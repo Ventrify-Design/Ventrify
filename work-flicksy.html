@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flicksy — Ventrify Work</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --brand:#6E3AFA; --brand-light:#9B6FFF; --accent:#00E5C8;
+      --bg:#06060F; --surface:#0D0D1A; --surface-2:#141428;
+      --text:#F0F0FA; --muted:#8585AE; --border:rgba(255,255,255,0.07);
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html{scroll-behavior:smooth;}
+    body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;overflow-x:hidden;line-height:1.6;}
+    h1,h2,h3,h4,h5{font-family:'Orbitron',sans-serif;letter-spacing:-0.02em;}
+    a{text-decoration:none;}
+    body::after{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");opacity:.025;pointer-events:none;z-index:9999;}
+
+    nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:1.25rem 3rem;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);background:rgba(6,6,15,0.75);border-bottom:1px solid var(--border);}
+    .logo{font-family:'Orbitron',sans-serif;font-size:1.35rem;font-weight:800;letter-spacing:-0.02em;color:var(--text);}
+    .logo em{color:var(--brand-light);font-style:normal;}
+    .nav-links{display:flex;gap:2.25rem;align-items:center;}
+    .nav-links a{font-size:0.875rem;font-weight:500;color:var(--muted);transition:color 0.2s ease;}
+    .nav-links a:hover,.nav-links a.active{color:var(--text);}
+    .btn{display:inline-flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-weight:700;font-size:0.875rem;letter-spacing:0.04em;border-radius:8px;padding:0.6rem 1.3rem;cursor:pointer;transition:transform 0.2s cubic-bezier(0.34,1.56,0.64,1),box-shadow 0.2s ease,background 0.2s ease,border-color 0.2s ease;border:1px solid transparent;}
+    .btn-primary{background:var(--brand);color:#fff;box-shadow:0 0 24px rgba(110,58,250,0.35),0 4px 14px rgba(0,0,0,0.35);}
+    .btn-primary:hover{background:var(--brand-light);transform:translateY(-2px);}
+    .btn-outline{background:transparent;color:var(--text);border-color:var(--border);}
+    .btn-outline:hover{border-color:rgba(255,255,255,0.2);background:rgba(255,255,255,0.04);transform:translateY(-2px);}
+    .btn-lg{padding:0.85rem 2rem;font-size:0.95rem;border-radius:10px;}
+
+    .container{max-width:1200px;margin:0 auto;}
+    .section{padding:5rem 3rem;}
+    .s-label{display:inline-flex;align-items:center;gap:10px;font-size:0.72rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);margin-bottom:1rem;}
+    .s-label::before{content:'';display:block;width:18px;height:1px;background:var(--accent);}
+
+    /* Project hero */
+    .project-hero{padding:9rem 3rem 0;position:relative;}
+    .project-hero-inner{max-width:1200px;margin:0 auto;padding-bottom:4rem;}
+    .back-link{display:inline-flex;align-items:center;gap:8px;font-size:0.82rem;font-weight:600;color:var(--muted);margin-bottom:2.5rem;transition:color 0.2s ease;}
+    .back-link:hover{color:var(--text);}
+    .project-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1.25rem;}
+    .project-tag{font-size:0.72rem;font-weight:700;letter-spacing:0.08em;padding:4px 10px;border-radius:5px;background:rgba(110,58,250,0.08);border:1px solid rgba(110,58,250,0.18);color:var(--brand-light);}
+    .project-title{font-size:clamp(2.5rem,5.5vw,5rem);font-weight:800;letter-spacing:-0.025em;line-height:0.95;margin-bottom:1.5rem;}
+    .project-meta-row{display:grid;grid-template-columns:repeat(4,1fr);gap:2rem;padding:2rem 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-bottom:0;}
+    .meta-label{font-size:0.7rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:0.4rem;}
+    .meta-val{font-family:'Orbitron',sans-serif;font-size:0.95rem;font-weight:700;color:var(--text);}
+
+    /* Hero image */
+    .project-hero-img{width:100%;max-width:1200px;margin:0 auto;display:block;border-radius:16px;overflow:hidden;position:relative;}
+    .project-hero-img img{width:100%;display:block;}
+    .project-hero-img-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(6,6,15,0.3) 0%,transparent 60%);}
+
+    /* Content */
+    .project-body{display:grid;grid-template-columns:1fr 340px;gap:5rem;align-items:start;}
+    .project-content h2{font-size:1.6rem;font-weight:800;letter-spacing:-0.015em;margin:2.5rem 0 1rem;}
+    .project-content h2:first-child{margin-top:0;}
+    .project-content p{font-size:0.95rem;line-height:1.75;color:var(--muted);margin-bottom:1rem;}
+    .project-sidebar{position:sticky;top:6rem;}
+    .sidebar-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.75rem;margin-bottom:1.5rem;}
+    .sidebar-card h4{font-family:'Orbitron',sans-serif;font-size:0.72rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem;}
+    .sidebar-tag-list{display:flex;flex-wrap:wrap;gap:6px;}
+    .sidebar-tag{font-size:0.75rem;padding:4px 10px;border-radius:5px;background:rgba(110,58,250,0.08);border:1px solid rgba(110,58,250,0.18);color:var(--brand-light);}
+    .tier-badge{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,rgba(110,58,250,0.15) 0%,rgba(0,229,200,0.08) 100%);border:1px solid rgba(110,58,250,0.3);border-radius:8px;padding:0.75rem 1rem;width:100%;margin-bottom:0.75rem;}
+    .tier-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);}
+    .tier-name{font-family:'Orbitron',sans-serif;font-size:0.85rem;font-weight:700;}
+
+    /* Screenshots gallery */
+    .gallery-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-top:1rem;}
+    .gallery-item{border-radius:10px;overflow:hidden;position:relative;background:var(--surface-2);}
+    .gallery-item img{width:100%;display:block;transition:transform 0.4s ease;}
+    .gallery-item:hover img{transform:scale(1.02);}
+    .gallery-item.full{grid-column:span 2;}
+    .gallery-section{margin-top:3rem;}
+    .gallery-section-label{display:inline-flex;align-items:center;gap:10px;font-size:0.72rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem;}
+    .gallery-section-label::before{content:'';display:block;width:18px;height:1px;background:var(--muted);}
+
+    /* CTA */
+    .cta-banner{background:linear-gradient(135deg,rgba(110,58,250,0.14) 0%,rgba(0,229,200,0.04) 100%);border:1px solid rgba(110,58,250,0.22);border-radius:24px;padding:5.5rem 4rem;text-align:center;position:relative;overflow:hidden;}
+    .orb{position:absolute;border-radius:50%;filter:blur(90px);pointer-events:none;}
+
+    .np-grid{display:grid;grid-template-columns:1fr 1fr;gap:3.5rem;align-items:center;}
+    .np-thumb{display:block;border-radius:14px;overflow:hidden;aspect-ratio:16/10;position:relative;}
+    .np-thumb img{width:100%;height:100%;object-fit:cover;transition:transform 0.5s ease;display:block;}
+    .np-thumb:hover img{transform:scale(1.04);}
+    @media(max-width:768px){.np-grid{grid-template-columns:1fr;gap:2rem;}}
+
+    footer{background:var(--surface);border-top:1px solid var(--border);padding:4.5rem 3rem 2.5rem;}
+    .footer-grid{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:3rem;margin-bottom:3rem;}
+    .footer-brand p{font-size:0.875rem;line-height:1.75;color:var(--muted);margin-top:1rem;max-width:270px;}
+    .footer-col h4{font-family:'Orbitron',sans-serif;font-size:0.72rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:1.1rem;}
+    .footer-col a{display:block;font-size:0.875rem;color:rgba(240,240,250,0.7);margin-bottom:0.6rem;transition:color 0.2s ease;}
+    .footer-col a:hover{color:var(--text);}
+    .footer-bottom{max-width:1200px;margin:0 auto;padding-top:2rem;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;}
+    .footer-bottom p{font-size:0.8rem;color:var(--muted);}
+
+    @media(max-width:900px){
+      nav{padding:1rem 1.5rem;}
+      .project-hero{padding:8rem 1.5rem 0;}
+      .section{padding:4rem 1.5rem;}
+      .project-meta-row{grid-template-columns:repeat(2,1fr);}
+      .project-body{grid-template-columns:1fr;}
+      .project-sidebar{position:static;}
+      .footer-grid{grid-template-columns:1fr 1fr;}
+    }
+    /* HAMBURGER */
+    .hamburger{display:none;flex-direction:column;justify-content:center;align-items:center;width:40px;height:40px;gap:5px;background:transparent;border:none;cursor:pointer;padding:4px;border-radius:8px;transition:background 0.2s ease;flex-shrink:0;}
+    .hamburger:hover{background:rgba(255,255,255,0.06);}
+    .hamburger-line{display:block;width:22px;height:2px;background:var(--text);border-radius:2px;transform-origin:center;transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1),opacity 0.2s ease;}
+    .hamburger.open .hamburger-line:nth-child(1){transform:translateY(7px) rotate(45deg);}
+    .hamburger.open .hamburger-line:nth-child(2){opacity:0;transform:scaleX(0);}
+    .hamburger.open .hamburger-line:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+    .mobile-menu{display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:190;background:rgba(6,6,15,0.97);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);flex-direction:column;padding:7rem 2rem 3rem;opacity:0;transform:translateY(-12px);transition:opacity 0.3s ease,transform 0.3s cubic-bezier(0.34,1.56,0.64,1);pointer-events:none;}
+    .mobile-menu.open{opacity:1;transform:translateY(0);pointer-events:all;}
+    .mobile-menu a.m-nav-link{display:block;font-family:'Orbitron',sans-serif;font-size:1.5rem;font-weight:700;letter-spacing:0.04em;color:var(--muted);padding:1.1rem 0;border-bottom:1px solid var(--border);transition:color 0.2s ease,padding-left 0.2s ease;}
+    .mobile-menu a.m-nav-link:hover{color:var(--text);padding-left:6px;}
+    .mobile-menu .m-cta{margin-top:2.5rem;}
+    .mobile-menu .m-cta .btn{width:100%;justify-content:center;font-size:0.9rem;padding:0.95rem 1.5rem;}
+    @media(max-width:640px){
+      .nav-links{display:none;}
+      .nav-cta{display:none;}
+      .hamburger{display:flex;}
+      .mobile-menu{display:flex;}
+      .gallery-grid{grid-template-columns:1fr;}
+      .gallery-item.full{grid-column:span 1;}
+      .footer-grid{grid-template-columns:1fr;}
+    }
+    /* SCROLL REVEAL */
+    [data-reveal]{opacity:0;transform:translateY(30px);transition:opacity 0.9s cubic-bezier(0.16,1,0.3,1),transform 0.9s cubic-bezier(0.16,1,0.3,1);}
+    [data-reveal].revealed{opacity:1;transform:translateY(0);}
+    [data-reveal][data-delay="1"]{transition-delay:0.07s;}
+    [data-reveal][data-delay="2"]{transition-delay:0.14s;}
+    [data-reveal][data-delay="3"]{transition-delay:0.21s;}
+    [data-reveal][data-delay="4"]{transition-delay:0.28s;}
+    [data-reveal][data-delay="5"]{transition-delay:0.35s;}
+    @keyframes fadeUpIn{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="logo"><img src="ventrify.svg" alt="Ventrify" style="height:22px;width:auto;display:block;"></a>
+  <div class="nav-links">
+    <a href="about.html">About</a>
+    <a href="work.html" class="active">Work</a>
+    <a href="pricing.html">Pricing</a>
+    <a href="insights.html">Insights</a>
+    <a href="contact.html">Contact</a>
+  </div>
+  <a href="contact.html" class="btn btn-primary nav-cta">Start Your Venture</a>
+  <button class="hamburger" id="hamburger" aria-label="Toggle menu" aria-expanded="false">
+    <span class="hamburger-line"></span>
+    <span class="hamburger-line"></span>
+    <span class="hamburger-line"></span>
+  </button>
+</nav>
+
+<!-- MOBILE MENU -->
+<div class="mobile-menu" id="mobileMenu" role="dialog" aria-label="Navigation menu">
+  <a href="about.html" class="m-nav-link">About</a>
+  <a href="work.html" class="m-nav-link">Work</a>
+  <a href="pricing.html" class="m-nav-link">Pricing</a>
+  <a href="insights.html" class="m-nav-link">Insights</a>
+  <a href="contact.html" class="m-nav-link">Contact</a>
+  <div class="m-cta">
+    <a href="contact.html" class="btn btn-primary btn-lg">Start Your Venture</a>
+  </div>
+</div>
+
+<!-- PROJECT HERO -->
+<div class="project-hero">
+  <div class="project-hero-inner">
+    <a href="work.html" class="back-link">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Back to Work
+    </a>
+    <div class="project-tags" style="animation:fadeUpIn 0.9s cubic-bezier(0.16,1,0.3,1) 0.1s both;">
+      <span class="project-tag">Venture Pro</span>
+      <span class="project-tag">Streaming</span>
+      <span class="project-tag">Media &amp; Entertainment</span>
+      <span class="project-tag">UI/UX Design + Development</span>
+    </div>
+    <h1 class="project-title" style="animation:fadeUpIn 0.9s cubic-bezier(0.16,1,0.3,1) 0.2s both;">Flicksy<br><span style="background:linear-gradient(140deg,#FF6B8A 0%,#C0392B 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Content discovery, reimagined</span></h1>
+    <div class="project-meta-row" data-reveal>
+      <div><div class="meta-label">Client</div><div class="meta-val">Flicksy</div></div>
+      <div><div class="meta-label">Industry</div><div class="meta-val">Streaming</div></div>
+      <div><div class="meta-label">Timeline</div><div class="meta-val">10 Weeks</div></div>
+      <div><div class="meta-label">Tier</div><div class="meta-val">Venture Pro</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- HERO IMAGE -->
+<div style="padding:0 3rem;margin-bottom:5rem;" data-reveal>
+  <div class="project-hero-img" style="max-width:1200px;margin:0 auto;">
+    <img src="Portfolio/Flicksy/flicksy-hero.jpg" alt="Flicksy — Streaming Platform" style="object-fit:cover; object-position:center; max-height:640px; width:100%; display:block;">
+    <div class="project-hero-img-overlay" style="background:linear-gradient(to top,rgba(13,13,26,0.45) 0%,rgba(13,13,26,0.04) 55%,transparent 100%);"></div>
+  </div>
+</div>
+
+<!-- PROJECT CONTENT -->
+<section class="section" style="padding-top:0;">
+  <div class="container">
+    <div class="project-body">
+      <div class="project-content" data-reveal>
+
+        <h2>The Challenge</h2>
+        <p>The streaming landscape is saturated — audiences have more choices than ever, yet finding something worth watching remains genuinely frustrating. Flicksy came to us with a clear conviction: the problem wasn't a lack of content, it was a failure of discovery.</p>
+        <p>The brief was to design and build a streaming platform that felt meaningfully different — one that surfaced the right content to the right person at the right moment, while fostering a sense of shared viewing culture through social features that didn't feel bolted on.</p>
+
+        <h2>Our Approach</h2>
+        <p>We began with a deep discovery phase — mapping the existing content consumption journeys across Netflix, Disney+, and niche platforms, identifying the exact friction points where users disengaged or defaulted to rewatching familiar titles. The insight was consistent: recommendation systems optimised for engagement over satisfaction left users feeling algorithmically trapped.</p>
+        <p>Our define phase reframed the product around three principles: transparent recommendations (users should understand why something is suggested), social discovery (friends and communities as a discovery layer), and frictionless playback that stepped out of the way the moment a decision was made. These principles shaped every design decision that followed.</p>
+        <p>In the design phase, we developed a visual language that felt cinematic without being heavy — dark surfaces, rich imagery, and a typographic hierarchy that guided the eye naturally toward content rather than chrome. The recommendation UI was prototyped in multiple variants before settling on an approach that surfaced reasoning alongside suggestions.</p>
+
+        <h2>What We Built</h2>
+        <p>A full-stack streaming platform covering web and mobile — from the content browse and discovery experience through to the playback layer, social viewing rooms, and personalisation engine. We also delivered the full design system and marketing site.</p>
+
+        <!-- PLATFORM DESIGN -->
+        <div class="gallery-section" data-reveal>
+          <div class="gallery-section-label">Platform Design</div>
+          <div class="gallery-grid">
+            <div class="gallery-item full">
+              <img src="Portfolio/Flicksy/screenshot_1.jpg" alt="Flicksy — Home and discovery feed">
+            </div>
+            <div class="gallery-item">
+              <img src="Portfolio/Flicksy/screenshot_2.jpg" alt="Content browse — genre categories">
+            </div>
+            <div class="gallery-item">
+              <img src="Portfolio/Flicksy/screenshot_3.jpg" alt="Title detail — synopsis and cast">
+            </div>
+            <div class="gallery-item full">
+              <img src="Portfolio/Flicksy/screenshot_4.jpg" alt="Recommendation engine — personalised feed">
+            </div>
+            <div class="gallery-item">
+              <img src="Portfolio/Flicksy/screenshot_5.jpg" alt="Watchlist and saved content">
+            </div>
+            <div class="gallery-item">
+              <img src="Portfolio/Flicksy/screenshot_6.jpg" alt="Social viewing — watch rooms">
+            </div>
+            <div class="gallery-item full">
+              <img src="Portfolio/Flicksy/screenshot_7.jpg" alt="Playback interface — full-screen controls">
+            </div>
+            <div class="gallery-item">
+              <img src="Portfolio/Flicksy/screenshot_8.jpg" alt="Profile and preferences">
+            </div>
+            <div class="gallery-item">
+              <img src="Portfolio/Flicksy/screenshot_9.jpg" alt="Mobile experience — content cards">
+            </div>
+          </div>
+        </div>
+
+        <h2>The Outcome</h2>
+        <p>We collaborated with Flicksy to deliver a cutting-edge streaming platform that combines intuitive design with powerful features. The recommendation system achieved significantly higher satisfaction scores than baseline, and social viewing room adoption exceeded projections in the first month post-launch.</p>
+        <p>Our work encompassed UI/UX design, responsive development, recommendation algorithms, and social features integration — delivered as a cohesive product under one roof, on time and on brief.</p>
+
+      </div>
+
+      <div class="project-sidebar" data-reveal data-delay="1">
+        <div class="sidebar-card">
+          <h4>Deliverables</h4>
+          <div class="sidebar-tag-list">
+            <span class="sidebar-tag">Market Research</span>
+            <span class="sidebar-tag">Product Vision</span>
+            <span class="sidebar-tag">User Personas</span>
+            <span class="sidebar-tag">Wireframes</span>
+            <span class="sidebar-tag">Design System</span>
+            <span class="sidebar-tag">Polished UI</span>
+            <span class="sidebar-tag">Web App Build</span>
+            <span class="sidebar-tag">Mobile App</span>
+            <span class="sidebar-tag">Recommendation Engine</span>
+            <span class="sidebar-tag">Social Features</span>
+            <span class="sidebar-tag">Marketing Website</span>
+            <span class="sidebar-tag">Figma Files</span>
+          </div>
+        </div>
+        <div class="sidebar-card">
+          <h4>Tech Stack</h4>
+          <div class="sidebar-tag-list">
+            <span class="sidebar-tag">React</span>
+            <span class="sidebar-tag">Next.js</span>
+            <span class="sidebar-tag">Node.js</span>
+            <span class="sidebar-tag">PostgreSQL</span>
+            <span class="sidebar-tag">AWS</span>
+            <span class="sidebar-tag">WebSockets</span>
+          </div>
+        </div>
+        <div class="sidebar-card">
+          <h4>Venture Tier</h4>
+          <div class="tier-badge">
+            <span class="tier-dot"></span>
+            <span class="tier-name">Venture Pro</span>
+          </div>
+          <p style="font-size:0.8rem;color:var(--muted);line-height:1.6;">Full 5-phase build plus brand, marketing, investor deck, and growth support.</p>
+        </div>
+        <a href="contact.html" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:0.5rem;">Start a Similar Venture</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- NEXT PROJECT -->
+<section class="section" style="padding-top:0;">
+  <div class="container">
+    <div style="border-top:1px solid var(--border);padding-top:4rem;" data-reveal>
+      <div style="font-size:0.72rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:2rem;">Next Project</div>
+      <div class="np-grid">
+        <div>
+          <div style="font-family:'Orbitron',sans-serif;font-size:clamp(1.6rem,3vw,2.2rem);font-weight:800;letter-spacing:-0.025em;margin-bottom:0.75rem;">CuraGo</div>
+          <p style="font-size:0.9rem;line-height:1.7;color:var(--muted);margin-bottom:1.75rem;max-width:380px;">An AI-powered healthcare platform connecting patients with personalised wellness solutions, telemedicine, and preventive care.</p>
+          <a href="work-curago.html" class="btn btn-outline">View Project <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:6px;"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
+        </div>
+        <a href="work-curago.html" class="np-thumb">
+          <img src="Portfolio/CuraGo/curago-hero.jpg" alt="CuraGo — Healthcare Platform">
+          <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(13,13,26,0.45) 0%,rgba(13,13,26,0.04) 55%,transparent 100%);"></div>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="section" style="padding-top:0;">
+  <div class="container">
+    <div class="cta-banner" data-reveal>
+      <div class="orb" style="width:400px;height:400px;background:radial-gradient(circle,rgba(110,58,250,0.2) 0%,transparent 70%);top:-120px;right:-80px;filter:blur(80px);"></div>
+      <div class="orb" style="width:300px;height:300px;background:radial-gradient(circle,rgba(0,229,200,0.1) 0%,transparent 70%);bottom:-60px;left:-40px;filter:blur(70px);"></div>
+      <div class="s-label" style="justify-content:center;margin-bottom:1.5rem;">Start Building</div>
+      <h2 style="font-size:clamp(1.9rem,4vw,3rem);font-weight:800;letter-spacing:-0.015em;margin-bottom:1rem;">Ready to build yours?</h2>
+      <p style="font-size:1rem;line-height:1.75;color:var(--muted);max-width:480px;margin:0 auto 2.5rem;">Book a discovery call and let's turn your idea into the next success story.</p>
+      <a href="contact.html" class="btn btn-primary btn-lg">Book Discovery Call</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <div class="logo"><img src="ventrify.svg" alt="Ventrify" style="height:22px;width:auto;display:block;"></div>
+      <p>AI-powered venture building for pre-seed founders. From idea to launched product — we build it all.</p>
+      <div style="display:inline-flex;align-items:center;gap:6px;font-size:0.75rem;color:var(--muted);background:rgba(255,255,255,0.04);border:1px solid var(--border);padding:4px 10px;border-radius:100px;margin-top:1.25rem;">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        Dubai, UAE
+      </div>
+    </div>
+    <div class="footer-col"><h4>Company</h4><a href="about.html">About</a><a href="work.html">Work</a><a href="pricing.html">Pricing</a><a href="insights.html">Insights</a><a href="contact.html">Contact</a></div>
+    <div class="footer-col"><h4>Services</h4><a href="about.html">Strategy</a><a href="about.html">Design</a><a href="about.html">Development</a><a href="about.html">Brand &amp; Marketing</a></div>
+    <div class="footer-col"><h4>Connect</h4><a href="#">LinkedIn</a><a href="#">Instagram</a><a href="#">Twitter / X</a><a href="contact.html">hello@ventrify.io</a></div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2026 Ventrify. All rights reserved.</p>
+    <p>Built with AI. Launched with intention.</p>
+  </div>
+</footer>
+
+<script>
+  const revealObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('revealed'); revealObs.unobserve(e.target); } });
+  }, { threshold: 0.1, rootMargin: '0px 0px -48px 0px' });
+  document.querySelectorAll('[data-reveal]').forEach(el => revealObs.observe(el));
+
+  const hamburger = document.getElementById('hamburger');
+  const mobileMenu = document.getElementById('mobileMenu');
+  hamburger.addEventListener('click', () => {
+    const isOpen = mobileMenu.classList.toggle('open');
+    hamburger.classList.toggle('open', isOpen);
+    hamburger.setAttribute('aria-expanded', isOpen);
+    document.body.style.overflow = isOpen ? 'hidden' : '';
+  });
+  mobileMenu.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', () => {
+      mobileMenu.classList.remove('open');
+      hamburger.classList.remove('open');
+      hamburger.setAttribute('aria-expanded', 'false');
+      document.body.style.overflow = '';
+    });
+  });
+</script>
+</body>
+</html>

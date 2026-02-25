@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About — Ventrify</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --brand: #6E3AFA; --brand-light: #9B6FFF; --accent: #00E5C8;
+      --bg: #06060F; --surface: #0D0D1A; --surface-2: #141428;
+      --text: #F0F0FA; --muted: #8585AE; --border: rgba(255,255,255,0.07);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; overflow-x: hidden; line-height: 1.6; }
+    h1,h2,h3,h4,h5 { font-family: 'Orbitron', sans-serif; letter-spacing: -0.02em; }
+    a { text-decoration: none; }
+    body::after { content:''; position:fixed; inset:0; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E"); opacity:.025; pointer-events:none; z-index:9999; }
+
+    /* NAV */
+    nav { position:fixed; top:0; left:0; right:0; z-index:200; display:flex; align-items:center; justify-content:space-between; padding:1.25rem 3rem; backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px); background:rgba(6,6,15,0.75); border-bottom:1px solid var(--border); }
+    .logo { font-family:'Orbitron',sans-serif; font-size:1.35rem; font-weight:800; letter-spacing:-0.02em; color:var(--text); }
+    .nav-links { display:flex; gap:2.25rem; align-items:center; }
+    .nav-links a { font-size:0.875rem; font-weight:500; color:var(--muted); transition:color 0.2s ease; }
+    .nav-links a:hover, .nav-links a.active { color:var(--text); }
+    .btn { display:inline-flex; align-items:center; justify-content:center; font-family:'Orbitron',sans-serif; font-weight:700; font-size:0.875rem; letter-spacing:0.04em; border-radius:8px; padding:0.6rem 1.3rem; cursor:pointer; transition:transform 0.2s cubic-bezier(0.34,1.56,0.64,1),box-shadow 0.2s ease,background 0.2s ease,border-color 0.2s ease; border:1px solid transparent; }
+    .btn-primary { background:var(--brand); color:#fff; box-shadow:0 0 24px rgba(110,58,250,0.35),0 4px 14px rgba(0,0,0,0.35); }
+    .btn-primary:hover { background:var(--brand-light); transform:translateY(-2px); box-shadow:0 0 36px rgba(110,58,250,0.5),0 8px 24px rgba(0,0,0,0.3); }
+    .btn-primary:active { transform:translateY(0); }
+    .btn-outline { background:transparent; color:var(--text); border-color:var(--border); }
+    .btn-outline:hover { border-color:rgba(255,255,255,0.2); background:rgba(255,255,255,0.04); transform:translateY(-2px); }
+    .btn-lg { padding:0.85rem 2rem; font-size:0.95rem; border-radius:10px; }
+
+    /* LAYOUT */
+    .page-hero { padding:10rem 3rem 6rem; position:relative; overflow:hidden; }
+    .orb { position:absolute; border-radius:50%; filter:blur(90px); pointer-events:none; }
+    .hero-grid { position:absolute; inset:0; background-image:linear-gradient(rgba(110,58,250,0.045) 1px,transparent 1px),linear-gradient(90deg,rgba(110,58,250,0.045) 1px,transparent 1px); background-size:64px 64px; mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black 30%,transparent 80%); -webkit-mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black 30%,transparent 80%); pointer-events:none; }
+    .container { max-width:1200px; margin:0 auto; }
+    .s-label { display:inline-flex; align-items:center; gap:10px; font-size:0.72rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--accent); margin-bottom:1rem; }
+    .s-label::before { content:''; display:block; width:18px; height:1px; background:var(--accent); }
+    .section { padding:6rem 3rem; }
+    .section-alt { padding:6rem 3rem; background:var(--surface); }
+    .grad-text { background:linear-gradient(140deg,var(--brand-light) 0%,var(--accent) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+
+    /* HERO STATS ROW */
+    .hero-stats { display:flex; gap:3rem; flex-wrap:wrap; padding-top:3rem; border-top:1px solid var(--border); margin-top:3.5rem; }
+    .h-stat-val { font-family:'Orbitron',sans-serif; font-size:2.4rem; font-weight:800; letter-spacing:-0.02em; line-height:1; margin-bottom:0.35rem; }
+    .h-stat-lbl { font-size:0.82rem; color:var(--muted); line-height:1.5; }
+
+    /* STORY — TWO COL */
+    .two-col { display:grid; grid-template-columns:1fr 1fr; gap:6rem; align-items:start; }
+    .two-col-center { display:grid; grid-template-columns:1fr 1fr; gap:6rem; align-items:center; }
+    .story-body p { font-size:1.05rem; line-height:1.75; color:var(--muted); margin-bottom:1.4rem; }
+    .story-body p:last-child { margin-bottom:0; }
+    .story-body p strong { color:var(--text); font-weight:600; }
+
+    /* PULL QUOTE */
+    .pull-quote { border-left:3px solid var(--brand); padding:1.25rem 1.75rem; background:rgba(110,58,250,0.06); border-radius:0 12px 12px 0; margin:2rem 0; }
+    .pull-quote p { font-family:'Orbitron',sans-serif; font-size:1rem; font-weight:700; letter-spacing:0.02em; line-height:1.6; color:var(--text); }
+
+    /* STAT PANEL */
+    .stat-panel { background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:2.5rem; display:flex; flex-direction:column; gap:0; overflow:hidden; }
+    .stat-item { padding:1.75rem 0; border-bottom:1px solid var(--border); }
+    .stat-item:first-child { padding-top:0; }
+    .stat-item:last-child { border-bottom:none; padding-bottom:0; }
+    .stat-num { font-family:'Orbitron',sans-serif; font-size:2.8rem; font-weight:900; letter-spacing:-0.03em; line-height:1; margin-bottom:0.4rem; }
+    .stat-desc { font-size:0.875rem; line-height:1.6; color:var(--muted); }
+
+    /* PROBLEM CARDS */
+    .problem-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1.5rem; margin-top:3rem; }
+    .prob-card { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:2.25rem; position:relative; overflow:hidden; transition:border-color 0.25s ease,background 0.25s ease; }
+    .prob-card:hover { border-color:rgba(110,58,250,0.3); background:var(--surface-2); }
+    .prob-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; opacity:0; transition:opacity 0.3s ease; }
+    .prob-card:hover::before { opacity:1; }
+    .prob-card.red::before { background:linear-gradient(90deg,#FA3A6E,#FF6B8A); }
+    .prob-card.amber::before { background:linear-gradient(90deg,#FA8C3A,#FFB86B); }
+    .prob-card.purple::before { background:linear-gradient(90deg,var(--brand),var(--brand-light)); }
+    .prob-icon { width:48px; height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; margin-bottom:1.5rem; }
+    .prob-title { font-family:'Orbitron',sans-serif; font-size:1.05rem; font-weight:700; letter-spacing:-0.015em; margin-bottom:0.75rem; }
+    .prob-desc { font-size:0.925rem; line-height:1.75; color:var(--muted); }
+
+    /* APPROACH GRID */
+    .approach-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:1.5rem; margin-top:3rem; }
+    .approach-card { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:2.5rem; transition:border-color 0.25s ease,background 0.25s ease,transform 0.3s cubic-bezier(0.34,1.56,0.64,1); }
+    .approach-card:hover { border-color:rgba(110,58,250,0.3); background:var(--surface-2); transform:translateY(-3px); }
+    .approach-card.wide { grid-column:span 2; display:grid; grid-template-columns:1fr 1fr; gap:3rem; align-items:center; }
+    .approach-num { font-family:'Orbitron',sans-serif; font-size:0.68rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--brand-light); margin-bottom:1rem; }
+    .approach-title { font-family:'Orbitron',sans-serif; font-size:1.2rem; font-weight:800; letter-spacing:-0.015em; margin-bottom:0.75rem; }
+    .approach-desc { font-size:0.925rem; line-height:1.75; color:var(--muted); }
+    .approach-tags { display:flex; flex-wrap:wrap; gap:6px; margin-top:1.5rem; }
+    .approach-tag { font-size:0.68rem; padding:3px 9px; border-radius:4px; background:rgba(110,58,250,0.08); border:1px solid rgba(110,58,250,0.18); color:var(--brand-light); }
+
+    /* LOGOS / CREDIBILITY STRIP */
+    .cred-strip { padding:3rem 3rem; border-top:1px solid var(--border); border-bottom:1px solid var(--border); background:var(--surface); }
+    .cred-label { font-size:0.72rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); text-align:center; margin-bottom:2rem; }
+    .cred-logos { display:flex; gap:2.5rem; justify-content:center; align-items:center; flex-wrap:wrap; }
+    .cred-logo { font-family:'Orbitron',sans-serif; font-size:0.85rem; font-weight:800; letter-spacing:0.06em; color:rgba(240,240,250,0.55); text-transform:uppercase; transition:color 0.2s ease; cursor:default; }
+    .cred-logo:hover { color:rgba(240,240,250,0.85); }
+
+    /* CTA */
+    .cta-banner { background:linear-gradient(135deg,rgba(110,58,250,0.14) 0%,rgba(0,229,200,0.04) 100%); border:1px solid rgba(110,58,250,0.22); border-radius:24px; padding:5.5rem 4rem; text-align:center; position:relative; overflow:hidden; }
+
+    /* FOOTER */
+    footer { background:var(--surface); border-top:1px solid var(--border); padding:4.5rem 3rem 2.5rem; }
+    .footer-grid { max-width:1200px; margin:0 auto; display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:3rem; margin-bottom:3rem; }
+    .footer-brand p { font-size:0.875rem; line-height:1.75; color:var(--muted); margin-top:1rem; max-width:270px; }
+    .footer-col h4 { font-family:'Orbitron',sans-serif; font-size:0.72rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); margin-bottom:1.1rem; }
+    .footer-col a { display:block; font-size:0.875rem; color:rgba(240,240,250,0.7); margin-bottom:0.6rem; transition:color 0.2s ease; }
+    .footer-col a:hover { color:var(--text); }
+    .footer-bottom { max-width:1200px; margin:0 auto; padding-top:2rem; border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; }
+    .footer-bottom p { font-size:0.8rem; color:var(--muted); }
+    .location-chip { display:inline-flex; align-items:center; gap:6px; font-size:0.75rem; color:var(--muted); background:rgba(255,255,255,0.04); border:1px solid var(--border); padding:4px 10px; border-radius:100px; margin-top:1.25rem; }
+
+    /* SCROLL REVEAL */
+    [data-reveal] { opacity:0; transform:translateY(30px); transition:opacity 0.9s cubic-bezier(0.16,1,0.3,1),transform 0.9s cubic-bezier(0.16,1,0.3,1); }
+    [data-reveal].revealed { opacity:1; transform:translateY(0); }
+    [data-reveal][data-delay="1"] { transition-delay:0.07s; }
+    [data-reveal][data-delay="2"] { transition-delay:0.14s; }
+    [data-reveal][data-delay="3"] { transition-delay:0.21s; }
+    [data-reveal][data-delay="4"] { transition-delay:0.28s; }
+    @keyframes fadeUpIn{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+
+    /* SERVICES LIST */
+    .services-list { display:flex; flex-direction:column; gap:1px; background:var(--border); border:1px solid var(--border); border-radius:16px; overflow:hidden; margin-top:3.5rem; }
+    .svc-row { background:var(--bg); display:grid; grid-template-columns:240px 1fr 1fr; gap:0; transition:background 0.25s ease; }
+    .svc-row:hover { background:var(--surface-2); }
+    .svc-label-col { padding:2.5rem 2rem; border-right:1px solid var(--border); display:flex; flex-direction:column; justify-content:space-between; }
+    .svc-phase { font-size:0.68rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--brand-light); margin-bottom:0.5rem; }
+    .svc-name { font-family:'Orbitron',sans-serif; font-size:1.4rem; font-weight:800; letter-spacing:-0.015em; }
+    .svc-content-col { padding:2.5rem 2.5rem; border-right:1px solid var(--border); }
+    .svc-desc { font-size:0.9rem; line-height:1.75; color:var(--muted); margin-bottom:1.5rem; }
+    .svc-outputs { padding:2.5rem 2.5rem; }
+    .svc-outputs h4 { font-family:'Orbitron',sans-serif; font-size:0.72rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:1rem; }
+    .output-list { display:flex; flex-wrap:wrap; gap:8px; }
+    .output-tag { font-size:0.75rem; padding:4px 10px; border-radius:6px; background:rgba(110,58,250,0.08); border:1px solid rgba(110,58,250,0.18); color:var(--brand-light); }
+
+    /* ADDITIONAL SERVICES */
+    .add-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1.5rem; margin-top:3rem; }
+    .add-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:2rem; transition:border-color 0.25s ease,background 0.25s ease,transform 0.25s cubic-bezier(0.34,1.56,0.64,1); }
+    .add-card:hover { border-color:rgba(110,58,250,0.3); background:var(--surface-2); transform:translateY(-3px); }
+    .add-icon { width:44px; height:44px; border-radius:10px; display:flex; align-items:center; justify-content:center; margin-bottom:1.25rem; }
+    .add-title { font-family:'Orbitron',sans-serif; font-size:1rem; font-weight:700; letter-spacing:-0.015em; margin-bottom:0.5rem; }
+    .add-desc { font-size:0.875rem; line-height:1.65; color:var(--muted); }
+
+    @media(max-width:1024px) {
+      .two-col, .two-col-center { grid-template-columns:1fr; gap:3.5rem; }
+      .approach-card.wide { grid-column:span 1; grid-template-columns:1fr; }
+      .problem-grid { grid-template-columns:1fr; }
+    }
+    @media(max-width:900px) {
+      .svc-row { grid-template-columns:1fr; }
+      .svc-label-col { border-right:none; border-bottom:1px solid var(--border); }
+      .svc-content-col { border-right:none; border-bottom:1px solid var(--border); }
+    }
+    @media(max-width:768px) {
+      nav { padding:1rem 1.5rem; }
+      .approach-grid { grid-template-columns:1fr; }
+      .footer-grid { grid-template-columns:1fr 1fr; }
+      .hero-stats { gap:2rem; }
+      .add-grid { grid-template-columns:repeat(2,1fr); }
+    }
+    /* HAMBURGER */
+    .hamburger { display:none; flex-direction:column; justify-content:center; align-items:center; width:40px; height:40px; gap:5px; background:transparent; border:none; cursor:pointer; padding:4px; border-radius:8px; transition:background 0.2s ease; flex-shrink:0; }
+    .hamburger:hover { background:rgba(255,255,255,0.06); }
+    .hamburger-line { display:block; width:22px; height:2px; background:var(--text); border-radius:2px; transform-origin:center; transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1),opacity 0.2s ease; }
+    .hamburger.open .hamburger-line:nth-child(1) { transform:translateY(7px) rotate(45deg); }
+    .hamburger.open .hamburger-line:nth-child(2) { opacity:0; transform:scaleX(0); }
+    .hamburger.open .hamburger-line:nth-child(3) { transform:translateY(-7px) rotate(-45deg); }
+    .mobile-menu { display:none; position:fixed; top:0; left:0; right:0; bottom:0; z-index:190; background:rgba(6,6,15,0.97); backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px); flex-direction:column; padding:7rem 2rem 3rem; opacity:0; transform:translateY(-12px); transition:opacity 0.3s ease,transform 0.3s cubic-bezier(0.34,1.56,0.64,1); pointer-events:none; }
+    .mobile-menu.open { opacity:1; transform:translateY(0); pointer-events:all; }
+    .mobile-menu a.m-nav-link { display:block; font-family:'Orbitron',sans-serif; font-size:1.5rem; font-weight:700; letter-spacing:0.04em; color:var(--muted); padding:1.1rem 0; border-bottom:1px solid var(--border); transition:color 0.2s ease,padding-left 0.2s ease; }
+    .mobile-menu a.m-nav-link:hover { color:var(--text); padding-left:6px; }
+    .mobile-menu .m-cta { margin-top:2.5rem; }
+    .mobile-menu .m-cta .btn { width:100%; justify-content:center; font-size:0.9rem; padding:0.95rem 1.5rem; }
+    @media(max-width:640px) {
+      .nav-links { display:none; }
+      .nav-cta { display:none; }
+      .hamburger { display:flex; }
+      .mobile-menu { display:flex; }
+      .footer-grid { grid-template-columns:1fr; }
+      .page-hero { padding:8rem 1.5rem 4rem; }
+      .section, .section-alt { padding:4rem 1.5rem; }
+      .cred-strip { padding:2.5rem 1.5rem; }
+      .add-grid { grid-template-columns:1fr; }
+    }
+    /* ── HERO TWO-COL ── */
+    .page-hero-inner{display:grid;grid-template-columns:1.5fr 1fr;gap:3rem;align-items:center;}
+    .p-visual{position:relative;height:575px;display:flex;justify-content:center;align-items:center;animation:fadeUpIn 1s cubic-bezier(0.16,1,0.3,1) 0.65s both;}
+    .p-halo{position:absolute;width:437px;height:437px;border-radius:50%;background:radial-gradient(circle,rgba(110,58,250,0.22) 0%,transparent 70%);filter:blur(44px);pointer-events:none;animation:phalo 4s ease-in-out infinite;}
+    @keyframes phalo{0%,100%{opacity:0.7;transform:scale(1)}50%{opacity:1;transform:scale(1.12)}}
+    .p-orbit-ring{position:absolute;width:483px;height:483px;border-radius:50%;border:1px dashed rgba(110,58,250,0.1);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;}
+    .p-ow{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;}
+    .p-oc{position:relative;width:0;height:0;}.p-cw{animation:pscw 9s linear infinite;}.p-ccw{animation:psccw 14s linear infinite;}
+    @keyframes pscw{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+    @keyframes psccw{from{transform:rotate(0deg)}to{transform:rotate(-360deg)}}
+    .p-od{position:absolute;border-radius:50%;}
+    .p-od-a{width:8px;height:8px;background:#9B6FFF;box-shadow:0 0 12px rgba(155,111,255,0.9);top:-241px;left:-4px;}
+    .p-od-b{width:6px;height:6px;background:#00E5C8;box-shadow:0 0 10px rgba(0,229,200,0.8);top:-178px;left:-3px;}
+    .p-sp{position:absolute;border-radius:50%;animation:pspk 3s ease-in-out infinite;pointer-events:none;}
+    @keyframes pspk{0%,100%{opacity:0.2;transform:scale(0.7)}50%{opacity:1;transform:scale(1.5)}}
+    .p-float{position:absolute;background:rgba(13,13,26,0.88);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:10px 14px;display:flex;align-items:center;gap:10px;box-shadow:0 8px 32px rgba(0,0,0,0.45);white-space:nowrap;}
+    .p-fi{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
+    .p-fv{font-family:'Orbitron',sans-serif;font-size:0.78rem;font-weight:800;color:var(--text);line-height:1;}
+    .p-fl{font-size:0.6rem;color:var(--muted);margin-top:3px;}
+    .pfa{animation:pfloatA 5s ease-in-out infinite;}.pfb{animation:pfloatB 7s ease-in-out infinite;}.pfc{animation:pfloatC 6s ease-in-out 0.8s infinite;}
+    @keyframes pfloatA{0%,100%{transform:translateY(0px)}50%{transform:translateY(-10px)}}
+    @keyframes pfloatB{0%,100%{transform:translateY(-50%) translateX(0px)}50%{transform:translateY(-50%) translateX(-8px)}}
+    @keyframes pfloatC{0%,100%{transform:translateY(0px)}50%{transform:translateY(10px)}}
+    /* ABOUT: Network connection card */
+    .net-card{width:280px;background:linear-gradient(160deg,#1a1340,#0d0d1a);border:1.5px solid rgba(110,58,250,0.38);border-radius:18px;padding:18px 20px;box-shadow:0 0 0 1px rgba(255,255,255,0.04),0 30px 70px rgba(0,0,0,0.6),0 0 60px rgba(110,58,250,0.12);transform:rotateY(-12deg) rotateX(4deg);animation:netFloat 6s ease-in-out infinite;}
+    @keyframes netFloat{0%,100%{transform:rotateY(-12deg) rotateX(4deg) translateY(0)}50%{transform:rotateY(-12deg) rotateX(4deg) translateY(-14px)}}
+    .net-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+    .net-title{font-family:'Orbitron',sans-serif;font-size:0.6rem;font-weight:700;letter-spacing:0.06em;color:var(--text);}
+    .net-live-badge{display:flex;align-items:center;gap:4px;background:rgba(0,229,200,0.1);border:1px solid rgba(0,229,200,0.25);border-radius:20px;padding:2px 8px;}
+    .net-live-dot{width:5px;height:5px;border-radius:50%;background:#00E5C8;box-shadow:0 0 6px rgba(0,229,200,0.8);animation:netLivePulse 1.5s ease-in-out infinite;}
+    @keyframes netLivePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.45;transform:scale(0.65)}}
+    .net-live-text{font-size:0.48rem;color:#00E5C8;font-weight:600;letter-spacing:0.06em;}
+    .net-svg{width:100%;height:auto;display:block;margin-bottom:10px;}
+    .net-footer{display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid rgba(255,255,255,0.07);}
+    .net-stat{text-align:center;}
+    .net-stat-num{font-family:'Orbitron',sans-serif;font-size:0.9rem;font-weight:800;background:linear-gradient(140deg,#9B6FFF,#00E5C8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1;}
+    .net-stat-lbl{font-size:0.44rem;color:var(--muted);margin-top:2px;letter-spacing:0.05em;text-transform:uppercase;}
+    .net-vdivider{width:1px;height:28px;background:rgba(255,255,255,0.07);}
+    @media(max-width:1024px){.page-hero-inner{grid-template-columns:1fr;}.p-visual{display:none;}}
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="logo"><img src="ventrify.svg" alt="Ventrify" style="height:22px;width:auto;display:block;"></a>
+  <div class="nav-links">
+    <a href="about.html" class="active">About</a>
+    <a href="work.html">Work</a>
+    <a href="pricing.html">Pricing</a>
+    <a href="insights.html">Insights</a>
+    <a href="contact.html">Contact</a>
+  </div>
+  <a href="contact.html" class="btn btn-primary nav-cta">Start Your Venture</a>
+  <button class="hamburger" id="hamburger" aria-label="Toggle menu" aria-expanded="false">
+    <span class="hamburger-line"></span>
+    <span class="hamburger-line"></span>
+    <span class="hamburger-line"></span>
+  </button>
+</nav>
+
+<!-- MOBILE MENU -->
+<div class="mobile-menu" id="mobileMenu" role="dialog" aria-label="Navigation menu">
+  <a href="about.html" class="m-nav-link">About</a>
+  <a href="work.html" class="m-nav-link">Work</a>
+  <a href="pricing.html" class="m-nav-link">Pricing</a>
+  <a href="insights.html" class="m-nav-link">Insights</a>
+  <a href="contact.html" class="m-nav-link">Contact</a>
+  <div class="m-cta">
+    <a href="contact.html" class="btn btn-primary btn-lg">Start Your Venture</a>
+  </div>
+</div>
+
+<!-- PAGE HERO -->
+<div class="page-hero">
+  <div class="hero-grid"></div>
+  <div class="orb" style="width:700px;height:700px;background:radial-gradient(circle,rgba(110,58,250,0.18) 0%,transparent 70%);top:-200px;right:-150px;"></div>
+  <div class="orb" style="width:400px;height:400px;background:radial-gradient(circle,rgba(0,229,200,0.1) 0%,transparent 70%);bottom:-50px;left:5%;"></div>
+  <div class="container" style="position:relative;z-index:1;">
+    <div class="page-hero-inner">
+      <div>
+        <div class="s-label" style="animation:fadeUpIn 0.9s cubic-bezier(0.16,1,0.3,1) 0.1s both;">Our Story</div>
+        <h1 style="font-size:clamp(2.8rem,6vw,5.5rem);font-weight:800;letter-spacing:-0.025em;line-height:0.95;margin-bottom:1.75rem;animation:fadeUpIn 0.9s cubic-bezier(0.16,1,0.3,1) 0.2s both;">Enterprise-grade.<br><span class="grad-text">Founder-focused.</span></h1>
+        <p style="font-size:1.25rem;line-height:1.75;color:var(--muted);max-width:560px;margin-bottom:1rem;animation:fadeUpIn 0.9s cubic-bezier(0.16,1,0.3,1) 0.4s both;">We spent years building products at award-winning agencies for global names. We learned what "right" looks like — the strategy, structure, and craft behind successful launches.</p>
+        <p style="font-size:1.25rem;line-height:1.75;color:var(--muted);max-width:560px;margin-bottom:1rem;">We also saw what happened when founders tried to build without those resources.</p>
+        <p style="font-size:1.25rem;line-height:1.75;color:var(--muted);max-width:560px;margin-bottom:0;">Ventrify exists to close that gap.</p>
+      </div>
+      <div class="p-visual" style="animation:fadeUpIn 0.9s cubic-bezier(0.16,1,0.3,1) 0.3s both;">
+        <div class="p-halo"></div>
+        <div class="p-orbit-ring"></div>
+        <div class="p-ow"><div class="p-oc p-cw"><div class="p-od p-od-a"></div></div></div>
+        <div class="p-ow"><div class="p-oc p-ccw"><div class="p-od p-od-b"></div></div></div>
+        <div class="p-sp" style="top:18%;left:12%;animation-delay:0s;"></div>
+        <div class="p-sp" style="top:70%;left:8%;animation-delay:1.2s;"></div>
+        <div class="p-sp" style="top:25%;right:10%;animation-delay:2.1s;"></div>
+        <div class="p-sp" style="top:75%;right:14%;animation-delay:0.7s;"></div>
+        <div style="position:relative;transform:scale(1.15);transform-origin:center center;">
+          <div class="p-float pfa" style="top:-10px;right:-30px;">
+            <span style="font-size:0.65rem;font-weight:600;color:#e2d9ff;">8 Connections</span>
+            <span style="font-size:0.6rem;color:#00E5C8;margin-left:4px;">Active</span>
+          </div>
+          <div class="p-float pfb" style="top:50%;left:-115px;">
+            <span style="font-size:0.65rem;font-weight:600;color:#e2d9ff;">Global Network</span>
+            <span style="font-size:0.6rem;color:var(--muted);margin-left:4px;">12+ markets</span>
+          </div>
+          <div class="p-float pfc" style="bottom:20px;right:-25px;">
+            <span style="font-size:0.65rem;font-weight:600;color:#e2d9ff;">Response</span>
+            <span style="font-size:0.6rem;color:var(--muted);margin-left:4px;">&lt; 24 hrs</span>
+          </div>
+          <div class="net-card">
+            <div class="net-hdr">
+              <span class="net-title">Live Network</span>
+              <div class="net-live-badge">
+                <div class="net-live-dot"></div>
+                <span class="net-live-text">Connected</span>
+              </div>
+            </div>
+            <svg class="net-svg" viewBox="0 0 240 162" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <radialGradient id="ncg" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stop-color="#9B6FFF"/>
+                  <stop offset="100%" stop-color="#6E3AFA"/>
+                </radialGradient>
+              </defs>
+              <!-- Connection lines -->
+              <line x1="120" y1="81" x2="45" y2="26" stroke="rgba(110,58,250,0.35)" stroke-width="1" stroke-dasharray="4 3"/>
+              <line x1="120" y1="81" x2="195" y2="26" stroke="rgba(110,58,250,0.35)" stroke-width="1" stroke-dasharray="4 3"/>
+              <line x1="120" y1="81" x2="22" y2="91" stroke="rgba(110,58,250,0.35)" stroke-width="1" stroke-dasharray="4 3"/>
+              <line x1="120" y1="81" x2="218" y2="91" stroke="rgba(110,58,250,0.35)" stroke-width="1" stroke-dasharray="4 3"/>
+              <line x1="120" y1="81" x2="65" y2="149" stroke="rgba(0,229,200,0.3)" stroke-width="1" stroke-dasharray="4 3"/>
+              <line x1="120" y1="81" x2="175" y2="149" stroke="rgba(0,229,200,0.3)" stroke-width="1" stroke-dasharray="4 3"/>
+              <!-- Hidden paths for animateMotion -->
+              <path id="np1" d="M120,81 L45,26" fill="none"/>
+              <path id="np2" d="M120,81 L195,26" fill="none"/>
+              <path id="np3" d="M120,81 L22,91" fill="none"/>
+              <path id="np4" d="M120,81 L218,91" fill="none"/>
+              <path id="np5" d="M120,81 L65,149" fill="none"/>
+              <path id="np6" d="M120,81 L175,149" fill="none"/>
+              <!-- Animated data-flow dots -->
+              <circle r="2.5" fill="#9B6FFF" opacity="0.95"><animateMotion dur="2.1s" repeatCount="indefinite" begin="0s"><mpath href="#np1"/></animateMotion></circle>
+              <circle r="2.5" fill="#00E5C8" opacity="0.95"><animateMotion dur="2.7s" repeatCount="indefinite" begin="0.5s"><mpath href="#np2"/></animateMotion></circle>
+              <circle r="2.5" fill="#9B6FFF" opacity="0.95"><animateMotion dur="2.4s" repeatCount="indefinite" begin="1s"><mpath href="#np3"/></animateMotion></circle>
+              <circle r="2.5" fill="#00E5C8" opacity="0.95"><animateMotion dur="2.9s" repeatCount="indefinite" begin="1.5s"><mpath href="#np4"/></animateMotion></circle>
+              <circle r="2.5" fill="#9B6FFF" opacity="0.95"><animateMotion dur="2.3s" repeatCount="indefinite" begin="0.7s"><mpath href="#np5"/></animateMotion></circle>
+              <circle r="2.5" fill="#00E5C8" opacity="0.95"><animateMotion dur="2.6s" repeatCount="indefinite" begin="1.8s"><mpath href="#np6"/></animateMotion></circle>
+              <!-- Outer client nodes -->
+              <circle cx="45" cy="26" r="14" fill="rgba(255,255,255,0.06)" stroke="rgba(155,111,255,0.2)" stroke-width="1"/>
+              <text x="45" y="26" font-family="Orbitron,sans-serif" font-size="7" font-weight="800" fill="rgba(240,240,250,0.65)" text-anchor="middle" dominant-baseline="central">N</text>
+              <circle cx="195" cy="26" r="14" fill="rgba(255,255,255,0.06)" stroke="rgba(155,111,255,0.2)" stroke-width="1"/>
+              <text x="195" y="26" font-family="Orbitron,sans-serif" font-size="7" font-weight="800" fill="rgba(240,240,250,0.65)" text-anchor="middle" dominant-baseline="central">G</text>
+              <circle cx="22" cy="91" r="14" fill="rgba(255,255,255,0.06)" stroke="rgba(155,111,255,0.2)" stroke-width="1"/>
+              <text x="22" y="91" font-family="Orbitron,sans-serif" font-size="7" font-weight="800" fill="rgba(240,240,250,0.65)" text-anchor="middle" dominant-baseline="central">H</text>
+              <circle cx="218" cy="91" r="14" fill="rgba(255,255,255,0.06)" stroke="rgba(155,111,255,0.2)" stroke-width="1"/>
+              <text x="218" y="91" font-family="Orbitron,sans-serif" font-size="7" font-weight="800" fill="rgba(240,240,250,0.65)" text-anchor="middle" dominant-baseline="central">E</text>
+              <circle cx="65" cy="149" r="14" fill="rgba(255,255,255,0.06)" stroke="rgba(0,229,200,0.2)" stroke-width="1"/>
+              <text x="65" y="149" font-family="Orbitron,sans-serif" font-size="7" font-weight="800" fill="rgba(240,240,250,0.65)" text-anchor="middle" dominant-baseline="central">S</text>
+              <circle cx="175" cy="149" r="14" fill="rgba(255,255,255,0.06)" stroke="rgba(0,229,200,0.2)" stroke-width="1"/>
+              <text x="175" y="149" font-family="Orbitron,sans-serif" font-size="7" font-weight="800" fill="rgba(240,240,250,0.65)" text-anchor="middle" dominant-baseline="central">A</text>
+              <!-- Central Ventrify hub -->
+              <circle cx="120" cy="81" r="22" fill="url(#ncg)" style="filter:drop-shadow(0 0 10px rgba(110,58,250,0.75))"/>
+              <text x="120" y="81" font-family="Orbitron,sans-serif" font-size="9" font-weight="800" fill="#fff" text-anchor="middle" dominant-baseline="central">V</text>
+            </svg>
+            <div class="net-footer">
+              <div class="net-stat">
+                <div class="net-stat-num">12+</div>
+                <div class="net-stat-lbl">Clients</div>
+              </div>
+              <div class="net-vdivider"></div>
+              <div class="net-stat">
+                <div class="net-stat-num">4</div>
+                <div class="net-stat-lbl">Ventures</div>
+              </div>
+              <div class="net-vdivider"></div>
+              <div class="net-stat">
+                <div class="net-stat-num">Global</div>
+                <div class="net-stat-lbl">Reach</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CREDIBILITY STRIP -->
+<div class="cred-strip">
+  <p class="cred-label">Our team has built for</p>
+  <div class="cred-logos">
+    <span class="cred-logo">Nike</span>
+    <span class="cred-logo">Google</span>
+    <span class="cred-logo">Samsung</span>
+    <span class="cred-logo">HSBC</span>
+    <span class="cred-logo">Spotify</span>
+    <span class="cred-logo">Adidas</span>
+    <span class="cred-logo">Emirates</span>
+    <span class="cred-logo">BBC</span>
+  </div>
+</div>
+
+<!-- THE ORIGIN STORY -->
+<section class="section">
+  <div class="container">
+    <div class="two-col-center">
+      <div class="story-body" data-reveal>
+        <div class="s-label">Why We Started</div>
+        <h2 style="font-size:clamp(2rem,4vw,3.25rem);font-weight:800;letter-spacing:-0.015em;line-height:1.1;margin-bottom:1.75rem;">Great ideas were failing for preventable reasons.</h2>
+        <p>Time and again, we saw promising startups launch with:</p>
+        <ul style="list-style:none;padding:0;margin:0 0 1.25rem 0;display:flex;flex-direction:column;gap:0.6rem;">
+          <li style="display:flex;align-items:center;gap:0.6rem;color:var(--muted);font-size:0.95rem;"><span style="width:6px;height:6px;border-radius:50%;background:var(--brand-light);flex-shrink:0;"></span>A brand but no product strategy</li>
+          <li style="display:flex;align-items:center;gap:0.6rem;color:var(--muted);font-size:0.95rem;"><span style="width:6px;height:6px;border-radius:50%;background:var(--brand-light);flex-shrink:0;"></span>A product but no cohesive identity</li>
+          <li style="display:flex;align-items:center;gap:0.6rem;color:var(--muted);font-size:0.95rem;"><span style="width:6px;height:6px;border-radius:50%;background:var(--brand-light);flex-shrink:0;"></span>Teams working in silos</li>
+          <li style="display:flex;align-items:center;gap:0.6rem;color:var(--muted);font-size:0.95rem;"><span style="width:6px;height:6px;border-radius:50%;background:var(--brand-light);flex-shrink:0;"></span>No clear post-launch plan</li>
+        </ul>
+        <p>It rarely failed because the idea was weak.<br><strong>It failed because the foundations weren't built properly.</strong></p>
+        <div class="pull-quote">
+          <p>"The problem wasn't the founders. It was a model never designed for them."</p>
+        </div>
+        <p>Traditional agencies are structured for enterprise — retainers, layers, overhead. For pre-seed and early-stage founders managing runway, that model is slow, fragmented, and expensive.</p>
+      </div>
+      <div data-reveal data-delay="1">
+        <div class="stat-panel">
+          <div class="stat-item">
+            <div class="stat-num" style="color:var(--brand-light);">90%</div>
+            <p class="stat-desc">of startup failures trace back to misallocated spend — often on execution that wasn't aligned from the start.</p>
+          </div>
+          <div class="stat-item">
+            <div class="stat-num" style="color:var(--accent);">1 in 3</div>
+            <p class="stat-desc">early products launch without cohesive systems behind them — no brand alignment, no design system, no post-launch strategy.</p>
+          </div>
+          <div class="stat-item">
+            <div class="stat-num" style="color:var(--brand-light);">4–6×</div>
+            <p class="stat-desc">the cost of fixing poor foundations post-launch versus building them correctly from day one.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- THE PROBLEM WE SOLVE -->
+<section class="section-alt">
+  <div class="container">
+    <div style="text-align:center;margin-bottom:0.75rem;">
+      <div class="s-label" style="justify-content:center;" data-reveal>The Pattern We Kept Seeing</div>
+      <h2 style="font-size:clamp(2.2rem,4.5vw,3.75rem);font-weight:800;letter-spacing:-0.015em;line-height:1.1;margin-bottom:1rem;" data-reveal data-delay="1">Three ways startups were set up to fail</h2>
+      <p style="font-size:1.1rem;line-height:1.75;color:var(--muted);max-width:580px;margin:0 auto;" data-reveal data-delay="2">These weren't isolated cases. They were patterns. And almost all were preventable.</p>
+    </div>
+    <div class="problem-grid">
+      <div class="prob-card red" data-reveal data-delay="1">
+        <div class="prob-icon" style="background:rgba(250,58,110,0.12);">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FA3A6E" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <div class="prob-title">Fragmented Execution</div>
+        <p class="prob-desc">Strategy, design, and development handled by separate teams. No single owner of the full picture. By launch, the vision was diluted — and founders only realized when it was live.</p>
+      </div>
+      <div class="prob-card amber" data-reveal data-delay="2">
+        <div class="prob-icon" style="background:rgba(250,140,58,0.12);">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FA8C3A" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+        </div>
+        <div class="prob-title">Enterprise Pricing Models</div>
+        <p class="prob-desc">Large retainers. Long timelines. Heavy overhead. Runway burned before meaningful traction.</p>
+      </div>
+      <div class="prob-card purple" data-reveal data-delay="3">
+        <div class="prob-icon" style="background:rgba(110,58,250,0.15);">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9B6FFF" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 3a3 3 0 00-3 3v12a3 3 0 003 3 3 3 0 003-3 3 3 0 00-3-3H6a3 3 0 00-3 3 3 3 0 003 3 3 3 0 003-3V6a3 3 0 00-3-3 3 3 0 00-3 3 3 3 0 003 3h12a3 3 0 003-3 3 3 0 00-3-3z"/></svg>
+        </div>
+        <div class="prob-title">Incomplete Launches</div>
+        <p class="prob-desc">No user validation. No acquisition plan. No iteration strategy. Functional — but fragile.</p>
+      </div>
+    </div>
+    <p style="text-align:center;font-size:1rem;line-height:1.75;color:var(--muted);margin-top:2.5rem;font-style:italic;" data-reveal>In a crowded market, fragile doesn't survive long.</p>
+  </div>
+</section>
+
+<!-- OUR ANSWER -->
+<section class="section">
+  <div class="container">
+    <div class="two-col-center" style="margin-bottom:5rem;" data-reveal>
+      <div>
+        <div class="s-label">Our Answer</div>
+        <h2 style="font-size:clamp(2rem,4vw,3.25rem);font-weight:800;letter-spacing:-0.015em;line-height:1.1;margin-bottom:1.75rem;">Built for speed. Grounded in craft. Priced for founders.</h2>
+        <div class="story-body">
+          <p>Ventrify is the studio we wished existed — one team taking ventures from raw idea to launched product, with every layer handled under one roof.</p>
+          <p>AI helps us move faster and more efficiently.<br>Experience ensures we move correctly.</p>
+          <p>Every project is led by seasoned designers and engineers who know how to ship products that work — not just products that launch.</p>
+          <p>Top-tier quality. Without top-tier overhead.</p>
+        </div>
+      </div>
+      <div data-reveal data-delay="1">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:2.5rem;display:flex;flex-direction:column;gap:1.5rem;">
+          <div style="display:flex;align-items:flex-start;gap:1.25rem;">
+            <div style="width:40px;height:40px;border-radius:10px;background:rgba(110,58,250,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9B6FFF" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            </div>
+            <div>
+              <div style="font-family:'Orbitron',sans-serif;font-size:0.9rem;font-weight:700;letter-spacing:0.03em;margin-bottom:0.4rem;">AI-Augmented. Human-Led.</div>
+              <p style="font-size:0.875rem;line-height:1.65;color:var(--muted);">We use AI to compress time and cost — but every decision is shaped and owned by experienced operators.</p>
+            </div>
+          </div>
+          <div style="height:1px;background:var(--border);"></div>
+          <div style="display:flex;align-items:flex-start;gap:1.25rem;">
+            <div style="width:40px;height:40px;border-radius:10px;background:rgba(0,229,200,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00E5C8" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            </div>
+            <div>
+              <div style="font-family:'Orbitron',sans-serif;font-size:0.9rem;font-weight:700;letter-spacing:0.03em;margin-bottom:0.4rem;">Speed Without Compromise</div>
+              <p style="font-size:0.875rem;line-height:1.65;color:var(--muted);">We move fast because founders need to. Our methodology ensures quality is never sacrificed for velocity.</p>
+            </div>
+          </div>
+          <div style="height:1px;background:var(--border);"></div>
+          <div style="display:flex;align-items:flex-start;gap:1.25rem;">
+            <div style="width:40px;height:40px;border-radius:10px;background:rgba(110,58,250,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9B6FFF" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+            </div>
+            <div>
+              <div style="font-family:'Orbitron',sans-serif;font-size:0.9rem;font-weight:700;letter-spacing:0.03em;margin-bottom:0.4rem;">One Studio. Every Layer.</div>
+              <p style="font-size:0.875rem;line-height:1.65;color:var(--muted);">Strategy, design, development, brand, and marketing — aligned from day one. No silos. No breakdowns. No fragments.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HOW WE WORK -->
+    <div data-reveal>
+      <div class="s-label">How We Build</div>
+      <h2 style="font-size:clamp(2.2rem,4.5vw,3.75rem);font-weight:800;letter-spacing:-0.015em;line-height:1.1;margin-bottom:0.75rem;">Our philosophy on building products</h2>
+      <p style="font-size:1.1rem;line-height:1.75;color:var(--muted);max-width:580px;margin-bottom:0;">Shaped by years of building for demanding global brands — refined for founders who can't afford to get it wrong.</p>
+    </div>
+    <div class="approach-grid" style="margin-top:2.5rem;">
+
+      <div class="approach-card" data-reveal data-delay="1">
+        <div class="approach-num">Principle 01</div>
+        <div class="approach-title">MVP-First. Vision-Always.</div>
+        <p class="approach-desc">We build lean, scalable MVPs designed for growth. What you launch is a foundation — not a ceiling.</p>
+        <div class="approach-tags">
+          <span class="approach-tag">Scoped MVP</span>
+          <span class="approach-tag">Scalable Architecture</span>
+          <span class="approach-tag">Future-Proof Design</span>
+        </div>
+      </div>
+
+      <div class="approach-card" data-reveal data-delay="2">
+        <div class="approach-num">Principle 02</div>
+        <div class="approach-title">Launch. Learn. Iterate.</div>
+        <p class="approach-desc">Speed matters — but only if what you ship is usable and valuable. We scope precisely so day one delivers real learning.</p>
+        <div class="approach-tags">
+          <span class="approach-tag">Rapid Release</span>
+          <span class="approach-tag">User Feedback Loops</span>
+          <span class="approach-tag">Iterative Roadmap</span>
+        </div>
+      </div>
+
+      <div class="approach-card" data-reveal data-delay="1">
+        <div class="approach-num">Principle 03</div>
+        <div class="approach-title">Every Touchpoint Covered.</div>
+        <p class="approach-desc">A product isn't just code. It's brand, UX, positioning, and narrative. We build the full picture before launch — not after.</p>
+        <div class="approach-tags">
+          <span class="approach-tag">Brand Identity</span>
+          <span class="approach-tag">UX Research</span>
+          <span class="approach-tag">Marketing Infrastructure</span>
+          <span class="approach-tag">Investor Narrative</span>
+        </div>
+      </div>
+
+      <div class="approach-card" data-reveal data-delay="2">
+        <div class="approach-num">Principle 04</div>
+        <div class="approach-title">Experience You Can't Prompt.</div>
+        <p class="approach-desc">AI can execute. It can't judge. What separates good from great is knowing how users behave, what converts, and how to design for scale. That's human expertise — and it's built into every project.</p>
+        <div class="approach-tags">
+          <span class="approach-tag">Senior Expertise</span>
+          <span class="approach-tag">Proven Patterns</span>
+          <span class="approach-tag">Human Judgement</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- THE 5-PHASE METHODOLOGY -->
+<section class="section-alt">
+  <div class="container">
+    <div style="text-align:center;margin-bottom:0.75rem;">
+      <div class="s-label" style="justify-content:center;" data-reveal>How We Do It</div>
+      <h2 style="font-size:clamp(2.2rem,4.5vw,3.75rem);font-weight:800;letter-spacing:-0.015em;line-height:1.1;margin-bottom:1rem;" data-reveal data-delay="1">The 5-Phase Venture Build</h2>
+      <p style="font-size:1.1rem;line-height:1.75;color:var(--muted);max-width:600px;margin:0 auto;" data-reveal data-delay="2">This is what "no fragments" actually looks like in practice. One continuous process — from raw idea to launched product — with every phase flowing directly into the next, handled by the same team, from the same brief.</p>
+    </div>
+    <div class="services-list" data-reveal data-delay="1">
+      <div class="svc-row">
+        <div class="svc-label-col">
+          <div>
+            <div class="svc-phase">Phase 01</div>
+            <div class="svc-name">Discover</div>
+          </div>
+        </div>
+        <div class="svc-content-col">
+          <p class="svc-desc">We begin by deeply understanding your idea, the market landscape, and the competitive environment. Through structured research and collaborative sessions, we uncover real market opportunities and define what success looks like — before a single pixel is drawn or line of code is written.</p>
+          <p class="svc-desc" style="margin-bottom:0;">This phase is what separates ventures built on validated insight from those built on assumptions. It sets the foundation for every decision that follows.</p>
+        </div>
+        <div class="svc-outputs">
+          <h4>Outputs</h4>
+          <div class="output-list">
+            <span class="output-tag">Kick-off Meeting</span>
+            <span class="output-tag">Market Research</span>
+            <span class="output-tag">Market Opportunities</span>
+            <span class="output-tag">Business Goals</span>
+            <span class="output-tag">Product Goals</span>
+          </div>
+        </div>
+      </div>
+      <div class="svc-row">
+        <div class="svc-label-col">
+          <div>
+            <div class="svc-phase">Phase 02</div>
+            <div class="svc-name">Define</div>
+          </div>
+        </div>
+        <div class="svc-content-col">
+          <p class="svc-desc">With discovery insights in hand, we shape the structural foundation of your product. We build detailed user personas, craft a compelling product vision, and ruthlessly prioritise the MVP feature set to ensure you're building the right thing for the right people.</p>
+          <p class="svc-desc" style="margin-bottom:0;">We define the tech stack and map the full product roadmap — so everyone knows the plan from day one, with nothing left to interpretation.</p>
+        </div>
+        <div class="svc-outputs">
+          <h4>Outputs</h4>
+          <div class="output-list">
+            <span class="output-tag">Personas</span>
+            <span class="output-tag">Product Vision</span>
+            <span class="output-tag">MVP Feature Prioritisation</span>
+            <span class="output-tag">Tech Stack</span>
+            <span class="output-tag">MVP User Journeys</span>
+            <span class="output-tag">Product Roadmap</span>
+          </div>
+        </div>
+      </div>
+      <div class="svc-row">
+        <div class="svc-label-col">
+          <div>
+            <div class="svc-phase">Phase 03</div>
+            <div class="svc-name">Design</div>
+          </div>
+        </div>
+        <div class="svc-content-col">
+          <p class="svc-desc">From first wireframe to final polished screen, we design every element of your product with clarity, scalability, and craft at the forefront. We build a comprehensive design system and component library — so what gets built is consistent, maintainable, and ready to grow well beyond v1.</p>
+          <p class="svc-desc" style="margin-bottom:0;">This phase also includes your investor pitch deck — designed to communicate your opportunity with the impact it deserves.</p>
+        </div>
+        <div class="svc-outputs">
+          <h4>Outputs</h4>
+          <div class="output-list">
+            <span class="output-tag">Wireframes</span>
+            <span class="output-tag">User Stories</span>
+            <span class="output-tag">UX Flows</span>
+            <span class="output-tag">Information Architecture</span>
+            <span class="output-tag">Design System</span>
+            <span class="output-tag">Component Libraries</span>
+            <span class="output-tag">Polished Designs</span>
+            <span class="output-tag">MVP Pitch Deck</span>
+          </div>
+        </div>
+      </div>
+      <div class="svc-row">
+        <div class="svc-label-col">
+          <div>
+            <div class="svc-phase">Phase 04</div>
+            <div class="svc-name">Develop</div>
+          </div>
+        </div>
+        <div class="svc-content-col">
+          <p class="svc-desc">Our engineers build your MVP to production-grade standards — clean, scalable architecture with solid back-end infrastructure. Analytics are baked in from the start so you can measure, learn, and iterate from the moment you go live.</p>
+          <p class="svc-desc" style="margin-bottom:0;">AI-augmented workflows let us accelerate the build without cutting corners on code quality or architectural decisions that will matter at scale.</p>
+        </div>
+        <div class="svc-outputs">
+          <h4>Outputs</h4>
+          <div class="output-list">
+            <span class="output-tag">Product Back-end</span>
+            <span class="output-tag">Product Architecture</span>
+            <span class="output-tag">MVP Build</span>
+            <span class="output-tag">Analytics Setup</span>
+          </div>
+        </div>
+      </div>
+      <div class="svc-row">
+        <div class="svc-label-col">
+          <div>
+            <div class="svc-phase">Phase 05</div>
+            <div class="svc-name">Deliver</div>
+          </div>
+        </div>
+        <div class="svc-content-col">
+          <p class="svc-desc">You receive a complete, production-ready handoff. Every file, every component, every line of code — organised, documented, and ready for your team to own and evolve. No dependency on us to operate what we built.</p>
+          <p class="svc-desc" style="margin-bottom:0;">What you walk away with is a market-ready product that is entirely yours — to own, operate, and grow on your own terms.</p>
+        </div>
+        <div class="svc-outputs">
+          <h4>Outputs</h4>
+          <div class="output-list">
+            <span class="output-tag">User Stories</span>
+            <span class="output-tag">Mockups</span>
+            <span class="output-tag">Figma Design Files</span>
+            <span class="output-tag">DS Repository</span>
+            <span class="output-tag">Codebase (GitHub)</span>
+            <span class="output-tag">MVP Product</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROCESS TIMELINE -->
+<section class="section" style="overflow:hidden;">
+  <div class="container">
+    <div class="s-label" data-reveal>End-to-End Timeline</div>
+    <h2 style="font-size:clamp(2.2rem,4.5vw,3.75rem);font-weight:800;letter-spacing:-0.015em;line-height:1.1;margin-bottom:0.75rem;" data-reveal data-delay="1">From kickoff to launch</h2>
+    <p style="font-size:1.1rem;line-height:1.75;color:var(--muted);max-width:620px;margin-bottom:4rem;" data-reveal data-delay="2">A typical engagement runs 8–16 weeks depending on scope. Phases are designed to overlap — so velocity never comes at the cost of craft.</p>
+
+    <!-- Scrollable timeline -->
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;" data-reveal data-delay="3">
+      <div style="min-width:680px;position:relative;">
+
+        <!-- Phase segments -->
+        <div style="display:flex;gap:3px;">
+
+          <!-- 01 Discover — flex:2 -->
+          <div style="flex:2;background:linear-gradient(160deg,rgba(110,58,250,0.18) 0%,rgba(110,58,250,0.06) 100%);border:1px solid rgba(110,58,250,0.3);border-radius:10px 0 0 10px;padding:1.5rem 1rem;position:relative;overflow:hidden;">
+            <div style="position:absolute;top:0;right:0;width:56px;height:56px;background:radial-gradient(circle at 100% 0%,rgba(110,58,250,0.22),transparent 70%);pointer-events:none;"></div>
+            <div style="font-family:'Orbitron',sans-serif;font-size:0.58rem;font-weight:700;letter-spacing:0.15em;color:rgba(155,111,255,0.7);margin-bottom:0.5rem;">PHASE 01</div>
+            <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:0.6rem;">Discover</div>
+            <div style="display:inline-block;font-size:0.68rem;background:rgba(110,58,250,0.14);border:1px solid rgba(110,58,250,0.3);border-radius:20px;padding:2px 10px;color:#9B6FFF;white-space:nowrap;">Wks 1–2</div>
+          </div>
+
+          <!-- 02 Define — flex:2 -->
+          <div style="flex:2;background:linear-gradient(160deg,rgba(125,68,252,0.15) 0%,rgba(125,68,252,0.05) 100%);border:1px solid rgba(125,68,252,0.25);padding:1.5rem 1rem;position:relative;overflow:hidden;">
+            <div style="position:absolute;top:0;right:0;width:56px;height:56px;background:radial-gradient(circle at 100% 0%,rgba(125,68,252,0.2),transparent 70%);pointer-events:none;"></div>
+            <div style="font-family:'Orbitron',sans-serif;font-size:0.58rem;font-weight:700;letter-spacing:0.15em;color:rgba(155,111,255,0.7);margin-bottom:0.5rem;">PHASE 02</div>
+            <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:0.6rem;">Define</div>
+            <div style="display:inline-block;font-size:0.68rem;background:rgba(125,68,252,0.12);border:1px solid rgba(125,68,252,0.28);border-radius:20px;padding:2px 10px;color:#9B6FFF;white-space:nowrap;">Wks 2–4</div>
+          </div>
+
+          <!-- 03 Design — flex:3 -->
+          <div style="flex:3;background:linear-gradient(160deg,rgba(150,85,255,0.13) 0%,rgba(150,85,255,0.04) 100%);border:1px solid rgba(150,85,255,0.22);padding:1.5rem 1rem;position:relative;overflow:hidden;">
+            <div style="position:absolute;top:0;right:0;width:56px;height:56px;background:radial-gradient(circle at 100% 0%,rgba(150,85,255,0.18),transparent 70%);pointer-events:none;"></div>
+            <div style="font-family:'Orbitron',sans-serif;font-size:0.58rem;font-weight:700;letter-spacing:0.15em;color:rgba(155,111,255,0.7);margin-bottom:0.5rem;">PHASE 03</div>
+            <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:0.6rem;">Design</div>
+            <div style="display:inline-block;font-size:0.68rem;background:rgba(150,85,255,0.11);border:1px solid rgba(150,85,255,0.25);border-radius:20px;padding:2px 10px;color:#9B6FFF;white-space:nowrap;">Wks 3–8</div>
+          </div>
+
+          <!-- 04 Develop — flex:4 -->
+          <div style="flex:4;background:linear-gradient(160deg,rgba(0,200,176,0.12) 0%,rgba(0,200,176,0.04) 100%);border:1px solid rgba(0,229,200,0.18);padding:1.5rem 1rem;position:relative;overflow:hidden;">
+            <div style="position:absolute;top:0;right:0;width:56px;height:56px;background:radial-gradient(circle at 100% 0%,rgba(0,229,200,0.14),transparent 70%);pointer-events:none;"></div>
+            <div style="font-family:'Orbitron',sans-serif;font-size:0.58rem;font-weight:700;letter-spacing:0.15em;color:rgba(0,229,200,0.75);margin-bottom:0.5rem;">PHASE 04</div>
+            <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:0.6rem;">Develop</div>
+            <div style="display:inline-block;font-size:0.68rem;background:rgba(0,229,200,0.09);border:1px solid rgba(0,229,200,0.2);border-radius:20px;padding:2px 10px;color:#00E5C8;white-space:nowrap;">Wks 6–14</div>
+          </div>
+
+          <!-- 05 Deliver — flex:2 -->
+          <div style="flex:2;background:linear-gradient(160deg,rgba(0,229,200,0.15) 0%,rgba(0,229,200,0.05) 100%);border:1px solid rgba(0,229,200,0.28);border-radius:0 10px 10px 0;padding:1.5rem 1rem;position:relative;overflow:hidden;">
+            <div style="position:absolute;top:0;right:0;width:56px;height:56px;background:radial-gradient(circle at 100% 0%,rgba(0,229,200,0.2),transparent 70%);pointer-events:none;"></div>
+            <div style="font-family:'Orbitron',sans-serif;font-size:0.58rem;font-weight:700;letter-spacing:0.15em;color:rgba(0,229,200,0.85);margin-bottom:0.5rem;">PHASE 05</div>
+            <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:0.6rem;">Deliver</div>
+            <div style="display:inline-block;font-size:0.68rem;background:rgba(0,229,200,0.11);border:1px solid rgba(0,229,200,0.28);border-radius:20px;padding:2px 10px;color:#00E5C8;white-space:nowrap;">Wks 10–16</div>
+          </div>
+
+        </div>
+
+        <!-- Gradient progress bar -->
+        <div style="height:4px;margin-top:3px;border-radius:0 0 8px 8px;background:linear-gradient(90deg,#6E3AFA 0%,#9B6FFF 30%,#7B8FFF 55%,#00C8B0 75%,#00E5C8 100%);box-shadow:0 2px 16px rgba(110,58,250,0.25);"></div>
+
+        <!-- Kickoff / Launch labels -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:0.85rem;">
+          <div style="font-size:0.72rem;color:var(--muted);">Kickoff</div>
+          <div style="font-size:0.78rem;color:var(--muted);">Phases overlap by design — <span style="color:var(--text);font-weight:600;">8–16 weeks total</span></div>
+          <div style="font-size:0.72rem;color:var(--muted);">Launch</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Tier duration cards -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:3rem;" data-reveal data-delay="4">
+
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.5rem;display:flex;align-items:center;gap:1rem;">
+        <div style="width:42px;height:42px;border-radius:10px;background:rgba(110,58,250,0.12);border:1px solid rgba(110,58,250,0.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#9B6FFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        </div>
+        <div>
+          <div style="font-family:'Orbitron',sans-serif;font-size:0.6rem;font-weight:700;letter-spacing:0.1em;color:#9B6FFF;margin-bottom:0.2rem;">LAUNCHPAD</div>
+          <div style="font-size:1.3rem;font-weight:800;color:var(--text);line-height:1.2;">~8 weeks</div>
+          <div style="font-size:0.75rem;color:var(--muted);margin-top:0.15rem;">MVP sprint</div>
+        </div>
+      </div>
+
+      <div style="background:var(--surface);border:1px solid rgba(110,58,250,0.35);border-radius:14px;padding:1.5rem;display:flex;align-items:center;gap:1rem;position:relative;">
+        <div style="position:absolute;top:-1px;left:50%;transform:translateX(-50%);background:var(--brand);color:#fff;font-size:0.58rem;font-weight:700;letter-spacing:0.08em;padding:3px 10px;border-radius:0 0 8px 8px;white-space:nowrap;">MOST POPULAR</div>
+        <div style="width:42px;height:42px;border-radius:10px;background:rgba(110,58,250,0.18);border:1px solid rgba(110,58,250,0.35);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#9B6FFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        </div>
+        <div>
+          <div style="font-family:'Orbitron',sans-serif;font-size:0.6rem;font-weight:700;letter-spacing:0.1em;color:#9B6FFF;margin-bottom:0.2rem;">VENTURE</div>
+          <div style="font-size:1.3rem;font-weight:800;color:var(--text);line-height:1.2;">~12 weeks</div>
+          <div style="font-size:0.75rem;color:var(--muted);margin-top:0.15rem;">Brand + product + growth</div>
+        </div>
+      </div>
+
+      <div style="background:var(--surface);border:1px solid rgba(0,229,200,0.22);border-radius:14px;padding:1.5rem;display:flex;align-items:center;gap:1rem;">
+        <div style="width:42px;height:42px;border-radius:10px;background:rgba(0,229,200,0.1);border:1px solid rgba(0,229,200,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#00E5C8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div>
+          <div style="font-family:'Orbitron',sans-serif;font-size:0.6rem;font-weight:700;letter-spacing:0.1em;color:#00E5C8;margin-bottom:0.2rem;">VENTURE PRO</div>
+          <div style="font-size:1.3rem;font-weight:800;color:var(--text);line-height:1.2;">~16 weeks</div>
+          <div style="font-size:0.75rem;color:var(--muted);margin-top:0.15rem;">Investor-ready</div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="section" style="padding-top:0;padding-bottom:0;">
+  <div class="container" style="padding-bottom:6rem;">
+    <div class="cta-banner" data-reveal>
+      <div class="orb" style="width:400px;height:400px;background:radial-gradient(circle,rgba(110,58,250,0.2) 0%,transparent 70%);top:-120px;right:-80px;filter:blur(80px);"></div>
+      <div class="orb" style="width:300px;height:300px;background:radial-gradient(circle,rgba(0,229,200,0.1) 0%,transparent 70%);bottom:-60px;left:-40px;filter:blur(70px);"></div>
+      <div class="s-label" style="justify-content:center;margin-bottom:1.5rem;">Work With Us</div>
+      <h2 style="font-size:clamp(1.9rem,4vw,3rem);font-weight:800;letter-spacing:-0.015em;margin-bottom:1rem;">Ready to build something that lasts?</h2>
+      <p style="font-size:1.1rem;line-height:1.75;color:var(--muted);max-width:500px;margin:0 auto 2.5rem;">Book a discovery call and let's talk about your venture — what it is, where you are, and exactly what it needs to succeed.</p>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+        <a href="contact.html" class="btn btn-primary btn-lg">Book Discovery Call</a>
+        <a href="pricing.html" class="btn btn-outline btn-lg">View Pricing</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <div class="logo"><img src="ventrify.svg" alt="Ventrify" style="height:22px;width:auto;display:block;"></div>
+      <p>AI-powered venture building for pre-seed founders. From idea to launched product — we build it all.</p>
+      <div class="location-chip">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        Dubai, UAE
+      </div>
+    </div>
+    <div class="footer-col">
+      <h4>Company</h4>
+      <a href="about.html">About</a>
+      <a href="work.html">Work</a>
+      <a href="pricing.html">Pricing</a>
+      <a href="insights.html">Insights</a>
+      <a href="contact.html">Contact</a>
+    </div>
+    <div class="footer-col">
+      <h4>Services</h4>
+      <a href="about.html">Strategy</a>
+      <a href="about.html">Design</a>
+      <a href="about.html">Development</a>
+      <a href="about.html">Brand &amp; Marketing</a>
+    </div>
+    <div class="footer-col">
+      <h4>Connect</h4>
+      <a href="#">LinkedIn</a>
+      <a href="#">Instagram</a>
+      <a href="#">Twitter / X</a>
+      <a href="contact.html">hello@ventrify.io</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2026 Ventrify. All rights reserved.</p>
+    <p>Built with AI. Launched with intention.</p>
+  </div>
+</footer>
+
+<script>
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('revealed'); observer.unobserve(e.target); } });
+  }, { threshold: 0.08 });
+  document.querySelectorAll('[data-reveal]').forEach(el => observer.observe(el));
+
+  const hamburger = document.getElementById('hamburger');
+  const mobileMenu = document.getElementById('mobileMenu');
+  hamburger.addEventListener('click', () => {
+    const isOpen = mobileMenu.classList.toggle('open');
+    hamburger.classList.toggle('open', isOpen);
+    hamburger.setAttribute('aria-expanded', isOpen);
+    document.body.style.overflow = isOpen ? 'hidden' : '';
+  });
+  mobileMenu.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', () => {
+      mobileMenu.classList.remove('open');
+      hamburger.classList.remove('open');
+      hamburger.setAttribute('aria-expanded', 'false');
+      document.body.style.overflow = '';
+    });
+  });
+</script>
+
+</body>
+</html>

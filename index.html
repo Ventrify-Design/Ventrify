@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ventrify — AI-Powered Venture Building</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --brand: #6E3AFA;
+      --brand-light: #9B6FFF;
+      --accent: #00E5C8;
+      --bg: #06060F;
+      --surface: #0D0D1A;
+      --surface-2: #141428;
+      --text: #F0F0FA;
+      --muted: #8585AE;
+      --border: rgba(255,255,255,0.07);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; overflow-x: hidden; line-height: 1.6; }
+    h1,h2,h3,h4,h5 { font-family: 'Orbitron', sans-serif; letter-spacing: -0.02em; }
+    a { text-decoration: none; }
+
+    /* Grain overlay */
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+      opacity: 0.025; pointer-events: none; z-index: 9999;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.25rem 3rem;
+      backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+      background: rgba(6,6,15,0.75);
+      border-bottom: 1px solid var(--border);
+    }
+    .logo { font-family: 'Orbitron', sans-serif; font-size: 1.35rem; font-weight: 800; letter-spacing: -0.02em; color: var(--text); }
+    .logo em { color: var(--brand-light); font-style: normal; }
+    .nav-links { display: flex; gap: 2.25rem; align-items: center; }
+    .nav-links a { font-size: 0.875rem; font-weight: 500; color: var(--muted); transition: color 0.2s ease; }
+    .nav-links a:hover, .nav-links a.active { color: var(--text); }
+    .btn { display: inline-flex; align-items: center; justify-content: center; font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 0.875rem; letter-spacing: 0.04em; border-radius: 8px; padding: 0.6rem 1.3rem; cursor: pointer; transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease; border: 1px solid transparent; }
+    .btn-primary { background: var(--brand); color: #fff; box-shadow: 0 0 24px rgba(110,58,250,0.35), 0 4px 14px rgba(0,0,0,0.35); }
+    .btn-primary:hover { background: var(--brand-light); transform: translateY(-2px); box-shadow: 0 0 36px rgba(110,58,250,0.5), 0 8px 24px rgba(0,0,0,0.3); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-outline { background: transparent; color: var(--text); border-color: var(--border); }
+    .btn-outline:hover { border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.04); transform: translateY(-2px); }
+    .btn-outline:active { transform: translateY(0); }
+    .btn-lg { padding: 0.85rem 2rem; font-size: 0.95rem; border-radius: 10px; }
+
+    /* HERO */
+    .hero {
+      min-height: 100vh; display: flex; align-items: center;
+      padding: 9rem 3rem 5rem;
+      position: relative; overflow: hidden;
+    }
+    .hero-grid {
+      position: absolute; inset: 0;
+      background-image: linear-gradient(rgba(110,58,250,0.045) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(110,58,250,0.045) 1px, transparent 1px);
+      background-size: 64px 64px;
+      mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 80%);
+      -webkit-mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 80%);
+      pointer-events: none;
+    }
+    .orb { position: absolute; border-radius: 50%; filter: blur(90px); pointer-events: none; }
+    .orb-1 { width: 700px; height: 700px; background: radial-gradient(circle, rgba(110,58,250,0.22) 0%, transparent 70%); top: -150px; right: -150px; animation: orb1 10s ease-in-out infinite; }
+    .orb-2 { width: 450px; height: 450px; background: radial-gradient(circle, rgba(0,229,200,0.12) 0%, transparent 70%); bottom: -50px; left: 15%; animation: orb2 14s ease-in-out infinite; }
+    .orb-3 { width: 350px; height: 350px; background: radial-gradient(circle, rgba(110,58,250,0.1) 0%, transparent 70%); top: 40%; left: -80px; animation: orb3 18s ease-in-out infinite; }
+    @keyframes orb1 { 0%,100%{transform:translate(0,0) scale(1)} 40%{transform:translate(-40px,30px) scale(1.06)} 70%{transform:translate(25px,-35px) scale(0.94)} }
+    @keyframes orb2 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(50px,-60px)} }
+    @keyframes orb3 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(40px,40px)} }
+
+    .hero-content { max-width: 1280px; margin: 0 auto; width: 100%; position: relative; z-index: 1; display: grid; grid-template-columns: 1fr 1.15fr; gap: 3rem; align-items: center; }
+
+    /* HERO ENTRANCE */
+    .hero-text > * {
+      animation: heroFadeUp 0.9s cubic-bezier(0.16,1,0.3,1) both;
+    }
+    .hero-text > *:nth-child(1) { animation-delay: 0.05s; }
+    .hero-text > *:nth-child(2) { animation-delay: 0.18s; }
+    .hero-text > *:nth-child(3) { animation-delay: 0.3s; }
+    .hero-text > *:nth-child(4) { animation-delay: 0.42s; }
+    .hero-text > *:nth-child(5) { animation-delay: 0.54s; }
+    @keyframes heroFadeUp {
+      from { opacity: 0; transform: translateY(32px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* SCROLL REVEAL */
+    [data-reveal] {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.9s cubic-bezier(0.16,1,0.3,1), transform 0.9s cubic-bezier(0.16,1,0.3,1);
+    }
+    [data-reveal].revealed { opacity: 1; transform: translateY(0); }
+    [data-reveal][data-delay="1"] { transition-delay: 0.07s; }
+    [data-reveal][data-delay="2"] { transition-delay: 0.14s; }
+    [data-reveal][data-delay="3"] { transition-delay: 0.21s; }
+    [data-reveal][data-delay="4"] { transition-delay: 0.28s; }
+    [data-reveal][data-delay="5"] { transition-delay: 0.35s; }
+    .p-card[data-reveal] { transform: none; }
+    .p-card[data-reveal].revealed { transform: none; }
+    .eyebrow-pill {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(110,58,250,0.1); border: 1px solid rgba(110,58,250,0.25);
+      border-radius: 100px; padding: 5px 14px;
+      font-size: 0.72rem; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase;
+      color: var(--brand-light); margin-bottom: 1.75rem;
+    }
+    .pill-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: blink 2.2s ease-in-out infinite; }
+    @keyframes blink { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.75)} }
+
+    .hero h1 { font-size: clamp(3.2rem,7.5vw,7rem); font-weight: 800; letter-spacing: -0.025em; line-height: 0.95; margin-bottom: 1.75rem; }
+    .grad-text { background: linear-gradient(140deg, var(--brand-light) 0%, var(--accent) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .hero-sub { font-size: 1.25rem; line-height: 1.75; color: var(--muted); max-width: 520px; margin-bottom: 2.5rem; }
+    .hero-ctas { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 4rem; }
+    .hero-stats { display: flex; gap: 3.5rem; flex-wrap: wrap; padding-top: 2.5rem; border-top: 1px solid var(--border); }
+    .stat-val { font-family: 'Orbitron', sans-serif; font-size: 2.1rem; font-weight: 800; letter-spacing: -0.02em; }
+    .stat-lbl { font-size: 0.78rem; color: var(--muted); margin-top: 3px; }
+
+    /* MARQUEE */
+    .marquee-wrap { overflow: hidden; padding: 1.5rem 0; background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .marquee-track { display: flex; gap: 3.5rem; animation: scroll 30s linear infinite; white-space: nowrap; width: max-content; }
+    .marquee-track:hover { animation-play-state: paused; }
+    .m-item { display: flex; align-items: center; gap: 12px; font-family: 'Orbitron', sans-serif; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(240,240,250,0.50); flex-shrink: 0; }
+    .m-sep { width: 4px; height: 4px; border-radius: 50%; background: var(--brand); opacity: 0.6; }
+    @keyframes scroll { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+
+    /* SECTION BASE */
+    .section { padding: 7rem 3rem; }
+    .container { max-width: 1200px; margin: 0 auto; }
+    .s-label { display: inline-flex; align-items: center; gap: 10px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 1rem; }
+    .s-label::before { content:''; display:block; width:18px; height:1px; background:var(--accent); }
+    .s-title { font-size: clamp(2.2rem,4.5vw,3.75rem); font-weight: 800; letter-spacing: -0.015em; line-height: 1.1; margin-bottom: 1rem; }
+    .s-sub { font-size: 1.1rem; line-height: 1.75; color: var(--muted); max-width: 540px; }
+
+    /* WHAT IS VENTRIFY */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: center; }
+    .feature-list { display: flex; flex-direction: column; gap: 1rem; }
+    .f-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem 1.5rem; display: flex; align-items: center; gap: 1.25rem; transition: border-color 0.25s ease, background 0.25s ease; cursor: default; }
+    .f-card:hover { border-color: rgba(110,58,250,0.3); background: var(--surface-2); }
+    .f-icon { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .f-icon.purple { background: rgba(110,58,250,0.15); }
+    .f-icon.teal { background: rgba(0,229,200,0.1); }
+    .f-card-title { font-family: 'Orbitron', sans-serif; font-size: 1.05rem; font-weight: 700; letter-spacing: -0.015em; margin-bottom: 2px; }
+    .f-card-sub { font-size: 0.925rem; color: var(--muted); }
+
+    /* PHASE GRID */
+    .phase-bg { background: var(--surface); }
+    .phase-grid { display: grid; grid-template-columns: repeat(5, 1fr); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+    .ph-card { background: var(--surface); padding: 2.25rem 1.75rem; border-right: 1px solid var(--border); position: relative; transition: background 0.3s ease; overflow: hidden; }
+    .ph-card:last-child { border-right: none; }
+    .ph-card:hover { background: var(--surface-2); }
+    .ph-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background: linear-gradient(90deg, var(--brand), var(--accent)); opacity:0; transition: opacity 0.3s ease; }
+    .ph-card:hover::before { opacity:1; }
+    .ph-num { font-family: 'Orbitron', sans-serif; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--brand-light); margin-bottom: 1rem; }
+    .ph-title { font-family: 'Orbitron', sans-serif; font-size: 1.25rem; font-weight: 700; letter-spacing: -0.015em; margin-bottom: 0.75rem; }
+    .ph-desc { font-size: 0.925rem; line-height: 1.6; color: var(--muted); margin-bottom: 1.25rem; }
+    .ph-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+    .ph-tag { font-size: 0.68rem; padding: 3px 8px; border-radius: 4px; background: rgba(110,58,250,0.08); border: 1px solid rgba(110,58,250,0.18); color: var(--brand-light); }
+
+    /* PRICING */
+    .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-top: 3rem; }
+    .p-card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 2.5rem; position: relative; transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s ease, border-color 0.3s ease; }
+    .p-card:hover { transform: translateY(-5px); box-shadow: 0 24px 64px rgba(0,0,0,0.45), 0 0 48px rgba(110,58,250,0.12); border-color: rgba(110,58,250,0.3); }
+    .p-card.featured { border-color: rgba(110,58,250,0.4); background: linear-gradient(135deg, rgba(110,58,250,0.1) 0%, var(--surface) 55%); box-shadow: 0 0 48px rgba(110,58,250,0.18); }
+    .p-badge { position: absolute; top: -13px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, var(--brand) 0%, var(--brand-light) 100%); color: #fff; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 4px 14px; border-radius: 100px; white-space: nowrap; }
+    .p-tier { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.5rem; }
+    .p-name { font-family: 'Orbitron', sans-serif; font-size: 1.9rem; font-weight: 800; letter-spacing: -0.01em; margin-bottom: 0.75rem; }
+    .p-desc { font-size: 0.875rem; line-height: 1.65; color: var(--muted); padding-bottom: 1.75rem; margin-bottom: 1.75rem; border-bottom: 1px solid var(--border); }
+    .p-list { list-style: none; display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 2rem; }
+    .p-list li { display: flex; align-items: flex-start; gap: 10px; font-size: 0.875rem; color: var(--text); line-height: 1.45; }
+    .p-check { width: 17px; height: 17px; min-width: 17px; border-radius: 50%; background: rgba(0,229,200,0.12); border: 1px solid rgba(0,229,200,0.3); display: inline-flex; align-items: center; justify-content: center; margin-top: 1px; flex-shrink: 0; }
+    .p-check svg { display: block; }
+
+    /* PRICE DISPLAY */
+    .p-price-wrap { margin-bottom: 1.5rem; }
+    .p-from-label { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.35rem; }
+    .p-price { display: flex; align-items: center; gap: 8px; }
+    .p-currency { display: inline-flex; align-items: center; color: var(--accent); }
+    .dirham-sign { height: 1.85rem; width: auto; display: block; }
+    .p-amount { font-family: 'Orbitron', sans-serif; font-size: 2.4rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1; color: var(--text); }
+
+    /* PAYMENT TERMS */
+    .p-terms { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.1rem; margin-bottom: 1.5rem; }
+    .p-terms-label { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.75rem; }
+    .p-terms-row { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+    .p-term-step { display: flex; flex-direction: column; align-items: center; gap: 3px; flex: 1; }
+    .p-term-pct { font-family: 'Orbitron', sans-serif; font-size: 1.05rem; font-weight: 800; letter-spacing: 0.02em; color: var(--brand-light); }
+    .p-term-when { font-size: 0.67rem; color: var(--muted); text-align: center; line-height: 1.3; }
+    .p-term-arrow { color: var(--muted); font-size: 0.75rem; flex-shrink: 0; }
+
+    /* FAQ */
+    .faq-list { display: flex; flex-direction: column; gap: 0; margin-top: 3rem; border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+    .faq-item { border-bottom: 1px solid var(--border); }
+    .faq-item:last-child { border-bottom: none; }
+    .faq-item summary {
+      list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 1.5rem;
+      padding: 1.65rem 2rem; cursor: pointer;
+      font-family: 'Orbitron', sans-serif; font-size: 1rem; font-weight: 700; letter-spacing: 0.03em; color: var(--text);
+      background: var(--surface); transition: background 0.2s ease;
+      user-select: none;
+    }
+    .faq-item summary::-webkit-details-marker { display: none; }
+    .faq-item summary:hover { background: var(--surface-2); }
+    .faq-icon { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.2s ease, border-color 0.2s ease, transform 0.3s cubic-bezier(0.34,1.56,0.64,1); }
+    .faq-item[open] summary { background: var(--surface-2); }
+    .faq-item[open] .faq-icon { background: rgba(110,58,250,0.15); border-color: rgba(110,58,250,0.35); transform: rotate(45deg); }
+    .faq-body { padding: 0 2rem 1.75rem; background: var(--surface-2); font-size: 1rem; line-height: 1.8; color: var(--muted); }
+    .faq-body p + p { margin-top: 1rem; }
+    .faq-body ol { padding-left: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.75rem; }
+    .faq-body ol li { color: var(--muted); line-height: 1.7; }
+    .faq-body ol li strong { color: var(--text); font-weight: 600; }
+
+    /* CTA BANNER */
+    .cta-banner { background: linear-gradient(135deg, rgba(110,58,250,0.14) 0%, rgba(0,229,200,0.04) 100%); border: 1px solid rgba(110,58,250,0.22); border-radius: 24px; padding: 5.5rem 4rem; text-align: center; position: relative; overflow: hidden; }
+    .cta-banner .orb { position: absolute; }
+
+    /* FOOTER */
+    footer { background: var(--surface); border-top: 1px solid var(--border); padding: 4.5rem 3rem 2.5rem; }
+    .footer-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 3rem; margin-bottom: 3rem; }
+    .footer-brand p { font-size: 0.875rem; line-height: 1.75; color: var(--muted); margin-top: 1rem; max-width: 270px; }
+    .footer-col h4 { font-family: 'Orbitron', sans-serif; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 1.1rem; }
+    .footer-col a { display: block; font-size: 0.875rem; color: rgba(240,240,250,0.7); margin-bottom: 0.6rem; transition: color 0.2s ease; }
+    .footer-col a:hover { color: var(--text); }
+    .footer-bottom { max-width: 1200px; margin: 0 auto; padding-top: 2rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+    .footer-bottom p { font-size: 0.8rem; color: var(--muted); }
+    .location-chip { display: inline-flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--muted); background: rgba(255,255,255,0.04); border: 1px solid var(--border); padding: 4px 10px; border-radius: 100px; margin-top: 1.25rem; }
+
+    /* PORTFOLIO PREVIEW */
+    .port-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-top: 3rem; }
+    .port-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; display: block; transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s ease, border-color 0.3s ease; }
+    .port-card:hover { transform: translateY(-5px); box-shadow: 0 24px 60px rgba(0,0,0,0.5), 0 0 40px rgba(110,58,250,0.12); border-color: rgba(110,58,250,0.25); }
+    .port-img { position: relative; overflow: hidden; aspect-ratio: 16/10; }
+    .port-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
+    .port-card:hover .port-img img { transform: scale(1.04); }
+    .port-img-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(13,13,26,0.5) 0%, rgba(13,13,26,0.06) 55%, transparent 100%); }
+    .port-img-color { position: absolute; inset: 0; mix-blend-mode: multiply; opacity: 0.28; transition: opacity 0.3s ease; }
+    .port-card:hover .port-img-color { opacity: 0.18; }
+    .port-meta { padding: 1.5rem 1.75rem 1.75rem; }
+    .port-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 0.75rem; }
+    .port-tag { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em; padding: 3px 9px; border-radius: 4px; background: rgba(110,58,250,0.08); border: 1px solid rgba(110,58,250,0.18); color: var(--brand-light); }
+    .port-title { font-family: 'Orbitron', sans-serif; font-size: 1.2rem; font-weight: 800; letter-spacing: -0.015em; margin-bottom: 0.5rem; transition: color 0.2s ease; }
+    .port-card:hover .port-title { color: var(--brand-light); }
+    .port-desc { font-size: 0.875rem; line-height: 1.65; color: var(--muted); }
+    .port-arrow { display: inline-flex; align-items: center; gap: 6px; font-family: 'Orbitron', sans-serif; font-size: 0.78rem; font-weight: 700; color: var(--accent); margin-top: 1rem; transition: gap 0.2s ease; }
+    .port-card:hover .port-arrow { gap: 10px; }
+
+    /* HAMBURGER */
+    .hamburger {
+      display: none;
+      flex-direction: column; justify-content: center; align-items: center;
+      width: 40px; height: 40px; gap: 5px;
+      background: transparent; border: none; cursor: pointer; padding: 4px;
+      border-radius: 8px;
+      transition: background 0.2s ease;
+      flex-shrink: 0;
+    }
+    .hamburger:hover { background: rgba(255,255,255,0.06); }
+    .hamburger-line {
+      display: block; width: 22px; height: 2px;
+      background: var(--text); border-radius: 2px;
+      transform-origin: center;
+      transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), opacity 0.2s ease, width 0.2s ease;
+    }
+    .hamburger.open .hamburger-line:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .hamburger.open .hamburger-line:nth-child(2) { opacity: 0; transform: scaleX(0); }
+    .hamburger.open .hamburger-line:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    /* MOBILE MENU */
+    .mobile-menu {
+      display: none;
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 190;
+      background: rgba(6,6,15,0.97);
+      backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+      flex-direction: column;
+      padding: 7rem 2rem 3rem;
+      opacity: 0;
+      transform: translateY(-12px);
+      transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      pointer-events: none;
+    }
+    .mobile-menu.open {
+      opacity: 1; transform: translateY(0); pointer-events: all;
+    }
+    .mobile-menu a.m-nav-link {
+      display: block;
+      font-family: 'Orbitron', sans-serif; font-size: 1.5rem; font-weight: 700;
+      letter-spacing: 0.04em; color: var(--muted);
+      padding: 1.1rem 0;
+      border-bottom: 1px solid var(--border);
+      transition: color 0.2s ease, padding-left 0.2s ease;
+    }
+    .mobile-menu a.m-nav-link:hover { color: var(--text); padding-left: 6px; }
+    .mobile-menu .m-cta { margin-top: 2.5rem; }
+    .mobile-menu .m-cta .btn { width: 100%; justify-content: center; font-size: 0.9rem; padding: 0.95rem 1.5rem; }
+
+    @media (max-width: 1024px) {
+      .phase-grid { grid-template-columns: repeat(3, 1fr); }
+      .ph-card:nth-child(3) { border-right: none; }
+      .ph-card:nth-child(4) { border-top: 1px solid var(--border); }
+      .ph-card:nth-child(5) { border-top: 1px solid var(--border); border-right: none; }
+    }
+    @media (max-width: 900px) {
+      nav { padding: 1rem 1.5rem; }
+      .nav-links { gap: 1.5rem; }
+      .hero { padding: 8rem 1.5rem 4rem; }
+      .section { padding: 5rem 1.5rem; }
+      .two-col { grid-template-columns: 1fr; gap: 3rem; }
+      .pricing-grid { grid-template-columns: 1fr; }
+      .port-grid { grid-template-columns: 1fr 1fr; }
+      footer { padding: 4rem 1.5rem 2rem; }
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 640px) {
+      .phase-grid { grid-template-columns: 1fr; }
+      .port-grid { grid-template-columns: 1fr; }
+      .ph-card { border-right: none; border-bottom: 1px solid var(--border); }
+      .ph-card:last-child { border-bottom: none; }
+      .hero-stats { gap: 2rem; }
+      .nav-links { display: none; }
+      .nav-cta { display: none; }
+      .hamburger { display: flex; }
+      .mobile-menu { display: flex; }
+      .cta-banner { padding: 3rem 1.5rem; }
+      .footer-grid { grid-template-columns: 1fr; }
+    }
+    /* ── HERO ILLUSTRATION ── */
+    .hero-visual {
+      position: relative; height: 660px;
+      display: flex; justify-content: center; align-items: center;
+      animation: heroFadeUp 1s cubic-bezier(0.16,1,0.3,1) 0.65s both;
+    }
+    .phone-halo {
+      position: absolute; width: 420px; height: 420px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(110,58,250,0.24) 0%, transparent 70%);
+      filter: blur(48px); pointer-events: none;
+      animation: haloPulse 4s ease-in-out infinite;
+    }
+    @keyframes haloPulse { 0%,100%{opacity:0.7;transform:scale(1)} 50%{opacity:1;transform:scale(1.12)} }
+    .orbit-ring-vis {
+      position: absolute; width: 480px; height: 570px; border-radius: 50%;
+      border: 1px dashed rgba(110,58,250,0.11);
+      top: 50%; left: 50%; transform: translate(-50%,-50%); pointer-events: none;
+    }
+    .orbit-wrap { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+    .orbit-container { position: relative; width: 0; height: 0; }
+    .orbit-cw { animation: spinCW 9s linear infinite; }
+    .orbit-ccw { animation: spinCCW 14s linear infinite; }
+    @keyframes spinCW { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+    @keyframes spinCCW { from{transform:rotate(0deg)} to{transform:rotate(-360deg)} }
+    .orbit-dot { position: absolute; border-radius: 50%; }
+    .orbit-dot-a { width:8px; height:8px; background:var(--brand-light); box-shadow:0 0 12px rgba(155,111,255,0.9); top:-240px; left:-4px; }
+    .orbit-dot-b { width:6px; height:6px; background:var(--accent); box-shadow:0 0 10px rgba(0,229,200,0.8); top:-170px; left:-3px; }
+    .sparkle { position:absolute; border-radius:50%; background:var(--brand-light); box-shadow:0 0 8px rgba(155,111,255,0.8); animation:sparklePop 3s ease-in-out infinite; pointer-events:none; }
+    @keyframes sparklePop { 0%,100%{opacity:0.2;transform:scale(0.7)} 50%{opacity:1;transform:scale(1.5)} }
+    /* Phone */
+    .phone-scene { position: relative; }
+    .phone-frame {
+      width: 248px; height: 516px;
+      background: linear-gradient(160deg, #1a1340 0%, #0d0d1a 100%);
+      border-radius: 42px;
+      border: 1.5px solid rgba(110,58,250,0.38);
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 40px 80px rgba(0,0,0,0.65), 0 0 90px rgba(110,58,250,0.18), inset 0 1px 0 rgba(255,255,255,0.08);
+      transform: rotateY(-16deg) rotateX(5deg);
+      animation: phoneFloat 6s ease-in-out infinite;
+      position: relative; overflow: hidden;
+    }
+    @keyframes phoneFloat {
+      0%,100% { transform: rotateY(-16deg) rotateX(5deg) translateY(0px); }
+      50% { transform: rotateY(-16deg) rotateX(5deg) translateY(-18px); }
+    }
+    .phone-notch { width:84px; height:25px; background:#06060F; border-radius:0 0 18px 18px; margin:0 auto; position:relative; z-index:2; }
+    .phone-screen { padding: 10px 18px 20px; }
+    .scr-header { display:flex; align-items:center; gap:9px; margin-bottom:14px; }
+    .scr-avatar { width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,var(--brand) 0%,var(--accent) 100%); flex-shrink:0; }
+    .scr-title-main { font-family:'Orbitron',sans-serif; font-size:0.68rem; font-weight:700; color:var(--text); letter-spacing:0.03em; line-height:1; }
+    .scr-title-sub { font-size:0.54rem; color:var(--muted); margin-top:2px; }
+    .scr-status { width:8px; height:8px; border-radius:50%; background:#00E5C8; margin-left:auto; box-shadow:0 0 8px rgba(0,229,200,0.8); animation:blink 2s ease-in-out infinite; }
+    .scr-metric { background:rgba(110,58,250,0.1); border:1px solid rgba(110,58,250,0.2); border-radius:14px; padding:12px 14px; margin-bottom:12px; }
+    .scr-metric-val { font-family:'Orbitron',sans-serif; font-size:1.45rem; font-weight:800; letter-spacing:-0.02em; color:var(--text); line-height:1; }
+    .scr-metric-row { display:flex; justify-content:space-between; align-items:center; margin-top:6px; }
+    .scr-metric-lbl { font-size:0.54rem; color:var(--muted); }
+    .scr-metric-change { font-size:0.56rem; font-weight:700; color:#00E5C8; }
+    .scr-chart { display:flex; align-items:flex-end; gap:5px; height:68px; margin-bottom:12px; }
+    .scr-bar { flex:1; background:rgba(110,58,250,0.22); border-radius:3px 3px 0 0; transform-origin:bottom; animation:barGrow 0.9s cubic-bezier(0.16,1,0.3,1) both; }
+    .scr-bar.hi { background:var(--brand); box-shadow:0 0 8px rgba(110,58,250,0.5); }
+    .scr-bar.ac { background:var(--accent); box-shadow:0 0 8px rgba(0,229,200,0.4); }
+    @keyframes barGrow { from{transform:scaleY(0);opacity:0} to{transform:scaleY(1);opacity:1} }
+    .scr-pills { display:flex; gap:6px; margin-bottom:12px; }
+    .scr-pill { font-size:0.51rem; font-weight:700; padding:4px 9px; border-radius:100px; border:1px solid var(--border); color:var(--muted); letter-spacing:0.04em; }
+    .scr-pill.on { background:rgba(110,58,250,0.2); border-color:rgba(110,58,250,0.4); color:var(--brand-light); }
+    .scr-prog-lbl { display:flex; justify-content:space-between; font-size:0.52rem; color:var(--muted); margin-bottom:6px; }
+    .scr-prog-lbl span:last-child { color:var(--accent); font-weight:700; }
+    .scr-prog-track { height:5px; background:rgba(255,255,255,0.07); border-radius:3px; overflow:hidden; margin-bottom:14px; }
+    .scr-prog-fill { height:100%; width:67%; background:linear-gradient(90deg,var(--brand),var(--accent)); border-radius:3px; transform-origin:left; animation:fillGrow 1.4s cubic-bezier(0.16,1,0.3,1) 0.9s both; }
+    @keyframes fillGrow { from{transform:scaleX(0)} to{transform:scaleX(1)} }
+    .scr-cards { display:flex; gap:6px; }
+    .scr-mini-card { flex:1; background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:10px; padding:9px 6px; text-align:center; }
+    .scr-mini-icon { font-size:0.76rem; margin-bottom:3px; }
+    .scr-mini-val { font-family:'Orbitron',sans-serif; font-size:0.64rem; font-weight:800; color:var(--text); line-height:1; }
+    .scr-mini-lbl { font-size:0.46rem; color:var(--muted); margin-top:2px; }
+    /* Floating cards */
+    .float-card {
+      position:absolute;
+      background:rgba(13,13,26,0.88); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+      border:1px solid rgba(255,255,255,0.1); border-radius:14px; padding:10px 14px;
+      display:flex; align-items:center; gap:10px;
+      box-shadow:0 8px 32px rgba(0,0,0,0.45),0 0 0 1px rgba(255,255,255,0.03);
+      white-space:nowrap;
+    }
+    .fc-icon { width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1rem; flex-shrink:0; }
+    .fc-val { font-family:'Orbitron',sans-serif; font-size:0.78rem; font-weight:800; color:var(--text); line-height:1; }
+    .fc-lbl { font-size:0.6rem; color:var(--muted); margin-top:3px; }
+    .float-1 { top:18px; right:-22px; animation:floatA 5s ease-in-out infinite; }
+    .float-2 { top:50%; left:-106px; animation:floatB 7s ease-in-out infinite; }
+    .float-3 { bottom:44px; right:-28px; animation:floatC 6s ease-in-out 0.8s infinite; }
+    @keyframes floatA { 0%,100%{transform:translateY(0px)} 50%{transform:translateY(-10px)} }
+    @keyframes floatB { 0%,100%{transform:translateY(-50%) translateX(0px)} 50%{transform:translateY(-50%) translateX(-8px)} }
+    @keyframes floatC { 0%,100%{transform:translateY(0px)} 50%{transform:translateY(10px)} }
+    .fc-avs { display:flex; }
+    .fc-av { width:22px; height:22px; border-radius:50%; border:2px solid rgba(13,13,26,0.9); margin-left:-7px; flex-shrink:0; }
+    .fc-av:first-child { margin-left:0; }
+    @media (max-width: 1024px) {
+      .hero-content { grid-template-columns: 1fr; }
+      .hero-visual { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="logo"><img src="ventrify.svg" alt="Ventrify" style="height:22px;width:auto;display:block;"></a>
+  <div class="nav-links">
+    <a href="about.html">About</a>
+    <a href="work.html">Work</a>
+    <a href="pricing.html">Pricing</a>
+    <a href="insights.html">Insights</a>
+    <a href="contact.html">Contact</a>
+  </div>
+  <a href="contact.html" class="btn btn-primary nav-cta">Start Your Venture</a>
+  <button class="hamburger" id="hamburger" aria-label="Toggle menu" aria-expanded="false">
+    <span class="hamburger-line"></span>
+    <span class="hamburger-line"></span>
+    <span class="hamburger-line"></span>
+  </button>
+</nav>
+
+<!-- MOBILE MENU -->
+<div class="mobile-menu" id="mobileMenu" role="dialog" aria-label="Navigation menu">
+  <a href="about.html" class="m-nav-link">About</a>
+  <a href="work.html" class="m-nav-link">Work</a>
+  <a href="pricing.html" class="m-nav-link">Pricing</a>
+  <a href="insights.html" class="m-nav-link">Insights</a>
+  <a href="contact.html" class="m-nav-link">Contact</a>
+  <div class="m-cta">
+    <a href="contact.html" class="btn btn-primary btn-lg">Start Your Venture</a>
+  </div>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+  <div class="hero-content">
+    <div class="hero-text">
+      <div class="eyebrow-pill"><span class="pill-dot"></span> AI-Powered Venture Building &nbsp;·&nbsp; Dubai</div>
+      <h1>
+        Turn Ideas into<br>
+        <span class="grad-text">Momentum</span>
+      </h1>
+      <p class="hero-sub">
+        Ventrify is the full-stack venture studio for pre-seed founders. Strategy, design, development, brand, and marketing — powered by AI, built at speed.
+      </p>
+      <div class="hero-ctas">
+        <a href="contact.html" class="btn btn-primary btn-lg">Start Your Venture</a>
+        <a href="work.html" class="btn btn-outline btn-lg">See Our Work</a>
+      </div>
+    </div>
+
+  <!-- HERO ILLUSTRATION -->
+  <div class="hero-visual">
+    <div class="phone-halo"></div>
+    <div class="orbit-ring-vis"></div>
+    <div class="orbit-wrap">
+      <div class="orbit-container orbit-cw">
+        <div class="orbit-dot orbit-dot-a"></div>
+      </div>
+    </div>
+    <div class="orbit-wrap">
+      <div class="orbit-container orbit-ccw">
+        <div class="orbit-dot orbit-dot-b"></div>
+      </div>
+    </div>
+    <div class="sparkle" style="width:4px;height:4px;top:12%;left:22%;animation-delay:0s;"></div>
+    <div class="sparkle" style="width:3px;height:3px;top:74%;left:13%;animation-delay:1.1s;"></div>
+    <div class="sparkle" style="width:3px;height:3px;top:20%;right:11%;animation-delay:2.2s;background:var(--accent);box-shadow:0 0 8px rgba(0,229,200,0.8);"></div>
+    <div class="sparkle" style="width:4px;height:4px;bottom:13%;right:17%;animation-delay:0.6s;"></div>
+    <div class="phone-scene">
+      <!-- Float: MVP Live -->
+      <div class="float-card float-1">
+        <div class="fc-icon" style="background:rgba(110,58,250,0.15);">🚀</div>
+        <div>
+          <div class="fc-val">MVP Live</div>
+          <div class="fc-lbl">Deployed · 12 weeks</div>
+        </div>
+      </div>
+      <!-- Float: User Growth -->
+      <div class="float-card float-2">
+        <div class="fc-icon" style="background:rgba(0,229,200,0.12);">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00E5C8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+        </div>
+        <div>
+          <div class="fc-val" style="color:var(--accent);">+340%</div>
+          <div class="fc-lbl">User Growth</div>
+        </div>
+      </div>
+      <!-- Float: Expert Team -->
+      <div class="float-card float-3">
+        <div class="fc-avs">
+          <div class="fc-av" style="background:linear-gradient(135deg,#6E3AFA,#9B6FFF);"></div>
+          <div class="fc-av" style="background:linear-gradient(135deg,#00E5C8,#0088AA);"></div>
+          <div class="fc-av" style="background:linear-gradient(135deg,#FA6E3A,#FA3A6E);"></div>
+        </div>
+        <div>
+          <div class="fc-val">Expert Team</div>
+          <div class="fc-lbl">Strategy · Design · Dev</div>
+        </div>
+      </div>
+      <!-- Phone frame -->
+      <div class="phone-frame">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="scr-header">
+            <div class="scr-avatar"></div>
+            <div>
+              <div class="scr-title-main">VentureOS</div>
+              <div class="scr-title-sub">Dashboard</div>
+            </div>
+            <div class="scr-status"></div>
+          </div>
+          <div class="scr-metric">
+            <div class="scr-metric-val">$128.4k</div>
+            <div class="scr-metric-row">
+              <span class="scr-metric-lbl">ARR Projected</span>
+              <span class="scr-metric-change">↑ 18.4%</span>
+            </div>
+          </div>
+          <div class="scr-chart">
+            <div class="scr-bar" style="height:30%;animation-delay:0.1s;"></div>
+            <div class="scr-bar" style="height:52%;animation-delay:0.15s;"></div>
+            <div class="scr-bar" style="height:38%;animation-delay:0.2s;"></div>
+            <div class="scr-bar" style="height:65%;animation-delay:0.25s;"></div>
+            <div class="scr-bar" style="height:48%;animation-delay:0.3s;"></div>
+            <div class="scr-bar hi" style="height:82%;animation-delay:0.35s;"></div>
+            <div class="scr-bar ac" style="height:70%;animation-delay:0.4s;"></div>
+          </div>
+          <div class="scr-pills">
+            <div class="scr-pill on">Monthly</div>
+            <div class="scr-pill">Weekly</div>
+            <div class="scr-pill">All</div>
+          </div>
+          <div class="scr-prog-lbl">
+            <span>Launch Progress</span>
+            <span>67%</span>
+          </div>
+          <div class="scr-prog-track">
+            <div class="scr-prog-fill"></div>
+          </div>
+          <div class="scr-cards">
+            <div class="scr-mini-card">
+              <div class="scr-mini-icon">⚡</div>
+              <div class="scr-mini-val">12</div>
+              <div class="scr-mini-lbl">Weeks</div>
+            </div>
+            <div class="scr-mini-card">
+              <div class="scr-mini-icon">🎯</div>
+              <div class="scr-mini-val">5</div>
+              <div class="scr-mini-lbl">Phases</div>
+            </div>
+            <div class="scr-mini-card">
+              <div class="scr-mini-icon">✨</div>
+              <div class="scr-mini-val">AI</div>
+              <div class="scr-mini-lbl">Powered</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</section>
+
+<!-- MARQUEE -->
+<div class="marquee-wrap">
+  <div class="marquee-track" aria-hidden="true">
+    <div class="m-item">Strategy<span class="m-sep"></span></div>
+    <div class="m-item">Product Design<span class="m-sep"></span></div>
+    <div class="m-item">MVP Development<span class="m-sep"></span></div>
+    <div class="m-item">Brand Identity<span class="m-sep"></span></div>
+    <div class="m-item">Investor Decks<span class="m-sep"></span></div>
+    <div class="m-item">Social Campaigns<span class="m-sep"></span></div>
+    <div class="m-item">SEO Content<span class="m-sep"></span></div>
+    <div class="m-item">Marketing Websites<span class="m-sep"></span></div>
+    <div class="m-item">Promo Videos<span class="m-sep"></span></div>
+    <div class="m-item">Strategy<span class="m-sep"></span></div>
+    <div class="m-item">Product Design<span class="m-sep"></span></div>
+    <div class="m-item">MVP Development<span class="m-sep"></span></div>
+    <div class="m-item">Brand Identity<span class="m-sep"></span></div>
+    <div class="m-item">Investor Decks<span class="m-sep"></span></div>
+    <div class="m-item">Social Campaigns<span class="m-sep"></span></div>
+    <div class="m-item">SEO Content<span class="m-sep"></span></div>
+    <div class="m-item">Marketing Websites<span class="m-sep"></span></div>
+    <div class="m-item">Promo Videos<span class="m-sep"></span></div>
+  </div>
+</div>
+
+<!-- WHAT IS VENTRIFY -->
+<section class="section">
+  <div class="container">
+    <div class="two-col">
+      <div>
+        <div class="s-label" data-reveal>What We Do</div>
+        <h2 class="s-title" data-reveal data-delay="1">The complete venture building kit</h2>
+        <p class="s-sub" style="margin-bottom:1.25rem;" data-reveal data-delay="2">Building a digital startup means navigating strategy, design, development, brand, and marketing — all at once. Most founders tackle it in silos, wasting time and money.</p>
+        <p class="s-sub" style="margin-bottom:2.5rem;" data-reveal data-delay="2">Ventrify brings it all under one roof. One methodology. One team. One outcome: a market-ready venture, built right.</p>
+        <a href="about.html" class="btn btn-primary" data-reveal data-delay="3">How We Work</a>
+      </div>
+      <div class="feature-list">
+        <div class="f-card" data-reveal data-delay="1">
+          <div class="f-icon purple">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9B6FFF" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+          </div>
+          <div><div class="f-card-title">Insight-Driven Strategy</div><div class="f-card-sub">Every build starts with validated market research and data</div></div>
+        </div>
+        <div class="f-card" data-reveal data-delay="2">
+          <div class="f-icon teal">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00E5C8" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/></svg>
+          </div>
+          <div><div class="f-card-title">End-to-End Design System</div><div class="f-card-sub">From wireframe to pixel-perfect UI, built to scale</div></div>
+        </div>
+        <div class="f-card" data-reveal data-delay="3">
+          <div class="f-icon purple">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9B6FFF" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          </div>
+          <div><div class="f-card-title">AI-Accelerated MVP Build</div><div class="f-card-sub">Ship faster without compromising quality or architecture</div></div>
+        </div>
+        <div class="f-card" data-reveal data-delay="4">
+          <div class="f-icon teal">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00E5C8" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          </div>
+          <div><div class="f-card-title">Launch-Ready Marketing</div><div class="f-card-sub">Brand, content, campaigns — ready for day one</div></div>
+        </div>
+        <div class="f-card" data-reveal data-delay="5">
+          <div class="f-icon purple">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9B6FFF" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+          </div>
+          <div><div class="f-card-title">Speed Without Compromise</div><div class="f-card-sub">AI tooling lets us move fast while maintaining craft</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 5 PHASES -->
+<section class="section phase-bg">
+  <div class="container">
+    <div style="text-align:center; margin-bottom:3.5rem;">
+      <div class="s-label" style="justify-content:center;" data-reveal>The Process</div>
+      <h2 class="s-title" data-reveal data-delay="1">The Ventrify Methodology</h2>
+      <p class="s-sub" style="margin:0 auto;" data-reveal data-delay="2">A structured 5-phase journey from raw idea to delivered, market-ready venture.</p>
+    </div>
+    <div class="phase-grid">
+      <div class="ph-card" data-reveal data-delay="1">
+        <div class="ph-num">Phase 01</div>
+        <div class="ph-title">Discover</div>
+        <p class="ph-desc">We start by understanding your vision, market, and goals — uncovering opportunities that shape what we build and why.</p>
+        <div class="ph-tags">
+          <span class="ph-tag">Kick-off</span>
+          <span class="ph-tag">Market Research</span>
+          <span class="ph-tag">Opportunities</span>
+          <span class="ph-tag">Business Goals</span>
+          <span class="ph-tag">Product Goals</span>
+        </div>
+      </div>
+      <div class="ph-card" data-reveal data-delay="2">
+        <div class="ph-num">Phase 02</div>
+        <div class="ph-title">Define</div>
+        <p class="ph-desc">With insights in place, we shape the foundation — personas, product vision, MVP feature set, tech stack, and roadmap.</p>
+        <div class="ph-tags">
+          <span class="ph-tag">Personas</span>
+          <span class="ph-tag">Product Vision</span>
+          <span class="ph-tag">MVP Features</span>
+          <span class="ph-tag">Tech Stack</span>
+          <span class="ph-tag">Roadmap</span>
+        </div>
+      </div>
+      <div class="ph-card" data-reveal data-delay="3">
+        <div class="ph-num">Phase 03</div>
+        <div class="ph-title">Design</div>
+        <p class="ph-desc">We bring your product to life — mapping flows, crafting UI, and building a flexible design system for clarity and scale.</p>
+        <div class="ph-tags">
+          <span class="ph-tag">Wireframes</span>
+          <span class="ph-tag">UX Flows</span>
+          <span class="ph-tag">Design System</span>
+          <span class="ph-tag">Polished UI</span>
+          <span class="ph-tag">Pitch Deck</span>
+        </div>
+      </div>
+      <div class="ph-card" data-reveal data-delay="4">
+        <div class="ph-num">Phase 04</div>
+        <div class="ph-title">Develop</div>
+        <p class="ph-desc">We turn designs into a working MVP — solid architecture, clean code, and built-in analytics to track performance from day one.</p>
+        <div class="ph-tags">
+          <span class="ph-tag">Back-end</span>
+          <span class="ph-tag">Architecture</span>
+          <span class="ph-tag">MVP Build</span>
+          <span class="ph-tag">Analytics</span>
+        </div>
+      </div>
+      <div class="ph-card" data-reveal data-delay="5">
+        <div class="ph-num">Phase 05</div>
+        <div class="ph-title">Deliver</div>
+        <p class="ph-desc">You get everything you need to launch — functional MVP, full design files, clean code, and a system built to scale.</p>
+        <div class="ph-tags">
+          <span class="ph-tag">Figma Files</span>
+          <span class="ph-tag">GitHub Repo</span>
+          <span class="ph-tag">Documentation</span>
+          <span class="ph-tag">MVP Product</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PORTFOLIO PREVIEW -->
+<section class="section">
+  <div class="container">
+    <div style="text-align:center; margin-bottom:0.5rem;">
+      <div class="s-label" style="justify-content:center;" data-reveal>Selected Work</div>
+      <h2 class="s-title" data-reveal data-delay="1">Ventures we've launched</h2>
+      <p class="s-sub" style="margin:0 auto;" data-reveal data-delay="2">A selection of digital products built through the Ventrify methodology — from raw idea to market-ready venture.</p>
+    </div>
+    <div class="port-grid">
+
+      <!-- CARD 1 — DebtFit -->
+      <a href="work-project.html" class="port-card" data-reveal data-delay="1">
+        <div class="port-img">
+          <img src="Portfolio/Debtfit/Debtfit-hero.jpg" alt="DebtFit — Personal Finance & Debt Management Platform" style="filter:brightness(0.95) saturate(0.95); object-fit:cover; object-position:center;">
+          <div class="port-img-color" style="background:linear-gradient(135deg,rgba(20,10,50,0.2),rgba(6,6,15,0.1));"></div>
+          <div class="port-img-overlay" style="background:linear-gradient(to top,rgba(6,6,15,0.55) 0%,rgba(6,6,15,0.12) 40%,transparent 70%),linear-gradient(to right,rgba(6,6,15,0.15) 0%,transparent 18%,transparent 82%,rgba(6,6,15,0.15) 100%);"></div>
+        </div>
+        <div class="port-meta">
+          <div class="port-title">DebtFit</div>
+          <p class="port-desc">A personal finance platform helping users track, plan, and eliminate debt — built end-to-end under the Venture Pro tier.</p>
+        </div>
+      </a>
+
+      <!-- CARD 2 — CuraGo -->
+      <a href="work-curago.html" class="port-card" data-reveal data-delay="2">
+        <div class="port-img">
+          <img src="Portfolio/CuraGo/curago-hero.jpg" alt="CuraGo — Healthcare Platform" style="filter:brightness(0.95) saturate(1.0); object-fit:cover; object-position:center;">
+          <div class="port-img-color" style="background:linear-gradient(135deg,rgba(0,160,115,0.2),rgba(0,55,45,0.08));"></div>
+          <div class="port-img-overlay" style="background:linear-gradient(to top,rgba(6,6,15,0.55) 0%,rgba(6,6,15,0.12) 40%,transparent 70%),linear-gradient(to right,rgba(6,6,15,0.15) 0%,transparent 18%,transparent 82%,rgba(6,6,15,0.15) 100%);"></div>
+        </div>
+        <div class="port-meta">
+          <div class="port-title">CuraGo</div>
+          <p class="port-desc">An AI-powered healthcare platform connecting patients with personalised wellness, telemedicine, and preventive care.</p>
+        </div>
+      </a>
+
+      <!-- CARD 3 — Wallix -->
+      <a href="work-wallix.html" class="port-card" data-reveal data-delay="3">
+        <div class="port-img">
+          <img src="Portfolio/Wallix/wallix-hero.jpg" alt="Wallix — Financial Analytics Platform" style="filter:brightness(0.95) saturate(1.0); object-fit:cover; object-position:center;">
+          <div class="port-img-color" style="background:linear-gradient(135deg,rgba(25,70,190,0.2),rgba(8,18,65,0.08));"></div>
+          <div class="port-img-overlay" style="background:linear-gradient(to top,rgba(6,6,15,0.55) 0%,rgba(6,6,15,0.12) 40%,transparent 70%),linear-gradient(to right,rgba(6,6,15,0.15) 0%,transparent 18%,transparent 82%,rgba(6,6,15,0.15) 100%);"></div>
+        </div>
+        <div class="port-meta">
+          <div class="port-title">Wallix</div>
+          <p class="port-desc">A sophisticated portfolio analytics platform with real-time tracking, customisable dashboards, and comprehensive financial reporting.</p>
+        </div>
+      </a>
+
+    </div>
+    <div style="text-align:center; margin-top:2.5rem;" data-reveal>
+      <a href="work.html" class="btn btn-outline">View All Work</a>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="section">
+  <div class="container">
+    <div style="text-align:center; margin-bottom:0.75rem;">
+      <div class="s-label" style="justify-content:center;" data-reveal>Venture Tiers</div>
+      <h2 class="s-title" data-reveal data-delay="1">Built for every stage</h2>
+      <p class="s-sub" style="margin:0 auto;" data-reveal data-delay="2">Every tier includes our full 5-phase methodology. What changes is the scope of what we build around your product.</p>
+    </div>
+    <div class="pricing-grid">
+
+      <!-- TIER 1 -->
+      <div class="p-card" data-reveal data-delay="1">
+        <div class="p-tier">Tier 01</div>
+        <div class="p-name">Launchpad</div>
+        <div class="p-price-wrap">
+          <div class="p-from-label">Starting from</div>
+          <div class="p-price">
+            <span class="p-currency"><svg class="dirham-sign" viewBox="0 0 56 68" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-label="AED"><path fill-rule="evenodd" d="M8,4 H27 Q56,4 56,34 Q56,64 27,64 H8 Z M18,15 H27 Q45,15 45,34 Q45,53 27,53 H18 Z M1,26 H46 V34 H1 Z M1,38 H46 V46 H1 Z"/></svg></span>
+            <span class="p-amount">150,000</span>
+          </div>
+        </div>
+        <p class="p-desc">The complete venture build — from validated strategy to a delivered MVP. Everything you need to go from idea to product.</p>
+        <ul class="p-list">
+          <li><span class="p-check"><svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.2 5.5L8 1" stroke="#00E5C8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>5-Phase Methodology (Discover → Deliver)</li>
+          <li><span class="p-check"><svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.2 5.5L8 1" stroke="#00E5C8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Market Research &amp; Opportunities</li>
+          <li><span class="p-check"><svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.2 5.5L8 1" stroke="#00E5C8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Product Vision &amp; MVP Roadmap</li>
+          <li><span class="p-check"><svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.2 5.5L8 1" stroke="#00E5C8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Full UX/UI Design &amp; Design System</li>
+          <li><span class="p-check"><svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.2 5.5L8 1" stroke="#00E5C8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>MVP Development &amp; Architecture</li>
+          <li><span class="p-check"><svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.2 5.5L8 1" stroke="#00E5C8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Analytics Integration</li>
+          <li><span class="p-check"><svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.2 5.5L8 1" stroke="#00E5C8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Figma Files &amp; GitHub Codebase</li>
+        </ul>
+        <div class="p-terms">
+          <div class="p-terms-label">Structured Payment Terms</div>
+          <div class="p-terms-row">
+            <div class="p-term-step">
+              <span class="p-term-pct">40%</span>
+              <span class="p-term-when">Upfront</span>
+            </div>
+            <span class="p-term-arrow">›</span>
+            <div class="p-term-step">
+              <span class="p-term-pct">30%</span>
+              <span class="p-term-when">Design Start</span>
+            </div>
+            <span class="p-term-arrow">›</span>
+            <div class="p-term-step">
+              <span class="p-term-pct">30%</span>
+              <span class="p-term-when">On Delivery</span>
+            </div>
+          </div>
+        </div>
+        <a href="contact.html" class="btn btn-outline" style="width:100%;justify-content:center;">Get Started</a>
+      </div>
+
+      <!-- TIER 2 FEATURED -->
+      <div class="p-card featured" data-reveal data-delay="2">
+        <div class="p-badge">Most Popular</div>
+        <div class="p-tier">Tier 02</div>
+        <div class="p-name">Venture</div>
+        <div class="p-price-wrap">
+          <div class="p-from-label">Starting from</div>
+          <div class="p-price">
+            <span class="p-currency"><svg class="dirham-sign" viewBox="0 0 56 68" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-label="AED"><path fill-rule="evenodd" d="M8,4 H27 Q56,4 56,34 Q56,64 27,64 H8 Z M18,15 H27 Q45,15 45,34 Q45,53 27,53 H18 Z M1,26 H46 V34 H1 Z M1,38 H46 V46 H1 Z"/></svg></span>
+            <span class="p-amount">240,000</span>
+          </div>
+        </div>
+        <p class="p-desc">The full Launchpad package plus everything you need to take your product to market — brand, website, and investor materials.</p>
+        <ul class="p-list">
+          <li><span class="p-check"><svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.2 5.5L8 1" stroke="#00E5C8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Everything in Launchpad</li>
+          <li><span class="p-check"><svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.2 5.5L8 1" stroke="#00E5C8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Brand Identity System</li>
+          <li><span class="p-check"><svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.2 5.5L8 1" stroke="#00E5C8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Marketing Website</li>
+          <li><span class="p-check"><svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.2 5.5L8 1" stroke="#00E5C8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Investor Pitch Deck</li>
+          <li><span class="p-check"><svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.2 5.5L8 1" stroke="#00E5C8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Social Media Campaign Strategy</li>
+          <li><span class="p-check"><svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.2 5.5L8 1" stroke="#00E5C8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Launch Content Creation</li>
+          <li><span class="p-check"><svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.2 5.5L8 1" stroke="#00E5C8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>SEO Foundation</li>
+        </ul>
+        <div class="p-terms">
+          <div class="p-terms-label">Structured Payment Terms</div>
+          <div class="p-terms-row">
+            <div class="p-term-step">
+              <span class="p-term-pct">40%</span>
+              <span class="p-term-when">Upfront</span>
+            </div>
+            <span class="p-term-arrow">›</span>
+            <div class="p-term-step">
+              <span class="p-term-pct">30%</span>
+              <span class="p-term-when">Design Start</span>
+            </div>
+            <span class="p-term-arrow">›</span>
+            <div class="p-term-step">
+              <span class="p-term-pct">30%</span>
+              <span class="p-term-when">On Delivery</span>
+            </div>
+          </div>
+        </div>
+        <a href="contact.html" class="btn btn-primary" style="width:100%;justify-content:center;">Get Started</a>
+      </div>
+
+      <!-- TIER 3 -->
+      <div class="p-card" data-reveal data-delay="3">
+        <div class="p-tier">Tier 03</div>
+        <div class="p-name">Venture Pro</div>
+        <div class="p-price-wrap">
+          <div class="p-from-label">Starting from</div>
+          <div class="p-price">
+            <span class="p-currency"><svg class="dirham-sign" viewBox="0 0 56 68" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-label="AED"><path fill-rule="evenodd" d="M8,4 H27 Q56,4 56,34 Q56,64 27,64 H8 Z M18,15 H27 Q45,15 45,34 Q45,53 27,53 H18 Z M1,26 H46 V34 H1 Z M1,38 H46 V46 H1 Z"/></svg></span>
+            <span class="p-amount">330,000</span>
+          </div>
+        </div>
+        <p class="p-desc">The most complete venture building package. Add video, growth content, and ongoing support for your post-launch journey.</p>
+        <ul class="p-list">
+          <li><span class="p-check"><svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.2 5.5L8 1" stroke="#00E5C8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Everything in Venture</li>
+          <li><span class="p-check"><svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.2 5.5L8 1" stroke="#00E5C8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Promotional Video Production</li>
+          <li><span class="p-check"><svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.2 5.5L8 1" stroke="#00E5C8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Ongoing SEO Content Strategy</li>
+          <li><span class="p-check"><svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.2 5.5L8 1" stroke="#00E5C8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Social Media Content Calendar</li>
+          <li><span class="p-check"><svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.2 5.5L8 1" stroke="#00E5C8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Investor Relations Support</li>
+          <li><span class="p-check"><svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.2 5.5L8 1" stroke="#00E5C8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Post-Launch Growth Retainer</li>
+          <li><span class="p-check"><svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.2 5.5L8 1" stroke="#00E5C8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Priority Support &amp; Iterations</li>
+        </ul>
+        <div class="p-terms">
+          <div class="p-terms-label">Structured Payment Terms</div>
+          <div class="p-terms-row">
+            <div class="p-term-step">
+              <span class="p-term-pct">40%</span>
+              <span class="p-term-when">Upfront</span>
+            </div>
+            <span class="p-term-arrow">›</span>
+            <div class="p-term-step">
+              <span class="p-term-pct">30%</span>
+              <span class="p-term-when">Design Start</span>
+            </div>
+            <span class="p-term-arrow">›</span>
+            <div class="p-term-step">
+              <span class="p-term-pct">30%</span>
+              <span class="p-term-when">On Delivery</span>
+            </div>
+          </div>
+        </div>
+        <a href="contact.html" class="btn btn-outline" style="width:100%;justify-content:center;">Get Started</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="section" style="padding-top:0;">
+  <div class="container">
+    <div style="text-align:center; margin-bottom:0.5rem;">
+      <div class="s-label" style="justify-content:center;" data-reveal>Got Questions</div>
+      <h2 class="s-title" data-reveal data-delay="1">Frequently asked</h2>
+      <p class="s-sub" style="margin:0 auto;" data-reveal data-delay="2">Everything you need to know before taking the first step.</p>
+    </div>
+    <div class="faq-list" data-reveal data-delay="1">
+
+      <details class="faq-item">
+        <summary>
+          What does working with Ventrify actually look like?
+          <span class="faq-icon">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="1" x2="6" y2="11"/><line x1="1" y1="6" x2="11" y2="6"/></svg>
+          </span>
+        </summary>
+        <div class="faq-body">
+          <p>From the moment you reach out, here's exactly what the journey looks like:</p>
+          <ol>
+            <li><strong>Discovery Call —</strong> We schedule an initial kick-off call. Before the call, you'll complete a short Venture Brief — a structured form that captures everything about your idea, your goals, your target market, and what you're looking to build.</li>
+            <li><strong>Scope of Work —</strong> We review your brief and come back to you with a clear, detailed Scope of Work outlining exactly what we'll build, how we'll build it, and the timeline. Once you're happy, you sign off and we're locked in.</li>
+            <li><strong>First Payment & Discovery + Define —</strong> You pay the first instalment (40%) and we begin immediately. The Discover and Define phases run together — we conduct market research, validate opportunities, and map out the full product vision. This phase ends with a structured presentation where we walk you through our research findings, our vision for the product, and a clearly defined MVP scope. You sign off on the MVP definition before anything is designed or built.</li>
+            <li><strong>Second Payment & Design Phase Begins —</strong> At the start of the Design phase, you pay the second instalment (30%). We then get to work on everything visual — from UX flows and wireframes to the full pixel-perfect UI and design system.</li>
+            <li><strong>Design Presentation & Feedback —</strong> Once design is complete, we hold a dedicated presentation session where we walk you through all design deliverables — not just the product screens, but the full design language. You then have one structured round of feedback to request refinements before we lock the designs and move into build.</li>
+            <li><strong>Build & Delivery —</strong> We move into development, building your MVP to the agreed specification. On delivery, you receive your full codebase, Figma files, and all supporting assets — and the final instalment (30%) is due.</li>
+          </ol>
+          <p>Throughout every phase, you'll always know where we are, what's coming next, and what's expected from you. No black boxes, no surprises.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary>
+          How long does a full venture build take?
+          <span class="faq-icon">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="1" x2="6" y2="11"/><line x1="1" y1="6" x2="11" y2="6"/></svg>
+          </span>
+        </summary>
+        <div class="faq-body">
+          <p>Timelines vary depending on the scope and complexity of your venture. Typically, a full 5-phase build runs between 10 and 16 weeks from kick-off to delivery. The Discover and Define phases take roughly 2–3 weeks, Design takes 3–5 weeks, and Build and Deliver account for the remainder depending on the technical complexity of the MVP.</p>
+          <p>We'll give you a precise timeline in your Scope of Work before anything is signed or paid — so there are no surprises.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary>
+          Do I need to be technical to work with Ventrify?
+          <span class="faq-icon">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="1" x2="6" y2="11"/><line x1="1" y1="6" x2="11" y2="6"/></svg>
+          </span>
+        </summary>
+        <div class="faq-body">
+          <p>Not at all. Most of our clients come to us with an idea and a vision — not a technical background. That's exactly the gap we're designed to fill. We handle every layer of the build, from strategy and design through to development and launch, and we communicate everything in plain language throughout.</p>
+          <p>If you do have a technical background, we'll meet you at that level too. Either way, you stay informed and in control at every stage.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary>
+          What do I actually own when the project is complete?
+          <span class="faq-icon">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="1" x2="6" y2="11"/><line x1="1" y1="6" x2="11" y2="6"/></svg>
+          </span>
+        </summary>
+        <div class="faq-body">
+          <p>Everything. Upon final delivery and payment, full intellectual property transfers to you. You receive the complete codebase via a private GitHub repository, all Figma design files, brand assets, and any additional deliverables included in your tier. There are no licensing fees, no lock-in, and no ongoing dependency on Ventrify to operate your product.</p>
+          <p>What you walk away with is a market-ready product that is entirely yours to own, operate, and grow.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary>
+          Can the scope change once the project has started?
+          <span class="faq-icon">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="1" x2="6" y2="11"/><line x1="1" y1="6" x2="11" y2="6"/></svg>
+          </span>
+        </summary>
+        <div class="faq-body">
+          <p>The MVP scope is deliberately locked in at the end of the Define phase — and that's a feature, not a limitation. Scope creep is one of the most common reasons ventures run over time and budget, and our structured sign-off process protects both you and the integrity of the build.</p>
+          <p>That said, we understand that ideas evolve. If a meaningful change is required mid-project, we'll assess it openly, communicate any impact on timeline or cost, and agree a path forward together before proceeding.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary>
+          Which tier is right for me?
+          <span class="faq-icon">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="1" x2="6" y2="11"/><line x1="1" y1="6" x2="11" y2="6"/></svg>
+          </span>
+        </summary>
+        <div class="faq-body">
+          <p>If your priority is getting a validated, functional MVP built and delivered, <strong>Launchpad</strong> covers everything you need. If you're also thinking about how you'll go to market — brand, website, investor materials, and a launch campaign — <strong>Venture</strong> is the most popular choice for a reason. And if you want everything, including ongoing content, video, and post-launch growth support, <strong>Venture Pro</strong> is the complete package.</p>
+          <p>Not sure? Book a discovery call and we'll help you figure out the right fit based on your goals and stage.</p>
+        </div>
+      </details>
+
+    </div>
+  </div>
+</section>
+
+<!-- CTA BANNER -->
+<section class="section" style="padding-top:0;">
+  <div class="container">
+    <div class="cta-banner" data-reveal>
+      <div class="orb" style="width:400px;height:400px;background:radial-gradient(circle,rgba(110,58,250,0.2) 0%,transparent 70%);top:-120px;right:-80px;filter:blur(80px);"></div>
+      <div class="orb" style="width:300px;height:300px;background:radial-gradient(circle,rgba(0,229,200,0.1) 0%,transparent 70%);bottom:-60px;left:-40px;filter:blur(70px);"></div>
+      <div class="s-label" style="justify-content:center; margin-bottom:1.5rem;">Ready to Build?</div>
+      <h2 class="s-title" style="margin-bottom:1rem;">Your venture starts here</h2>
+      <p class="s-sub" style="margin:0 auto 2.5rem;">Book a discovery call and let's map out exactly what it takes to turn your idea into a launched, investable product.</p>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+        <a href="contact.html" class="btn btn-primary btn-lg">Book Discovery Call</a>
+        <a href="about.html" class="btn btn-outline btn-lg">How We Work</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand" data-reveal>
+      <div class="logo"><img src="ventrify.svg" alt="Ventrify" style="height:22px;width:auto;display:block;"></div>
+      <p>AI-powered venture building for pre-seed founders. From idea to launched product — we build it all.</p>
+      <div class="location-chip">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        Dubai, UAE
+      </div>
+    </div>
+    <div class="footer-col">
+      <h4>Company</h4>
+      <a href="about.html">About</a>
+      <a href="work.html">Work</a>
+      <a href="pricing.html">Pricing</a>
+      <a href="insights.html">Insights</a>
+      <a href="contact.html">Contact</a>
+    </div>
+    <div class="footer-col">
+      <h4>Services</h4>
+      <a href="about.html">Strategy</a>
+      <a href="about.html">Design</a>
+      <a href="about.html">Development</a>
+      <a href="about.html">Brand &amp; Marketing</a>
+    </div>
+    <div class="footer-col">
+      <h4>Connect</h4>
+      <a href="#">LinkedIn</a>
+      <a href="#">Instagram</a>
+      <a href="#">Twitter / X</a>
+      <a href="contact.html">hello@ventrify.io</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2026 Ventrify. All rights reserved.</p>
+    <p>Built with AI. Launched with intention.</p>
+  </div>
+</footer>
+
+<script>
+  const hamburger = document.getElementById('hamburger');
+  const mobileMenu = document.getElementById('mobileMenu');
+
+  hamburger.addEventListener('click', () => {
+    const isOpen = mobileMenu.classList.toggle('open');
+    hamburger.classList.toggle('open', isOpen);
+    hamburger.setAttribute('aria-expanded', isOpen);
+    document.body.style.overflow = isOpen ? 'hidden' : '';
+  });
+
+  // Close on link tap
+  mobileMenu.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', () => {
+      mobileMenu.classList.remove('open');
+      hamburger.classList.remove('open');
+      hamburger.setAttribute('aria-expanded', 'false');
+      document.body.style.overflow = '';
+    });
+  });
+
+  // Scroll reveal
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('revealed');
+        revealObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -48px 0px' });
+
+  document.querySelectorAll('[data-reveal]').forEach(el => revealObserver.observe(el));
+</script>
+</body>
+</html>
