@@ -52,27 +52,19 @@
     .project-hero-img img{width:100%;display:block;}
     .project-hero-img-overlay{position:absolute;inset:0;}
 
-    .project-body{display:grid;grid-template-columns:1fr 340px;gap:5rem;align-items:start;}
-    .project-content h2{font-size:1.6rem;font-weight:800;letter-spacing:-0.015em;margin:2.5rem 0 1rem;}
+    .project-body{max-width:900px;margin:0 auto;}
+    .project-content h2{font-size:1.5rem;font-weight:800;letter-spacing:-0.015em;margin:3.5rem 0 1rem;}
     .project-content h2:first-child{margin-top:0;}
-    .project-content p{font-size:0.95rem;line-height:1.75;color:var(--muted);margin-bottom:1rem;}
-    .project-sidebar{position:sticky;top:6rem;}
-    .sidebar-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.75rem;margin-bottom:1.5rem;}
-    .sidebar-card h4{font-family:'Orbitron',sans-serif;font-size:0.72rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem;}
-    .sidebar-tag-list{display:flex;flex-wrap:wrap;gap:6px;}
-    .sidebar-tag{font-size:0.75rem;padding:4px 10px;border-radius:5px;background:rgba(110,58,250,0.08);border:1px solid rgba(110,58,250,0.18);color:var(--brand-light);}
-    .tier-badge{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,rgba(110,58,250,0.15) 0%,rgba(0,229,200,0.08) 100%);border:1px solid rgba(110,58,250,0.3);border-radius:8px;padding:0.75rem 1rem;width:100%;margin-bottom:0.75rem;}
-    .tier-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);}
-    .tier-name{font-family:'Orbitron',sans-serif;font-size:0.85rem;font-weight:700;}
+    .project-content p{font-size:0.975rem;line-height:1.82;color:var(--muted);margin-bottom:1.1rem;}
 
-    .gallery-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-top:1rem;}
-    .gallery-item{border-radius:10px;overflow:hidden;position:relative;background:var(--surface-2);}
+    .gallery-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1.25rem;margin-top:1.25rem;}
+    .gallery-item{border-radius:14px;overflow:hidden;position:relative;background:var(--surface-2);}
     .gallery-item img{width:100%;display:block;transition:transform 0.4s ease;}
     .gallery-item:hover img{transform:scale(1.02);}
     .gallery-item.full{grid-column:span 2;}
-    .gallery-section{margin-top:3rem;}
-    .gallery-section-label{display:inline-flex;align-items:center;gap:10px;font-size:0.72rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem;}
-    .gallery-section-label::before{content:'';display:block;width:18px;height:1px;background:var(--muted);}
+    .gallery-section{margin-top:4rem;padding-top:3rem;border-top:1px solid var(--border);}
+    .gallery-section-label{display:inline-flex;align-items:center;gap:10px;font-size:0.72rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);margin-bottom:1.25rem;}
+    .gallery-section-label::before{content:'';display:block;width:18px;height:1px;background:var(--accent);}
 
     .cta-banner{background:linear-gradient(135deg,rgba(110,58,250,0.14) 0%,rgba(0,229,200,0.04) 100%);border:1px solid rgba(110,58,250,0.22);border-radius:24px;padding:5.5rem 4rem;text-align:center;position:relative;overflow:hidden;}
     .orb{position:absolute;border-radius:50%;filter:blur(90px);pointer-events:none;}
@@ -97,8 +89,6 @@
       .project-hero{padding:8rem 1.5rem 0;}
       .section{padding:4rem 1.5rem;}
       .project-meta-row{grid-template-columns:repeat(2,1fr);}
-      .project-body{grid-template-columns:1fr;}
-      .project-sidebar{position:static;}
       .footer-grid{grid-template-columns:1fr 1fr;}
     }
     .hamburger{display:none;flex-direction:column;justify-content:center;align-items:center;width:40px;height:40px;gap:5px;background:transparent;border:none;cursor:pointer;padding:4px;border-radius:8px;transition:background 0.2s ease;flex-shrink:0;}
@@ -192,7 +182,7 @@
 </div>
 
 <!-- PROJECT CONTENT -->
-<section class="section" style="padding-top:0;">
+<section class="section" style="padding-top:2rem;">
   <div class="container">
     <div class="project-body">
       <div class="project-content" data-reveal>
@@ -243,45 +233,6 @@
 
       </div>
 
-      <div class="project-sidebar" data-reveal data-delay="1">
-        <div class="sidebar-card">
-          <h4>Deliverables</h4>
-          <div class="sidebar-tag-list">
-            <span class="sidebar-tag">Market Research</span>
-            <span class="sidebar-tag">Product Vision</span>
-            <span class="sidebar-tag">User Personas</span>
-            <span class="sidebar-tag">Wireframes</span>
-            <span class="sidebar-tag">Design System</span>
-            <span class="sidebar-tag">Polished UI</span>
-            <span class="sidebar-tag">Web App Build</span>
-            <span class="sidebar-tag">Mobile App</span>
-            <span class="sidebar-tag">AI Health Engine</span>
-            <span class="sidebar-tag">Telemedicine Feature</span>
-            <span class="sidebar-tag">Marketing Website</span>
-            <span class="sidebar-tag">Figma Files</span>
-          </div>
-        </div>
-        <div class="sidebar-card">
-          <h4>Tech Stack</h4>
-          <div class="sidebar-tag-list">
-            <span class="sidebar-tag">React Native</span>
-            <span class="sidebar-tag">Next.js</span>
-            <span class="sidebar-tag">Node.js</span>
-            <span class="sidebar-tag">PostgreSQL</span>
-            <span class="sidebar-tag">WebRTC</span>
-            <span class="sidebar-tag">AWS</span>
-          </div>
-        </div>
-        <div class="sidebar-card">
-          <h4>Venture Tier</h4>
-          <div class="tier-badge">
-            <span class="tier-dot"></span>
-            <span class="tier-name">Venture Pro</span>
-          </div>
-          <p style="font-size:0.8rem;color:var(--muted);line-height:1.6;">Full 5-phase build plus brand, marketing, investor deck, and growth support.</p>
-        </div>
-        <a href="contact.html" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:0.5rem;">Start a Similar Venture</a>
-      </div>
     </div>
   </div>
 </section>
