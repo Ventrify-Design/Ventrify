@@ -331,40 +331,47 @@
       </div>
 
       <!-- RIGHT: FORM -->
-      <div class="contact-form" data-reveal>
+      <form class="contact-form" id="contactForm" action="https://api.web3forms.com/submit" method="POST">
+        <!-- Web3Forms config — replace YOUR_ACCESS_KEY after signing up at web3forms.com -->
+        <input type="hidden" name="access_key" value="0c7e6dc6-a0b0-4dcf-9317-8899e8884f8e">
+        <input type="hidden" name="subject" value="New Enquiry — Ventrify">
+        <input type="hidden" name="from_name" value="Ventrify Contact Form">
+        <input type="hidden" name="tier" id="tierInput" value="Venture">
+        <input type="checkbox" name="botcheck" style="display:none;">
+
         <h2 style="font-size:1.5rem;font-weight:800;letter-spacing:-0.015em;margin-bottom:0.5rem;">Start your venture</h2>
         <p style="font-size:0.875rem;color:var(--muted);margin-bottom:2rem;line-height:1.65;">Tell us about your idea and we'll figure out the best path forward together.</p>
 
         <div class="form-row">
           <div class="form-group">
             <label>First Name</label>
-            <input type="text" class="form-input" placeholder="John">
+            <input type="text" name="first_name" class="form-input" placeholder="John" required>
           </div>
           <div class="form-group">
             <label>Last Name</label>
-            <input type="text" class="form-input" placeholder="Smith">
+            <input type="text" name="last_name" class="form-input" placeholder="Smith" required>
           </div>
         </div>
 
         <div class="form-row">
           <div class="form-group">
             <label>Email</label>
-            <input type="email" class="form-input" placeholder="john@yourstartup.com">
+            <input type="email" name="email" class="form-input" placeholder="john@yourstartup.com" required>
           </div>
           <div class="form-group">
             <label>Phone (optional)</label>
-            <input type="tel" class="form-input" placeholder="+971 ...">
+            <input type="tel" name="phone" class="form-input" placeholder="+971 ...">
           </div>
         </div>
 
         <div class="form-group">
           <label>Company / Product Name</label>
-          <input type="text" class="form-input" placeholder="What's your startup called?">
+          <input type="text" name="company" class="form-input" placeholder="What's your startup called?">
         </div>
 
         <div class="form-group">
           <label>Industry / Sector</label>
-          <select class="form-select form-input">
+          <select name="industry" class="form-select form-input">
             <option value="" disabled selected>Select your industry</option>
             <option>Fintech</option>
             <option>Health &amp; Wellness</option>
@@ -402,12 +409,12 @@
 
         <div class="form-group">
           <label>Tell us about your idea</label>
-          <textarea class="form-textarea" placeholder="Describe your product idea, the problem it solves, and where you are right now (early idea, validated concept, etc.)..."></textarea>
+          <textarea name="message" class="form-textarea" placeholder="Describe your product idea, the problem it solves, and where you are right now (early idea, validated concept, etc.)..." required></textarea>
         </div>
 
         <div class="form-group">
           <label>How did you hear about Ventrify?</label>
-          <select class="form-select form-input">
+          <select name="referral" class="form-select form-input">
             <option value="" disabled selected>Select an option</option>
             <option>LinkedIn</option>
             <option>Instagram</option>
@@ -418,12 +425,20 @@
           </select>
         </div>
 
-        <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:0.9rem 2rem;font-size:0.95rem;border-radius:10px;margin-top:0.5rem;">
+        <button type="submit" id="submitBtn" class="btn btn-primary" style="width:100%;justify-content:center;padding:0.9rem 2rem;font-size:0.95rem;border-radius:10px;margin-top:0.5rem;">
           Send My Enquiry
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:8px;"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </button>
         <p class="form-note">By submitting you agree to our Privacy Policy. We'll never share your data with third parties.</p>
-      </div>
+
+        <!-- Success message -->
+        <div id="formSuccess" style="display:none;margin-top:1.5rem;padding:1.5rem;background:rgba(0,229,200,0.07);border:1px solid rgba(0,229,200,0.25);border-radius:12px;text-align:center;">
+          <div style="font-size:1.5rem;margin-bottom:0.5rem;">&#10003;</div>
+          <div style="font-family:'Orbitron',sans-serif;font-size:0.9rem;font-weight:700;color:var(--accent);margin-bottom:0.4rem;">Enquiry sent!</div>
+          <div style="font-size:0.83rem;color:var(--muted);line-height:1.6;">We've received your message and will get back to you within 24 hours.</div>
+        </div>
+        <div id="formError" style="display:none;margin-top:1rem;padding:1rem;background:rgba(255,80,80,0.07);border:1px solid rgba(255,80,80,0.2);border-radius:10px;font-size:0.82rem;color:#ff7070;text-align:center;">Something went wrong — please try again or email us directly at hello@ventrify.io</div>
+      </form>
     </div>
   </div>
 </section>
@@ -452,7 +467,33 @@
   function selectTier(el) {
     document.querySelectorAll('.tier-opt').forEach(t => t.classList.remove('selected'));
     el.classList.add('selected');
+    document.getElementById('tierInput').value = el.querySelector('.tier-opt-name').textContent;
   }
+
+  document.getElementById('contactForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = document.getElementById('submitBtn');
+    const successEl = document.getElementById('formSuccess');
+    const errorEl = document.getElementById('formError');
+    btn.disabled = true;
+    btn.innerHTML = 'Sending&hellip;';
+    errorEl.style.display = 'none';
+    try {
+      const res = await fetch('https://api.web3forms.com/submit', { method:'POST', body: new FormData(this) });
+      const json = await res.json();
+      if (json.success) {
+        this.querySelectorAll('input:not([type=hidden]):not([type=checkbox]),select,textarea').forEach(f => f.value = '');
+        btn.style.display = 'none';
+        successEl.style.display = 'block';
+      } else {
+        throw new Error('failed');
+      }
+    } catch(_) {
+      btn.disabled = false;
+      btn.innerHTML = 'Try Again <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:8px;"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
+      errorEl.style.display = 'block';
+    }
+  });
   const revealObs = new IntersectionObserver((entries) => {
     entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('revealed'); revealObs.unobserve(e.target); } });
   }, { threshold: 0.1, rootMargin: '0px 0px -48px 0px' });
