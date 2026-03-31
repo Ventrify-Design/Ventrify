@@ -1,0 +1,70 @@
+/* ============================================
+   VENTRIFY DESIGN TOKENS
+   Single source of truth for all design values.
+   Change a token here → every page updates.
+   ============================================ */
+
+:root {
+  /* ── Colour Palette ── */
+  --brand: #6C5CE7;
+  --brand-light: #A29BFE;
+  --accent: #00CEFF;
+  --bg: #0B0E17;
+  --surface: #111627;
+  --surface-2: #1A1F35;
+  --surface-card: #1A2038;
+  --text: #E8EAF0;
+  --muted: #7B8194;
+  --border: rgba(255,255,255,0.06);
+
+  /* ── Brand RGBA (for opacity variants) ── */
+  --brand-rgb: 108,92,231;
+  --accent-rgb: 0,206,255;
+
+  /* ── Shadows (clean, minimal) ── */
+  --shadow-raised: 0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-raised-hover: 0 4px 16px rgba(0,0,0,0.5), 0 2px 4px rgba(0,0,0,0.3);
+  --shadow-floating: 0 8px 32px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.4);
+  --shadow-inset: inset 0 1px 3px rgba(0,0,0,0.4);
+  --shadow-btn: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-btn-hover: 0 3px 12px rgba(0,0,0,0.5);
+  --shadow-btn-active: inset 0 1px 3px rgba(0,0,0,0.5);
+  --shadow-brand-glow: 0 0 24px rgba(108,92,231,0.15);
+  --shadow-brand-glow-hover: 0 0 36px rgba(108,92,231,0.25);
+  --shadow-nav: 0 1px 0 rgba(255,255,255,0.04);
+  --shadow-footer: 0 -1px 0 rgba(255,255,255,0.04);
+  --shadow-cta: 0 2px 8px rgba(0,0,0,0.4);
+
+  /* ── Typography ── */
+  --font-heading: 'Nunito', sans-serif;
+  --font-body: 'Raleway', sans-serif;
+
+  /* ── Font Weights ── */
+  --fw-heading: 500;
+  --fw-heading-bold: 700;
+  --fw-body: 400;
+  --fw-body-medium: 500;
+  --fw-body-semibold: 600;
+  --fw-body-bold: 700;
+  --fw-label: 700;
+
+  /* ── Spacing ── */
+  --section-padding: 6rem 3rem;
+  --section-padding-tablet: 5rem 1.5rem;
+  --section-padding-mobile: 3rem 1.25rem;
+  --card-padding: 2rem;
+  --card-padding-mobile: 1.5rem;
+
+  /* ── Radii ── */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-card: 16px;
+  --radius-lg: 20px;
+  --radius-xl: 24px;
+
+  /* ── Transitions ── */
+  --ease-spring: cubic-bezier(0.34,1.56,0.64,1);
+  --ease-smooth: cubic-bezier(0.16,1,0.3,1);
+  --transition-fast: 0.2s ease;
+  --transition-medium: 0.3s ease;
+}

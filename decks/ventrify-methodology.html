@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ventrify — Methodology</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  @page { size: landscape; margin: 0; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --brand: #6E3AFA; --brand-light: #9B6FFF; --accent: #00B8A0;
+    --bg: #FFFFFF; --surface: #F5F5F7; --surface-2: #FFFFFF;
+    --text: #1D1D1F; --muted: #86868B; --border: rgba(0,0,0,0.08);
+  }
+  body { background: #F0F0F0; color: var(--text); font-family: 'Raleway', sans-serif; line-height: 1.6; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  h1,h2,h3,h4,h5 { font-family: 'Nunito', sans-serif; letter-spacing: -0.02em; }
+
+  .slide {
+    width: 1280px; height: 720px; padding: 56px 72px;
+    position: relative; overflow: hidden;
+    page-break-after: always; page-break-inside: avoid;
+    background: var(--bg);
+    display: flex; flex-direction: column; justify-content: center;
+    margin: 0 auto;
+  }
+  .slide:last-child { page-break-after: avoid; }
+
+  .slide-label { display: inline-flex; align-items: center; gap: 10px; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: 16px; }
+  .slide-label::before { content: ''; display: block; width: 18px; height: 1px; background: var(--accent); }
+  .slide-title { font-size: 2rem; font-weight: 800; letter-spacing: -0.025em; line-height: 1.15; margin-bottom: 14px; color: var(--text); }
+  .slide-sub { font-size: 0.95rem; line-height: 1.7; color: var(--muted); max-width: 640px; }
+  .gradient-text { background: linear-gradient(140deg, #9B6FFF, #00B8A0); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; display: inline; padding-bottom: 0.05em; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+
+  .footer-bar { position: absolute; bottom: 0; left: 0; right: 0; height: 48px; display: flex; align-items: center; justify-content: space-between; padding: 0 72px; border-top: 1px solid rgba(0,0,0,0.06); font-size: 0.6rem; color: var(--muted); letter-spacing: 0.06em; }
+
+  /* Card grid */
+  .card-grid { display: grid; gap: 16px; margin-top: 24px; }
+  .card-grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .card-grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .card-grid-2 { grid-template-columns: 1fr 1fr; }
+  .card-grid-5 { grid-template-columns: repeat(5, 1fr); }
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px;
+    position: relative; overflow: hidden;
+  }
+  .card-number { font-family: 'Nunito', sans-serif; font-size: 0.6rem; font-weight: 700; color: var(--brand-light); opacity: 0.5; margin-bottom: 8px; }
+  .card-title { font-family: 'Nunito', sans-serif; font-size: 0.82rem; font-weight: 700; margin-bottom: 6px; color: var(--text); }
+  .card-body { font-size: 0.75rem; line-height: 1.65; color: var(--muted); }
+
+  /* Tag */
+  .tag { display: inline-block; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.06em; padding: 3px 10px; border-radius: 5px; background: rgba(110,58,250,0.06); border: 1px solid rgba(110,58,250,0.12); color: #9B6FFF; margin-right: 6px; margin-bottom: 6px; }
+
+  /* Phase strip */
+  .phase-strip { display: flex; gap: 12px; margin-top: 20px; }
+  .phase-card { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px 16px; text-align: center; position: relative; }
+  .phase-card.active { border-color: rgba(110,58,250,0.2); background: rgba(110,58,250,0.03); }
+  .phase-num { font-family: 'Nunito', sans-serif; font-size: 0.58rem; font-weight: 700; color: var(--accent); margin-bottom: 6px; letter-spacing: 0.1em; }
+  .phase-name { font-family: 'Nunito', sans-serif; font-size: 0.9rem; font-weight: 700; margin-bottom: 6px; color: var(--text); }
+  .phase-desc { font-size: 0.65rem; line-height: 1.55; color: var(--muted); }
+  .phase-weeks { font-size: 0.55rem; font-weight: 700; color: var(--accent); margin-top: 8px; letter-spacing: 0.06em; }
+
+  /* Stat */
+  .stat-row { display: flex; gap: 40px; margin-top: 24px; }
+  .stat { text-align: center; }
+  .stat-val { font-family: 'Nunito', sans-serif; font-size: 2.2rem; font-weight: 900; color: var(--text); }
+  .stat-label { font-size: 0.68rem; font-weight: 600; color: var(--muted); margin-top: 4px; line-height: 1.4; }
+
+  /* Two col layout */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start; }
+  .two-col-narrow { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: start; }
+
+  /* Deliverable card */
+  .del-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+  .del-card.highlight { border-color: rgba(110,58,250,0.2); background: rgba(110,58,250,0.03); }
+  .del-card-title { font-family: 'Nunito', sans-serif; font-size: 0.7rem; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+  .del-card-body { font-size: 0.6rem; line-height: 1.5; color: var(--muted); }
+
+  /* Deliverable list */
+  .del-list { list-style: none; margin-top: 12px; }
+  .del-list li { font-size: 0.68rem; color: var(--muted); padding: 4px 0; padding-left: 16px; position: relative; line-height: 1.5; }
+  .del-list li::before { content: '\2713'; position: absolute; left: 0; color: var(--accent); font-size: 0.6rem; font-weight: 700; }
+
+  /* Callout box */
+  .callout { background: rgba(110,58,250,0.04); border: 1px solid rgba(110,58,250,0.12); border-radius: 12px; padding: 20px 24px; margin-top: 16px; text-align: center; }
+  .callout-text { font-family: 'Nunito', sans-serif; font-size: 0.88rem; font-weight: 700; color: var(--brand); }
+
+  /* Table */
+  .handoff-table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 0.72rem; }
+  .handoff-table th { font-family: 'Nunito', sans-serif; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; text-align: left; padding: 10px 14px; border-bottom: 1px solid rgba(0,0,0,0.08); color: var(--muted); background: var(--surface); }
+  .handoff-table td { padding: 9px 14px; border-bottom: 1px solid rgba(0,0,0,0.04); color: var(--muted); vertical-align: top; line-height: 1.5; }
+  .handoff-table td:first-child { font-family: 'Nunito', sans-serif; font-weight: 700; color: var(--text); width: 140px; }
+  .handoff-table tr:last-child td { border-bottom: none; }
+
+  /* Timeline badge */
+  .timeline-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 0.62rem; font-weight: 700; color: var(--accent); margin-top: 16px; letter-spacing: 0.06em; }
+  .timeline-badge::before { content: ''; display: block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+
+  /* Orb decorations */
+  .orb { position: absolute; border-radius: 50%; filter: blur(80px); pointer-events: none; z-index: 0; }
+
+  /* Gate/payment column */
+  .gate-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 28px 24px; }
+  .gate-title { font-family: 'Nunito', sans-serif; font-size: 1rem; font-weight: 800; margin-bottom: 16px; color: var(--text); }
+  .gate-item { margin-bottom: 14px; }
+  .gate-item:last-child { margin-bottom: 0; }
+  .gate-item-label { font-family: 'Nunito', sans-serif; font-size: 0.72rem; font-weight: 700; color: var(--brand); margin-bottom: 4px; }
+  .gate-item-body { font-size: 0.65rem; line-height: 1.6; color: var(--muted); }
+
+  @media screen {
+    .slide { margin: 20px auto; box-shadow: 0 4px 24px rgba(0,0,0,0.08); border: 1px solid rgba(0,0,0,0.06); border-radius: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 1 — COVER -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide" style="justify-content: center; align-items: center; text-align: center;">
+  <div class="orb" style="width:600px;height:600px;background:radial-gradient(circle,rgba(110,58,250,0.05) 0%,transparent 70%);top:-100px;right:-100px;"></div>
+  <div class="orb" style="width:400px;height:400px;background:radial-gradient(circle,rgba(0,184,160,0.04) 0%,transparent 70%);bottom:-80px;left:-60px;"></div>
+  <div style="position:relative;z-index:1;">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:30px;width:auto;display:block;margin:0 auto 12px;">
+    <div style="font-size:1.15rem;color:var(--muted);margin-bottom:40px;letter-spacing:0.02em;">The Ventrify Methodology</div>
+    <h1 style="font-size:2.8rem;font-weight:900;letter-spacing:-0.03em;line-height:1.15;margin-bottom:20px;color:var(--text);">
+      Five phases. One outcome:<br><span style="color:var(--brand-light);">Launched product.</span>
+    </h1>
+    <p style="font-size:1rem;color:var(--muted);max-width:560px;margin:0 auto 32px;line-height:1.7;">A structured, repeatable process from raw idea to market-ready venture. Two client gates. Three payment milestones. Five parallel workstreams.</p>
+    <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
+      <span class="tag" style="font-size:0.65rem;padding:5px 14px;">Methodology Overview</span>
+      <span class="tag" style="font-size:0.65rem;padding:5px 14px;">March 2026</span>
+      <span class="tag" style="font-size:0.65rem;padding:5px 14px;">Dubai, UAE</span>
+    </div>
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Methodology</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 2 — OVERVIEW -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide" style="">
+  <div class="orb" style="width:400px;height:400px;background:radial-gradient(circle,rgba(110,58,250,0.04) 0%,transparent 70%);top:-80px;right:-60px;"></div>
+  <div style="position:relative;z-index:1;">
+    <div class="slide-label">The Process</div>
+    <h2 class="slide-title">How every venture <span class="gradient-text">is built</span></h2>
+    <p class="slide-sub" style="margin-bottom:24px;">Five sequential phases, each with defined deliverables, timelines, and quality gates.</p>
+    <div class="phase-strip">
+      <div class="phase-card">
+        <div class="phase-num">PHASE 01</div>
+        <div class="phase-name">Discover</div>
+        <div class="phase-desc">Deep market and user research to build your evidence base</div>
+        <div class="phase-weeks">Weeks 1–2</div>
+      </div>
+      <div class="phase-card">
+        <div class="phase-num">PHASE 02</div>
+        <div class="phase-name">Define</div>
+        <div class="phase-desc">Shape the product vision, personas, and go-to-market plan</div>
+        <div class="phase-weeks">Weeks 2–4</div>
+      </div>
+      <div class="phase-card">
+        <div class="phase-num">PHASE 03</div>
+        <div class="phase-name">Design</div>
+        <div class="phase-desc">Every screen specified, every component documented in Figma</div>
+        <div class="phase-weeks">Weeks 3–8</div>
+      </div>
+      <div class="phase-card">
+        <div class="phase-num">PHASE 04</div>
+        <div class="phase-name">Develop</div>
+        <div class="phase-desc">Production-grade build with full QA and launch readiness</div>
+        <div class="phase-weeks">Weeks 6–14</div>
+      </div>
+      <div class="phase-card">
+        <div class="phase-num">PHASE 05</div>
+        <div class="phase-name">Deliver</div>
+        <div class="phase-desc">Clean handoff with full IP transfer and documentation</div>
+        <div class="phase-weeks">Weeks 10–16</div>
+      </div>
+    </div>
+    <p style="font-size:0.68rem;color:var(--muted);margin-top:20px;max-width:800px;line-height:1.6;">Two client gates control progression: Gate 1 after Research (sign-off required), Gate 2 after Define (scope lock + SOW signed). No work proceeds without gate approval and corresponding payment milestone.</p>
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Methodology</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 3 — PHASE 01: DISCOVER -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="orb" style="width:350px;height:350px;background:radial-gradient(circle,rgba(0,184,160,0.04) 0%,transparent 70%);bottom:-60px;left:-40px;"></div>
+  <div style="position:relative;z-index:1;">
+    <div class="slide-label">Phase 01</div>
+    <h2 class="slide-title" style="font-size:2rem;">Discover <br><span style="font-size:1.3rem;font-weight:600;color:var(--brand-light);">Research your market</span></h2>
+    <p class="slide-sub" style="margin-bottom:20px;font-size:0.88rem;">We deeply research your market, competitors, and target users — building the evidence base that shapes every decision from here.</p>
+    <div class="card-grid card-grid-2" style="gap:12px;">
+      <div class="del-card">
+        <div class="del-card-title">Market Research & Analysis</div>
+        <div class="del-card-body">TAM/SAM/SOM sizing, growth trends, regulatory landscape, and market timing assessment.</div>
+      </div>
+      <div class="del-card">
+        <div class="del-card-title">Competitor Analysis</div>
+        <div class="del-card-body">Feature matrix, pricing models, channel strategies, and positioning gaps across direct and indirect competitors.</div>
+      </div>
+      <div class="del-card">
+        <div class="del-card-title">User Insights</div>
+        <div class="del-card-body">Behaviour patterns, sentiment analysis, pain points, and willingness-to-pay indicators from real user data.</div>
+      </div>
+      <div class="del-card">
+        <div class="del-card-title">SWOT Analysis</div>
+        <div class="del-card-body">Strengths, weaknesses, opportunities, and threats mapped to your specific market position.</div>
+      </div>
+      <div class="del-card">
+        <div class="del-card-title">Market Opportunities Report</div>
+        <div class="del-card-body">Synthesised findings with actionable recommendations for product positioning and differentiation.</div>
+      </div>
+      <div class="del-card highlight">
+        <div class="del-card-title" style="color:var(--brand);">Gate 1 Research Presentation Deck</div>
+        <div class="del-card-body">Comprehensive deck presenting all findings. Client sign-off required before proceeding to Define.</div>
+      </div>
+    </div>
+    <div class="timeline-badge">Timeline: Weeks 1–2</div>
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Methodology</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 4 — PHASE 02: DEFINE -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide" style="">
+  <div class="orb" style="width:400px;height:400px;background:radial-gradient(circle,rgba(110,58,250,0.05) 0%,transparent 70%);top:-100px;right:-80px;"></div>
+  <div style="position:relative;z-index:1;">
+    <div class="slide-label">Phase 02</div>
+    <h2 class="slide-title" style="font-size:2rem;">Define <br><span style="font-size:1.3rem;font-weight:600;color:var(--brand-light);">Shape the product</span></h2>
+    <p class="slide-sub" style="margin-bottom:16px;font-size:0.88rem;">With insights in place, we shape the product foundation — who it's for, what it does, how it's positioned, and how it goes to market.</p>
+    <div class="card-grid card-grid-3" style="gap:10px;">
+      <div class="del-card" style="padding:12px 14px;">
+        <div class="del-card-title" style="font-size:0.68rem;">User Personas</div>
+        <div class="del-card-body" style="font-size:0.58rem;">3 detailed personas with goals, frustrations, and behaviours.</div>
+      </div>
+      <div class="del-card" style="padding:12px 14px;">
+        <div class="del-card-title" style="font-size:0.68rem;">Product Vision Document</div>
+        <div class="del-card-body" style="font-size:0.58rem;">North star vision, value proposition, and success metrics.</div>
+      </div>
+      <div class="del-card" style="padding:12px 14px;">
+        <div class="del-card-title" style="font-size:0.68rem;">MVP Feature Prioritisation</div>
+        <div class="del-card-body" style="font-size:0.58rem;">MoSCoW framework applied to every feature in scope.</div>
+      </div>
+      <div class="del-card" style="padding:12px 14px;">
+        <div class="del-card-title" style="font-size:0.68rem;">Tech Stack Recommendation</div>
+        <div class="del-card-body" style="font-size:0.58rem;">Evaluated options with rationale for each technology choice.</div>
+      </div>
+      <div class="del-card" style="padding:12px 14px;">
+        <div class="del-card-title" style="font-size:0.68rem;">User Journeys</div>
+        <div class="del-card-body" style="font-size:0.58rem;">End-to-end flows for every core user task and edge case.</div>
+      </div>
+      <div class="del-card" style="padding:12px 14px;">
+        <div class="del-card-title" style="font-size:0.68rem;">Product Roadmap</div>
+        <div class="del-card-body" style="font-size:0.58rem;">v1, v1.1, and v2 milestones with feature allocation.</div>
+      </div>
+      <div class="del-card" style="padding:12px 14px;">
+        <div class="del-card-title" style="font-size:0.68rem;">Tone of Voice + Social Strategy</div>
+        <div class="del-card-body" style="font-size:0.58rem;">Brand voice guide and social media content strategy.</div>
+      </div>
+      <div class="del-card" style="padding:12px 14px;">
+        <div class="del-card-title" style="font-size:0.68rem;">4 Auto-Generated Decks</div>
+        <div class="del-card-body" style="font-size:0.58rem;">Research, Vision, Marketing, and Investor decks.</div>
+      </div>
+      <div class="del-card highlight" style="padding:12px 14px;">
+        <div class="del-card-title" style="font-size:0.68rem;color:var(--brand);">Gate 2 Vision + SOW</div>
+        <div class="del-card-body" style="font-size:0.58rem;">Vision presentation + Statement of Work. Scope locks here.</div>
+      </div>
+    </div>
+    <div class="timeline-badge">Timeline: Weeks 2–4</div>
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Methodology</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 5 — PHASE 03: DESIGN -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="orb" style="width:350px;height:350px;background:radial-gradient(circle,rgba(0,184,160,0.04) 0%,transparent 70%);bottom:-60px;right:-40px;"></div>
+  <div style="position:relative;z-index:1;">
+    <div class="slide-label">Phase 03</div>
+    <h2 class="slide-title" style="font-size:2rem;">Design <br><span style="font-size:1.3rem;font-weight:600;color:var(--brand-light);">Every pixel specified</span></h2>
+    <p class="slide-sub" style="margin-bottom:20px;font-size:0.88rem;">Every screen is specified, every component documented, and the design system is built in Figma with custom plugins.</p>
+    <div class="card-grid card-grid-2" style="gap:12px;">
+      <div class="del-card">
+        <div class="del-card-title">User Stories</div>
+        <div class="del-card-body">Complete user stories for all MVP features, with acceptance criteria and edge cases defined.</div>
+      </div>
+      <div class="del-card">
+        <div class="del-card-title">Information Architecture</div>
+        <div class="del-card-body">Screen map, navigation tree, and data model — the structural blueprint for the entire product.</div>
+      </div>
+      <div class="del-card">
+        <div class="del-card-title">Wireframe Notes</div>
+        <div class="del-card-body">Detailed layout specifications for every screen, annotated with interaction patterns and states.</div>
+      </div>
+      <div class="del-card">
+        <div class="del-card-title">Figma Variables Plugin</div>
+        <div class="del-card-body">82 design tokens auto-applied: colours, spacing, typography, radii, and elevation values.</div>
+      </div>
+      <div class="del-card">
+        <div class="del-card-title">Figma Components Plugin</div>
+        <div class="del-card-body">121 component variants built to spec — buttons, inputs, cards, modals, navigation, and more.</div>
+      </div>
+      <div class="del-card">
+        <div class="del-card-title">Component Specification Documents</div>
+        <div class="del-card-body">Every component documented with props, states, variants, and usage guidelines for developers.</div>
+      </div>
+    </div>
+    <div class="timeline-badge">Timeline: Weeks 3–8</div>
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Methodology</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 6 — PHASE 04: DEVELOP -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide" style="">
+  <div class="orb" style="width:400px;height:400px;background:radial-gradient(circle,rgba(110,58,250,0.04) 0%,transparent 70%);top:-80px;left:-60px;"></div>
+  <div style="position:relative;z-index:1;">
+    <div class="slide-label">Phase 04</div>
+    <h2 class="slide-title" style="font-size:2rem;">Develop <br><span style="font-size:1.3rem;font-weight:600;color:var(--brand-light);">Production-grade build</span></h2>
+    <p class="slide-sub" style="margin-bottom:16px;font-size:0.88rem;">We build the MVP to production-grade standards — a real app, not a prototype.</p>
+    <div class="two-col-narrow" style="gap:24px;">
+      <div>
+        <ul class="del-list" style="margin-top:0;">
+          <li><strong style="color:var(--text);">Expo mobile app</strong> — cross-platform iOS & Android</li>
+          <li><strong style="color:var(--text);">Theme system</strong> — design tokens mapped to code</li>
+          <li><strong style="color:var(--text);">Navigation architecture</strong> — tab, stack, and modal routing</li>
+          <li><strong style="color:var(--text);">11+ UI components</strong> — built to Figma spec</li>
+          <li><strong style="color:var(--text);">30+ screens</strong> — all MVP flows implemented</li>
+          <li><strong style="color:var(--text);">Email authentication</strong> — secure sign-up and login</li>
+          <li><strong style="color:var(--text);">Onboarding flow</strong> — first-run experience</li>
+        </ul>
+      </div>
+      <div>
+        <ul class="del-list" style="margin-top:0;">
+          <li><strong style="color:var(--text);">Push notifications</strong> — Firebase Cloud Messaging</li>
+          <li><strong style="color:var(--text);">PostHog analytics</strong> — event tracking + funnels</li>
+          <li><strong style="color:var(--text);">App Tracking Transparency</strong> — iOS compliance</li>
+          <li><strong style="color:var(--text);">Demo mode</strong> — investor-ready walkthrough</li>
+          <li><strong style="color:var(--text);">Wireframe Deck</strong> — screen-by-screen reference</li>
+          <li><strong style="color:var(--text);">Firebase security rules</strong> — Firestore + Storage</li>
+          <li><strong style="color:var(--text);">QA + App Store checklists</strong> — submission-ready</li>
+        </ul>
+      </div>
+    </div>
+    <div class="timeline-badge">Timeline: Weeks 6–14</div>
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Methodology</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 7 — PHASE 05: DELIVER -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="orb" style="width:350px;height:350px;background:radial-gradient(circle,rgba(110,58,250,0.06) 0%,transparent 70%);top:-80px;right:-60px;"></div>
+  <div style="position:relative;z-index:1;">
+    <div class="slide-label">Phase 05</div>
+    <h2 class="slide-title" style="font-size:2rem;">Deliver <br><span style="font-size:1.3rem;font-weight:600;color:var(--brand-light);">Complete handoff</span></h2>
+    <p class="slide-sub" style="margin-bottom:16px;font-size:0.88rem;">Clean, complete handoff. Everything organised, documented, and ready for you to own.</p>
+    <div class="card-grid card-grid-2" style="gap:12px;">
+      <div class="del-card">
+        <div class="del-card-title">Handoff Documentation</div>
+        <div class="del-card-body">Architecture guide, environment setup, deployment procedures, and troubleshooting reference.</div>
+      </div>
+      <div class="del-card">
+        <div class="del-card-title">Launch Day Playbook</div>
+        <div class="del-card-body">Step-by-step launch checklist with timing, channels, and contingency plans.</div>
+      </div>
+      <div class="del-card">
+        <div class="del-card-title">3 GitHub Repositories</div>
+        <div class="del-card-body">Mobile app, marketing website, and design system — all transferred to your organisation.</div>
+      </div>
+      <div class="del-card">
+        <div class="del-card-title">App Store Submission</div>
+        <div class="del-card-body">Both iOS (App Store) and Android (Google Play) submitted and approved.</div>
+      </div>
+      <div class="del-card">
+        <div class="del-card-title">Firebase Project Transferred</div>
+        <div class="del-card-body">Full ownership of authentication, Firestore, storage, and cloud functions.</div>
+      </div>
+      <div class="del-card">
+        <div class="del-card-title">Sanity CMS Access</div>
+        <div class="del-card-body">Content management system configured and handed over with admin credentials.</div>
+      </div>
+    </div>
+    <div class="callout" style="margin-top:14px;padding:12px 24px;">
+      <div class="callout-text" style="font-size:0.82rem;">Full IP transfer. Client portal updated. Retainer log initialised. You own everything.</div>
+    </div>
+    <div class="timeline-badge">Timeline: Weeks 10–16</div>
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Methodology</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 8 — PARALLEL WORKSTREAMS -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide" style="">
+  <div class="orb" style="width:400px;height:400px;background:radial-gradient(circle,rgba(0,184,160,0.04) 0%,transparent 70%);bottom:-80px;right:-60px;"></div>
+  <div style="position:relative;z-index:1;">
+    <div class="slide-label">Parallel Workstreams</div>
+    <h2 class="slide-title" style="font-size:2rem;">Five streams. <span style="color:var(--brand-light);">Running simultaneously.</span></h2>
+    <p class="slide-sub" style="margin-bottom:24px;font-size:0.88rem;">After scope lock at Gate 2, five workstreams run in parallel alongside the build.</p>
+    <div class="card-grid card-grid-5" style="gap:14px;">
+      <div class="card" style="background:var(--surface);padding:18px;">
+        <div class="card-number">A</div>
+        <div class="card-title" style="font-size:0.75rem;">Marketing Website</div>
+        <div class="card-body" style="font-size:0.64rem;">Next.js, 6 pages, blog via Sanity CMS, mobile-first.</div>
+      </div>
+      <div class="card" style="background:var(--surface);padding:18px;">
+        <div class="card-number">B</div>
+        <div class="card-title" style="font-size:0.75rem;">Marketing Content</div>
+        <div class="card-body" style="font-size:0.64rem;">20 social posts with visuals + Launch Pack PDF.</div>
+      </div>
+      <div class="card" style="background:var(--surface);padding:18px;">
+        <div class="card-number">C</div>
+        <div class="card-title" style="font-size:0.75rem;">Promo Video</div>
+        <div class="card-body" style="font-size:0.64rem;">1-min script + audio brief for production (Pro).</div>
+      </div>
+      <div class="card" style="background:var(--surface);padding:18px;">
+        <div class="card-number">D</div>
+        <div class="card-title" style="font-size:0.75rem;">SEO Blog</div>
+        <div class="card-body" style="font-size:0.64rem;">5 long-form posts + Blog Content Pack PDF.</div>
+      </div>
+      <div class="card" style="background:var(--surface);padding:18px;">
+        <div class="card-number">E</div>
+        <div class="card-title" style="font-size:0.75rem;">Design System</div>
+        <div class="card-body" style="font-size:0.64rem;">Figma plugins + 22-page Next.js docs site.</div>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Methodology</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 9 — GATES & PAYMENTS -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="orb" style="width:350px;height:350px;background:radial-gradient(circle,rgba(110,58,250,0.04) 0%,transparent 70%);top:-60px;left:-40px;"></div>
+  <div style="position:relative;z-index:1;">
+    <div class="slide-label">Quality Control</div>
+    <h2 class="slide-title" style="font-size:2rem;">Gates, milestones, <span class="gradient-text">and transparency</span></h2>
+    <p class="slide-sub" style="margin-bottom:24px;font-size:0.88rem;">Clear checkpoints ensure alignment and protect both parties throughout the engagement.</p>
+    <div class="two-col" style="gap:32px;">
+      <div class="gate-card">
+        <div class="gate-title">Client Gates</div>
+        <div class="gate-item">
+          <div class="gate-item-label">Gate 1 — After Research</div>
+          <div class="gate-item-body">All research findings presented in a comprehensive deck. Client reviews market analysis, competitor landscape, and user insights. Sign-off required before Define phase begins.</div>
+        </div>
+        <div class="gate-item" style="margin-top:16px;">
+          <div class="gate-item-label">Gate 2 — After Define</div>
+          <div class="gate-item-body">Product vision, personas, feature scope, and roadmap presented. Client signs the Statement of Work. Scope locks at this point — all remaining phases execute against the agreed specification.</div>
+        </div>
+      </div>
+      <div class="gate-card">
+        <div class="gate-title">Payment Milestones</div>
+        <div class="gate-item">
+          <div class="gate-item-label" style="color:var(--accent);">40% — Upfront</div>
+          <div class="gate-item-body">Paid at project kickoff. Covers the Discover and Define phases, including all research and strategic planning.</div>
+        </div>
+        <div class="gate-item" style="margin-top:16px;">
+          <div class="gate-item-label" style="color:var(--accent);">30% — Design Start</div>
+          <div class="gate-item-body">Paid after Gate 2 approval and SOW signature. Unlocks Design and Development phases.</div>
+        </div>
+        <div class="gate-item" style="margin-top:16px;">
+          <div class="gate-item-label" style="color:var(--accent);">30% — On Delivery</div>
+          <div class="gate-item-body">Final payment upon completed handoff, app store submission, and IP transfer.</div>
+        </div>
+      </div>
+    </div>
+    <p style="font-size:0.65rem;color:var(--muted);margin-top:20px;text-align:center;max-width:700px;margin-left:auto;margin-right:auto;">No work proceeds until the corresponding gate is approved and milestone is paid.</p>
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Methodology</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 10 — WHAT YOU RECEIVE -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide" style="">
+  <div class="orb" style="width:400px;height:400px;background:radial-gradient(circle,rgba(0,184,160,0.05) 0%,transparent 70%);top:-100px;right:-80px;"></div>
+  <div style="position:relative;z-index:1;">
+    <div class="slide-label">Complete Handoff</div>
+    <h2 class="slide-title" style="font-size:2rem;">Everything transfers <span class="gradient-text">to you</span></h2>
+    <p class="slide-sub" style="margin-bottom:20px;font-size:0.88rem;">A complete inventory of everything you receive at the end of the engagement.</p>
+    <table class="handoff-table">
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th>What You Receive</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Code</td>
+          <td>3 GitHub repositories — mobile app, marketing website, design system docs</td>
+        </tr>
+        <tr>
+          <td>Design</td>
+          <td>Figma files with full component library + custom variables and components plugins</td>
+        </tr>
+        <tr>
+          <td>Live Products</td>
+          <td>iOS app, Android app, marketing website, design system site, client portal</td>
+        </tr>
+        <tr>
+          <td>Services</td>
+          <td>Firebase (auth, Firestore, storage, functions), Sanity CMS, PostHog analytics</td>
+        </tr>
+        <tr>
+          <td>Documents</td>
+          <td>10+ branded PDFs — research, vision, marketing, investor, wireframe, launch, and more</td>
+        </tr>
+        <tr>
+          <td>Content</td>
+          <td>20 social media posts, 5 SEO blog articles, promotional video script + audio brief</td>
+        </tr>
+        <tr>
+          <td style="color:var(--brand);">Ownership</td>
+          <td style="color:var(--text);font-weight:600;">Full IP transfer. No lock-in. No licensing fees. You own everything we build.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Methodology</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 11 — CLOSING -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide" style="justify-content: center; align-items: center; text-align: center;">
+  <div class="orb" style="width:600px;height:600px;background:radial-gradient(circle,rgba(110,58,250,0.05) 0%,transparent 70%);top:-120px;left:50%;transform:translateX(-50%);"></div>
+  <div class="orb" style="width:400px;height:400px;background:radial-gradient(circle,rgba(0,184,160,0.04) 0%,transparent 70%);bottom:-100px;left:-80px;"></div>
+  <div style="position:relative;z-index:1;">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:34px;width:auto;display:block;margin:0 auto 32px;">
+    <h2 style="font-size:3rem;font-weight:900;letter-spacing:-0.03em;line-height:1.1;margin-bottom:20px;color:var(--text);">
+      Let's build your <span class="gradient-text">venture.</span>
+    </h2>
+    <p style="font-size:1.05rem;color:var(--muted);max-width:520px;margin:0 auto 36px;line-height:1.7;">Book a discovery call and we'll walk you through the methodology in detail.</p>
+    <div style="display:flex;gap:32px;justify-content:center;align-items:center;flex-wrap:wrap;">
+      <span style="font-size:0.85rem;color:var(--text);font-weight:600;">hello@ventrify.io</span>
+      <span style="font-size:0.85rem;color:var(--muted);">ventrify.io</span>
+      <span style="font-size:0.85rem;color:var(--muted);">Dubai, UAE</span>
+    </div>
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Methodology</span>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ventrify — Investor Overview</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  @page { size: landscape; margin: 0; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --brand: #6E3AFA; --brand-light: #9B6FFF; --accent: #00B8A0;
+    --bg: #FFFFFF; --surface: #F5F5F7; --surface-2: #FFFFFF;
+    --text: #1D1D1F; --muted: #86868B; --border: rgba(0,0,0,0.08);
+  }
+  body { background: #F0F0F0; color: var(--text); font-family: 'Raleway', sans-serif; line-height: 1.6; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  h1,h2,h3,h4,h5 { font-family: 'Nunito', sans-serif; letter-spacing: -0.02em; }
+
+  .slide {
+    width: 1280px; height: 720px; padding: 56px 72px;
+    position: relative; overflow: hidden;
+    page-break-after: always; page-break-inside: avoid;
+    background: var(--bg);
+    display: flex; flex-direction: column; justify-content: center;
+    margin: 0 auto;
+  }
+  .slide:last-child { page-break-after: avoid; }
+
+  .slide-label { display: inline-flex; align-items: center; gap: 10px; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: 16px; }
+  .slide-label::before { content: ''; display: block; width: 18px; height: 1px; background: var(--accent); }
+  .slide-title { font-size: 2.4rem; font-weight: 800; letter-spacing: -0.025em; line-height: 1.1; margin-bottom: 16px; color: var(--text); }
+  .slide-sub { font-size: 1rem; line-height: 1.7; color: var(--muted); max-width: 640px; }
+  .gradient-text { background: linear-gradient(140deg, #9B6FFF, #00B8A0); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+  .footer-bar { position: absolute; bottom: 0; left: 0; right: 0; height: 48px; display: flex; align-items: center; justify-content: space-between; padding: 0 72px; border-top: 1px solid rgba(0,0,0,0.06); font-size: 0.6rem; color: var(--muted); letter-spacing: 0.06em; }
+
+  /* Card grid */
+  .card-grid { display: grid; gap: 16px; margin-top: 24px; }
+  .card-grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .card-grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .card-grid-2 { grid-template-columns: 1fr 1fr; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px;
+    position: relative; overflow: hidden;
+  }
+  .card-number { font-family: 'Nunito', sans-serif; font-size: 0.6rem; font-weight: 700; color: var(--brand-light); opacity: 0.5; margin-bottom: 8px; }
+  .card-title { font-family: 'Nunito', sans-serif; font-size: 0.82rem; font-weight: 700; margin-bottom: 6px; color: var(--text); }
+  .card-body { font-size: 0.75rem; line-height: 1.65; color: var(--muted); }
+
+  /* Stat */
+  .stat-row { display: flex; gap: 40px; margin-top: 24px; }
+  .stat { text-align: center; }
+  .stat-val { font-family: 'Nunito', sans-serif; font-size: 2.2rem; font-weight: 900; color: var(--text); }
+  .stat-label { font-size: 0.68rem; font-weight: 600; color: var(--muted); margin-top: 4px; line-height: 1.4; }
+
+  /* Tag */
+  .tag { display: inline-block; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.06em; padding: 3px 10px; border-radius: 5px; background: rgba(110,58,250,0.06); border: 1px solid rgba(110,58,250,0.12); color: #9B6FFF; margin-right: 6px; margin-bottom: 6px; }
+
+  /* Phase strip */
+  .phase-strip { display: flex; gap: 12px; margin-top: 20px; }
+  .phase-card { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px 16px; text-align: center; position: relative; }
+  .phase-card.active { border-color: rgba(110,58,250,0.2); background: rgba(110,58,250,0.03); }
+  .phase-num { font-family: 'Nunito', sans-serif; font-size: 0.58rem; font-weight: 700; color: var(--accent); margin-bottom: 6px; letter-spacing: 0.1em; }
+  .phase-name { font-family: 'Nunito', sans-serif; font-size: 0.9rem; font-weight: 700; margin-bottom: 6px; color: var(--text); }
+  .phase-desc { font-size: 0.65rem; line-height: 1.55; color: var(--muted); }
+
+  /* Comparison table */
+  .compare-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.78rem; }
+  .compare-table th { font-family: 'Nunito', sans-serif; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em; text-align: left; padding: 12px 16px; border-bottom: 1px solid rgba(0,0,0,0.06); color: var(--muted); background: var(--surface); }
+  .compare-table th:nth-child(2) { color: var(--muted); }
+  .compare-table th:nth-child(3) { color: var(--accent); }
+  .compare-table td { padding: 10px 16px; border-bottom: 1px solid rgba(0,0,0,0.06); color: var(--muted); vertical-align: top; }
+  .compare-table td:nth-child(3) { color: var(--text); font-weight: 600; }
+  .compare-table tr:last-child td { border-bottom: none; }
+
+  /* Tier cards */
+  .tier-card { background: var(--surface-2); border: 1px solid var(--border); border-radius: 14px; padding: 28px 24px; }
+  .tier-card.featured { border-color: rgba(110,58,250,0.15); background: rgba(110,58,250,0.02); }
+  .tier-name { font-family: 'Nunito', sans-serif; font-size: 1rem; font-weight: 800; margin-bottom: 4px; color: var(--text); }
+  .tier-price { font-family: 'Nunito', sans-serif; font-size: 0.72rem; font-weight: 600; color: var(--accent); margin-bottom: 10px; }
+  .tier-desc { font-size: 0.72rem; line-height: 1.6; color: var(--muted); margin-bottom: 14px; }
+  .tier-list { list-style: none; }
+  .tier-list li { font-size: 0.65rem; color: var(--muted); padding: 3px 0; padding-left: 16px; position: relative; }
+  .tier-list li::before { content: '\2713'; position: absolute; left: 0; color: var(--accent); font-size: 0.6rem; }
+
+  /* Deliverable grid */
+  .del-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 20px; }
+  .del-item { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 12px; text-align: center; }
+  .del-num { font-family: 'Nunito', sans-serif; font-size: 1.1rem; font-weight: 900; color: var(--brand-light); opacity: 0.4; margin-bottom: 4px; }
+  .del-name { font-family: 'Nunito', sans-serif; font-size: 0.58rem; font-weight: 700; color: var(--text); line-height: 1.4; }
+
+  /* Two col layout */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
+  .two-col-text .slide-title { font-size: 2rem; }
+
+  /* Orb decorations — very faint for light mode */
+  .orb { position: absolute; border-radius: 50%; filter: blur(80px); pointer-events: none; z-index: 0; }
+
+  /* Quote */
+  .quote { font-size: 1.3rem; font-style: italic; line-height: 1.6; color: var(--text); border-left: 3px solid var(--brand); padding-left: 24px; margin: 24px 0; max-width: 700px; }
+
+  /* Revenue model */
+  .rev-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+  .rev-title { font-family: 'Nunito', sans-serif; font-size: 0.78rem; font-weight: 700; margin-bottom: 8px; }
+  .rev-body { font-size: 0.72rem; line-height: 1.6; color: var(--muted); }
+
+  @media screen {
+    .slide { margin: 20px auto; box-shadow: 0 4px 24px rgba(0,0,0,0.08); border: 1px solid rgba(0,0,0,0.06); border-radius: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 1 — COVER -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide" style="justify-content: center; align-items: center; text-align: center;">
+  <div class="orb" style="width:600px;height:600px;background:radial-gradient(circle,rgba(110,58,250,0.05) 0%,transparent 70%);top:-100px;right:-100px;"></div>
+  <div class="orb" style="width:400px;height:400px;background:radial-gradient(circle,rgba(0,184,160,0.04) 0%,transparent 70%);bottom:-80px;left:-60px;"></div>
+  <div style="position:relative;z-index:1;">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:30px;width:auto;display:block;margin:0 auto 12px;">
+    <div style="font-size:1.15rem;color:var(--muted);margin-bottom:40px;letter-spacing:0.02em;">AI-Powered Venture Building</div>
+    <h1 style="font-size:3.2rem;font-weight:900;letter-spacing:-0.03em;line-height:1.05;margin-bottom:20px;color:var(--text);">
+      The full-stack studio<br><span class="gradient-text">for pre-seed founders</span>
+    </h1>
+    <p style="font-size:1rem;color:var(--muted);max-width:560px;margin:0 auto 32px;line-height:1.7;">From raw idea to launched, investable product — strategy, design, development, brand, and marketing delivered by one team, powered by AI.</p>
+    <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
+      <span class="tag" style="font-size:0.65rem;padding:5px 14px;">Investor Overview</span>
+      <span class="tag" style="font-size:0.65rem;padding:5px 14px;">March 2026</span>
+      <span class="tag" style="font-size:0.65rem;padding:5px 14px;">Dubai, UAE</span>
+    </div>
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Investor Overview</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 2 — THE PROBLEM -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide" style="background:var(--surface);">
+  <div class="orb" style="width:400px;height:400px;background:radial-gradient(circle,rgba(110,58,250,0.04) 0%,transparent 70%);top:-80px;right:-60px;"></div>
+  <div style="position:relative;z-index:1;">
+    <div class="slide-label">The Problem</div>
+    <h2 class="slide-title">Great ideas are failing for<br><span class="gradient-text">entirely preventable reasons</span></h2>
+    <p class="slide-sub" style="margin-bottom:28px;">Pre-seed founders face an impossible choice: hire expensive agencies built for enterprise, or piece together freelancers and hope it all comes together.</p>
+    <div class="card-grid card-grid-3">
+      <div class="card" style="background:var(--surface-2);">
+        <div class="card-number">01</div>
+        <div class="card-title">Fragmented Execution</div>
+        <div class="card-body">Strategy, design, and development handled by separate teams with no single owner. By launch, the vision is diluted — and founders only realise when it's live.</div>
+      </div>
+      <div class="card" style="background:var(--surface-2);">
+        <div class="card-number">02</div>
+        <div class="card-title">Enterprise Pricing</div>
+        <div class="card-body">Traditional agencies charge enterprise rates with layers of overhead. A pre-seed founder burning runway can't afford 6-figure retainers for work that takes 6+ months.</div>
+      </div>
+      <div class="card" style="background:var(--surface-2);">
+        <div class="card-number">03</div>
+        <div class="card-title">Incomplete Launches</div>
+        <div class="card-body">Products ship without user validation, acquisition strategy, or iteration plan. Functional — but fragile. In a crowded market, fragile doesn't survive long.</div>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Investor Overview</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 3 — THE MARKET -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="orb" style="width:350px;height:350px;background:radial-gradient(circle,rgba(0,184,160,0.04) 0%,transparent 70%);bottom:-60px;left:-40px;"></div>
+  <div style="position:relative;z-index:1;">
+    <div class="slide-label">The Market</div>
+    <h2 class="slide-title">A massive, underserved<br><span class="gradient-text">founder market</span></h2>
+    <p class="slide-sub" style="margin-bottom:28px;">The global startup ecosystem is booming — but the infrastructure to support early-stage founders has barely evolved. Most services are still designed for Series A+ companies with established teams.</p>
+    <div class="stat-row">
+      <div class="stat">
+        <div class="stat-val">$500B+</div>
+        <div class="stat-label">Global VC funding<br>annually (2025)</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val">90%</div>
+        <div class="stat-label">Of startups fail — most<br>due to execution, not ideas</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val">305M</div>
+        <div class="stat-label">New businesses created<br>globally each year</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val">72%</div>
+        <div class="stat-label">Of founders cite "building<br>the product" as #1 challenge</div>
+      </div>
+    </div>
+    <p style="font-size:0.78rem;color:var(--muted);margin-top:28px;max-width:700px;line-height:1.7;">The MENA startup ecosystem alone raised $3.4B in 2024, with the UAE as the dominant hub. Pre-seed founders in this region are actively seeking structured, affordable paths to market — and the supply side is severely lacking.</p>
+    <p style="font-size:0.58rem;color:rgba(134,134,139,0.5);margin-top:8px;">Sources listed on final page.</p>
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Investor Overview</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 4 — OUR SOLUTION -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide" style="background:var(--surface);">
+  <div class="orb" style="width:500px;height:500px;background:radial-gradient(circle,rgba(110,58,250,0.05) 0%,transparent 70%);top:-120px;left:-80px;"></div>
+  <div style="position:relative;z-index:1;">
+    <div class="slide-label">Our Solution</div>
+    <h2 class="slide-title">One studio. <span class="gradient-text">Everything a founder needs.</span></h2>
+    <p class="slide-sub" style="margin-bottom:28px;">Ventrify is an AI-powered venture studio that takes pre-seed founders from raw idea to a fully launched, investable digital product — in as little as 12 weeks.</p>
+    <div class="card-grid card-grid-3">
+      <div class="card" style="border-top:2px solid var(--brand);background:var(--surface-2);">
+        <div class="card-title">AI-Augmented. Human-Led.</div>
+        <div class="card-body">AI compresses time and cost — but every strategic decision is shaped and owned by experienced designers and engineers.</div>
+      </div>
+      <div class="card" style="border-top:2px solid var(--accent);background:var(--surface-2);">
+        <div class="card-title">Speed Without Compromise</div>
+        <div class="card-body">Our 5-phase methodology and AI tooling delivers in weeks what traditional agencies take months to produce — without cutting corners.</div>
+      </div>
+      <div class="card" style="border-top:2px solid var(--brand-light);background:var(--surface-2);">
+        <div class="card-title">One Team. Every Layer.</div>
+        <div class="card-body">Strategy, design, development, brand, and marketing — all aligned from day one. No silos. No handoff gaps. No fragments.</div>
+      </div>
+    </div>
+    <div class="quote" style="margin-top:28px;font-size:1rem;">
+      "Enterprise-grade quality. Founder-friendly pricing. AI-powered speed."
+    </div>
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Investor Overview</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 5 — THE METHODOLOGY -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div style="position:relative;z-index:1;">
+    <div class="slide-label">The Process</div>
+    <h2 class="slide-title" style="font-size:2rem;">The 5-Phase <span class="gradient-text">Venture Build</span></h2>
+    <p class="slide-sub" style="margin-bottom:20px;">A structured, repeatable methodology that transforms every engagement from chaos into a predictable delivery pipeline. Each phase flows into the next, handled by the same team, from the same brief.</p>
+    <div class="phase-strip">
+      <div class="phase-card">
+        <div class="phase-num">PHASE 01</div>
+        <div class="phase-name" style="font-size:0.82rem;">Discover</div>
+        <div class="phase-desc">Market research, competitor analysis, opportunity mapping. Validated insight before a single pixel is drawn.</div>
+        <div style="margin-top:8px;font-size:0.55rem;color:var(--accent);font-weight:600;">WEEKS 1–2</div>
+      </div>
+      <div class="phase-card">
+        <div class="phase-num">PHASE 02</div>
+        <div class="phase-name" style="font-size:0.82rem;">Define</div>
+        <div class="phase-desc">Personas, product vision, MVP feature set, tech stack, and roadmap. Scope locked before design begins.</div>
+        <div style="margin-top:8px;font-size:0.55rem;color:var(--accent);font-weight:600;">WEEKS 2–4</div>
+      </div>
+      <div class="phase-card active">
+        <div class="phase-num">PHASE 03</div>
+        <div class="phase-name" style="font-size:0.82rem;">Design</div>
+        <div class="phase-desc">Wireframes, UX flows, design system, component library, polished UI, and investor pitch deck.</div>
+        <div style="margin-top:8px;font-size:0.55rem;color:var(--accent);font-weight:600;">WEEKS 3–8</div>
+      </div>
+      <div class="phase-card">
+        <div class="phase-num">PHASE 04</div>
+        <div class="phase-name" style="font-size:0.82rem;">Develop</div>
+        <div class="phase-desc">Production-grade MVP build. Clean architecture, analytics baked in, AI-accelerated without cutting corners.</div>
+        <div style="margin-top:8px;font-size:0.55rem;color:var(--accent);font-weight:600;">WEEKS 6–14</div>
+      </div>
+      <div class="phase-card">
+        <div class="phase-num">PHASE 05</div>
+        <div class="phase-name" style="font-size:0.82rem;">Deliver</div>
+        <div class="phase-desc">Complete handoff — code, designs, docs. Everything the founder needs to own and scale independently.</div>
+        <div style="margin-top:8px;font-size:0.55rem;color:var(--accent);font-weight:600;">WEEKS 10–16</div>
+      </div>
+    </div>
+    <p style="font-size:0.72rem;color:var(--muted);margin-top:16px;">Formal gate reviews between phases ensure the client approves every decision before we proceed. Scope is locked at Gate 2 — no scope creep, no surprises.</p>
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Investor Overview</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 6 — 10 DELIVERABLES -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide" style="background:var(--surface);">
+  <div style="position:relative;z-index:1;">
+    <div class="slide-label">What Every Client Gets</div>
+    <h2 class="slide-title" style="font-size:2rem;">10 standardised deliverables. <span class="gradient-text">Every engagement.</span></h2>
+    <p class="slide-sub" style="margin-bottom:16px;">This isn't bespoke consulting — it's a productised, repeatable system. Every founder receives the same comprehensive package, tailored to their product.</p>
+    <div class="del-grid">
+      <div class="del-item" style="background:var(--surface-2);">
+        <div class="del-num">01</div>
+        <div class="del-name">MVP Digital<br>Product</div>
+      </div>
+      <div class="del-item" style="background:var(--surface-2);">
+        <div class="del-num">02</div>
+        <div class="del-name">Marketing<br>Website</div>
+      </div>
+      <div class="del-item" style="background:var(--surface-2);">
+        <div class="del-num">03</div>
+        <div class="del-name">Design System<br>(Figma)</div>
+      </div>
+      <div class="del-item" style="background:var(--surface-2);">
+        <div class="del-num">04</div>
+        <div class="del-name">Design System<br>Documentation</div>
+      </div>
+      <div class="del-item" style="background:var(--surface-2);">
+        <div class="del-num">05</div>
+        <div class="del-name">Research &<br>Analysis Deck</div>
+      </div>
+      <div class="del-item" style="background:var(--surface-2);">
+        <div class="del-num">06</div>
+        <div class="del-name">Product<br>Vision Deck</div>
+      </div>
+      <div class="del-item" style="background:var(--surface-2);">
+        <div class="del-num">07</div>
+        <div class="del-name">Marketing<br>Strategy Deck</div>
+      </div>
+      <div class="del-item" style="background:var(--surface-2);">
+        <div class="del-num">08</div>
+        <div class="del-name">Investor<br>Pitch Deck</div>
+      </div>
+      <div class="del-item" style="background:var(--surface-2);">
+        <div class="del-num">09</div>
+        <div class="del-name">Social Media<br>& Content</div>
+      </div>
+      <div class="del-item" style="background:var(--surface-2);">
+        <div class="del-num">10</div>
+        <div class="del-name">Promo Video<br>Script & Brief</div>
+      </div>
+    </div>
+    <p style="font-size:0.72rem;color:var(--muted);margin-top:16px;line-height:1.65;">Full IP transfer on completion. The founder owns everything — code, designs, brand, content. No lock-in, no dependency on Ventrify to operate what we built.</p>
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Investor Overview</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 7 — THE AI ENGINE -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="orb" style="width:450px;height:450px;background:radial-gradient(circle,rgba(110,58,250,0.05) 0%,transparent 70%);bottom:-100px;right:-80px;"></div>
+  <div style="position:relative;z-index:1;">
+    <div class="slide-label">The AI Engine</div>
+    <h2 class="slide-title" style="font-size:2rem;">AI isn't a feature.<br><span class="gradient-text">It's the production engine.</span></h2>
+    <p class="slide-sub" style="margin-bottom:24px;">While competitors use AI as a marketing buzzword, we've rebuilt the entire production pipeline around it. AI handles the heavy lifting — humans make the decisions that matter.</p>
+    <div class="card-grid card-grid-2" style="gap:20px;">
+      <div class="card">
+        <div class="card-title">What AI Does</div>
+        <div class="card-body" style="font-size:0.72rem;line-height:1.7;">
+          <strong style="color:var(--text);">Builds the MVP product</strong> — full-stack code generation<br>
+          <strong style="color:var(--text);">Generates branded PDF decks</strong> — research, vision, investor, marketing<br>
+          <strong style="color:var(--text);">Creates design system plugins</strong> — Figma tokens, components, documentation<br>
+          <strong style="color:var(--text);">Writes marketing content</strong> — blog posts, social media, SEO copy<br>
+          <strong style="color:var(--text);">Automates publishing</strong> — CMS integration, social scheduling<br>
+          <strong style="color:var(--text);">Produces video scripts</strong> — storyboard, voiceover, audio brief
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">What Humans Do</div>
+        <div class="card-body" style="font-size:0.72rem;line-height:1.7;">
+          <strong style="color:var(--text);">Strategic decisions</strong> — market positioning, product direction<br>
+          <strong style="color:var(--text);">Visual design craft</strong> — Figma wireframes, polished UI, brand identity<br>
+          <strong style="color:var(--text);">Quality assurance</strong> — code review, design review, QA testing<br>
+          <strong style="color:var(--text);">Client relationships</strong> — discovery calls, gate reviews, sign-offs<br>
+          <strong style="color:var(--text);">Architecture decisions</strong> — tech stack, scalability, security<br>
+          <strong style="color:var(--text);">Video production</strong> — filming, editing, post-production
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:20px;padding:16px 24px;background:rgba(0,184,160,0.06);border:1px solid rgba(0,184,160,0.12);border-radius:10px;display:inline-block;">
+      <span style="font-family:'Nunito',sans-serif;font-size:0.72rem;font-weight:700;color:var(--accent);">Result:</span>
+      <span style="font-size:0.78rem;color:var(--text);margin-left:8px;">3–4x faster delivery. 60–70% lower cost. No compromise on quality.</span>
+    </div>
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Investor Overview</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 8 — TRADITIONAL vs VENTRIFY -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide" style="background:var(--surface);">
+  <div style="position:relative;z-index:1;">
+    <div class="slide-label">The Comparison</div>
+    <h2 class="slide-title" style="font-size:2rem;">Traditional agency <span class="gradient-text">vs Ventrify</span></h2>
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th style="width:28%;">Dimension</th>
+          <th style="width:36%;">Traditional Agency</th>
+          <th style="width:36%;">Ventrify</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="color:var(--text);font-weight:600;">Timeline</td>
+          <td>6–12 months typical</td>
+          <td>8–16 weeks end-to-end</td>
+        </tr>
+        <tr>
+          <td style="color:var(--text);font-weight:600;">Cost</td>
+          <td>$100K–$500K+ (fragmented vendors)</td>
+          <td>Fixed tiers from AED 150K (~$41K)</td>
+        </tr>
+        <tr>
+          <td style="color:var(--text);font-weight:600;">Scope</td>
+          <td>Usually design OR dev, rarely both</td>
+          <td>Strategy + Design + Dev + Brand + Marketing</td>
+        </tr>
+        <tr>
+          <td style="color:var(--text);font-weight:600;">Deliverables</td>
+          <td>Varies per engagement, often vague</td>
+          <td>10 standardised deliverables, every time</td>
+        </tr>
+        <tr>
+          <td style="color:var(--text);font-weight:600;">Team</td>
+          <td>Multiple vendors, no single owner</td>
+          <td>One integrated team, one methodology</td>
+        </tr>
+        <tr>
+          <td style="color:var(--text);font-weight:600;">Ownership</td>
+          <td>Often retains IP or creates dependency</td>
+          <td>Full IP transfer. Zero lock-in.</td>
+        </tr>
+        <tr>
+          <td style="color:var(--text);font-weight:600;">Post-Launch</td>
+          <td>Project ends. "Good luck."</td>
+          <td>Optional content retainer for ongoing growth</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Investor Overview</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 9 — PRICING & BUSINESS MODEL -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div style="position:relative;z-index:1;">
+    <div class="slide-label">Business Model</div>
+    <h2 class="slide-title" style="font-size:2rem;">Three tiers. <span class="gradient-text">Predictable revenue.</span></h2>
+    <p class="slide-sub" style="margin-bottom:20px;">Productised pricing with milestone-based payments. Clients know exactly what they get and when they pay — no hourly billing, no scope ambiguity.</p>
+    <div class="card-grid card-grid-3" style="gap:16px;">
+      <div class="tier-card">
+        <div class="tier-name">Launchpad</div>
+        <div class="tier-price">From AED 150,000</div>
+        <div class="tier-desc">Strategy to delivered MVP. Everything to go from idea to product.</div>
+        <ul class="tier-list">
+          <li>5-Phase Methodology</li>
+          <li>Market Research & Strategy</li>
+          <li>Full UX/UI Design & DS</li>
+          <li>MVP Development</li>
+          <li>Analytics Integration</li>
+          <li>Figma Files & GitHub Repo</li>
+        </ul>
+      </div>
+      <div class="tier-card featured">
+        <div style="font-size:0.55rem;font-weight:700;color:var(--accent);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px;">Most Popular</div>
+        <div class="tier-name">Venture</div>
+        <div class="tier-price">From AED 240,000</div>
+        <div class="tier-desc">Launchpad + brand identity, marketing website, investor deck, social & SEO.</div>
+        <ul class="tier-list">
+          <li>Everything in Launchpad</li>
+          <li>Brand Identity System</li>
+          <li>Marketing Website</li>
+          <li>Investor Pitch Deck</li>
+          <li>Social Media Strategy</li>
+          <li>Launch Content & SEO</li>
+        </ul>
+      </div>
+      <div class="tier-card">
+        <div class="tier-name">Venture Pro</div>
+        <div class="tier-price">From AED 330,000</div>
+        <div class="tier-desc">The full package + video, growth content, and post-launch retainer.</div>
+        <ul class="tier-list">
+          <li>Everything in Venture</li>
+          <li>Promo Video Production</li>
+          <li>Ongoing SEO Content</li>
+          <li>Content Calendar</li>
+          <li>Post-Launch Retainer</li>
+          <li>Priority Support</li>
+        </ul>
+      </div>
+    </div>
+    <div style="display:flex;gap:24px;margin-top:16px;">
+      <div style="font-size:0.68rem;color:var(--muted);"><strong style="color:var(--text);">Payment:</strong> 40% upfront → 30% at design start → 30% on delivery</div>
+      <div style="font-size:0.68rem;color:var(--muted);"><strong style="color:var(--text);">Add-ons:</strong> Brand, website, pitch deck, social, and SEO available standalone</div>
+    </div>
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Investor Overview</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 10 — SCALABILITY & REVENUE -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide" style="background:var(--surface);">
+  <div style="position:relative;z-index:1;">
+    <div class="slide-label">Scalability</div>
+    <h2 class="slide-title" style="font-size:2rem;">A repeatable engine<br><span class="gradient-text">that scales with demand</span></h2>
+    <p class="slide-sub" style="margin-bottom:24px;">Because the methodology is productised and AI handles production, Ventrify can scale client volume without proportionally scaling headcount.</p>
+    <div class="card-grid card-grid-3" style="gap:16px;">
+      <div class="rev-card" style="background:var(--surface-2);">
+        <div class="rev-title" style="color:var(--brand-light);">Project Revenue</div>
+        <div class="rev-body">
+          <strong style="color:var(--text);">AED 150K–330K per engagement</strong><br>
+          Milestone-based payments provide predictable cash flow. Average engagement: ~16 weeks. With AI efficiency, gross margins of 65–75% are achievable per project.
+        </div>
+      </div>
+      <div class="rev-card" style="background:var(--surface-2);">
+        <div class="rev-title" style="color:var(--accent);">Retainer Revenue</div>
+        <div class="rev-body">
+          <strong style="color:var(--text);">AED 5K–13K/month per client</strong><br>
+          Post-launch content retainers (blog, social, email) create recurring monthly revenue. AI-generated content keeps production costs minimal while maintaining quality.
+        </div>
+      </div>
+      <div class="rev-card" style="background:var(--surface-2);">
+        <div class="rev-title" style="color:var(--brand-light);">Add-On Revenue</div>
+        <div class="rev-body">
+          <strong style="color:var(--text);">AED 5K–22K per service</strong><br>
+          Standalone services (brand, website, pitch deck, social campaigns) available to existing products and teams. Lower touch, high margin.
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:24px;display:grid;grid-template-columns:repeat(4,1fr);gap:16px;">
+      <div style="text-align:center;">
+        <div style="font-family:'Nunito',sans-serif;font-size:1.4rem;font-weight:900;color:var(--text);">3–4x</div>
+        <div style="font-size:0.62rem;color:var(--muted);margin-top:4px;">Faster than traditional<br>agency delivery</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-family:'Nunito',sans-serif;font-size:1.4rem;font-weight:900;color:var(--accent);">65–75%</div>
+        <div style="font-size:0.62rem;color:var(--muted);margin-top:4px;">Target gross margins<br>per engagement</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-family:'Nunito',sans-serif;font-size:1.4rem;font-weight:900;color:var(--text);">~2x</div>
+        <div style="font-size:0.62rem;color:var(--muted);margin-top:4px;">Client capacity vs<br>traditional model</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-family:'Nunito',sans-serif;font-size:1.4rem;font-weight:900;color:var(--accent);">Low</div>
+        <div style="font-size:0.62rem;color:var(--muted);margin-top:4px;">Headcount dependency<br>AI handles production</div>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Investor Overview</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 11 — WHY NOW -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="orb" style="width:500px;height:500px;background:radial-gradient(circle,rgba(110,58,250,0.06) 0%,transparent 70%);top:-100px;left:-60px;"></div>
+  <div style="position:relative;z-index:1;">
+    <div class="slide-label">Why Now</div>
+    <h2 class="slide-title">The AI inflection point<br><span class="gradient-text">changes everything</span></h2>
+    <p class="slide-sub" style="margin-bottom:28px;">For the first time in history, a small team with the right AI tooling can deliver output that previously required a 30-person agency. The window to build the definitive AI-powered venture studio is open now.</p>
+    <div class="card-grid card-grid-3">
+      <div class="card">
+        <div class="card-number">01</div>
+        <div class="card-title">AI Has Matured</div>
+        <div class="card-body">Code generation, content creation, and design tooling have reached production-grade quality. This wasn't possible 18 months ago.</div>
+      </div>
+      <div class="card">
+        <div class="card-number">02</div>
+        <div class="card-title">Founders Need Speed</div>
+        <div class="card-body">The startup ecosystem moves faster than ever. Founders who launch in 12 weeks have a massive advantage over those who wait 12 months.</div>
+      </div>
+      <div class="card">
+        <div class="card-number">03</div>
+        <div class="card-title">MENA is Surging</div>
+        <div class="card-body">Dubai is the fastest-growing startup hub in the region. Government-backed programmes are creating thousands of new founders who need exactly this service.</div>
+      </div>
+    </div>
+    <div class="quote" style="margin-top:28px;font-size:1rem;">
+      "The agencies that don't adopt AI will be outpaced. The AI tools that don't have human craft will be commoditised. Ventrify sits at the intersection."
+    </div>
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Investor Overview</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 12 — CLOSING / CTA -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide" style="justify-content:center;align-items:center;text-align:center;background:var(--surface);">
+  <div class="orb" style="width:600px;height:600px;background:radial-gradient(circle,rgba(110,58,250,0.05) 0%,transparent 70%);top:-150px;right:-100px;"></div>
+  <div class="orb" style="width:400px;height:400px;background:radial-gradient(circle,rgba(0,184,160,0.04) 0%,transparent 70%);bottom:-80px;left:-60px;"></div>
+  <div style="position:relative;z-index:1;">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:34px;width:auto;display:block;margin:0 auto 32px;">
+    <h2 style="font-size:2.4rem;font-weight:800;letter-spacing:-0.025em;line-height:1.1;margin-bottom:20px;color:var(--text);">
+      Let's build the future of<br><span class="gradient-text">venture building — together.</span>
+    </h2>
+    <p style="font-size:1rem;color:var(--muted);max-width:520px;margin:0 auto 40px;line-height:1.7;">We're looking for partners who believe that AI + human craft is the new model for building products — and that the best time to build it is right now.</p>
+    <div style="display:flex;gap:32px;justify-content:center;margin-bottom:40px;">
+      <div style="text-align:center;">
+        <div style="font-size:0.62rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Website</div>
+        <div style="font-family:'Nunito',sans-serif;font-size:0.85rem;font-weight:700;color:var(--text);">ventrify.io</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-size:0.62rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Email</div>
+        <div style="font-family:'Nunito',sans-serif;font-size:0.85rem;font-weight:700;color:var(--text);">hello@ventrify.io</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-size:0.62rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Location</div>
+        <div style="font-family:'Nunito',sans-serif;font-size:0.85rem;font-weight:700;color:var(--text);">Dubai, UAE</div>
+      </div>
+    </div>
+    <div style="font-size:0.72rem;color:var(--muted);">Built with AI. Launched with intention.</div>
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Investor Overview — March 2026</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 13 — SOURCES -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide" style="justify-content:flex-start;padding-top:72px;">
+  <div style="position:relative;z-index:1;">
+    <div class="slide-label">References</div>
+    <h2 class="slide-title" style="font-size:1.8rem;margin-bottom:32px;">Sources & References</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px 48px;">
+      <div>
+        <div style="font-family:'Nunito',sans-serif;font-size:0.68rem;font-weight:700;color:var(--text);margin-bottom:12px;">Market Data</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="font-size:0.7rem;line-height:1.6;color:var(--muted);">
+            <strong style="color:var(--text);">$500B+ global VC funding</strong><br>
+            Crunchbase Global Funding Report, 2025. Annual venture capital investment data.
+          </div>
+          <div style="font-size:0.7rem;line-height:1.6;color:var(--muted);">
+            <strong style="color:var(--text);">90% startup failure rate</strong><br>
+            CB Insights, "Top Reasons Startups Fail" (2024 update). Analysis of 110+ post-mortems. Primary causes: no market need, ran out of cash, wrong team.
+          </div>
+          <div style="font-size:0.7rem;line-height:1.6;color:var(--muted);">
+            <strong style="color:var(--text);">305M new businesses per year</strong><br>
+            GEM (Global Entrepreneurship Monitor), 2024/2025 Global Report. Includes formal and informal business creation across 50+ economies.
+          </div>
+          <div style="font-size:0.7rem;line-height:1.6;color:var(--muted);">
+            <strong style="color:var(--text);">72% of founders cite product build as #1 challenge</strong><br>
+            First Round Capital, "State of Startups" survey (2024). Based on responses from 900+ founders.
+          </div>
+        </div>
+      </div>
+      <div>
+        <div style="font-family:'Nunito',sans-serif;font-size:0.68rem;font-weight:700;color:var(--text);margin-bottom:12px;">Regional Data</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="font-size:0.7rem;line-height:1.6;color:var(--muted);">
+            <strong style="color:var(--text);">MENA raised $3.4B in 2024</strong><br>
+            MAGNiTT MENA Venture Investment Report, 2024. UAE accounted for 54% of total deal volume.
+          </div>
+        </div>
+        <div style="font-family:'Nunito',sans-serif;font-size:0.68rem;font-weight:700;color:var(--text);margin-top:28px;margin-bottom:12px;">Methodology Notes</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="font-size:0.7rem;line-height:1.6;color:var(--muted);">
+            Gross margin projections (65–75%) are based on internal cost modelling for AI-augmented delivery vs traditional agency staffing benchmarks.
+          </div>
+          <div style="font-size:0.7rem;line-height:1.6;color:var(--muted);">
+            Delivery speed comparisons (3–4x) are based on average project timelines for comparable scope from industry benchmarks (Clutch, GoodFirms agency surveys, 2024).
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Investor Overview — March 2026</span>
+  </div>
+</div>
+
+</body>
+</html>

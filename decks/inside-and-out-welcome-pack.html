@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ventrify — Inside & Out Welcome Pack</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  @page { size: landscape; margin: 0; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --brand: #6E3AFA; --brand-light: #9B6FFF; --accent: #00B8A0;
+    --bg: #FFFFFF; --surface: #F5F5F7; --surface-2: #FFFFFF;
+    --text: #1D1D1F; --muted: #86868B; --border: rgba(0,0,0,0.08);
+  }
+  body { background: #F0F0F0; color: var(--text); font-family: 'Raleway', sans-serif; line-height: 1.6; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  h1,h2,h3,h4,h5 { font-family: 'Nunito', sans-serif; letter-spacing: -0.02em; }
+
+  .slide {
+    width: 1280px; height: 720px; padding: 56px 72px;
+    position: relative; overflow: hidden;
+    page-break-after: always; page-break-inside: avoid;
+    background: var(--bg);
+    display: flex; flex-direction: column; justify-content: center;
+    margin: 0 auto;
+  }
+  .slide:last-child { page-break-after: avoid; }
+
+  .slide-label { display: inline-flex; align-items: center; gap: 10px; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: 16px; }
+  .slide-label::before { content: ''; display: block; width: 18px; height: 1px; background: var(--accent); }
+  .slide-title { font-size: 2.2rem; font-weight: 800; letter-spacing: -0.025em; line-height: 1.1; margin-bottom: 14px; color: var(--text); }
+  .slide-sub { font-size: 1rem; line-height: 1.7; color: var(--muted); max-width: 640px; }
+  .gradient-text { background: linear-gradient(140deg, #9B6FFF, #00B8A0); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+  .footer-bar { position: absolute; bottom: 0; left: 0; right: 0; height: 48px; display: flex; align-items: center; justify-content: space-between; padding: 0 72px; border-top: 1px solid rgba(0,0,0,0.06); font-size: 0.6rem; color: var(--muted); letter-spacing: 0.06em; }
+
+  /* Card grid */
+  .card-grid { display: grid; gap: 16px; margin-top: 24px; }
+  .card-grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .card-grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .card-grid-2 { grid-template-columns: 1fr 1fr; }
+  .card-grid-5 { grid-template-columns: repeat(5, 1fr); }
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px;
+    position: relative; overflow: hidden;
+  }
+  .card-number { font-family: 'Nunito', sans-serif; font-size: 0.6rem; font-weight: 700; color: var(--brand-light); opacity: 0.5; margin-bottom: 8px; }
+  .card-title { font-family: 'Nunito', sans-serif; font-size: 0.82rem; font-weight: 700; margin-bottom: 6px; color: var(--text); }
+  .card-body { font-size: 0.75rem; line-height: 1.65; color: var(--muted); }
+
+  /* Tag */
+  .tag { display: inline-block; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.06em; padding: 3px 10px; border-radius: 5px; background: rgba(110,58,250,0.06); border: 1px solid rgba(110,58,250,0.12); color: #9B6FFF; margin-right: 6px; margin-bottom: 6px; }
+
+  /* Phase strip */
+  .phase-strip { display: flex; gap: 12px; margin-top: 20px; }
+  .phase-card { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px 16px; text-align: center; position: relative; }
+  .phase-card.active { border-color: rgba(110,58,250,0.2); background: rgba(110,58,250,0.03); }
+  .phase-num { font-family: 'Nunito', sans-serif; font-size: 0.58rem; font-weight: 700; color: var(--accent); margin-bottom: 6px; letter-spacing: 0.1em; }
+  .phase-name { font-family: 'Nunito', sans-serif; font-size: 0.9rem; font-weight: 700; margin-bottom: 6px; color: var(--text); }
+  .phase-desc { font-size: 0.65rem; line-height: 1.55; color: var(--muted); }
+  .phase-weeks { font-size: 0.55rem; font-weight: 700; color: var(--accent); margin-top: 8px; letter-spacing: 0.06em; }
+
+  /* Two col layout */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start; }
+  .two-col-narrow { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: start; }
+
+  /* Deliverable list */
+  .del-list { list-style: none; margin-top: 12px; }
+  .del-list li { font-size: 0.68rem; color: var(--muted); padding: 4px 0; padding-left: 16px; position: relative; line-height: 1.5; }
+  .del-list li::before { content: '\2713'; position: absolute; left: 0; color: var(--accent); font-size: 0.6rem; font-weight: 700; }
+
+  /* Callout box */
+  .callout { background: rgba(110,58,250,0.04); border: 1px solid rgba(110,58,250,0.12); border-radius: 12px; padding: 20px 24px; margin-top: 16px; text-align: center; }
+  .callout-text { font-family: 'Nunito', sans-serif; font-size: 0.88rem; font-weight: 700; color: var(--brand); }
+
+  /* Table */
+  .handoff-table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 0.72rem; }
+  .handoff-table th { font-family: 'Nunito', sans-serif; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; text-align: left; padding: 10px 14px; border-bottom: 1px solid rgba(0,0,0,0.08); color: var(--muted); background: var(--surface); }
+  .handoff-table td { padding: 9px 14px; border-bottom: 1px solid rgba(0,0,0,0.04); color: var(--muted); vertical-align: top; line-height: 1.5; }
+  .handoff-table td:first-child { font-family: 'Nunito', sans-serif; font-weight: 700; color: var(--text); width: 140px; }
+  .handoff-table tr:last-child td { border-bottom: none; }
+
+  /* Timeline badge */
+  .timeline-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 0.62rem; font-weight: 700; color: var(--accent); margin-top: 16px; letter-spacing: 0.06em; }
+  .timeline-badge::before { content: ''; display: block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+
+  /* Orb decorations */
+  .orb { position: absolute; border-radius: 50%; filter: blur(80px); pointer-events: none; z-index: 0; }
+
+  /* Gate card */
+  .gate-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 28px 24px; }
+  .gate-title { font-family: 'Nunito', sans-serif; font-size: 1rem; font-weight: 800; margin-bottom: 16px; color: var(--text); }
+  .gate-item { margin-bottom: 14px; }
+  .gate-item:last-child { margin-bottom: 0; }
+  .gate-item-label { font-family: 'Nunito', sans-serif; font-size: 0.72rem; font-weight: 700; color: var(--brand); margin-bottom: 4px; }
+  .gate-item-body { font-size: 0.65rem; line-height: 1.6; color: var(--muted); }
+
+  /* Detail row for slide 2 */
+  .detail-row { display: flex; align-items: baseline; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgba(0,0,0,0.04); }
+  .detail-row:last-child { border-bottom: none; }
+  .detail-label { font-family: 'Nunito', sans-serif; font-size: 0.65rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; min-width: 80px; }
+  .detail-value { font-family: 'Nunito', sans-serif; font-size: 0.82rem; font-weight: 700; color: var(--text); }
+
+  /* Payment step */
+  .payment-strip { display: flex; gap: 0; margin-top: 24px; }
+  .payment-step { flex: 1; padding: 28px 24px; text-align: center; position: relative; }
+  .payment-step:not(:last-child)::after { content: ''; position: absolute; right: 0; top: 20%; height: 60%; width: 1px; background: var(--border); }
+  .payment-pct { font-family: 'Nunito', sans-serif; font-size: 2rem; font-weight: 900; color: var(--brand); margin-bottom: 4px; }
+  .payment-name { font-family: 'Nunito', sans-serif; font-size: 0.82rem; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+  .payment-desc { font-size: 0.68rem; line-height: 1.6; color: var(--muted); max-width: 260px; margin: 0 auto; }
+
+  /* Checklist items */
+  .checklist-item { display: flex; gap: 16px; padding: 14px 0; border-bottom: 1px solid rgba(0,0,0,0.04); }
+  .checklist-item:last-child { border-bottom: none; }
+  .checklist-num { font-family: 'Nunito', sans-serif; font-size: 0.82rem; font-weight: 800; color: var(--brand); min-width: 24px; }
+  .checklist-content {}
+  .checklist-title { font-family: 'Nunito', sans-serif; font-size: 0.78rem; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+  .checklist-desc { font-size: 0.65rem; line-height: 1.6; color: var(--muted); }
+
+  /* Portal feature list */
+  .portal-feature { display: flex; align-items: center; gap: 10px; padding: 8px 0; font-size: 0.72rem; color: var(--muted); }
+  .portal-feature::before { content: ''; display: block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+
+  /* Comm list */
+  .comm-item { display: flex; gap: 16px; padding: 10px 0; border-bottom: 1px solid rgba(0,0,0,0.04); }
+  .comm-item:last-child { border-bottom: none; }
+  .comm-label { font-family: 'Nunito', sans-serif; font-size: 0.72rem; font-weight: 700; color: var(--text); min-width: 160px; }
+  .comm-value { font-size: 0.72rem; color: var(--muted); line-height: 1.5; }
+
+  /* Phase progress bar */
+  .phase-bar { display: flex; margin-top: 24px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+  .phase-bar-segment { padding: 18px 16px; text-align: center; position: relative; }
+  .phase-bar-segment:not(:last-child) { border-right: 1px solid var(--border); }
+  .phase-bar-label { font-family: 'Nunito', sans-serif; font-size: 0.72rem; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+  .phase-bar-weeks { font-size: 0.55rem; font-weight: 700; color: var(--accent); letter-spacing: 0.06em; }
+
+  /* Progress gradient */
+  .progress-bar { height: 6px; border-radius: 3px; margin-top: 16px; background: linear-gradient(90deg, var(--brand), var(--brand-light), var(--accent)); }
+
+  @media screen {
+    .slide { margin: 20px auto; box-shadow: 0 4px 24px rgba(0,0,0,0.08); border: 1px solid rgba(0,0,0,0.06); border-radius: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 1 — COVER -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide" style="justify-content: center; align-items: center; text-align: center;">
+  <div class="orb" style="width:600px;height:600px;background:radial-gradient(circle,rgba(110,58,250,0.05) 0%,transparent 70%);top:-100px;right:-100px;"></div>
+  <div class="orb" style="width:400px;height:400px;background:radial-gradient(circle,rgba(0,184,160,0.04) 0%,transparent 70%);bottom:-80px;left:-60px;"></div>
+  <div style="position:relative;z-index:1;">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:30px;width:auto;display:block;margin:0 auto 12px;">
+    <div style="font-size:1.15rem;color:var(--muted);margin-bottom:40px;letter-spacing:0.02em;">Welcome Pack</div>
+    <h1 style="font-size:2.8rem;font-weight:900;letter-spacing:-0.03em;line-height:1.15;margin-bottom:20px;color:var(--text);">
+      Welcome to Ventrify,<br><span class="gradient-text">Inside &amp; Out.</span>
+    </h1>
+    <p style="font-size:1rem;color:var(--muted);max-width:560px;margin:0 auto 32px;line-height:1.7;">This document is your guide to how we'll work together — what to expect, how we communicate, and everything you need to know from day one.</p>
+    <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
+      <span class="tag" style="font-size:0.65rem;padding:5px 14px;">Prepared for Inside &amp; Out</span>
+      <span class="tag" style="font-size:0.65rem;padding:5px 14px;">March 2026</span>
+      <span class="tag" style="font-size:0.65rem;padding:5px 14px;">Confidential</span>
+    </div>
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Inside &amp; Out · Welcome Pack</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 2 — WHAT WE'RE BUILDING TOGETHER -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="orb" style="width:400px;height:400px;background:radial-gradient(circle,rgba(110,58,250,0.04) 0%,transparent 70%);top:-80px;right:-60px;"></div>
+  <div style="position:relative;z-index:1;">
+    <div class="slide-label">Your Venture</div>
+    <h2 class="slide-title">What we're building <span class="gradient-text">together</span></h2>
+    <div class="two-col" style="margin-top:28px;">
+      <div>
+        <div class="detail-row">
+          <span class="detail-label">Client</span>
+          <span class="detail-value">Inside &amp; Out</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Tier</span>
+          <span class="detail-value" style="color:var(--muted);font-weight:500;font-style:italic;">To be confirmed</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Timeline</span>
+          <span class="detail-value">~12 Weeks</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Kick-off</span>
+          <span class="detail-value" style="color:var(--muted);font-weight:500;font-style:italic;">To be confirmed</span>
+        </div>
+      </div>
+      <div>
+        <p style="font-size:0.82rem;line-height:1.75;color:var(--muted);">Over the coming weeks, our team will take your idea through our proven 5-phase methodology — from deep research through to a fully launched product.</p>
+        <p style="font-size:0.82rem;line-height:1.75;color:var(--muted);margin-top:12px;">This Welcome Pack outlines how we'll work, what you'll receive, and what we need from you.</p>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Inside &amp; Out · Welcome Pack</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 3 — YOUR TEAM -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="orb" style="width:350px;height:350px;background:radial-gradient(circle,rgba(0,184,160,0.04) 0%,transparent 70%);bottom:-60px;left:-40px;"></div>
+  <div style="position:relative;z-index:1;">
+    <div class="slide-label">Your Team</div>
+    <h2 class="slide-title">One team. <span class="gradient-text">Every layer.</span></h2>
+    <p class="slide-sub" style="margin-bottom:24px;">You'll work with the same dedicated team from day one to delivery. No handoffs between departments, no communication gaps.</p>
+    <div class="card-grid card-grid-3">
+      <div class="card">
+        <div class="card-number">01</div>
+        <div class="card-title">Strategy &amp; Research</div>
+        <div class="card-body">Market analysis, competitor research, product vision, and go-to-market planning.</div>
+      </div>
+      <div class="card">
+        <div class="card-number">02</div>
+        <div class="card-title">Design &amp; Brand</div>
+        <div class="card-body">UX/UI design, design system, brand identity, and visual communication.</div>
+      </div>
+      <div class="card">
+        <div class="card-number">03</div>
+        <div class="card-title">Development &amp; Launch</div>
+        <div class="card-body">Full-stack build, QA, app store submission, and deployment.</div>
+      </div>
+    </div>
+    <div class="callout" style="margin-top:20px;">
+      <div class="callout-text" style="font-size:0.78rem;">Your primary point of contact for all communication is hello@ventrify.io</div>
+    </div>
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Inside &amp; Out · Welcome Pack</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 4 — THE 5-PHASE PROCESS -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="orb" style="width:400px;height:400px;background:radial-gradient(circle,rgba(110,58,250,0.04) 0%,transparent 70%);top:-80px;right:-60px;"></div>
+  <div style="position:relative;z-index:1;">
+    <div class="slide-label">The Process</div>
+    <h2 class="slide-title">How your venture <span class="gradient-text">will be built</span></h2>
+    <div class="phase-strip">
+      <div class="phase-card">
+        <div class="phase-num">PHASE 01</div>
+        <div class="phase-name">Discover</div>
+        <div class="phase-desc">Deep market and user research to build your evidence base</div>
+        <div class="phase-weeks">Wks 1–2</div>
+      </div>
+      <div class="phase-card">
+        <div class="phase-num">PHASE 02</div>
+        <div class="phase-name">Define</div>
+        <div class="phase-desc">Shape the product vision, personas, and go-to-market plan</div>
+        <div class="phase-weeks">Wks 2–4</div>
+      </div>
+      <div class="phase-card">
+        <div class="phase-num">PHASE 03</div>
+        <div class="phase-name">Design</div>
+        <div class="phase-desc">Every screen specified, every component documented in Figma</div>
+        <div class="phase-weeks">Wks 3–8</div>
+      </div>
+      <div class="phase-card">
+        <div class="phase-num">PHASE 04</div>
+        <div class="phase-name">Develop</div>
+        <div class="phase-desc">Production-grade build with full QA and launch readiness</div>
+        <div class="phase-weeks">Wks 6–14</div>
+      </div>
+      <div class="phase-card">
+        <div class="phase-num">PHASE 05</div>
+        <div class="phase-name">Deliver</div>
+        <div class="phase-desc">Clean handoff with full IP transfer and documentation</div>
+        <div class="phase-weeks">Wks 10–16</div>
+      </div>
+    </div>
+    <p style="font-size:0.68rem;color:var(--muted);margin-top:20px;max-width:800px;line-height:1.6;">Two formal gate reviews ensure you approve every major decision before we proceed. Your scope is locked at Gate 2 — no surprises.</p>
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Inside &amp; Out · Welcome Pack</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 5 — GATE REVIEWS -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="orb" style="width:350px;height:350px;background:radial-gradient(circle,rgba(110,58,250,0.05) 0%,transparent 70%);top:-80px;right:-60px;"></div>
+  <div style="position:relative;z-index:1;">
+    <div class="slide-label">Quality Gates</div>
+    <h2 class="slide-title">Your sign-off <span class="gradient-text">points</span></h2>
+    <div class="card-grid card-grid-2" style="margin-top:28px;">
+      <div class="gate-card">
+        <div class="gate-title">Gate 1: Research Sign-Off</div>
+        <div class="gate-item">
+          <div class="gate-item-body">After Phase 1, we present all research findings in a comprehensive deck. You review market analysis, competitor landscape, and user insights. We proceed only after your written approval.</div>
+        </div>
+      </div>
+      <div class="gate-card">
+        <div class="gate-title">Gate 2: Scope Lock</div>
+        <div class="gate-item">
+          <div class="gate-item-body">After Phase 2, we present product vision, personas, features, and roadmap. You sign the Statement of Work. This locks the MVP scope — everything from here is built to this agreed specification.</div>
+        </div>
+      </div>
+    </div>
+    <div class="callout" style="margin-top:20px;">
+      <div class="callout-text" style="font-size:0.72rem;font-weight:600;">Changes to Must Have features after Gate 2 require a formal change request with timeline and cost impact assessment.</div>
+    </div>
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Inside &amp; Out · Welcome Pack</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 6 — WHAT YOU'LL RECEIVE -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="orb" style="width:400px;height:400px;background:radial-gradient(circle,rgba(0,184,160,0.04) 0%,transparent 70%);bottom:-80px;left:-60px;"></div>
+  <div style="position:relative;z-index:1;">
+    <div class="slide-label">Deliverables</div>
+    <h2 class="slide-title">Everything you'll <span class="gradient-text">receive</span></h2>
+    <table class="handoff-table">
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th>Deliverables</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Code</td>
+          <td>3 GitHub repos (app, website, design system)</td>
+        </tr>
+        <tr>
+          <td>Design</td>
+          <td>Figma files with design system + custom plugins</td>
+        </tr>
+        <tr>
+          <td>Live Products</td>
+          <td>iOS app, Android app, marketing website, design system site</td>
+        </tr>
+        <tr>
+          <td>Services</td>
+          <td>Firebase, Sanity CMS, PostHog analytics</td>
+        </tr>
+        <tr>
+          <td>Documents</td>
+          <td>10+ branded PDFs (decks, SOW, marketing pack, wireframes)</td>
+        </tr>
+        <tr>
+          <td>Content</td>
+          <td>20 social posts, 5 blog posts, video script</td>
+        </tr>
+        <tr>
+          <td style="color:var(--brand);">Ownership</td>
+          <td style="color:var(--text);font-weight:600;">Full IP transfer. No lock-in. Everything is yours.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Inside &amp; Out · Welcome Pack</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 7 — PAYMENT MILESTONES -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="orb" style="width:350px;height:350px;background:radial-gradient(circle,rgba(110,58,250,0.05) 0%,transparent 70%);top:-100px;left:-80px;"></div>
+  <div style="position:relative;z-index:1;">
+    <div class="slide-label">Payments</div>
+    <h2 class="slide-title">Three milestones. <span class="gradient-text">No surprises.</span></h2>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-top:28px;">
+      <div class="payment-strip">
+        <div class="payment-step">
+          <div class="payment-pct">40%</div>
+          <div class="payment-name">Upfront</div>
+          <div class="payment-desc">On signing the Statement of Work. Covers Discover and Define phases.</div>
+        </div>
+        <div class="payment-step">
+          <div class="payment-pct">30%</div>
+          <div class="payment-name">Design Start</div>
+          <div class="payment-desc">After Gate 2 approval. Unlocks Design and Development.</div>
+        </div>
+        <div class="payment-step">
+          <div class="payment-pct">30%</div>
+          <div class="payment-name">On Delivery</div>
+          <div class="payment-desc">Upon completed handoff, app store submission, and IP transfer.</div>
+        </div>
+      </div>
+    </div>
+    <div class="callout" style="margin-top:20px;">
+      <div class="callout-text" style="font-size:0.72rem;font-weight:600;">Invoices are sent via Stripe. No work begins on any phase until the corresponding milestone is paid.</div>
+    </div>
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Inside &amp; Out · Welcome Pack</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 8 — YOUR CLIENT PORTAL -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="orb" style="width:400px;height:400px;background:radial-gradient(circle,rgba(110,58,250,0.04) 0%,transparent 70%);top:-80px;right:-60px;"></div>
+  <div style="position:relative;z-index:1;">
+    <div class="slide-label">Your Portal</div>
+    <h2 class="slide-title">Track everything <span class="gradient-text">in real time</span></h2>
+    <p class="slide-sub" style="margin-bottom:24px;">You have access to a dedicated client portal where you can track project progress, view payment status, and download deliverables as they're completed.</p>
+    <div class="card" style="padding:28px 32px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="portal-feature">Project timeline &amp; phase progress</div>
+        <div class="portal-feature">Payment milestone status</div>
+        <div class="portal-feature">Deliverable downloads (PDFs, assets, links)</div>
+        <div class="portal-feature">Communication log</div>
+      </div>
+    </div>
+    <div class="callout" style="margin-top:20px;">
+      <div class="callout-text" style="font-size:0.72rem;font-weight:600;">Your portal access code will be shared separately via email.</div>
+    </div>
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Inside &amp; Out · Welcome Pack</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 9 — COMMUNICATION -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="orb" style="width:350px;height:350px;background:radial-gradient(circle,rgba(0,184,160,0.04) 0%,transparent 70%);bottom:-60px;right:-40px;"></div>
+  <div style="position:relative;z-index:1;">
+    <div class="slide-label">Communication</div>
+    <h2 class="slide-title">How we'll stay <span class="gradient-text">in touch</span></h2>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px 32px;margin-top:24px;">
+      <div class="comm-item">
+        <span class="comm-label">Primary contact</span>
+        <span class="comm-value">hello@ventrify.io</span>
+      </div>
+      <div class="comm-item">
+        <span class="comm-label">Response time</span>
+        <span class="comm-value">Within 24 hours on working days</span>
+      </div>
+      <div class="comm-item">
+        <span class="comm-label">Gate reviews</span>
+        <span class="comm-value">Scheduled video calls with screen share</span>
+      </div>
+      <div class="comm-item">
+        <span class="comm-label">Updates</span>
+        <span class="comm-value">Regular progress updates via your client portal</span>
+      </div>
+      <div class="comm-item">
+        <span class="comm-label">Feedback rounds</span>
+        <span class="comm-value">One structured feedback round per phase</span>
+      </div>
+    </div>
+    <p style="font-size:0.68rem;color:var(--muted);margin-top:20px;max-width:800px;line-height:1.6;">We believe in clear, direct communication. If you ever have questions, concerns, or ideas — reach out. There's no such thing as a bad question at this stage.</p>
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Inside &amp; Out · Welcome Pack</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 10 — WHAT WE NEED FROM YOU -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="orb" style="width:400px;height:400px;background:radial-gradient(circle,rgba(110,58,250,0.04) 0%,transparent 70%);bottom:-80px;left:-60px;"></div>
+  <div style="position:relative;z-index:1;">
+    <div class="slide-label">From You</div>
+    <h2 class="slide-title">What we need <span class="gradient-text">to get started</span></h2>
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:14px;padding:28px 32px;margin-top:24px;">
+      <div class="checklist-item">
+        <span class="checklist-num">1</span>
+        <div class="checklist-content">
+          <div class="checklist-title">Completed Venture Brief</div>
+          <div class="checklist-desc">Your intake form with product details, target market, and vision.</div>
+        </div>
+      </div>
+      <div class="checklist-item">
+        <span class="checklist-num">2</span>
+        <div class="checklist-content">
+          <div class="checklist-title">Brand Assets (if any)</div>
+          <div class="checklist-desc">Logo, colours, fonts, or brand guidelines you already have.</div>
+        </div>
+      </div>
+      <div class="checklist-item">
+        <span class="checklist-num">3</span>
+        <div class="checklist-content">
+          <div class="checklist-title">Gate Review Availability</div>
+          <div class="checklist-desc">Two scheduled sessions for Gate 1 and Gate 2 sign-offs.</div>
+        </div>
+      </div>
+      <div class="checklist-item">
+        <span class="checklist-num">4</span>
+        <div class="checklist-content">
+          <div class="checklist-title">Timely Feedback</div>
+          <div class="checklist-desc">One feedback round per phase, returned within 5 working days.</div>
+        </div>
+      </div>
+      <div class="checklist-item">
+        <span class="checklist-num">5</span>
+        <div class="checklist-content">
+          <div class="checklist-title">First Payment Milestone</div>
+          <div class="checklist-desc">40% upfront to begin Phase 1.</div>
+        </div>
+      </div>
+    </div>
+    <p style="font-size:0.68rem;color:var(--muted);margin-top:16px;max-width:800px;line-height:1.6;">That's it. We handle everything else — strategy, research, design, development, content, and launch.</p>
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Inside &amp; Out · Welcome Pack</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 11 — TIMELINE AT A GLANCE -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="orb" style="width:350px;height:350px;background:radial-gradient(circle,rgba(110,58,250,0.05) 0%,transparent 70%);top:-80px;right:-60px;"></div>
+  <div style="position:relative;z-index:1;">
+    <div class="slide-label">Timeline</div>
+    <h2 class="slide-title">Your venture <span class="gradient-text">at a glance</span></h2>
+    <div class="phase-bar">
+      <div class="phase-bar-segment" style="flex:2;background:rgba(110,58,250,0.06);">
+        <div class="phase-bar-label">Discover</div>
+        <div class="phase-bar-weeks">Wks 1–2</div>
+      </div>
+      <div class="phase-bar-segment" style="flex:2;background:rgba(110,58,250,0.04);">
+        <div class="phase-bar-label">Define</div>
+        <div class="phase-bar-weeks">Wks 2–4</div>
+      </div>
+      <div class="phase-bar-segment" style="flex:5;background:rgba(110,58,250,0.03);">
+        <div class="phase-bar-label">Design</div>
+        <div class="phase-bar-weeks">Wks 3–8</div>
+      </div>
+      <div class="phase-bar-segment" style="flex:8;background:rgba(0,184,160,0.04);">
+        <div class="phase-bar-label">Develop</div>
+        <div class="phase-bar-weeks">Wks 6–14</div>
+      </div>
+      <div class="phase-bar-segment" style="flex:6;background:rgba(0,184,160,0.03);">
+        <div class="phase-bar-label">Deliver</div>
+        <div class="phase-bar-weeks">Wks 10–16</div>
+      </div>
+    </div>
+    <p style="font-size:0.82rem;color:var(--muted);margin-top:20px;text-align:center;">Phases overlap by design — <strong style="color:var(--text);">10–16 weeks total</strong></p>
+    <div class="progress-bar"></div>
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Inside &amp; Out · Welcome Pack</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 12 — CLOSING -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide" style="justify-content: center; align-items: center; text-align: center;">
+  <div class="orb" style="width:600px;height:600px;background:radial-gradient(circle,rgba(110,58,250,0.05) 0%,transparent 70%);top:-100px;left:-100px;"></div>
+  <div class="orb" style="width:400px;height:400px;background:radial-gradient(circle,rgba(0,184,160,0.04) 0%,transparent 70%);bottom:-80px;right:-60px;"></div>
+  <div style="position:relative;z-index:1;">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:34px;width:auto;display:block;margin:0 auto 32px;">
+    <h1 style="font-size:2.8rem;font-weight:900;letter-spacing:-0.03em;line-height:1.15;margin-bottom:20px;color:var(--text);">
+      Let's build <span class="gradient-text">Inside &amp; Out.</span>
+    </h1>
+    <p style="font-size:1rem;color:var(--muted);max-width:520px;margin:0 auto 32px;line-height:1.7;">We're excited to bring your venture to life. If you have any questions before we begin, don't hesitate to reach out.</p>
+    <div style="display:flex;gap:24px;justify-content:center;flex-wrap:wrap;font-size:0.82rem;color:var(--muted);">
+      <span>hello@ventrify.io</span>
+      <span style="color:var(--border);">·</span>
+      <span>ventrify.io</span>
+      <span style="color:var(--border);">·</span>
+      <span>Dubai, UAE</span>
+    </div>
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Inside &amp; Out · Welcome Pack</span>
+  </div>
+</div>
+
+</body>
+</html>

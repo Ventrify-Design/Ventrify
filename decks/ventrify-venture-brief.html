@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ventrify — Venture Brief</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  @page { size: landscape; margin: 0; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --brand: #6E3AFA; --brand-light: #9B6FFF; --accent: #00B8A0;
+    --bg: #FFFFFF; --surface: #F5F5F7; --surface-2: #FFFFFF;
+    --text: #1D1D1F; --muted: #86868B; --border: rgba(0,0,0,0.08);
+  }
+  body { background: #F0F0F0; color: var(--text); font-family: 'Raleway', sans-serif; line-height: 1.6; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  h1,h2,h3,h4,h5 { font-family: 'Nunito', sans-serif; letter-spacing: -0.02em; }
+
+  .slide {
+    width: 1280px; height: 720px; padding: 56px 72px;
+    position: relative; overflow: hidden;
+    page-break-after: always; page-break-inside: avoid;
+    background: var(--bg);
+    display: flex; flex-direction: column; justify-content: center;
+    margin: 0 auto;
+  }
+  .slide:last-child { page-break-after: avoid; }
+
+  .slide-label { display: inline-flex; align-items: center; gap: 10px; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: 16px; }
+  .slide-label::before { content: ''; display: block; width: 18px; height: 1px; background: var(--accent); }
+  .slide-title { font-size: 2.4rem; font-weight: 800; letter-spacing: -0.025em; line-height: 1.1; margin-bottom: 16px; color: var(--text); }
+  .slide-sub { font-size: 1rem; line-height: 1.7; color: var(--muted); max-width: 640px; }
+  .gradient-text { background: linear-gradient(140deg, #9B6FFF, #00B8A0); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+  .footer-bar { position: absolute; bottom: 0; left: 0; right: 0; height: 48px; display: flex; align-items: center; justify-content: space-between; padding: 0 72px; border-top: 1px solid rgba(0,0,0,0.06); font-size: 0.6rem; color: var(--muted); letter-spacing: 0.06em; }
+
+  /* Tag */
+  .tag { display: inline-block; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.06em; padding: 3px 10px; border-radius: 5px; background: rgba(110,58,250,0.06); border: 1px solid rgba(110,58,250,0.12); color: #9B6FFF; margin-right: 6px; margin-bottom: 6px; }
+
+  /* Orb decorations */
+  .orb { position: absolute; border-radius: 50%; filter: blur(80px); pointer-events: none; z-index: 0; }
+
+  /* Card */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px; position: relative; overflow: hidden; }
+
+  /* Callout box */
+  .callout { background: rgba(110,58,250,0.04); border: 1px solid rgba(110,58,250,0.12); border-radius: 12px; padding: 20px 24px; margin-top: 16px; text-align: center; }
+  .callout-text { font-family: 'Nunito', sans-serif; font-size: 0.88rem; font-weight: 700; color: var(--brand); }
+
+  /* ── Form-specific styles ── */
+  .form-field {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+  }
+  .field-label {
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    width: 140px;
+    flex-shrink: 0;
+  }
+  .field-value {
+    flex: 1;
+    font-size: 0.78rem;
+    color: rgba(0,0,0,0.25);
+    font-style: italic;
+  }
+
+  .text-area {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+  .text-area .field-label {
+    display: block;
+    margin-bottom: 6px;
+    width: auto;
+  }
+  .text-area .field-hint {
+    font-size: 0.68rem;
+    color: rgba(0,0,0,0.25);
+    font-style: italic;
+    line-height: 1.5;
+  }
+  .text-area-space {
+    min-height: 80px;
+  }
+  .text-area-space-lg {
+    min-height: 120px;
+  }
+
+  .checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    flex: 1;
+  }
+  .checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.75rem;
+    color: var(--text);
+  }
+  .checkbox-box {
+    width: 16px;
+    height: 16px;
+    border: 1px solid rgba(0,0,0,0.15);
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+
+  /* Numbered steps */
+  .step-list { list-style: none; margin-top: 16px; counter-reset: step-counter; }
+  .step-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+  }
+  .step-item:last-child { border-bottom: none; }
+  .step-num {
+    font-family: 'Nunito', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--brand-light);
+    opacity: 0.5;
+    width: 28px;
+    flex-shrink: 0;
+    text-align: center;
+    line-height: 1.4;
+  }
+  .step-text {
+    font-size: 0.88rem;
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  /* Numbered lines for list area */
+  .numbered-lines {
+    margin-top: 8px;
+  }
+  .numbered-line {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+  }
+  .numbered-line:last-child { border-bottom: none; }
+  .line-num {
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--muted);
+    opacity: 0.5;
+    width: 18px;
+    flex-shrink: 0;
+  }
+  .line-blank {
+    flex: 1;
+    height: 1px;
+    background: rgba(0,0,0,0.05);
+  }
+
+  @media screen {
+    .slide { margin: 20px auto; box-shadow: 0 4px 24px rgba(0,0,0,0.08); border: 1px solid rgba(0,0,0,0.06); border-radius: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 1 — COVER -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide" style="justify-content: center; align-items: center; text-align: center;">
+  <div class="orb" style="width:600px;height:600px;background:radial-gradient(circle,rgba(110,58,250,0.05) 0%,transparent 70%);top:-100px;right:-100px;"></div>
+  <div class="orb" style="width:400px;height:400px;background:radial-gradient(circle,rgba(0,184,160,0.04) 0%,transparent 70%);bottom:-80px;left:-60px;"></div>
+  <div style="position:relative;z-index:1;">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:30px;width:auto;display:block;margin:0 auto 12px;">
+    <div style="font-size:1.15rem;color:var(--muted);margin-bottom:40px;letter-spacing:0.02em;">Venture Brief</div>
+    <h1 style="font-size:3.2rem;font-weight:900;letter-spacing:-0.03em;line-height:1.05;margin-bottom:20px;color:var(--text);">
+      Tell us about <span class="gradient-text">your idea</span>
+    </h1>
+    <p style="font-size:1rem;color:var(--muted);max-width:580px;margin:0 auto 32px;line-height:1.7;">This brief helps us understand your vision, goals, and priorities before we begin. Complete each section as thoroughly as you can — the more context you provide, the better we can scope and plan your venture.</p>
+    <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
+      <span class="tag" style="font-size:0.65rem;padding:5px 14px;">Intake Form</span>
+      <span class="tag" style="font-size:0.65rem;padding:5px 14px;">Confidential</span>
+    </div>
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Venture Brief</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 2 — ABOUT YOU -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide" style="background:var(--surface);">
+  <div class="orb" style="width:350px;height:350px;background:radial-gradient(circle,rgba(110,58,250,0.04) 0%,transparent 70%);top:-80px;right:-60px;"></div>
+  <div style="position:relative;z-index:1;">
+    <div class="slide-label">Section 01</div>
+    <h2 class="slide-title" style="font-size:2.2rem;margin-bottom:28px;">About You</h2>
+
+    <div class="form-field">
+      <div class="field-label">Full Name</div>
+      <div class="field-value">Your full name</div>
+    </div>
+    <div class="form-field">
+      <div class="field-label">Email</div>
+      <div class="field-value">Your email address</div>
+    </div>
+    <div class="form-field">
+      <div class="field-label">Phone</div>
+      <div class="field-value">Your phone number</div>
+    </div>
+    <div class="form-field">
+      <div class="field-label">Location</div>
+      <div class="field-value">City, Country</div>
+    </div>
+    <div class="form-field">
+      <div class="field-label">LinkedIn / Website</div>
+      <div class="field-value">URL</div>
+    </div>
+    <div class="form-field" style="align-items:flex-start;">
+      <div class="field-label" style="padding-top:2px;">Role / Background</div>
+      <div class="field-value">A brief line about your professional experience and what you bring to this venture.</div>
+    </div>
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Venture Brief</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 3 — YOUR IDEA -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="orb" style="width:350px;height:350px;background:radial-gradient(circle,rgba(0,184,160,0.04) 0%,transparent 70%);bottom:-60px;left:-40px;"></div>
+  <div style="position:relative;z-index:1;">
+    <div class="slide-label">Section 02</div>
+    <h2 class="slide-title" style="font-size:2.2rem;margin-bottom:20px;">Your Idea</h2>
+
+    <div class="form-field">
+      <div class="field-label">Product / Company Name</div>
+      <div class="field-value">Your product or company name</div>
+    </div>
+
+    <div class="text-area">
+      <div class="field-label">One-Line Description</div>
+      <div class="field-hint">Describe your product in one sentence.</div>
+      <div class="text-area-space"></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="text-area">
+        <div class="field-label">The Problem</div>
+        <div class="field-hint">What problem does your product solve? Who experiences this problem?</div>
+        <div class="text-area-space-lg"></div>
+      </div>
+      <div class="text-area">
+        <div class="field-label">The Solution</div>
+        <div class="field-hint">How does your product solve it? What's the core value proposition?</div>
+        <div class="text-area-space-lg"></div>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Venture Brief</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 4 — TARGET MARKET -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide" style="background:var(--surface);">
+  <div class="orb" style="width:400px;height:400px;background:radial-gradient(circle,rgba(110,58,250,0.04) 0%,transparent 70%);top:-100px;left:-80px;"></div>
+  <div style="position:relative;z-index:1;">
+    <div class="slide-label">Section 03</div>
+    <h2 class="slide-title" style="font-size:2.2rem;margin-bottom:20px;">Target Market</h2>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="text-area">
+        <div class="field-label">Target Audience</div>
+        <div class="field-hint">Who is your primary user? Be as specific as possible.</div>
+        <div class="text-area-space-lg"></div>
+      </div>
+      <div class="text-area">
+        <div class="field-label">Market Size</div>
+        <div class="field-hint">How big is the market? (Any data you have — TAM, competitors, growth)</div>
+        <div class="text-area-space-lg"></div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="text-area">
+        <div class="field-label">Existing Solutions</div>
+        <div class="field-hint">What alternatives exist today? Why are they not good enough?</div>
+        <div class="text-area-space-lg"></div>
+      </div>
+      <div class="text-area">
+        <div class="field-label" style="width:auto;">Unique Advantage</div>
+        <div class="field-hint">What makes your approach different or better?</div>
+        <div class="text-area-space-lg"></div>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Venture Brief</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 5 — PRODUCT VISION -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="orb" style="width:350px;height:350px;background:radial-gradient(circle,rgba(0,184,160,0.04) 0%,transparent 70%);top:-60px;right:-60px;"></div>
+  <div style="position:relative;z-index:1;">
+    <div class="slide-label">Section 04</div>
+    <h2 class="slide-title" style="font-size:2.2rem;margin-bottom:20px;">Product Vision</h2>
+
+    <div class="form-field" style="align-items:flex-start;">
+      <div class="field-label" style="padding-top:2px;">Platform Preference</div>
+      <div class="checkbox-row">
+        <div class="checkbox-item"><div class="checkbox-box"></div><span>iOS</span></div>
+        <div class="checkbox-item"><div class="checkbox-box"></div><span>Android</span></div>
+        <div class="checkbox-item"><div class="checkbox-box"></div><span>Web</span></div>
+        <div class="checkbox-item"><div class="checkbox-box"></div><span>All</span></div>
+      </div>
+    </div>
+
+    <div class="text-area">
+      <div class="field-label">Core Features</div>
+      <div class="field-hint">List the 3–5 most important features your MVP must have.</div>
+      <div class="numbered-lines">
+        <div class="numbered-line"><span class="line-num">1.</span><span class="line-blank"></span></div>
+        <div class="numbered-line"><span class="line-num">2.</span><span class="line-blank"></span></div>
+        <div class="numbered-line"><span class="line-num">3.</span><span class="line-blank"></span></div>
+        <div class="numbered-line"><span class="line-num">4.</span><span class="line-blank"></span></div>
+        <div class="numbered-line"><span class="line-num">5.</span><span class="line-blank"></span></div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="text-area">
+        <div class="field-label">Nice-to-Haves</div>
+        <div class="field-hint">Features that would be great but aren't essential for v1.</div>
+        <div class="text-area-space-lg"></div>
+      </div>
+      <div class="text-area">
+        <div class="field-label">Inspiration</div>
+        <div class="field-hint">Any products, apps, or websites you admire? What do you like about them?</div>
+        <div class="text-area-space-lg"></div>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Venture Brief</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 6 — BRAND & MARKETING -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide" style="background:var(--surface);">
+  <div class="orb" style="width:400px;height:400px;background:radial-gradient(circle,rgba(110,58,250,0.04) 0%,transparent 70%);bottom:-80px;right:-60px;"></div>
+  <div style="position:relative;z-index:1;">
+    <div class="slide-label">Section 05</div>
+    <h2 class="slide-title" style="font-size:2.2rem;margin-bottom:20px;">Brand & Marketing</h2>
+
+    <div class="form-field" style="align-items:flex-start;">
+      <div class="field-label" style="padding-top:2px;">Brand Status</div>
+      <div style="flex:1;">
+        <div style="font-size:0.68rem;color:rgba(0,0,0,0.25);font-style:italic;margin-bottom:8px;">Do you have any existing brand assets?</div>
+        <div class="checkbox-row">
+          <div class="checkbox-item"><div class="checkbox-box"></div><span>Logo</span></div>
+          <div class="checkbox-item"><div class="checkbox-box"></div><span>Colours</span></div>
+          <div class="checkbox-item"><div class="checkbox-box"></div><span>Fonts</span></div>
+          <div class="checkbox-item"><div class="checkbox-box"></div><span>Brand guidelines</span></div>
+          <div class="checkbox-item"><div class="checkbox-box"></div><span>Nothing yet</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-field">
+      <div class="field-label">Brand Personality</div>
+      <div class="field-value">How should your brand feel? (e.g., professional, playful, premium, minimal)</div>
+    </div>
+
+    <div class="form-field">
+      <div class="field-label">Social Presence</div>
+      <div class="field-value">Do you have any existing social media accounts?</div>
+    </div>
+
+    <div class="form-field" style="align-items:flex-start;">
+      <div class="field-label" style="padding-top:2px;">Content Preferences</div>
+      <div style="flex:1;">
+        <div style="font-size:0.68rem;color:rgba(0,0,0,0.25);font-style:italic;margin-bottom:8px;">Any content formats you're interested in?</div>
+        <div class="checkbox-row">
+          <div class="checkbox-item"><div class="checkbox-box"></div><span>Blog</span></div>
+          <div class="checkbox-item"><div class="checkbox-box"></div><span>Social media</span></div>
+          <div class="checkbox-item"><div class="checkbox-box"></div><span>Video</span></div>
+          <div class="checkbox-item"><div class="checkbox-box"></div><span>Newsletter</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Venture Brief</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 7 — BUSINESS & FUNDING -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="orb" style="width:350px;height:350px;background:radial-gradient(circle,rgba(0,184,160,0.04) 0%,transparent 70%);top:-60px;left:-40px;"></div>
+  <div style="position:relative;z-index:1;">
+    <div class="slide-label">Section 06</div>
+    <h2 class="slide-title" style="font-size:2.2rem;margin-bottom:20px;">Business & Funding</h2>
+
+    <div class="form-field" style="align-items:flex-start;">
+      <div class="field-label" style="padding-top:2px;">Business Stage</div>
+      <div style="flex:1;">
+        <div style="font-size:0.68rem;color:rgba(0,0,0,0.25);font-style:italic;margin-bottom:8px;">Where are you right now?</div>
+        <div class="checkbox-row">
+          <div class="checkbox-item"><div class="checkbox-box"></div><span>Just an idea</span></div>
+          <div class="checkbox-item"><div class="checkbox-box"></div><span>Validated concept</span></div>
+          <div class="checkbox-item"><div class="checkbox-box"></div><span>Have early traction</span></div>
+          <div class="checkbox-item"><div class="checkbox-box"></div><span>Revenue generating</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-field" style="align-items:flex-start;">
+      <div class="field-label" style="padding-top:2px;">Funding Status</div>
+      <div style="flex:1;">
+        <div style="font-size:0.68rem;color:rgba(0,0,0,0.25);font-style:italic;margin-bottom:8px;">Have you raised any funding?</div>
+        <div class="checkbox-row">
+          <div class="checkbox-item"><div class="checkbox-box"></div><span>Not yet</span></div>
+          <div class="checkbox-item"><div class="checkbox-box"></div><span>Friends & family</span></div>
+          <div class="checkbox-item"><div class="checkbox-box"></div><span>Angel</span></div>
+          <div class="checkbox-item"><div class="checkbox-box"></div><span>Pre-seed</span></div>
+          <div class="checkbox-item"><div class="checkbox-box"></div><span>Seed</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-field" style="align-items:flex-start;">
+      <div class="field-label" style="padding-top:2px;">Budget Range</div>
+      <div style="flex:1;">
+        <div style="font-size:0.68rem;color:rgba(0,0,0,0.25);font-style:italic;margin-bottom:8px;">Which tier are you considering?</div>
+        <div class="checkbox-row">
+          <div class="checkbox-item"><div class="checkbox-box"></div><span>Launchpad (from AED 150K)</span></div>
+          <div class="checkbox-item"><div class="checkbox-box"></div><span>Venture (from AED 240K)</span></div>
+          <div class="checkbox-item"><div class="checkbox-box"></div><span>Venture Pro (from AED 330K)</span></div>
+          <div class="checkbox-item"><div class="checkbox-box"></div><span>Not sure yet</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-field">
+      <div class="field-label">Timeline</div>
+      <div class="field-value">When would you ideally like to launch?</div>
+    </div>
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Venture Brief</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 8 — PRIORITIES & EXPECTATIONS -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide" style="background:var(--surface);">
+  <div class="orb" style="width:400px;height:400px;background:radial-gradient(circle,rgba(110,58,250,0.04) 0%,transparent 70%);top:-80px;right:-60px;"></div>
+  <div style="position:relative;z-index:1;">
+    <div class="slide-label">Section 07</div>
+    <h2 class="slide-title" style="font-size:2.2rem;margin-bottom:20px;">Priorities</h2>
+
+    <div class="text-area">
+      <div class="field-label">Top Priority</div>
+      <div class="field-hint">What's the single most important outcome from this engagement?</div>
+      <div class="text-area-space-lg"></div>
+    </div>
+
+    <div class="text-area">
+      <div class="field-label">Success Metrics</div>
+      <div class="field-hint">How will you measure whether this venture is successful?</div>
+      <div class="text-area-space-lg"></div>
+    </div>
+
+    <div class="text-area">
+      <div class="field-label">Concerns</div>
+      <div class="field-hint">Is there anything you're worried about or want us to be aware of?</div>
+      <div class="text-area-space"></div>
+    </div>
+
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Venture Brief</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 9 — NEXT STEPS -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="orb" style="width:500px;height:500px;background:radial-gradient(circle,rgba(110,58,250,0.04) 0%,transparent 70%);bottom:-100px;right:-80px;"></div>
+  <div class="orb" style="width:350px;height:350px;background:radial-gradient(circle,rgba(0,184,160,0.03) 0%,transparent 70%);top:-60px;left:-40px;"></div>
+  <div style="position:relative;z-index:1;">
+    <div class="slide-label">What Happens Next</div>
+    <h2 class="slide-title" style="font-size:2.2rem;margin-bottom:8px;">Once you submit <span class="gradient-text">your brief</span></h2>
+    <p class="slide-sub" style="margin-bottom:24px;font-size:0.9rem;">Here's what to expect after you send us your completed venture brief.</p>
+
+    <ul class="step-list" style="max-width:800px;">
+      <li class="step-item">
+        <span class="step-num">01</span>
+        <span class="step-text">We review your brief within 24 hours</span>
+      </li>
+      <li class="step-item">
+        <span class="step-num">02</span>
+        <span class="step-text">We schedule a 45-minute discovery call to discuss your vision</span>
+      </li>
+      <li class="step-item">
+        <span class="step-num">03</span>
+        <span class="step-text">We scope your venture and recommend the right tier</span>
+      </li>
+      <li class="step-item">
+        <span class="step-num">04</span>
+        <span class="step-text">You receive a Statement of Work with clear deliverables and timeline</span>
+      </li>
+      <li class="step-item">
+        <span class="step-num">05</span>
+        <span class="step-text">We kick off Phase 1 — and start building</span>
+      </li>
+    </ul>
+
+    <div class="callout" style="max-width:800px;margin-top:28px;">
+      <div class="callout-text" style="font-size:0.82rem;">Submit this brief to hello@ventrify.io or complete it during your discovery call.</div>
+    </div>
+
+    <div style="margin-top:16px;font-size:0.72rem;color:var(--muted);letter-spacing:0.02em;">
+      hello@ventrify.io &nbsp;·&nbsp; ventrify.io
+    </div>
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Venture Brief</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 10 — CLOSING -->
+<!-- ════════════════════════════════════════════════════════════ -->
+<div class="slide" style="justify-content: center; align-items: center; text-align: center; background: var(--surface);">
+  <div class="orb" style="width:600px;height:600px;background:radial-gradient(circle,rgba(110,58,250,0.05) 0%,transparent 70%);top:-120px;left:50%;transform:translateX(-50%);"></div>
+  <div class="orb" style="width:400px;height:400px;background:radial-gradient(circle,rgba(0,184,160,0.04) 0%,transparent 70%);bottom:-100px;right:-60px;"></div>
+  <div style="position:relative;z-index:1;">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:34px;width:auto;display:block;margin:0 auto 32px;">
+    <h1 style="font-size:3rem;font-weight:900;letter-spacing:-0.03em;line-height:1.1;margin-bottom:20px;color:var(--text);">
+      Ready to start <span class="gradient-text">building?</span>
+    </h1>
+    <p style="font-size:1rem;color:var(--muted);max-width:500px;margin:0 auto 36px;line-height:1.7;">Send this brief to hello@ventrify.io and we'll take it from here.</p>
+    <div style="font-size:0.82rem;color:var(--muted);letter-spacing:0.02em;">
+      hello@ventrify.io &nbsp;·&nbsp; ventrify.io &nbsp;·&nbsp; Dubai, UAE
+    </div>
+  </div>
+  <div class="footer-bar">
+    <img src="../ventrify.svg" alt="Ventrify" style="height:14px;width:auto;display:block;opacity:0.25;">
+    <span>Confidential — Venture Brief</span>
+  </div>
+</div>
+
+</body>
+</html>
