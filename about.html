@@ -390,13 +390,18 @@
     }
     @media (max-width: 640px) {
       .about-hero { padding: 7rem 1.25rem 3rem; min-height: auto; }
-      .hero-stats { flex-direction: column; gap: 1.5rem; }
+      .hero-stats { flex-direction: column; gap: 1rem; }
       .stat-divider { display: none; }
       .stat-block { padding: 0; }
-      .phase-block { grid-template-columns: 1fr !important; gap: 1.5rem !important; }
+      .stat-val { font-size: 1.8rem !important; }
+      .phase-block { grid-template-columns: 1fr !important; gap: 1rem !important; }
       .phase-block:nth-child(even) { direction: ltr !important; }
-      .phase-preview { max-width: 100%; }
+      .phase-preview { max-width: 100%; aspect-ratio: 16/9; }
+      .phase-list { margin-top: 2rem; }
+      .prob-card, .answer-card { padding: 1.5rem !important; }
+      .problem-grid, .answer-grid { gap: 0.75rem !important; }
       .section { padding: 3.5rem 1.25rem; }
+      .phase-bar-wrap { display: none; }
     }
   </style>
 </head>
@@ -555,9 +560,9 @@
             <span>Gate 1 Review — validate the opportunity before moving to definition</span>
           </div>
         </div>
-        <div class="phase-preview" id="phase-img-discover">
-          <div class="phase-preview-label">Research Deck</div>
-          <img src="https://placehold.co/560x350/111627/7B8194?text=Research+Deck" alt="Research deck placeholder">
+        <div class="phase-preview" id="phase-img-discover" style="display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(108,92,231,0.08),rgba(0,206,255,0.04));">
+          <div class="phase-preview-label">Research</div>
+          <div style="font-size:4rem;line-height:1;opacity:0.8;">🔍</div>
         </div>
       </div>
 
@@ -585,9 +590,9 @@
             <span>Gate 2 Review — scope locked, nothing left to interpretation</span>
           </div>
         </div>
-        <div class="phase-preview" id="phase-img-define">
-          <div class="phase-preview-label">Product Vision</div>
-          <img src="https://placehold.co/560x350/111627/7B8194?text=Product+Vision+Deck" alt="Product vision deck placeholder">
+        <div class="phase-preview" id="phase-img-define" style="display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(0,206,255,0.06),rgba(108,92,231,0.04));">
+          <div class="phase-preview-label">Vision</div>
+          <div style="font-size:4rem;line-height:1;opacity:0.8;">🎯</div>
         </div>
       </div>
 
@@ -612,9 +617,9 @@
             <span class="phase-tag">Investor Pitch Deck</span>
           </div>
         </div>
-        <div class="phase-preview" id="phase-img-design">
-          <div class="phase-preview-label">UI Designs</div>
-          <img src="https://placehold.co/560x350/111627/7B8194?text=App+UI+Designs" alt="UI design screens placeholder">
+        <div class="phase-preview" id="phase-img-design" style="display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(108,92,231,0.08),rgba(162,155,254,0.04));">
+          <div class="phase-preview-label">Design</div>
+          <div style="font-size:4rem;line-height:1;opacity:0.8;">🎨</div>
         </div>
       </div>
 
@@ -636,9 +641,9 @@
             <span class="phase-tag">Analytics Setup</span>
           </div>
         </div>
-        <div class="phase-preview" id="phase-img-develop">
-          <div class="phase-preview-label">MVP App</div>
-          <img src="https://placehold.co/560x350/111627/7B8194?text=MVP+Product" alt="MVP app placeholder">
+        <div class="phase-preview" id="phase-img-develop" style="display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(0,206,255,0.08),rgba(108,92,231,0.04));">
+          <div class="phase-preview-label">Build</div>
+          <div style="font-size:4rem;line-height:1;opacity:0.8;">⚡</div>
         </div>
       </div>
 
@@ -662,16 +667,16 @@
             <span class="phase-tag">Full Documentation</span>
           </div>
         </div>
-        <div class="phase-preview" id="phase-img-deliver">
-          <div class="phase-preview-label">Full Handoff</div>
-          <img src="https://placehold.co/560x350/111627/7B8194?text=Complete+Handoff" alt="Deliverables handoff placeholder">
+        <div class="phase-preview" id="phase-img-deliver" style="display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(0,206,255,0.06),rgba(0,206,255,0.02));">
+          <div class="phase-preview-label">Handoff</div>
+          <div style="font-size:4rem;line-height:1;opacity:0.8;">🚀</div>
         </div>
       </div>
 
     </div>
 
     <!-- Phase bar visualization -->
-    <div style="margin-top:4rem;overflow-x:auto;-webkit-overflow-scrolling:touch;" data-reveal data-delay="2">
+    <div class="phase-bar-wrap" style="margin-top:4rem;overflow-x:auto;-webkit-overflow-scrolling:touch;" data-reveal data-delay="2">
       <div style="text-align:center;margin-bottom:1.5rem;">
         <div style="font-family:var(--font-heading);font-size:0.95rem;color:var(--text);">End-to-End Timeline</div>
         <div style="font-size:0.82rem;color:var(--muted);margin-top:0.25rem;">Phases overlap by design — velocity never comes at the cost of craft.</div>
