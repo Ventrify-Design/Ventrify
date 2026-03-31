@@ -746,11 +746,16 @@
     @media (max-width: 640px) {
       .hero { padding: 7rem 1.25rem 3rem; }
       .hero h1 { font-size: clamp(2.4rem, 8vw, 3.5rem); }
-      .device-showcase { margin-top: 3rem; }
+      .hero-stats { flex-direction: column; gap: 1.5rem; }
+      .stat-block { padding: 0; }
+      .stat-divider { display: none; }
+      .device-showcase { margin-top: 2rem; }
       .showcase-row { flex-wrap: wrap; gap: 0.75rem; }
       .showcase-phone { width: 100px; height: 216px; border-radius: 16px; }
       .showcase-laptop { width: 100%; height: auto; aspect-ratio: 16/10; }
       .showcase-deck { flex: none; width: calc(50% - 0.375rem); }
+      .compare-topic { min-width: 0 !important; }
+      .compare-old, .compare-new { padding: 0.75rem 1rem; }
       .advantage-grid { grid-template-columns: 1fr !important; gap: 1rem !important; }
     }
   </style>
@@ -943,7 +948,7 @@
 
     <!-- Phase bar visualization -->
     <div style="margin-top:4rem;overflow-x:auto;-webkit-overflow-scrolling:touch;" data-reveal data-delay="2">
-      <div style="min-width:680px;position:relative;">
+      <div style="min-width:0;position:relative;">
 
         <!-- Phase segments -->
         <div style="display:flex;gap:3px;">

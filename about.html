@@ -391,8 +391,12 @@
     @media (max-width: 640px) {
       .about-hero { padding: 7rem 1.25rem 3rem; min-height: auto; }
       .hero-stats { flex-direction: column; gap: 1.5rem; }
-      .stat-divider { width: 40px; height: 1px; }
+      .stat-divider { display: none; }
       .stat-block { padding: 0; }
+      .phase-block { grid-template-columns: 1fr !important; gap: 1.5rem !important; }
+      .phase-block:nth-child(even) { direction: ltr !important; }
+      .phase-preview { max-width: 100%; }
+      .section { padding: 3.5rem 1.25rem; }
     }
   </style>
 </head>
@@ -672,7 +676,7 @@
         <div style="font-family:var(--font-heading);font-size:0.95rem;color:var(--text);">End-to-End Timeline</div>
         <div style="font-size:0.82rem;color:var(--muted);margin-top:0.25rem;">Phases overlap by design — velocity never comes at the cost of craft.</div>
       </div>
-      <div style="min-width:680px;position:relative;">
+      <div style="min-width:0;position:relative;">
         <div style="display:flex;gap:3px;">
           <div style="flex:2;background:linear-gradient(160deg,rgba(110,58,250,0.18) 0%,rgba(110,58,250,0.06) 100%);border:1px solid rgba(110,58,250,0.3);border-radius:10px 0 0 10px;padding:1.5rem 1rem;position:relative;overflow:hidden;">
             <div style="position:absolute;top:0;right:0;width:56px;height:56px;background:radial-gradient(circle at 100% 0%,rgba(110,58,250,0.22),transparent 70%);pointer-events:none;"></div>
