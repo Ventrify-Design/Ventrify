@@ -3,1536 +3,2027 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ventrify — AI-Powered Venture Building</title>
-  <meta name="description" content="Ventrify — the full-stack venture studio for pre-seed founders. Strategy, design, development, brand, and marketing. Powered by AI, built at speed.">
-  <meta property="og:title" content="Ventrify — AI-Powered Venture Building">
-  <meta property="og:description" content="Turn ideas into launched products. Strategy, design, development, brand, and marketing under one roof.">
+  <title>Ventrify — Turn Ideas into Launched Products</title>
+  <meta name="description" content="Ventrify — the full-stack venture studio for pre-seed founders. Strategy, design, development, brand, and marketing under one roof. From idea to launched product in 10–16 weeks.">
+  <meta property="og:title" content="Ventrify — Turn Ideas into Launched Products">
+  <meta property="og:description" content="Strategy, design, development, and marketing — under one roof. For pre-seed founders who want to launch, not manage vendors.">
   <meta property="og:type" content="website">
-  <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles/tokens.css">
-  <link rel="stylesheet" href="styles/shared.css">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
-    /* ── HERO ── */
-    .hero {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 9rem 3rem 5rem;
-      position: relative;
-      overflow: hidden;
-      text-align: center;
-    }
-    .hero-bg-image {
-      position: absolute;
-      inset: 0;
-      background-image: url('brand%20assets/hero-1.png');
-      background-size: cover;
-      background-position: center bottom;
-      background-repeat: no-repeat;
-      opacity: 0.12;
-      mix-blend-mode: lighten;
-      pointer-events: none;
-      z-index: 0;
-      mask-image: radial-gradient(ellipse 85% 80% at 50% 55%, black 20%, transparent 75%);
-      -webkit-mask-image: radial-gradient(ellipse 85% 80% at 50% 55%, black 20%, transparent 75%);
-    }
-    .orb-1 { width: 700px; height: 700px; background: radial-gradient(circle, rgba(110,58,250,0.06) 0%, transparent 70%); top: -150px; right: -150px; animation: orb1 10s ease-in-out infinite; }
-    .orb-2 { width: 450px; height: 450px; background: radial-gradient(circle, rgba(0,184,160,0.05) 0%, transparent 70%); bottom: -50px; left: 15%; animation: orb2 14s ease-in-out infinite; }
-    .orb-3 { width: 350px; height: 350px; background: radial-gradient(circle, rgba(110,58,250,0.04) 0%, transparent 70%); top: 40%; left: -80px; animation: orb3 18s ease-in-out infinite; }
-    @keyframes orb1 { 0%,100%{transform:translate(0,0) scale(1)} 40%{transform:translate(-40px,30px) scale(1.06)} 70%{transform:translate(25px,-35px) scale(0.94)} }
-    @keyframes orb2 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(50px,-60px)} }
-    @keyframes orb3 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(40px,40px)} }
+    /* ============================================
+       DESIGN TOKENS
+       ============================================ */
+    :root {
+      --primary: #0036FF;
+      --primary-light: #3366FF;
+      --primary-rgb: 0,54,255;
+      --bg-dark: #0A0118;
+      --bg-light: #FFFFFF;
+      --surface-dark: #120826;
+      --surface-dark-2: #1A0E30;
+      --surface-card-dark: rgba(255,255,255,0.04);
+      --text-light: #FFFFFF;
+      --text-light-muted: rgba(255,255,255,0.6);
+      --text-light-subtle: rgba(255,255,255,0.6);
+      --text-dark: #141414;
+      --text-dark-muted: #656565;
+      --border-dark: rgba(255,255,255,0.08);
+      --border-light: rgba(0,0,0,0.06);
 
-    .hero-content {
-      max-width: 1080px;
-      margin: 0 auto;
-      width: 100%;
-      position: relative;
-      z-index: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      --font-heading: 'Inter', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      --radius-sm: 12px;
+      --radius-md: 16px;
+      --radius-card: 20px;
+      --radius-lg: 24px;
+      --radius-pill: 980px;
+
+      --ease-smooth: cubic-bezier(0.6, 0.6, 0, 1);
+      --transition: 0.45s cubic-bezier(0.6, 0.6, 0, 1);
     }
 
-    /* HERO ENTRANCE */
-    .hero-content > * {
-      animation: heroFadeUp 0.9s var(--ease-smooth) both;
+    /* ============================================
+       BASE RESET
+       ============================================ */
+    *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+    html { scroll-behavior:smooth; }
+    body {
+      background:var(--bg-dark);
+      color:var(--text-dark);
+      font-family:var(--font-body);
+      font-size:17px;
+      overflow-x:hidden;
+      line-height:1.65;
+      font-weight:400;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
     }
-    .hero-content > *:nth-child(1) { animation-delay: 0.05s; }
-    .hero-content > *:nth-child(2) { animation-delay: 0.18s; }
-    .hero-content > *:nth-child(3) { animation-delay: 0.3s; }
-    .hero-content > *:nth-child(4) { animation-delay: 0.42s; }
-    .hero-content > *:nth-child(5) { animation-delay: 0.54s; }
-    @keyframes heroFadeUp {
-      from { opacity: 0; transform: translateY(32px); }
-      to   { opacity: 1; transform: translateY(0); }
+    h1,h2,h3,h4,h5 { font-family:var(--font-heading); letter-spacing:-0.02em; font-weight:600; }
+    a { text-decoration:none; color:inherit; }
+    img { max-width:100%; }
+    .skip-link {
+      position:absolute; top:-100px; left:50%;
+      transform:translateX(-50%);
+      background:var(--primary); color:#fff;
+      padding:8px 16px; border-radius:0 0 8px 8px;
+      font-size:0.82rem; font-weight:600;
+      z-index:9999; transition:top 0.2s ease;
+    }
+    .skip-link:focus { top:0; }
+
+    /* Shimmer */
+    @keyframes shimmer {
+      0% { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+    .shimmer-text {
+      background: linear-gradient(90deg,
+        rgba(255,255,255,0.95) 0%,
+        rgba(255,255,255,0.95) 35%,
+        rgba(var(--primary-rgb),0.7) 50%,
+        rgba(255,255,255,0.95) 65%,
+        rgba(255,255,255,0.95) 100%);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: shimmer 3s ease-in-out 1s 1 forwards;
+    }
+    @keyframes shimmerDark {
+      0% { background-position: 200% center; }
+      100% { background-position: -200% center; }
+    }
+    .s-title-shimmer {
+      background: linear-gradient(90deg,
+        #141414 0%, #141414 35%,
+        rgba(var(--primary-rgb),0.65) 50%,
+        #141414 65%, #141414 100%);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      background-position: -200% center;
+    }
+    [data-reveal].revealed .s-title-shimmer {
+      animation: shimmerDark 2s ease-in-out 0.2s 1;
     }
 
-    .eyebrow-pill {
-      display: inline-flex; align-items: center; gap: 8px;
-      background: rgba(110,58,250,0.06); border: 1px solid rgba(110,58,250,0.1);
-      border-radius: 100px; padding: 5px 14px;
-      font-size: 0.72rem; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase;
-      color: var(--brand-light); margin-bottom: 1.75rem;
+    /* ============================================
+       NAVIGATION — Floating Pill + Extras Pill
+       ============================================ */
+    .nav-wrap {
+      position:fixed; top:16px; left:50%;
+      transform:translateX(-50%);
+      z-index:200;
+      display:flex; align-items:center; gap:8px;
+      max-width:calc(100% - 24px);
     }
-    .pill-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: blink 2.2s ease-in-out infinite; }
-    @keyframes blink { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.75)} }
+    nav {
+      display:flex; align-items:center; gap:2px;
+      padding:6px 8px 6px 20px;
+      height:60px;
+      background:rgba(255,255,255,0.88);
+      backdrop-filter:blur(12px);
+      -webkit-backdrop-filter:blur(12px);
+      border-radius:var(--radius-pill);
+      box-shadow:0 1px 2px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.08), 0 16px 56px rgba(0,0,0,0.08);
+    }
+    .logo {
+      font-family:var(--font-heading);
+      font-size:1rem; font-weight:600;
+      letter-spacing:-0.02em;
+      color:var(--text-dark);
+      margin-right:auto;
+      white-space:nowrap;
+      padding-right:1rem;
+    }
+    .logo .os { font-weight:400; color:var(--text-dark-muted); }
+    .nav-links { display:flex; gap:0; align-items:center; }
+    .nav-links a {
+      font-size:0.82rem; font-weight:500;
+      color:var(--text-dark-muted);
+      padding:6px 14px; border-radius:8px;
+      transition:background var(--transition), color var(--transition);
+      white-space:nowrap;
+    }
+    .nav-links a:hover { background:rgba(0,0,0,0.04); color:var(--text-dark); }
+    .nav-links a:focus-visible {
+      outline:2px solid var(--primary);
+      outline-offset:2px; border-radius:4px;
+    }
+    .nav-extras { display:flex; align-items:center; gap:4px; }
+    .nav-extras .btn {
+      background:var(--primary); color:#fff; border:none;
+      border-radius:var(--radius-pill);
+      padding:6px 16px;
+      font-weight:600; font-size:0.82rem;
+      cursor:pointer;
+      transition:opacity var(--transition), transform var(--transition);
+      white-space:nowrap;
+    }
+    .nav-extras .btn:hover { opacity:0.9; transform:translateY(-1px); }
 
-    .hero h1 {
-      font-size: clamp(3rem, 6vw, 5.5rem);
-      letter-spacing: -0.03em;
-      line-height: 1.05;
-      margin-bottom: 1.75rem;
-    }
-    .hero-sub {
-      font-size: 1.15rem;
-      line-height: 1.75;
-      color: var(--muted);
-      max-width: 580px;
-      margin-bottom: 2.5rem;
-    }
-    .hero-ctas { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-bottom: 4rem; }
 
-    /* HERO STATS */
-    .hero-stats {
-      display: flex;
-      align-items: center;
-      gap: 0;
-      flex-wrap: wrap;
-      justify-content: center;
+    /* Buttons */
+    .btn {
+      display:inline-flex; align-items:center; justify-content:center;
+      font-family:var(--font-heading); font-weight:600; font-size:0.88rem;
+      letter-spacing:-0.01em;
+      border-radius:var(--radius-pill);
+      padding:0.75rem 1.75rem;
+      min-height:44px; cursor:pointer;
+      transition:transform 0.2s ease, box-shadow var(--transition), background var(--transition), border-color var(--transition), opacity var(--transition);
+      text-decoration:none;
     }
-    .stat-block { text-align: center; padding: 0 3rem; }
-    .stat-val {
-      font-family: var(--font-heading);
-      font-size: clamp(2.5rem, 4vw, 3.5rem);
-      letter-spacing: -0.02em;
-      color: var(--text);
-      line-height: 1;
+    .btn-primary {
+      background:var(--primary); color:#fff; border:none;
+      position:relative; overflow:hidden;
+      box-shadow:0 1px 2px rgba(var(--primary-rgb),0.2), 0 4px 12px rgba(var(--primary-rgb),0.15);
     }
-    .stat-lbl { font-size: 0.82rem; color: var(--muted); margin-top: 6px; }
-    .stat-divider {
-      width: 1px;
-      height: 40px;
-      background: var(--border);
-      flex-shrink: 0;
+    .btn-primary::before {
+      content:''; position:absolute; inset:0;
+      background:linear-gradient(180deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
+      border-radius:inherit; pointer-events:none;
+    }
+    .btn-primary:hover {
+      box-shadow:0 4px 16px rgba(var(--primary-rgb),0.25), 0 1px 2px rgba(var(--primary-rgb),0.15);
+      transform:translateY(-1px);
+    }
+    .btn-primary:active { opacity:0.9; transform:translateY(0); }
+    .btn:focus-visible { outline:2px solid var(--primary); outline-offset:3px; }
+    .btn-outline {
+      background:rgba(0,0,0,0.04);
+      color:var(--text-dark);
+      border:1px solid rgba(0,0,0,0.08);
+    }
+    .btn-outline:hover { background:rgba(0,0,0,0.06); border-color:rgba(0,0,0,0.12); }
+    .btn-sm { padding:0.5rem 1.25rem; font-size:0.82rem; min-height:36px; }
+    .btn-lg { padding:0.85rem 2.2rem; font-size:0.92rem; }
+
+    /* Hero-specific buttons */
+    .btn-hero-primary {
+      background:var(--primary); color:#fff; border:none;
+      position:relative; overflow:hidden;
+      box-shadow:0 1px 2px rgba(var(--primary-rgb),0.3), 0 4px 16px rgba(var(--primary-rgb),0.25);
+    }
+    .btn-hero-primary::before {
+      content:''; position:absolute; inset:0;
+      background:linear-gradient(180deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05));
+      border-radius:inherit; pointer-events:none;
+    }
+    .btn-hero-primary:hover {
+      box-shadow:0 4px 24px rgba(var(--primary-rgb),0.35), 0 1px 2px rgba(var(--primary-rgb),0.2);
+      transform:translateY(-1px);
+    }
+    .btn-hero-outline {
+      background:rgba(255,255,255,0.08);
+      color:rgba(255,255,255,0.85);
+      border:1px solid rgba(255,255,255,0.14);
+    }
+    .btn-hero-outline:hover {
+      background:rgba(255,255,255,0.12);
+      border-color:rgba(255,255,255,0.22);
+    }
+    .btn-dark-primary {
+      background:var(--primary); color:#fff; border:none;
+      position:relative; overflow:hidden;
+      box-shadow:0 1px 2px rgba(var(--primary-rgb),0.3), 0 4px 16px rgba(var(--primary-rgb),0.25);
+    }
+    .btn-dark-primary::before {
+      content:''; position:absolute; inset:0;
+      background:linear-gradient(180deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05));
+      border-radius:inherit; pointer-events:none;
+    }
+    .btn-dark-primary:hover {
+      box-shadow:0 4px 24px rgba(var(--primary-rgb),0.35);
+      transform:translateY(-1px);
+    }
+    .btn-dark-outline {
+      background:rgba(255,255,255,0.06);
+      color:rgba(255,255,255,0.7);
+      border:1px solid rgba(255,255,255,0.1);
+    }
+    .btn-dark-outline:hover {
+      background:rgba(255,255,255,0.1);
+      border-color:rgba(255,255,255,0.18);
     }
 
-    /* ── SECTION BASE ── */
+    /* Layout */
+    .container { max-width:1080px; margin:0 auto; }
+    .section { padding:5.5rem 3rem; background:var(--bg-light); }
+    .section-alt { padding:5.5rem 3rem; background:#FAFAFA; }
+
+    /* Section labels */
+    .s-label {
+      display:inline-flex; align-items:center; gap:8px;
+      font-size:0.75rem; font-weight:500; letter-spacing:0.1em;
+      text-transform:uppercase; color:var(--primary);
+      margin-bottom:0.75rem;
+      font-family:var(--font-mono);
+    }
+    .s-label::before {
+      content:''; display:block; width:16px; height:2px;
+      background:var(--primary); border-radius:1px; opacity:0.5;
+    }
+    .s-label-dark {
+      display:inline-flex; align-items:center; gap:8px;
+      font-size:0.75rem; font-weight:500; letter-spacing:0.1em;
+      text-transform:uppercase; color:var(--primary);
+      margin-bottom:0.75rem;
+      font-family:var(--font-mono);
+    }
+    .s-label-dark::before {
+      content:''; display:block; width:16px; height:2px;
+      background:rgba(var(--primary-rgb),0.5); border-radius:1px;
+    }
     .s-title {
-      font-size: clamp(2.2rem, 4.5vw, 3.75rem);
-      letter-spacing: -0.02em;
-      line-height: 1.1;
-      margin-bottom: 1rem;
+      font-size:clamp(2rem, 4.5vw, 3rem);
+      letter-spacing:-0.03em; line-height:1.15;
+      margin-bottom:1rem;
+      font-weight:600; color:var(--text-dark);
     }
     .s-sub {
-      font-size: 1.1rem;
-      line-height: 1.75;
-      color: var(--muted);
-      max-width: 540px;
+      font-size:1.1rem; line-height:1.7;
+      color:var(--text-dark-muted);
+      max-width:560px; font-weight:400;
+      margin-bottom:2.5rem;
     }
 
-    /* ── CAPABILITIES (2x2) ── */
+    .section-head-center {
+      text-align:center;
+      display:flex; flex-direction:column; align-items:center;
+      margin-bottom:0;
+    }
+    .section-head-center .s-label::before,
+    .section-head-center .s-label::after { opacity:0.5; }
+    .section-head-center .s-sub { margin-left:auto; margin-right:auto; }
+
+    /* Card pattern */
+    .card {
+      background:#F5F5F7; border:none;
+      border-radius:var(--radius-card);
+      overflow:hidden;
+      transition:box-shadow var(--transition), transform var(--transition);
+    }
+    .card:hover {
+      box-shadow:0 8px 32px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04);
+      transform:translateY(-2px);
+    }
+
+    /* Scroll Reveal */
+    [data-reveal] {
+      opacity:0; transform:translateY(24px);
+      transition:opacity 0.8s var(--ease-smooth), transform 0.8s var(--ease-smooth);
+    }
+    [data-reveal].revealed { opacity:1; transform:translateY(0); }
+    [data-reveal][data-delay="1"] { transition-delay:0.08s; }
+    [data-reveal][data-delay="2"] { transition-delay:0.16s; }
+    [data-reveal][data-delay="3"] { transition-delay:0.24s; }
+    [data-reveal][data-delay="4"] { transition-delay:0.32s; }
+    [data-reveal][data-delay="5"] { transition-delay:0.4s; }
+
+    /* ============================================
+       HERO — Dark gradient
+       ============================================ */
+    .hero {
+      min-height:100vh;
+      display:flex; align-items:center; justify-content:center;
+      padding:10rem 3rem 5rem;
+      position:relative; overflow:hidden;
+      text-align:center;
+      background:linear-gradient(180deg,
+        #080B1A 0%, #0C1035 30%, #111B52 65%, #1A2E78 100%);
+      color:white;
+    }
+    .hero-content {
+      max-width:1080px; margin:0 auto; width:100%;
+      position:relative; z-index:1;
+      display:flex; flex-direction:column; align-items:center;
+    }
+    .hero-content > * { animation:heroFadeUp 0.9s var(--ease-smooth) both; }
+    .hero-content > *:nth-child(1) { animation-delay:0.05s; }
+    .hero-content > *:nth-child(2) { animation-delay:0.15s; }
+    .hero-content > *:nth-child(3) { animation-delay:0.25s; }
+    .hero-content > *:nth-child(4) { animation-delay:0.35s; }
+    .hero-content > *:nth-child(5) { animation-delay:0.45s; }
+    @keyframes heroFadeUp {
+      from { opacity:0; transform:translateY(32px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    .hero-mono-label {
+      font-family:var(--font-mono); font-size:0.78rem; font-weight:400;
+      color:rgba(255,255,255,0.35); letter-spacing:0.08em;
+      margin-bottom:1.75rem;
+      text-transform:uppercase;
+    }
+    .hero h1 {
+      font-size:clamp(3rem, 7vw, 4.5rem);
+      letter-spacing:-0.04em;
+      line-height:1.08;
+      margin-bottom:1.75rem;
+      max-width:820px; font-weight:600;
+      background:linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.7));
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      background-clip:text;
+    }
+    .hero-sub {
+      font-size:1.15rem; line-height:1.75;
+      color:rgba(255,255,255,0.55);
+      max-width:640px;
+      margin-bottom:2.5rem; font-weight:400;
+    }
+    .hero-ctas {
+      display:flex; gap:12px; flex-wrap:wrap;
+      justify-content:center; margin-bottom:0;
+    }
+
+    /* Hero image section (transparent — sits on navy) */
+    .hero-image-section {
+      background:transparent;
+      padding:0;
+      margin-top:-4rem;
+      position:relative;
+      z-index:1;
+    }
+    .hero-showcase-img {
+      width:100%; height:auto; display:block;
+      border-radius:var(--radius-card);
+    }
+
+    /* ============================================
+       PAGE INTRO — Dark narrative band
+       ============================================ */
+    .page-intro-section {
+      background:var(--bg-dark);
+      padding:5.5rem 3rem;
+    }
+    .page-intro-section .intro-lead {
+      font-size:clamp(1.15rem,2.5vw,1.4rem);
+      line-height:1.75;
+      color:var(--text-light-muted);
+      font-weight:400;
+    }
+    .page-intro-section .intro-lead .hl {
+      color:#FFFFFF; font-weight:500;
+    }
+    .intro-stats {
+      display:flex; align-items:center; justify-content:center;
+      gap:0; margin-top:2rem; flex-wrap:wrap;
+    }
+    .intro-stat { text-align:center; padding:0 2.5rem; }
+    .intro-stat-val {
+      font-family:var(--font-heading);
+      font-size:clamp(1.8rem,3.5vw,2.5rem);
+      font-weight:600; color:#FFFFFF;
+      letter-spacing:-0.02em; line-height:1;
+    }
+    .intro-stat-lbl {
+      font-size:0.82rem;
+      color:var(--text-light-muted);
+      margin-top:0.4rem;
+    }
+    .intro-divider {
+      width:1px; height:40px;
+      background:rgba(255,255,255,0.1);
+      flex-shrink:0;
+    }
+
+    /* ============================================
+       CAPABILITIES (2x2 grid)
+       ============================================ */
     .cap-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 2rem;
-      margin-top: 3.5rem;
-      max-width: 1080px;
-      margin-left: auto;
-      margin-right: auto;
+      display:grid; grid-template-columns:repeat(2, 1fr);
+      gap:1.5rem; margin-top:3rem;
     }
     .cap-card {
-      background: var(--surface-card);
-      border: 1px solid rgba(255,255,255,0.06);
-      border-radius: var(--radius-card);
-      padding: 2.5rem;
-      transition: border-color 0.3s ease, transform 0.3s ease;
+      background:#F5F5F7;
+      border-radius:var(--radius-card);
+      padding:2.25rem;
+      transition:box-shadow var(--transition), transform var(--transition);
     }
     .cap-card:hover {
-      border-color: rgba(255,255,255,0.12);
-      transform: translateY(-2px);
+      box-shadow:0 8px 32px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04);
+      transform:translateY(-2px);
     }
     .cap-icon {
-      width: 48px; height: 48px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 1.25rem;
+      width:48px; height:48px;
+      border-radius:12px;
+      display:flex; align-items:center; justify-content:center;
+      background:rgba(var(--primary-rgb),0.08);
+      color:var(--primary);
+      margin-bottom:1.25rem;
     }
-    .cap-icon.purple { background: rgba(110,58,250,0.1); }
-    .cap-icon.teal { background: rgba(0,184,160,0.08); }
     .cap-title {
-      font-family: var(--font-heading);
-      font-size: 1.15rem;
-      letter-spacing: -0.015em;
-      margin-bottom: 0.5rem;
+      font-size:1.1rem; font-weight:600;
+      color:var(--text-dark);
+      letter-spacing:-0.015em;
+      margin-bottom:0.5rem;
     }
     .cap-desc {
-      font-size: 0.95rem;
-      line-height: 1.7;
-      color: var(--muted);
+      font-size:0.95rem; line-height:1.7;
+      color:var(--text-dark-muted);
     }
 
-    /* ── TIMELINE ── */
+    /* ============================================
+       RESEARCH STATS BANNER
+       ============================================ */
+    .research-stats {
+      display:flex; justify-content:center;
+      gap:0; margin-top:3rem; margin-bottom:3rem;
+      flex-wrap:wrap;
+    }
+    .rs-block { text-align:center; padding:0 3rem; }
+    .rs-val {
+      font-family:var(--font-heading);
+      font-size:clamp(2rem,4vw,3rem);
+      color:var(--text-dark);
+      font-weight:600; letter-spacing:-0.02em;
+      line-height:1;
+    }
+    .rs-lbl {
+      font-size:0.85rem;
+      color:var(--text-dark-muted);
+      margin-top:0.5rem;
+    }
+    .rs-divider {
+      width:1px; height:50px;
+      background:rgba(0,0,0,0.1);
+      flex-shrink:0; align-self:center;
+    }
+
+    /* ============================================
+       TIMELINE — 5 phases
+       ============================================ */
     .timeline {
-      display: flex;
-      align-items: flex-start;
-      justify-content: center;
-      position: relative;
-      max-width: 1080px;
-      margin: 3.5rem auto 0;
-      padding-top: 2rem;
+      display:flex; align-items:flex-start;
+      justify-content:center;
+      position:relative;
+      max-width:1080px;
+      margin:3rem auto 0;
+      padding-top:2rem;
     }
     .timeline-line {
-      position: absolute;
-      top: calc(2rem + 18px);
-      left: 10%;
-      right: 10%;
-      height: 1px;
-      background: var(--border);
+      position:absolute;
+      top:calc(2rem + 18px);
+      left:10%; right:10%;
+      height:1px;
+      background:rgba(0,0,0,0.1);
     }
     .timeline-step {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      position: relative;
-      padding: 0 1rem;
+      flex:1; display:flex; flex-direction:column;
+      align-items:center; text-align:center;
+      position:relative; padding:0 1rem;
     }
     .timeline-node {
-      width: 36px; height: 36px;
-      border-radius: 50%;
-      background: var(--brand);
-      color: #fff;
-      font-family: var(--font-heading);
-      font-size: 0.78rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 1rem;
-      position: relative;
-      z-index: 1;
+      width:36px; height:36px;
+      border-radius:50%;
+      background:var(--primary);
+      color:#fff;
+      font-family:var(--font-heading);
+      font-weight:600;
+      font-size:0.85rem;
+      display:flex; align-items:center; justify-content:center;
+      margin-bottom:1rem;
+      position:relative; z-index:1;
+      box-shadow:0 4px 12px rgba(var(--primary-rgb),0.2);
     }
     .timeline-name {
-      font-family: var(--font-heading);
-      font-size: 1.05rem;
-      letter-spacing: -0.01em;
-      margin-bottom: 0.4rem;
+      font-family:var(--font-heading);
+      font-size:1.05rem; font-weight:600;
+      color:var(--text-dark);
+      letter-spacing:-0.01em;
+      margin-bottom:0.4rem;
     }
     .timeline-desc {
-      font-size: 0.85rem;
-      line-height: 1.6;
-      color: var(--muted);
-      max-width: 180px;
+      font-size:0.85rem; line-height:1.6;
+      color:var(--text-dark-muted);
+      max-width:180px;
     }
-
-    /* ── GATE INDICATORS ── */
     .gate-indicator {
-      position: absolute;
-      top: calc(2rem + 10px);
-      z-index: 2;
-      width: 18px; height: 18px;
-      border-radius: 50%;
-      background: rgba(0,184,160,0.12);
-      border: 1.5px solid rgba(0,184,160,0.35);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      position:absolute;
+      top:calc(2rem + 10px);
+      z-index:2;
+      width:18px; height:18px;
+      border-radius:50%;
+      background:rgba(var(--primary-rgb),0.1);
+      border:1.5px solid rgba(var(--primary-rgb),0.4);
+      display:flex; align-items:center; justify-content:center;
     }
-    .gate-indicator.g1 { left: calc(20% + 10px); }
-    .gate-indicator.g2 { left: calc(40% + 10px); }
+    .gate-indicator.g1 { left:calc(20% + 10px); }
+    .gate-indicator.g2 { left:calc(40% + 10px); }
 
-    /* ── DELIVERABLES (3-stream cards) ── */
+    /* ============================================
+       DELIVERABLES — 3-stream cards
+       ============================================ */
     .del-streams {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1.5rem;
-      max-width: 1080px;
-      margin: 3.5rem auto 0;
+      display:grid; grid-template-columns:repeat(3, 1fr);
+      gap:1.5rem; margin-top:3rem;
     }
     .del-stream-card {
-      background: var(--surface-card);
-      border-radius: var(--radius-card);
-      border: 1px solid rgba(255,255,255,0.06);
-      overflow: hidden;
-      transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      background:#FFFFFF;
+      border:1px solid rgba(0,0,0,0.06);
+      border-radius:var(--radius-card);
+      overflow:hidden;
+      box-shadow:0 1px 2px rgba(0,0,0,0.04), 0 4px 8px rgba(0,0,0,0.02);
+      transition:box-shadow var(--transition), transform var(--transition);
     }
     .del-stream-card:hover {
-      transform: translateY(-4px);
+      box-shadow:0 4px 24px rgba(0,0,0,0.08);
+      transform:translateY(-3px);
     }
-    .del-stream-featured {
-      border-color: rgba(110,58,250,0.15);
+    .del-stream-card.featured {
+      border-color:rgba(var(--primary-rgb),0.18);
+      box-shadow:0 1px 2px rgba(0,0,0,0.04), 0 4px 16px rgba(var(--primary-rgb),0.08);
     }
     .del-stream-header {
-      padding: 1.5rem 1.5rem 1.25rem;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
+      padding:1.5rem 1.5rem 1.25rem;
+      display:flex; align-items:center; gap:1rem;
+      border-bottom:1px solid rgba(0,0,0,0.06);
+      background:#FAFAFA;
+    }
+    .del-stream-card.featured .del-stream-header {
+      background:linear-gradient(135deg, rgba(var(--primary-rgb),0.05), rgba(var(--primary-rgb),0.02));
     }
     .del-stream-icon {
-      width: 44px; height: 44px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
+      width:44px; height:44px;
+      border-radius:12px;
+      display:flex; align-items:center; justify-content:center;
+      flex-shrink:0;
+      background:rgba(var(--primary-rgb),0.08);
+      color:var(--primary);
     }
     .del-stream-name {
-      font-family: var(--font-heading);
-      font-size: 1.1rem;
-      font-weight: 600;
-      color: var(--text);
-      letter-spacing: -0.01em;
+      font-family:var(--font-heading);
+      font-size:1.1rem; font-weight:600;
+      color:var(--text-dark);
+      letter-spacing:-0.01em;
     }
     .del-stream-sub {
-      font-size: 0.78rem;
-      color: var(--muted);
-      margin-top: 1px;
+      font-size:0.78rem;
+      color:var(--text-dark-muted);
+      margin-top:2px;
     }
     .del-stream-list {
-      list-style: none;
-      padding: 0.5rem 1.5rem 1.75rem;
-      margin: 0;
+      list-style:none; padding:1rem 1.5rem 1.75rem; margin:0;
     }
     .del-stream-list li {
-      display: flex;
-      align-items: center;
-      gap: 0.65rem;
-      font-size: 0.9rem;
-      color: var(--text);
-      padding: 0.55rem 0;
-      border-bottom: 1px solid var(--border);
+      display:flex; align-items:center; gap:0.65rem;
+      font-size:0.9rem;
+      color:var(--text-dark);
+      padding:0.6rem 0;
+      border-bottom:1px solid rgba(0,0,0,0.05);
     }
-    .del-stream-list li:last-child {
-      border-bottom: none;
-    }
-    .del-stream-list li svg {
-      flex-shrink: 0;
-    }
+    .del-stream-list li:last-child { border-bottom:none; }
+    .del-stream-list li svg { flex-shrink:0; color:var(--primary); }
 
-    /* ── COMPARISON STACK ── */
+    /* ============================================
+       COMPARISON STACK
+       ============================================ */
     .compare-stack {
-      max-width: 1080px;
-      margin: 3.5rem auto 0;
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
+      max-width:1080px; margin:3rem auto 0;
+      display:flex; flex-direction:column; gap:0.75rem;
     }
     .compare-row {
-      display: grid;
-      grid-template-columns: 1fr auto 1fr;
-      align-items: center;
-      gap: 0;
-      border-radius: 12px;
-      overflow: hidden;
-      border: 1px solid var(--border);
+      display:grid; grid-template-columns:1fr auto 1fr;
+      align-items:center;
+      border-radius:var(--radius-md);
+      overflow:hidden;
+      border:1px solid var(--border-light);
+      background:#FFFFFF;
     }
     .compare-old {
-      display: flex;
-      align-items: center;
-      gap: 0.85rem;
-      padding: 1.25rem 1.5rem;
-      background: rgba(255,77,106,0.03);
+      display:flex; align-items:center; gap:0.85rem;
+      padding:1.25rem 1.5rem;
+      background:#FAFAFA;
     }
     .compare-x {
-      width: 30px; height: 30px;
-      border-radius: 50%;
-      background: rgba(255,77,106,0.08);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
+      width:28px; height:28px;
+      border-radius:50%;
+      background:rgba(200,40,40,0.08);
+      color:#c82828;
+      display:flex; align-items:center; justify-content:center;
+      flex-shrink:0;
     }
     .compare-old-val {
-      font-family: var(--font-heading);
-      font-size: 0.88rem;
-      color: var(--muted);
-      text-decoration: line-through;
-      text-decoration-color: rgba(255,77,106,0.35);
+      font-size:0.92rem;
+      color:var(--text-dark-muted);
+      text-decoration:line-through;
+      text-decoration-color:rgba(200,40,40,0.35);
+      font-weight:500;
     }
     .compare-old-note {
-      font-size: 0.76rem;
-      color: var(--muted);
-      opacity: 0.7;
-      margin-top: 2px;
+      font-size:0.76rem;
+      color:var(--text-dark-muted);
+      opacity:0.75; margin-top:2px;
     }
     .compare-topic {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.35rem;
-      padding: 1rem 1.5rem;
-      border-left: 1px solid var(--border);
-      border-right: 1px solid var(--border);
-      min-width: 100px;
+      display:flex; flex-direction:column; align-items:center;
+      gap:0.35rem; padding:1rem 1.5rem;
+      border-left:1px solid var(--border-light);
+      border-right:1px solid var(--border-light);
+      min-width:120px;
+      background:#FFFFFF;
+      color:var(--text-dark-muted);
     }
     .compare-topic span {
-      font-family: var(--font-heading);
-      font-size: 0.62rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--muted);
+      font-family:var(--font-mono);
+      font-size:0.68rem;
+      letter-spacing:0.1em;
+      text-transform:uppercase;
+      color:var(--text-dark-muted);
     }
     .compare-new {
-      display: flex;
-      align-items: center;
-      gap: 0.85rem;
-      padding: 1.25rem 1.5rem;
-      background: rgba(110,58,250,0.03);
+      display:flex; align-items:center; gap:0.85rem;
+      padding:1.25rem 1.5rem;
+      background:rgba(var(--primary-rgb),0.03);
     }
     .compare-check {
-      width: 30px; height: 30px;
-      border-radius: 50%;
-      background: rgba(0,184,160,0.1);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
+      width:28px; height:28px;
+      border-radius:50%;
+      background:rgba(var(--primary-rgb),0.1);
+      color:var(--primary);
+      display:flex; align-items:center; justify-content:center;
+      flex-shrink:0;
     }
     .compare-new-val {
-      font-family: var(--font-heading);
-      font-size: 0.88rem;
-      color: var(--text);
+      font-size:0.92rem;
+      color:var(--text-dark); font-weight:600;
     }
     .compare-new-note {
-      font-size: 0.76rem;
-      color: var(--accent);
-      margin-top: 2px;
+      font-size:0.76rem;
+      color:var(--primary);
+      margin-top:2px;
+      opacity:0.8;
     }
 
-    /* ── PORTFOLIO ── */
+    /* ============================================
+       ADVANTAGE (3 pillars)
+       ============================================ */
+    .adv-grid {
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:1.5rem; margin-top:3rem;
+    }
+    .adv-card {
+      background:#F5F5F7;
+      border-radius:var(--radius-card);
+      padding:2.5rem 2rem;
+      text-align:center;
+    }
+    .adv-icon {
+      width:56px; height:56px;
+      border-radius:14px;
+      background:rgba(var(--primary-rgb),0.08);
+      color:var(--primary);
+      display:flex; align-items:center; justify-content:center;
+      margin:0 auto 1.5rem;
+    }
+    .adv-val {
+      font-family:var(--font-heading);
+      font-size:clamp(2.2rem,4.5vw,3rem);
+      color:var(--text-dark);
+      font-weight:600; letter-spacing:-0.02em;
+      line-height:1;
+    }
+    .adv-lbl {
+      font-family:var(--font-mono);
+      font-size:0.78rem;
+      letter-spacing:0.1em;
+      text-transform:uppercase;
+      color:var(--primary);
+      margin:0.75rem 0 1rem;
+    }
+    .adv-desc {
+      font-size:0.95rem;
+      color:var(--text-dark-muted);
+      line-height:1.65;
+      margin:0;
+    }
+    .adv-punch {
+      text-align:center; margin-top:3rem;
+      padding:2.5rem;
+      background:#F5F5F7;
+      border-radius:var(--radius-card);
+    }
+    .adv-punch h3 {
+      font-size:clamp(1.15rem,2.5vw,1.4rem);
+      color:var(--text-dark);
+      letter-spacing:-0.01em;
+      line-height:1.5;
+      font-weight:600;
+      margin-bottom:0.5rem;
+    }
+    .adv-punch p {
+      font-size:0.95rem;
+      color:var(--text-dark-muted);
+      max-width:620px; margin:0 auto;
+    }
+
+    /* ============================================
+       PORTFOLIO
+       ============================================ */
     .port-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 2rem;
-      margin-top: 3.5rem;
-      max-width: 1080px;
-      margin-left: auto;
-      margin-right: auto;
+      display:grid; grid-template-columns:repeat(2,1fr);
+      gap:1.5rem; margin-top:3rem;
     }
     .port-card {
-      display: block;
-      transition: transform 0.3s ease;
+      display:block;
+      background:#F5F5F7;
+      border-radius:var(--radius-card);
+      overflow:hidden;
+      transition:box-shadow var(--transition), transform var(--transition);
     }
-    .port-card:hover { transform: translateY(-3px); }
+    .port-card:hover {
+      box-shadow:0 12px 40px rgba(0,0,0,0.1), 0 2px 8px rgba(0,0,0,0.04);
+      transform:translateY(-3px);
+    }
     .port-img {
-      position: relative;
-      overflow: hidden;
-      aspect-ratio: 16/10;
-      border-radius: var(--radius-card);
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04);
-      border: 1px solid rgba(0,0,0,0.06);
+      aspect-ratio:16/10;
+      overflow:hidden;
+      background:#EBEBED;
     }
     .port-img img {
-      width: 100%; height: 100%;
-      object-fit: cover;
-      transition: transform 0.5s var(--ease-smooth);
+      width:100%; height:100%;
+      object-fit:cover;
+      transition:transform 0.5s var(--ease-smooth);
     }
-    .port-card:hover .port-img img { transform: scale(1.02); }
-    .port-img-overlay {
-      position: absolute; inset: 0;
-      background: rgba(0,0,0,0);
-      transition: background 0.3s ease;
+    .port-card:hover .port-img img { transform:scale(1.03); }
+    .port-body {
+      padding:1.5rem 1.75rem 1.75rem;
     }
-    .port-card:hover .port-img-overlay { background: rgba(0,0,0,0.06); }
     .port-title {
-      font-family: var(--font-heading);
-      font-size: 1.3rem;
-      letter-spacing: -0.015em;
-      margin-top: 1.25rem;
-      margin-bottom: 0.35rem;
-      transition: color var(--transition-fast);
+      font-family:var(--font-heading);
+      font-size:1.15rem;
+      font-weight:600;
+      color:var(--text-dark);
+      letter-spacing:-0.015em;
+      margin-bottom:0.4rem;
     }
-    .port-card:hover .port-title { color: var(--brand-light); }
     .port-desc {
-      font-size: 0.92rem;
-      line-height: 1.65;
-      color: var(--muted);
+      font-size:0.92rem;
+      line-height:1.6;
+      color:var(--text-dark-muted);
     }
 
-    /* ── PRICING ── */
+    /* ============================================
+       PRICING
+       ============================================ */
     .pricing-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1.5rem;
-      margin-top: 3.5rem;
-      max-width: 1080px;
-      margin-left: auto;
-      margin-right: auto;
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:1.5rem;
+      margin-top:3rem;
+      align-items:start;
     }
     .p-card {
-      background: var(--surface-card);
-      border: 1px solid rgba(255,255,255,0.06);
-      border-radius: var(--radius-card);
-      padding: 2.5rem;
-      position: relative;
-      transition: border-color 0.3s ease, transform 0.3s ease;
+      background:#FFFFFF;
+      border:1px solid rgba(0,0,0,0.06);
+      border-radius:var(--radius-card);
+      padding:2.5rem 2rem;
+      position:relative;
+      box-shadow:0 1px 2px rgba(0,0,0,0.04), 0 4px 8px rgba(0,0,0,0.02);
+      transition:box-shadow var(--transition), transform var(--transition);
     }
     .p-card:hover {
-      border-color: rgba(255,255,255,0.12);
-      transform: translateY(-2px);
+      box-shadow:0 8px 32px rgba(0,0,0,0.08);
+      transform:translateY(-2px);
     }
     .p-card.featured {
-      background: var(--surface-card);
-      border-color: rgba(108,92,231,0.3);
+      border-color:rgba(var(--primary-rgb),0.18);
+      box-shadow:0 1px 2px rgba(0,0,0,0.04), 0 8px 32px rgba(var(--primary-rgb),0.1);
     }
     .p-badge {
-      position: absolute;
-      top: -13px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: linear-gradient(135deg, var(--brand) 0%, var(--brand-light) 100%);
-      color: #fff;
-      font-size: 0.68rem;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      padding: 4px 14px;
-      border-radius: 100px;
-      white-space: nowrap;
+      position:absolute;
+      top:-1px; left:50%;
+      transform:translateX(-50%);
+      font-family:var(--font-mono);
+      font-size:0.72rem; font-weight:500;
+      letter-spacing:0.1em; text-transform:uppercase;
+      color:#fff; background:var(--primary);
+      padding:4px 14px;
+      border-radius:0 0 8px 8px;
     }
     .p-tier {
-      font-size: 0.7rem;
-      font-weight: 700;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: var(--accent);
-      margin-bottom: 0.5rem;
+      font-family:var(--font-mono);
+      font-size:0.72rem;
+      font-weight:500;
+      letter-spacing:0.12em;
+      text-transform:uppercase;
+      color:var(--primary);
+      margin-bottom:0.5rem;
     }
     .p-name {
-      font-family: var(--font-heading);
-      font-size: 1.9rem;
-      letter-spacing: -0.01em;
-      margin-bottom: 0.5rem;
+      font-family:var(--font-heading);
+      font-size:1.65rem;
+      font-weight:600;
+      color:var(--text-dark);
+      letter-spacing:-0.015em;
+      margin-bottom:0.75rem;
     }
     .p-price-from {
-      font-size: 0.75rem;
-      font-weight: 500;
-      color: var(--muted);
-      letter-spacing: 0.04em;
-      margin-bottom: 0.25rem;
+      font-size:0.78rem;
+      font-weight:500;
+      color:var(--text-dark-muted);
+      letter-spacing:0.02em;
+      margin-bottom:0.25rem;
     }
     .p-price-amount {
-      font-family: var(--font-heading);
-      font-size: clamp(1.6rem, 3vw, 2rem);
-      font-weight: 700;
-      color: var(--text);
-      letter-spacing: -0.02em;
-      line-height: 1.1;
-      margin-bottom: 1.25rem;
+      font-family:var(--font-heading);
+      font-size:clamp(1.6rem, 3vw, 2rem);
+      font-weight:600;
+      color:var(--text-dark);
+      letter-spacing:-0.02em;
+      line-height:1.1;
+      margin-bottom:1.25rem;
     }
     .p-price-amount .p-currency {
-      font-size: 0.55em;
-      font-weight: 600;
-      color: var(--muted);
-      letter-spacing: 0.02em;
-      vertical-align: 0.15em;
-      margin-right: 0.15em;
+      font-size:0.55em;
+      font-weight:600;
+      color:var(--text-dark-muted);
+      letter-spacing:0.02em;
+      vertical-align:0.15em;
+      margin-right:0.15em;
     }
     .p-desc-text {
-      font-size: 0.88rem;
-      line-height: 1.65;
-      color: var(--muted);
-      margin-bottom: 1.75rem;
-      padding-bottom: 1.75rem;
-      border-bottom: 1px solid var(--border);
+      font-size:0.92rem;
+      line-height:1.65;
+      color:var(--text-dark-muted);
+      margin-bottom:1.5rem;
+      padding-bottom:1.5rem;
+      border-bottom:1px solid rgba(0,0,0,0.06);
     }
     .p-link {
-      font-family: var(--font-heading);
-      font-size: 0.88rem;
-      color: var(--brand);
-      transition: color var(--transition-fast);
+      font-family:var(--font-heading);
+      font-size:0.9rem;
+      font-weight:600;
+      color:var(--primary);
+      transition:color var(--transition);
+      display:inline-flex; align-items:center; gap:4px;
     }
-    .p-link:hover { color: var(--brand-light); }
+    .p-link:hover { color:var(--text-dark); }
 
-    /* ── FAQ ── */
+    /* ============================================
+       FAQ
+       ============================================ */
     .faq-list {
-      display: flex;
-      flex-direction: column;
-      margin-top: 3rem;
-      max-width: 720px;
-      margin-left: auto;
-      margin-right: auto;
+      max-width:780px; margin:3rem auto 0;
+      display:flex; flex-direction:column;
     }
-    .faq-item {
-      border-bottom: 1px solid var(--border);
-    }
-    .faq-item:first-child {
-      border-top: 1px solid var(--border);
-    }
+    .faq-item { border-top:1px solid rgba(0,0,0,0.08); }
+    .faq-item:last-child { border-bottom:1px solid rgba(0,0,0,0.08); }
     .faq-item summary {
-      list-style: none;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1.5rem;
-      padding: 1.5rem 0;
-      cursor: pointer;
-      font-family: var(--font-heading);
-      font-size: 1rem;
-      color: var(--text);
-      transition: color var(--transition-fast);
-      user-select: none;
+      list-style:none;
+      cursor:pointer;
+      padding:1.5rem 0;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:1.5rem;
+      font-size:1.05rem;
+      font-weight:500;
+      color:var(--text-dark);
+      transition:color var(--transition);
     }
-    .faq-item summary::-webkit-details-marker { display: none; }
-    .faq-item summary:hover { color: var(--brand-light); }
+    .faq-item summary::-webkit-details-marker { display:none; }
+    .faq-item summary:hover { color:var(--primary); }
     .faq-icon {
-      width: 24px; height: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      transition: transform 0.3s var(--ease-spring);
-      color: var(--muted);
+      font-family:var(--font-mono);
+      font-size:1.5rem; font-weight:300;
+      color:var(--text-dark-muted);
+      transition:transform var(--transition), color var(--transition);
+      flex-shrink:0; line-height:1;
     }
-    .faq-item[open] .faq-icon { transform: rotate(45deg); color: var(--brand-light); }
-    .faq-body {
-      padding: 0 0 1.75rem;
-      font-size: 0.95rem;
-      line-height: 1.8;
-      color: var(--muted);
-      max-width: 620px;
+    .faq-item[open] .faq-icon {
+      transform:rotate(45deg);
+      color:var(--primary);
     }
-    .faq-body p + p { margin-top: 1rem; }
-    .faq-body ol { padding-left: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.75rem; }
-    .faq-body ol li { color: var(--muted); line-height: 1.7; }
-    .faq-body ol li strong { color: var(--text); font-weight: 600; }
-    .faq-body ul { list-style: disc; padding-left: 1.25rem; }
-    .faq-body ul li { list-style: disc; color: var(--muted); line-height: 1.7; }
-    .faq-body ul li strong { color: var(--text); font-weight: 600; }
-
-    .cta-banner .orb { position: absolute; }
-
-    /* ── PRODUCT SHOWCASE (hero) ── */
-    /* ── DELIVERABLES SHOWCASE ── */
-    .device-showcase {
-      max-width: none;
-      margin: 5rem auto 0;
-      display: flex;
-      flex-direction: column;
-      gap: 1.25rem;
+    .faq-answer { padding:0 0 1.75rem; max-width:700px; }
+    .faq-answer p {
+      font-size:0.95rem; line-height:1.75;
+      color:var(--text-dark-muted);
+      font-weight:400;
     }
-    .showcase-row {
-      display: flex;
-      justify-content: center;
-      align-items: flex-end;
-      gap: 1.25rem;
+    .faq-answer p + p { margin-top:0.85rem; }
+    .faq-answer ol, .faq-answer ul {
+      padding-left:1.25rem; margin:0.85rem 0;
+      display:flex; flex-direction:column; gap:0.65rem;
     }
-    .showcase-device {
-      position: relative;
-      overflow: hidden;
-      border: 2px solid rgba(255,255,255,0.06);
-      background: var(--surface);
-      flex-shrink: 0;
+    .faq-answer ol li, .faq-answer ul li {
+      color:var(--text-dark-muted); line-height:1.7;
+      font-size:0.94rem;
     }
-    .showcase-device img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-    .showcase-label {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      font-family: var(--font-heading);
-      font-size: 0.6rem;
-      font-weight: var(--fw-label);
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--accent);
-      background: rgba(11,14,23,0.8);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      padding: 3px 8px;
-      border-radius: 6px;
-      z-index: 2;
-    }
-    /* Phone */
-    .showcase-phone {
-      width: 160px;
-      height: 340px;
-      border-radius: 24px;
-    }
-    /* Laptop */
-    .showcase-laptop {
-      width: 480px;
-      height: 300px;
-      border-radius: 10px;
-    }
-    /* Deck / landscape cards */
-    .showcase-deck {
-      flex: 1;
-      min-width: 0;
-      aspect-ratio: 16/9;
-      border-radius: 10px;
+    .faq-answer strong { color:var(--text-dark); font-weight:600; }
+    .faq-answer code {
+      font-family:var(--font-mono);
+      font-size:0.9em;
+      background:#F5F5F7;
+      padding:2px 6px; border-radius:4px;
+      color:var(--text-dark);
     }
 
-    /* ── GRADIENT MESH BACKGROUNDS ── */
-    .mesh-bg-1 {
-      position: relative;
+    /* ============================================
+       FINAL CTA — Dark bookend
+       ============================================ */
+    .final-cta {
+      padding:6rem 3rem;
+      text-align:center;
+      background:var(--bg-dark);
+      position:relative;
+      overflow:hidden;
     }
-    .mesh-bg-1::before {
-      content: '';
-      position: absolute;
-      top: -200px;
-      right: -100px;
-      width: 600px;
-      height: 600px;
-      background: radial-gradient(circle, rgba(110,58,250,0.03) 0%, transparent 70%);
-      border-radius: 50%;
-      filter: blur(60px);
-      pointer-events: none;
+    .final-cta .cta-content { position:relative; z-index:1; }
+    .final-cta h2 {
+      font-size:clamp(2.2rem, 4.5vw, 3.5rem);
+      letter-spacing:-0.03em; line-height:1.1;
+      margin-bottom:1rem; font-weight:600;
+      background:linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.7));
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      background-clip:text;
     }
-    .mesh-bg-2 {
-      position: relative;
+    .final-cta .cta-sub {
+      font-size:1.1rem; color:var(--text-light-muted);
+      line-height:1.7;
+      max-width:580px;
+      margin:0 auto 2.5rem; font-weight:400;
     }
-    .mesh-bg-2::before {
-      content: '';
-      position: absolute;
-      bottom: -150px;
-      left: -80px;
-      width: 500px;
-      height: 500px;
-      background: radial-gradient(circle, rgba(0,184,160,0.025) 0%, transparent 70%);
-      border-radius: 50%;
-      filter: blur(60px);
-      pointer-events: none;
+    .final-cta .cta-buttons {
+      display:flex; gap:12px; justify-content:center; flex-wrap:wrap;
     }
 
-    .location-chip {
-      display: inline-flex; align-items: center; gap: 6px;
-      font-size: 0.75rem; color: var(--muted);
-      background: rgba(0,0,0,0.03); border: 1px solid var(--border);
-      padding: 4px 10px; border-radius: 100px; margin-top: 1.25rem;
+    /* ============================================
+       FOOTER — Dark
+       ============================================ */
+    footer {
+      background:var(--bg-dark);
+      border-top:1px solid rgba(255,255,255,0.06);
+      padding:4rem 3rem 2.5rem;
+    }
+    .footer-inner { max-width:1080px; margin:0 auto; }
+    .footer-top {
+      display:flex; justify-content:space-between;
+      align-items:start; margin-bottom:3rem;
+      gap:2rem;
+    }
+    .footer-brand .logo {
+      margin-bottom:0.75rem;
+      color:rgba(255,255,255,0.8);
+    }
+    .footer-brand .logo .os { color:rgba(255,255,255,0.4); }
+    .footer-brand p {
+      font-size:0.88rem;
+      color:rgba(255,255,255,0.55);
+      line-height:1.7;
+      max-width:280px; font-weight:400;
+    }
+    .footer-links {
+      display:flex; gap:3rem;
+    }
+    .footer-links a {
+      font-size:0.88rem;
+      color:rgba(255,255,255,0.6);
+      transition:color var(--transition);
+      font-weight:400;
+    }
+    .footer-links a:hover { color:rgba(255,255,255,0.9); }
+    .footer-bottom {
+      padding-top:2rem;
+      border-top:1px solid rgba(255,255,255,0.06);
+      display:flex; justify-content:space-between;
+      align-items:center; flex-wrap:wrap; gap:1rem;
+    }
+    .footer-bottom p {
+      font-size:0.82rem; color:rgba(255,255,255,0.5);
     }
 
-    /* ── RESPONSIVE ── */
-    @media (max-width: 900px) {
-      .hero { padding: 8rem 1.5rem 4rem; }
-      .showcase-laptop { width: 340px; height: 212px; }
-      .showcase-phone { width: 120px; height: 260px; border-radius: 20px; }
-      .showcase-row-secondary { flex-wrap: wrap; }
-      .cap-grid { grid-template-columns: 1fr; }
-      .advantage-grid { grid-template-columns: 1fr !important; }
-      .pricing-grid { grid-template-columns: 1fr; max-width: 480px; }
-      .port-grid { grid-template-columns: 1fr; }
-      .del-streams { grid-template-columns: 1fr; max-width: 480px; }
-      .compare-row { grid-template-columns: 1fr; }
-      .compare-topic { flex-direction: row; border-left: none; border-right: none; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); min-width: 0; padding: 0.6rem 1.5rem; justify-content: center; }
-      .compare-old, .compare-new { padding: 1rem 1.25rem; }
-      .showcase-phone { width: 130px; height: 270px; }
-      .showcase-deck { width: 200px; }
-      .timeline { flex-direction: column; align-items: flex-start; padding-left: 2.5rem; }
-      .timeline-line {
-        top: 0; bottom: 0; left: 18px; right: auto;
-        width: 1px; height: auto;
+    /* ============================================
+       HAMBURGER & MOBILE MENU
+       ============================================ */
+    .hamburger {
+      display:none; flex-direction:column; justify-content:center;
+      align-items:center; width:44px; height:44px; gap:5px;
+      background:transparent; border:none; cursor:pointer;
+      padding:4px; border-radius:var(--radius-sm); flex-shrink:0;
+      transition:background var(--transition);
+    }
+    .hamburger:hover { background:rgba(0,0,0,0.04); }
+    .hamburger-line {
+      display:block; width:20px; height:1.5px;
+      background:var(--text-dark);
+      border-radius:1px; transform-origin:center;
+      transition:transform 0.3s var(--ease-smooth), opacity 0.2s ease, background 0.2s ease;
+    }
+    .hamburger.open .hamburger-line:nth-child(1) { transform:translateY(6.5px) rotate(45deg); }
+    .hamburger.open .hamburger-line:nth-child(2) { opacity:0; transform:scaleX(0); }
+    .hamburger.open .hamburger-line:nth-child(3) { transform:translateY(-6.5px) rotate(-45deg); }
+    .hamburger.open .hamburger-line { background:#fff; }
+
+    .mobile-menu {
+      display:none; position:fixed; top:0; left:0; right:0; bottom:0;
+      z-index:190;
+      background:rgba(10,1,24,0.98);
+      backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+      flex-direction:column; padding:7rem 2rem 3rem;
+      opacity:0; transform:translateY(-8px);
+      transition:opacity 0.35s ease, transform 0.3s var(--ease-smooth);
+      pointer-events:none;
+    }
+    .mobile-menu.open { opacity:1; transform:translateY(0); pointer-events:all; }
+    .mobile-menu a.m-nav-link {
+      display:block; font-family:var(--font-heading);
+      font-size:1.4rem; font-weight:500;
+      letter-spacing:-0.01em; color:rgba(255,255,255,0.75);
+      padding:1.1rem 0;
+      border-bottom:1px solid rgba(255,255,255,0.06);
+      transition:color var(--transition);
+    }
+    .mobile-menu a.m-nav-link:hover { color:#fff; }
+    .mobile-menu .m-cta { margin-top:2.5rem; }
+    .mobile-menu .m-cta .btn {
+      width:100%; justify-content:center;
+      font-size:0.92rem; padding:0.95rem 1.5rem;
+    }
+
+    /* ============================================
+       RESPONSIVE — TABLET (900px)
+       ============================================ */
+    @media(max-width:900px) {
+      nav { padding:6px 12px 6px 16px; max-width:calc(100% - 32px); }
+      .section, .section-alt { padding:5rem 1.5rem; }
+      .hero { padding:8rem 1.5rem 4rem; }
+      .page-intro-section { padding:5rem 1.5rem; }
+      .final-cta { padding:5rem 1.5rem; }
+
+      .cap-grid { grid-template-columns:1fr; }
+      .del-streams { grid-template-columns:1fr; max-width:480px; margin-left:auto; margin-right:auto; }
+      .adv-grid { grid-template-columns:1fr; max-width:480px; margin-left:auto; margin-right:auto; }
+      .port-grid { grid-template-columns:1fr; }
+      .pricing-grid { grid-template-columns:1fr; max-width:460px; margin-left:auto; margin-right:auto; }
+
+      .compare-row { grid-template-columns:1fr; }
+      .compare-topic {
+        flex-direction:row; justify-content:center;
+        border-left:none; border-right:none;
+        border-top:1px solid var(--border-light);
+        border-bottom:1px solid var(--border-light);
+        min-width:0; padding:0.65rem 1.5rem;
       }
+
+      .timeline { flex-direction:column; align-items:flex-start; padding-left:2.5rem; }
+      .timeline-line { top:0; bottom:0; left:18px; right:auto; width:1px; height:auto; }
       .timeline-step {
-        flex-direction: row;
-        align-items: flex-start;
-        text-align: left;
-        padding: 0 0 2.5rem 0;
+        flex-direction:row; align-items:flex-start;
+        text-align:left;
+        padding:0 0 2.5rem 0;
       }
-      .timeline-node { margin-bottom: 0; margin-right: 1.25rem; flex-shrink: 0; }
-      .timeline-desc { max-width: none; }
-      .gate-indicator { display: none; }
+      .timeline-node { margin-bottom:0; margin-right:1.25rem; flex-shrink:0; }
+      .timeline-desc { max-width:none; }
+      .gate-indicator { display:none; }
+
+      .footer-top { flex-direction:column; }
+      .footer-links { flex-wrap:wrap; gap:1.5rem; }
     }
-    @media (max-width: 640px) {
-      .hero { padding: 7rem 1.25rem 3rem; }
-      .hero h1 { font-size: clamp(2.4rem, 8vw, 3.5rem); }
-      .hero-stats { flex-direction: column; gap: 1rem; }
-      .stat-block { padding: 0; }
-      .stat-divider { display: none; }
-      .stat-val { font-size: 1.8rem !important; }
-      .device-showcase { margin-top: 2rem; }
-      .showcase-row { flex-wrap: wrap; gap: 0.75rem; }
-      .showcase-phone { width: 100px; height: 216px; border-radius: 16px; }
-      .showcase-laptop { width: 100%; height: auto; aspect-ratio: 16/10; }
-      .showcase-deck { flex: none; width: calc(50% - 0.375rem); }
-      .cap-card { padding: 1.5rem !important; }
-      .cap-grid { gap: 0.75rem !important; }
-      .compare-topic { min-width: 0 !important; }
-      .compare-old, .compare-new { padding: 0.75rem 1rem; }
-      .advantage-grid { grid-template-columns: 1fr !important; gap: 1rem !important; }
-      /* Hide phase bar on mobile — timeline covers it */
-      .phase-bar-wrap { display: none; }
-      /* Research stats row */
-      .research-stats { flex-direction: column !important; gap: 1.5rem !important; }
-      .research-stats .stat-divider { display: none; }
+
+    /* ============================================
+       RESPONSIVE — MOBILE (640px)
+       ============================================ */
+    @media(max-width:640px) {
+      .nav-links { display:none; }
+      .nav-extras { display:none; }
+      .hamburger { display:flex; }
+      .mobile-menu { display:flex; }
+
+      .nav-wrap { max-width:calc(100% - 24px); }
+
+      .section, .section-alt { padding:4rem 1.25rem; }
+      .hero { padding:7rem 1.25rem 3rem; }
+      .hero h1 { font-size:clamp(2.2rem, 8vw, 3.2rem); }
+      .hero-sub { font-size:1.02rem; }
+
+      .hero-image-section { margin-top:-3rem; }
+      .hero-image-section > div { padding:0 1.25rem; }
+
+      .page-intro-section { padding:4rem 1.25rem; }
+      .intro-stats { flex-direction:column; gap:1.5rem; }
+      .intro-stat { padding:0; }
+      .intro-divider { display:none; }
+
+      .research-stats { flex-direction:column; gap:1.5rem; }
+      .rs-divider { display:none; }
+      .rs-block { padding:0; }
+
+      .adv-card { padding:2rem 1.5rem; }
+      .adv-punch { padding:2rem 1.5rem; }
+
+      .port-body { padding:1.25rem 1.5rem 1.5rem; }
+
+      .p-card { padding:2rem 1.5rem; }
+
+      .final-cta { padding:5rem 1.25rem; }
+      .final-cta h2 { font-size:clamp(1.8rem, 7vw, 2.6rem); }
+
+      footer { padding:3rem 1.25rem 2rem; }
+      .footer-bottom { flex-direction:column; align-items:flex-start; }
     }
+    /* Currency selector — injected via currency.js into .footer-currency */
+    .footer-currency { display:flex; align-items:center; gap:4px; }
+    .currency-selector {
+      display:flex; align-items:center; gap:2px;
+      padding:0; background:transparent;
+    }
+    .currency-btn {
+      background:transparent; border:none; cursor:pointer;
+      width:30px; height:30px;
+      border-radius:50%;
+      font-size:0.9rem;
+      display:flex; align-items:center; justify-content:center;
+      transition:background 0.2s ease, opacity 0.2s ease;
+      padding:0;
+      opacity:0.5;
+    }
+    .currency-btn:hover { background:rgba(255,255,255,0.08); opacity:0.85; }
+    .currency-btn.active { background:rgba(255,255,255,0.12); opacity:1; }
+
   </style>
 </head>
 <body>
+  <a href="#main-content" class="skip-link">Skip to content</a>
 
-<nav id="site-nav"></nav>
+  <!-- ═══════════════════════════════════════════
+       NAVIGATION — Floating Pill
+       ═══════════════════════════════════════════ -->
+  <div class="nav-wrap">
+    <nav>
+      <a href="index.html" class="logo">VENTRIFY</a>
+      <div class="nav-links">
+        <a href="about.html">About</a>
+        <a href="work.html">Work</a>
+        <a href="pricing.html">Pricing</a>
+        <a href="insights.html">Insights</a>
+        <a href="contact.html">Contact</a>
+      </div>
+      <div class="nav-extras">
+        <a href="contact.html" class="btn">Start Your Venture</a>
+      </div>
+      <button class="hamburger" aria-label="Menu">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </button>
+    </nav>
+  </div>
 
-<!-- HERO -->
-<section class="hero">
-  <div class="hero-bg-image"></div>
-  <div class="orb orb-1"></div>
-  <div class="orb orb-2"></div>
-  <div class="orb orb-3"></div>
-  <div class="hero-content">
-    <h1>
-      Turn Ideas into<br>
-      <span class="grad-text">Launched Products</span>
-    </h1>
-    <p class="hero-sub">
-      Strategy, design, development, and marketing — under one roof.<br>
-      For pre-seed founders who want to launch, not manage vendors.
-    </p>
-    <div class="hero-ctas">
-      <a href="contact.html" class="btn btn-primary btn-lg">Start Your Venture</a>
-      <a href="work.html" class="btn btn-outline btn-lg">See Our Work</a>
+  <!-- Mobile Menu -->
+  <div class="mobile-menu">
+    <a href="about.html" class="m-nav-link">About</a>
+    <a href="work.html" class="m-nav-link">Work</a>
+    <a href="pricing.html" class="m-nav-link">Pricing</a>
+    <a href="insights.html" class="m-nav-link">Insights</a>
+    <a href="contact.html" class="m-nav-link">Contact</a>
+    <div class="m-cta">
+      <a href="contact.html" class="btn btn-dark-primary btn-lg">Start Your Venture</a>
     </div>
   </div>
-</section>
 
-<!-- WHAT WE DO -->
-<section class="section mesh-bg-1" style="padding:8rem 3rem;">
-  <div class="container">
-    <div style="text-align:center; margin-bottom:0;">
-      <div class="s-label" style="justify-content:center;" data-reveal>What We Do</div>
-      <h2 class="s-title" data-reveal data-delay="1">Everything you need to launch</h2>
-      <p class="s-sub" style="margin:0 auto;" data-reveal data-delay="2">Four integrated capabilities that replace an entire team of agencies.</p>
+  <!-- ═══════════════════════════════════════════
+       1. HERO — Dark gradient
+       ═══════════════════════════════════════════ -->
+  <section class="hero" id="main-content">
+    <div class="hero-content">
+      <div class="hero-mono-label">The Venture Studio</div>
+      <h1 class="shimmer-text">Turn ideas into<br>launched products.</h1>
+      <p class="hero-sub">Strategy, design, development, brand, and marketing &mdash; under one roof. For pre-seed founders who want to launch, not manage vendors.</p>
+      <div class="hero-ctas">
+        <a href="contact.html" class="btn btn-hero-primary btn-lg">Start Your Venture</a>
+        <a href="work.html" class="btn btn-hero-outline btn-lg">See Our Work</a>
+      </div>
     </div>
-    <div class="cap-grid">
-      <div class="cap-card" data-reveal data-delay="1">
-        <div class="cap-icon purple">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9B6FFF" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        </div>
-        <div class="cap-title">Validated Strategy</div>
-        <p class="cap-desc">Deep market research, competitor analysis, and user insights — every decision backed by evidence.</p>
-      </div>
-      <div class="cap-card" data-reveal data-delay="2">
-        <div class="cap-icon teal">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00B8A0" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-        </div>
-        <div class="cap-title">Full Design System</div>
-        <p class="cap-desc">Figma tokens, component library, and a living documentation site with custom plugins.</p>
-      </div>
-      <div class="cap-card" data-reveal data-delay="3">
-        <div class="cap-icon purple">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9B6FFF" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-        </div>
-        <div class="cap-title">Production MVP</div>
-        <p class="cap-desc">A real iOS + Android app with authentication, analytics, and demo mode — not a prototype.</p>
-      </div>
-      <div class="cap-card" data-reveal data-delay="4">
-        <div class="cap-icon teal">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00B8A0" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-        </div>
-        <div class="cap-title">Go-to-Market Package</div>
-        <p class="cap-desc">Website, investor deck, 20 social posts, 5 blog articles, and a 30-day content calendar.</p>
-      </div>
+  </section>
+
+  <!-- HERO IMAGE — sits on the navy -->
+  <div class="hero-image-section">
+    <div style="max-width:1100px;margin:0 auto;padding:0 3rem;">
+      <img src="brand%20assets/hero-1.png" alt="Ventrify venture deliverables" class="hero-showcase-img">
     </div>
   </div>
-</section>
 
-<!-- RESEARCH-FIRST -->
-<section class="section" style="padding:8rem 3rem;">
-  <div class="container">
-    <div style="text-align:center;margin-bottom:0;">
-      <div class="s-label" style="justify-content:center;" data-reveal>Research-First Approach</div>
-      <h2 class="s-title" data-reveal data-delay="1">We prove the idea before we build it</h2>
-      <p class="s-sub" style="margin:0 auto;" data-reveal data-delay="2">Most agencies skip straight to design. We start with deep research — so you never waste money building something nobody wants.</p>
-    </div>
-
-    <!-- Stat banner -->
-    <div class="research-stats" style="display:flex;justify-content:center;gap:4rem;margin-top:3.5rem;flex-wrap:wrap;" data-reveal data-delay="1">
-      <div style="text-align:center;">
-        <div style="font-family:var(--font-heading);font-size:clamp(2rem,4vw,3rem);color:var(--text);">42%</div>
-        <div style="font-size:0.85rem;color:var(--muted);margin-top:4px;">Of startups fail from no market need</div>
+  <!-- ═══════════════════════════════════════════
+       2. INTRO — Dark narrative band + stats
+       ═══════════════════════════════════════════ -->
+  <section class="page-intro-section" id="intro">
+    <div class="container" data-reveal>
+      <div style="max-width:820px;margin:0 auto;text-align:center;">
+        <p class="intro-lead">Most founders waste months coordinating five vendors who don&rsquo;t talk to each other. <span class="hl">We replaced all of them with one team and one methodology.</span> Research, strategy, design, build, and go-to-market &mdash; delivered together, in 10&ndash;16 weeks, with a single fixed fee and zero scope creep.</p>
       </div>
-      <div style="width:1px;height:50px;background:var(--border);flex-shrink:0;align-self:center;"></div>
-      <div style="text-align:center;">
-        <div style="font-family:var(--font-heading);font-size:clamp(2rem,4vw,3rem);color:var(--text);">3</div>
-        <div style="font-size:0.85rem;color:var(--muted);margin-top:4px;">Research decks before design begins</div>
-      </div>
-      <div style="width:1px;height:50px;background:var(--border);flex-shrink:0;align-self:center;"></div>
-      <div style="text-align:center;">
-        <div style="font-family:var(--font-heading);font-size:clamp(2rem,4vw,3rem);color:var(--text);">Gate 1</div>
-        <div style="font-size:0.85rem;color:var(--muted);margin-top:4px;">Formal review before any build work</div>
-      </div>
-    </div>
-
-    <!-- Research pillars -->
-    <div class="cap-grid" style="margin-top:3.5rem;" data-reveal data-delay="2">
-      <div class="cap-card">
-        <div class="cap-icon purple">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9B6FFF" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <div class="intro-stats">
+        <div class="intro-stat">
+          <div class="intro-stat-val">40+</div>
+          <div class="intro-stat-lbl">Deliverables per engagement</div>
         </div>
-        <div class="cap-title">Market &amp; Competitor Analysis</div>
-        <p class="cap-desc">We map the landscape so you know exactly where you fit and where the gaps are.</p>
-      </div>
-      <div class="cap-card">
-        <div class="cap-icon teal">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00B8A0" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        <div class="intro-divider"></div>
+        <div class="intro-stat">
+          <div class="intro-stat-val">10&ndash;16</div>
+          <div class="intro-stat-lbl">Weeks. Idea to launch.</div>
         </div>
-        <div class="cap-title">User &amp; Persona Validation</div>
-        <p class="cap-desc">Real user insights shape every feature — not assumptions or guesswork.</p>
-      </div>
-      <div class="cap-card">
-        <div class="cap-icon purple">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9B6FFF" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-        </div>
-        <div class="cap-title">Opportunity Validation</div>
-        <p class="cap-desc">We pressure-test the business case before a single pixel is designed or line of code is written.</p>
-      </div>
-      <div class="cap-card">
-        <div class="cap-icon teal">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00B8A0" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>
-        </div>
-        <div class="cap-title">Evidence-Based Decisions</div>
-        <p class="cap-desc">Every product decision is backed by data — not gut feel. You invest with confidence.</p>
-      </div>
-    </div>
-
-    <!-- Bottom tagline -->
-  </div>
-</section>
-
-<!-- METHODOLOGY -->
-<section class="section" style="padding:8rem 3rem; background:var(--surface);">
-  <div class="container">
-    <div style="text-align:center;margin-bottom:0;">
-      <div class="s-label" style="justify-content:center;" data-reveal>How We Build</div>
-      <h2 class="s-title" data-reveal data-delay="1">Five phases. One methodology.</h2>
-      <p class="s-sub" style="margin:0 auto;" data-reveal data-delay="2">From raw idea to launched product, with gate reviews at every stage.</p>
-    </div>
-
-    <!-- Horizontal timeline -->
-    <div class="timeline" data-reveal data-delay="1">
-      <div class="timeline-line"></div>
-      <!-- Gate review indicators -->
-      <div class="gate-indicator g1">
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#00B8A0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-      </div>
-      <div class="gate-indicator g2">
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#00B8A0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-      </div>
-      <div class="timeline-step">
-        <div class="timeline-node">1</div>
-        <div>
-          <div class="timeline-name">Discover</div>
-          <p class="timeline-desc">Research your market and validate the opportunity.</p>
-        </div>
-      </div>
-      <div class="timeline-step">
-        <div class="timeline-node">2</div>
-        <div>
-          <div class="timeline-name">Define</div>
-          <p class="timeline-desc">Shape personas, vision, and MVP scope.</p>
-        </div>
-      </div>
-      <div class="timeline-step">
-        <div class="timeline-node">3</div>
-        <div>
-          <div class="timeline-name">Design</div>
-          <p class="timeline-desc">Design every screen with a full design system.</p>
-        </div>
-      </div>
-      <div class="timeline-step">
-        <div class="timeline-node">4</div>
-        <div>
-          <div class="timeline-name">Develop</div>
-          <p class="timeline-desc">Build the production-grade app.</p>
-        </div>
-      </div>
-      <div class="timeline-step">
-        <div class="timeline-node">5</div>
-        <div>
-          <div class="timeline-name">Deliver</div>
-          <p class="timeline-desc">Hand off everything. Full IP transfer.</p>
+        <div class="intro-divider"></div>
+        <div class="intro-stat">
+          <div class="intro-stat-val">100%</div>
+          <div class="intro-stat-lbl">IP transfer on delivery</div>
         </div>
       </div>
     </div>
+  </section>
 
-    <!-- Phase bar visualization -->
-    <div class="phase-bar-wrap" style="margin-top:4rem;overflow-x:auto;-webkit-overflow-scrolling:touch;" data-reveal data-delay="2">
-      <div style="min-width:0;position:relative;">
-
-        <!-- Phase segments -->
-        <div style="display:flex;gap:3px;">
-          <!-- 01 Discover -->
-          <div style="flex:2;background:linear-gradient(160deg,rgba(110,58,250,0.18) 0%,rgba(110,58,250,0.06) 100%);border:1px solid rgba(110,58,250,0.3);border-radius:10px 0 0 10px;padding:1.5rem 1rem;position:relative;overflow:hidden;">
-            <div style="position:absolute;top:0;right:0;width:56px;height:56px;background:radial-gradient(circle at 100% 0%,rgba(110,58,250,0.22),transparent 70%);pointer-events:none;"></div>
-            <div style="font-family:var(--font-heading);font-size:0.58rem;font-weight:700;letter-spacing:0.15em;color:rgba(155,111,255,0.7);margin-bottom:0.5rem;">PHASE 01</div>
-            <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:0.6rem;">Discover</div>
-            <div style="display:inline-block;font-size:0.68rem;background:rgba(110,58,250,0.14);border:1px solid rgba(110,58,250,0.3);border-radius:20px;padding:2px 10px;color:#9B6FFF;white-space:nowrap;">Wks 1–2</div>
+  <!-- ═══════════════════════════════════════════
+       3. WHAT WE DO — Capabilities
+       ═══════════════════════════════════════════ -->
+  <section class="section" id="what-we-do">
+    <div class="container" data-reveal>
+      <div class="section-head-center">
+        <div class="s-label">What We Do</div>
+        <h2 class="s-title s-title-shimmer">Everything you need to launch</h2>
+        <p class="s-sub">Four integrated capabilities that replace an entire team of agencies.</p>
+      </div>
+      <div class="cap-grid">
+        <div class="cap-card" data-reveal data-delay="1">
+          <div class="cap-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           </div>
-          <!-- 02 Define -->
-          <div style="flex:2;background:linear-gradient(160deg,rgba(125,68,252,0.15) 0%,rgba(125,68,252,0.05) 100%);border:1px solid rgba(125,68,252,0.25);padding:1.5rem 1rem;position:relative;overflow:hidden;">
-            <div style="position:absolute;top:0;right:0;width:56px;height:56px;background:radial-gradient(circle at 100% 0%,rgba(125,68,252,0.2),transparent 70%);pointer-events:none;"></div>
-            <div style="font-family:var(--font-heading);font-size:0.58rem;font-weight:700;letter-spacing:0.15em;color:rgba(155,111,255,0.7);margin-bottom:0.5rem;">PHASE 02</div>
-            <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:0.6rem;">Define</div>
-            <div style="display:inline-block;font-size:0.68rem;background:rgba(125,68,252,0.12);border:1px solid rgba(125,68,252,0.28);border-radius:20px;padding:2px 10px;color:#9B6FFF;white-space:nowrap;">Wks 2–4</div>
-          </div>
-          <!-- 03 Design -->
-          <div style="flex:3;background:linear-gradient(160deg,rgba(150,85,255,0.13) 0%,rgba(150,85,255,0.04) 100%);border:1px solid rgba(150,85,255,0.22);padding:1.5rem 1rem;position:relative;overflow:hidden;">
-            <div style="position:absolute;top:0;right:0;width:56px;height:56px;background:radial-gradient(circle at 100% 0%,rgba(150,85,255,0.18),transparent 70%);pointer-events:none;"></div>
-            <div style="font-family:var(--font-heading);font-size:0.58rem;font-weight:700;letter-spacing:0.15em;color:rgba(155,111,255,0.7);margin-bottom:0.5rem;">PHASE 03</div>
-            <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:0.6rem;">Design</div>
-            <div style="display:inline-block;font-size:0.68rem;background:rgba(150,85,255,0.11);border:1px solid rgba(150,85,255,0.25);border-radius:20px;padding:2px 10px;color:#9B6FFF;white-space:nowrap;">Wks 3–8</div>
-          </div>
-          <!-- 04 Develop -->
-          <div style="flex:4;background:linear-gradient(160deg,rgba(0,200,176,0.12) 0%,rgba(0,200,176,0.04) 100%);border:1px solid rgba(0,184,160,0.18);padding:1.5rem 1rem;position:relative;overflow:hidden;">
-            <div style="position:absolute;top:0;right:0;width:56px;height:56px;background:radial-gradient(circle at 100% 0%,rgba(0,184,160,0.14),transparent 70%);pointer-events:none;"></div>
-            <div style="font-family:var(--font-heading);font-size:0.58rem;font-weight:700;letter-spacing:0.15em;color:rgba(0,184,160,0.75);margin-bottom:0.5rem;">PHASE 04</div>
-            <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:0.6rem;">Develop</div>
-            <div style="display:inline-block;font-size:0.68rem;background:rgba(0,184,160,0.09);border:1px solid rgba(0,184,160,0.2);border-radius:20px;padding:2px 10px;color:#00B8A0;white-space:nowrap;">Wks 6–14</div>
-          </div>
-          <!-- 05 Deliver -->
-          <div style="flex:2;background:linear-gradient(160deg,rgba(0,184,160,0.15) 0%,rgba(0,184,160,0.05) 100%);border:1px solid rgba(0,184,160,0.28);border-radius:0 10px 10px 0;padding:1.5rem 1rem;position:relative;overflow:hidden;">
-            <div style="position:absolute;top:0;right:0;width:56px;height:56px;background:radial-gradient(circle at 100% 0%,rgba(0,184,160,0.2),transparent 70%);pointer-events:none;"></div>
-            <div style="font-family:var(--font-heading);font-size:0.58rem;font-weight:700;letter-spacing:0.15em;color:rgba(0,184,160,0.85);margin-bottom:0.5rem;">PHASE 05</div>
-            <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:0.6rem;">Deliver</div>
-            <div style="display:inline-block;font-size:0.68rem;background:rgba(0,184,160,0.11);border:1px solid rgba(0,184,160,0.28);border-radius:20px;padding:2px 10px;color:#00B8A0;white-space:nowrap;">Wks 10–16</div>
-          </div>
+          <div class="cap-title">Validated Strategy</div>
+          <p class="cap-desc">Deep market research, competitor analysis, and user insights &mdash; every decision backed by evidence.</p>
         </div>
-
-        <!-- Gradient progress bar -->
-        <div style="height:4px;margin-top:3px;border-radius:0 0 8px 8px;background:linear-gradient(90deg,#6E3AFA 0%,#9B6FFF 30%,#7B8FFF 55%,#00C8B0 75%,#00B8A0 100%);box-shadow:0 2px 16px rgba(110,58,250,0.12);"></div>
-
-        <!-- Kickoff / Launch labels -->
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:0.85rem;">
-          <div style="font-size:0.72rem;color:var(--muted);">Kickoff</div>
-          <div style="font-size:0.78rem;color:var(--muted);">Phases overlap by design — <span style="color:var(--text);font-weight:600;">8–16 weeks total</span></div>
-          <div style="font-size:0.72rem;color:var(--muted);">Launch</div>
+        <div class="cap-card" data-reveal data-delay="2">
+          <div class="cap-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          </div>
+          <div class="cap-title">Full Design System</div>
+          <p class="cap-desc">Figma tokens, component library, and a living documentation site with custom plugins.</p>
         </div>
-
+        <div class="cap-card" data-reveal data-delay="3">
+          <div class="cap-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          </div>
+          <div class="cap-title">Production MVP</div>
+          <p class="cap-desc">A real iOS + Android app with authentication, analytics, and demo mode &mdash; not a prototype.</p>
+        </div>
+        <div class="cap-card" data-reveal data-delay="4">
+          <div class="cap-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </div>
+          <div class="cap-title">Go-to-Market Package</div>
+          <p class="cap-desc">Website, investor deck, 20 social posts, 5 blog articles, and a 30-day content calendar.</p>
+        </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- DELIVERABLES -->
-<section class="section" style="padding:8rem 3rem; background:var(--surface);">
-  <div class="container">
-    <div style="text-align:center; margin-bottom:0;">
-      <div class="s-label" style="justify-content:center;" data-reveal>What You Get</div>
-      <h2 class="s-title" data-reveal data-delay="1">40+ deliverables. Every engagement.</h2>
-      <p class="s-sub" style="margin:0 auto;" data-reveal data-delay="2">Three streams, one team. Everything a venture needs to launch — nothing left to outsource.</p>
-    </div>
+  <!-- ═══════════════════════════════════════════
+       4. RESEARCH-FIRST
+       ═══════════════════════════════════════════ -->
+  <section class="section-alt" id="research">
+    <div class="container" data-reveal>
+      <div class="section-head-center">
+        <div class="s-label">Research-First Approach</div>
+        <h2 class="s-title s-title-shimmer">We prove the idea before we build it</h2>
+        <p class="s-sub">Most agencies skip straight to design. We start with deep research &mdash; so you never waste money building something nobody wants.</p>
+      </div>
 
-    <!-- 3-stream cards -->
-    <div class="del-streams" data-reveal data-delay="1">
+      <!-- Stat banner -->
+      <div class="research-stats" data-reveal data-delay="1">
+        <div class="rs-block">
+          <div class="rs-val">42%</div>
+          <div class="rs-lbl">Of startups fail from no market need</div>
+        </div>
+        <div class="rs-divider"></div>
+        <div class="rs-block">
+          <div class="rs-val">3</div>
+          <div class="rs-lbl">Research decks before design begins</div>
+        </div>
+        <div class="rs-divider"></div>
+        <div class="rs-block">
+          <div class="rs-val">Gate 1</div>
+          <div class="rs-lbl">Formal review before any build work</div>
+        </div>
+      </div>
 
-      <!-- STRATEGY -->
-      <div class="del-stream-card">
-        <div class="del-stream-header" style="background:linear-gradient(135deg,rgba(110,58,250,0.14),rgba(110,58,250,0.04));">
-          <div class="del-stream-icon" style="background:rgba(110,58,250,0.12);">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9B6FFF" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <!-- Research pillars -->
+      <div class="cap-grid" data-reveal data-delay="2">
+        <div class="cap-card">
+          <div class="cap-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           </div>
+          <div class="cap-title">Market &amp; Competitor Analysis</div>
+          <p class="cap-desc">We map the landscape so you know exactly where you fit and where the gaps are.</p>
+        </div>
+        <div class="cap-card">
+          <div class="cap-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+          </div>
+          <div class="cap-title">User &amp; Persona Validation</div>
+          <p class="cap-desc">Real user insights shape every feature &mdash; not assumptions or guesswork.</p>
+        </div>
+        <div class="cap-card">
+          <div class="cap-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </div>
+          <div class="cap-title">Opportunity Validation</div>
+          <p class="cap-desc">We pressure-test the business case before a single pixel is designed or line of code is written.</p>
+        </div>
+        <div class="cap-card">
+          <div class="cap-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>
+          </div>
+          <div class="cap-title">Evidence-Based Decisions</div>
+          <p class="cap-desc">Every product decision is backed by data &mdash; not gut feel. You invest with confidence.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       5. METHODOLOGY — 5 phases
+       ═══════════════════════════════════════════ -->
+  <section class="section" id="methodology">
+    <div class="container" data-reveal>
+      <div class="section-head-center">
+        <div class="s-label">How We Build</div>
+        <h2 class="s-title s-title-shimmer">Five phases. One methodology.</h2>
+        <p class="s-sub">From raw idea to launched product, with gate reviews at every stage.</p>
+      </div>
+
+      <div class="timeline" data-reveal data-delay="1">
+        <div class="timeline-line"></div>
+        <div class="gate-indicator g1">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="gate-indicator g2">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="timeline-step">
+          <div class="timeline-node">1</div>
           <div>
-            <div class="del-stream-name">Strategy</div>
-            <div class="del-stream-sub">Research, validate, plan</div>
+            <div class="timeline-name">Discover</div>
+            <p class="timeline-desc">Research your market and validate the opportunity.</p>
           </div>
         </div>
-        <ul class="del-stream-list">
-          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00B8A0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Research &amp; Analysis Deck</li>
-          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00B8A0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Product Vision Deck</li>
-          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00B8A0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Investor Pitch Deck</li>
-          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00B8A0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Personas &amp; MVP Scope</li>
-        </ul>
-      </div>
-
-      <!-- PRODUCT -->
-      <div class="del-stream-card del-stream-featured">
-        <div class="del-stream-header" style="background:linear-gradient(135deg,rgba(110,58,250,0.2),rgba(0,184,160,0.08));">
-          <div class="del-stream-icon" style="background:rgba(110,58,250,0.15);">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9B6FFF" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-          </div>
+        <div class="timeline-step">
+          <div class="timeline-node">2</div>
           <div>
-            <div class="del-stream-name">Product</div>
-            <div class="del-stream-sub">Design, build, ship</div>
+            <div class="timeline-name">Define</div>
+            <p class="timeline-desc">Shape personas, vision, and MVP scope.</p>
           </div>
         </div>
-        <ul class="del-stream-list">
-          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00B8A0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>MVP Mobile App (iOS + Android)</li>
-          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00B8A0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Design System &amp; Component Library</li>
-          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00B8A0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Marketing Website</li>
-          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00B8A0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Client Portal &amp; Progress Tracking</li>
-        </ul>
-      </div>
-
-      <!-- GO-TO-MARKET -->
-      <div class="del-stream-card">
-        <div class="del-stream-header" style="background:linear-gradient(135deg,rgba(0,184,160,0.14),rgba(0,184,160,0.04));">
-          <div class="del-stream-icon" style="background:rgba(0,184,160,0.12);">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00B8A0" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-          </div>
+        <div class="timeline-step">
+          <div class="timeline-node">3</div>
           <div>
-            <div class="del-stream-name">Go-to-Market</div>
-            <div class="del-stream-sub">Launch, grow, convert</div>
+            <div class="timeline-name">Design</div>
+            <p class="timeline-desc">Design every screen with a full design system.</p>
           </div>
         </div>
-        <ul class="del-stream-list">
-          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00B8A0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Marketing Strategy Deck</li>
-          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00B8A0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>20 Branded Social Posts</li>
-          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00B8A0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>5 SEO Blog Articles</li>
-          <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00B8A0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>30-Day Content Calendar</li>
-        </ul>
-      </div>
-
-    </div>
-  </div>
-</section>
-
-<!-- WHY VENTRIFY -->
-<section class="section" style="padding:8rem 3rem;background:var(--surface);">
-  <div class="container">
-    <div style="text-align:center; margin-bottom:0;">
-      <div class="s-label" style="justify-content:center;" data-reveal>Why Ventrify</div>
-      <h2 style="font-family:var(--font-heading);font-size:clamp(2.2rem,4.5vw,3.75rem);letter-spacing:-0.02em;line-height:1.1;margin-bottom:1rem;" data-reveal data-delay="1">Traditional agencies weren't<br>built for founders</h2>
-      <p style="font-size:1.1rem;line-height:1.75;color:var(--muted);max-width:540px;margin:0 auto;" data-reveal data-delay="2">Here's why pre-seed founders choose Ventrify over the traditional route.</p>
-    </div>
-
-    <!-- Comparison rows -->
-    <div class="compare-stack" data-reveal data-delay="1">
-
-      <!-- Row 1: Timeline -->
-      <div class="compare-row">
-        <div class="compare-old">
-          <div class="compare-x">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff4d6a" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </div>
+        <div class="timeline-step">
+          <div class="timeline-node">4</div>
           <div>
-            <div class="compare-old-val">6–12 months</div>
-            <div class="compare-old-note">Typical agency delivery</div>
+            <div class="timeline-name">Develop</div>
+            <p class="timeline-desc">Build the production-grade app.</p>
           </div>
         </div>
-        <div class="compare-topic">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          <span>Timeline</span>
-        </div>
-        <div class="compare-new">
-          <div class="compare-check">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00B8A0" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-          </div>
+        <div class="timeline-step">
+          <div class="timeline-node">5</div>
           <div>
-            <div class="compare-new-val">10–16 weeks</div>
-            <div class="compare-new-note">End-to-end, idea to App Store</div>
+            <div class="timeline-name">Deliver</div>
+            <p class="timeline-desc">Hand off everything. Full IP transfer.</p>
           </div>
         </div>
-      </div>
-
-      <!-- Row 2: Cost -->
-      <div class="compare-row">
-        <div class="compare-old">
-          <div class="compare-x">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff4d6a" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </div>
-          <div>
-            <div class="compare-old-val">$100K–$500K+</div>
-            <div class="compare-old-note">Fragmented across vendors</div>
-          </div>
-        </div>
-        <div class="compare-topic">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
-          <span>Cost</span>
-        </div>
-        <div class="compare-new">
-          <div class="compare-check">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00B8A0" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-          </div>
-          <div>
-            <div class="compare-new-val" data-price-aed="150000" data-price-compact data-price-compact-prefix="Fixed tiers from ">Fixed tiers from AED 150K</div>
-            <div class="compare-new-note">One team, one price, no surprises</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Row 3: Scope -->
-      <div class="compare-row">
-        <div class="compare-old">
-          <div class="compare-x">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff4d6a" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </div>
-          <div>
-            <div class="compare-old-val">Design or dev — rarely both</div>
-            <div class="compare-old-note">You coordinate between vendors</div>
-          </div>
-        </div>
-        <div class="compare-topic">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-          <span>Scope</span>
-        </div>
-        <div class="compare-new">
-          <div class="compare-check">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00B8A0" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-          </div>
-          <div>
-            <div class="compare-new-val">Strategy + Design + Dev + Marketing</div>
-            <div class="compare-new-note">One team owns everything</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Row 4: Deliverables -->
-      <div class="compare-row">
-        <div class="compare-old">
-          <div class="compare-x">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff4d6a" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </div>
-          <div>
-            <div class="compare-old-val">Varies per project</div>
-            <div class="compare-old-note">Vague scope, creep common</div>
-          </div>
-        </div>
-        <div class="compare-topic">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          <span>Deliverables</span>
-        </div>
-        <div class="compare-new">
-          <div class="compare-check">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00B8A0" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-          </div>
-          <div>
-            <div class="compare-new-val">40+ standardised deliverables</div>
-            <div class="compare-new-note">Scope locked at Gate 2, every time</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Row 5: Ownership -->
-      <div class="compare-row">
-        <div class="compare-old">
-          <div class="compare-x">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff4d6a" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </div>
-          <div>
-            <div class="compare-old-val">Retains IP, creates dependency</div>
-            <div class="compare-old-note">Ongoing fees, vendor lock-in</div>
-          </div>
-        </div>
-        <div class="compare-topic">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-          <span>Ownership</span>
-        </div>
-        <div class="compare-new">
-          <div class="compare-check">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00B8A0" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-          </div>
-          <div>
-            <div class="compare-new-val">Full IP transfer. Zero lock-in.</div>
-            <div class="compare-new-note">You own everything we build</div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-</section>
-
-<!-- THE VENTRIFY ADVANTAGE -->
-<section class="section" style="padding:8rem 3rem;">
-  <div class="container">
-    <div style="text-align:center; margin-bottom:0;">
-      <div class="s-label" style="justify-content:center;" data-reveal>The Advantage</div>
-      <h2 style="font-family:var(--font-heading);font-size:clamp(2.2rem,4.5vw,3.75rem);letter-spacing:-0.02em;line-height:1.1;margin-bottom:1.25rem;" data-reveal data-delay="1">Less money. Less time.<br>Same world-class output.</h2>
-      <p style="font-size:1.1rem;line-height:1.75;color:var(--muted);max-width:520px;margin:0 auto;" data-reveal data-delay="2">We engineered the waste out of venture building — so you get more for less.</p>
-    </div>
-
-    <!-- Three pillars -->
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:4rem;" class="advantage-grid" data-reveal data-delay="1">
-
-      <!-- Save Money -->
-      <div style="background:var(--surface-card);border:1px solid rgba(255,255,255,0.06);border-radius:var(--radius-card);padding:2.5rem 2rem;text-align:center;">
-        <div style="width:56px;height:56px;border-radius:14px;background:rgba(110,58,250,0.08);display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
-        </div>
-        <div style="font-family:var(--font-heading);font-size:clamp(2.4rem,5vw,3.2rem);color:var(--text);line-height:1;">60–70%</div>
-        <div style="font-family:var(--font-heading);font-size:0.85rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--brand);margin:0.5rem 0 1rem;">Less Cost</div>
-        <p style="font-size:0.95rem;color:var(--muted);line-height:1.65;margin:0;">One fixed price replaces five separate vendors. No hidden fees, no scope creep, no surprises.</p>
-      </div>
-
-      <!-- Save Time -->
-      <div style="background:var(--surface-card);border:1px solid rgba(255,255,255,0.06);border-radius:var(--radius-card);padding:2.5rem 2rem;text-align:center;">
-        <div style="width:56px;height:56px;border-radius:14px;background:rgba(0,184,160,0.08);display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        </div>
-        <div style="font-family:var(--font-heading);font-size:clamp(2.4rem,5vw,3.2rem);color:var(--text);line-height:1;">10–16</div>
-        <div style="font-family:var(--font-heading);font-size:0.85rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--accent);margin:0.5rem 0 1rem;">Weeks, Not Months</div>
-        <p style="font-size:0.95rem;color:var(--muted);line-height:1.65;margin:0;">From raw idea to live product. A single team moves faster than five agencies trying to align.</p>
-      </div>
-
-      <!-- No Compromise -->
-      <div style="background:var(--surface-card);border:1px solid rgba(255,255,255,0.06);border-radius:var(--radius-card);padding:2.5rem 2rem;text-align:center;">
-        <div style="width:56px;height:56px;border-radius:14px;background:rgba(110,58,250,0.08);display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-        </div>
-        <div style="font-family:var(--font-heading);font-size:clamp(2.4rem,5vw,3.2rem);color:var(--text);line-height:1;">40+</div>
-        <div style="font-family:var(--font-heading);font-size:0.85rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--brand);margin:0.5rem 0 1rem;">Deliverables</div>
-        <p style="font-size:0.95rem;color:var(--muted);line-height:1.65;margin:0;">Cheaper and faster doesn't mean cutting corners. Every engagement ships 40+ production-grade assets.</p>
       </div>
     </div>
+  </section>
 
-    <!-- Bottom punch line -->
-    <div style="text-align:center;margin-top:3.5rem;padding:2rem;border-radius:var(--radius-card);background:linear-gradient(135deg,rgba(110,58,250,0.04),rgba(0,184,160,0.04));box-shadow:none;" data-reveal data-delay="2">
-      <p style="font-family:var(--font-heading);font-size:clamp(1.1rem,2.5vw,1.35rem);color:var(--text);letter-spacing:-0.01em;line-height:1.5;margin:0;">Stop paying agency prices for startup work.<br><span style="color:var(--muted);font-family:var(--font-body);font-size:0.95rem;font-weight:400;">We built a system that delivers agency-quality output at a fraction of the cost and timeline.</span></p>
-    </div>
-  </div>
-</section>
-
-<!-- PORTFOLIO -->
-<section class="section mesh-bg-2" style="padding:8rem 3rem;">
-  <div class="container">
-    <div style="text-align:center; margin-bottom:0;">
-      <div class="s-label" style="justify-content:center;" data-reveal>Selected Work</div>
-      <h2 class="s-title" data-reveal data-delay="1">Ventures we've built</h2>
-      <p class="s-sub" style="margin:0 auto;" data-reveal data-delay="2">Products built through our methodology — from raw idea to market-ready venture.</p>
-    </div>
-    <div class="port-grid">
-      <a href="work-project.html" class="port-card" data-reveal data-delay="1">
-        <div class="port-img">
-          <img src="Portfolio/Debtfit/Debtfit-hero.jpg" alt="DebtFit" loading="lazy">
-          <div class="port-img-overlay"></div>
-        </div>
-        <div class="port-title">DebtFit</div>
-        <p class="port-desc">Personal finance platform for debt tracking and elimination.</p>
-      </a>
-      <a href="work-curago.html" class="port-card" data-reveal data-delay="2">
-        <div class="port-img">
-          <img src="Portfolio/CuraGo/curago-hero.jpg" alt="CuraGo" loading="lazy">
-          <div class="port-img-overlay"></div>
-        </div>
-        <div class="port-title">CuraGo</div>
-        <p class="port-desc">AI-powered healthcare connecting patients with personalised care.</p>
-      </a>
-      <a href="work-wallix.html" class="port-card" data-reveal data-delay="3">
-        <div class="port-img">
-          <img src="Portfolio/Wallix/wallix-hero.jpg" alt="Wallix" loading="lazy">
-          <div class="port-img-overlay"></div>
-        </div>
-        <div class="port-title">Wallix</div>
-        <p class="port-desc">Portfolio analytics with real-time tracking and reporting.</p>
-      </a>
-      <a href="work-flicksy.html" class="port-card" data-reveal data-delay="4">
-        <div class="port-img">
-          <img src="Portfolio/Flicksy/flicksy-hero.jpg" alt="Flicksy" loading="lazy">
-          <div class="port-img-overlay"></div>
-        </div>
-        <div class="port-title">Flicksy</div>
-        <p class="port-desc">Content discovery platform reimagining how people find and watch.</p>
-      </a>
-    </div>
-  </div>
-</section>
-
-<!-- PRICING -->
-<section class="section" style="padding:8rem 3rem; background:var(--surface);">
-  <div class="container">
-    <div style="text-align:center; margin-bottom:0;">
-      <div class="s-label" style="justify-content:center;" data-reveal>Venture Tiers</div>
-      <h2 class="s-title" data-reveal data-delay="1">Built for every stage</h2>
-      <p class="s-sub" style="margin:0 auto;" data-reveal data-delay="2">Every tier includes our full 5-phase methodology.</p>
-    </div>
-    <div class="pricing-grid">
-      <div class="p-card" data-reveal data-delay="1">
-        <div class="p-tier">Tier 01</div>
-        <div class="p-name">Launchpad</div>
-        <div class="p-price-from">Starting from</div>
-        <div class="p-price-amount" data-price-aed="150000" data-currency-class="p-currency"><span class="p-currency">AED</span>150,000</div>
-        <p class="p-desc-text">The complete venture build — from validated strategy to a delivered MVP.</p>
-        <a href="pricing.html" class="p-link">See what's included &rarr;</a>
+  <!-- ═══════════════════════════════════════════
+       6. DELIVERABLES — 3-stream cards
+       ═══════════════════════════════════════════ -->
+  <section class="section-alt" id="deliverables">
+    <div class="container" data-reveal>
+      <div class="section-head-center">
+        <div class="s-label">What You Get</div>
+        <h2 class="s-title s-title-shimmer">40+ deliverables. Every engagement.</h2>
+        <p class="s-sub">Three streams, one team. Everything a venture needs to launch &mdash; nothing left to outsource.</p>
       </div>
-      <div class="p-card featured" data-reveal data-delay="2">
-        <div class="p-badge">Most Popular</div>
-        <div class="p-tier">Tier 02</div>
-        <div class="p-name">Venture</div>
-        <div class="p-price-from">Starting from</div>
-        <div class="p-price-amount" data-price-aed="240000" data-currency-class="p-currency"><span class="p-currency">AED</span>240,000</div>
-        <p class="p-desc-text">Everything in Launchpad plus the go-to-market package — website, investor deck, and content.</p>
-        <a href="pricing.html" class="p-link">See what's included &rarr;</a>
-      </div>
-      <div class="p-card" data-reveal data-delay="3">
-        <div class="p-tier">Tier 03</div>
-        <div class="p-name">Venture Pro</div>
-        <div class="p-price-from">Starting from</div>
-        <div class="p-price-amount" data-price-aed="330000" data-currency-class="p-currency"><span class="p-currency">AED</span>330,000</div>
-        <p class="p-desc-text">The most complete package including video, extended content, and 3 months of post-launch support.</p>
-        <a href="pricing.html" class="p-link">See what's included &rarr;</a>
-      </div>
-    </div>
-  </div>
-</section>
 
-<!-- FAQ -->
-<section class="section" style="padding:8rem 3rem;">
-  <div class="container">
-    <div style="text-align:center; margin-bottom:0;">
-      <div class="s-label" style="justify-content:center;" data-reveal>Questions</div>
-      <h2 class="s-title" data-reveal data-delay="1">Frequently asked</h2>
-    </div>
-    <div class="faq-list" data-reveal data-delay="1">
-
-      <details class="faq-item">
-        <summary>
-          What does working with Ventrify actually look like?
-          <span class="faq-icon">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="7" y1="1" x2="7" y2="13"/><line x1="1" y1="7" x2="13" y2="7"/></svg>
-          </span>
-        </summary>
-        <div class="faq-body">
-          <p>From the moment you reach out, here's exactly what the journey looks like:</p>
-          <ol>
-            <li><strong>Discovery Call —</strong> We schedule an initial kick-off call. Before that, you'll complete a short Venture Brief capturing your idea, goals, target market, and what you want to build.</li>
-            <li><strong>Scope of Work —</strong> We review your brief and return with a detailed Scope of Work: what we'll build, how, and the timeline. Once you sign off, we're locked in.</li>
-            <li><strong>First Payment & Discovery + Define —</strong> You pay the first instalment (40%) and we begin immediately. The Discover and Define phases run together — market research, opportunity validation, and full product vision.<br><br>This phase ends with a structured presentation covering research findings, product vision, and a clearly defined MVP scope. You sign off before anything is designed or built.</li>
-            <li><strong>Second Payment & Design —</strong> You pay the second instalment (30%) and we begin everything visual — UX flows, wireframes, pixel-perfect UI, and design system.</li>
-            <li><strong>Design Presentation & Feedback —</strong> We walk you through all design deliverables — product screens and the full design language. You get one structured round of feedback before we lock designs and move into build.</li>
-            <li><strong>Build & Delivery —</strong> We build your MVP to the agreed specification. On delivery, you receive your codebase, Figma files, and all assets — and the final instalment (30%) is due.</li>
-          </ol>
-          <p>Throughout every phase, you'll always know where we are, what's coming next, and what's expected from you. No black boxes, no surprises.</p>
-        </div>
-      </details>
-
-      <details class="faq-item">
-        <summary>
-          How long does a full venture build take?
-          <span class="faq-icon">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="7" y1="1" x2="7" y2="13"/><line x1="1" y1="7" x2="13" y2="7"/></svg>
-          </span>
-        </summary>
-        <div class="faq-body">
-          <p>A full 5-phase build typically runs between 10 and 16 weeks from kick-off to delivery.</p>
-          <p>Discover and Define take roughly 2–3 weeks. Design takes 3–5 weeks. Build and Deliver account for the remainder depending on technical complexity.</p>
-          <p>We'll give you a precise timeline in your Scope of Work before anything is signed or paid.</p>
-        </div>
-      </details>
-
-      <details class="faq-item">
-        <summary>
-          Do I need to be technical to work with Ventrify?
-          <span class="faq-icon">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="7" y1="1" x2="7" y2="13"/><line x1="1" y1="7" x2="13" y2="7"/></svg>
-          </span>
-        </summary>
-        <div class="faq-body">
-          <p>Not at all. Most of our clients come to us with an idea and a vision — not a technical background. That's exactly the gap we're designed to fill.</p>
-          <p>We handle every layer of the build and communicate everything in plain language. If you do have a technical background, we'll meet you at that level too.</p>
-        </div>
-      </details>
-
-      <details class="faq-item">
-        <summary>
-          What do I actually own when the project is complete?
-          <span class="faq-icon">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="7" y1="1" x2="7" y2="13"/><line x1="1" y1="7" x2="13" y2="7"/></svg>
-          </span>
-        </summary>
-        <div class="faq-body">
-          <p>Everything. Full intellectual property transfers to you upon final delivery and payment. You receive:</p>
-          <ul style="color:var(--muted);font-size:0.9rem;line-height:1.75;margin:0.75rem 0;padding-left:1rem;">
-            <li>Complete codebase via private GitHub repositories</li>
-            <li>All Figma design files and brand assets</li>
-            <li>Live app on both app stores</li>
-            <li>Marketing website</li>
-            <li>Design system documentation site</li>
-            <li>All PDF deliverables</li>
+      <div class="del-streams">
+        <!-- STRATEGY -->
+        <div class="del-stream-card" data-reveal data-delay="1">
+          <div class="del-stream-header">
+            <div class="del-stream-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </div>
+            <div>
+              <div class="del-stream-name">Strategy</div>
+              <div class="del-stream-sub">Research, validate, plan</div>
+            </div>
+          </div>
+          <ul class="del-stream-list">
+            <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Research &amp; Analysis Deck</li>
+            <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Product Vision Deck</li>
+            <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Investor Pitch Deck</li>
+            <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Personas &amp; MVP Scope</li>
           </ul>
-          <p>No licensing fees, no lock-in, no ongoing dependency on Ventrify.</p>
         </div>
-      </details>
 
-      <details class="faq-item">
-        <summary>
-          Can the scope change once the project has started?
-          <span class="faq-icon">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="7" y1="1" x2="7" y2="13"/><line x1="1" y1="7" x2="13" y2="7"/></svg>
-          </span>
-        </summary>
-        <div class="faq-body">
-          <p>The MVP scope is locked at the end of the Define phase (Gate 2) via a signed Statement of Work. This prevents scope creep and protects both sides. If meaningful change is needed mid-project, we assess openly, communicate timeline and cost impact, and agree a path forward before proceeding.</p>
-        </div>
-      </details>
-
-      <details class="faq-item">
-        <summary>
-          Which tier is right for me?
-          <span class="faq-icon">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="7" y1="1" x2="7" y2="13"/><line x1="1" y1="7" x2="13" y2="7"/></svg>
-          </span>
-        </summary>
-        <div class="faq-body">
-          <ul style="color:var(--muted);font-size:0.9rem;line-height:1.75;margin:0.75rem 0;padding-left:1rem;">
-            <li><strong style="color:var(--text);">Launchpad</strong> — A validated, functional MVP built and delivered.</li>
-            <li><strong style="color:var(--text);">Venture</strong> — Everything in Launchpad plus go-to-market: brand, website, investor materials, and launch campaign.</li>
-            <li><strong style="color:var(--text);">Venture Pro</strong> — The complete package including ongoing content, video, and 3 months of post-launch support.</li>
+        <!-- PRODUCT -->
+        <div class="del-stream-card featured" data-reveal data-delay="2">
+          <div class="del-stream-header">
+            <div class="del-stream-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            </div>
+            <div>
+              <div class="del-stream-name">Product</div>
+              <div class="del-stream-sub">Design, build, ship</div>
+            </div>
+          </div>
+          <ul class="del-stream-list">
+            <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>MVP Mobile App (iOS + Android)</li>
+            <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Design System &amp; Component Library</li>
+            <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Marketing Website</li>
+            <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Client Portal &amp; Progress Tracking</li>
           </ul>
-          <p>Not sure? Book a discovery call and we'll help you find the right fit.</p>
         </div>
-      </details>
 
-      <details class="faq-item">
-        <summary>
-          What's included in the retainer?
-          <span class="faq-icon">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="7" y1="1" x2="7" y2="13"/><line x1="1" y1="7" x2="13" y2="7"/></svg>
-          </span>
-        </summary>
-        <div class="faq-body">
-          <p>The Venture Pro retainer (3 months included) provides per month:</p>
-          <ul style="color:var(--muted);font-size:0.9rem;line-height:1.75;margin:0.75rem 0;padding-left:1rem;">
-            <li>4 new blog posts</li>
-            <li>12 new social media posts</li>
-            <li>1 product update email</li>
-            <li>1 analytics report</li>
+        <!-- GO-TO-MARKET -->
+        <div class="del-stream-card" data-reveal data-delay="3">
+          <div class="del-stream-header">
+            <div class="del-stream-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </div>
+            <div>
+              <div class="del-stream-name">Go-to-Market</div>
+              <div class="del-stream-sub">Launch, grow, convert</div>
+            </div>
+          </div>
+          <ul class="del-stream-list">
+            <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Marketing Strategy Deck</li>
+            <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>20 Branded Social Posts</li>
+            <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>5 SEO Blog Articles</li>
+            <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>30-Day Content Calendar</li>
           </ul>
-          <p>A master retainer log ensures no content is ever repeated. Additional months can be purchased as an add-on on any tier.</p>
         </div>
-      </details>
-
-      <details class="faq-item">
-        <summary>
-          How do payments work?
-          <span class="faq-icon">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="7" y1="1" x2="7" y2="13"/><line x1="1" y1="7" x2="13" y2="7"/></svg>
-          </span>
-        </summary>
-        <div class="faq-body">
-          <p>All tiers use the same 40/30/30 milestone structure:</p>
-          <ul style="color:var(--muted);font-size:0.9rem;line-height:1.75;margin:0.75rem 0;padding-left:1rem;">
-            <li><strong style="color:var(--text);">40%</strong> upfront — before Phase 1 begins</li>
-            <li><strong style="color:var(--text);">30%</strong> at design start — before Phase 3</li>
-            <li><strong style="color:var(--text);">30%</strong> on delivery — before Phase 5 handoff</li>
-          </ul>
-          <p>Invoices are sent via Stripe. No work begins on any phase until the corresponding milestone is paid.</p>
-        </div>
-      </details>
-
-    </div>
-  </div>
-</section>
-
-<!-- CTA BANNER -->
-<section class="section" style="padding:0 3rem 8rem;">
-  <div class="container">
-    <div class="cta-banner" data-reveal>
-      <div class="cta-bg-image" style="background-image:url('brand%20assets/hero-2.png');"></div>
-      <div class="orb" style="width:400px;height:400px;background:radial-gradient(circle,rgba(110,58,250,0.06) 0%,transparent 70%);top:-120px;right:-80px;filter:blur(80px);"></div>
-      <div class="orb" style="width:300px;height:300px;background:radial-gradient(circle,rgba(0,184,160,0.04) 0%,transparent 70%);bottom:-60px;left:-40px;filter:blur(70px);"></div>
-      <div class="s-label" style="justify-content:center; margin-bottom:1.5rem;">Ready to Build?</div>
-      <h2 class="s-title" style="margin-bottom:1rem;">Your venture starts here</h2>
-      <p class="s-sub" style="margin:0 auto 2.5rem;">Book a discovery call and let's map out exactly what it takes to turn your idea into a launched, investable product.</p>
-      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
-        <a href="contact.html" class="btn btn-primary btn-lg">Book Discovery Call</a>
-        <a href="about.html" class="btn btn-outline btn-lg">See the Methodology</a>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<footer id="site-footer"></footer>
+  <!-- ═══════════════════════════════════════════
+       7. WHY VENTRIFY — Comparison rows
+       ═══════════════════════════════════════════ -->
+  <section class="section" id="why-ventrify">
+    <div class="container" data-reveal>
+      <div class="section-head-center">
+        <div class="s-label">Why Ventrify</div>
+        <h2 class="s-title s-title-shimmer">Traditional agencies weren&rsquo;t<br>built for founders</h2>
+        <p class="s-sub">Here&rsquo;s why pre-seed founders choose Ventrify over the traditional route.</p>
+      </div>
 
-<script src="scripts/shared.js" defer></script>
-<script src="scripts/currency.js" defer></script>
+      <div class="compare-stack" data-reveal data-delay="1">
+        <!-- Row 1: Timeline -->
+        <div class="compare-row">
+          <div class="compare-old">
+            <div class="compare-x">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </div>
+            <div>
+              <div class="compare-old-val">6&ndash;12 months</div>
+              <div class="compare-old-note">Typical agency delivery</div>
+            </div>
+          </div>
+          <div class="compare-topic">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span>Timeline</span>
+          </div>
+          <div class="compare-new">
+            <div class="compare-check">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div>
+              <div class="compare-new-val">10&ndash;16 weeks</div>
+              <div class="compare-new-note">End-to-end, idea to App Store</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 2: Cost -->
+        <div class="compare-row">
+          <div class="compare-old">
+            <div class="compare-x">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </div>
+            <div>
+              <div class="compare-old-val">$100K&ndash;$500K+</div>
+              <div class="compare-old-note">Fragmented across vendors</div>
+            </div>
+          </div>
+          <div class="compare-topic">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+            <span>Cost</span>
+          </div>
+          <div class="compare-new">
+            <div class="compare-check">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div>
+              <div class="compare-new-val" data-price-aed="150000" data-price-compact data-price-compact-prefix="Fixed tiers from ">Fixed tiers from AED 150K</div>
+              <div class="compare-new-note">One team, one price, no surprises</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 3: Scope -->
+        <div class="compare-row">
+          <div class="compare-old">
+            <div class="compare-x">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </div>
+            <div>
+              <div class="compare-old-val">Design or dev &mdash; rarely both</div>
+              <div class="compare-old-note">You coordinate between vendors</div>
+            </div>
+          </div>
+          <div class="compare-topic">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            <span>Scope</span>
+          </div>
+          <div class="compare-new">
+            <div class="compare-check">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div>
+              <div class="compare-new-val">Strategy + Design + Dev + Marketing</div>
+              <div class="compare-new-note">One team owns everything</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 4: Deliverables -->
+        <div class="compare-row">
+          <div class="compare-old">
+            <div class="compare-x">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </div>
+            <div>
+              <div class="compare-old-val">Varies per project</div>
+              <div class="compare-old-note">Vague scope, creep common</div>
+            </div>
+          </div>
+          <div class="compare-topic">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span>Deliverables</span>
+          </div>
+          <div class="compare-new">
+            <div class="compare-check">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div>
+              <div class="compare-new-val">40+ standardised deliverables</div>
+              <div class="compare-new-note">Scope locked at Gate 2, every time</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 5: Ownership -->
+        <div class="compare-row">
+          <div class="compare-old">
+            <div class="compare-x">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </div>
+            <div>
+              <div class="compare-old-val">Retains IP, creates dependency</div>
+              <div class="compare-old-note">Ongoing fees, vendor lock-in</div>
+            </div>
+          </div>
+          <div class="compare-topic">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+            <span>Ownership</span>
+          </div>
+          <div class="compare-new">
+            <div class="compare-check">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div>
+              <div class="compare-new-val">Full IP transfer. Zero lock-in.</div>
+              <div class="compare-new-note">You own everything we build</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       8. THE VENTRIFY ADVANTAGE — 3 pillars
+       ═══════════════════════════════════════════ -->
+  <section class="section-alt" id="advantage">
+    <div class="container" data-reveal>
+      <div class="section-head-center">
+        <div class="s-label">The Advantage</div>
+        <h2 class="s-title s-title-shimmer">Less money. Less time.<br>Same world-class output.</h2>
+        <p class="s-sub">We engineered the waste out of venture building &mdash; so you get more for less.</p>
+      </div>
+
+      <div class="adv-grid" data-reveal data-delay="1">
+        <div class="adv-card">
+          <div class="adv-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+          </div>
+          <div class="adv-val">60&ndash;70%</div>
+          <div class="adv-lbl">Less Cost</div>
+          <p class="adv-desc">One fixed price replaces five separate vendors. No hidden fees, no scope creep, no surprises.</p>
+        </div>
+        <div class="adv-card">
+          <div class="adv-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div class="adv-val">10&ndash;16</div>
+          <div class="adv-lbl">Weeks, Not Months</div>
+          <p class="adv-desc">From raw idea to live product. A single team moves faster than five agencies trying to align.</p>
+        </div>
+        <div class="adv-card">
+          <div class="adv-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          </div>
+          <div class="adv-val">40+</div>
+          <div class="adv-lbl">Deliverables</div>
+          <p class="adv-desc">Cheaper and faster doesn&rsquo;t mean cutting corners. Every engagement ships 40+ production-grade assets.</p>
+        </div>
+      </div>
+
+      <div class="adv-punch" data-reveal data-delay="2">
+        <h3>Stop paying agency prices for startup work.</h3>
+        <p>We built a system that delivers agency-quality output at a fraction of the cost and timeline.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       9. SELECTED WORK — Portfolio
+       ═══════════════════════════════════════════ -->
+  <section class="section" id="work">
+    <div class="container" data-reveal>
+      <div class="section-head-center">
+        <div class="s-label">Selected Work</div>
+        <h2 class="s-title s-title-shimmer">Ventures we&rsquo;ve built</h2>
+        <p class="s-sub">Products built through our methodology &mdash; from raw idea to market-ready venture.</p>
+      </div>
+      <div class="port-grid">
+        <a href="work-project.html" class="port-card" data-reveal data-delay="1">
+          <div class="port-img">
+            <img src="Portfolio/Debtfit/Debtfit-hero.jpg" alt="DebtFit" loading="lazy">
+          </div>
+          <div class="port-body">
+            <div class="port-title">DebtFit</div>
+            <p class="port-desc">Personal finance platform for debt tracking and elimination.</p>
+          </div>
+        </a>
+        <a href="work-curago.html" class="port-card" data-reveal data-delay="2">
+          <div class="port-img">
+            <img src="Portfolio/CuraGo/curago-hero.jpg" alt="CuraGo" loading="lazy">
+          </div>
+          <div class="port-body">
+            <div class="port-title">CuraGo</div>
+            <p class="port-desc">AI-powered healthcare connecting patients with personalised care.</p>
+          </div>
+        </a>
+        <a href="work-wallix.html" class="port-card" data-reveal data-delay="3">
+          <div class="port-img">
+            <img src="Portfolio/Wallix/wallix-hero.jpg" alt="Wallix" loading="lazy">
+          </div>
+          <div class="port-body">
+            <div class="port-title">Wallix</div>
+            <p class="port-desc">Portfolio analytics with real-time tracking and reporting.</p>
+          </div>
+        </a>
+        <a href="work-flicksy.html" class="port-card" data-reveal data-delay="4">
+          <div class="port-img">
+            <img src="Portfolio/Flicksy/flicksy-hero.jpg" alt="Flicksy" loading="lazy">
+          </div>
+          <div class="port-body">
+            <div class="port-title">Flicksy</div>
+            <p class="port-desc">Content discovery platform reimagining how people find and watch.</p>
+          </div>
+        </a>
+      </div>
+      <div style="text-align:center;margin-top:3rem;" data-reveal>
+        <a href="work.html" class="btn btn-outline btn-lg">See all work &rarr;</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       10. PRICING — 3 tiers
+       ═══════════════════════════════════════════ -->
+  <section class="section-alt" id="pricing">
+    <div class="container" data-reveal>
+      <div class="section-head-center">
+        <div class="s-label">Venture Tiers</div>
+        <h2 class="s-title s-title-shimmer">Built for every stage</h2>
+        <p class="s-sub">Every tier includes our full 5-phase methodology.</p>
+      </div>
+      <div class="pricing-grid">
+        <div class="p-card" data-reveal data-delay="1">
+          <div class="p-tier">Tier 01</div>
+          <div class="p-name">Launchpad</div>
+          <div class="p-price-from">Starting from</div>
+          <div class="p-price-amount" data-price-aed="150000" data-currency-class="p-currency"><span class="p-currency">AED</span>150,000</div>
+          <p class="p-desc-text">The complete venture build &mdash; from validated strategy to a delivered MVP.</p>
+          <a href="pricing.html" class="p-link">See what&rsquo;s included &rarr;</a>
+        </div>
+        <div class="p-card featured" data-reveal data-delay="2">
+          <div class="p-badge">Most Popular</div>
+          <div class="p-tier">Tier 02</div>
+          <div class="p-name">Venture</div>
+          <div class="p-price-from">Starting from</div>
+          <div class="p-price-amount" data-price-aed="240000" data-currency-class="p-currency"><span class="p-currency">AED</span>240,000</div>
+          <p class="p-desc-text">Everything in Launchpad plus the go-to-market package &mdash; website, investor deck, and content.</p>
+          <a href="pricing.html" class="p-link">See what&rsquo;s included &rarr;</a>
+        </div>
+        <div class="p-card" data-reveal data-delay="3">
+          <div class="p-tier">Tier 03</div>
+          <div class="p-name">Venture Pro</div>
+          <div class="p-price-from">Starting from</div>
+          <div class="p-price-amount" data-price-aed="330000" data-currency-class="p-currency"><span class="p-currency">AED</span>330,000</div>
+          <p class="p-desc-text">The most complete package including video, extended content, and 3 months of post-launch support.</p>
+          <a href="pricing.html" class="p-link">See what&rsquo;s included &rarr;</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       11. FAQ
+       ═══════════════════════════════════════════ -->
+  <section class="section" id="faqs">
+    <div class="container" data-reveal>
+      <div class="section-head-center">
+        <div class="s-label">Questions</div>
+        <h2 class="s-title s-title-shimmer">Frequently asked</h2>
+        <p class="s-sub">The questions founders ask before we start working together.</p>
+      </div>
+      <div class="faq-list">
+        <details class="faq-item" data-reveal data-delay="1">
+          <summary>
+            <span>What does working with Ventrify actually look like?</span>
+            <span class="faq-icon" aria-hidden="true">+</span>
+          </summary>
+          <div class="faq-answer">
+            <p>From the moment you reach out, here&rsquo;s exactly what the journey looks like:</p>
+            <ol>
+              <li><strong>Discovery Call &mdash;</strong> We schedule an initial kick-off call. Before that, you&rsquo;ll complete a short Venture Brief capturing your idea, goals, target market, and what you want to build.</li>
+              <li><strong>Scope of Work &mdash;</strong> We review your brief and return with a detailed Scope of Work: what we&rsquo;ll build, how, and the timeline. Once you sign off, we&rsquo;re locked in.</li>
+              <li><strong>First Payment &amp; Discovery + Define &mdash;</strong> You pay the first instalment (40%) and we begin immediately. The Discover and Define phases run together &mdash; market research, opportunity validation, and full product vision. This phase ends with a structured presentation covering research findings, product vision, and a clearly defined MVP scope. You sign off before anything is designed or built.</li>
+              <li><strong>Second Payment &amp; Design &mdash;</strong> You pay the second instalment (30%) and we begin everything visual &mdash; UX flows, wireframes, pixel-perfect UI, and design system.</li>
+              <li><strong>Design Presentation &amp; Feedback &mdash;</strong> We walk you through all design deliverables &mdash; product screens and the full design language. You get one structured round of feedback before we lock designs and move into build.</li>
+              <li><strong>Build &amp; Delivery &mdash;</strong> We build your MVP to the agreed specification. On delivery, you receive your codebase, Figma files, and all assets &mdash; and the final instalment (30%) is due.</li>
+            </ol>
+            <p>Throughout every phase, you&rsquo;ll always know where we are, what&rsquo;s coming next, and what&rsquo;s expected from you. No black boxes, no surprises.</p>
+          </div>
+        </details>
+
+        <details class="faq-item" data-reveal data-delay="1">
+          <summary>
+            <span>How long does a full venture build take?</span>
+            <span class="faq-icon" aria-hidden="true">+</span>
+          </summary>
+          <div class="faq-answer">
+            <p>A full 5-phase build typically runs between 10 and 16 weeks from kick-off to delivery.</p>
+            <p>Discover and Define take roughly 2&ndash;3 weeks. Design takes 3&ndash;5 weeks. Build and Deliver account for the remainder depending on technical complexity.</p>
+            <p>We&rsquo;ll give you a precise timeline in your Scope of Work before anything is signed or paid.</p>
+          </div>
+        </details>
+
+        <details class="faq-item" data-reveal data-delay="2">
+          <summary>
+            <span>Do I need to be technical to work with Ventrify?</span>
+            <span class="faq-icon" aria-hidden="true">+</span>
+          </summary>
+          <div class="faq-answer">
+            <p>Not at all. Most of our clients come to us with an idea and a vision &mdash; not a technical background. That&rsquo;s exactly the gap we&rsquo;re designed to fill.</p>
+            <p>We handle every layer of the build and communicate everything in plain language. If you do have a technical background, we&rsquo;ll meet you at that level too.</p>
+          </div>
+        </details>
+
+        <details class="faq-item" data-reveal data-delay="2">
+          <summary>
+            <span>What do I actually own when the project is complete?</span>
+            <span class="faq-icon" aria-hidden="true">+</span>
+          </summary>
+          <div class="faq-answer">
+            <p>Everything. Full intellectual property transfers to you upon final delivery and payment. You receive:</p>
+            <ul>
+              <li>Complete codebase via private GitHub repositories</li>
+              <li>All Figma design files and brand assets</li>
+              <li>Live app on both app stores</li>
+              <li>Marketing website</li>
+              <li>Design system documentation site</li>
+              <li>All PDF deliverables</li>
+            </ul>
+            <p>No licensing fees, no lock-in, no ongoing dependency on Ventrify.</p>
+          </div>
+        </details>
+
+        <details class="faq-item" data-reveal data-delay="3">
+          <summary>
+            <span>Can the scope change once the project has started?</span>
+            <span class="faq-icon" aria-hidden="true">+</span>
+          </summary>
+          <div class="faq-answer">
+            <p>The MVP scope is locked at the end of the Define phase (Gate 2) via a signed Statement of Work. This prevents scope creep and protects both sides. If meaningful change is needed mid-project, we assess openly, communicate timeline and cost impact, and agree a path forward before proceeding.</p>
+          </div>
+        </details>
+
+        <details class="faq-item" data-reveal data-delay="3">
+          <summary>
+            <span>Which tier is right for me?</span>
+            <span class="faq-icon" aria-hidden="true">+</span>
+          </summary>
+          <div class="faq-answer">
+            <ul>
+              <li><strong>Launchpad</strong> &mdash; A validated, functional MVP built and delivered.</li>
+              <li><strong>Venture</strong> &mdash; Everything in Launchpad plus go-to-market: brand, website, investor materials, and launch campaign.</li>
+              <li><strong>Venture Pro</strong> &mdash; The complete package including ongoing content, video, and 3 months of post-launch support.</li>
+            </ul>
+            <p>Not sure? Book a discovery call and we&rsquo;ll help you find the right fit.</p>
+          </div>
+        </details>
+
+        <details class="faq-item" data-reveal data-delay="4">
+          <summary>
+            <span>What&rsquo;s included in the retainer?</span>
+            <span class="faq-icon" aria-hidden="true">+</span>
+          </summary>
+          <div class="faq-answer">
+            <p>The Venture Pro retainer (3 months included) provides per month:</p>
+            <ul>
+              <li>4 new blog posts</li>
+              <li>12 new social media posts</li>
+              <li>1 product update email</li>
+              <li>1 analytics report</li>
+            </ul>
+            <p>A master retainer log ensures no content is ever repeated. Additional months can be purchased as an add-on on any tier.</p>
+          </div>
+        </details>
+
+        <details class="faq-item" data-reveal data-delay="4">
+          <summary>
+            <span>How do payments work?</span>
+            <span class="faq-icon" aria-hidden="true">+</span>
+          </summary>
+          <div class="faq-answer">
+            <p>All tiers use the same 40/30/30 milestone structure:</p>
+            <ul>
+              <li><strong>40%</strong> upfront &mdash; before Phase 1 begins</li>
+              <li><strong>30%</strong> at design start &mdash; before Phase 3</li>
+              <li><strong>30%</strong> on delivery &mdash; before Phase 5 handoff</li>
+            </ul>
+            <p>Invoices are sent via Stripe. No work begins on any phase until the corresponding milestone is paid.</p>
+          </div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       12. FINAL CTA — Dark bookend
+       ═══════════════════════════════════════════ -->
+  <section class="final-cta">
+    <div class="cta-content" data-reveal>
+      <h2>Your venture starts here.</h2>
+      <p class="cta-sub">Book a discovery call and let&rsquo;s map out exactly what it takes to turn your idea into a launched, investable product.</p>
+      <div class="cta-buttons">
+        <a href="contact.html" class="btn btn-dark-primary btn-lg">Book Discovery Call</a>
+        <a href="about.html" class="btn btn-dark-outline btn-lg">See the Methodology</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       13. FOOTER — Dark
+       ═══════════════════════════════════════════ -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <div class="logo">VENTRIFY</div>
+          <p>The full-stack venture studio for pre-seed founders. Strategy, design, development, and marketing &mdash; under one roof.</p>
+        </div>
+        <div class="footer-links">
+          <a href="about.html">About</a>
+          <a href="work.html">Work</a>
+          <a href="pricing.html">Pricing</a>
+          <a href="insights.html">Insights</a>
+          <a href="contact.html">Contact</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 Ventrify. All rights reserved.</p>
+        <div class="footer-currency"></div>
+        <p>Dubai &middot; London &middot; Singapore</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ═══════════════════════════════════════════
+       JAVASCRIPT
+       ═══════════════════════════════════════════ -->
+  <script>
+    // Hamburger Toggle
+    const hamburger = document.querySelector('.hamburger');
+    const mobileMenu = document.querySelector('.mobile-menu');
+
+    if (hamburger && mobileMenu) {
+      hamburger.addEventListener('click', () => {
+        hamburger.classList.toggle('open');
+        mobileMenu.classList.toggle('open');
+        document.body.style.overflow = mobileMenu.classList.contains('open') ? 'hidden' : '';
+      });
+
+      mobileMenu.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', () => {
+          hamburger.classList.remove('open');
+          mobileMenu.classList.remove('open');
+          document.body.style.overflow = '';
+        });
+      });
+    }
+
+    // Scroll Reveal Observer
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('revealed');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, {
+      threshold: 0.01,
+      rootMargin: '0px 0px -80px 0px'
+    });
+
+    document.querySelectorAll('[data-reveal]').forEach(el => {
+      revealObserver.observe(el);
+    });
+
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function(e) {
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          e.preventDefault();
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    });
+  </script>
+  <script src="scripts/currency.js" defer></script>
 </body>
 </html>

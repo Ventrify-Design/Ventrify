@@ -1,3 +1,15 @@
 node_modules/
 .DS_Store
+**/.DS_Store
 temporary screenshots/
+
+# Temp scratch files
+_*.mjs
+
+# Large unrelated extracted archives
+Test site/
+Workflow/
+workflow new/
+
+# Vercel
+.vercel/

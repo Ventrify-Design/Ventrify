@@ -98,9 +98,9 @@
       .catch(function() { callback('AED'); });
   }
 
-  // Inject currency selector into nav
+  // Inject currency selector into footer (fallback to legacy nav container)
   function injectSelector(activeCurrency) {
-    var nav = document.querySelector('.nav-buttons');
+    var nav = document.querySelector('.footer-currency') || document.querySelector('.nav-buttons');
     if (!nav || document.getElementById('currency-selector')) return;
 
     var selector = document.createElement('div');

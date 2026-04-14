@@ -8,226 +8,1039 @@
   <meta property="og:title" content="Why most pre-seed founders build the wrong product first — and how to avoid it">
   <meta property="og:description" content="The single biggest mistake in early-stage venture building is moving from idea to build without a validated foundation. Here's the framework we use to make sure every product starts right.">
   <meta property="og:type" content="article">
-  <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles/tokens.css">
-  <link rel="stylesheet" href="styles/shared.css">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
-    /* PAGE-SPECIFIC STYLES ONLY */
-    .article-hero { padding:9rem 3rem 0; position:relative; }
-    .article-hero-inner { max-width:800px; margin:0 auto; padding-bottom:3rem; }
-    .back-link { display:inline-flex; align-items:center; gap:8px; font-size:0.82rem; font-weight:600; color:var(--muted); margin-bottom:2.5rem; transition:color var(--transition-fast); }
-    .back-link:hover { color:var(--text); }
-    .article-category { display:inline-block; font-family:var(--font-heading); font-size:0.7rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--accent); background:rgba(0,184,160,0.08); padding:4px 12px; border-radius:6px; margin-bottom:1rem; }
-    .article-title { font-size:clamp(2rem,4.5vw,3.2rem); letter-spacing:-0.025em; line-height:1.1; margin-bottom:1.5rem; color:var(--text); }
-    .article-meta { display:flex; align-items:center; gap:1rem; font-size:0.82rem; color:var(--muted); flex-wrap:wrap; }
-    .article-meta-dot { width:3px; height:3px; border-radius:50%; background:var(--muted); }
-    .article-hero-img { width:100%; max-width:800px; margin:0 auto 4rem; display:block; border-radius:var(--radius-card); overflow:hidden; box-shadow:var(--shadow-raised); }
-    .article-hero-img img { width:100%; display:block; }
-    .article-body { max-width:680px; margin:0 auto; padding:0 3rem 4rem; }
-    .article-body h2 { font-family:var(--font-heading); font-size:1.4rem; letter-spacing:-0.015em; margin:3rem 0 1rem; color:var(--text); }
-    .article-body h3 { font-family:var(--font-heading); font-size:1.15rem; margin:2.5rem 0 0.75rem; color:var(--text); }
-    .article-body p { font-size:0.95rem; line-height:1.85; color:var(--muted); margin-bottom:1.25rem; }
-    .article-body ul, .article-body ol { padding-left:1.5rem; margin-bottom:1.25rem; }
-    .article-body li { font-size:0.95rem; line-height:1.85; color:var(--muted); margin-bottom:0.5rem; }
-    .article-body strong { color:var(--text); font-weight:600; }
-    .pull-quote { border-left:3px solid var(--brand); padding:1.25rem 0 1.25rem 1.5rem; margin:2rem 0; font-size:1.05rem; line-height:1.7; color:var(--text); font-weight:500; font-style:italic; }
-    .highlight-box { background:rgba(0,184,160,0.06); border-radius:var(--radius-card); padding:1.5rem 2rem; margin:2rem 0; }
-    .highlight-box h4 { font-family:var(--font-heading); font-size:0.85rem; letter-spacing:0.05em; color:var(--accent); margin-bottom:1rem; text-transform:uppercase; }
-    .highlight-box p { color:var(--text); margin-bottom:0; }
-    .highlight-box ul { margin-bottom:0; }
-    .article-tags { display:flex; gap:8px; flex-wrap:wrap; padding:2rem 0; border-top:1px solid var(--border); margin-top:3rem; }
-    .article-tag { font-size:0.72rem; font-weight:600; letter-spacing:0.06em; padding:5px 12px; border-radius:6px; background:var(--surface-card); color:var(--muted); box-shadow:var(--shadow-btn); }
-    .more-articles { max-width:1200px; margin:0 auto; padding:4rem 3rem 2rem; }
-    .more-articles-heading { font-family:var(--font-heading); font-size:1.1rem; color:var(--text); margin-bottom:2rem; }
-    .more-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1.5rem; }
-    .more-card { background:var(--surface-card); border:1px solid rgba(255,255,255,0.06); border-radius:var(--radius-card); overflow:hidden; transition:transform 0.25s var(--ease-spring), border-color 0.25s ease; text-decoration:none; display:block; }
-    .more-card:hover { transform:translateY(-4px); border-color:rgba(255,255,255,0.12); }
-    .more-card img { width:100%; height:180px; object-fit:cover; display:block; }
-    .more-card-body { padding:1.25rem; }
-    .more-card-cat { font-family:var(--font-heading); font-size:0.65rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--accent); margin-bottom:0.5rem; }
-    .more-card-title { font-family:var(--font-heading); font-size:0.9rem; color:var(--text); line-height:1.35; }
-    .newsletter-section { max-width:800px; margin:0 auto; padding:4rem 3rem; text-align:center; }
-    .nl-input { background:var(--surface-card); border:none; border-radius:var(--radius-sm); padding:0.85rem 1.25rem; font-size:0.875rem; color:var(--text); font-family:var(--font-body); box-shadow:var(--shadow-inset); outline:none; width:100%; max-width:320px; }
-    .nl-input:focus { box-shadow:var(--shadow-inset), 0 0 0 2px rgba(110,58,250,0.2); }
-    .nl-input::placeholder { color:var(--muted); }
+    /* ============================================
+       DESIGN TOKENS
+       ============================================ */
+    :root {
+      --primary: #0036FF;
+      --primary-light: #3366FF;
+      --primary-rgb: 0,54,255;
+      --bg-dark: #0A0118;
+      --bg-light: #FFFFFF;
+      --surface-dark: #120826;
+      --surface-dark-2: #1A0E30;
+      --surface-card-dark: rgba(255,255,255,0.04);
+      --text-light: #FFFFFF;
+      --text-light-muted: rgba(255,255,255,0.6);
+      --text-light-subtle: rgba(255,255,255,0.6);
+      --text-dark: #141414;
+      --text-dark-muted: #656565;
+      --border-dark: rgba(255,255,255,0.08);
+      --border-light: rgba(0,0,0,0.06);
+
+      --font-heading: 'Inter', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      --radius-sm: 12px;
+      --radius-md: 16px;
+      --radius-card: 20px;
+      --radius-lg: 24px;
+      --radius-pill: 980px;
+
+      --ease-smooth: cubic-bezier(0.6, 0.6, 0, 1);
+      --transition: 0.45s cubic-bezier(0.6, 0.6, 0, 1);
+    }
+
+    /* ============================================
+       BASE RESET
+       ============================================ */
+    *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+    html { scroll-behavior:smooth; }
+    body {
+      background:var(--bg-dark);
+      color:var(--text-dark);
+      font-family:var(--font-body);
+      font-size:17px;
+      overflow-x:hidden;
+      line-height:1.65;
+      font-weight:400;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+    h1,h2,h3,h4,h5 { font-family:var(--font-heading); letter-spacing:-0.02em; font-weight:600; }
+    a { text-decoration:none; color:inherit; }
+    img { max-width:100%; }
+    .skip-link {
+      position:absolute; top:-100px; left:50%;
+      transform:translateX(-50%);
+      background:var(--primary); color:#fff;
+      padding:8px 16px; border-radius:0 0 8px 8px;
+      font-size:0.82rem; font-weight:600;
+      z-index:9999; transition:top 0.2s ease;
+    }
+    .skip-link:focus { top:0; }
+
+    /* ============================================
+       NAVIGATION — Floating Pill + Extras Pill
+       ============================================ */
+    .nav-wrap {
+      position:fixed; top:16px; left:50%;
+      transform:translateX(-50%);
+      z-index:200;
+      display:flex; align-items:center; gap:8px;
+      max-width:calc(100% - 24px);
+    }
+    nav {
+      display:flex; align-items:center; gap:2px;
+      padding:6px 8px 6px 20px;
+      height:60px;
+      background:rgba(255,255,255,0.88);
+      backdrop-filter:blur(12px);
+      -webkit-backdrop-filter:blur(12px);
+      border-radius:var(--radius-pill);
+      box-shadow:0 1px 2px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.08), 0 16px 56px rgba(0,0,0,0.08);
+    }
+    .logo {
+      font-family:var(--font-heading);
+      font-size:1rem; font-weight:600;
+      letter-spacing:-0.02em;
+      color:var(--text-dark);
+      margin-right:auto;
+      white-space:nowrap;
+      padding-right:1rem;
+    }
+    .logo .os { font-weight:400; color:var(--text-dark-muted); }
+    .nav-links { display:flex; gap:0; align-items:center; }
+    .nav-links a {
+      font-size:0.82rem; font-weight:500;
+      color:var(--text-dark-muted);
+      padding:6px 14px; border-radius:8px;
+      transition:background var(--transition), color var(--transition);
+      white-space:nowrap;
+    }
+    .nav-links a:hover { background:rgba(0,0,0,0.04); color:var(--text-dark); }
+    .nav-links a.active { color:var(--text-dark); background:rgba(0,0,0,0.04); }
+    .nav-links a:focus-visible {
+      outline:2px solid var(--primary);
+      outline-offset:2px; border-radius:4px;
+    }
+    .nav-extras { display:flex; align-items:center; gap:4px; }
+    .nav-extras .btn {
+      background:var(--primary); color:#fff; border:none;
+      border-radius:var(--radius-pill);
+      padding:6px 16px;
+      font-weight:600; font-size:0.82rem;
+      cursor:pointer;
+      transition:opacity var(--transition), transform var(--transition);
+      white-space:nowrap;
+    }
+    .nav-extras .btn:hover { opacity:0.9; transform:translateY(-1px); }
+
+    /* Buttons */
+    .btn {
+      display:inline-flex; align-items:center; justify-content:center;
+      font-family:var(--font-heading); font-weight:600; font-size:0.88rem;
+      letter-spacing:-0.01em;
+      border-radius:var(--radius-pill);
+      padding:0.75rem 1.75rem;
+      min-height:44px; cursor:pointer;
+      transition:transform 0.2s ease, box-shadow var(--transition), background var(--transition), border-color var(--transition), opacity var(--transition);
+      text-decoration:none;
+    }
+    .btn-primary {
+      background:var(--primary); color:#fff; border:none;
+      position:relative; overflow:hidden;
+      box-shadow:0 1px 2px rgba(var(--primary-rgb),0.2), 0 4px 12px rgba(var(--primary-rgb),0.15);
+    }
+    .btn-primary::before {
+      content:''; position:absolute; inset:0;
+      background:linear-gradient(180deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
+      border-radius:inherit; pointer-events:none;
+    }
+    .btn-primary:hover {
+      box-shadow:0 4px 16px rgba(var(--primary-rgb),0.25), 0 1px 2px rgba(var(--primary-rgb),0.15);
+      transform:translateY(-1px);
+    }
+    .btn-primary:active { opacity:0.9; transform:translateY(0); }
+    .btn:focus-visible { outline:2px solid var(--primary); outline-offset:3px; }
+    .btn-outline {
+      background:rgba(0,0,0,0.04);
+      color:var(--text-dark);
+      border:1px solid rgba(0,0,0,0.08);
+    }
+    .btn-outline:hover { background:rgba(0,0,0,0.06); border-color:rgba(0,0,0,0.12); }
+    .btn-sm { padding:0.5rem 1.25rem; font-size:0.82rem; min-height:36px; }
+    .btn-lg { padding:0.85rem 2.2rem; font-size:0.92rem; }
+
+    .btn-dark-primary {
+      background:var(--primary); color:#fff; border:none;
+      position:relative; overflow:hidden;
+      box-shadow:0 1px 2px rgba(var(--primary-rgb),0.3), 0 4px 16px rgba(var(--primary-rgb),0.25);
+    }
+    .btn-dark-primary::before {
+      content:''; position:absolute; inset:0;
+      background:linear-gradient(180deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05));
+      border-radius:inherit; pointer-events:none;
+    }
+    .btn-dark-primary:hover {
+      box-shadow:0 4px 24px rgba(var(--primary-rgb),0.35);
+      transform:translateY(-1px);
+    }
+    .btn-dark-outline {
+      background:rgba(255,255,255,0.06);
+      color:rgba(255,255,255,0.7);
+      border:1px solid rgba(255,255,255,0.1);
+    }
+    .btn-dark-outline:hover {
+      background:rgba(255,255,255,0.1);
+      border-color:rgba(255,255,255,0.18);
+    }
+
+    /* Layout */
+    .container { max-width:1080px; margin:0 auto; }
+
+    /* Section labels */
+    .s-label {
+      display:inline-flex; align-items:center; gap:8px;
+      font-size:0.75rem; font-weight:500; letter-spacing:0.1em;
+      text-transform:uppercase; color:var(--primary);
+      margin-bottom:0.75rem;
+      font-family:var(--font-mono);
+    }
+    .s-label::before {
+      content:''; display:block; width:16px; height:2px;
+      background:var(--primary); border-radius:1px; opacity:0.5;
+    }
+
+    /* Scroll Reveal */
+    [data-reveal] {
+      opacity:0; transform:translateY(24px);
+      transition:opacity 0.8s var(--ease-smooth), transform 0.8s var(--ease-smooth);
+    }
+    [data-reveal].revealed { opacity:1; transform:translateY(0); }
+    [data-reveal][data-delay="1"] { transition-delay:0.08s; }
+    [data-reveal][data-delay="2"] { transition-delay:0.16s; }
+    [data-reveal][data-delay="3"] { transition-delay:0.24s; }
+
+    /* ============================================
+       ARTICLE HERO — Dark 4-stop navy gradient
+       ============================================ */
+    .article-hero {
+      padding:10rem 3rem 5rem;
+      position:relative; overflow:hidden;
+      background:linear-gradient(180deg,
+        #080B1A 0%, #0C1035 30%, #111B52 65%, #1A2E78 100%);
+      color:white;
+    }
+    .article-hero-inner {
+      max-width:820px; margin:0 auto;
+      position:relative; z-index:1;
+    }
+    .article-hero-inner > * { animation:heroFadeUp 0.9s var(--ease-smooth) both; }
+    .article-hero-inner > *:nth-child(1) { animation-delay:0.05s; }
+    .article-hero-inner > *:nth-child(2) { animation-delay:0.12s; }
+    .article-hero-inner > *:nth-child(3) { animation-delay:0.2s; }
+    .article-hero-inner > *:nth-child(4) { animation-delay:0.28s; }
+    .article-hero-inner > *:nth-child(5) { animation-delay:0.36s; }
+    @keyframes heroFadeUp {
+      from { opacity:0; transform:translateY(32px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    .article-eyebrow {
+      font-family:var(--font-mono); font-size:0.78rem; font-weight:400;
+      color:rgba(255,255,255,0.45); letter-spacing:0.08em;
+      margin-bottom:1.5rem;
+      text-transform:uppercase;
+    }
+    .back-link {
+      display:inline-flex; align-items:center; gap:8px;
+      font-family:var(--font-mono);
+      font-size:0.78rem; font-weight:500;
+      color:rgba(255,255,255,0.55);
+      margin-bottom:2rem;
+      padding:6px 14px 6px 10px;
+      border-radius:var(--radius-pill);
+      background:rgba(255,255,255,0.06);
+      border:1px solid rgba(255,255,255,0.1);
+      transition:background var(--transition), color var(--transition), border-color var(--transition);
+      min-height:36px;
+    }
+    .back-link:hover {
+      color:#fff;
+      background:rgba(255,255,255,0.1);
+      border-color:rgba(255,255,255,0.18);
+    }
+    .article-title {
+      font-family:var(--font-heading);
+      font-size:clamp(2.2rem, 5.2vw, 3.6rem);
+      letter-spacing:-0.035em;
+      line-height:1.08;
+      margin-bottom:1.5rem;
+      font-weight:600;
+      max-width:820px;
+      background:linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.75));
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      background-clip:text;
+    }
+    .article-subtitle {
+      font-size:1.15rem;
+      line-height:1.7;
+      color:rgba(255,255,255,0.62);
+      max-width:680px;
+      margin-bottom:2rem;
+      font-weight:400;
+    }
+    .article-meta-row {
+      display:flex; align-items:center; gap:0.85rem;
+      font-family:var(--font-mono);
+      font-size:0.78rem;
+      color:rgba(255,255,255,0.5);
+      flex-wrap:wrap;
+      padding-top:1.5rem;
+      border-top:1px solid rgba(255,255,255,0.1);
+    }
+    .article-meta-row .dot {
+      width:3px; height:3px; border-radius:50%;
+      background:rgba(255,255,255,0.35);
+      flex-shrink:0;
+    }
+    .article-meta-row .author {
+      color:rgba(255,255,255,0.75);
+      font-weight:500;
+    }
+
+    /* ============================================
+       PAGE INTRO — Dark narrative band
+       ============================================ */
+    .page-intro-section {
+      background:var(--bg-dark);
+      padding:5.5rem 3rem;
+    }
+    .page-intro-section .intro-inner {
+      max-width:820px; margin:0 auto; text-align:center;
+    }
+    .page-intro-section .intro-lead {
+      font-size:clamp(1.15rem,2.5vw,1.4rem);
+      line-height:1.75;
+      color:var(--text-light-muted);
+      font-weight:400;
+    }
+    .page-intro-section .intro-lead .hl {
+      color:#FFFFFF; font-weight:500;
+    }
+
+    /* ============================================
+       ARTICLE BODY — White prose section
+       ============================================ */
+    .article-body-section {
+      background:var(--bg-light);
+      padding:5.5rem 3rem;
+    }
+    .article-body {
+      max-width:720px;
+      margin:0 auto;
+    }
+    .article-body p {
+      font-size:17px;
+      line-height:1.75;
+      color:var(--text-dark);
+      margin-bottom:1.5rem;
+    }
+    .article-body h2 {
+      font-family:var(--font-heading);
+      font-size:clamp(1.6rem, 3vw, 2rem);
+      letter-spacing:-0.025em;
+      line-height:1.2;
+      margin:3.5rem 0 1.25rem;
+      color:var(--text-dark);
+      font-weight:600;
+    }
+    .article-body h3 {
+      font-family:var(--font-heading);
+      font-size:clamp(1.25rem, 2vw, 1.5rem);
+      letter-spacing:-0.02em;
+      line-height:1.3;
+      margin:2.5rem 0 1rem;
+      color:var(--text-dark);
+      font-weight:600;
+    }
+    .article-body ul,
+    .article-body ol {
+      padding-left:1.25rem;
+      margin-bottom:1.75rem;
+    }
+    .article-body li {
+      font-size:17px;
+      line-height:1.75;
+      color:var(--text-dark);
+      margin-bottom:0.6rem;
+      padding-left:0.35rem;
+    }
+    .article-body li::marker {
+      color:var(--primary);
+    }
+    .article-body strong {
+      color:var(--text-dark);
+      font-weight:600;
+    }
+    .article-body a {
+      color:var(--primary);
+      text-decoration:underline;
+      text-underline-offset:3px;
+      text-decoration-thickness:1px;
+    }
+    .article-body code {
+      font-family:var(--font-mono);
+      font-size:0.9em;
+      background:#F5F5F7;
+      padding:0.15em 0.4em;
+      border-radius:6px;
+      color:var(--text-dark);
+      font-weight:500;
+    }
+    .pull-quote {
+      border-left:3px solid var(--primary);
+      padding:0.5rem 0 0.5rem 1.75rem;
+      margin:2.5rem 0;
+      font-family:var(--font-heading);
+      font-size:1.3rem;
+      line-height:1.5;
+      letter-spacing:-0.02em;
+      color:var(--text-dark);
+      font-weight:500;
+      font-style:normal;
+    }
+    .highlight-box {
+      background:#F5F5F7;
+      border-radius:var(--radius-card);
+      padding:2rem 2.25rem;
+      margin:2.5rem 0;
+    }
+    .highlight-box h4 {
+      font-family:var(--font-mono);
+      font-size:0.78rem;
+      font-weight:500;
+      letter-spacing:0.1em;
+      color:var(--primary);
+      margin-bottom:1rem;
+      text-transform:uppercase;
+    }
+    .highlight-box p { color:var(--text-dark); margin-bottom:0; }
+    .highlight-box ul {
+      margin-bottom:0;
+      padding-left:1.25rem;
+    }
+    .highlight-box li:last-child { margin-bottom:0; }
+
+    .article-tags {
+      display:flex; gap:8px; flex-wrap:wrap;
+      padding-top:2.5rem;
+      border-top:1px solid var(--border-light);
+      margin-top:4rem;
+    }
+    .article-tag {
+      font-family:var(--font-mono);
+      font-size:0.72rem;
+      font-weight:500;
+      letter-spacing:0.08em;
+      text-transform:uppercase;
+      padding:6px 14px;
+      border-radius:var(--radius-pill);
+      background:#F5F5F7;
+      color:var(--text-dark-muted);
+      border:1px solid rgba(0,0,0,0.04);
+    }
+
+    /* ============================================
+       RELATED READS — White section
+       ============================================ */
+    .related-section {
+      background:var(--bg-light);
+      padding:5.5rem 3rem;
+      border-top:1px solid var(--border-light);
+    }
+    .related-inner {
+      max-width:1080px; margin:0 auto;
+    }
+    .related-header {
+      margin-bottom:3rem;
+    }
+    .related-header h2 {
+      font-family:var(--font-heading);
+      font-size:clamp(1.8rem, 3.5vw, 2.4rem);
+      letter-spacing:-0.025em;
+      color:var(--text-dark);
+      font-weight:600;
+      line-height:1.15;
+    }
+    .related-grid {
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:1.75rem;
+    }
+    .related-card {
+      display:flex;
+      flex-direction:column;
+      background:#F5F5F7;
+      border-radius:var(--radius-card);
+      overflow:hidden;
+      transition:box-shadow var(--transition), transform var(--transition);
+      text-decoration:none;
+      color:inherit;
+    }
+    .related-card:hover {
+      box-shadow:0 12px 40px rgba(0,0,0,0.1), 0 2px 8px rgba(0,0,0,0.04);
+      transform:translateY(-4px);
+    }
+    .related-card-visual {
+      aspect-ratio:16/10;
+      position:relative;
+      overflow:hidden;
+    }
+    .related-card-visual::after {
+      content:'';
+      position:absolute; inset:0;
+      background:linear-gradient(to top, rgba(0,0,0,0.25) 0%, transparent 55%);
+      pointer-events:none;
+    }
+    .related-card[data-category="product"]     .related-card-visual { background:linear-gradient(135deg, #3366FF 0%, #0036FF 55%, #120826 100%); }
+    .related-card[data-category="fundraising"] .related-card-visual { background:linear-gradient(135deg, #120826 0%, #1A2E78 55%, #0036FF 100%); }
+    .related-card[data-category="dubai"]       .related-card-visual { background:linear-gradient(135deg, #0036FF 0%, #3366FF 55%, #0A0118 100%); }
+    .related-card-tag {
+      position:absolute;
+      left:1.25rem; bottom:1.25rem;
+      font-family:var(--font-mono);
+      font-size:0.68rem;
+      font-weight:500;
+      letter-spacing:0.1em;
+      text-transform:uppercase;
+      color:#fff;
+      background:rgba(10,1,24,0.6);
+      backdrop-filter:blur(8px);
+      -webkit-backdrop-filter:blur(8px);
+      padding:5px 10px;
+      border-radius:var(--radius-pill);
+      border:1px solid rgba(255,255,255,0.14);
+      z-index:2;
+    }
+    .related-card-body {
+      padding:1.5rem 1.5rem 1.65rem;
+      display:flex; flex-direction:column; gap:0.5rem; flex:1;
+    }
+    .related-card-cat {
+      font-family:var(--font-mono);
+      font-size:0.72rem;
+      font-weight:500;
+      letter-spacing:0.1em;
+      text-transform:uppercase;
+      color:var(--primary);
+    }
+    .related-card-title {
+      font-family:var(--font-heading);
+      font-size:1.15rem;
+      font-weight:600;
+      letter-spacing:-0.02em;
+      color:var(--text-dark);
+      line-height:1.3;
+      transition:color var(--transition);
+    }
+    .related-card:hover .related-card-title { color:var(--primary); }
+
+    /* ============================================
+       FINAL CTA — Dark bookend
+       ============================================ */
+    .final-cta {
+      padding:6rem 3rem;
+      text-align:center;
+      background:var(--bg-dark);
+      position:relative;
+      overflow:hidden;
+    }
+    .final-cta .cta-content { position:relative; z-index:1; }
+    .final-cta h2 {
+      font-size:clamp(2.2rem, 4.5vw, 3.5rem);
+      letter-spacing:-0.03em; line-height:1.1;
+      margin-bottom:1rem; font-weight:600;
+      background:linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.7));
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      background-clip:text;
+    }
+    .final-cta .cta-sub {
+      font-size:1.1rem; color:var(--text-light-muted);
+      line-height:1.7;
+      max-width:580px;
+      margin:0 auto 2.5rem; font-weight:400;
+    }
+    .final-cta .cta-buttons {
+      display:flex; gap:12px; justify-content:center; flex-wrap:wrap;
+    }
+
+    /* ============================================
+       FOOTER — Dark
+       ============================================ */
+    footer {
+      background:var(--bg-dark);
+      border-top:1px solid rgba(255,255,255,0.06);
+      padding:4rem 3rem 2.5rem;
+    }
+    .footer-inner { max-width:1080px; margin:0 auto; }
+    .footer-top {
+      display:flex; justify-content:space-between;
+      align-items:start; margin-bottom:3rem;
+      gap:2rem;
+    }
+    .footer-brand .logo {
+      margin-bottom:0.75rem;
+      color:rgba(255,255,255,0.8);
+    }
+    .footer-brand .logo .os { color:rgba(255,255,255,0.4); }
+    .footer-brand p {
+      font-size:0.88rem;
+      color:rgba(255,255,255,0.55);
+      line-height:1.7;
+      max-width:280px; font-weight:400;
+    }
+    .footer-links {
+      display:flex; gap:3rem;
+    }
+    .footer-links a {
+      font-size:0.88rem;
+      color:rgba(255,255,255,0.6);
+      transition:color var(--transition);
+      font-weight:400;
+    }
+    .footer-links a:hover { color:rgba(255,255,255,0.9); }
+    .footer-bottom {
+      padding-top:2rem;
+      border-top:1px solid rgba(255,255,255,0.06);
+      display:flex; justify-content:space-between;
+      align-items:center; flex-wrap:wrap; gap:1rem;
+    }
+    .footer-bottom p {
+      font-size:0.82rem; color:rgba(255,255,255,0.5);
+    }
+
+    /* ============================================
+       HAMBURGER & MOBILE MENU
+       ============================================ */
+    .hamburger {
+      display:none; flex-direction:column; justify-content:center;
+      align-items:center; width:44px; height:44px; gap:5px;
+      background:transparent; border:none; cursor:pointer;
+      padding:4px; border-radius:var(--radius-sm); flex-shrink:0;
+      transition:background var(--transition);
+    }
+    .hamburger:hover { background:rgba(0,0,0,0.04); }
+    .hamburger-line {
+      display:block; width:20px; height:1.5px;
+      background:var(--text-dark);
+      border-radius:1px; transform-origin:center;
+      transition:transform 0.3s var(--ease-smooth), opacity 0.2s ease, background 0.2s ease;
+    }
+    .hamburger.open .hamburger-line:nth-child(1) { transform:translateY(6.5px) rotate(45deg); }
+    .hamburger.open .hamburger-line:nth-child(2) { opacity:0; transform:scaleX(0); }
+    .hamburger.open .hamburger-line:nth-child(3) { transform:translateY(-6.5px) rotate(-45deg); }
+    .hamburger.open .hamburger-line { background:#fff; }
+
+    .mobile-menu {
+      display:none; position:fixed; top:0; left:0; right:0; bottom:0;
+      z-index:190;
+      background:rgba(10,1,24,0.98);
+      backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+      flex-direction:column; padding:7rem 2rem 3rem;
+      opacity:0; transform:translateY(-8px);
+      transition:opacity 0.35s ease, transform 0.3s var(--ease-smooth);
+      pointer-events:none;
+    }
+    .mobile-menu.open { opacity:1; transform:translateY(0); pointer-events:all; }
+    .mobile-menu a.m-nav-link {
+      display:block; font-family:var(--font-heading);
+      font-size:1.4rem; font-weight:500;
+      letter-spacing:-0.01em; color:rgba(255,255,255,0.75);
+      padding:1.1rem 0;
+      border-bottom:1px solid rgba(255,255,255,0.06);
+      transition:color var(--transition);
+    }
+    .mobile-menu a.m-nav-link:hover { color:#fff; }
+    .mobile-menu a.m-nav-link.active { color:#fff; }
+    .mobile-menu .m-cta { margin-top:2.5rem; }
+    .mobile-menu .m-cta .btn {
+      width:100%; justify-content:center;
+      font-size:0.92rem; padding:0.95rem 1.5rem;
+    }
+
+    /* ============================================
+       RESPONSIVE — TABLET (900px)
+       ============================================ */
     @media(max-width:900px) {
-      .article-hero { padding:8rem 1.5rem 0; }
-      .article-body { padding:0 1.5rem 3rem; }
-      .more-articles { padding:3rem 1.5rem; }
-      .more-grid { grid-template-columns:repeat(2,1fr); }
+      nav { padding:6px 12px 6px 16px; max-width:calc(100% - 32px); }
+      .article-hero { padding:8rem 1.5rem 4rem; }
+      .page-intro-section { padding:4.5rem 1.5rem; }
+      .article-body-section { padding:4.5rem 1.5rem; }
+      .related-section { padding:4.5rem 1.5rem; }
+      .final-cta { padding:5rem 1.5rem; }
+
+      .related-grid { grid-template-columns:repeat(2,1fr); }
+
+      .footer-top { flex-direction:column; }
+      .footer-links { flex-wrap:wrap; gap:1.5rem; }
     }
+
+    /* ============================================
+       RESPONSIVE — MOBILE (640px)
+       ============================================ */
     @media(max-width:640px) {
-      .article-hero { padding:7rem 1.25rem 0; }
-      .article-body { padding:0 1.25rem 2rem; }
-      .more-grid { grid-template-columns:1fr; }
-      .newsletter-section { padding:3rem 1.25rem; }
+      .nav-links { display:none; }
+      .nav-extras { display:none; }
+      .hamburger { display:flex; }
+      .mobile-menu { display:flex; }
+
+      .nav-wrap { max-width:calc(100% - 24px); }
+
+      .article-hero { padding:7rem 1.25rem 3.5rem; }
+      .article-title { font-size:clamp(2rem, 8vw, 2.6rem); }
+      .article-subtitle { font-size:1.02rem; }
+      .article-meta-row { gap:0.6rem; font-size:0.72rem; }
+
+      .page-intro-section { padding:3.5rem 1.25rem; }
+
+      .article-body-section { padding:3.5rem 1.25rem; }
+      .article-body p,
+      .article-body li { font-size:16px; }
+      .article-body h2 { margin:2.5rem 0 1rem; }
+      .article-body h3 { margin:2rem 0 0.85rem; }
+      .pull-quote { font-size:1.1rem; padding-left:1.25rem; margin:2rem 0; }
+      .highlight-box { padding:1.5rem 1.5rem; }
+
+      .related-section { padding:3.5rem 1.25rem; }
+      .related-grid { grid-template-columns:1fr; gap:1.25rem; }
+
+      .final-cta { padding:5rem 1.25rem; }
+      .final-cta h2 { font-size:clamp(1.8rem, 7vw, 2.6rem); }
+
+      footer { padding:3rem 1.25rem 2rem; }
+      .footer-bottom { flex-direction:column; align-items:flex-start; }
     }
+    /* Currency selector — injected via currency.js into .footer-currency */
+    .footer-currency { display:flex; align-items:center; gap:4px; }
+    .currency-selector {
+      display:flex; align-items:center; gap:2px;
+      padding:0; background:transparent;
+    }
+    .currency-btn {
+      background:transparent; border:none; cursor:pointer;
+      width:30px; height:30px;
+      border-radius:50%;
+      font-size:0.9rem;
+      display:flex; align-items:center; justify-content:center;
+      transition:background 0.2s ease, opacity 0.2s ease;
+      padding:0;
+      opacity:0.5;
+    }
+    .currency-btn:hover { background:rgba(255,255,255,0.08); opacity:0.85; }
+    .currency-btn.active { background:rgba(255,255,255,0.12); opacity:1; }
+
   </style>
 </head>
 <body>
+  <a href="#main-content" class="skip-link">Skip to content</a>
 
-<nav id="site-nav"></nav>
+  <!-- ═══════════════════════════════════════════
+       NAVIGATION — Floating Pill
+       ═══════════════════════════════════════════ -->
+  <div class="nav-wrap">
+    <nav>
+      <a href="index.html" class="logo">VENTRIFY</a>
+        <div class="nav-links">
+        <a href="about.html">About</a>
+        <a href="work.html">Work</a>
+        <a href="pricing.html">Pricing</a>
+        <a href="insights.html" class="active">Insights</a>
+        <a href="contact.html">Contact</a>
+      </div>
+      <div class="nav-extras">
+        <a href="contact.html" class="btn">Start Your Venture</a>
+      </div>
+        <button class="hamburger" aria-label="Menu">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </button>
+      </nav>
+  </div>
 
-<!-- ARTICLE HERO -->
-<div class="article-hero">
-  <div class="article-hero-inner">
-    <a href="insights.html" class="back-link">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-      Back to Insights
-    </a>
-    <div class="article-category">Strategy</div>
-    <h1 class="article-title">Why most pre-seed founders build the wrong product first — and how to avoid it</h1>
-    <div class="article-meta">
-      <span>Ventrify Team</span>
-      <span class="article-meta-dot"></span>
-      <span>Feb 2026</span>
-      <span class="article-meta-dot"></span>
-      <span>8 min read</span>
+  <!-- Mobile Menu -->
+  <div class="mobile-menu">
+    <a href="about.html" class="m-nav-link">About</a>
+    <a href="work.html" class="m-nav-link">Work</a>
+    <a href="pricing.html" class="m-nav-link">Pricing</a>
+    <a href="insights.html" class="m-nav-link active">Insights</a>
+    <a href="contact.html" class="m-nav-link">Contact</a>
+    <div class="m-cta">
+      <a href="contact.html" class="btn btn-dark-primary btn-lg">Start Your Venture</a>
     </div>
   </div>
-</div>
 
-<!-- HERO IMAGE -->
-<div class="article-hero-img">
-  <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1200&q=80" alt="Team working on strategy">
-</div>
-
-<!-- ARTICLE BODY -->
-<div class="article-body">
-
-  <p>There is a moment every founder knows. You have the idea. It feels sharp, urgent, obvious — the kind of idea that makes you wonder why nobody has built it yet. Within days you are sketching wireframes. Within weeks you are in conversations with developers. Within months you have spent real money and real time building something that, when you put it in front of actual customers, does not land the way you expected.</p>
-
-  <p>This is not a rare failure mode. It is the default outcome for founders who move from insight to build before doing the unglamorous work of validation. At Ventrify, across dozens of ventures, we have seen this pattern consistently enough that we now treat validation as a prerequisite, not an optional step.</p>
-
-  <h2>The Build-First Trap</h2>
-
-  <p>The build-first trap is seductive for good reasons. Momentum feels like progress. Having something to show investors and early customers feels essential. The startup mythology is full of founders who moved fast and built before the market was ready for them — and it worked. So founders copy the behaviour without copying the specific conditions that made it work.</p>
-
-  <p>What those stories leave out is that the successful build-first founders had usually spent years in their target industry. They had an intimate, earned understanding of the problem. They were not guessing at customer pain; they had <strong>lived it</strong>. That is a very different starting point to a founder who spotted an opportunity from the outside.</p>
-
-  <div class="pull-quote">
-    "The single most expensive thing a founder can build is a product nobody needs."
-  </div>
-
-  <h2>The Three Root Causes</h2>
-
-  <p>After reviewing our venture portfolio and the founders we have consulted for, the wrong-product problem almost always traces back to one of three root causes.</p>
-
-  <h3>1. Building for an imagined customer</h3>
-  <p>The founder has a mental model of who the user is — their frustrations, their workflows, their willingness to pay — but this model has never been tested against reality. The imagined customer is usually a slightly idealised version of the founder, or a composite of people the founder knows from their own social circle, which is rarely a representative sample of the actual market.</p>
-
-  <h3>2. Solving a personal pain that is not widespread</h3>
-  <p>Personal pain is a powerful motivator and often a genuine signal. The problem is that founders rarely interrogate whether their own experience is shared by enough people to build a business on. A pain that affects 500 people is not the same as a pain that affects 500,000. The market size question is not just a slide in a pitch deck — it is a fundamental check on whether the product is worth building.</p>
-
-  <h3>3. Assuming direct market translation</h3>
-  <p>A product that works in one geography or sector does not automatically translate to another. Behaviour, regulation, distribution channels, and purchasing dynamics differ dramatically. Founders building in the Gulf frequently import product assumptions from the US or UK market without pressure-testing them against local context.</p>
-
-  <h2>The Ventrify Validation Sprint</h2>
-
-  <p>Before any venture we build reaches the design phase, we run a two-week Validation Sprint. It is not glamorous work. It does not involve any code. But it is the most valuable two weeks in the product lifecycle.</p>
-
-  <div class="highlight-box">
-    <h4>Validation Sprint — What We Do</h4>
-    <ul>
-      <li><strong>Problem interviews (12–20 target customers):</strong> We ask about the problem, not the solution. No pitching.</li>
-      <li><strong>Current behaviour mapping:</strong> How are people solving this today? What are they paying, tolerating, or ignoring?</li>
-      <li><strong>Acute pain scoring:</strong> Is this a vitamin (nice to have) or a painkiller (must have)?</li>
-      <li><strong>Competitive landscape audit:</strong> What exists? Why have existing solutions failed to capture the market?</li>
-      <li><strong>Willingness-to-pay signal:</strong> Not "would you use this" but "would you pay X for this today?"</li>
-    </ul>
-  </div>
-
-  <p>The output is a validation brief — a single document that either gives us the confidence to move into product definition, or surfaces the pivots we need to make before we do. In roughly 40% of cases, the brief leads to a significant change in product direction. In around 10% of cases, it leads to abandoning the idea entirely.</p>
-
-  <p>That 10% figure is not a failure stat. It is the most money we ever save a founder.</p>
-
-  <h2>What "Validated" Actually Means</h2>
-
-  <p>There is a version of validation theatre that is just as dangerous as not validating at all. It involves doing five interviews with friends who are too polite to tell you the idea is weak, then declaring the concept validated and moving to build.</p>
-
-  <p>Real validation meets a specific bar:</p>
-
-  <ul>
-    <li>You have spoken with at least 15 people who fit the target customer profile — and you recruited them, not your network.</li>
-    <li>At least two-thirds of them described the problem <strong>unprompted</strong> in their interview, before you introduced your solution.</li>
-    <li>You can clearly describe how they currently solve the problem and what it costs them (in time, money, or frustration).</li>
-    <li>At least several of them have asked when they can use your product, or have agreed to join a waitlist.</li>
-    <li>You have a credible hypothesis for why existing solutions have not fully solved this for them.</li>
-  </ul>
-
-  <p>This bar is high intentionally. The goal is not to confirm your hypothesis — it is to stress-test it until only the signal remains.</p>
-
-  <h2>What Changes After Validation</h2>
-
-  <p>Founders who go through a genuine validation process emerge with something more valuable than a confirmed idea. They emerge with a precise understanding of their first customer — not a persona, but a real segment with a shared problem, a specific context, and a realistic willingness to pay.</p>
-
-  <p>That precision changes everything downstream. It changes the product feature set (because you know exactly what problem you are solving and for whom). It changes the go-to-market (because you know where to find your first hundred customers). It changes the pitch (because you can speak about the market from evidence, not assumption).</p>
-
-  <div class="pull-quote">
-    "Move fast — but move fast on the right thing. Speed in the wrong direction is not velocity, it is drift."
-  </div>
-
-  <h2>The Bottom Line</h2>
-
-  <p>Pre-seed is the cheapest time to be wrong. There is no team to disappoint, no investors to explain yourself to, no customers you have let down. But that window closes fast. The moment you take money — even a small friends-and-family round — you have created obligations that make changing direction harder.</p>
-
-  <p>Use the pre-seed window to validate relentlessly. Talk to the market before you build for it. Build for evidence, not enthusiasm. The best product you will ever ship is the one that solves a problem you genuinely understand.</p>
-
-  <!-- TAGS -->
-  <div class="article-tags">
-    <span class="article-tag">Strategy</span>
-    <span class="article-tag">Pre-Seed</span>
-    <span class="article-tag">Product Validation</span>
-    <span class="article-tag">Venture Building</span>
-    <span class="article-tag">Founder Advice</span>
-  </div>
-</div>
-
-<!-- MORE ARTICLES -->
-<div class="more-articles">
-  <h3 class="more-articles-heading">More Articles</h3>
-  <div class="more-grid">
-    <a href="insight-mvp-scope.html" class="more-card">
-      <img src="https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=600&q=80" alt="MVP scope">
-      <div class="more-card-body">
-        <div class="more-card-cat">Product</div>
-        <div class="more-card-title">How to define your MVP feature set without scope creep</div>
+  <!-- ═══════════════════════════════════════════
+       1. ARTICLE HERO — Dark 4-stop navy gradient
+       ═══════════════════════════════════════════ -->
+  <section class="article-hero" id="main-content">
+    <div class="article-hero-inner">
+      <a href="insights.html" class="back-link">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        Back to Insights
+      </a>
+      <div class="article-eyebrow">Strategy</div>
+      <h1 class="article-title">Why most pre-seed founders build the wrong product first &mdash; and how to avoid it</h1>
+      <p class="article-subtitle">The single biggest mistake in early-stage venture building is moving from idea to build without a validated foundation. Here&rsquo;s the framework we use to make sure every product starts right.</p>
+      <div class="article-meta-row">
+        <span class="author">Ventrify Team</span>
+        <span class="dot"></span>
+        <span>Feb 2026</span>
+        <span class="dot"></span>
+        <span>8 min read</span>
       </div>
-    </a>
-    <a href="insight-dubai-investors.html" class="more-card">
-      <img src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=600&q=80" alt="Dubai investors">
-      <div class="more-card-body">
-        <div class="more-card-cat">Fundraising</div>
-        <div class="more-card-title">What investors in Dubai actually look for in a pre-seed deck</div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       2. INTRO — Dark narrative band
+       ═══════════════════════════════════════════ -->
+  <section class="page-intro-section">
+    <div class="intro-inner" data-reveal>
+      <p class="intro-lead">Pre-seed is the cheapest time to be wrong. <span class="hl">The founders who go furthest are the ones who validate relentlessly</span> &mdash; before the first line of code, before the first hire, before the first dollar of outside money.</p>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       3. ARTICLE BODY — White prose section
+       ═══════════════════════════════════════════ -->
+  <section class="article-body-section">
+    <article class="article-body">
+
+      <p>There is a moment every founder knows. You have the idea. It feels sharp, urgent, obvious &mdash; the kind of idea that makes you wonder why nobody has built it yet. Within days you are sketching wireframes. Within weeks you are in conversations with developers. Within months you have spent real money and real time building something that, when you put it in front of actual customers, does not land the way you expected.</p>
+
+      <p>This is not a rare failure mode. It is the default outcome for founders who move from insight to build before doing the unglamorous work of validation. At Ventrify, across dozens of ventures, we have seen this pattern consistently enough that we now treat validation as a prerequisite, not an optional step.</p>
+
+      <h2>The Build-First Trap</h2>
+
+      <p>The build-first trap is seductive for good reasons. Momentum feels like progress. Having something to show investors and early customers feels essential. The startup mythology is full of founders who moved fast and built before the market was ready for them &mdash; and it worked. So founders copy the behaviour without copying the specific conditions that made it work.</p>
+
+      <p>What those stories leave out is that the successful build-first founders had usually spent years in their target industry. They had an intimate, earned understanding of the problem. They were not guessing at customer pain; they had <strong>lived it</strong>. That is a very different starting point to a founder who spotted an opportunity from the outside.</p>
+
+      <div class="pull-quote">
+        &ldquo;The single most expensive thing a founder can build is a product nobody needs.&rdquo;
       </div>
-    </a>
-    <a href="insight-dubai-startup.html" class="more-card">
-      <img src="https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=600&q=80" alt="Dubai startup">
-      <div class="more-card-body">
-        <div class="more-card-cat">Dubai</div>
-        <div class="more-card-title">Why Dubai is becoming one of the world's best places to launch a startup</div>
+
+      <h2>The Three Root Causes</h2>
+
+      <p>After reviewing our venture portfolio and the founders we have consulted for, the wrong-product problem almost always traces back to one of three root causes.</p>
+
+      <h3>1. Building for an imagined customer</h3>
+      <p>The founder has a mental model of who the user is &mdash; their frustrations, their workflows, their willingness to pay &mdash; but this model has never been tested against reality. The imagined customer is usually a slightly idealised version of the founder, or a composite of people the founder knows from their own social circle, which is rarely a representative sample of the actual market.</p>
+
+      <h3>2. Solving a personal pain that is not widespread</h3>
+      <p>Personal pain is a powerful motivator and often a genuine signal. The problem is that founders rarely interrogate whether their own experience is shared by enough people to build a business on. A pain that affects 500 people is not the same as a pain that affects 500,000. The market size question is not just a slide in a pitch deck &mdash; it is a fundamental check on whether the product is worth building.</p>
+
+      <h3>3. Assuming direct market translation</h3>
+      <p>A product that works in one geography or sector does not automatically translate to another. Behaviour, regulation, distribution channels, and purchasing dynamics differ dramatically. Founders building in the Gulf frequently import product assumptions from the US or UK market without pressure-testing them against local context.</p>
+
+      <h2>The Ventrify Validation Sprint</h2>
+
+      <p>Before any venture we build reaches the design phase, we run a two-week Validation Sprint. It is not glamorous work. It does not involve any code. But it is the most valuable two weeks in the product lifecycle.</p>
+
+      <div class="highlight-box">
+        <h4>Validation Sprint &mdash; What We Do</h4>
+        <ul>
+          <li><strong>Problem interviews (12&ndash;20 target customers):</strong> We ask about the problem, not the solution. No pitching.</li>
+          <li><strong>Current behaviour mapping:</strong> How are people solving this today? What are they paying, tolerating, or ignoring?</li>
+          <li><strong>Acute pain scoring:</strong> Is this a vitamin (nice to have) or a painkiller (must have)?</li>
+          <li><strong>Competitive landscape audit:</strong> What exists? Why have existing solutions failed to capture the market?</li>
+          <li><strong>Willingness-to-pay signal:</strong> Not &ldquo;would you use this&rdquo; but &ldquo;would you pay X for this today?&rdquo;</li>
+        </ul>
       </div>
-    </a>
-  </div>
-</div>
 
-<!-- NEWSLETTER -->
-<div class="newsletter-section">
-  <div class="s-label" style="justify-content:center;margin-bottom:1rem;">Stay Sharp</div>
-  <h2 style="font-family:var(--font-heading);font-size:1.8rem;letter-spacing:-0.015em;margin-bottom:0.75rem;">Get the Ventrify newsletter</h2>
-  <p style="font-size:0.9rem;color:var(--muted);max-width:400px;margin:0 auto 2rem;line-height:1.7;">Founders building in the AI era. Product, strategy, and venture insights — every fortnight.</p>
-  <div style="display:flex;gap:10px;max-width:440px;margin:0 auto;flex-wrap:wrap;justify-content:center;">
-    <input type="email" class="nl-input" placeholder="your@email.com">
-    <button class="btn btn-primary" style="white-space:nowrap;">Subscribe</button>
-  </div>
-  <p style="font-size:0.75rem;color:var(--muted);margin-top:1rem;">No spam. Unsubscribe anytime.</p>
-</div>
+      <p>The output is a validation brief &mdash; a single document that either gives us the confidence to move into product definition, or surfaces the pivots we need to make before we do. In roughly 40% of cases, the brief leads to a significant change in product direction. In around 10% of cases, it leads to abandoning the idea entirely.</p>
 
-<footer id="site-footer"></footer>
+      <p>That 10% figure is not a failure stat. It is the most money we ever save a founder.</p>
 
-<script src="scripts/shared.js" defer></script>
-<script src="scripts/currency.js" defer></script>
+      <h2>What &ldquo;Validated&rdquo; Actually Means</h2>
+
+      <p>There is a version of validation theatre that is just as dangerous as not validating at all. It involves doing five interviews with friends who are too polite to tell you the idea is weak, then declaring the concept validated and moving to build.</p>
+
+      <p>Real validation meets a specific bar:</p>
+
+      <ul>
+        <li>You have spoken with at least 15 people who fit the target customer profile &mdash; and you recruited them, not your network.</li>
+        <li>At least two-thirds of them described the problem <strong>unprompted</strong> in their interview, before you introduced your solution.</li>
+        <li>You can clearly describe how they currently solve the problem and what it costs them (in time, money, or frustration).</li>
+        <li>At least several of them have asked when they can use your product, or have agreed to join a waitlist.</li>
+        <li>You have a credible hypothesis for why existing solutions have not fully solved this for them.</li>
+      </ul>
+
+      <p>This bar is high intentionally. The goal is not to confirm your hypothesis &mdash; it is to stress-test it until only the signal remains.</p>
+
+      <h2>What Changes After Validation</h2>
+
+      <p>Founders who go through a genuine validation process emerge with something more valuable than a confirmed idea. They emerge with a precise understanding of their first customer &mdash; not a persona, but a real segment with a shared problem, a specific context, and a realistic willingness to pay.</p>
+
+      <p>That precision changes everything downstream. It changes the product feature set (because you know exactly what problem you are solving and for whom). It changes the go-to-market (because you know where to find your first hundred customers). It changes the pitch (because you can speak about the market from evidence, not assumption).</p>
+
+      <div class="pull-quote">
+        &ldquo;Move fast &mdash; but move fast on the right thing. Speed in the wrong direction is not velocity, it is drift.&rdquo;
+      </div>
+
+      <h2>The Bottom Line</h2>
+
+      <p>Pre-seed is the cheapest time to be wrong. There is no team to disappoint, no investors to explain yourself to, no customers you have let down. But that window closes fast. The moment you take money &mdash; even a small friends-and-family round &mdash; you have created obligations that make changing direction harder.</p>
+
+      <p>Use the pre-seed window to validate relentlessly. Talk to the market before you build for it. Build for evidence, not enthusiasm. The best product you will ever ship is the one that solves a problem you genuinely understand.</p>
+
+      <!-- TAGS -->
+      <div class="article-tags">
+        <span class="article-tag">Strategy</span>
+        <span class="article-tag">Pre-Seed</span>
+        <span class="article-tag">Product Validation</span>
+        <span class="article-tag">Venture Building</span>
+        <span class="article-tag">Founder Advice</span>
+      </div>
+    </article>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       4. RELATED READS
+       ═══════════════════════════════════════════ -->
+  <section class="related-section">
+    <div class="related-inner">
+      <div class="related-header" data-reveal>
+        <div class="s-label">Keep Reading</div>
+        <h2>Related articles</h2>
+      </div>
+      <div class="related-grid">
+
+        <a href="insight-mvp-scope.html" class="related-card" data-category="product" data-reveal data-delay="1">
+          <div class="related-card-visual">
+            <span class="related-card-tag">Product</span>
+          </div>
+          <div class="related-card-body">
+            <div class="related-card-cat">Product</div>
+            <div class="related-card-title">How to define your MVP feature set without scope creep</div>
+          </div>
+        </a>
+
+        <a href="insight-dubai-investors.html" class="related-card" data-category="fundraising" data-reveal data-delay="2">
+          <div class="related-card-visual">
+            <span class="related-card-tag">Fundraising</span>
+          </div>
+          <div class="related-card-body">
+            <div class="related-card-cat">Fundraising</div>
+            <div class="related-card-title">What investors in Dubai actually look for in a pre-seed deck</div>
+          </div>
+        </a>
+
+        <a href="insight-dubai-startup.html" class="related-card" data-category="dubai" data-reveal data-delay="3">
+          <div class="related-card-visual">
+            <span class="related-card-tag">Dubai</span>
+          </div>
+          <div class="related-card-body">
+            <div class="related-card-cat">Dubai</div>
+            <div class="related-card-title">Why Dubai is becoming one of the world&rsquo;s best places to launch a startup</div>
+          </div>
+        </a>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       5. FINAL CTA — Dark bookend
+       ═══════════════════════════════════════════ -->
+  <section class="final-cta">
+    <div class="cta-content" data-reveal>
+      <h2>Ready to build yours?</h2>
+      <p class="cta-sub">Enough reading. If you&rsquo;re ready to go from idea to launched product, we&rsquo;d love to talk.</p>
+      <div class="cta-buttons">
+        <a href="contact.html" class="btn btn-dark-primary btn-lg">Start Your Venture</a>
+        <a href="about.html" class="btn btn-dark-outline btn-lg">How We Work</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       6. FOOTER — Dark
+       ═══════════════════════════════════════════ -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <div class="logo">VENTRIFY</div>
+          <p>The full-stack venture studio for pre-seed founders. Strategy, design, development, and marketing &mdash; under one roof.</p>
+        </div>
+        <div class="footer-links">
+          <a href="about.html">About</a>
+          <a href="work.html">Work</a>
+          <a href="pricing.html">Pricing</a>
+          <a href="insights.html">Insights</a>
+          <a href="contact.html">Contact</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 Ventrify. All rights reserved.</p>
+        <div class="footer-currency"></div>
+        <p>Dubai &middot; London &middot; Singapore</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ═══════════════════════════════════════════
+       JAVASCRIPT
+       ═══════════════════════════════════════════ -->
+  <script>
+    // Hamburger Toggle
+    const hamburger = document.querySelector('.hamburger');
+    const mobileMenu = document.querySelector('.mobile-menu');
+
+    if (hamburger && mobileMenu) {
+      hamburger.addEventListener('click', () => {
+        hamburger.classList.toggle('open');
+        mobileMenu.classList.toggle('open');
+        document.body.style.overflow = mobileMenu.classList.contains('open') ? 'hidden' : '';
+      });
+
+      mobileMenu.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', () => {
+          hamburger.classList.remove('open');
+          mobileMenu.classList.remove('open');
+          document.body.style.overflow = '';
+        });
+      });
+    }
+
+    // Scroll Reveal Observer
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('revealed');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, {
+      threshold: 0.01,
+      rootMargin: '0px 0px -80px 0px'
+    });
+
+    document.querySelectorAll('[data-reveal]').forEach(el => {
+      revealObserver.observe(el);
+    });
+
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function(e) {
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          e.preventDefault();
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    });
+  </script>
+  <script src="scripts/currency.js" defer></script>
 </body>
 </html>

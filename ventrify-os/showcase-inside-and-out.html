@@ -1,0 +1,1876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Showcase — Inside &amp; Out Case Study | Ventrify OS</title>
+  <meta name="description" content="See every deliverable Ventrify OS produced for Inside & Out — a mental wellness app taken from raw brief to Gate 2 approval in 7 days.">
+  <meta property="og:title" content="Showcase — Inside & Out Case Study | Ventrify OS">
+  <meta property="og:description" content="A mental wellness app — taken from raw brief to Gate 2 approval in 7 days. Here's every deliverable the system produced.">
+  <meta property="og:type" content="website">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================
+       DESIGN TOKENS
+       ============================================ */
+    :root {
+      --primary: #0036FF;
+      --primary-light: #3366FF;
+      --primary-rgb: 0,54,255;
+      --bg-dark: #0A0118;
+      --bg-light: #FFFFFF;
+      --surface-dark: #120826;
+      --surface-dark-2: #1A0E30;
+      --surface-card-dark: rgba(255,255,255,0.04);
+      --text-light: #FFFFFF;
+      --text-light-muted: rgba(255,255,255,0.6);
+      --text-light-subtle: rgba(255,255,255,0.6);
+      --text-dark: #141414;
+      --text-dark-muted: #656565;
+      --border-dark: rgba(255,255,255,0.08);
+      --border-light: rgba(0,0,0,0.06);
+
+      --font-heading: 'Inter', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      --radius-sm: 12px;
+      --radius-md: 16px;
+      --radius-card: 20px;
+      --radius-lg: 24px;
+      --radius-pill: 980px;
+
+      --ease-smooth: cubic-bezier(0.6, 0.6, 0, 1);
+      --transition: 0.45s cubic-bezier(0.6, 0.6, 0, 1);
+    }
+
+    /* ============================================
+       BASE RESET
+       ============================================ */
+    *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+    html { scroll-behavior:smooth; }
+    body {
+      background:var(--bg-dark);
+      color:var(--text-dark);
+      font-family:var(--font-body);
+      font-size:17px;
+      overflow-x:hidden;
+      line-height:1.65;
+      font-weight:400;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+    h1,h2,h3,h4,h5 { font-family:var(--font-heading); letter-spacing:-0.02em; font-weight:600; }
+    a { text-decoration:none; color:inherit; }
+    img { max-width:100%; }
+    .skip-link {
+      position:absolute;
+      top:-100px;
+      left:50%;
+      transform:translateX(-50%);
+      background:var(--primary);
+      color:#fff;
+      padding:8px 16px;
+      border-radius:0 0 8px 8px;
+      font-size:0.82rem;
+      font-weight:600;
+      z-index:9999;
+      transition:top 0.2s ease;
+    }
+    .skip-link:focus {
+      top:0;
+    }
+
+    /* ============================================
+       SHIMMER ANIMATION
+       ============================================ */
+    @keyframes shimmer {
+      0% { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+    .shimmer-text {
+      background: linear-gradient(90deg,
+        rgba(255,255,255,0.95) 0%,
+        rgba(255,255,255,0.95) 35%,
+        rgba(var(--primary-rgb),0.7) 50%,
+        rgba(255,255,255,0.95) 65%,
+        rgba(255,255,255,0.95) 100%
+      );
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: shimmer 3s ease-in-out 1s 1 forwards;
+    }
+
+    @keyframes shimmerDark {
+      0% { background-position: 200% center; }
+      100% { background-position: -200% center; }
+    }
+    .s-title-shimmer {
+      background: linear-gradient(90deg,
+        #141414 0%,
+        #141414 35%,
+        rgba(var(--primary-rgb),0.65) 50%,
+        #141414 65%,
+        #141414 100%
+      );
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      background-position: -200% center;
+    }
+    [data-reveal].revealed .s-title-shimmer {
+      animation: shimmerDark 2s ease-in-out 0.2s 1;
+    }
+
+    .s-title-dark-shimmer {
+      background: linear-gradient(90deg,
+        rgba(255,255,255,0.95) 0%,
+        rgba(255,255,255,0.95) 35%,
+        rgba(var(--primary-rgb),0.7) 50%,
+        rgba(255,255,255,0.95) 65%,
+        rgba(255,255,255,0.95) 100%
+      );
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      background-position: -200% center;
+    }
+    [data-reveal].revealed .s-title-dark-shimmer {
+      animation: shimmer 2s ease-in-out 0.2s 1;
+    }
+
+    /* ============================================
+       NAVIGATION — Floating Pill
+       ============================================ */
+    nav {
+      position:fixed;
+      top:16px;
+      left:50%;
+      transform:translateX(-50%);
+      z-index:200;
+      display:flex;
+      align-items:center;
+      gap:2px;
+      padding:6px 8px 6px 20px;
+      height:60px;
+      background:rgba(255,255,255,0.88);
+      backdrop-filter:blur(12px);
+      -webkit-backdrop-filter:blur(12px);
+      border-radius:var(--radius-pill);
+      box-shadow:0 1px 2px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.08), 0 16px 56px rgba(0,0,0,0.08);
+      max-width:650px;
+      width:auto;
+    }
+    .logo {
+      font-family:var(--font-heading);
+      font-size:1rem;
+      font-weight:600;
+      letter-spacing:-0.02em;
+      color:var(--text-dark);
+      margin-right:auto;
+      white-space:nowrap;
+      padding-right:1rem;
+    }
+    .logo .os {
+      font-weight:400;
+      color:var(--text-dark-muted);
+    }
+    .nav-links {
+      display:flex;
+      gap:0;
+      align-items:center;
+    }
+    .nav-links a {
+      font-size:0.82rem;
+      font-weight:500;
+      color:var(--text-dark-muted);
+      padding:6px 14px;
+      border-radius:8px;
+      transition:background var(--transition), color var(--transition);
+      white-space:nowrap;
+    }
+    .nav-links a:hover {
+      background:rgba(0,0,0,0.04);
+      color:var(--text-dark);
+    }
+    .nav-links a:focus-visible {
+      outline:2px solid var(--primary);
+      outline-offset:2px;
+      border-radius:4px;
+    }
+    .nav-links a.active {
+      color:var(--text-dark);
+      background:rgba(0,0,0,0.04);
+    }
+    .nav-cta { display:flex; align-items:center; margin-left:4px; }
+    .nav-cta .btn {
+      background:var(--primary);
+      color:#fff;
+      border:none;
+      border-radius:var(--radius-pill);
+      padding:6px 16px;
+      font-weight:600;
+      font-size:0.82rem;
+      cursor:pointer;
+      transition:opacity var(--transition), transform var(--transition);
+      white-space:nowrap;
+    }
+    .nav-cta .btn:hover {
+      opacity:0.9;
+      transform:translateY(-1px);
+    }
+
+    /* -- Buttons -- */
+    .btn {
+      display:inline-flex; align-items:center; justify-content:center;
+      font-family:var(--font-heading); font-weight:600; font-size:0.88rem;
+      letter-spacing:-0.01em;
+      border-radius:var(--radius-pill);
+      padding:0.75rem 1.75rem;
+      min-height:44px;
+      cursor:pointer;
+      transition:transform 0.2s ease, box-shadow var(--transition), background var(--transition), border-color var(--transition), opacity var(--transition);
+      text-decoration:none;
+    }
+    .btn-primary {
+      background:var(--primary);
+      color:#fff;
+      border:none;
+      position:relative;
+      overflow:hidden;
+      box-shadow:0 1px 2px rgba(var(--primary-rgb),0.2), 0 4px 12px rgba(var(--primary-rgb),0.15);
+    }
+    .btn-primary::before {
+      content:'';
+      position:absolute;
+      inset:0;
+      background:linear-gradient(180deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
+      border-radius:inherit;
+      pointer-events:none;
+    }
+    .btn-primary:hover {
+      box-shadow:0 4px 16px rgba(var(--primary-rgb),0.25), 0 1px 2px rgba(var(--primary-rgb),0.15);
+      transform:translateY(-1px);
+    }
+    .btn-primary:active { opacity:0.9; transform:translateY(0); }
+    .btn:focus-visible {
+      outline:2px solid var(--primary);
+      outline-offset:3px;
+    }
+
+    .btn-outline {
+      background:rgba(0,0,0,0.04);
+      color:var(--text-dark);
+      border:1px solid rgba(0,0,0,0.08);
+    }
+    .btn-outline:hover {
+      background:rgba(0,0,0,0.06);
+      border-color:rgba(0,0,0,0.12);
+    }
+
+    .btn-sm {
+      padding:0.5rem 1.25rem;
+      font-size:0.82rem;
+      min-height:36px;
+    }
+
+    .btn-hero-primary {
+      background:var(--primary);
+      color:#fff;
+      border:none;
+      position:relative;
+      overflow:hidden;
+      box-shadow:0 1px 2px rgba(var(--primary-rgb),0.3), 0 4px 16px rgba(var(--primary-rgb),0.25);
+    }
+    .btn-hero-primary::before {
+      content:'';
+      position:absolute;
+      inset:0;
+      background:linear-gradient(180deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05));
+      border-radius:inherit;
+      pointer-events:none;
+    }
+    .btn-hero-primary:hover {
+      box-shadow:0 4px 24px rgba(var(--primary-rgb),0.35), 0 1px 2px rgba(var(--primary-rgb),0.2);
+      transform:translateY(-1px);
+    }
+    .btn-hero-outline {
+      background:rgba(255,255,255,0.08);
+      color:rgba(255,255,255,0.8);
+      border:1px solid rgba(255,255,255,0.12);
+    }
+    .btn-hero-outline:hover {
+      background:rgba(255,255,255,0.12);
+      border-color:rgba(255,255,255,0.2);
+    }
+
+    .btn-dark-primary {
+      background:var(--primary);
+      color:#fff;
+      border:none;
+      position:relative;
+      overflow:hidden;
+      box-shadow:0 1px 2px rgba(var(--primary-rgb),0.3), 0 4px 16px rgba(var(--primary-rgb),0.25);
+    }
+    .btn-dark-primary::before {
+      content:'';
+      position:absolute;
+      inset:0;
+      background:linear-gradient(180deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05));
+      border-radius:inherit;
+      pointer-events:none;
+    }
+    .btn-dark-primary:hover {
+      box-shadow:0 4px 24px rgba(var(--primary-rgb),0.35);
+      transform:translateY(-1px);
+    }
+    .btn-dark-outline {
+      background:rgba(255,255,255,0.06);
+      color:rgba(255,255,255,0.7);
+      border:1px solid rgba(255,255,255,0.1);
+    }
+    .btn-dark-outline:hover {
+      background:rgba(255,255,255,0.1);
+      border-color:rgba(255,255,255,0.18);
+    }
+
+    .btn-lg { padding:0.85rem 2.2rem; font-size:0.92rem; }
+
+    /* -- Layout -- */
+    .container { max-width:1080px; margin:0 auto; }
+
+    .section {
+      padding:5.5rem 3rem;
+      background:var(--bg-light);
+    }
+    .section-alt {
+      padding:5.5rem 3rem;
+      background:#FAFAFA;
+    }
+
+    /* Section labels — light bg */
+    .s-label {
+      display:inline-flex; align-items:center; gap:8px;
+      font-size:0.75rem; font-weight:500; letter-spacing:0.1em;
+      text-transform:uppercase;
+      color:var(--primary);
+      margin-bottom:0.75rem;
+      font-family:var(--font-mono);
+    }
+    .s-label::before {
+      content:''; display:block; width:16px; height:2px;
+      background:var(--primary); border-radius:1px;
+      opacity:0.5;
+    }
+
+    .s-label-dark {
+      display:inline-flex; align-items:center; gap:8px;
+      font-size:0.75rem; font-weight:500; letter-spacing:0.1em;
+      text-transform:uppercase;
+      color:var(--primary);
+      margin-bottom:0.75rem;
+      font-family:var(--font-mono);
+    }
+    .s-label-dark::before {
+      content:''; display:block; width:16px; height:2px;
+      background:rgba(var(--primary-rgb),0.5); border-radius:1px;
+    }
+
+    .s-title {
+      font-size:clamp(2rem, 4.5vw, 3rem);
+      letter-spacing:-0.03em;
+      line-height:1.15;
+      margin-bottom:1rem;
+      font-weight:600;
+      color:var(--text-dark);
+    }
+
+    .s-title-dark {
+      font-size:clamp(2rem, 4.5vw, 3rem);
+      letter-spacing:-0.03em;
+      line-height:1.15;
+      margin-bottom:1rem;
+      font-weight:600;
+      color:var(--text-dark);
+    }
+
+    .s-sub {
+      font-size:1.1rem;
+      line-height:1.7;
+      color:var(--text-dark-muted);
+      max-width:560px;
+      font-weight:400;
+    }
+    .s-sub-dark {
+      font-size:1.1rem;
+      line-height:1.7;
+      color:var(--text-dark-muted);
+      max-width:560px;
+      font-weight:400;
+    }
+
+    /* -- Cards (light bg) -- */
+    .card {
+      background:#F5F5F7;
+      border:none;
+      border-radius:var(--radius-card);
+      padding:0;
+      overflow:hidden;
+      transition:box-shadow var(--transition), transform var(--transition);
+    }
+    .card:hover {
+      box-shadow:0 8px 32px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04);
+      transform:translateY(-2px);
+    }
+    .card-visual {
+      height:200px;
+      background:#EBEBED;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:3rem;
+      overflow:hidden;
+      position:relative;
+    }
+    .card-body {
+      padding:2rem;
+      text-align:center;
+    }
+    .card-body h3 {
+      font-size:1.15rem;
+      font-weight:600;
+      letter-spacing:-0.02em;
+      color:var(--text-dark);
+      margin-bottom:0.75rem;
+    }
+    .card-body .card-divider {
+      width:40px;
+      height:1.5px;
+      background:rgba(0,0,0,0.12);
+      margin:0 auto 0.75rem;
+    }
+    .card-body p {
+      font-size:0.92rem;
+      line-height:1.65;
+      color:var(--text-dark-muted);
+    }
+
+    /* -- Scroll Reveal -- */
+    [data-reveal] {
+      opacity:0; transform:translateY(24px);
+      transition:opacity 0.8s var(--ease-smooth), transform 0.8s var(--ease-smooth);
+    }
+    [data-reveal].revealed { opacity:1; transform:translateY(0); }
+    [data-reveal][data-delay="1"] { transition-delay:0.08s; }
+    [data-reveal][data-delay="2"] { transition-delay:0.16s; }
+    [data-reveal][data-delay="3"] { transition-delay:0.24s; }
+    [data-reveal][data-delay="4"] { transition-delay:0.32s; }
+    [data-reveal][data-delay="5"] { transition-delay:0.4s; }
+    [data-reveal][data-delay="6"] { transition-delay:0.48s; }
+
+    /* ============================================
+       HERO — Dark to Light Gradient
+       ============================================ */
+    .hero {
+      min-height:90vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:10rem 3rem 5rem;
+      position:relative;
+      overflow:hidden;
+      text-align:center;
+      background:linear-gradient(180deg,
+        #080B1A 0%,
+        #0C1035 30%,
+        #111B52 65%,
+        #1A2E78 100%);
+      color:#fff;
+    }
+    .hero-image-section {
+      background:transparent;
+      padding:0;
+      margin-top:-4rem;
+      position:relative;
+      z-index:1;
+    }
+    .hero-showcase-img {
+      width:100%;
+      height:auto;
+      display:block;
+      border-radius:var(--radius-card);
+    }
+    .page-intro-section {
+      background:var(--bg-dark);
+      padding:5.5rem 3rem;
+    }
+
+    .hero-content {
+      max-width:1080px; margin:0 auto; width:100%;
+      position:relative; z-index:1;
+      display:flex; flex-direction:column; align-items:center;
+    }
+    .hero-content > * {
+      animation:heroFadeUp 0.9s var(--ease-smooth) both;
+    }
+    .hero-content > *:nth-child(1) { animation-delay:0.05s; }
+    .hero-content > *:nth-child(2) { animation-delay:0.15s; }
+    .hero-content > *:nth-child(3) { animation-delay:0.25s; }
+    .hero-content > *:nth-child(4) { animation-delay:0.35s; }
+    .hero-content > *:nth-child(5) { animation-delay:0.45s; }
+    @keyframes heroFadeUp {
+      from { opacity:0; transform:translateY(32px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    .hero-mono-label {
+      font-family:var(--font-mono); font-size:0.78rem; font-weight:400;
+      color:rgba(255,255,255,0.3); letter-spacing:0.02em;
+      margin-bottom:1.75rem;
+    }
+
+    .hero h1 {
+      font-size:clamp(3rem, 7vw, 4.5rem);
+      letter-spacing:-0.04em;
+      line-height:1.08;
+      margin-bottom:1.75rem;
+      max-width:800px;
+      font-weight:600;
+    }
+    .hero-sub {
+      font-size:1.15rem; line-height:1.75; color:rgba(255,255,255,0.55);
+      max-width:640px; margin-bottom:3rem; font-weight:400;
+    }
+
+    /* Hero Stats */
+    .hero-stats {
+      display:flex; align-items:center; gap:0;
+      flex-wrap:wrap; justify-content:center;
+      position:relative;
+    }
+    .stat-block { text-align:center; padding:0 2.5rem; }
+    .stat-val {
+      font-family:var(--font-heading); font-weight:500;
+      font-size:clamp(2rem, 4vw, 2.8rem);
+      letter-spacing:-0.02em; color:var(--text-dark); line-height:1;
+    }
+    .stat-lbl {
+      font-size:0.82rem; color:rgba(255,255,255,0.65); margin-top:6px;
+      font-family:var(--font-body); font-weight:400;
+    }
+    .stat-divider {
+      width:1px; height:32px; background:rgba(255,255,255,0.1); flex-shrink:0;
+    }
+
+    /* ============================================
+       FOOTER — Dark
+       ============================================ */
+    footer {
+      background:var(--bg-dark);
+      border-top:1px solid rgba(255,255,255,0.06);
+      padding:4rem 3rem 2.5rem;
+    }
+    .footer-inner {
+      max-width:1080px; margin:0 auto;
+    }
+    .footer-top {
+      display:flex; justify-content:space-between;
+      align-items:start; margin-bottom:3rem;
+      gap:2rem;
+    }
+    .footer-brand .logo {
+      margin-bottom:0.75rem;
+      color:rgba(255,255,255,0.7);
+    }
+    .footer-brand .logo .os {
+      color:rgba(255,255,255,0.4);
+    }
+    .footer-brand p {
+      font-size:0.85rem; color:rgba(255,255,255,0.6); line-height:1.7;
+      max-width:260px; font-weight:400;
+    }
+    .footer-links {
+      display:flex; gap:3rem;
+    }
+    .footer-links a {
+      font-size:0.88rem; color:rgba(255,255,255,0.6);
+      transition:color var(--transition); font-weight:400;
+    }
+    .footer-links a:hover { color:rgba(255,255,255,0.85); }
+    .footer-bottom {
+      padding-top:2rem;
+      border-top:1px solid rgba(255,255,255,0.06);
+      display:flex; justify-content:space-between;
+      align-items:center; flex-wrap:wrap; gap:1rem;
+    }
+    .footer-bottom p {
+      font-size:0.82rem; color:rgba(255,255,255,0.55);
+    }
+
+    /* ============================================
+       FINAL CTA — Dark section
+       ============================================ */
+    .final-cta {
+      padding:10rem 3rem;
+      text-align:center;
+      background:var(--bg-dark);
+      position:relative;
+      overflow:hidden;
+    }
+    .final-cta .cta-content {
+      position:relative; z-index:1;
+    }
+    .final-cta h2 {
+      font-size:clamp(2.2rem, 4.5vw, 3.5rem);
+      letter-spacing:-0.03em; line-height:1.1;
+      margin-bottom:1rem; font-weight:600;
+      background:linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.7));
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      background-clip:text;
+    }
+    .final-cta .cta-sub {
+      font-size:1.1rem; color:var(--text-dark-muted); line-height:1.7;
+      max-width:580px; margin:0 auto 2.5rem; font-weight:400;
+    }
+    .final-cta .cta-buttons {
+      display:flex; gap:12px; justify-content:center; flex-wrap:wrap;
+    }
+
+    /* ============================================
+       HAMBURGER & MOBILE MENU
+       ============================================ */
+    .hamburger {
+      display:none; flex-direction:column; justify-content:center;
+      align-items:center; width:44px; height:44px; gap:5px;
+      background:transparent; border:none; cursor:pointer;
+      padding:4px; border-radius:var(--radius-sm); flex-shrink:0;
+      transition:background var(--transition);
+    }
+    .hamburger:hover { background:rgba(0,0,0,0.04); }
+    .hamburger-line {
+      display:block; width:20px; height:1.5px; background:var(--text-dark);
+      border-radius:1px; transform-origin:center;
+      transition:transform 0.3s var(--ease-smooth), opacity 0.2s ease;
+    }
+    .hamburger.open .hamburger-line:nth-child(1) { transform:translateY(6.5px) rotate(45deg); }
+    .hamburger.open .hamburger-line:nth-child(2) { opacity:0; transform:scaleX(0); }
+    .hamburger.open .hamburger-line:nth-child(3) { transform:translateY(-6.5px) rotate(-45deg); }
+    .hamburger.open .hamburger-line { background:#fff; }
+
+    .mobile-menu {
+      display:none; position:fixed; top:0; left:0; right:0; bottom:0;
+      z-index:190;
+      background:rgba(10,1,24,0.98);
+      backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+      flex-direction:column; padding:7rem 2rem 3rem;
+      opacity:0; transform:translateY(-8px);
+      transition:opacity 0.35s ease, transform 0.3s var(--ease-smooth);
+      pointer-events:none;
+    }
+    .mobile-menu.open { opacity:1; transform:translateY(0); pointer-events:all; }
+    .mobile-menu a.m-nav-link {
+      display:block; font-family:var(--font-heading); font-size:1.4rem;
+      font-weight:500; letter-spacing:-0.01em; color:rgba(255,255,255,0.75);
+      padding:1.1rem 0; border-bottom:1px solid rgba(255,255,255,0.06);
+      transition:color var(--transition);
+    }
+    .mobile-menu a.m-nav-link:hover { color:#fff; }
+    .mobile-menu a.m-nav-link:focus-visible {
+      outline:2px solid rgba(255,255,255,0.5);
+      outline-offset:2px;
+    }
+    .mobile-menu .m-cta { margin-top:2.5rem; }
+    .mobile-menu .m-cta .btn { width:100%; justify-content:center; font-size:0.92rem; padding:0.95rem 1.5rem; }
+
+    /* ============================================
+       PAGE-SPECIFIC: SHOWCASE
+       ============================================ */
+
+    /* Brief Card */
+    .brief-card {
+      background:#F5F5F7;
+      border-radius:var(--radius-card);
+      overflow:hidden;
+    }
+    .brief-card-header {
+      padding:1.5rem 2rem;
+      background:#EBEBED;
+      font-family:var(--font-mono);
+      font-size:0.78rem;
+      font-weight:500;
+      letter-spacing:0.08em;
+      text-transform:uppercase;
+      color:var(--primary);
+    }
+    .brief-card-body {
+      padding:1.5rem 2rem;
+    }
+    .brief-row {
+      display:flex;
+      justify-content:space-between;
+      align-items:baseline;
+      padding:0.65rem 0;
+      border-bottom:1px solid rgba(0,0,0,0.06);
+      font-size:0.92rem;
+    }
+    .brief-row:last-child { border-bottom:none; }
+    .brief-row .br-label {
+      color:var(--text-dark-muted);
+      font-weight:400;
+    }
+    .brief-row .br-value {
+      font-weight:600;
+      color:var(--text-dark);
+      text-align:right;
+    }
+
+    /* Two-column layout */
+    .two-col {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:4rem;
+      margin-top:2.5rem;
+      align-items:start;
+    }
+    .two-col-text {
+      font-size:0.95rem;
+      color:var(--text-dark-muted);
+      line-height:1.85;
+      font-weight:400;
+    }
+    .two-col-text p {
+      margin-bottom:1.5rem;
+    }
+    .two-col-text p:last-child { margin-bottom:0; }
+
+    /* Intake note */
+    .intake-note {
+      font-family:var(--font-mono);
+      font-size:0.82rem;
+      color:var(--text-dark-muted);
+      margin-top:2rem;
+      padding-top:1.5rem;
+      border-top:1px solid rgba(0,0,0,0.06);
+      line-height:1.7;
+    }
+
+    /* Research document list */
+    .doc-list {
+      display:flex;
+      flex-direction:column;
+      gap:0;
+    }
+    .doc-row {
+      display:flex;
+      align-items:baseline;
+      gap:1rem;
+      padding:0.85rem 0;
+      border-bottom:1px solid rgba(0,0,0,0.06);
+    }
+    .doc-row:first-child {
+      border-top:1px solid rgba(0,0,0,0.06);
+    }
+    .doc-num {
+      font-family:var(--font-mono);
+      font-size:0.78rem;
+      color:rgba(var(--primary-rgb),0.4);
+      font-weight:500;
+      flex-shrink:0;
+      width:24px;
+    }
+    .doc-title {
+      font-weight:600;
+      font-size:0.95rem;
+      color:var(--text-dark);
+      flex-shrink:0;
+    }
+    .doc-desc {
+      font-size:0.85rem;
+      color:var(--text-dark-muted);
+      font-weight:400;
+      margin-left:auto;
+      text-align:right;
+    }
+    .doc-total {
+      font-family:var(--font-mono);
+      font-size:0.85rem;
+      color:var(--text-dark-muted);
+      margin-top:1.25rem;
+      letter-spacing:0.01em;
+    }
+
+    /* Placeholder card (for deck/screenshot mockups) */
+    .placeholder-card {
+      background:linear-gradient(135deg, #0C1035, #1A2E78);
+      border-radius:var(--radius-card);
+      padding:3rem 2rem;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      min-height:280px;
+      text-align:center;
+    }
+    .placeholder-card .pc-icon {
+      font-size:2.5rem;
+      margin-bottom:1.25rem;
+      opacity:0.6;
+    }
+    .placeholder-card .pc-title {
+      font-family:var(--font-mono);
+      font-size:0.85rem;
+      color:rgba(255,255,255,0.6);
+      line-height:1.65;
+      font-weight:400;
+    }
+    .placeholder-card .pc-title strong {
+      display:block;
+      font-family:var(--font-heading);
+      font-size:1.1rem;
+      font-weight:600;
+      color:rgba(255,255,255,0.85);
+      margin-bottom:0.35rem;
+      letter-spacing:-0.01em;
+    }
+
+    /* Gate callout */
+    .gate-callout {
+      margin-top:2.5rem;
+      padding:1.25rem 2rem;
+      background:rgba(var(--primary-rgb),0.04);
+      border-left:3px solid var(--primary);
+      border-radius:0 var(--radius-sm) var(--radius-sm) 0;
+      font-size:0.92rem;
+      color:var(--text-dark);
+      font-weight:500;
+      line-height:1.6;
+    }
+    .gate-callout strong {
+      color:var(--primary);
+    }
+
+    /* Definition deliverable cards grid */
+    .define-grid {
+      display:grid;
+      grid-template-columns:repeat(3, 1fr);
+      gap:1.5rem;
+      margin-top:2.5rem;
+    }
+    .define-card {
+      background:#F5F5F7;
+      border-radius:var(--radius-card);
+      overflow:hidden;
+      transition:box-shadow var(--transition), transform var(--transition);
+    }
+    .define-card:hover {
+      box-shadow:0 8px 32px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04);
+      transform:translateY(-2px);
+    }
+    .define-card-visual {
+      height:120px;
+      background:linear-gradient(135deg, #EBEBED, #E0E0E5);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:2.2rem;
+    }
+    .define-card-body {
+      padding:1.5rem;
+    }
+    .define-card-body h3 {
+      font-size:1rem;
+      font-weight:600;
+      color:var(--text-dark);
+      margin-bottom:0.5rem;
+      letter-spacing:-0.01em;
+    }
+    .define-card-body p {
+      font-size:0.85rem;
+      color:var(--text-dark-muted);
+      line-height:1.6;
+      font-weight:400;
+    }
+
+    /* Plus note */
+    .plus-note {
+      font-size:0.92rem;
+      color:var(--text-dark-muted);
+      margin-top:2rem;
+      font-weight:500;
+    }
+    .plus-note span {
+      color:var(--primary);
+      font-weight:600;
+    }
+
+    /* Workstream cards */
+    .workstream-grid {
+      display:grid;
+      grid-template-columns:repeat(5, 1fr);
+      gap:1.25rem;
+      margin-top:2.5rem;
+    }
+    .ws-card {
+      background:#F5F5F7;
+      border-radius:var(--radius-md);
+      padding:1.75rem 1.25rem;
+      text-align:center;
+      transition:box-shadow var(--transition), transform var(--transition);
+    }
+    .ws-card:hover {
+      box-shadow:0 8px 32px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04);
+      transform:translateY(-2px);
+    }
+    .ws-card .ws-icon {
+      font-size:2rem;
+      margin-bottom:1rem;
+    }
+    .ws-card h3 {
+      font-size:0.92rem;
+      font-weight:600;
+      color:var(--text-dark);
+      margin-bottom:0.5rem;
+      letter-spacing:-0.01em;
+    }
+    .ws-card p {
+      font-size:0.78rem;
+      color:var(--text-dark-muted);
+      line-height:1.5;
+      font-weight:400;
+    }
+
+    /* Deck grid */
+    .deck-grid {
+      display:grid;
+      grid-template-columns:repeat(2, 1fr);
+      gap:1.5rem;
+      margin-top:2.5rem;
+    }
+    .deck-card {
+      border-radius:var(--radius-card);
+      overflow:hidden;
+      transition:box-shadow var(--transition), transform var(--transition);
+    }
+    .deck-card:hover {
+      box-shadow:0 12px 40px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+      transform:translateY(-2px);
+    }
+    .deck-card-visual {
+      height:180px;
+      background:linear-gradient(135deg, #0C1035, #1A2E78);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:1.5rem;
+    }
+    .deck-card-visual .dcv-label {
+      font-family:var(--font-mono);
+      font-size:0.92rem;
+      color:rgba(255,255,255,0.5);
+      letter-spacing:0.02em;
+    }
+    .deck-card-body {
+      background:#F5F5F7;
+      padding:1.75rem;
+    }
+    .deck-card-body h3 {
+      font-size:1.05rem;
+      font-weight:600;
+      color:var(--text-dark);
+      margin-bottom:0.5rem;
+      letter-spacing:-0.01em;
+    }
+    .deck-card-body p {
+      font-size:0.88rem;
+      color:var(--text-dark-muted);
+      line-height:1.6;
+      font-weight:400;
+    }
+
+    /* Deliverables checklist (What Shipped section) */
+    .shipped-groups {
+      margin-top:2.5rem;
+    }
+    .shipped-group {
+      margin-bottom:2.5rem;
+    }
+    .shipped-group:last-child {
+      margin-bottom:0;
+    }
+    .shipped-group-header {
+      font-family:var(--font-mono); font-size:0.75rem;
+      font-weight:500; letter-spacing:0.1em;
+      text-transform:uppercase; color:var(--primary);
+      margin-bottom:0.75rem; padding-bottom:0.5rem;
+      border-bottom:1px solid rgba(0,0,0,0.06);
+    }
+    .shipped-list {
+      display:grid;
+      grid-template-columns:repeat(2, 1fr);
+      gap:0.35rem 1.5rem;
+    }
+    .shipped-item {
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:0.5rem 0;
+      font-size:0.92rem;
+      color:var(--text-dark);
+      font-weight:400;
+    }
+    .shipped-item .si-check {
+      width:18px; height:18px;
+      border-radius:50%;
+      background:rgba(var(--primary-rgb),0.08);
+      display:flex; align-items:center; justify-content:center;
+      flex-shrink:0;
+    }
+    .shipped-item .si-check::after {
+      content:'';
+      width:6px; height:6px;
+      border-radius:50%;
+      background:var(--primary);
+    }
+
+    /* Bottom stat banner */
+    .shipped-stat {
+      margin-top:3rem;
+      padding:2.5rem;
+      background:#F5F5F7;
+      border-radius:var(--radius-card);
+      text-align:center;
+    }
+    .shipped-stat .ss-val {
+      font-family:var(--font-heading);
+      font-weight:600;
+      font-size:clamp(2.4rem, 5vw, 3.5rem);
+      color:var(--text-dark);
+      line-height:1;
+      margin-bottom:0.5rem;
+      letter-spacing:-0.02em;
+    }
+    .shipped-stat .ss-lbl {
+      font-size:0.92rem;
+      color:var(--text-dark-muted);
+      font-weight:400;
+    }
+    /* Gallery — visual deliverable previews */
+    .gallery-row {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:3.5rem;
+      align-items:center;
+      margin-bottom:5rem;
+    }
+    .gallery-row:last-child { margin-bottom:0; }
+    .gallery-row-reverse { direction:rtl; }
+    .gallery-row-reverse > * { direction:ltr; }
+    .gallery-label {
+      font-family:var(--font-mono);
+      font-size:0.75rem;
+      font-weight:500;
+      letter-spacing:0.1em;
+      text-transform:uppercase;
+      color:var(--primary);
+      margin-bottom:0.5rem;
+    }
+    .gallery-text h3 {
+      font-size:1.4rem;
+      font-weight:600;
+      letter-spacing:-0.02em;
+      color:var(--text-dark);
+      margin-bottom:0.75rem;
+    }
+    .gallery-text p {
+      font-size:0.95rem;
+      line-height:1.7;
+      color:var(--text-dark-muted);
+      margin-bottom:1.25rem;
+    }
+    .gallery-tags {
+      display:flex;
+      flex-wrap:wrap;
+      gap:0.4rem;
+    }
+    .gallery-tags span {
+      font-family:var(--font-mono);
+      font-size:0.72rem;
+      font-weight:400;
+      padding:4px 10px;
+      border-radius:6px;
+      background:rgba(0,0,0,0.04);
+      color:var(--text-dark-muted);
+    }
+    .gallery-preview {
+      border-radius:var(--radius-card);
+      overflow:hidden;
+    }
+    .gallery-preview-inner {
+      padding:3rem 2rem;
+      min-height:280px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:1.5rem;
+      position:relative;
+    }
+    .gallery-preview-label {
+      font-family:var(--font-mono);
+      font-size:0.7rem;
+      font-weight:400;
+      color:rgba(255,255,255,0.3);
+      letter-spacing:0.05em;
+      position:absolute;
+      top:1rem;
+      left:1.25rem;
+    }
+    @media(max-width:900px) {
+      .gallery-row { grid-template-columns:1fr; gap:2rem; }
+      .gallery-row-reverse { direction:ltr; }
+      .gallery-preview-inner { min-height:220px; }
+    }
+    @media(max-width:640px) {
+      .gallery-row { margin-bottom:3.5rem; }
+      .gallery-preview-inner { min-height:200px; padding:2.5rem 1.5rem; }
+    }
+
+    .shipped-punchline {
+      text-align:center;
+      margin-top:2rem;
+      font-size:1.05rem;
+      color:var(--text-dark);
+      font-weight:500;
+      line-height:1.7;
+      max-width:640px;
+      margin-left:auto;
+      margin-right:auto;
+    }
+
+    /* ============================================
+       RESPONSIVE — TABLET (900px)
+       ============================================ */
+    @media(max-width:900px) {
+      nav { padding:6px 12px 6px 16px; max-width:calc(100% - 32px); }
+      .section, .section-alt { padding:5rem 1.5rem; }
+      .hero { padding:8rem 1.5rem 6rem; }
+
+      .two-col { grid-template-columns:1fr; gap:2.5rem; }
+
+      .define-grid { grid-template-columns:repeat(2, 1fr); }
+
+      .workstream-grid { grid-template-columns:repeat(3, 1fr); }
+
+      .deck-grid { grid-template-columns:1fr; max-width:520px; }
+
+      .shipped-list { grid-template-columns:1fr; }
+
+      .footer-top { flex-direction:column; }
+      .footer-links { flex-wrap:wrap; gap:1.5rem; }
+    }
+
+    /* ============================================
+       RESPONSIVE — MOBILE (640px)
+       ============================================ */
+    @media(max-width:640px) {
+      .nav-links { display:none; }
+      .nav-cta { display:none; }
+      .hamburger { display:flex; }
+      .mobile-menu { display:flex; }
+
+      nav { max-width:calc(100% - 24px); }
+
+      .section, .section-alt { padding:4rem 1.25rem; }
+      .hero { padding:7rem 1.25rem 5rem; }
+      .hero h1 { font-size:clamp(2.2rem, 8vw, 3.2rem); }
+      .hero-sub { font-size:1.05rem; }
+      .hero-stats { gap:0; flex-wrap:wrap; }
+      .stat-block { padding:0 1.25rem; }
+      .stat-val { font-size:clamp(1.8rem, 6vw, 2.5rem); }
+      .hero-mono-label { font-size:0.72rem; }
+
+      .two-col { grid-template-columns:1fr; gap:2rem; }
+
+      .doc-row { flex-direction:column; gap:0.25rem; align-items:flex-start; }
+      .doc-desc { margin-left:0; text-align:left; padding-left:2.25rem; }
+
+      .define-grid { grid-template-columns:1fr; max-width:420px; }
+
+      .workstream-grid { grid-template-columns:1fr 1fr; }
+
+      .deck-grid { grid-template-columns:1fr; }
+      .deck-card-visual { height:140px; }
+
+      .shipped-list { grid-template-columns:1fr; }
+
+      .brief-card-body { padding:1.25rem 1.5rem; }
+      .brief-row { font-size:0.85rem; }
+
+      .gate-callout { padding:1rem 1.25rem; font-size:0.85rem; }
+
+      .final-cta { padding:5rem 1.25rem; }
+      .final-cta h2 { font-size:clamp(1.8rem, 7vw, 2.8rem); }
+
+      footer { padding:3rem 1.25rem 2rem; }
+      .footer-bottom { flex-direction:column; align-items:flex-start; }
+
+      .hero-stats .stat-divider:nth-of-type(2) { display:none; }
+      .hero-stats .stat-block:nth-of-type(3),
+      .hero-stats .stat-block:nth-of-type(4) { margin-top:1.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to content</a>
+
+  <!-- ===================================================
+       NAVIGATION — Floating Pill
+       =================================================== -->
+  <nav>
+    <a href="index.html" class="logo">VENTRIFY <span class="os">OS</span></a>
+    <div class="nav-links">
+      <a href="system.html">System</a>
+      <a href="showcase.html" class="active">Showcase</a>
+      <a href="pricing.html">Pricing</a>
+    </div>
+    <div class="nav-cta">
+      <a href="pricing.html" class="btn">Get the Workflow</a>
+    </div>
+    <button class="hamburger" aria-label="Menu">
+      <span class="hamburger-line"></span>
+      <span class="hamburger-line"></span>
+      <span class="hamburger-line"></span>
+    </button>
+  </nav>
+
+  <!-- Mobile Menu -->
+  <div class="mobile-menu">
+    <a href="system.html" class="m-nav-link">System</a>
+    <a href="showcase.html" class="m-nav-link active">Showcase</a>
+    <a href="pricing.html" class="m-nav-link">Pricing</a>
+    <div class="m-cta">
+      <a href="pricing.html" class="btn btn-dark-primary btn-lg">Get the Workflow</a>
+    </div>
+  </div>
+
+  <!-- ===================================================
+       1. HERO — Dark to Light Gradient
+       =================================================== -->
+  <section class="hero" id="main-content">
+    <div class="hero-content">
+      <h1 class="shimmer-text">Inside &amp; Out</h1>
+      <p class="hero-sub">A mental wellness app &mdash; taken from raw brief to Gate 2 approval in 7 days. Here&rsquo;s every deliverable the system produced.</p>
+    </div>
+  </section>
+
+  <!-- HERO IMAGE — on hero gradient end colour -->
+  <div class="hero-image-section">
+    <div style="max-width:1100px;margin:0 auto;padding:0 3rem;">
+      <img src="assets/hero-desk.png" alt="Inside & Out — complete venture deliverables" class="hero-showcase-img">
+    </div>
+  </div>
+
+  <!-- PAGE INTRO — dark band with stats -->
+  <section class="page-intro-section">
+    <div class="container" data-reveal>
+      <div style="max-width:780px;margin:0 auto;text-align:center;">
+        <p style="font-size:clamp(1.15rem,2.5vw,1.4rem);line-height:1.75;color:var(--text-light-muted);font-weight:400;">In March 2026, we ran the Ventrify workflow on a real client. <span style="color:#FFFFFF;font-weight:500;">Seven days later, the founder had paid AED 132,000, four investor-grade decks had been auto-generated, and 2,060 lines of market research were complete.</span> One operator. Zero subcontractors. Here&rsquo;s exactly what shipped.</p>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:0;margin-top:2rem;flex-wrap:wrap;">
+        <div style="text-align:center;padding:0 2rem;">
+          <div style="font-family:var(--font-heading);font-size:clamp(1.6rem,3vw,2.2rem);font-weight:600;color:#FFFFFF;letter-spacing:-0.02em;">7 Days</div>
+          <div style="font-size:0.82rem;color:var(--text-light-muted);margin-top:0.25rem;">Brief to Gate 2</div>
+        </div>
+        <div style="width:1px;height:40px;background:rgba(255,255,255,0.1);flex-shrink:0;"></div>
+        <div style="text-align:center;padding:0 2rem;">
+          <div style="font-family:var(--font-heading);font-size:clamp(1.6rem,3vw,2.2rem);font-weight:600;color:#FFFFFF;letter-spacing:-0.02em;">AED 132K</div>
+          <div style="font-size:0.82rem;color:var(--text-light-muted);margin-top:0.25rem;">Revenue Day One</div>
+        </div>
+        <div style="width:1px;height:40px;background:rgba(255,255,255,0.1);flex-shrink:0;"></div>
+        <div style="text-align:center;padding:0 2rem;">
+          <div style="font-family:var(--font-heading);font-size:clamp(1.6rem,3vw,2.2rem);font-weight:600;color:#FFFFFF;letter-spacing:-0.02em;">27</div>
+          <div style="font-size:0.82rem;color:var(--text-light-muted);margin-top:0.25rem;">Commits in 48hrs</div>
+        </div>
+        <div style="width:1px;height:40px;background:rgba(255,255,255,0.1);flex-shrink:0;"></div>
+        <div style="text-align:center;padding:0 2rem;">
+          <div style="font-family:var(--font-heading);font-size:clamp(1.6rem,3vw,2.2rem);font-weight:600;color:#FFFFFF;letter-spacing:-0.02em;">1</div>
+          <div style="font-size:0.82rem;color:var(--text-light-muted);margin-top:0.25rem;">Operator</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================
+       2. THE BRIEF — Section (white bg)
+       =================================================== -->
+  <section class="section" id="brief">
+    <div class="container" data-reveal>
+      <div class="s-label">Phase 0 &mdash; The Brief</div>
+      <h2 class="s-title s-title-shimmer">It started with an idea</h2>
+      <div class="two-col">
+        <div class="two-col-text">
+          <p>The founder came to us with a concept for a mental wellness app &mdash; a platform to help users track their emotional health, build daily habits, and access guided exercises.</p>
+          <p>No brand, no technical team, no investor materials. Just an idea and the budget to build it.</p>
+          <div class="intake-note">The intake form was completed via the built-in browser tool at localhost:3010. Brand kit was generated automatically from the brief.</div>
+        </div>
+        <div class="brief-card">
+          <div class="brief-card-header">Project Brief</div>
+          <div class="brief-card-body">
+            <div class="brief-row">
+              <span class="br-label">Project</span>
+              <span class="br-value">Inside &amp; Out</span>
+            </div>
+            <div class="brief-row">
+              <span class="br-label">Industry</span>
+              <span class="br-value">Health &amp; Wellness</span>
+            </div>
+            <div class="brief-row">
+              <span class="br-label">Workflow</span>
+              <span class="br-value">Ventrify OS</span>
+            </div>
+            <div class="brief-row">
+              <span class="br-label">Fee</span>
+              <span class="br-value">AED 132,000</span>
+            </div>
+            <div class="brief-row">
+              <span class="br-label">Timeline</span>
+              <span class="br-value">12 Weeks</span>
+            </div>
+            <div class="brief-row">
+              <span class="br-label">Platform</span>
+              <span class="br-value">iOS + Android</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================
+       3. RESEARCH PHASE — Section Alt (light gray bg)
+       =================================================== -->
+  <section class="section-alt" id="research">
+    <div class="container" data-reveal>
+      <div class="s-label">Phase 1 &mdash; Discover</div>
+      <h2 class="s-title s-title-shimmer">Deep research before a single pixel</h2>
+      <p class="s-sub">7 research documents produced in the first 48 hours.</p>
+      <div class="two-col" style="margin-top:2.5rem;">
+        <div>
+          <div class="doc-list">
+            <div class="doc-row">
+              <span class="doc-num">01</span>
+              <span class="doc-title">Market Analysis</span>
+              <span class="doc-desc">TAM/SAM/SOM, growth trends, market sizing</span>
+            </div>
+            <div class="doc-row">
+              <span class="doc-num">02</span>
+              <span class="doc-title">Competitor Analysis</span>
+              <span class="doc-desc">5 direct competitors, feature matrix, pricing gaps</span>
+            </div>
+            <div class="doc-row">
+              <span class="doc-num">03</span>
+              <span class="doc-title">User Insights</span>
+              <span class="doc-desc">Pain points, behaviour patterns, App Store review mining</span>
+            </div>
+            <div class="doc-row">
+              <span class="doc-num">04</span>
+              <span class="doc-title">SWOT Analysis</span>
+              <span class="doc-desc">Strengths, weaknesses, opportunities, threats</span>
+            </div>
+            <div class="doc-row">
+              <span class="doc-num">05</span>
+              <span class="doc-title">Opportunities</span>
+              <span class="doc-desc">Top 3 validated market gaps</span>
+            </div>
+            <div class="doc-row">
+              <span class="doc-num">06</span>
+              <span class="doc-title">Unit Economics</span>
+              <span class="doc-desc">CAC, LTV, revenue projections, break-even</span>
+            </div>
+            <div class="doc-row">
+              <span class="doc-num">07</span>
+              <span class="doc-title">Partnerships</span>
+              <span class="doc-desc">B2B distribution channels, strategic alliances</span>
+            </div>
+          </div>
+          <div class="doc-total">Total: 2,060 lines of structured research</div>
+        </div>
+        <div>
+          <div class="placeholder-card">
+            <div class="pc-icon">&#x1F4CA;</div>
+            <div class="pc-title">
+              <strong>Research &amp; Analysis Deck</strong>
+              24 slides, auto-generated
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="gate-callout" data-reveal>
+        <strong>Gate 1 Review</strong> &mdash; Research presented to client. Opportunity validated. Approved to proceed.
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================
+       4. DEFINITION PHASE — Section (white bg)
+       =================================================== -->
+  <section class="section" id="define">
+    <div class="container" data-reveal>
+      <div class="s-label">Phase 2 &mdash; Define</div>
+      <h2 class="s-title s-title-shimmer">Shaping the product foundation</h2>
+      <div class="define-grid">
+        <div class="define-card" data-reveal data-delay="1">
+          <div class="define-card-visual">&#x1F464;</div>
+          <div class="define-card-body">
+            <h3>Personas</h3>
+            <p>3 detailed user archetypes with goals, frustrations, and tech comfort</p>
+          </div>
+        </div>
+        <div class="define-card" data-reveal data-delay="2">
+          <div class="define-card-visual">&#x1F4A1;</div>
+          <div class="define-card-body">
+            <h3>Product Vision</h3>
+            <p>North star definition, value propositions, key differentiators</p>
+          </div>
+        </div>
+        <div class="define-card" data-reveal data-delay="3">
+          <div class="define-card-visual">&#x2705;</div>
+          <div class="define-card-body">
+            <h3>MVP Features</h3>
+            <p>MoSCoW-prioritised feature set with 6 mandatory standard features</p>
+          </div>
+        </div>
+        <div class="define-card" data-reveal data-delay="4">
+          <div class="define-card-visual">&#x2699;&#xFE0F;</div>
+          <div class="define-card-body">
+            <h3>Tech Stack</h3>
+            <p>Expo + Firebase + PostHog + Sanity + Vercel</p>
+          </div>
+        </div>
+        <div class="define-card" data-reveal data-delay="5">
+          <div class="define-card-visual">&#x1F6A9;</div>
+          <div class="define-card-body">
+            <h3>User Journeys</h3>
+            <p>3 core journeys mapped step-by-step with decision points</p>
+          </div>
+        </div>
+        <div class="define-card" data-reveal data-delay="6">
+          <div class="define-card-visual">&#x1F5D3;&#xFE0F;</div>
+          <div class="define-card-body">
+            <h3>Roadmap</h3>
+            <p>MVP &rarr; v1.1 quick wins &rarr; v2 growth phase</p>
+          </div>
+        </div>
+      </div>
+      <p class="plus-note" data-reveal><span>Plus:</span> Tone of Voice guide, Social Strategy, 30-day Content Calendar</p>
+      <div class="gate-callout" data-reveal>
+        <strong>Gate 2 Review</strong> &mdash; Product vision and MVP scope locked. Statement of Work signed. Nothing changes from here.
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================
+       5. PARALLEL WORKSTREAMS — Section Alt (light gray)
+       =================================================== -->
+  <section class="section-alt" id="workstreams">
+    <div class="container" data-reveal>
+      <div class="s-label">Phases 3&ndash;5 + Workstreams</div>
+      <h2 class="s-title s-title-shimmer">Five workstreams. Running in parallel.</h2>
+      <p class="s-sub">Once scope is locked, the system fires multiple workstreams simultaneously. Design, development, website, marketing content, and the design system all progress at the same time.</p>
+      <div class="workstream-grid">
+        <div class="ws-card" data-reveal data-delay="1">
+          <div class="ws-icon">&#x1F4F1;</div>
+          <h3>Core Build</h3>
+          <p>MVP App (iOS + Android)</p>
+        </div>
+        <div class="ws-card" data-reveal data-delay="2">
+          <div class="ws-icon">&#x1F310;</div>
+          <h3>Website</h3>
+          <p>Marketing site (Next.js)</p>
+        </div>
+        <div class="ws-card" data-reveal data-delay="3">
+          <div class="ws-icon">&#x1F4DD;</div>
+          <h3>Content</h3>
+          <p>20 social posts, 5 blog posts</p>
+        </div>
+        <div class="ws-card" data-reveal data-delay="4">
+          <div class="ws-icon">&#x1F3AC;</div>
+          <h3>Video</h3>
+          <p>Script + audio brief</p>
+        </div>
+        <div class="ws-card" data-reveal data-delay="5">
+          <div class="ws-icon">&#x1F3A8;</div>
+          <h3>Design System</h3>
+          <p>33+ page DS site + 2 Figma plugins</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================
+       6. PRESENTATION DECKS — Section (white bg)
+       =================================================== -->
+  <section class="section" id="decks">
+    <div class="container" data-reveal>
+      <div class="s-label">Auto-Generated</div>
+      <h2 class="s-title s-title-shimmer">Four decks. Zero PowerPoint.</h2>
+      <p class="s-sub">Every deck is auto-generated from the project data via Puppeteer. Charts, personas, market stats &mdash; all populated, branded, and WCAG AA accessible.</p>
+      <div class="deck-grid">
+        <div class="deck-card" data-reveal data-delay="1">
+          <div class="deck-card-visual">
+            <span class="dcv-label">research-deck.pdf</span>
+          </div>
+          <div class="deck-card-body">
+            <h3>Research Deck</h3>
+            <p>Market findings, competitive landscape, SWOT, opportunities</p>
+          </div>
+        </div>
+        <div class="deck-card" data-reveal data-delay="2">
+          <div class="deck-card-visual">
+            <span class="dcv-label">vision-deck.pdf</span>
+          </div>
+          <div class="deck-card-body">
+            <h3>Vision Deck</h3>
+            <p>Product vision, personas, MVP scope, roadmap</p>
+          </div>
+        </div>
+        <div class="deck-card" data-reveal data-delay="3">
+          <div class="deck-card-visual">
+            <span class="dcv-label">strategy-deck.pdf</span>
+          </div>
+          <div class="deck-card-body">
+            <h3>Strategy Deck</h3>
+            <p>Go-to-market plan, acquisition channels, content pillars</p>
+          </div>
+        </div>
+        <div class="deck-card" data-reveal data-delay="4">
+          <div class="deck-card-visual">
+            <span class="dcv-label">investor-deck.pdf</span>
+          </div>
+          <div class="deck-card-body">
+            <h3>Investor Deck</h3>
+            <p>Financials, traction, team, ask &mdash; investor-ready</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================
+       7. WHAT SHIPPED — Section Alt (light gray)
+       =================================================== -->
+  <section class="section-alt" id="shipped">
+    <div class="container" data-reveal>
+      <div class="s-label">The Outcome</div>
+      <h2 class="s-title s-title-shimmer">Everything that was delivered</h2>
+      <div class="shipped-groups">
+
+        <!-- Core Product -->
+        <div class="shipped-group" data-reveal data-delay="1">
+          <div class="shipped-group-header">Core Product</div>
+          <div class="shipped-list">
+            <div class="shipped-item"><div class="si-check"></div>MVP App (iOS + Android)</div>
+            <div class="shipped-item"><div class="si-check"></div>Marketing Website</div>
+            <div class="shipped-item"><div class="si-check"></div>Design System Site (33+ pages)</div>
+            <div class="shipped-item"><div class="si-check"></div>2 Figma Plugins</div>
+          </div>
+        </div>
+
+        <!-- Research -->
+        <div class="shipped-group" data-reveal data-delay="2">
+          <div class="shipped-group-header">Research &mdash; 7 Documents</div>
+          <div class="shipped-list">
+            <div class="shipped-item"><div class="si-check"></div>Market Analysis</div>
+            <div class="shipped-item"><div class="si-check"></div>Competitor Analysis</div>
+            <div class="shipped-item"><div class="si-check"></div>User Insights</div>
+            <div class="shipped-item"><div class="si-check"></div>SWOT Analysis</div>
+            <div class="shipped-item"><div class="si-check"></div>Opportunities</div>
+            <div class="shipped-item"><div class="si-check"></div>Unit Economics</div>
+            <div class="shipped-item"><div class="si-check"></div>Partnerships</div>
+          </div>
+        </div>
+
+        <!-- Definition -->
+        <div class="shipped-group" data-reveal data-delay="3">
+          <div class="shipped-group-header">Definition &mdash; 9 Documents</div>
+          <div class="shipped-list">
+            <div class="shipped-item"><div class="si-check"></div>Personas</div>
+            <div class="shipped-item"><div class="si-check"></div>Product Vision</div>
+            <div class="shipped-item"><div class="si-check"></div>MVP Features</div>
+            <div class="shipped-item"><div class="si-check"></div>Tech Stack</div>
+            <div class="shipped-item"><div class="si-check"></div>User Journeys</div>
+            <div class="shipped-item"><div class="si-check"></div>Roadmap</div>
+            <div class="shipped-item"><div class="si-check"></div>Tone of Voice</div>
+            <div class="shipped-item"><div class="si-check"></div>Social Strategy</div>
+            <div class="shipped-item"><div class="si-check"></div>Content Calendar</div>
+            <div class="shipped-item"><div class="si-check"></div>Information Architecture (45-65 screens mapped)</div>
+          </div>
+        </div>
+
+        <!-- Presentations -->
+        <div class="shipped-group" data-reveal data-delay="4">
+          <div class="shipped-group-header">Presentations &mdash; 4 Branded PDF Decks</div>
+          <div class="shipped-list">
+            <div class="shipped-item"><div class="si-check"></div>Research &amp; Analysis Deck</div>
+            <div class="shipped-item"><div class="si-check"></div>Product Vision Deck</div>
+            <div class="shipped-item"><div class="si-check"></div>Marketing Strategy Deck</div>
+            <div class="shipped-item"><div class="si-check"></div>Investor Pitch Deck</div>
+          </div>
+        </div>
+
+        <!-- Marketing -->
+        <div class="shipped-group" data-reveal data-delay="5">
+          <div class="shipped-group-header">Marketing &mdash; Content Suite</div>
+          <div class="shipped-list">
+            <div class="shipped-item"><div class="si-check"></div>20 Social Posts</div>
+            <div class="shipped-item"><div class="si-check"></div>5 Blog Posts</div>
+            <div class="shipped-item"><div class="si-check"></div>Video Script</div>
+            <div class="shipped-item"><div class="si-check"></div>Audio Production Brief</div>
+            <div class="shipped-item"><div class="si-check"></div>Social Graphics (20 branded PNGs)</div>
+            <div class="shipped-item"><div class="si-check"></div>Promo Video (60-65 seconds)</div>
+          </div>
+        </div>
+
+        <!-- Infrastructure -->
+        <div class="shipped-group" data-reveal data-delay="6">
+          <div class="shipped-group-header">Infrastructure &mdash; Operations</div>
+          <div class="shipped-list">
+            <div class="shipped-item"><div class="si-check"></div>Client Portal</div>
+            <div class="shipped-item"><div class="si-check"></div>Statement of Work (SOW)</div>
+            <div class="shipped-item"><div class="si-check"></div>3 Milestone Invoices</div>
+            <div class="shipped-item"><div class="si-check"></div>Welcome Pack</div>
+            <div class="shipped-item"><div class="si-check"></div>Wireframe Deck</div>
+            <div class="shipped-item"><div class="si-check"></div>Handoff Pack</div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="shipped-stat" data-reveal>
+        <div class="ss-val">70+</div>
+        <div class="ss-lbl">Total deliverables shipped</div>
+      </div>
+      <p class="shipped-punchline" data-reveal>Delivered by one operator in 12 weeks. The client received everything they needed to launch, fundraise, and grow.</p>
+    </div>
+  </section>
+
+  <!-- ===================================================
+       7b. DELIVERABLE GALLERY — Visual previews
+       =================================================== -->
+  <section class="section" id="gallery">
+    <div class="container">
+      <div style="text-align:center;margin-bottom:3.5rem;" data-reveal>
+        <div class="s-label">What It Looks Like</div>
+        <h2 class="s-title s-title-shimmer">The finished product</h2>
+        <p class="s-sub" style="margin:0 auto;">Every deliverable below was generated by the system. Real outputs from a real engagement.</p>
+      </div>
+
+      <!-- MVP App -->
+      <div class="gallery-row" data-reveal>
+        <div class="gallery-text">
+          <div class="gallery-label">MVP Mobile App</div>
+          <h3>iOS + Android — one codebase</h3>
+          <p>Built with Expo and React Native. Firebase authentication, PostHog analytics, push notifications, light/dark mode, and a demo mode for investor presentations — all standard on every engagement.</p>
+          <div class="gallery-tags">
+            <span>Expo</span><span>Firebase</span><span>PostHog</span><span>Demo Mode</span>
+          </div>
+        </div>
+        <div class="gallery-preview" id="gallery-app">
+          <div class="gallery-preview-inner" style="background:linear-gradient(135deg,#0C1035,#1A2E78);">
+            <div class="gallery-preview-label">MVP App — Inside & Out</div>
+            <div style="display:flex;gap:1rem;justify-content:center;align-items:flex-end;">
+              <div style="width:80px;height:160px;background:rgba(255,255,255,0.06);border-radius:12px;border:1px solid rgba(255,255,255,0.1);"></div>
+              <div style="width:80px;height:172px;background:rgba(255,255,255,0.08);border-radius:12px;border:1px solid rgba(255,255,255,0.12);"></div>
+              <div style="width:80px;height:160px;background:rgba(255,255,255,0.06);border-radius:12px;border:1px solid rgba(255,255,255,0.1);"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Marketing Website -->
+      <div class="gallery-row gallery-row-reverse" data-reveal>
+        <div class="gallery-text">
+          <div class="gallery-label">Marketing Website</div>
+          <h3>Next.js — mobile-first, SEO-ready</h3>
+          <p>A complete marketing site with Sanity CMS for blog management, SEO foundations, OG meta tags, and analytics. Deployed to Vercel. The client's public-facing home from day one.</p>
+          <div class="gallery-tags">
+            <span>Next.js</span><span>Tailwind</span><span>Sanity CMS</span><span>Vercel</span>
+          </div>
+        </div>
+        <div class="gallery-preview" id="gallery-website">
+          <div class="gallery-preview-inner" style="background:linear-gradient(135deg,#0C2D4A,#0A1628);">
+            <div class="gallery-preview-label">Marketing Site — Inside & Out</div>
+            <div style="width:100%;max-width:320px;height:180px;background:rgba(255,255,255,0.05);border-radius:8px;border:1px solid rgba(255,255,255,0.08);margin:0 auto;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Design System -->
+      <div class="gallery-row" data-reveal>
+        <div class="gallery-text">
+          <div class="gallery-label">Design System Site</div>
+          <h3>33+ pages of living documentation</h3>
+          <p>Every design token, component, pattern, and guideline — documented on a live Next.js site. Includes brand guidelines, accessibility standards, and product documentation. Plus 2 custom Figma plugins.</p>
+          <div class="gallery-tags">
+            <span>Next.js</span><span>33+ Pages</span><span>Figma Plugins</span><span>WCAG AA</span>
+          </div>
+        </div>
+        <div class="gallery-preview" id="gallery-ds">
+          <div class="gallery-preview-inner" style="background:linear-gradient(135deg,#1A0E30,#2D1B4E);">
+            <div class="gallery-preview-label">Design System — Inside & Out</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:280px;margin:0 auto;">
+              <div style="height:60px;background:rgba(255,255,255,0.05);border-radius:6px;border:1px solid rgba(255,255,255,0.08);"></div>
+              <div style="height:60px;background:rgba(255,255,255,0.05);border-radius:6px;border:1px solid rgba(255,255,255,0.08);"></div>
+              <div style="height:60px;background:rgba(255,255,255,0.05);border-radius:6px;border:1px solid rgba(255,255,255,0.08);"></div>
+              <div style="height:60px;background:rgba(255,255,255,0.05);border-radius:6px;border:1px solid rgba(255,255,255,0.08);"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Investor Deck -->
+      <div class="gallery-row gallery-row-reverse" data-reveal>
+        <div class="gallery-text">
+          <div class="gallery-label">Investor Pitch Deck</div>
+          <h3>Data-driven. Auto-generated. Branded.</h3>
+          <p>Financial projections, market sizing, competitive positioning, traction data, and product screenshots — all pulled from the project files and rendered into a branded PDF via Puppeteer. No PowerPoint. No manual work.</p>
+          <div class="gallery-tags">
+            <span>Puppeteer</span><span>A4 Landscape</span><span>WCAG AA</span><span>Auto-populated</span>
+          </div>
+        </div>
+        <div class="gallery-preview" id="gallery-deck">
+          <div class="gallery-preview-inner" style="background:linear-gradient(135deg,#0C1035,#1A2E78);">
+            <div class="gallery-preview-label">Investor Deck — Inside & Out</div>
+            <div style="width:100%;max-width:280px;height:160px;background:rgba(255,255,255,0.05);border-radius:8px;border:1px solid rgba(255,255,255,0.08);margin:0 auto;display:flex;align-items:center;justify-content:center;">
+              <div style="font-family:var(--font-mono);font-size:0.75rem;color:rgba(255,255,255,0.3);">24 slides</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Client Portal -->
+      <div class="gallery-row" data-reveal>
+        <div class="gallery-text">
+          <div class="gallery-label">Client Portal</div>
+          <h3>Real-time progress. Deliverable downloads.</h3>
+          <p>A password-protected portal where the client tracks project status, views payment milestones, and downloads deliverables as they're produced. Reads STATUS.md in real-time — no manual updates needed.</p>
+          <div class="gallery-tags">
+            <span>localhost:3015</span><span>Real-time</span><span>Status Tracking</span><span>Downloads</span>
+          </div>
+        </div>
+        <div class="gallery-preview" id="gallery-portal">
+          <div class="gallery-preview-inner" style="background:linear-gradient(135deg,#0A1628,#0C2D4A);">
+            <div class="gallery-preview-label">Client Portal — Inside & Out</div>
+            <div style="width:100%;max-width:300px;margin:0 auto;">
+              <div style="height:12px;background:rgba(255,255,255,0.08);border-radius:4px;margin-bottom:8px;width:60%;"></div>
+              <div style="height:8px;background:rgba(255,255,255,0.04);border-radius:3px;margin-bottom:6px;width:90%;"></div>
+              <div style="height:8px;background:rgba(255,255,255,0.04);border-radius:3px;margin-bottom:6px;width:75%;"></div>
+              <div style="height:8px;background:rgba(255,255,255,0.04);border-radius:3px;width:85%;"></div>
+              <div style="height:6px;background:linear-gradient(90deg,rgba(var(--primary-rgb),0.4),rgba(var(--primary-rgb),0.1));border-radius:3px;margin-top:16px;width:70%;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===================================================
+       8. CTA — Dark section
+       =================================================== -->
+  <section class="final-cta">
+    <div class="cta-content" data-reveal>
+      <h2>This is what the workflow produces.</h2>
+      <p class="cta-sub">Every engagement. Every time. One operator.</p>
+      <div class="cta-buttons">
+        <a href="pricing.html" class="btn btn-dark-primary btn-lg">Get the Workflow &mdash; <span data-price-gbp="500">&pound;500</span></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================
+       9. FOOTER — Dark
+       =================================================== -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <div class="logo">VENTRIFY <span class="os">OS</span></div>
+          <p>A product by Ventrify &mdash; the AI-powered venture studio.</p>
+        </div>
+        <div class="footer-links">
+          <a href="system.html">System</a>
+          <a href="showcase.html">Showcase</a>
+          <a href="pricing.html">Pricing</a>
+          <a href="faqs.html">FAQs</a>
+          <a href="../index.html">Ventrify Studio</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 Ventrify. All rights reserved.</p>
+        <p>A product by Ventrify &mdash; <a href="https://ventrify.io" style="color:rgba(255,255,255,0.4);">ventrify.io</a></p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ===================================================
+       JAVASCRIPT
+       =================================================== -->
+  <script>
+    // Hamburger Toggle
+    const hamburger = document.querySelector('.hamburger');
+    const mobileMenu = document.querySelector('.mobile-menu');
+
+    hamburger.addEventListener('click', () => {
+      hamburger.classList.toggle('open');
+      mobileMenu.classList.toggle('open');
+      document.body.style.overflow = mobileMenu.classList.contains('open') ? 'hidden' : '';
+    });
+
+    // Close mobile menu on link click
+    mobileMenu.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => {
+        hamburger.classList.remove('open');
+        mobileMenu.classList.remove('open');
+        document.body.style.overflow = '';
+      });
+    });
+
+    // Scroll Reveal Observer
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('revealed');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, {
+      threshold: 0.01,
+      rootMargin: '0px 0px 120px 0px'
+    });
+
+    document.querySelectorAll('[data-reveal]').forEach(el => {
+      revealObserver.observe(el);
+    });
+
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function(e) {
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          e.preventDefault();
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    });
+  </script>
+  <script src="currency.js" defer></script>
+</body>
+</html>

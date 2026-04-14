@@ -1,0 +1,1498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FAQs &mdash; Ventrify OS</title>
+  <meta name="description" content="Help centre for Ventrify OS. Browse 28 questions across pricing, setup, technical, deliverables, support, and ownership.">
+  <meta property="og:title" content="FAQs &mdash; Ventrify OS">
+  <meta property="og:description" content="Help centre for Ventrify OS. Browse 28 questions across pricing, setup, technical, deliverables, support, and ownership.">
+  <meta property="og:type" content="website">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================
+       DESIGN TOKENS
+       ============================================ */
+    :root {
+      --primary: #0036FF;
+      --primary-light: #3366FF;
+      --primary-rgb: 0,54,255;
+      --bg-dark: #0A0118;
+      --bg-light: #FFFFFF;
+      --surface-dark: #120826;
+      --surface-dark-2: #1A0E30;
+      --surface-card-dark: rgba(255,255,255,0.04);
+      --text-light: #FFFFFF;
+      --text-light-muted: rgba(255,255,255,0.6);
+      --text-light-subtle: rgba(255,255,255,0.6);
+      --text-dark: #141414;
+      --text-dark-muted: #656565;
+      --border-dark: rgba(255,255,255,0.08);
+      --border-light: rgba(0,0,0,0.06);
+
+      --font-heading: 'Inter', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      --radius-sm: 12px;
+      --radius-md: 16px;
+      --radius-card: 20px;
+      --radius-lg: 24px;
+      --radius-pill: 980px;
+
+      --ease-smooth: cubic-bezier(0.6, 0.6, 0, 1);
+      --transition: 0.45s cubic-bezier(0.6, 0.6, 0, 1);
+    }
+
+    /* ============================================
+       BASE RESET
+       ============================================ */
+    *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+    html { scroll-behavior:smooth; }
+    body {
+      background:var(--bg-dark);
+      color:var(--text-dark);
+      font-family:var(--font-body);
+      font-size:17px;
+      overflow-x:hidden;
+      line-height:1.65;
+      font-weight:400;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+    h1,h2,h3,h4,h5 { font-family:var(--font-heading); letter-spacing:-0.02em; font-weight:600; }
+    a { text-decoration:none; color:inherit; }
+    img { max-width:100%; }
+    .skip-link {
+      position:absolute;
+      top:-100px;
+      left:50%;
+      transform:translateX(-50%);
+      background:var(--primary);
+      color:#fff;
+      padding:8px 16px;
+      border-radius:0 0 8px 8px;
+      font-size:0.82rem;
+      font-weight:600;
+      z-index:9999;
+      transition:top 0.2s ease;
+    }
+    .skip-link:focus { top:0; }
+
+    /* ============================================
+       NAVIGATION — Floating Pill
+       ============================================ */
+    nav {
+      position:fixed;
+      top:16px;
+      left:50%;
+      transform:translateX(-50%);
+      z-index:200;
+      display:flex;
+      align-items:center;
+      gap:2px;
+      padding:6px 8px 6px 20px;
+      height:60px;
+      background:rgba(255,255,255,0.88);
+      backdrop-filter:blur(12px);
+      -webkit-backdrop-filter:blur(12px);
+      border-radius:var(--radius-pill);
+      box-shadow:0 1px 2px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.08), 0 16px 56px rgba(0,0,0,0.08);
+      max-width:650px;
+      width:auto;
+    }
+    .logo {
+      font-family:var(--font-heading);
+      font-size:1rem;
+      font-weight:600;
+      letter-spacing:-0.02em;
+      color:var(--text-dark);
+      margin-right:auto;
+      white-space:nowrap;
+      padding-right:1rem;
+    }
+    .logo .os { font-weight:400; color:var(--text-dark-muted); }
+    .nav-links { display:flex; gap:0; align-items:center; }
+    .nav-links a {
+      font-size:0.82rem;
+      font-weight:500;
+      color:var(--text-dark-muted);
+      padding:6px 14px;
+      border-radius:8px;
+      transition:background var(--transition), color var(--transition);
+      white-space:nowrap;
+    }
+    .nav-links a:hover { background:rgba(0,0,0,0.04); color:var(--text-dark); }
+    .nav-links a:focus-visible {
+      outline:2px solid var(--primary);
+      outline-offset:2px;
+      border-radius:4px;
+    }
+    .nav-links a.active { color:var(--text-dark); background:rgba(0,0,0,0.04); }
+    .nav-cta { display:flex; align-items:center; margin-left:4px; }
+    .nav-cta .btn {
+      background:var(--primary);
+      color:#fff;
+      border:none;
+      border-radius:var(--radius-pill);
+      padding:6px 16px;
+      font-weight:600;
+      font-size:0.82rem;
+      cursor:pointer;
+      transition:opacity var(--transition), transform var(--transition);
+      white-space:nowrap;
+    }
+    .nav-cta .btn:hover { opacity:0.9; transform:translateY(-1px); }
+
+    /* -- Buttons -- */
+    .btn {
+      display:inline-flex; align-items:center; justify-content:center;
+      font-family:var(--font-heading); font-weight:600; font-size:0.88rem;
+      letter-spacing:-0.01em;
+      border-radius:var(--radius-pill);
+      padding:0.75rem 1.75rem;
+      min-height:44px;
+      cursor:pointer;
+      transition:transform 0.2s ease, box-shadow var(--transition), background var(--transition), border-color var(--transition), opacity var(--transition);
+      text-decoration:none;
+    }
+    .btn-primary {
+      background:var(--primary);
+      color:#fff;
+      border:none;
+      position:relative;
+      overflow:hidden;
+      box-shadow:0 1px 2px rgba(var(--primary-rgb),0.2), 0 4px 12px rgba(var(--primary-rgb),0.15);
+    }
+    .btn-primary::before {
+      content:'';
+      position:absolute;
+      inset:0;
+      background:linear-gradient(180deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
+      border-radius:inherit;
+      pointer-events:none;
+    }
+    .btn-primary:hover {
+      box-shadow:0 4px 16px rgba(var(--primary-rgb),0.25), 0 1px 2px rgba(var(--primary-rgb),0.15);
+      transform:translateY(-1px);
+    }
+    .btn-primary:active { opacity:0.9; transform:translateY(0); }
+    .btn:focus-visible {
+      outline:2px solid var(--primary);
+      outline-offset:3px;
+    }
+
+    .btn-outline {
+      background:rgba(0,0,0,0.04);
+      color:var(--text-dark);
+      border:1px solid rgba(0,0,0,0.08);
+    }
+    .btn-outline:hover {
+      background:rgba(0,0,0,0.06);
+      border-color:rgba(0,0,0,0.12);
+    }
+
+    /* Hero-specific button variants (on dark bg) */
+    .btn-hero-primary {
+      background:var(--primary);
+      color:#fff;
+      border:none;
+      position:relative;
+      overflow:hidden;
+      box-shadow:0 1px 2px rgba(var(--primary-rgb),0.3), 0 4px 16px rgba(var(--primary-rgb),0.25);
+    }
+    .btn-hero-primary::before {
+      content:'';
+      position:absolute;
+      inset:0;
+      background:linear-gradient(180deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05));
+      border-radius:inherit;
+      pointer-events:none;
+    }
+    .btn-hero-primary:hover {
+      box-shadow:0 4px 24px rgba(var(--primary-rgb),0.35), 0 1px 2px rgba(var(--primary-rgb),0.2);
+      transform:translateY(-1px);
+    }
+    .btn-hero-outline {
+      background:rgba(255,255,255,0.08);
+      color:rgba(255,255,255,0.8);
+      border:1px solid rgba(255,255,255,0.12);
+    }
+    .btn-hero-outline:hover {
+      background:rgba(255,255,255,0.12);
+      border-color:rgba(255,255,255,0.2);
+    }
+
+    /* Dark section button variants */
+    .btn-dark-primary {
+      background:var(--primary);
+      color:#fff;
+      border:none;
+      position:relative;
+      overflow:hidden;
+      box-shadow:0 1px 2px rgba(var(--primary-rgb),0.3), 0 4px 16px rgba(var(--primary-rgb),0.25);
+    }
+    .btn-dark-primary::before {
+      content:'';
+      position:absolute;
+      inset:0;
+      background:linear-gradient(180deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05));
+      border-radius:inherit;
+      pointer-events:none;
+    }
+    .btn-dark-primary:hover {
+      box-shadow:0 4px 24px rgba(var(--primary-rgb),0.35);
+      transform:translateY(-1px);
+    }
+    .btn-dark-outline {
+      background:rgba(255,255,255,0.06);
+      color:rgba(255,255,255,0.7);
+      border:1px solid rgba(255,255,255,0.1);
+    }
+    .btn-dark-outline:hover {
+      background:rgba(255,255,255,0.1);
+      border-color:rgba(255,255,255,0.18);
+    }
+
+    .btn-lg { padding:0.85rem 2.2rem; font-size:0.92rem; }
+
+    /* -- Layout -- */
+    .container { max-width:1080px; margin:0 auto; }
+
+    /* Light section defaults */
+    .section {
+      padding:5.5rem 3rem;
+      background:var(--bg-light);
+    }
+    .section-alt {
+      padding:5.5rem 3rem;
+      background:#FAFAFA;
+    }
+
+    /* -- Scroll Reveal -- */
+    [data-reveal] {
+      opacity:0; transform:translateY(24px);
+      transition:opacity 0.8s var(--ease-smooth), transform 0.8s var(--ease-smooth);
+    }
+    [data-reveal].revealed { opacity:1; transform:translateY(0); }
+    [data-reveal][data-delay="1"] { transition-delay:0.08s; }
+    [data-reveal][data-delay="2"] { transition-delay:0.16s; }
+
+    /* ============================================
+       HERO — Dark to Navy Gradient
+       ============================================ */
+    .hero {
+      min-height:70vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:10rem 3rem 5rem;
+      position:relative;
+      overflow:hidden;
+      text-align:center;
+      background:linear-gradient(180deg,
+        #080B1A 0%,
+        #0C1035 30%,
+        #111B52 65%,
+        #1A2E78 100%);
+      color:#fff;
+    }
+    .hero-content {
+      max-width:1080px; margin:0 auto; width:100%;
+      position:relative; z-index:1;
+      display:flex; flex-direction:column; align-items:center;
+    }
+    .hero-content > * {
+      animation:heroFadeUp 0.9s var(--ease-smooth) both;
+    }
+    .hero-content > *:nth-child(1) { animation-delay:0.05s; }
+    .hero-content > *:nth-child(2) { animation-delay:0.15s; }
+    @keyframes heroFadeUp {
+      from { opacity:0; transform:translateY(32px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    .hero h1 {
+      font-size:clamp(2.6rem, 6.5vw, 4rem);
+      letter-spacing:-0.04em;
+      line-height:1.08;
+      margin-bottom:1.5rem;
+      max-width:820px;
+      font-weight:600;
+      background:linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.7));
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      background-clip:text;
+    }
+    .hero-sub {
+      font-size:1.15rem; line-height:1.75; color:rgba(255,255,255,0.55);
+      max-width:620px; margin-bottom:0; font-weight:400;
+    }
+
+    /* ============================================
+       PAGE INTRO BAND — Dark
+       ============================================ */
+    .page-intro-section {
+      background:var(--bg-dark);
+      padding:5.5rem 3rem;
+    }
+    .page-intro-meta {
+      max-width:780px;
+      margin:0 auto;
+      text-align:center;
+      font-family:var(--font-mono);
+      font-size:0.82rem;
+      letter-spacing:0.02em;
+      color:rgba(255,255,255,0.55);
+      line-height:1.7;
+    }
+    .page-intro-meta .dot {
+      display:inline-block;
+      width:7px; height:7px; border-radius:50%;
+      background:var(--primary);
+      box-shadow:0 0 10px rgba(var(--primary-rgb),0.7);
+      margin-right:8px;
+      vertical-align:middle;
+      transform:translateY(-1px);
+    }
+    .page-intro-meta .sep {
+      margin:0 0.7rem;
+      color:rgba(255,255,255,0.25);
+    }
+    .page-intro-meta a {
+      color:var(--primary);
+      text-decoration:underline;
+      text-underline-offset:3px;
+      transition:opacity var(--transition);
+    }
+    .page-intro-meta a:hover { opacity:0.8; }
+
+    /* ============================================
+       FAQ MAIN CONTENT — Light bg
+       ============================================ */
+    .faq-section {
+      padding:5.5rem 3rem;
+      background:var(--bg-light);
+    }
+    .faq-inner {
+      max-width:1180px;
+      margin:0 auto;
+    }
+
+    /* Search */
+    .search-wrap {
+      position:relative;
+      width:100%;
+      max-width:540px;
+      margin:0 auto;
+    }
+    .search-input {
+      width:100%;
+      padding:0.95rem 1.25rem 0.95rem 3rem;
+      font-family:var(--font-body);
+      font-size:0.95rem;
+      font-weight:400;
+      color:var(--text-dark);
+      background:#F5F5F7;
+      border:1px solid rgba(0,0,0,0.08);
+      border-radius:var(--radius-pill);
+      outline:none;
+      transition:border-color var(--transition), background var(--transition), box-shadow var(--transition);
+    }
+    .search-input::placeholder {
+      color:var(--text-dark-muted);
+      font-weight:400;
+    }
+    .search-input:focus {
+      border-color:var(--primary);
+      background:#fff;
+      box-shadow:0 0 0 4px rgba(var(--primary-rgb),0.1);
+    }
+    .search-icon {
+      position:absolute;
+      left:1.1rem;
+      top:50%;
+      transform:translateY(-50%);
+      width:18px;
+      height:18px;
+      color:var(--text-dark-muted);
+      pointer-events:none;
+    }
+
+    /* Filter pills row */
+    .filter-pills {
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:center;
+      gap:0.5rem;
+      max-width:780px;
+      margin:1.5rem auto 0;
+    }
+    .filter-pill {
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      font-family:var(--font-body);
+      font-size:0.82rem;
+      font-weight:500;
+      color:var(--text-dark);
+      background:#fff;
+      border:1px solid rgba(0,0,0,0.08);
+      padding:0.5rem 1rem;
+      border-radius:var(--radius-pill);
+      cursor:pointer;
+      transition:background var(--transition), color var(--transition), border-color var(--transition), box-shadow var(--transition);
+      min-height:36px;
+      letter-spacing:-0.005em;
+    }
+    .filter-pill:hover {
+      background:#F5F5F7;
+      border-color:rgba(0,0,0,0.14);
+    }
+    .filter-pill.active {
+      background:var(--primary);
+      color:#fff;
+      border-color:var(--primary);
+      box-shadow:0 1px 2px rgba(var(--primary-rgb),0.3), 0 4px 14px rgba(var(--primary-rgb),0.22);
+    }
+    .filter-pill .count {
+      font-family:var(--font-mono);
+      font-size:0.72rem;
+      opacity:0.65;
+    }
+    .filter-pill.active .count { opacity:0.9; }
+    .filter-pill:focus-visible {
+      outline:2px solid var(--primary);
+      outline-offset:2px;
+    }
+
+    /* Two-column grid */
+    .help-grid {
+      display:grid;
+      grid-template-columns:260px 1fr;
+      gap:3rem;
+      align-items:flex-start;
+      margin-top:3.5rem;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      position:sticky;
+      top:120px;
+      align-self:flex-start;
+    }
+    .sidebar-label {
+      font-family:var(--font-mono);
+      font-size:0.7rem;
+      font-weight:500;
+      letter-spacing:0.12em;
+      text-transform:uppercase;
+      color:var(--text-dark-muted);
+      padding:0 1rem 0.85rem;
+    }
+    .sidebar-list {
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+    }
+    .sidebar-item {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:12px 16px;
+      border-radius:var(--radius-sm);
+      background:#fff;
+      border:none;
+      cursor:pointer;
+      font-family:var(--font-body);
+      font-size:0.9rem;
+      font-weight:500;
+      color:var(--text-dark);
+      width:100%;
+      text-align:left;
+      transition:background var(--transition), color var(--transition);
+      letter-spacing:-0.005em;
+    }
+    .sidebar-item:hover {
+      background:rgba(0,0,0,0.025);
+    }
+    .sidebar-item.active {
+      background:#F5F5F7;
+      color:var(--text-dark);
+    }
+    .sidebar-item .badge {
+      font-family:var(--font-mono);
+      font-size:0.7rem;
+      font-weight:500;
+      color:var(--text-dark-muted);
+      background:#F5F5F7;
+      padding:4px 10px;
+      border-radius:var(--radius-pill);
+      min-width:28px;
+      text-align:center;
+      transition:background var(--transition), color var(--transition);
+    }
+    .sidebar-item.active .badge {
+      background:var(--primary);
+      color:#fff;
+    }
+    .sidebar-item:focus-visible {
+      outline:2px solid var(--primary);
+      outline-offset:2px;
+    }
+
+    /* Main column */
+    .help-main { min-width:0; }
+    .faq-cat-block {
+      margin-bottom:2.75rem;
+    }
+    .faq-cat-block:last-of-type { margin-bottom:0; }
+    .faq-cat-heading {
+      font-family:var(--font-mono);
+      font-size:0.72rem;
+      font-weight:500;
+      letter-spacing:0.14em;
+      text-transform:uppercase;
+      color:var(--primary);
+      margin-bottom:1rem;
+      display:flex;
+      align-items:center;
+      gap:0.6rem;
+    }
+    .faq-cat-heading::before {
+      content:'';
+      width:5px; height:5px;
+      border-radius:50%;
+      background:var(--primary);
+      box-shadow:0 0 8px rgba(var(--primary-rgb),0.5);
+    }
+
+    .faq-list {
+      display:flex;
+      flex-direction:column;
+      gap:0.75rem;
+    }
+    .faq-item {
+      background:#fff;
+      border:1px solid rgba(0,0,0,0.08);
+      border-radius:12px;
+      transition:background var(--transition), border-color var(--transition), box-shadow var(--transition);
+      overflow:hidden;
+    }
+    .faq-item:hover {
+      border-color:rgba(0,0,0,0.14);
+    }
+    .faq-item[open] {
+      background:#F5F5F7;
+      border-color:rgba(var(--primary-rgb),0.2);
+      box-shadow:0 4px 18px rgba(var(--primary-rgb),0.05);
+    }
+    .faq-item summary {
+      list-style:none;
+      cursor:pointer;
+      padding:1.25rem 1.5rem;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:1.5rem;
+      font-size:0.95rem;
+      font-weight:500;
+      color:var(--text-dark);
+      transition:color var(--transition);
+    }
+    .faq-item summary::-webkit-details-marker { display:none; }
+    .faq-icon {
+      font-family:var(--font-mono);
+      font-size:1.5rem;
+      font-weight:300;
+      color:var(--text-dark-muted);
+      transition:transform var(--transition), color var(--transition);
+      flex-shrink:0;
+      line-height:1;
+    }
+    .faq-item[open] .faq-icon {
+      transform:rotate(45deg);
+      color:var(--primary);
+    }
+    .faq-answer {
+      padding:0 1.5rem 1.35rem;
+      max-width:760px;
+    }
+    .faq-answer p {
+      font-size:0.95rem;
+      line-height:1.7;
+      color:var(--text-dark-muted);
+      font-weight:400;
+    }
+    .faq-answer a {
+      color:var(--primary);
+      border-bottom:1px solid rgba(var(--primary-rgb),0.3);
+      transition:color var(--transition), border-color var(--transition);
+    }
+    .faq-answer a:hover {
+      color:var(--text-dark);
+      border-color:var(--text-dark);
+    }
+    .faq-answer code {
+      font-family:var(--font-mono);
+      font-size:0.86em;
+      background:#F0F0F2;
+      padding:2px 7px;
+      border-radius:5px;
+      color:var(--text-dark);
+      border:1px solid rgba(0,0,0,0.05);
+    }
+
+    .faq-item.faq-hidden { display:none; }
+    .faq-cat-block.faq-cat-hidden { display:none; }
+
+    .no-results {
+      text-align:center;
+      padding:3rem 1.5rem;
+      background:#F5F5F7;
+      border:1px solid rgba(0,0,0,0.06);
+      border-radius:var(--radius-card);
+      display:none;
+    }
+    .no-results.visible { display:block; }
+    .no-results h3 {
+      font-size:1.05rem;
+      font-weight:600;
+      color:var(--text-dark);
+      margin-bottom:0.5rem;
+    }
+    .no-results p {
+      font-size:0.92rem;
+      color:var(--text-dark-muted);
+    }
+    .no-results a {
+      color:var(--primary);
+      border-bottom:1px solid rgba(var(--primary-rgb),0.3);
+    }
+
+    /* ============================================
+       FINAL CTA — Dark island
+       ============================================ */
+    .final-cta {
+      padding:8rem 3rem;
+      text-align:center;
+      background:var(--bg-dark);
+      position:relative;
+      overflow:hidden;
+    }
+    .final-cta::before {
+      content:'';
+      position:absolute;
+      inset:0;
+      background:radial-gradient(ellipse 700px 300px at 50% 50%, rgba(var(--primary-rgb),0.08), transparent 70%);
+      pointer-events:none;
+    }
+    .final-cta .cta-content { position:relative; z-index:1; }
+    .final-cta h2 {
+      font-size:clamp(2.2rem, 4.5vw, 3.5rem);
+      letter-spacing:-0.03em; line-height:1.1;
+      margin-bottom:1rem; font-weight:600;
+      background:linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.7));
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      background-clip:text;
+    }
+    .final-cta .cta-sub {
+      font-size:1.1rem; color:var(--text-light-muted); line-height:1.7;
+      max-width:580px; margin:0 auto 2.5rem; font-weight:400;
+    }
+    .final-cta .cta-sub a {
+      color:rgba(255,255,255,0.85);
+      border-bottom:1px solid rgba(255,255,255,0.2);
+      transition:color var(--transition), border-color var(--transition);
+    }
+    .final-cta .cta-sub a:hover {
+      color:var(--primary-light);
+      border-color:var(--primary-light);
+    }
+    .final-cta .cta-buttons {
+      display:flex; gap:12px; justify-content:center; flex-wrap:wrap;
+    }
+
+    /* ============================================
+       FOOTER — Dark
+       ============================================ */
+    footer {
+      background:var(--bg-dark);
+      border-top:1px solid rgba(255,255,255,0.06);
+      padding:4rem 3rem 2.5rem;
+    }
+    .footer-inner { max-width:1080px; margin:0 auto; }
+    .footer-top {
+      display:flex; justify-content:space-between;
+      align-items:start; margin-bottom:3rem;
+      gap:2rem;
+    }
+    .footer-brand .logo {
+      margin-bottom:0.75rem;
+      color:rgba(255,255,255,0.7);
+    }
+    .footer-brand .logo .os { color:rgba(255,255,255,0.4); }
+    .footer-brand p {
+      font-size:0.85rem; color:rgba(255,255,255,0.6); line-height:1.7;
+      max-width:260px; font-weight:400;
+    }
+    .footer-links { display:flex; gap:3rem; flex-wrap:wrap; }
+    .footer-links a {
+      font-size:0.88rem; color:rgba(255,255,255,0.6);
+      transition:color var(--transition); font-weight:400;
+    }
+    .footer-links a:hover { color:rgba(255,255,255,0.85); }
+    .footer-bottom {
+      padding-top:2rem;
+      border-top:1px solid rgba(255,255,255,0.06);
+      display:flex; justify-content:space-between;
+      align-items:center; flex-wrap:wrap; gap:1rem;
+    }
+    .footer-bottom p {
+      font-size:0.82rem; color:rgba(255,255,255,0.55);
+    }
+
+    /* ============================================
+       HAMBURGER & MOBILE MENU
+       ============================================ */
+    .hamburger {
+      display:none; flex-direction:column; justify-content:center;
+      align-items:center; width:44px; height:44px; gap:5px;
+      background:transparent; border:none; cursor:pointer;
+      padding:4px; border-radius:var(--radius-sm); flex-shrink:0;
+      transition:background var(--transition);
+    }
+    .hamburger:hover { background:rgba(0,0,0,0.04); }
+    .hamburger-line {
+      display:block; width:20px; height:1.5px; background:var(--text-dark);
+      border-radius:1px; transform-origin:center;
+      transition:transform 0.3s var(--ease-smooth), opacity 0.2s ease;
+    }
+    .hamburger.open .hamburger-line:nth-child(1) { transform:translateY(6.5px) rotate(45deg); }
+    .hamburger.open .hamburger-line:nth-child(2) { opacity:0; transform:scaleX(0); }
+    .hamburger.open .hamburger-line:nth-child(3) { transform:translateY(-6.5px) rotate(-45deg); }
+    .hamburger.open .hamburger-line { background:#fff; }
+
+    .mobile-menu {
+      display:none; position:fixed; top:0; left:0; right:0; bottom:0;
+      z-index:190;
+      background:rgba(10,1,24,0.98);
+      backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+      flex-direction:column; padding:7rem 2rem 3rem;
+      opacity:0; transform:translateY(-8px);
+      transition:opacity 0.35s ease, transform 0.3s var(--ease-smooth);
+      pointer-events:none;
+    }
+    .mobile-menu.open { opacity:1; transform:translateY(0); pointer-events:all; }
+    .mobile-menu a.m-nav-link {
+      display:block; font-family:var(--font-heading); font-size:1.4rem;
+      font-weight:500; letter-spacing:-0.01em; color:rgba(255,255,255,0.75);
+      padding:1.1rem 0; border-bottom:1px solid rgba(255,255,255,0.06);
+      transition:color var(--transition);
+    }
+    .mobile-menu a.m-nav-link:hover { color:#fff; }
+    .mobile-menu a.m-nav-link:focus-visible {
+      outline:2px solid rgba(255,255,255,0.5);
+      outline-offset:2px;
+    }
+    .mobile-menu .m-cta { margin-top:2.5rem; }
+    .mobile-menu .m-cta .btn { width:100%; justify-content:center; font-size:0.92rem; padding:0.95rem 1.5rem; }
+
+    /* ============================================
+       RESPONSIVE -- TABLET (900px)
+       ============================================ */
+    @media(max-width:900px) {
+      nav { padding:6px 12px 6px 16px; max-width:calc(100% - 32px); }
+      .hero { padding:8rem 1.5rem 5rem; min-height:60vh; }
+      .page-intro-section { padding:3rem 1.5rem; }
+      .faq-section { padding:4rem 1.5rem; }
+      .help-grid {
+        grid-template-columns:1fr;
+        gap:2rem;
+        margin-top:2.5rem;
+      }
+      .sidebar {
+        position:static;
+        top:auto;
+      }
+      .sidebar-label { padding:0 0 0.75rem; }
+      .sidebar-list {
+        flex-direction:row;
+        flex-wrap:wrap;
+        gap:6px;
+      }
+      .sidebar-item {
+        flex:0 1 auto;
+        padding:9px 14px;
+        background:#F5F5F7;
+      }
+      .sidebar-item:hover { background:#EDEDF0; }
+      .sidebar-item.active { background:var(--primary); color:#fff; }
+      .sidebar-item.active .badge { background:rgba(255,255,255,0.18); color:#fff; }
+
+      .footer-top { flex-direction:column; }
+      .footer-links { flex-wrap:wrap; gap:1.5rem; }
+    }
+
+    /* ============================================
+       RESPONSIVE -- MOBILE (640px)
+       ============================================ */
+    @media(max-width:640px) {
+      .nav-links { display:none; }
+      .nav-cta { display:none; }
+      .hamburger { display:flex; }
+      .mobile-menu { display:flex; }
+
+      nav { max-width:calc(100% - 24px); }
+
+      .hero { padding:7rem 1.25rem 4rem; min-height:auto; }
+      .hero h1 { font-size:clamp(2rem, 8vw, 2.8rem); }
+      .hero-sub { font-size:1rem; }
+
+      .page-intro-section { padding:2.5rem 1.25rem; }
+      .page-intro-meta { font-size:0.74rem; line-height:1.9; }
+      .page-intro-meta .sep { margin:0 0.45rem; display:inline; }
+
+      .faq-section { padding:3rem 1.25rem; }
+
+      .search-input { font-size:16px; padding:0.85rem 1.1rem 0.85rem 2.85rem; }
+      .search-icon { left:0.95rem; }
+      .filter-pills { gap:0.4rem; margin-top:1.25rem; }
+      .filter-pill { font-size:0.78rem; padding:0.45rem 0.85rem; }
+
+      .help-grid { gap:1.5rem; margin-top:2rem; }
+      .sidebar-list { gap:5px; }
+      .sidebar-item { padding:8px 12px; font-size:0.82rem; }
+      .sidebar-label { font-size:0.66rem; }
+
+      .faq-cat-block { margin-bottom:2rem; }
+      .faq-item summary { font-size:0.92rem; padding:1.05rem 1.2rem; gap:1rem; }
+      .faq-icon { font-size:1.3rem; }
+      .faq-answer { padding:0 1.2rem 1.15rem; }
+      .faq-answer p { font-size:0.9rem; }
+
+      .final-cta { padding:5rem 1.25rem; }
+      .final-cta h2 { font-size:clamp(1.8rem, 7vw, 2.8rem); }
+
+      footer { padding:3rem 1.25rem 2rem; }
+      .footer-bottom { flex-direction:column; align-items:flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to content</a>
+
+  <!-- ═══════════════════════════════════════════
+       NAVIGATION — Floating Pill
+       ═══════════════════════════════════════════ -->
+  <nav>
+    <a href="index.html" class="logo">VENTRIFY <span class="os">OS</span></a>
+    <div class="nav-links">
+      <a href="system.html">System</a>
+      <a href="showcase.html">Showcase</a>
+      <a href="pricing.html">Pricing</a>
+    </div>
+    <div class="nav-cta">
+      <a href="pricing.html" class="btn">Get the Workflow</a>
+    </div>
+    <button class="hamburger" aria-label="Menu">
+      <span class="hamburger-line"></span>
+      <span class="hamburger-line"></span>
+      <span class="hamburger-line"></span>
+    </button>
+  </nav>
+
+  <!-- Mobile Menu -->
+  <div class="mobile-menu">
+    <a href="system.html" class="m-nav-link">System</a>
+    <a href="showcase.html" class="m-nav-link">Showcase</a>
+    <a href="pricing.html" class="m-nav-link">Pricing</a>
+    <div class="m-cta">
+      <a href="pricing.html" class="btn btn-dark-primary btn-lg">Get the Workflow</a>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       1. HERO — Dark to Navy Gradient
+       ═══════════════════════════════════════════ -->
+  <section class="hero" id="main-content">
+    <div class="hero-content">
+      <h1>Frequently asked<br><span style="background:linear-gradient(135deg,var(--primary),var(--primary-light));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">questions</span></h1>
+      <p class="hero-sub">Everything you need to know about Ventrify OS. Browse by category or search for a specific topic.</p>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       2. PAGE INTRO — Dark band
+       ═══════════════════════════════════════════ -->
+  <section class="page-intro-section">
+    <div data-reveal>
+      <p class="page-intro-meta">
+        <span class="dot"></span>Help Centre
+        <span class="sep">&middot;</span>
+        28 questions answered
+        <span class="sep">&middot;</span>
+        Can&rsquo;t find yours? <a href="mailto:hello@ventrify.io">Contact us</a>
+      </p>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       3. FAQ MAIN CONTENT — Light bg
+       ═══════════════════════════════════════════ -->
+  <section class="faq-section">
+    <div class="faq-inner">
+
+      <!-- Search bar -->
+      <div data-reveal>
+        <div class="search-wrap">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="7"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" id="faq-search" class="search-input" placeholder="Search questions..." aria-label="Search questions">
+        </div>
+
+        <!-- Filter pills row -->
+        <div class="filter-pills" role="tablist" aria-label="FAQ category filters">
+          <button class="filter-pill active" data-filter="all" role="tab" aria-selected="true">All <span class="count">28</span></button>
+          <button class="filter-pill" data-filter="pricing" role="tab" aria-selected="false">Pricing <span class="count">5</span></button>
+          <button class="filter-pill" data-filter="setup" role="tab" aria-selected="false">Setup <span class="count">5</span></button>
+          <button class="filter-pill" data-filter="technical" role="tab" aria-selected="false">Technical <span class="count">5</span></button>
+          <button class="filter-pill" data-filter="deliverables" role="tab" aria-selected="false">Deliverables <span class="count">5</span></button>
+          <button class="filter-pill" data-filter="support" role="tab" aria-selected="false">Support <span class="count">4</span></button>
+          <button class="filter-pill" data-filter="ownership" role="tab" aria-selected="false">Ownership <span class="count">4</span></button>
+        </div>
+      </div>
+
+      <!-- Two-column layout -->
+      <div class="help-grid">
+
+        <!-- Sidebar -->
+        <aside class="sidebar" aria-label="Browse FAQ topics">
+          <div class="sidebar-label">Browse by topic</div>
+          <div class="sidebar-list" role="tablist">
+            <button class="sidebar-item active" data-filter="all" role="tab" aria-selected="true">
+              <span>All Questions</span>
+              <span class="badge">28</span>
+            </button>
+            <button class="sidebar-item" data-filter="pricing" role="tab" aria-selected="false">
+              <span>Pricing</span>
+              <span class="badge">5</span>
+            </button>
+            <button class="sidebar-item" data-filter="setup" role="tab" aria-selected="false">
+              <span>Setup</span>
+              <span class="badge">5</span>
+            </button>
+            <button class="sidebar-item" data-filter="technical" role="tab" aria-selected="false">
+              <span>Technical</span>
+              <span class="badge">5</span>
+            </button>
+            <button class="sidebar-item" data-filter="deliverables" role="tab" aria-selected="false">
+              <span>Deliverables</span>
+              <span class="badge">5</span>
+            </button>
+            <button class="sidebar-item" data-filter="support" role="tab" aria-selected="false">
+              <span>Support</span>
+              <span class="badge">4</span>
+            </button>
+            <button class="sidebar-item" data-filter="ownership" role="tab" aria-selected="false">
+              <span>Ownership</span>
+              <span class="badge">4</span>
+            </button>
+          </div>
+        </aside>
+
+        <!-- Main column -->
+        <div class="help-main">
+
+          <!-- Pricing -->
+          <div class="faq-cat-block" data-category="pricing">
+            <div class="faq-cat-heading">Pricing</div>
+            <div class="faq-list">
+              <details class="faq-item" data-category="pricing">
+                <summary>
+                  <span>How much does the workflow cost?</span>
+                  <span class="faq-icon" aria-hidden="true">+</span>
+                </summary>
+                <div class="faq-answer">
+                  <p><span data-price-gbp="500">&pound;500</span>. One-time payment. No subscription, no recurring fees.</p>
+                </div>
+              </details>
+              <details class="faq-item" data-category="pricing">
+                <summary>
+                  <span>Is the price in different currencies?</span>
+                  <span class="faq-icon" aria-hidden="true">+</span>
+                </summary>
+                <div class="faq-answer">
+                  <p>Yes &mdash; the site auto-detects your location and shows the price in your local currency (GBP, USD, AED, CAD, or SGD). The actual transaction will be in GBP via Stripe, with your card&rsquo;s normal currency conversion.</p>
+                </div>
+              </details>
+              <details class="faq-item" data-category="pricing">
+                <summary>
+                  <span>Are there discounts for multiple seats?</span>
+                  <span class="faq-icon" aria-hidden="true">+</span>
+                </summary>
+                <div class="faq-answer">
+                  <p>The workflow is licensed per operator. Contact us for team licensing if you need multiple seats.</p>
+                </div>
+              </details>
+              <details class="faq-item" data-category="pricing">
+                <summary>
+                  <span>Do I get future updates?</span>
+                  <span class="faq-icon" aria-hidden="true">+</span>
+                </summary>
+                <div class="faq-answer">
+                  <p>Yes. All workflow updates are free for life. When new features, agents, or tools are added to the system, you get them at no extra cost.</p>
+                </div>
+              </details>
+              <details class="faq-item" data-category="pricing">
+                <summary>
+                  <span>What&rsquo;s your refund policy?</span>
+                  <span class="faq-icon" aria-hidden="true">+</span>
+                </summary>
+                <div class="faq-answer">
+                  <p>If the workflow doesn&rsquo;t run on your machine after following the setup guide, we&rsquo;ll refund you in full within 14 days of purchase.</p>
+                </div>
+              </details>
+            </div>
+          </div>
+
+          <!-- Setup -->
+          <div class="faq-cat-block" data-category="setup">
+            <div class="faq-cat-heading">Setup</div>
+            <div class="faq-list">
+              <details class="faq-item" data-category="setup">
+                <summary>
+                  <span>What do I need to install before I can use this?</span>
+                  <span class="faq-icon" aria-hidden="true">+</span>
+                </summary>
+                <div class="faq-answer">
+                  <p>VS Code (free), Claude Code extension (requires a Claude subscription), Node.js 18+, and Git. The setup guide walks you through installing each one.</p>
+                </div>
+              </details>
+              <details class="faq-item" data-category="setup">
+                <summary>
+                  <span>How long does setup take?</span>
+                  <span class="faq-icon" aria-hidden="true">+</span>
+                </summary>
+                <div class="faq-answer">
+                  <p>Around 30 minutes if you&rsquo;re starting from scratch. Faster if you already have VS Code and Node installed.</p>
+                </div>
+              </details>
+              <details class="faq-item" data-category="setup">
+                <summary>
+                  <span>Do I need a Claude API key or subscription?</span>
+                  <span class="faq-icon" aria-hidden="true">+</span>
+                </summary>
+                <div class="faq-answer">
+                  <p>Yes. You need an active Claude subscription to use Claude Code. The workflow runs entirely through Claude Code &mdash; we don&rsquo;t access any APIs separately.</p>
+                </div>
+              </details>
+              <details class="faq-item" data-category="setup">
+                <summary>
+                  <span>Can I run this on Windows? Mac? Linux?</span>
+                  <span class="faq-icon" aria-hidden="true">+</span>
+                </summary>
+                <div class="faq-answer">
+                  <p>All three. The workflow uses cross-platform tools (Node, Git, VS Code). Some optional tools like FFmpeg need separate installation per OS &mdash; covered in the setup guide.</p>
+                </div>
+              </details>
+              <details class="faq-item" data-category="setup">
+                <summary>
+                  <span>What if I get stuck during setup?</span>
+                  <span class="faq-icon" aria-hidden="true">+</span>
+                </summary>
+                <div class="faq-answer">
+                  <p>The setup guide covers common issues. If you hit something the guide doesn&rsquo;t cover, email <a href="mailto:hello@ventrify.io">hello@ventrify.io</a> and we&rsquo;ll help.</p>
+                </div>
+              </details>
+            </div>
+          </div>
+
+          <!-- Technical -->
+          <div class="faq-cat-block" data-category="technical">
+            <div class="faq-cat-heading">Technical</div>
+            <div class="faq-list">
+              <details class="faq-item" data-category="technical">
+                <summary>
+                  <span>Do I need to be a developer?</span>
+                  <span class="faq-icon" aria-hidden="true">+</span>
+                </summary>
+                <div class="faq-answer">
+                  <p>No. Basic comfort with VS Code and a terminal is enough. If you can run <code>npm install</code>, you can run this workflow.</p>
+                </div>
+              </details>
+              <details class="faq-item" data-category="technical">
+                <summary>
+                  <span>What programming languages does this use?</span>
+                  <span class="faq-icon" aria-hidden="true">+</span>
+                </summary>
+                <div class="faq-answer">
+                  <p>The workflow uses Node.js (JavaScript) for tools and PDF generators. The MVP app is built with React Native (JavaScript/TypeScript). The marketing site is Next.js. You don&rsquo;t need to write any of this &mdash; Claude does.</p>
+                </div>
+              </details>
+              <details class="faq-item" data-category="technical">
+                <summary>
+                  <span>Does this require a database or backend server?</span>
+                  <span class="faq-icon" aria-hidden="true">+</span>
+                </summary>
+                <div class="faq-answer">
+                  <p>No. The workflow itself runs entirely in your code editor. The deliverables it produces (apps, websites) may use external services like Firebase, but the workflow doesn&rsquo;t require its own backend.</p>
+                </div>
+              </details>
+              <details class="faq-item" data-category="technical">
+                <summary>
+                  <span>What if Claude makes a mistake?</span>
+                  <span class="faq-icon" aria-hidden="true">+</span>
+                </summary>
+                <div class="faq-answer">
+                  <p>The workflow includes 3 QA validators that catch errors before deliverables ship. The persistent memory system also learns from past sessions. You always review and approve outputs at each gate review.</p>
+                </div>
+              </details>
+              <details class="faq-item" data-category="technical">
+                <summary>
+                  <span>Can I customise the workflow?</span>
+                  <span class="faq-icon" aria-hidden="true">+</span>
+                </summary>
+                <div class="faq-answer">
+                  <p>Yes. The <code>CLAUDE.md</code> file is yours to edit. You can adjust phase orders, add your own deliverables, customise the brand kit defaults &mdash; anything. The workflow is a starting point, not a cage.</p>
+                </div>
+              </details>
+            </div>
+          </div>
+
+          <!-- Deliverables -->
+          <div class="faq-cat-block" data-category="deliverables">
+            <div class="faq-cat-heading">Deliverables</div>
+            <div class="faq-list">
+              <details class="faq-item" data-category="deliverables">
+                <summary>
+                  <span>What does the workflow actually produce?</span>
+                  <span class="faq-icon" aria-hidden="true">+</span>
+                </summary>
+                <div class="faq-answer">
+                  <p>70+ deliverables across 7 categories: research (7 docs), definition (7 docs), 4 PDF presentation decks, MVP app (iOS + Android), marketing website, design system + 3 Figma plugins, social content, video, and operations files (SOW, invoices, portal). See the <a href="showcase.html">showcase page</a> for examples.</p>
+                </div>
+              </details>
+              <details class="faq-item" data-category="deliverables">
+                <summary>
+                  <span>Are the deliverables fully branded for each client?</span>
+                  <span class="faq-icon" aria-hidden="true">+</span>
+                </summary>
+                <div class="faq-answer">
+                  <p>Yes. The brand kit step in Phase 0 captures the client&rsquo;s colours, fonts, logo, and tone. Every deliverable uses these &mdash; including 37 auto-sourced brand photos that match the client&rsquo;s industry and style.</p>
+                </div>
+              </details>
+              <details class="faq-item" data-category="deliverables">
+                <summary>
+                  <span>Can I sell the deliverables to my client?</span>
+                  <span class="faq-icon" aria-hidden="true">+</span>
+                </summary>
+                <div class="faq-answer">
+                  <p>Yes. Anything the workflow produces is yours to deliver to your client. They become the IP owner once you hand off.</p>
+                </div>
+              </details>
+              <details class="faq-item" data-category="deliverables">
+                <summary>
+                  <span>How long does a typical engagement take?</span>
+                  <span class="faq-icon" aria-hidden="true">+</span>
+                </summary>
+                <div class="faq-answer">
+                  <p>6&ndash;8 weeks from brief to launched product. Some phases run in parallel, which is what makes the speed possible.</p>
+                </div>
+              </details>
+              <details class="faq-item" data-category="deliverables">
+                <summary>
+                  <span>What if the client wants something the workflow doesn&rsquo;t include?</span>
+                  <span class="faq-icon" aria-hidden="true">+</span>
+                </summary>
+                <div class="faq-answer">
+                  <p>The workflow handles 70+ standard deliverables. For anything custom, you can extend the workflow yourself or invoice the client separately.</p>
+                </div>
+              </details>
+            </div>
+          </div>
+
+          <!-- Support -->
+          <div class="faq-cat-block" data-category="support">
+            <div class="faq-cat-heading">Support</div>
+            <div class="faq-list">
+              <details class="faq-item" data-category="support">
+                <summary>
+                  <span>Do you offer support?</span>
+                  <span class="faq-icon" aria-hidden="true">+</span>
+                </summary>
+                <div class="faq-answer">
+                  <p>The setup guide and workflow documentation cover most cases. For specific issues, email <a href="mailto:hello@ventrify.io">hello@ventrify.io</a> &mdash; we respond within 48 hours.</p>
+                </div>
+              </details>
+              <details class="faq-item" data-category="support">
+                <summary>
+                  <span>Is there a community?</span>
+                  <span class="faq-icon" aria-hidden="true">+</span>
+                </summary>
+                <div class="faq-answer">
+                  <p>Not yet. As more practitioners buy the workflow, we&rsquo;ll build one. For now, support is direct.</p>
+                </div>
+              </details>
+              <details class="faq-item" data-category="support">
+                <summary>
+                  <span>What if I find a bug?</span>
+                  <span class="faq-icon" aria-hidden="true">+</span>
+                </summary>
+                <div class="faq-answer">
+                  <p>Email us with details. We push fixes to the workflow regularly, and you&rsquo;ll get the update for free.</p>
+                </div>
+              </details>
+              <details class="faq-item" data-category="support">
+                <summary>
+                  <span>Can I get a 1:1 call to walk through the workflow?</span>
+                  <span class="faq-icon" aria-hidden="true">+</span>
+                </summary>
+                <div class="faq-answer">
+                  <p>We don&rsquo;t currently offer 1:1 onboarding. The demo video covers a complete engagement walkthrough. If demand grows, we may add this.</p>
+                </div>
+              </details>
+            </div>
+          </div>
+
+          <!-- Ownership -->
+          <div class="faq-cat-block" data-category="ownership">
+            <div class="faq-cat-heading">Ownership</div>
+            <div class="faq-list">
+              <details class="faq-item" data-category="ownership">
+                <summary>
+                  <span>Who owns the deliverables I produce?</span>
+                  <span class="faq-icon" aria-hidden="true">+</span>
+                </summary>
+                <div class="faq-answer">
+                  <p>You do. Once you hand off to your client, they own the IP. You own the workflow you used to produce it.</p>
+                </div>
+              </details>
+              <details class="faq-item" data-category="ownership">
+                <summary>
+                  <span>Can I share the workflow with team members?</span>
+                  <span class="faq-icon" aria-hidden="true">+</span>
+                </summary>
+                <div class="faq-answer">
+                  <p>The workflow is licensed per operator. If multiple people in your team will be running the workflow, you need multiple licenses.</p>
+                </div>
+              </details>
+              <details class="faq-item" data-category="ownership">
+                <summary>
+                  <span>Can I resell the workflow itself?</span>
+                  <span class="faq-icon" aria-hidden="true">+</span>
+                </summary>
+                <div class="faq-answer">
+                  <p>No. The workflow is licensed for your use to deliver client engagements. You cannot redistribute, resell, or rebrand the workflow itself.</p>
+                </div>
+              </details>
+              <details class="faq-item" data-category="ownership">
+                <summary>
+                  <span>What happens if Ventrify shuts down?</span>
+                  <span class="faq-icon" aria-hidden="true">+</span>
+                </summary>
+                <div class="faq-answer">
+                  <p>The workflow you&rsquo;ve purchased is yours forever. It runs entirely on your machine through Claude Code &mdash; there&rsquo;s no Ventrify server it depends on. Even if we vanished, your workflow would keep working.</p>
+                </div>
+              </details>
+            </div>
+          </div>
+
+          <!-- No results -->
+          <div class="no-results" id="no-results">
+            <h3>No matching questions</h3>
+            <p>Try a different search term or category, or email <a href="mailto:hello@ventrify.io">hello@ventrify.io</a> and we&rsquo;ll answer directly.</p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       4. FINAL CTA — Dark island
+       ═══════════════════════════════════════════ -->
+  <section class="final-cta">
+    <div class="cta-content" data-reveal>
+      <h2>Still have questions?</h2>
+      <p class="cta-sub">Email <a href="mailto:hello@ventrify.io">hello@ventrify.io</a> and we&rsquo;ll get back to you within 48 hours.</p>
+      <div class="cta-buttons">
+        <a href="pricing.html" class="btn btn-dark-primary btn-lg">Get the Workflow &mdash; <span data-price-gbp="500">&pound;500</span></a>
+        <a href="mailto:hello@ventrify.io" class="btn btn-dark-outline btn-lg">Email Us</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       FOOTER
+       ═══════════════════════════════════════════ -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <div class="logo">VENTRIFY <span class="os">OS</span></div>
+          <p>A product by Ventrify &mdash; the AI-powered venture studio.</p>
+        </div>
+        <div class="footer-links">
+          <a href="system.html">System</a>
+          <a href="showcase.html">Showcase</a>
+          <a href="pricing.html">Pricing</a>
+          <a href="faqs.html">FAQs</a>
+          <a href="../index.html">Ventrify Studio</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 Ventrify. All rights reserved.</p>
+        <p>A product by Ventrify &mdash; <a href="https://ventrify.io" style="color:rgba(255,255,255,0.4);">ventrify.io</a></p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ═══════════════════════════════════════════
+       JAVASCRIPT
+       ═══════════════════════════════════════════ -->
+  <script>
+    // Hamburger Toggle
+    const hamburger = document.querySelector('.hamburger');
+    const mobileMenu = document.querySelector('.mobile-menu');
+
+    hamburger.addEventListener('click', () => {
+      hamburger.classList.toggle('open');
+      mobileMenu.classList.toggle('open');
+      document.body.style.overflow = mobileMenu.classList.contains('open') ? 'hidden' : '';
+    });
+
+    mobileMenu.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => {
+        hamburger.classList.remove('open');
+        mobileMenu.classList.remove('open');
+        document.body.style.overflow = '';
+      });
+    });
+
+    // Scroll Reveal Observer
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('revealed');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, {
+      threshold: 0.01,
+      rootMargin: '0px 0px 120px 0px'
+    });
+
+    document.querySelectorAll('[data-reveal]').forEach(el => {
+      revealObserver.observe(el);
+    });
+
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function(e) {
+        const href = this.getAttribute('href');
+        if (href.length <= 1) return;
+        const target = document.querySelector(href);
+        if (target) {
+          e.preventDefault();
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    });
+
+    // ============================================
+    // FAQ Search + Category Filter (sidebar + pills synced)
+    // ============================================
+    const searchInput = document.getElementById('faq-search');
+    const filterPills = document.querySelectorAll('.filter-pill');
+    const sidebarItems = document.querySelectorAll('.sidebar-item');
+    const faqItems = document.querySelectorAll('.faq-item');
+    const faqCatBlocks = document.querySelectorAll('.faq-cat-block');
+    const noResults = document.getElementById('no-results');
+
+    let activeCategory = 'all';
+    let activeQuery = '';
+
+    function applyFilters() {
+      const q = activeQuery.trim().toLowerCase();
+      let visibleCount = 0;
+
+      faqItems.forEach(item => {
+        const cat = item.getAttribute('data-category');
+        const summaryText = item.querySelector('summary span')?.textContent?.toLowerCase() || '';
+        const answerText = item.querySelector('.faq-answer')?.textContent?.toLowerCase() || '';
+        const haystack = summaryText + ' ' + answerText;
+
+        const catMatch = (activeCategory === 'all') || (cat === activeCategory);
+        const queryMatch = (q === '') || haystack.includes(q);
+
+        if (catMatch && queryMatch) {
+          item.classList.remove('faq-hidden');
+          visibleCount++;
+        } else {
+          item.classList.add('faq-hidden');
+          item.removeAttribute('open');
+        }
+      });
+
+      // Hide whole category blocks that have no visible items
+      faqCatBlocks.forEach(block => {
+        const visibleInBlock = block.querySelectorAll('.faq-item:not(.faq-hidden)').length;
+        if (visibleInBlock === 0) {
+          block.classList.add('faq-cat-hidden');
+        } else {
+          block.classList.remove('faq-cat-hidden');
+        }
+      });
+
+      // Toggle no-results message
+      if (visibleCount === 0) {
+        noResults.classList.add('visible');
+      } else {
+        noResults.classList.remove('visible');
+      }
+    }
+
+    function setActiveCategory(cat) {
+      activeCategory = cat;
+
+      filterPills.forEach(p => {
+        const isActive = p.getAttribute('data-filter') === cat;
+        p.classList.toggle('active', isActive);
+        p.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      });
+
+      sidebarItems.forEach(s => {
+        const isActive = s.getAttribute('data-filter') === cat;
+        s.classList.toggle('active', isActive);
+        s.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      });
+
+      applyFilters();
+    }
+
+    searchInput.addEventListener('input', (e) => {
+      activeQuery = e.target.value;
+      applyFilters();
+    });
+
+    filterPills.forEach(pill => {
+      pill.addEventListener('click', () => {
+        setActiveCategory(pill.getAttribute('data-filter'));
+      });
+    });
+
+    sidebarItems.forEach(item => {
+      item.addEventListener('click', () => {
+        setActiveCategory(item.getAttribute('data-filter'));
+      });
+    });
+  </script>
+  <script src="currency.js" defer></script>
+</body>
+</html>

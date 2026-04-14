@@ -1,0 +1,3 @@
+# No parent-dir exclusions needed — this folder is the project root
+.DS_Store
+**/.DS_Store

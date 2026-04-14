@@ -8,213 +8,1163 @@
   <meta property="og:title" content="The AI tools transforming how we build digital products in 2026">
   <meta property="og:description" content="From design generation to code review — the specific AI tools we use across our venture builds and why.">
   <meta property="og:type" content="article">
-  <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles/tokens.css">
-  <link rel="stylesheet" href="styles/shared.css">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
-    /* PAGE-SPECIFIC STYLES ONLY */
-    .article-hero { padding:9rem 3rem 0; position:relative; }
-    .article-hero-inner { max-width:800px; margin:0 auto; padding-bottom:3rem; }
-    .back-link { display:inline-flex; align-items:center; gap:8px; font-size:0.82rem; font-weight:600; color:var(--muted); margin-bottom:2.5rem; transition:color var(--transition-fast); }
-    .back-link:hover { color:var(--text); }
-    .article-category { display:inline-block; font-family:var(--font-heading); font-size:0.7rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--accent); background:rgba(0,184,160,0.08); padding:4px 12px; border-radius:6px; margin-bottom:1rem; }
-    .article-title { font-size:clamp(2rem,4.5vw,3.2rem); letter-spacing:-0.025em; line-height:1.1; margin-bottom:1.5rem; color:var(--text); }
-    .article-meta { display:flex; align-items:center; gap:1rem; font-size:0.82rem; color:var(--muted); flex-wrap:wrap; }
-    .article-meta-dot { width:3px; height:3px; border-radius:50%; background:var(--muted); }
-    .article-hero-img { width:100%; max-width:800px; margin:0 auto 4rem; display:block; border-radius:var(--radius-card); overflow:hidden; box-shadow:var(--shadow-raised); }
-    .article-hero-img img { width:100%; display:block; }
-    .article-body { max-width:680px; margin:0 auto; padding:0 3rem 4rem; }
-    .article-body h2 { font-family:var(--font-heading); font-size:1.4rem; letter-spacing:-0.015em; margin:3rem 0 1rem; color:var(--text); }
-    .article-body h3 { font-family:var(--font-heading); font-size:1.15rem; margin:2.5rem 0 0.75rem; color:var(--text); }
-    .article-body p { font-size:0.95rem; line-height:1.85; color:var(--muted); margin-bottom:1.25rem; }
-    .article-body ul, .article-body ol { padding-left:1.5rem; margin-bottom:1.25rem; }
-    .article-body li { font-size:0.95rem; line-height:1.85; color:var(--muted); margin-bottom:0.5rem; }
-    .article-body strong { color:var(--text); font-weight:600; }
-    .pull-quote { border-left:3px solid var(--brand); padding:1.25rem 0 1.25rem 1.5rem; margin:2rem 0; font-size:1.05rem; line-height:1.7; color:var(--text); font-weight:500; font-style:italic; }
-    .highlight-box { background:rgba(0,184,160,0.06); border-radius:var(--radius-card); padding:1.5rem 2rem; margin:2rem 0; }
-    .highlight-box h4 { font-family:var(--font-heading); font-size:0.85rem; letter-spacing:0.05em; color:var(--accent); margin-bottom:1rem; text-transform:uppercase; }
-    .highlight-box p { color:var(--text); margin-bottom:0; }
-    .highlight-box ul { margin-bottom:0; }
-    .article-tags { display:flex; gap:8px; flex-wrap:wrap; padding:2rem 0; border-top:1px solid var(--border); margin-top:3rem; }
-    .article-tag { font-size:0.72rem; font-weight:600; letter-spacing:0.06em; padding:5px 12px; border-radius:6px; background:var(--surface-card); color:var(--muted); box-shadow:var(--shadow-btn); }
-    .more-articles { max-width:1200px; margin:0 auto; padding:4rem 3rem 2rem; }
-    .more-articles-heading { font-family:var(--font-heading); font-size:1.1rem; color:var(--text); margin-bottom:2rem; }
-    .more-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1.5rem; }
-    .more-card { background:var(--surface-card); border:1px solid rgba(255,255,255,0.06); border-radius:var(--radius-card); overflow:hidden; transition:transform 0.25s var(--ease-spring), border-color 0.25s ease; text-decoration:none; display:block; }
-    .more-card:hover { transform:translateY(-4px); border-color:rgba(255,255,255,0.12); }
-    .more-card img { width:100%; height:180px; object-fit:cover; display:block; }
-    .more-card-body { padding:1.25rem; }
-    .more-card-cat { font-family:var(--font-heading); font-size:0.65rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--accent); margin-bottom:0.5rem; }
-    .more-card-title { font-family:var(--font-heading); font-size:0.9rem; color:var(--text); line-height:1.35; }
-    .newsletter-section { max-width:800px; margin:0 auto; padding:4rem 3rem; text-align:center; }
-    .nl-input { background:var(--surface-card); border:none; border-radius:var(--radius-sm); padding:0.85rem 1.25rem; font-size:0.875rem; color:var(--text); font-family:var(--font-body); box-shadow:var(--shadow-inset); outline:none; width:100%; max-width:320px; }
-    .nl-input:focus { box-shadow:var(--shadow-inset), 0 0 0 2px rgba(110,58,250,0.2); }
-    .nl-input::placeholder { color:var(--muted); }
+    /* ============================================
+       DESIGN TOKENS
+       ============================================ */
+    :root {
+      --primary: #0036FF;
+      --primary-light: #3366FF;
+      --primary-rgb: 0,54,255;
+      --bg-dark: #0A0118;
+      --bg-light: #FFFFFF;
+      --surface-dark: #120826;
+      --surface-dark-2: #1A0E30;
+      --surface-card-dark: rgba(255,255,255,0.04);
+      --text-light: #FFFFFF;
+      --text-light-muted: rgba(255,255,255,0.6);
+      --text-light-subtle: rgba(255,255,255,0.6);
+      --text-dark: #141414;
+      --text-dark-muted: #656565;
+      --border-dark: rgba(255,255,255,0.08);
+      --border-light: rgba(0,0,0,0.06);
+
+      --font-heading: 'Inter', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      --radius-sm: 12px;
+      --radius-md: 16px;
+      --radius-card: 20px;
+      --radius-lg: 24px;
+      --radius-pill: 980px;
+
+      --ease-smooth: cubic-bezier(0.6, 0.6, 0, 1);
+      --transition: 0.45s cubic-bezier(0.6, 0.6, 0, 1);
+    }
+
+    /* ============================================
+       BASE RESET
+       ============================================ */
+    *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+    html { scroll-behavior:smooth; }
+    body {
+      background:var(--bg-dark);
+      color:var(--text-dark);
+      font-family:var(--font-body);
+      font-size:17px;
+      overflow-x:hidden;
+      line-height:1.65;
+      font-weight:400;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+    h1,h2,h3,h4,h5 { font-family:var(--font-heading); letter-spacing:-0.02em; font-weight:600; }
+    a { text-decoration:none; color:inherit; }
+    img { max-width:100%; }
+    .skip-link {
+      position:absolute; top:-100px; left:50%;
+      transform:translateX(-50%);
+      background:var(--primary); color:#fff;
+      padding:8px 16px; border-radius:0 0 8px 8px;
+      font-size:0.82rem; font-weight:600;
+      z-index:9999; transition:top 0.2s ease;
+    }
+    .skip-link:focus { top:0; }
+
+    /* ============================================
+       NAVIGATION — Floating Pill + Extras Pill
+       ============================================ */
+    .nav-wrap {
+      position:fixed; top:16px; left:50%;
+      transform:translateX(-50%);
+      z-index:200;
+      display:flex; align-items:center; gap:8px;
+      max-width:calc(100% - 24px);
+    }
+    nav {
+      display:flex; align-items:center; gap:2px;
+      padding:6px 8px 6px 20px;
+      height:60px;
+      background:rgba(255,255,255,0.88);
+      backdrop-filter:blur(12px);
+      -webkit-backdrop-filter:blur(12px);
+      border-radius:var(--radius-pill);
+      box-shadow:0 1px 2px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.08), 0 16px 56px rgba(0,0,0,0.08);
+    }
+    .logo {
+      font-family:var(--font-heading);
+      font-size:1rem; font-weight:600;
+      letter-spacing:-0.02em;
+      color:var(--text-dark);
+      margin-right:auto;
+      white-space:nowrap;
+      padding-right:1rem;
+    }
+    .logo .os { font-weight:400; color:var(--text-dark-muted); }
+    .nav-links { display:flex; gap:0; align-items:center; }
+    .nav-links a {
+      font-size:0.82rem; font-weight:500;
+      color:var(--text-dark-muted);
+      padding:6px 14px; border-radius:8px;
+      transition:background var(--transition), color var(--transition);
+      white-space:nowrap;
+    }
+    .nav-links a:hover { background:rgba(0,0,0,0.04); color:var(--text-dark); }
+    .nav-links a.active { color:var(--text-dark); background:rgba(0,0,0,0.04); }
+    .nav-links a:focus-visible {
+      outline:2px solid var(--primary);
+      outline-offset:2px; border-radius:4px;
+    }
+    .nav-extras { display:flex; align-items:center; gap:4px; }
+    .nav-extras .btn {
+      background:var(--primary); color:#fff; border:none;
+      border-radius:var(--radius-pill);
+      padding:6px 16px;
+      font-weight:600; font-size:0.82rem;
+      cursor:pointer;
+      transition:opacity var(--transition), transform var(--transition);
+      white-space:nowrap;
+      min-height:unset;
+    }
+    .nav-extras .btn:hover { opacity:0.9; transform:translateY(-1px); }
+
+    /* Buttons */
+    .btn {
+      display:inline-flex; align-items:center; justify-content:center;
+      font-family:var(--font-heading); font-weight:600; font-size:0.88rem;
+      letter-spacing:-0.01em;
+      border-radius:var(--radius-pill);
+      padding:0.75rem 1.75rem;
+      min-height:44px; cursor:pointer;
+      transition:transform 0.2s ease, box-shadow var(--transition), background var(--transition), border-color var(--transition), opacity var(--transition);
+      text-decoration:none;
+    }
+    .btn-primary {
+      background:var(--primary); color:#fff; border:none;
+      position:relative; overflow:hidden;
+      box-shadow:0 1px 2px rgba(var(--primary-rgb),0.2), 0 4px 12px rgba(var(--primary-rgb),0.15);
+    }
+    .btn-primary::before {
+      content:''; position:absolute; inset:0;
+      background:linear-gradient(180deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
+      border-radius:inherit; pointer-events:none;
+    }
+    .btn-primary:hover {
+      box-shadow:0 4px 16px rgba(var(--primary-rgb),0.25), 0 1px 2px rgba(var(--primary-rgb),0.15);
+      transform:translateY(-1px);
+    }
+    .btn-primary:active { opacity:0.9; transform:translateY(0); }
+    .btn:focus-visible { outline:2px solid var(--primary); outline-offset:3px; }
+    .btn-sm { padding:0.5rem 1.25rem; font-size:0.82rem; min-height:36px; }
+    .btn-lg { padding:0.85rem 2.2rem; font-size:0.92rem; }
+
+    .btn-hero-primary {
+      background:var(--primary); color:#fff; border:none;
+      position:relative; overflow:hidden;
+      box-shadow:0 1px 2px rgba(var(--primary-rgb),0.3), 0 4px 16px rgba(var(--primary-rgb),0.25);
+    }
+    .btn-hero-primary::before {
+      content:''; position:absolute; inset:0;
+      background:linear-gradient(180deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05));
+      border-radius:inherit; pointer-events:none;
+    }
+    .btn-hero-primary:hover {
+      box-shadow:0 4px 24px rgba(var(--primary-rgb),0.35), 0 1px 2px rgba(var(--primary-rgb),0.2);
+      transform:translateY(-1px);
+    }
+    .btn-hero-outline {
+      background:rgba(255,255,255,0.08);
+      color:rgba(255,255,255,0.85);
+      border:1px solid rgba(255,255,255,0.14);
+    }
+    .btn-hero-outline:hover {
+      background:rgba(255,255,255,0.12);
+      border-color:rgba(255,255,255,0.22);
+    }
+    .btn-dark-primary {
+      background:var(--primary); color:#fff; border:none;
+      position:relative; overflow:hidden;
+      box-shadow:0 1px 2px rgba(var(--primary-rgb),0.3), 0 4px 16px rgba(var(--primary-rgb),0.25);
+    }
+    .btn-dark-primary::before {
+      content:''; position:absolute; inset:0;
+      background:linear-gradient(180deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05));
+      border-radius:inherit; pointer-events:none;
+    }
+    .btn-dark-primary:hover {
+      box-shadow:0 4px 24px rgba(var(--primary-rgb),0.35);
+      transform:translateY(-1px);
+    }
+    .btn-dark-outline {
+      background:rgba(255,255,255,0.06);
+      color:rgba(255,255,255,0.7);
+      border:1px solid rgba(255,255,255,0.1);
+    }
+    .btn-dark-outline:hover {
+      background:rgba(255,255,255,0.1);
+      border-color:rgba(255,255,255,0.18);
+    }
+
+    /* Layout */
+    .container { max-width:1080px; margin:0 auto; }
+
+    /* Section labels */
+    .s-label {
+      display:inline-flex; align-items:center; gap:8px;
+      font-size:0.75rem; font-weight:500; letter-spacing:0.1em;
+      text-transform:uppercase; color:var(--primary);
+      margin-bottom:0.75rem;
+      font-family:var(--font-mono);
+    }
+    .s-label::before {
+      content:''; display:block; width:16px; height:2px;
+      background:var(--primary); border-radius:1px; opacity:0.5;
+    }
+    .s-title {
+      font-size:clamp(2rem, 4.5vw, 3rem);
+      letter-spacing:-0.03em; line-height:1.15;
+      margin-bottom:1rem;
+      font-weight:600; color:var(--text-dark);
+    }
+    .s-sub {
+      font-size:1.1rem; line-height:1.7;
+      color:var(--text-dark-muted);
+      max-width:560px; font-weight:400;
+      margin-bottom:2.5rem;
+    }
+
+    /* Scroll Reveal */
+    [data-reveal] {
+      opacity:0; transform:translateY(24px);
+      transition:opacity 0.8s var(--ease-smooth), transform 0.8s var(--ease-smooth);
+    }
+    [data-reveal].revealed { opacity:1; transform:translateY(0); }
+    [data-reveal][data-delay="1"] { transition-delay:0.08s; }
+    [data-reveal][data-delay="2"] { transition-delay:0.16s; }
+    [data-reveal][data-delay="3"] { transition-delay:0.24s; }
+
+    /* ============================================
+       ARTICLE HERO — Dark 4-stop gradient
+       ============================================ */
+    .article-hero {
+      min-height:72vh;
+      display:flex; align-items:center; justify-content:center;
+      padding:10rem 3rem 5rem;
+      position:relative; overflow:hidden;
+      text-align:left;
+      background:linear-gradient(180deg,
+        #080B1A 0%, #0C1035 30%, #111B52 65%, #1A2E78 100%);
+      color:white;
+    }
+    .article-hero-inner {
+      max-width:820px; margin:0 auto; width:100%;
+      position:relative; z-index:1;
+    }
+    .article-hero-inner > * { animation:heroFadeUp 0.9s var(--ease-smooth) both; }
+    .article-hero-inner > *:nth-child(1) { animation-delay:0.05s; }
+    .article-hero-inner > *:nth-child(2) { animation-delay:0.12s; }
+    .article-hero-inner > *:nth-child(3) { animation-delay:0.2s; }
+    .article-hero-inner > *:nth-child(4) { animation-delay:0.28s; }
+    .article-hero-inner > *:nth-child(5) { animation-delay:0.36s; }
+    @keyframes heroFadeUp {
+      from { opacity:0; transform:translateY(32px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    .back-link {
+      display:inline-flex; align-items:center; gap:8px;
+      font-family:var(--font-mono);
+      font-size:0.78rem; font-weight:500;
+      color:rgba(255,255,255,0.55);
+      letter-spacing:0.06em;
+      padding:8px 14px 8px 10px;
+      margin-bottom:2rem;
+      border-radius:var(--radius-pill);
+      background:rgba(255,255,255,0.06);
+      border:1px solid rgba(255,255,255,0.12);
+      min-height:44px;
+      transition:background var(--transition), color var(--transition), border-color var(--transition);
+    }
+    .back-link:hover {
+      color:#fff;
+      background:rgba(255,255,255,0.1);
+      border-color:rgba(255,255,255,0.2);
+    }
+
+    .hero-mono-label {
+      font-family:var(--font-mono); font-size:0.78rem; font-weight:400;
+      color:rgba(255,255,255,0.45); letter-spacing:0.08em;
+      margin-bottom:1.5rem;
+      text-transform:uppercase;
+      display:inline-block;
+    }
+
+    .article-title {
+      font-size:clamp(2.2rem, 5.5vw, 3.8rem);
+      letter-spacing:-0.035em;
+      line-height:1.08;
+      margin-bottom:1.5rem;
+      font-weight:600;
+      background:linear-gradient(180deg, rgba(255,255,255,0.97), rgba(255,255,255,0.72));
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      background-clip:text;
+    }
+
+    .article-deck {
+      font-size:1.2rem; line-height:1.65;
+      color:rgba(255,255,255,0.6);
+      max-width:680px;
+      margin-bottom:2.5rem; font-weight:400;
+    }
+
+    .article-meta {
+      display:flex; align-items:center; gap:0.75rem;
+      flex-wrap:wrap;
+      font-family:var(--font-mono);
+      font-size:0.8rem;
+      color:rgba(255,255,255,0.55);
+      padding-top:1.5rem;
+      border-top:1px solid rgba(255,255,255,0.1);
+    }
+    .article-meta .dot {
+      width:3px; height:3px;
+      border-radius:50%;
+      background:rgba(255,255,255,0.3);
+      flex-shrink:0;
+    }
+
+    /* ============================================
+       PAGE INTRO — Dark lead paragraph
+       ============================================ */
+    .page-intro-section {
+      background:var(--bg-dark);
+      padding:5.5rem 3rem;
+    }
+    .page-intro-section .intro-inner {
+      max-width:820px; margin:0 auto; text-align:center;
+    }
+    .page-intro-section .intro-lead {
+      font-size:clamp(1.2rem,2.5vw,1.5rem);
+      line-height:1.7;
+      color:var(--text-light-muted);
+      font-weight:400;
+    }
+    .page-intro-section .intro-lead .hl {
+      color:#FFFFFF; font-weight:500;
+    }
+
+    /* ============================================
+       ARTICLE BODY — White prose
+       ============================================ */
+    .article-body-section {
+      background:var(--bg-light);
+      padding:5rem 3rem 4rem;
+    }
+    .article-body {
+      max-width:720px;
+      margin:0 auto;
+      color:var(--text-dark);
+    }
+    .article-body p {
+      font-size:1.0625rem;
+      line-height:1.75;
+      color:var(--text-dark);
+      margin-bottom:1.5rem;
+      font-weight:400;
+    }
+    .article-body p:first-child::first-letter {
+      /* subtle drop cap not required */
+    }
+    .article-body h2 {
+      font-family:var(--font-heading);
+      font-size:clamp(1.65rem, 3vw, 2rem);
+      font-weight:600;
+      letter-spacing:-0.025em;
+      line-height:1.25;
+      color:var(--text-dark);
+      margin:3.5rem 0 1.25rem;
+    }
+    .article-body h3 {
+      font-family:var(--font-heading);
+      font-size:clamp(1.25rem, 2.2vw, 1.4rem);
+      font-weight:600;
+      letter-spacing:-0.02em;
+      line-height:1.3;
+      color:var(--text-dark);
+      margin:2.5rem 0 1rem;
+    }
+    .article-body ul, .article-body ol {
+      padding-left:1.4rem;
+      margin:0 0 1.5rem;
+    }
+    .article-body li {
+      font-size:1.0625rem;
+      line-height:1.75;
+      color:var(--text-dark);
+      margin-bottom:0.65rem;
+    }
+    .article-body li::marker { color:var(--primary); }
+    .article-body strong {
+      color:var(--text-dark);
+      font-weight:600;
+    }
+    .article-body a {
+      color:var(--primary);
+      border-bottom:1px solid rgba(var(--primary-rgb),0.3);
+      transition:border-color var(--transition);
+    }
+    .article-body a:hover { border-bottom-color:var(--primary); }
+    .article-body code {
+      font-family:var(--font-mono);
+      font-size:0.92em;
+      background:rgba(var(--primary-rgb),0.06);
+      color:var(--primary);
+      padding:2px 7px;
+      border-radius:6px;
+      font-weight:500;
+    }
+    .article-body blockquote {
+      margin:2.5rem 0;
+      padding:0.5rem 0 0.5rem 1.75rem;
+      border-left:3px solid var(--primary);
+      font-size:1.22rem;
+      line-height:1.55;
+      color:var(--text-dark);
+      font-weight:500;
+      letter-spacing:-0.015em;
+    }
+    .article-body blockquote p {
+      font-size:inherit;
+      line-height:inherit;
+      margin:0;
+      color:inherit;
+      font-weight:inherit;
+      letter-spacing:inherit;
+    }
+
+    .highlight-box {
+      background:#F5F5F7;
+      border-radius:var(--radius-card);
+      padding:2rem 2.25rem;
+      margin:2.5rem 0;
+    }
+    .highlight-box h4 {
+      font-family:var(--font-mono);
+      font-size:0.76rem;
+      font-weight:500;
+      letter-spacing:0.1em;
+      color:var(--primary);
+      margin-bottom:1rem;
+      text-transform:uppercase;
+    }
+    .highlight-box ul { margin-bottom:0; padding-left:1.25rem; }
+    .highlight-box li { margin-bottom:0.5rem; font-size:1rem; line-height:1.65; }
+    .highlight-box li:last-child { margin-bottom:0; }
+
+    .article-tags {
+      display:flex; gap:8px; flex-wrap:wrap;
+      padding:2rem 0 0;
+      border-top:1px solid var(--border-light);
+      margin-top:3rem;
+    }
+    .article-tag {
+      font-family:var(--font-mono);
+      font-size:0.72rem;
+      font-weight:500;
+      letter-spacing:0.08em;
+      padding:6px 12px;
+      border-radius:var(--radius-pill);
+      background:#F5F5F7;
+      color:var(--text-dark-muted);
+      text-transform:uppercase;
+    }
+
+    /* ============================================
+       RELATED READS — White section, article cards
+       ============================================ */
+    .related-section {
+      padding:5rem 3rem 6rem;
+      background:var(--bg-light);
+      border-top:1px solid var(--border-light);
+    }
+    .related-inner { max-width:1080px; margin:0 auto; }
+    .related-header {
+      display:flex; align-items:end; justify-content:space-between;
+      gap:2rem; flex-wrap:wrap;
+      margin-bottom:2.5rem;
+    }
+    .related-header h2 {
+      font-size:clamp(1.6rem, 3vw, 2rem);
+      letter-spacing:-0.02em;
+      line-height:1.2;
+      color:var(--text-dark);
+      font-weight:600;
+    }
+    .related-header .s-label { margin-bottom:0.5rem; }
+    .related-back {
+      display:inline-flex; align-items:center; gap:6px;
+      font-family:var(--font-heading);
+      font-size:0.9rem; font-weight:600;
+      color:var(--primary); letter-spacing:-0.01em;
+    }
+    .related-back .arrow {
+      transition:transform var(--transition);
+      display:inline-block;
+    }
+    .related-back:hover .arrow { transform:translateX(4px); }
+
+    .articles-grid {
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:1.5rem;
+    }
+    .article-card {
+      display:flex;
+      flex-direction:column;
+      background:#F5F5F7;
+      border-radius:var(--radius-card);
+      overflow:hidden;
+      transition:box-shadow var(--transition), transform var(--transition);
+      color:inherit;
+      text-decoration:none;
+      position:relative;
+    }
+    .article-card:hover {
+      box-shadow:0 12px 40px rgba(0,0,0,0.1), 0 2px 8px rgba(0,0,0,0.04);
+      transform:translateY(-4px);
+    }
+    .article-card-visual {
+      aspect-ratio:16/10;
+      position:relative;
+      overflow:hidden;
+    }
+    .article-card-visual::before {
+      content:'';
+      position:absolute; inset:0;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(255,255,255,0.12) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(255,255,255,0.08) 0%, transparent 50%);
+      pointer-events:none;
+    }
+    .article-card-visual::after {
+      content:'';
+      position:absolute; inset:0;
+      background:linear-gradient(to top, rgba(0,0,0,0.25) 0%, transparent 55%);
+      pointer-events:none;
+    }
+    .article-card[data-category="strategy"]  .article-card-visual { background:linear-gradient(135deg, #0036FF 0%, #1A2E78 55%, #0A0118 100%); }
+    .article-card[data-category="product"]   .article-card-visual { background:linear-gradient(135deg, #3366FF 0%, #0036FF 55%, #120826 100%); }
+    .article-card[data-category="design"]    .article-card-visual { background:linear-gradient(135deg, #3366FF 0%, #1A2E78 50%, #0A0118 100%); }
+    .article-card[data-category="ai"]        .article-card-visual { background:linear-gradient(135deg, #1A0E30 0%, #0036FF 55%, #3366FF 100%); }
+
+    .article-card-visual-inner {
+      position:absolute; inset:0;
+      display:flex; align-items:flex-end;
+      padding:1.25rem;
+      z-index:2;
+    }
+    .article-card-tag-floating {
+      font-family:var(--font-mono);
+      font-size:0.68rem;
+      font-weight:500;
+      letter-spacing:0.1em;
+      text-transform:uppercase;
+      color:#fff;
+      background:rgba(10,1,24,0.6);
+      backdrop-filter:blur(8px);
+      -webkit-backdrop-filter:blur(8px);
+      padding:5px 10px;
+      border-radius:var(--radius-pill);
+      border:1px solid rgba(255,255,255,0.14);
+    }
+    .article-card-body {
+      padding:1.5rem 1.5rem 1.65rem;
+      display:flex;
+      flex-direction:column;
+      gap:0.5rem;
+      flex:1;
+    }
+    .article-card-category {
+      font-family:var(--font-mono);
+      font-size:0.7rem;
+      font-weight:500;
+      letter-spacing:0.1em;
+      text-transform:uppercase;
+      color:var(--primary);
+    }
+    .article-card-title {
+      font-family:var(--font-heading);
+      font-size:1.15rem;
+      font-weight:600;
+      letter-spacing:-0.02em;
+      color:var(--text-dark);
+      line-height:1.25;
+      transition:color var(--transition);
+    }
+    .article-card:hover .article-card-title { color:var(--primary); }
+    .article-card-divider {
+      width:32px; height:1.5px;
+      background:rgba(0,0,0,0.12);
+      margin:0.25rem 0 0.5rem;
+    }
+    .article-card-desc {
+      font-size:0.92rem;
+      line-height:1.6;
+      color:var(--text-dark-muted);
+      margin-bottom:0.5rem;
+    }
+    .article-card-meta {
+      display:flex; align-items:center; flex-wrap:wrap;
+      gap:0.5rem;
+      font-family:var(--font-mono);
+      font-size:0.74rem;
+      color:var(--text-dark-muted);
+      padding:0.75rem 0;
+      border-top:1px solid rgba(0,0,0,0.06);
+      border-bottom:1px solid rgba(0,0,0,0.06);
+      margin:0.4rem 0 0.9rem;
+    }
+    .article-card-meta span.dot {
+      width:3px; height:3px;
+      border-radius:50%;
+      background:rgba(0,0,0,0.25);
+      flex-shrink:0;
+    }
+    .article-card-cta {
+      display:inline-flex; align-items:center; gap:6px;
+      font-family:var(--font-heading);
+      font-size:0.88rem; font-weight:600;
+      color:var(--primary);
+      letter-spacing:-0.01em;
+      margin-top:auto;
+    }
+    .article-card-cta .arrow {
+      transition:transform var(--transition);
+      display:inline-block;
+    }
+    .article-card:hover .article-card-cta .arrow { transform:translateX(4px); }
+
+    /* ============================================
+       FINAL CTA — Dark bookend
+       ============================================ */
+    .final-cta {
+      padding:6rem 3rem;
+      text-align:center;
+      background:var(--bg-dark);
+      position:relative; overflow:hidden;
+    }
+    .final-cta .cta-content { position:relative; z-index:1; }
+    .final-cta h2 {
+      font-size:clamp(2.2rem, 4.5vw, 3.5rem);
+      letter-spacing:-0.03em; line-height:1.1;
+      margin-bottom:1rem; font-weight:600;
+      background:linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.7));
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      background-clip:text;
+    }
+    .final-cta .cta-sub {
+      font-size:1.1rem; color:var(--text-light-muted);
+      line-height:1.7;
+      max-width:580px;
+      margin:0 auto 2.5rem; font-weight:400;
+    }
+    .final-cta .cta-buttons {
+      display:flex; gap:12px; justify-content:center; flex-wrap:wrap;
+    }
+
+    /* ============================================
+       FOOTER — Dark
+       ============================================ */
+    footer {
+      background:var(--bg-dark);
+      border-top:1px solid rgba(255,255,255,0.06);
+      padding:4rem 3rem 2.5rem;
+    }
+    .footer-inner { max-width:1080px; margin:0 auto; }
+    .footer-top {
+      display:flex; justify-content:space-between;
+      align-items:start; margin-bottom:3rem;
+      gap:2rem;
+    }
+    .footer-brand .logo {
+      margin-bottom:0.75rem;
+      color:rgba(255,255,255,0.8);
+    }
+    .footer-brand .logo .os { color:rgba(255,255,255,0.4); }
+    .footer-brand p {
+      font-size:0.88rem;
+      color:rgba(255,255,255,0.55);
+      line-height:1.7;
+      max-width:280px; font-weight:400;
+    }
+    .footer-links {
+      display:flex; gap:3rem;
+    }
+    .footer-links a {
+      font-size:0.88rem;
+      color:rgba(255,255,255,0.6);
+      transition:color var(--transition);
+      font-weight:400;
+    }
+    .footer-links a:hover { color:rgba(255,255,255,0.9); }
+    .footer-bottom {
+      padding-top:2rem;
+      border-top:1px solid rgba(255,255,255,0.06);
+      display:flex; justify-content:space-between;
+      align-items:center; flex-wrap:wrap; gap:1rem;
+    }
+    .footer-bottom p {
+      font-size:0.82rem; color:rgba(255,255,255,0.5);
+    }
+
+    /* ============================================
+       HAMBURGER & MOBILE MENU
+       ============================================ */
+    .hamburger {
+      display:none; flex-direction:column; justify-content:center;
+      align-items:center; width:44px; height:44px; gap:5px;
+      background:transparent; border:none; cursor:pointer;
+      padding:4px; border-radius:var(--radius-sm); flex-shrink:0;
+      transition:background var(--transition);
+    }
+    .hamburger:hover { background:rgba(0,0,0,0.04); }
+    .hamburger-line {
+      display:block; width:20px; height:1.5px;
+      background:var(--text-dark);
+      border-radius:1px; transform-origin:center;
+      transition:transform 0.3s var(--ease-smooth), opacity 0.2s ease, background 0.2s ease;
+    }
+    .hamburger.open .hamburger-line:nth-child(1) { transform:translateY(6.5px) rotate(45deg); }
+    .hamburger.open .hamburger-line:nth-child(2) { opacity:0; transform:scaleX(0); }
+    .hamburger.open .hamburger-line:nth-child(3) { transform:translateY(-6.5px) rotate(-45deg); }
+    .hamburger.open .hamburger-line { background:#fff; }
+
+    .mobile-menu {
+      display:none; position:fixed; top:0; left:0; right:0; bottom:0;
+      z-index:190;
+      background:rgba(10,1,24,0.98);
+      backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+      flex-direction:column; padding:7rem 2rem 3rem;
+      opacity:0; transform:translateY(-8px);
+      transition:opacity 0.35s ease, transform 0.3s var(--ease-smooth);
+      pointer-events:none;
+    }
+    .mobile-menu.open { opacity:1; transform:translateY(0); pointer-events:all; }
+    .mobile-menu a.m-nav-link {
+      display:block; font-family:var(--font-heading);
+      font-size:1.4rem; font-weight:500;
+      letter-spacing:-0.01em; color:rgba(255,255,255,0.75);
+      padding:1.1rem 0;
+      border-bottom:1px solid rgba(255,255,255,0.06);
+      transition:color var(--transition);
+    }
+    .mobile-menu a.m-nav-link:hover { color:#fff; }
+    .mobile-menu a.m-nav-link.active { color:#fff; }
+    .mobile-menu .m-cta { margin-top:2.5rem; }
+    .mobile-menu .m-cta .btn {
+      width:100%; justify-content:center;
+      font-size:0.92rem; padding:0.95rem 1.5rem;
+    }
+
+    /* ============================================
+       RESPONSIVE — TABLET (900px)
+       ============================================ */
     @media(max-width:900px) {
-      .article-hero { padding:8rem 1.5rem 0; }
-      .article-body { padding:0 1.5rem 3rem; }
-      .more-articles { padding:3rem 1.5rem; }
-      .more-grid { grid-template-columns:repeat(2,1fr); }
+      nav { padding:6px 12px 6px 16px; max-width:calc(100% - 32px); }
+      .article-hero { padding:8rem 1.5rem 4rem; min-height:auto; }
+      .page-intro-section { padding:5rem 1.5rem; }
+      .article-body-section { padding:4rem 1.5rem 3rem; }
+      .related-section { padding:4rem 1.5rem 5rem; }
+      .final-cta { padding:5rem 1.5rem; }
+
+      .articles-grid { grid-template-columns:repeat(2,1fr); gap:1.25rem; }
+
+      .footer-top { flex-direction:column; }
+      .footer-links { flex-wrap:wrap; gap:1.5rem; }
     }
+
+    /* ============================================
+       RESPONSIVE — MOBILE (640px)
+       ============================================ */
     @media(max-width:640px) {
-      .article-hero { padding:7rem 1.25rem 0; }
-      .article-body { padding:0 1.25rem 2rem; }
-      .more-grid { grid-template-columns:1fr; }
-      .newsletter-section { padding:3rem 1.25rem; }
+      .nav-links { display:none; }
+      .nav-extras { display:none; }
+      .hamburger { display:flex; }
+      .mobile-menu { display:flex; }
+
+      .nav-wrap { max-width:calc(100% - 24px); }
+
+      .article-hero { padding:7rem 1.25rem 3.5rem; }
+      .article-deck { font-size:1.05rem; }
+      .article-meta { font-size:0.74rem; gap:0.5rem; }
+
+      .page-intro-section { padding:4rem 1.25rem; }
+      .page-intro-section .intro-lead { font-size:1.1rem; }
+
+      .article-body-section { padding:3.5rem 1.25rem 2.5rem; }
+      .article-body p,
+      .article-body li { font-size:1rem; line-height:1.7; }
+      .article-body h2 { font-size:1.5rem; margin:2.75rem 0 1rem; }
+      .article-body h3 { font-size:1.2rem; margin:2rem 0 0.85rem; }
+      .article-body blockquote {
+        font-size:1.1rem;
+        padding-left:1.25rem;
+        margin:2rem 0;
+      }
+      .highlight-box { padding:1.5rem 1.5rem; }
+
+      .related-section { padding:3.5rem 1.25rem 4.5rem; }
+      .related-header { margin-bottom:2rem; }
+      .articles-grid { grid-template-columns:1fr; gap:1.25rem; }
+      .article-card-body { padding:1.5rem 1.5rem 1.6rem; }
+
+      .final-cta { padding:4.5rem 1.25rem; }
+      .final-cta h2 { font-size:clamp(1.8rem, 7vw, 2.6rem); }
+
+      footer { padding:3rem 1.25rem 2rem; }
+      .footer-bottom { flex-direction:column; align-items:flex-start; }
     }
+    /* Currency selector — injected via currency.js into .footer-currency */
+    .footer-currency { display:flex; align-items:center; gap:4px; }
+    .currency-selector {
+      display:flex; align-items:center; gap:2px;
+      padding:0; background:transparent;
+    }
+    .currency-btn {
+      background:transparent; border:none; cursor:pointer;
+      width:30px; height:30px;
+      border-radius:50%;
+      font-size:0.9rem;
+      display:flex; align-items:center; justify-content:center;
+      transition:background 0.2s ease, opacity 0.2s ease;
+      padding:0;
+      opacity:0.5;
+    }
+    .currency-btn:hover { background:rgba(255,255,255,0.08); opacity:0.85; }
+    .currency-btn.active { background:rgba(255,255,255,0.12); opacity:1; }
+
   </style>
 </head>
 <body>
+  <a href="#main-content" class="skip-link">Skip to content</a>
 
-<nav id="site-nav"></nav>
+  <!-- ═══════════════════════════════════════════
+       NAVIGATION — Floating Pill
+       ═══════════════════════════════════════════ -->
+  <div class="nav-wrap">
+    <nav>
+      <a href="index.html" class="logo">VENTRIFY</a>
+        <div class="nav-links">
+        <a href="about.html">About</a>
+        <a href="work.html">Work</a>
+        <a href="pricing.html">Pricing</a>
+        <a href="insights.html" class="active">Insights</a>
+        <a href="contact.html">Contact</a>
+      </div>
+      <div class="nav-extras">
+        <a href="contact.html" class="btn">Start Your Venture</a>
+      </div>
+        <button class="hamburger" aria-label="Menu">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </button>
+      </nav>
+  </div>
 
-<!-- ARTICLE HERO -->
-<div class="article-hero">
-  <div class="article-hero-inner">
-    <a href="insights.html" class="back-link">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-      Back to Insights
-    </a>
-    <div class="article-category">AI &amp; Tech</div>
-    <h1 class="article-title">The AI tools transforming how we build digital products in 2026</h1>
-    <div class="article-meta">
-      <span>Ventrify Team</span>
-      <span class="article-meta-dot"></span>
-      <span>Feb 2026</span>
-      <span class="article-meta-dot"></span>
-      <span>5 min read</span>
+  <!-- Mobile Menu -->
+  <div class="mobile-menu">
+    <a href="about.html" class="m-nav-link">About</a>
+    <a href="work.html" class="m-nav-link">Work</a>
+    <a href="pricing.html" class="m-nav-link">Pricing</a>
+    <a href="insights.html" class="m-nav-link active">Insights</a>
+    <a href="contact.html" class="m-nav-link">Contact</a>
+    <div class="m-cta">
+      <a href="contact.html" class="btn btn-dark-primary btn-lg">Start Your Venture</a>
     </div>
   </div>
-</div>
 
-<!-- HERO IMAGE -->
-<div class="article-hero-img">
-  <img src="https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&w=1200&q=80" alt="AI tools for digital product building">
-</div>
-
-<!-- ARTICLE BODY -->
-<div class="article-body">
-
-  <p>Two years ago, building a software product from scratch required months of design iteration, engineering sprints, and QA cycles before anything usable existed. Today, a small team with the right AI toolchain can go from a validated idea to a working, polished product in a fraction of the time. This is not hyperbole — it is the lived experience of every team building products in 2026.</p>
-
-  <p>But speed alone is not the story. The more significant shift is qualitative: the barrier between having an idea and being able to articulate it in working software has collapsed. For founders, this is the most consequential change in the history of venture building. It also introduces new failure modes that founders who misunderstand the tools will run straight into.</p>
-
-  <h2>The New Velocity Standard</h2>
-
-  <p>AI has fundamentally changed the speed at which digital products can be built. What once took a four-person team three months now takes a two-person team three weeks. This compression has raised the baseline expectation for how fast a pre-seed company can move from idea to first customer — and investors have recalibrated their expectations accordingly.</p>
-
-  <p>In practice, this means the old "we need six months to build an MVP" timeline is no longer a credible position. Founders who cannot show meaningful product progress within six to eight weeks of starting are increasingly scrutinised. The tools exist. The question investors are now asking is whether the team knows how to use them.</p>
-
-  <div class="pull-quote">
-    "AI has not replaced the product team. It has made the product team's decisions land faster — which means the cost of a bad decision has also accelerated."
-  </div>
-
-  <h2>Design: From Brief to UI in Hours</h2>
-
-  <p>The design phase has historically been where product momentum stalls. A brief goes to a designer, a week passes, wireframes come back, feedback cycles begin. In complex products, this loop can span months before a pixel-perfect UI is ready for engineering handoff.</p>
-
-  <p>Tools like <strong>v0 by Vercel</strong>, <strong>Figma AI</strong>, and <strong>Galileo AI</strong> have collapsed this cycle in different but complementary ways. v0 lets you describe a UI in plain language and receive working React components immediately — not mockups, not wireframes, but production-ready code. Figma AI has layered generation, auto-layout suggestions, and design linting directly into the tool most professional designers already use. Galileo AI occupies the concept-generation layer, producing full application UI from a brief in seconds.</p>
-
-  <p>Used well, these tools do not replace designers — they eliminate the low-value translation work and let skilled designers focus on the decisions that actually require human judgement: information architecture, interaction design, and the subtle craft that differentiates a good product from a generic one. The founders who treat these tools as designer replacements consistently produce products that look generated. The ones who use them as accelerators for skilled designers consistently produce something differentiated.</p>
-
-  <div class="highlight-box">
-    <h4>Design Tools Worth Knowing in 2026</h4>
-    <ul>
-      <li><strong>v0 by Vercel</strong> — Prompt-to-React UI, excellent for component generation and rapid prototyping</li>
-      <li><strong>Figma AI</strong> — In-context generation, design linting, auto-layout, and content filling inside the Figma workflow</li>
-      <li><strong>Galileo AI</strong> — Full-screen UI generation from a brief, best used for early concept exploration</li>
-      <li><strong>Framer AI</strong> — Full website generation with CMS, good for marketing sites and landing pages</li>
-      <li><strong>Uizard</strong> — Sketch-to-UI and whiteboard-to-prototype, useful in workshop contexts</li>
-    </ul>
-  </div>
-
-  <h2>Development: AI-Pair Programming</h2>
-
-  <p>On the engineering side, the shift has been equally dramatic. <strong>GitHub Copilot</strong>, now in its third major iteration, functions less like an autocomplete tool and more like a junior engineer who has read every open-source codebase ever written. It suggests implementations, catches obvious bugs, and writes boilerplate so efficiently that developers who use it consistently report 30–40% productivity gains on routine work.</p>
-
-  <p><strong>Cursor</strong> goes further. It operates as an AI-native IDE that understands your entire codebase — not just the file you are editing — and can make multi-file changes, refactor across modules, and explain architectural decisions in plain language. For small teams building quickly, Cursor has become the default environment. The ability to describe what you want in plain English and have the editor propose the implementation across multiple files is genuinely transformative for non-engineering founders who can code at a basic level.</p>
-
-  <p><strong>Claude</strong> (in its code-review capacity) has become a standard part of the quality assurance workflow for teams at Ventrify. Running a PR through Claude before human review catches a significant proportion of logical errors, edge cases, and security issues that would otherwise require a senior engineer's time. It is not a replacement for engineering judgment, but it is a remarkably effective first pass.</p>
-
-  <p>The net effect of this stack is that a solo technical founder, or a two-person technical team, can now build at a pace that previously required five or six engineers. This has significant implications for burn rate, runway, and the leverage small pre-seed teams can achieve.</p>
-
-  <h2>Validation: Synthetic User Testing</h2>
-
-  <p>Perhaps the most underutilised category of AI tools in product development is synthetic user testing. Before a product reaches real users, teams can now use AI-generated user personas and scenario simulations to stress-test workflows, identify friction points, and surface edge cases that would not emerge in standard internal QA.</p>
-
-  <p>Tools like <strong>UserTesting AI</strong> and custom LLM setups allow teams to define a detailed persona — demographics, goals, frustrations, technical literacy — and then run that persona through a product flow, generating qualitative feedback about where the experience breaks down. This is not a replacement for real user research. Real users will always surface insights that synthetic personas miss. But as a pre-validation layer, it catches the obvious failures before they waste real users' time and erode early trust.</p>
-
-  <p>At Ventrify, we use synthetic testing as a bridge between internal QA and first-user access. It has consistently caught usability issues in onboarding flows and data-entry patterns that our own team, too familiar with the product to notice, had become blind to.</p>
-
-  <h2>The Caveat: What AI Still Cannot Do</h2>
-
-  <p>The risk in all of this is a kind of tool-induced overconfidence. If you can build fast, surely you should build more? If generation is cheap, why constrain the feature set?</p>
-
-  <p>The answer is that the hardest problems in product building were never about execution speed. They were — and remain — about <strong>product strategy, customer empathy, and market timing</strong>. No AI tool tells you which problem is worth solving. None of them can tell you whether your market is ready for the solution you are proposing. None of them can replicate the judgment that comes from genuine domain expertise or from sitting across the table from a frustrated customer and really listening.</p>
-
-  <p>AI accelerates the translation of decisions into working software. It does not improve the quality of the decisions themselves. Founders who mistake generation velocity for product clarity will build impressive-looking products that solve the wrong problem very efficiently.</p>
-
-  <div class="pull-quote">
-    "The tools have changed. The job of the founder has not: figure out what is worth building, for whom, and why now."
-  </div>
-
-  <p>Use the tools. Use them aggressively. But keep the strategic thinking firmly in the human layer. The founder's job in 2026 is not to generate output — it is to make the right calls about what output to generate, and then use AI to execute those calls faster than was ever previously possible.</p>
-
-  <!-- TAGS -->
-  <div class="article-tags">
-    <span class="article-tag">AI &amp; Tech</span>
-    <span class="article-tag">Product</span>
-    <span class="article-tag">Tools</span>
-    <span class="article-tag">2026</span>
-    <span class="article-tag">Venture Building</span>
-  </div>
-</div>
-
-<!-- MORE ARTICLES -->
-<div class="more-articles">
-  <h3 class="more-articles-heading">More Articles</h3>
-  <div class="more-grid">
-    <a href="insight-design-systems.html" class="more-card">
-      <img src="https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&w=600&q=80" alt="Design systems">
-      <div class="more-card-body">
-        <div class="more-card-cat">Design</div>
-        <div class="more-card-title">Design systems for startups: when to build one and when to wait</div>
+  <!-- ═══════════════════════════════════════════
+       1. ARTICLE HERO — Dark 4-stop gradient
+       ═══════════════════════════════════════════ -->
+  <section class="article-hero" id="main-content">
+    <div class="article-hero-inner">
+      <a href="insights.html" class="back-link">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        Back to Insights
+      </a>
+      <span class="hero-mono-label">AI &amp; Tech</span>
+      <h1 class="article-title">The AI tools transforming how we build digital products in 2026</h1>
+      <p class="article-deck">From design generation to code review &mdash; the specific AI tools we use across our venture builds, and why they have reshaped how fast a small team can ship.</p>
+      <div class="article-meta">
+        <span>Feb 2026</span>
+        <span class="dot"></span>
+        <span>5 min read</span>
+        <span class="dot"></span>
+        <span>Ventrify Team</span>
       </div>
-    </a>
-    <a href="insight-mvp-scope.html" class="more-card">
-      <img src="https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=600&q=80" alt="MVP scope">
-      <div class="more-card-body">
-        <div class="more-card-cat">Product</div>
-        <div class="more-card-title">How to define your MVP feature set without scope creep</div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       2. INTRO — Dark lead paragraph
+       ═══════════════════════════════════════════ -->
+  <section class="page-intro-section">
+    <div class="container" data-reveal>
+      <div class="intro-inner">
+        <p class="intro-lead">Two years ago, building a software product from scratch required months of design iteration, engineering sprints, and QA cycles before anything usable existed. Today, <span class="hl">a small team with the right AI toolchain can go from a validated idea to a working, polished product in a fraction of the time.</span> This is not hyperbole &mdash; it is the lived experience of every team building products in 2026.</p>
       </div>
-    </a>
-    <a href="insight-preseed-product.html" class="more-card">
-      <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=600&q=80" alt="Pre-seed strategy">
-      <div class="more-card-body">
-        <div class="more-card-cat">Strategy</div>
-        <div class="more-card-title">Why most pre-seed founders build the wrong product first</div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       3. ARTICLE BODY — White prose
+       ═══════════════════════════════════════════ -->
+  <section class="article-body-section">
+    <article class="article-body">
+
+      <p>But speed alone is not the story. The more significant shift is qualitative: the barrier between having an idea and being able to articulate it in working software has collapsed. For founders, this is the most consequential change in the history of venture building. It also introduces new failure modes that founders who misunderstand the tools will run straight into.</p>
+
+      <h2>The New Velocity Standard</h2>
+
+      <p>AI has fundamentally changed the speed at which digital products can be built. What once took a four-person team three months now takes a two-person team three weeks. This compression has raised the baseline expectation for how fast a pre-seed company can move from idea to first customer &mdash; and investors have recalibrated their expectations accordingly.</p>
+
+      <p>In practice, this means the old <code>"we need six months to build an MVP"</code> timeline is no longer a credible position. Founders who cannot show meaningful product progress within six to eight weeks of starting are increasingly scrutinised. The tools exist. The question investors are now asking is whether the team knows how to use them.</p>
+
+      <blockquote>
+        <p>AI has not replaced the product team. It has made the product team&rsquo;s decisions land faster &mdash; which means the cost of a bad decision has also accelerated.</p>
+      </blockquote>
+
+      <h2>Design: From Brief to UI in Hours</h2>
+
+      <p>The design phase has historically been where product momentum stalls. A brief goes to a designer, a week passes, wireframes come back, feedback cycles begin. In complex products, this loop can span months before a pixel-perfect UI is ready for engineering handoff.</p>
+
+      <p>Tools like <strong>v0 by Vercel</strong>, <strong>Figma AI</strong>, and <strong>Galileo AI</strong> have collapsed this cycle in different but complementary ways. v0 lets you describe a UI in plain language and receive working React components immediately &mdash; not mockups, not wireframes, but production-ready code. Figma AI has layered generation, auto-layout suggestions, and design linting directly into the tool most professional designers already use. Galileo AI occupies the concept-generation layer, producing full application UI from a brief in seconds.</p>
+
+      <p>Used well, these tools do not replace designers &mdash; they eliminate the low-value translation work and let skilled designers focus on the decisions that actually require human judgement: information architecture, interaction design, and the subtle craft that differentiates a good product from a generic one. The founders who treat these tools as designer replacements consistently produce products that look generated. The ones who use them as accelerators for skilled designers consistently produce something differentiated.</p>
+
+      <div class="highlight-box">
+        <h4>Design Tools Worth Knowing in 2026</h4>
+        <ul>
+          <li><strong>v0 by Vercel</strong> &mdash; Prompt-to-React UI, excellent for component generation and rapid prototyping</li>
+          <li><strong>Figma AI</strong> &mdash; In-context generation, design linting, auto-layout, and content filling inside the Figma workflow</li>
+          <li><strong>Galileo AI</strong> &mdash; Full-screen UI generation from a brief, best used for early concept exploration</li>
+          <li><strong>Framer AI</strong> &mdash; Full website generation with CMS, good for marketing sites and landing pages</li>
+          <li><strong>Uizard</strong> &mdash; Sketch-to-UI and whiteboard-to-prototype, useful in workshop contexts</li>
+        </ul>
       </div>
-    </a>
-  </div>
-</div>
 
-<!-- NEWSLETTER -->
-<div class="newsletter-section">
-  <div class="s-label" style="justify-content:center;margin-bottom:1rem;">Stay Sharp</div>
-  <h2 style="font-family:var(--font-heading);font-size:1.8rem;letter-spacing:-0.015em;margin-bottom:0.75rem;">Get the Ventrify newsletter</h2>
-  <p style="font-size:0.9rem;color:var(--muted);max-width:400px;margin:0 auto 2rem;line-height:1.7;">Founders building in the AI era. Product, strategy, and venture insights — every fortnight.</p>
-  <div style="display:flex;gap:10px;max-width:440px;margin:0 auto;flex-wrap:wrap;justify-content:center;">
-    <input type="email" class="nl-input" placeholder="your@email.com">
-    <button class="btn btn-primary" style="white-space:nowrap;">Subscribe</button>
-  </div>
-  <p style="font-size:0.75rem;color:var(--muted);margin-top:1rem;">No spam. Unsubscribe anytime.</p>
-</div>
+      <h2>Development: AI-Pair Programming</h2>
 
-<footer id="site-footer"></footer>
+      <p>On the engineering side, the shift has been equally dramatic. <strong>GitHub Copilot</strong>, now in its third major iteration, functions less like an autocomplete tool and more like a junior engineer who has read every open-source codebase ever written. It suggests implementations, catches obvious bugs, and writes boilerplate so efficiently that developers who use it consistently report 30&ndash;40% productivity gains on routine work.</p>
 
-<script src="scripts/shared.js" defer></script>
-<script src="scripts/currency.js" defer></script>
+      <p><strong>Cursor</strong> goes further. It operates as an AI-native IDE that understands your entire codebase &mdash; not just the file you are editing &mdash; and can make multi-file changes, refactor across modules, and explain architectural decisions in plain language. For small teams building quickly, Cursor has become the default environment. The ability to describe what you want in plain English and have the editor propose the implementation across multiple files is genuinely transformative for non-engineering founders who can code at a basic level.</p>
+
+      <p><strong>Claude</strong> (in its code-review capacity) has become a standard part of the quality assurance workflow for teams at Ventrify. Running a PR through Claude before human review catches a significant proportion of logical errors, edge cases, and security issues that would otherwise require a senior engineer&rsquo;s time. It is not a replacement for engineering judgment, but it is a remarkably effective first pass.</p>
+
+      <p>The net effect of this stack is that a solo technical founder, or a two-person technical team, can now build at a pace that previously required five or six engineers. This has significant implications for burn rate, runway, and the leverage small pre-seed teams can achieve.</p>
+
+      <h2>Validation: Synthetic User Testing</h2>
+
+      <p>Perhaps the most underutilised category of AI tools in product development is synthetic user testing. Before a product reaches real users, teams can now use AI-generated user personas and scenario simulations to stress-test workflows, identify friction points, and surface edge cases that would not emerge in standard internal QA.</p>
+
+      <p>Tools like <strong>UserTesting AI</strong> and custom LLM setups allow teams to define a detailed persona &mdash; demographics, goals, frustrations, technical literacy &mdash; and then run that persona through a product flow, generating qualitative feedback about where the experience breaks down. This is not a replacement for real user research. Real users will always surface insights that synthetic personas miss. But as a pre-validation layer, it catches the obvious failures before they waste real users&rsquo; time and erode early trust.</p>
+
+      <p>At Ventrify, we use synthetic testing as a bridge between internal QA and first-user access. It has consistently caught usability issues in onboarding flows and data-entry patterns that our own team, too familiar with the product to notice, had become blind to.</p>
+
+      <h2>The Caveat: What AI Still Cannot Do</h2>
+
+      <p>The risk in all of this is a kind of tool-induced overconfidence. If you can build fast, surely you should build more? If generation is cheap, why constrain the feature set?</p>
+
+      <p>The answer is that the hardest problems in product building were never about execution speed. They were &mdash; and remain &mdash; about <strong>product strategy, customer empathy, and market timing</strong>. No AI tool tells you which problem is worth solving. None of them can tell you whether your market is ready for the solution you are proposing. None of them can replicate the judgment that comes from genuine domain expertise or from sitting across the table from a frustrated customer and really listening.</p>
+
+      <p>AI accelerates the translation of decisions into working software. It does not improve the quality of the decisions themselves. Founders who mistake generation velocity for product clarity will build impressive-looking products that solve the wrong problem very efficiently.</p>
+
+      <blockquote>
+        <p>The tools have changed. The job of the founder has not: figure out what is worth building, for whom, and why now.</p>
+      </blockquote>
+
+      <p>Use the tools. Use them aggressively. But keep the strategic thinking firmly in the human layer. The founder&rsquo;s job in 2026 is not to generate output &mdash; it is to make the right calls about what output to generate, and then use AI to execute those calls faster than was ever previously possible.</p>
+
+      <div class="article-tags">
+        <span class="article-tag">AI &amp; Tech</span>
+        <span class="article-tag">Product</span>
+        <span class="article-tag">Tools</span>
+        <span class="article-tag">2026</span>
+        <span class="article-tag">Venture Building</span>
+      </div>
+    </article>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       4. RELATED READS — White, listing pattern
+       ═══════════════════════════════════════════ -->
+  <section class="related-section">
+    <div class="related-inner">
+      <div class="related-header" data-reveal>
+        <div>
+          <div class="s-label">Continue Reading</div>
+          <h2>More from the studio</h2>
+        </div>
+        <a href="insights.html" class="related-back">All insights <span class="arrow">&rarr;</span></a>
+      </div>
+
+      <div class="articles-grid">
+
+        <!-- Design systems -->
+        <a href="insight-design-systems.html" class="article-card" data-category="design" data-reveal data-delay="1">
+          <div class="article-card-visual">
+            <div class="article-card-visual-inner">
+              <span class="article-card-tag-floating">Design</span>
+            </div>
+          </div>
+          <div class="article-card-body">
+            <div class="article-card-category">Design</div>
+            <div class="article-card-title">Design systems for startups: when to build one and when to wait</div>
+            <div class="article-card-divider"></div>
+            <p class="article-card-desc">A practical guide to implementing a design system without over-engineering it at the wrong stage.</p>
+            <div class="article-card-meta">
+              <span>Nov 2025</span>
+              <span class="dot"></span>
+              <span>6 min read</span>
+            </div>
+            <span class="article-card-cta">Read article <span class="arrow">&rarr;</span></span>
+          </div>
+        </a>
+
+        <!-- MVP scope -->
+        <a href="insight-mvp-scope.html" class="article-card" data-category="product" data-reveal data-delay="2">
+          <div class="article-card-visual">
+            <div class="article-card-visual-inner">
+              <span class="article-card-tag-floating">Product</span>
+            </div>
+          </div>
+          <div class="article-card-body">
+            <div class="article-card-category">Product</div>
+            <div class="article-card-title">How to define your MVP feature set without scope creep</div>
+            <div class="article-card-divider"></div>
+            <p class="article-card-desc">A repeatable framework for ruthlessly prioritising what goes into v1 &mdash; and what waits.</p>
+            <div class="article-card-meta">
+              <span>Jan 2026</span>
+              <span class="dot"></span>
+              <span>6 min read</span>
+            </div>
+            <span class="article-card-cta">Read article <span class="arrow">&rarr;</span></span>
+          </div>
+        </a>
+
+        <!-- Pre-seed product -->
+        <a href="insight-preseed-product.html" class="article-card" data-category="strategy" data-reveal data-delay="3">
+          <div class="article-card-visual">
+            <div class="article-card-visual-inner">
+              <span class="article-card-tag-floating">Strategy</span>
+            </div>
+          </div>
+          <div class="article-card-body">
+            <div class="article-card-category">Strategy</div>
+            <div class="article-card-title">Why most pre-seed founders build the wrong product first</div>
+            <div class="article-card-divider"></div>
+            <p class="article-card-desc">The single biggest mistake in early-stage venture building is moving from idea to build without a validated foundation.</p>
+            <div class="article-card-meta">
+              <span>Feb 2026</span>
+              <span class="dot"></span>
+              <span>8 min read</span>
+            </div>
+            <span class="article-card-cta">Read article <span class="arrow">&rarr;</span></span>
+          </div>
+        </a>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       5. FINAL CTA — Dark bookend
+       ═══════════════════════════════════════════ -->
+  <section class="final-cta">
+    <div class="cta-content" data-reveal>
+      <h2>Ready to build yours?</h2>
+      <p class="cta-sub">Enough reading. If you&rsquo;re ready to go from idea to launched product, we&rsquo;d love to talk.</p>
+      <div class="cta-buttons">
+        <a href="contact.html" class="btn btn-dark-primary btn-lg">Start Your Venture</a>
+        <a href="about.html" class="btn btn-dark-outline btn-lg">How We Work</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       6. FOOTER — Dark
+       ═══════════════════════════════════════════ -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <div class="logo">VENTRIFY</div>
+          <p>The full-stack venture studio for pre-seed founders. Strategy, design, development, and marketing &mdash; under one roof.</p>
+        </div>
+        <div class="footer-links">
+          <a href="about.html">About</a>
+          <a href="work.html">Work</a>
+          <a href="pricing.html">Pricing</a>
+          <a href="insights.html">Insights</a>
+          <a href="contact.html">Contact</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 Ventrify. All rights reserved.</p>
+        <div class="footer-currency"></div>
+        <p>Dubai &middot; London &middot; Singapore</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ═══════════════════════════════════════════
+       JAVASCRIPT
+       ═══════════════════════════════════════════ -->
+  <script>
+    // Hamburger Toggle
+    const hamburger = document.querySelector('.hamburger');
+    const mobileMenu = document.querySelector('.mobile-menu');
+
+    if (hamburger && mobileMenu) {
+      hamburger.addEventListener('click', () => {
+        hamburger.classList.toggle('open');
+        mobileMenu.classList.toggle('open');
+        document.body.style.overflow = mobileMenu.classList.contains('open') ? 'hidden' : '';
+      });
+
+      mobileMenu.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', () => {
+          hamburger.classList.remove('open');
+          mobileMenu.classList.remove('open');
+          document.body.style.overflow = '';
+        });
+      });
+    }
+
+    // Scroll Reveal Observer
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('revealed');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, {
+      threshold: 0.01,
+      rootMargin: '0px 0px -80px 0px'
+    });
+
+    document.querySelectorAll('[data-reveal]').forEach(el => {
+      revealObserver.observe(el);
+    });
+  </script>
+  <script src="scripts/currency.js" defer></script>
 </body>
 </html>

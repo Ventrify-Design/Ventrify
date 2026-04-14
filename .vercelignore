@@ -1,0 +1,17 @@
+# OS site deploys from its own Vercel project
+ventrify-os/
+
+# Dev / scratch
+node_modules/
+temporary screenshots/
+_*.mjs
+screenshot.mjs
+.DS_Store
+**/.DS_Store
+
+# Unrelated archives
+Test site/
+Workflow/
+workflow new/
+decks/
+brand_assets/

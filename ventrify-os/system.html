@@ -1,0 +1,1472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>What's Inside — Ventrify OS System Deep Dive</title>
+  <meta name="description" content="A complete technical breakdown of every file, tool, and workflow in Ventrify OS. For practitioners who want to know exactly what they're getting.">
+  <meta property="og:title" content="What's Inside — Ventrify OS System Deep Dive">
+  <meta property="og:description" content="4,242 lines of instruction. 15+ automated tools. 5 phases. Everything has a place.">
+  <meta property="og:type" content="website">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================
+       DESIGN TOKENS
+       ============================================ */
+    :root {
+      --primary: #0036FF;
+      --primary-light: #3366FF;
+      --primary-rgb: 0,54,255;
+      --bg-dark: #0A0118;
+      --bg-light: #FFFFFF;
+      --surface-dark: #120826;
+      --surface-dark-2: #1A0E30;
+      --surface-card-dark: rgba(255,255,255,0.04);
+      --text-light: #FFFFFF;
+      --text-light-muted: rgba(255,255,255,0.6);
+      --text-light-subtle: rgba(255,255,255,0.6);
+      --text-dark: #141414;
+      --text-dark-muted: #656565;
+      --border-dark: rgba(255,255,255,0.08);
+      --border-light: rgba(0,0,0,0.06);
+
+      --font-heading: 'Inter', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      --radius-sm: 12px;
+      --radius-md: 16px;
+      --radius-card: 20px;
+      --radius-lg: 24px;
+      --radius-pill: 980px;
+
+      --ease-smooth: cubic-bezier(0.6, 0.6, 0, 1);
+      --transition: 0.45s cubic-bezier(0.6, 0.6, 0, 1);
+    }
+
+    /* ============================================
+       BASE RESET
+       ============================================ */
+    *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+    html { scroll-behavior:smooth; }
+    body {
+      background:var(--bg-dark);
+      color:var(--text-dark);
+      font-family:var(--font-body);
+      font-size:17px;
+      overflow-x:hidden;
+      line-height:1.65;
+      font-weight:400;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+    h1,h2,h3,h4,h5 { font-family:var(--font-heading); letter-spacing:-0.02em; font-weight:600; }
+    a { text-decoration:none; color:inherit; }
+    img { max-width:100%; }
+    .skip-link {
+      position:absolute;
+      top:-100px;
+      left:50%;
+      transform:translateX(-50%);
+      background:var(--primary);
+      color:#fff;
+      padding:8px 16px;
+      border-radius:0 0 8px 8px;
+      font-size:0.82rem;
+      font-weight:600;
+      z-index:9999;
+      transition:top 0.2s ease;
+    }
+    .skip-link:focus {
+      top:0;
+    }
+
+    /* ============================================
+       SHIMMER ANIMATION
+       ============================================ */
+    @keyframes shimmer {
+      0% { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+    .shimmer-text {
+      background: linear-gradient(90deg,
+        rgba(255,255,255,0.95) 0%,
+        rgba(255,255,255,0.95) 35%,
+        rgba(var(--primary-rgb),0.7) 50%,
+        rgba(255,255,255,0.95) 65%,
+        rgba(255,255,255,0.95) 100%
+      );
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: shimmer 3s ease-in-out 1s 1 forwards;
+    }
+
+    /* Section title shimmer on reveal (light bg) */
+    @keyframes shimmerDark {
+      0% { background-position: 200% center; }
+      100% { background-position: -200% center; }
+    }
+    .s-title-shimmer {
+      background: linear-gradient(90deg,
+        #141414 0%,
+        #141414 35%,
+        rgba(var(--primary-rgb),0.65) 50%,
+        #141414 65%,
+        #141414 100%
+      );
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      background-position: -200% center;
+    }
+    [data-reveal].revealed .s-title-shimmer {
+      animation: shimmerDark 2s ease-in-out 0.2s 1;
+    }
+
+    /* ============================================
+       NAVIGATION — Floating Pill (ToDesktop)
+       ============================================ */
+    nav {
+      position:fixed;
+      top:16px;
+      left:50%;
+      transform:translateX(-50%);
+      z-index:200;
+      display:flex;
+      align-items:center;
+      gap:2px;
+      padding:6px 8px 6px 20px;
+      height:60px;
+      background:rgba(255,255,255,0.88);
+      backdrop-filter:blur(12px);
+      -webkit-backdrop-filter:blur(12px);
+      border-radius:var(--radius-pill);
+      box-shadow:0 1px 2px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.08), 0 16px 56px rgba(0,0,0,0.08);
+      max-width:650px;
+      width:auto;
+    }
+    .logo {
+      font-family:var(--font-heading);
+      font-size:1rem;
+      font-weight:600;
+      letter-spacing:-0.02em;
+      color:var(--text-dark);
+      margin-right:auto;
+      white-space:nowrap;
+      padding-right:1rem;
+    }
+    .logo .os {
+      font-weight:400;
+      color:var(--text-dark-muted);
+    }
+    .nav-links {
+      display:flex;
+      gap:0;
+      align-items:center;
+    }
+    .nav-links a {
+      font-size:0.82rem;
+      font-weight:500;
+      color:var(--text-dark-muted);
+      padding:6px 14px;
+      border-radius:8px;
+      transition:background var(--transition), color var(--transition);
+      white-space:nowrap;
+    }
+    .nav-links a:hover {
+      background:rgba(0,0,0,0.04);
+      color:var(--text-dark);
+    }
+    .nav-links a:focus-visible {
+      outline:2px solid var(--primary);
+      outline-offset:2px;
+      border-radius:4px;
+    }
+    .nav-links a.active {
+      color:var(--text-dark);
+      background:rgba(0,0,0,0.04);
+    }
+    .nav-cta { display:flex; align-items:center; margin-left:4px; }
+    .nav-cta .btn {
+      background:var(--primary);
+      color:#fff;
+      border:none;
+      border-radius:var(--radius-pill);
+      padding:6px 16px;
+      font-weight:600;
+      font-size:0.82rem;
+      cursor:pointer;
+      transition:opacity var(--transition), transform var(--transition);
+      white-space:nowrap;
+    }
+    .nav-cta .btn:hover {
+      opacity:0.9;
+      transform:translateY(-1px);
+    }
+
+    /* -- Buttons -- */
+    .btn {
+      display:inline-flex; align-items:center; justify-content:center;
+      font-family:var(--font-heading); font-weight:600; font-size:0.88rem;
+      letter-spacing:-0.01em;
+      border-radius:var(--radius-pill);
+      padding:0.75rem 1.75rem;
+      min-height:44px;
+      cursor:pointer;
+      transition:transform 0.2s ease, box-shadow var(--transition), background var(--transition), border-color var(--transition), opacity var(--transition);
+      text-decoration:none;
+    }
+    .btn-primary {
+      background:var(--primary);
+      color:#fff;
+      border:none;
+      position:relative;
+      overflow:hidden;
+      box-shadow:0 1px 2px rgba(var(--primary-rgb),0.2), 0 4px 12px rgba(var(--primary-rgb),0.15);
+    }
+    .btn-primary::before {
+      content:'';
+      position:absolute;
+      inset:0;
+      background:linear-gradient(180deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
+      border-radius:inherit;
+      pointer-events:none;
+    }
+    .btn-primary:hover {
+      box-shadow:0 4px 16px rgba(var(--primary-rgb),0.25), 0 1px 2px rgba(var(--primary-rgb),0.15);
+      transform:translateY(-1px);
+    }
+    .btn-primary:active { opacity:0.9; transform:translateY(0); }
+    .btn:focus-visible {
+      outline:2px solid var(--primary);
+      outline-offset:3px;
+    }
+
+    .btn-outline {
+      background:rgba(0,0,0,0.04);
+      color:var(--text-dark);
+      border:1px solid rgba(0,0,0,0.08);
+    }
+    .btn-outline:hover {
+      background:rgba(0,0,0,0.06);
+      border-color:rgba(0,0,0,0.12);
+    }
+
+    /* Hero-specific button variants (on dark bg) */
+    .btn-hero-primary {
+      background:var(--primary);
+      color:#fff;
+      border:none;
+      position:relative;
+      overflow:hidden;
+      box-shadow:0 1px 2px rgba(var(--primary-rgb),0.3), 0 4px 16px rgba(var(--primary-rgb),0.25);
+    }
+    .btn-hero-primary::before {
+      content:'';
+      position:absolute;
+      inset:0;
+      background:linear-gradient(180deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05));
+      border-radius:inherit;
+      pointer-events:none;
+    }
+    .btn-hero-primary:hover {
+      box-shadow:0 4px 24px rgba(var(--primary-rgb),0.35), 0 1px 2px rgba(var(--primary-rgb),0.2);
+      transform:translateY(-1px);
+    }
+    .btn-hero-outline {
+      background:rgba(255,255,255,0.08);
+      color:rgba(255,255,255,0.8);
+      border:1px solid rgba(255,255,255,0.12);
+    }
+    .btn-hero-outline:hover {
+      background:rgba(255,255,255,0.12);
+      border-color:rgba(255,255,255,0.2);
+    }
+
+    /* Dark section button variants */
+    .btn-dark-primary {
+      background:var(--primary);
+      color:#fff;
+      border:none;
+      position:relative;
+      overflow:hidden;
+      box-shadow:0 1px 2px rgba(var(--primary-rgb),0.3), 0 4px 16px rgba(var(--primary-rgb),0.25);
+    }
+    .btn-dark-primary::before {
+      content:'';
+      position:absolute;
+      inset:0;
+      background:linear-gradient(180deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05));
+      border-radius:inherit;
+      pointer-events:none;
+    }
+    .btn-dark-primary:hover {
+      box-shadow:0 4px 24px rgba(var(--primary-rgb),0.35);
+      transform:translateY(-1px);
+    }
+    .btn-dark-outline {
+      background:rgba(255,255,255,0.06);
+      color:rgba(255,255,255,0.7);
+      border:1px solid rgba(255,255,255,0.1);
+    }
+    .btn-dark-outline:hover {
+      background:rgba(255,255,255,0.1);
+      border-color:rgba(255,255,255,0.18);
+    }
+
+    .btn-lg { padding:0.85rem 2.2rem; font-size:0.92rem; }
+
+    /* -- Layout -- */
+    .container { max-width:1080px; margin:0 auto; }
+
+    /* Light section defaults */
+    .section {
+      padding:7rem 3rem;
+      background:var(--bg-light);
+    }
+    .section-alt {
+      padding:7rem 3rem;
+      background:#FAFAFA;
+    }
+
+    /* Section labels — light bg */
+    .s-label {
+      display:inline-flex; align-items:center; gap:8px;
+      font-size:0.75rem; font-weight:500; letter-spacing:0.1em;
+      text-transform:uppercase;
+      color:var(--primary);
+      margin-bottom:0.75rem;
+      font-family:var(--font-mono);
+    }
+    .s-label::before {
+      content:''; display:block; width:16px; height:2px;
+      background:var(--primary); border-radius:1px;
+      opacity:0.5;
+    }
+
+    /* Section labels — dark bg */
+    .s-label-dark {
+      display:inline-flex; align-items:center; gap:8px;
+      font-size:0.75rem; font-weight:500; letter-spacing:0.1em;
+      text-transform:uppercase;
+      color:var(--primary);
+      margin-bottom:0.75rem;
+      font-family:var(--font-mono);
+    }
+    .s-label-dark::before {
+      content:''; display:block; width:16px; height:2px;
+      background:rgba(var(--primary-rgb),0.5); border-radius:1px;
+    }
+
+    /* Section titles — light bg */
+    .s-title {
+      font-size:clamp(2rem, 4.5vw, 3rem);
+      letter-spacing:-0.03em;
+      line-height:1.15;
+      margin-bottom:1rem;
+      font-weight:600;
+      color:var(--text-dark);
+    }
+
+    /* Section titles — dark bg */
+    .s-title-dark {
+      font-size:clamp(2rem, 4.5vw, 3rem);
+      letter-spacing:-0.03em;
+      line-height:1.15;
+      margin-bottom:1rem;
+      font-weight:600;
+      color:var(--text-light);
+    }
+
+    .s-sub {
+      font-size:1.1rem;
+      line-height:1.7;
+      color:var(--text-dark-muted);
+      max-width:560px;
+      font-weight:400;
+    }
+    .s-sub-dark {
+      font-size:1.1rem;
+      line-height:1.7;
+      color:var(--text-light-muted);
+      max-width:560px;
+      font-weight:400;
+    }
+
+    /* -- Cards (light bg) -- */
+    .card {
+      background:#F5F5F7;
+      border:none;
+      border-radius:var(--radius-card);
+      padding:0;
+      overflow:hidden;
+      transition:box-shadow var(--transition), transform var(--transition);
+    }
+    .card:hover {
+      box-shadow:0 8px 32px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04);
+      transform:translateY(-2px);
+    }
+    .card-visual {
+      height:200px;
+      background:#EBEBED;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:3rem;
+      overflow:hidden;
+      position:relative;
+    }
+    .card-body {
+      padding:2rem;
+      text-align:center;
+    }
+    .card-body h3 {
+      font-size:1.15rem;
+      font-weight:600;
+      letter-spacing:-0.02em;
+      color:var(--text-dark);
+      margin-bottom:0.75rem;
+    }
+    .card-body .card-divider {
+      width:40px;
+      height:1.5px;
+      background:rgba(0,0,0,0.12);
+      margin:0 auto 0.75rem;
+    }
+    .card-body p {
+      font-size:0.92rem;
+      line-height:1.65;
+      color:var(--text-dark-muted);
+    }
+
+    /* -- Scroll Reveal -- */
+    [data-reveal] {
+      opacity:0; transform:translateY(24px);
+      transition:opacity 0.8s var(--ease-smooth), transform 0.8s var(--ease-smooth);
+    }
+    [data-reveal].revealed { opacity:1; transform:translateY(0); }
+    [data-reveal][data-delay="1"] { transition-delay:0.08s; }
+    [data-reveal][data-delay="2"] { transition-delay:0.16s; }
+    [data-reveal][data-delay="3"] { transition-delay:0.24s; }
+    [data-reveal][data-delay="4"] { transition-delay:0.32s; }
+    [data-reveal][data-delay="5"] { transition-delay:0.4s; }
+
+    /* ============================================
+       HERO — Dark to Light Gradient
+       ============================================ */
+    .hero {
+      min-height:90vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:10rem 3rem 5rem;
+      position:relative;
+      overflow:hidden;
+      text-align:center;
+      background:linear-gradient(180deg,
+        #080B1A 0%,
+        #0C1035 30%,
+        #111B52 65%,
+        #1A2E78 100%);
+      color:#fff;
+    }
+    .hero-image-section {
+      background:transparent;
+      padding:0;
+      margin-top:-4rem;
+      position:relative;
+      z-index:1;
+    }
+    .hero-showcase-img {
+      width:100%;
+      height:auto;
+      display:block;
+      border-radius:var(--radius-card);
+    }
+    .page-intro-section {
+      background:var(--bg-dark);
+      padding:5.5rem 3rem;
+    }
+
+    .hero-content {
+      max-width:1080px; margin:0 auto; width:100%;
+      position:relative; z-index:1;
+      display:flex; flex-direction:column; align-items:center;
+    }
+    .hero-content > * {
+      animation:heroFadeUp 0.9s var(--ease-smooth) both;
+    }
+    .hero-content > *:nth-child(1) { animation-delay:0.05s; }
+    .hero-content > *:nth-child(2) { animation-delay:0.15s; }
+    .hero-content > *:nth-child(3) { animation-delay:0.25s; }
+    .hero-content > *:nth-child(4) { animation-delay:0.35s; }
+    @keyframes heroFadeUp {
+      from { opacity:0; transform:translateY(32px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    .hero-mono-label {
+      font-family:var(--font-mono); font-size:0.78rem; font-weight:400;
+      color:rgba(255,255,255,0.3); letter-spacing:0.02em;
+      margin-bottom:1.75rem;
+    }
+
+    .hero h1 {
+      font-size:clamp(3rem, 7vw, 4.5rem);
+      letter-spacing:-0.04em;
+      line-height:1.08;
+      margin-bottom:1.75rem;
+      max-width:800px;
+      font-weight:600;
+      background:linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.7));
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      background-clip:text;
+    }
+    .hero-sub {
+      font-size:1.15rem; line-height:1.75; color:rgba(255,255,255,0.55);
+      max-width:640px; margin-bottom:0; font-weight:400;
+    }
+
+    /* ============================================
+       CLAUDE.MD SECTION (light bg)
+       ============================================ */
+    .system-layout {
+      display:grid; grid-template-columns:1fr 1fr;
+      gap:3rem; margin-top:3rem; align-items:center;
+    }
+    .system-text p {
+      font-size:0.95rem; color:var(--text-dark-muted); line-height:1.8;
+      margin-bottom:1rem; font-weight:400;
+    }
+
+    /* Code block — light mode */
+    .code-block {
+      background:#0C1035;
+      color:rgba(255,255,255,0.6);
+      border:1px solid rgba(255,255,255,0.08);
+      border-radius:var(--radius-card);
+      overflow:hidden;
+      box-shadow:0 16px 56px rgba(5,6,27,0.25), 0 2px 4px rgba(5,6,27,0.1);
+    }
+    .code-block-bar {
+      display:flex; align-items:center; gap:6px;
+      padding:12px 16px;
+      border-bottom:1px solid rgba(255,255,255,0.06);
+    }
+    .code-block-dot {
+      width:8px; height:8px; border-radius:50%;
+    }
+    .code-block-dot:nth-child(1) { background:#FF5F57; }
+    .code-block-dot:nth-child(2) { background:#FFBD2E; }
+    .code-block-dot:nth-child(3) { background:#28C840; }
+    .code-block-title {
+      font-family:var(--font-mono); font-size:0.7rem;
+      color:rgba(255,255,255,0.35); margin-left:auto;
+    }
+    .code-block-content {
+      padding:1.5rem 2rem;
+      font-family:var(--font-mono);
+      font-size:0.8rem;
+      line-height:1.9;
+      color:rgba(255,255,255,0.6);
+    }
+    .code-block-content .dir { color:#5C9DFF; }
+    .code-block-content .file { color:rgba(255,255,255,0.55); }
+    .code-block-content .comment { color:rgba(255,255,255,0.35); }
+    .code-block-content .highlight { color:#7CC8FF; font-weight:500; }
+
+    /* Stats row */
+    .stats-row {
+      display:flex; align-items:center; gap:0;
+      justify-content:center; margin-top:3rem;
+      flex-wrap:wrap;
+    }
+    .stat-block { text-align:center; padding:0 2.5rem; }
+    .stat-val {
+      font-family:var(--font-heading); font-weight:500;
+      font-size:clamp(2rem, 4vw, 2.8rem);
+      letter-spacing:-0.02em; color:var(--text-dark); line-height:1;
+    }
+    .stat-lbl {
+      font-size:0.82rem; color:var(--text-dark-muted); margin-top:6px;
+      font-family:var(--font-body); font-weight:400;
+    }
+    .stat-divider {
+      width:1px; height:32px; background:rgba(0,0,0,0.1); flex-shrink:0;
+    }
+
+    /* ============================================
+       TOOLS GRID (alt light bg)
+       ============================================ */
+    .tools-grid {
+      display:grid; grid-template-columns:repeat(3,1fr);
+      gap:1.5rem; margin-top:3rem;
+    }
+    .tool-card {
+      background:#F5F5F7;
+      border:none;
+      border-radius:var(--radius-card);
+      overflow:hidden;
+      transition:box-shadow var(--transition), transform var(--transition);
+    }
+    .tool-card:hover {
+      box-shadow:0 8px 32px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04);
+      transform:translateY(-2px);
+    }
+    .tool-card-visual {
+      height:120px;
+      background:#EBEBED;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+      position:relative;
+    }
+    .tool-card-port {
+      font-family:var(--font-mono); font-size:0.72rem;
+      font-weight:500; letter-spacing:0.02em;
+      color:var(--primary);
+      padding:4px 12px; display:inline-block;
+      background:rgba(var(--primary-rgb),0.08);
+      border-radius:var(--radius-pill);
+    }
+    .tool-card-body {
+      padding:1.5rem;
+    }
+    .tool-card-body h3 {
+      font-size:1.05rem; font-weight:600; margin-bottom:0.5rem;
+      color:var(--text-dark); letter-spacing:-0.02em;
+    }
+    .tool-card-body .card-divider {
+      width:32px;
+      height:1.5px;
+      background:rgba(0,0,0,0.12);
+      margin-bottom:0.65rem;
+    }
+    .tool-card-body p {
+      font-size:0.88rem; color:var(--text-dark-muted); line-height:1.6;
+    }
+
+    /* ============================================
+       FILE TREE (light code block)
+       ============================================ */
+    .file-tree-block {
+      background:#0C1035;
+      border:1px solid rgba(255,255,255,0.08);
+      border-radius:var(--radius-card);
+      overflow:hidden;
+      margin-top:3rem;
+      box-shadow:0 4px 16px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .file-tree-content {
+      padding:1.5rem 2rem;
+      font-family:var(--font-mono);
+      font-size:0.78rem;
+      line-height:2;
+      color:rgba(255,255,255,0.55);
+      overflow-x:auto;
+      max-width:100%;
+      white-space:pre;
+    }
+    .file-tree-content .dir { color:#5C9DFF; }
+    .file-tree-content .file { color:rgba(255,255,255,0.55); }
+    .file-tree-content .comment { color:rgba(255,255,255,0.35); }
+
+    /* ============================================
+       TECH STACK TABLE (light bg)
+       ============================================ */
+    .stack-table-wrap {
+      margin-top:3rem;
+      overflow-x:auto;
+    }
+    .stack-table {
+      width:100%; border-collapse:collapse;
+    }
+    .stack-table td {
+      padding:1rem 1.5rem;
+      border-bottom:1px solid var(--border-light);
+      font-size:0.9rem;
+    }
+    .stack-table td:first-child {
+      color:var(--text-dark-muted); font-weight:400;
+      font-family:var(--font-mono); font-size:0.82rem;
+      white-space:nowrap; width:200px;
+    }
+    .stack-table td:last-child {
+      color:var(--text-dark); font-weight:400;
+    }
+    .stack-table tr:last-child td {
+      border-bottom:none;
+    }
+
+    /* ============================================
+       TIER COMPARISON TABLE (light bg)
+       ============================================ */
+    .tier-table-wrap {
+      margin-top:3rem;
+      overflow-x:auto;
+    }
+    .tier-table {
+      width:100%; border-collapse:collapse;
+      font-size:0.88rem;
+    }
+    .tier-table thead th {
+      font-family:var(--font-heading); font-weight:600;
+      font-size:0.82rem; letter-spacing:0.02em;
+      text-align:center; padding:1.25rem 1.5rem;
+      border-bottom:1px solid var(--border-light);
+      color:var(--text-dark-muted);
+      background:#FAFAFA;
+    }
+    .tier-table thead th:first-child {
+      text-align:left;
+    }
+    .tier-table td {
+      padding:0.85rem 1.5rem;
+      border-bottom:1px solid var(--border-light);
+      text-align:center;
+      color:var(--text-dark);
+      font-size:0.85rem;
+    }
+    .tier-table td:first-child {
+      text-align:left; color:var(--text-dark-muted); font-weight:400;
+    }
+    .tier-table tr:last-child td {
+      border-bottom:none;
+    }
+    .tier-table .check {
+      color:var(--primary); font-weight:600; font-size:1.1rem;
+    }
+    .tier-table .dash {
+      color:rgba(0,0,0,0.15); font-size:1.1rem;
+    }
+
+    /* ============================================
+       FINAL CTA — Dark island (bookend)
+       ============================================ */
+    .final-cta {
+      padding:10rem 3rem;
+      text-align:center;
+      background:var(--bg-dark);
+      position:relative;
+      overflow:hidden;
+    }
+    .final-cta .cta-content {
+      position:relative; z-index:1;
+    }
+    .final-cta h2 {
+      font-size:clamp(2.2rem, 4.5vw, 3.5rem);
+      letter-spacing:-0.03em; line-height:1.1;
+      margin-bottom:1rem; font-weight:600;
+      background:linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.7));
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      background-clip:text;
+    }
+    .final-cta .cta-sub {
+      font-size:1.1rem; color:var(--text-light-muted); line-height:1.7;
+      max-width:580px; margin:0 auto 2.5rem; font-weight:400;
+    }
+    .final-cta .cta-buttons {
+      display:flex; gap:12px; justify-content:center; flex-wrap:wrap;
+    }
+
+    /* ============================================
+       FOOTER — Dark (same as hero)
+       ============================================ */
+    footer {
+      background:var(--bg-dark);
+      border-top:1px solid rgba(255,255,255,0.06);
+      padding:4rem 3rem 2.5rem;
+    }
+    .footer-inner {
+      max-width:1080px; margin:0 auto;
+    }
+    .footer-top {
+      display:flex; justify-content:space-between;
+      align-items:start; margin-bottom:3rem;
+      gap:2rem;
+    }
+    .footer-brand .logo {
+      margin-bottom:0.75rem;
+      color:rgba(255,255,255,0.7);
+    }
+    .footer-brand .logo .os {
+      color:rgba(255,255,255,0.4);
+    }
+    .footer-brand p {
+      font-size:0.85rem; color:rgba(255,255,255,0.6); line-height:1.7;
+      max-width:260px; font-weight:400;
+    }
+    .footer-links {
+      display:flex; gap:3rem;
+    }
+    .footer-links a {
+      font-size:0.88rem; color:rgba(255,255,255,0.6);
+      transition:color var(--transition); font-weight:400;
+    }
+    .footer-links a:hover { color:rgba(255,255,255,0.85); }
+    .footer-bottom {
+      padding-top:2rem;
+      border-top:1px solid rgba(255,255,255,0.06);
+      display:flex; justify-content:space-between;
+      align-items:center; flex-wrap:wrap; gap:1rem;
+    }
+    .footer-bottom p {
+      font-size:0.82rem; color:rgba(255,255,255,0.55);
+    }
+
+    /* ============================================
+       HAMBURGER & MOBILE MENU
+       ============================================ */
+    .hamburger {
+      display:none; flex-direction:column; justify-content:center;
+      align-items:center; width:44px; height:44px; gap:5px;
+      background:transparent; border:none; cursor:pointer;
+      padding:4px; border-radius:var(--radius-sm); flex-shrink:0;
+      transition:background var(--transition);
+    }
+    .hamburger:hover { background:rgba(0,0,0,0.04); }
+    .hamburger-line {
+      display:block; width:20px; height:1.5px; background:var(--text-dark);
+      border-radius:1px; transform-origin:center;
+      transition:transform 0.3s var(--ease-smooth), opacity 0.2s ease;
+    }
+    .hamburger.open .hamburger-line:nth-child(1) { transform:translateY(6.5px) rotate(45deg); }
+    .hamburger.open .hamburger-line:nth-child(2) { opacity:0; transform:scaleX(0); }
+    .hamburger.open .hamburger-line:nth-child(3) { transform:translateY(-6.5px) rotate(-45deg); }
+    /* When open, switch hamburger lines to white */
+    .hamburger.open .hamburger-line { background:#fff; }
+
+    .mobile-menu {
+      display:none; position:fixed; top:0; left:0; right:0; bottom:0;
+      z-index:190;
+      background:rgba(10,1,24,0.98);
+      backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+      flex-direction:column; padding:7rem 2rem 3rem;
+      opacity:0; transform:translateY(-8px);
+      transition:opacity 0.35s ease, transform 0.3s var(--ease-smooth);
+      pointer-events:none;
+    }
+    .mobile-menu.open { opacity:1; transform:translateY(0); pointer-events:all; }
+    .mobile-menu a.m-nav-link {
+      display:block; font-family:var(--font-heading); font-size:1.4rem;
+      font-weight:500; letter-spacing:-0.01em; color:rgba(255,255,255,0.75);
+      padding:1.1rem 0; border-bottom:1px solid rgba(255,255,255,0.06);
+      transition:color var(--transition);
+    }
+    .mobile-menu a.m-nav-link:hover { color:#fff; }
+    .mobile-menu a.m-nav-link.active { color:#fff; }
+    .mobile-menu a.m-nav-link:focus-visible {
+      outline:2px solid rgba(255,255,255,0.5);
+      outline-offset:2px;
+    }
+    .mobile-menu .m-cta { margin-top:2.5rem; }
+    .mobile-menu .m-cta .btn { width:100%; justify-content:center; font-size:0.92rem; padding:0.95rem 1.5rem; }
+
+    /* ============================================
+       RESPONSIVE -- TABLET (900px)
+       ============================================ */
+    @media(max-width:900px) {
+      nav { padding:6px 12px 6px 16px; max-width:calc(100% - 32px); }
+      .section, .section-alt { padding:5rem 1.5rem; }
+      .hero { padding:8rem 1.5rem 6rem; }
+
+      .system-layout { grid-template-columns:1fr; }
+      .tools-grid { grid-template-columns:1fr 1fr; }
+
+      .footer-top { flex-direction:column; }
+      .footer-links { flex-wrap:wrap; gap:1.5rem; }
+
+    }
+
+    /* ============================================
+       RESPONSIVE -- MOBILE (640px)
+       ============================================ */
+    @media(max-width:640px) {
+      .nav-links { display:none; }
+      .nav-cta { display:none; }
+      .hamburger { display:flex; }
+      .mobile-menu { display:flex; }
+
+      nav { max-width:calc(100% - 24px); }
+
+      .section, .section-alt { padding:4rem 1.25rem; }
+      .hero { padding:7rem 1.25rem 5rem; min-height:auto; }
+      .hero h1 { font-size:clamp(2.2rem, 8vw, 3.2rem); }
+      .hero-sub { font-size:1rem; }
+
+      .hero-mono-label { font-size:0.72rem; }
+
+      .system-layout { grid-template-columns:1fr; }
+      .code-block-content { font-size:0.75rem; padding:1.25rem; }
+
+      .tools-grid { grid-template-columns:1fr; }
+
+      .file-tree-content { font-size:0.65rem; padding:1.5rem 1.25rem; line-height:1.8; }
+
+      .stack-table td { padding:0.75rem 1rem; font-size:0.82rem; }
+      .stack-table td:first-child { width:auto; font-size:0.75rem; }
+
+      #included [style*="grid-template-columns:1fr 1fr"] { grid-template-columns:1fr !important; }
+
+      .stats-row { gap:0; }
+      .stat-block { padding:0 1.25rem; }
+      .stat-val { font-size:clamp(1.8rem, 6vw, 2.5rem); }
+
+      .final-cta { padding:5rem 1.25rem; }
+      .final-cta h2 { font-size:clamp(1.8rem, 7vw, 2.8rem); }
+
+      footer { padding:3rem 1.25rem 2rem; }
+      .footer-bottom { flex-direction:column; align-items:flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to content</a>
+
+  <!-- ═══════════════════════════════════════════
+       NAVIGATION — Floating Pill
+       ═══════════════════════════════════════════ -->
+  <nav>
+    <a href="index.html" class="logo">VENTRIFY <span class="os">OS</span></a>
+    <div class="nav-links">
+      <a href="system.html" class="active">System</a>
+      <a href="showcase.html">Showcase</a>
+      <a href="pricing.html">Pricing</a>
+    </div>
+    <div class="nav-cta">
+      <a href="pricing.html" class="btn">Get the Workflow</a>
+    </div>
+    <button class="hamburger" aria-label="Menu">
+      <span class="hamburger-line"></span>
+      <span class="hamburger-line"></span>
+      <span class="hamburger-line"></span>
+    </button>
+  </nav>
+
+  <!-- Mobile Menu -->
+  <div class="mobile-menu">
+    <a href="system.html" class="m-nav-link active">System</a>
+    <a href="showcase.html" class="m-nav-link">Showcase</a>
+    <a href="pricing.html" class="m-nav-link">Pricing</a>
+    <div class="m-cta">
+      <a href="pricing.html" class="btn btn-dark-primary btn-lg">Get the Workflow</a>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       1. HERO — Dark to Light Gradient
+       ═══════════════════════════════════════════ -->
+  <section class="hero" id="main-content">
+    <div class="hero-content">
+      <h1>What&rsquo;s inside the system</h1>
+      <p class="hero-sub">A complete technical breakdown of every file, tool, and workflow in Ventrify OS. For practitioners who want to know exactly what they&rsquo;re getting.</p>
+    </div>
+  </section>
+
+  <!-- HERO IMAGE — on hero gradient end colour -->
+  <div class="hero-image-section">
+    <div style="max-width:1100px;margin:0 auto;padding:0 3rem;">
+      <img src="assets/hero-system.jpeg" alt="Ventrify OS — complete system deliverables" class="hero-showcase-img">
+    </div>
+  </div>
+
+  <!-- PAGE INTRO — dark band -->
+  <section class="page-intro-section">
+    <div class="container" data-reveal>
+      <div style="max-width:780px;margin:0 auto;text-align:center;">
+        <p style="font-size:clamp(1.15rem,2.5vw,1.4rem);line-height:1.75;color:var(--text-light-muted);font-weight:400;">4,242 lines of structured instruction. 15+ automated tools. 5 specialist AI agents. 3 Figma plugins. 11 PDF generators. <span style="color:#FFFFFF;font-weight:500;">Every file, every phase, every deliverable &mdash; codified.</span> This is what you get when you drop CLAUDE.md into a project folder.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       2. THE CLAUDE.MD FILE (light bg)
+       ═══════════════════════════════════════════ -->
+  <section class="section" id="claude-md">
+    <div class="container" data-reveal>
+      <div class="s-label">The Core</div>
+      <h2 class="s-title s-title-shimmer">4,242 lines of<br>operating instruction</h2>
+      <div class="system-layout">
+        <div class="system-text">
+          <p>The CLAUDE.md file is the brain of the system. When dropped into a project folder, Claude Code reads it and becomes a full-stack venture studio operator.</p>
+          <p>It contains every phase, every deliverable specification, every quality gate, every payment checkpoint, and every prompt template &mdash; structured so that a single operator can run a complete engagement from brief to delivery.</p>
+        </div>
+        <div class="code-block">
+          <div class="code-block-bar">
+            <span class="code-block-dot"></span>
+            <span class="code-block-dot"></span>
+            <span class="code-block-dot"></span>
+            <span class="code-block-title">CLAUDE.md</span>
+          </div>
+          <div class="code-block-content">
+<span class="highlight">## PREREQUISITES</span>
+<span class="highlight">## PHASE 0</span> <span class="comment">&mdash; CLIENT BRIEF + BRAND KIT</span>
+<span class="highlight">## PHASE 1</span> <span class="comment">&mdash; DISCOVER (7 research docs)</span>
+<span class="highlight">## GATE 1</span>  <span class="comment">&mdash; CLIENT SIGN-OFF</span>
+<span class="highlight">## PHASE 2</span> <span class="comment">&mdash; DEFINE (9 deliverables)</span>
+<span class="highlight">## GATE 2</span>  <span class="comment">&mdash; SCOPE LOCK</span>
+<span class="highlight">## SOW SIGN-OFF</span>
+<span class="highlight">## PHASE 3</span> <span class="comment">&mdash; DESIGN</span>
+<span class="highlight">## PHASE 4</span> <span class="comment">&mdash; DEVELOP</span>
+<span class="highlight">## PHASE 5</span> <span class="comment">&mdash; DELIVER + HANDOFF</span>
+<span class="highlight">## WORKSTREAM A</span> <span class="comment">&mdash; MARKETING WEBSITE</span>
+<span class="highlight">## WORKSTREAM B</span> <span class="comment">&mdash; MARKETING CONTENT</span>
+<span class="highlight">## WORKSTREAM C</span> <span class="comment">&mdash; VIDEO PRODUCTION</span>
+<span class="highlight">## WORKSTREAM D</span> <span class="comment">&mdash; BLOG CONTENT</span>
+<span class="highlight">## WORKSTREAM E</span> <span class="comment">&mdash; DESIGN SYSTEM</span>
+<span class="highlight">## RETAINER FRAMEWORK</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-row" data-reveal>
+        <div class="stat-block" data-reveal data-delay="1">
+          <div class="stat-val">4,242</div>
+          <div class="stat-lbl">Lines</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-block" data-reveal data-delay="2">
+          <div class="stat-val">5 + 5</div>
+          <div class="stat-lbl">Phases + Workstreams</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-block" data-reveal data-delay="3">
+          <div class="stat-val">2</div>
+          <div class="stat-lbl">Formal Gates</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       3. TOOLS & SCRIPTS (alt light bg)
+       ═══════════════════════════════════════════ -->
+  <section class="section-alt" id="tools">
+    <div class="container" data-reveal>
+      <div class="s-label">The Tooling</div>
+      <h2 class="s-title s-title-shimmer">15+ automated tools</h2>
+      <p class="s-sub">Every tool runs locally via npm scripts. No external services required except Stripe for invoicing.</p>
+
+      <div class="tools-grid">
+        <div class="tool-card" data-reveal data-delay="1">
+          <div class="tool-card-visual" style="background:linear-gradient(135deg,#E8ECF4,#D8DCE8);">
+            <div class="tool-card-port">localhost:3010</div>
+          </div>
+          <div class="tool-card-body">
+            <h3>Brief Intake</h3>
+            <div class="card-divider"></div>
+            <p>Browser form that captures the 8-section client brief</p>
+          </div>
+        </div>
+        <div class="tool-card" data-reveal data-delay="2">
+          <div class="tool-card-visual" style="background:linear-gradient(135deg,#E8ECF4,#D8DCE8);">
+            <div class="tool-card-port">localhost:3014</div>
+          </div>
+          <div class="tool-card-body">
+            <h3>Payment Dashboard</h3>
+            <div class="card-divider"></div>
+            <p>Stripe integration, milestone tracking, invoice generation</p>
+          </div>
+        </div>
+        <div class="tool-card" data-reveal data-delay="3">
+          <div class="tool-card-visual" style="background:linear-gradient(135deg,#E8ECF4,#D8DCE8);">
+            <div class="tool-card-port">localhost:3012</div>
+          </div>
+          <div class="tool-card-body">
+            <h3>Social Scheduler</h3>
+            <div class="card-divider"></div>
+            <p>20-post approval interface + Buffer scheduling</p>
+          </div>
+        </div>
+        <div class="tool-card" data-reveal data-delay="1">
+          <div class="tool-card-visual" style="background:linear-gradient(135deg,#E8ECF4,#D8DCE8);">
+            <div class="tool-card-port">localhost:3013</div>
+          </div>
+          <div class="tool-card-body">
+            <h3>Blog Publisher</h3>
+            <div class="card-divider"></div>
+            <p>Blog post review + Sanity CMS publishing</p>
+          </div>
+        </div>
+        <div class="tool-card" data-reveal data-delay="2">
+          <div class="tool-card-visual" style="background:linear-gradient(135deg,#E8ECF4,#D8DCE8);">
+            <div class="tool-card-port">localhost:3015</div>
+          </div>
+          <div class="tool-card-body">
+            <h3>Client Portal</h3>
+            <div class="card-divider"></div>
+            <p>Client-facing progress tracker, deliverable downloads</p>
+          </div>
+        </div>
+        <div class="tool-card" data-reveal data-delay="3">
+          <div class="tool-card-visual" style="background:linear-gradient(135deg,#E8ECF4,#D8DCE8);">
+            <div class="tool-card-port">PDF Generator</div>
+          </div>
+          <div class="tool-card-body">
+            <h3>SOW Generator</h3>
+            <div class="card-divider"></div>
+            <p>Puppeteer PDF, auto-populates from brief + define files</p>
+          </div>
+        </div>
+        <div class="tool-card" data-reveal data-delay="1">
+          <div class="tool-card-visual" style="background:linear-gradient(135deg,#E8ECF4,#D8DCE8);">
+            <div class="tool-card-port">PDF Generator</div>
+          </div>
+          <div class="tool-card-body">
+            <h3>Research Deck</h3>
+            <div class="card-divider"></div>
+            <p>Auto-generated branded PDF from research files</p>
+          </div>
+        </div>
+        <div class="tool-card" data-reveal data-delay="2">
+          <div class="tool-card-visual" style="background:linear-gradient(135deg,#E8ECF4,#D8DCE8);">
+            <div class="tool-card-port">PDF Generator</div>
+          </div>
+          <div class="tool-card-body">
+            <h3>Vision Deck</h3>
+            <div class="card-divider"></div>
+            <p>Auto-generated from define files + wireframe screenshots</p>
+          </div>
+        </div>
+        <div class="tool-card" data-reveal data-delay="3">
+          <div class="tool-card-visual" style="background:linear-gradient(135deg,#E8ECF4,#D8DCE8);">
+            <div class="tool-card-port">PDF Generator</div>
+          </div>
+          <div class="tool-card-body">
+            <h3>Strategy Deck</h3>
+            <div class="card-divider"></div>
+            <p>Auto-generated from marketing files</p>
+          </div>
+        </div>
+        <div class="tool-card" data-reveal data-delay="1">
+          <div class="tool-card-visual" style="background:linear-gradient(135deg,#E8ECF4,#D8DCE8);">
+            <div class="tool-card-port">PDF Generator</div>
+          </div>
+          <div class="tool-card-body">
+            <h3>Investor Deck</h3>
+            <div class="card-divider"></div>
+            <p>Auto-generated with financial projections + product screenshots</p>
+          </div>
+        </div>
+        <div class="tool-card" data-reveal data-delay="2">
+          <div class="tool-card-visual" style="background:linear-gradient(135deg,#E8ECF4,#D8DCE8);">
+            <div class="tool-card-port">PDF Generator</div>
+          </div>
+          <div class="tool-card-body">
+            <h3>Invoice Generator</h3>
+            <div class="card-divider"></div>
+            <p>Branded PDF invoices per milestone</p>
+          </div>
+        </div>
+        <div class="tool-card" data-reveal data-delay="3">
+          <div class="tool-card-visual" style="background:linear-gradient(135deg,#E8ECF4,#D8DCE8);">
+            <div class="tool-card-port">PDF Generator</div>
+          </div>
+          <div class="tool-card-body">
+            <h3>Welcome Pack</h3>
+            <div class="card-divider"></div>
+            <p>Ventrify-branded onboarding document</p>
+          </div>
+        </div>
+        <div class="tool-card" data-reveal data-delay="1">
+          <div class="tool-card-visual" style="background:linear-gradient(135deg,#E8ECF4,#D8DCE8);">
+            <div class="tool-card-port">CLI</div>
+          </div>
+          <div class="tool-card-body">
+            <h3>Brand Photography</h3>
+            <div class="card-divider"></div>
+            <p>Auto-sources 37 on-brand photos from Unsplash and Pexels</p>
+          </div>
+        </div>
+        <div class="tool-card" data-reveal data-delay="2">
+          <div class="tool-card-visual" style="background:linear-gradient(135deg,#E8ECF4,#D8DCE8);">
+            <div class="tool-card-port">CLI</div>
+          </div>
+          <div class="tool-card-body">
+            <h3>Social Graphics</h3>
+            <div class="card-divider"></div>
+            <p>Generates branded PNGs for all 20 social posts</p>
+          </div>
+        </div>
+        <div class="tool-card" data-reveal data-delay="3">
+          <div class="tool-card-visual" style="background:linear-gradient(135deg,#E8ECF4,#D8DCE8);">
+            <div class="tool-card-port">CLI</div>
+          </div>
+          <div class="tool-card-body">
+            <h3>QA Validators</h3>
+            <div class="card-divider"></div>
+            <p>Markdown validation + PDF quality review before every deck</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       4. PROJECT STRUCTURE (light bg)
+       ═══════════════════════════════════════════ -->
+  <section class="section" id="structure">
+    <div class="container" data-reveal>
+      <div class="s-label">The Template</div>
+      <h2 class="s-title s-title-shimmer">Everything has a place</h2>
+
+      <div class="file-tree-block">
+        <div class="code-block-bar">
+          <span class="code-block-dot"></span>
+          <span class="code-block-dot"></span>
+          <span class="code-block-dot"></span>
+          <span class="code-block-title">Project Structure</span>
+        </div>
+        <div class="file-tree-content">
+<span class="dir">/[client]-venture/</span>
+<span class="file">&boxvr;&boxh;&boxh; CLAUDE.md</span>                 <span class="comment">&larr; The operating system</span>
+<span class="file">&boxvr;&boxh;&boxh; brief.md</span>                  <span class="comment">&larr; Client brief</span>
+<span class="file">&boxvr;&boxh;&boxh; payments.md</span>               <span class="comment">&larr; Payment tracking</span>
+<span class="file">&boxvr;&boxh;&boxh; portal.md</span>                 <span class="comment">&larr; Client portal config</span>
+<span class="file">&boxvr;&boxh;&boxh; STATUS.md</span>                 <span class="comment">&larr; Real-time status tracker</span>
+<span class="dir">&boxvr;&boxh;&boxh; /tools/</span>                   <span class="comment">&larr; 15+ automated tools</span>
+<span class="dir">&boxv;   &boxvr;&boxh;&boxh; /intake/</span>              <span class="comment">&larr; Brief form (port 3010)</span>
+<span class="dir">&boxv;   &boxvr;&boxh;&boxh; /payments/</span>            <span class="comment">&larr; Stripe dashboard (port 3014)</span>
+<span class="dir">&boxv;   &boxvr;&boxh;&boxh; /social/</span>              <span class="comment">&larr; Social scheduler (port 3012)</span>
+<span class="dir">&boxv;   &boxvr;&boxh;&boxh; /blog/</span>                <span class="comment">&larr; Blog publisher (port 3013)</span>
+<span class="dir">&boxv;   &boxvr;&boxh;&boxh; /portal/</span>              <span class="comment">&larr; Client portal (port 3015)</span>
+<span class="dir">&boxv;   &boxur;&boxh;&boxh; /pdf/</span>                 <span class="comment">&larr; All PDF generators</span>
+<span class="dir">&boxvr;&boxh;&boxh; /.claude/</span>                  <span class="comment">&larr; Agent config</span>
+<span class="dir">&boxv;   &boxvr;&boxh;&boxh; /agents/</span>              <span class="comment">&larr; Custom agent definitions</span>
+<span class="dir">&boxv;   &boxur;&boxh;&boxh; /memory/</span>              <span class="comment">&larr; Persistent memory files</span>
+<span class="dir">&boxvr;&boxh;&boxh; /brand/</span>                   <span class="comment">&larr; Brand kit + logos</span>
+<span class="dir">&boxv;   &boxur;&boxh;&boxh; /imagery/</span>             <span class="comment">&larr; 37 sourced brand photos</span>
+<span class="dir">&boxvr;&boxh;&boxh; /research/</span>                <span class="comment">&larr; 7 research documents</span>
+<span class="dir">&boxvr;&boxh;&boxh; /define/</span>                  <span class="comment">&larr; 6 definition documents</span>
+<span class="dir">&boxvr;&boxh;&boxh; /design/</span>                  <span class="comment">&larr; Component specifications</span>
+<span class="dir">&boxvr;&boxh;&boxh; /decks/</span>                   <span class="comment">&larr; 4 branded PDF decks</span>
+<span class="dir">&boxvr;&boxh;&boxh; /invoices/</span>                <span class="comment">&larr; Milestone invoices</span>
+<span class="dir">&boxvr;&boxh;&boxh; /marketing/</span>               <span class="comment">&larr; Tone, strategy, calendar, posts</span>
+<span class="dir">&boxvr;&boxh;&boxh; /product/</span>                 <span class="comment">&larr; MVP app code (Expo)</span>
+<span class="dir">&boxvr;&boxh;&boxh; /website/</span>                 <span class="comment">&larr; Marketing site (Next.js)</span>
+<span class="dir">&boxvr;&boxh;&boxh; /design-system/</span>           <span class="comment">&larr; 33+ page DS site</span>
+<span class="dir">&boxvr;&boxh;&boxh; /figma-plugins/</span>           <span class="comment">&larr; 3 Figma plugins</span>
+<span class="dir">&boxv;   &boxur;&boxh;&boxh; /screens/</span>             <span class="comment">&larr; Screen export plugin</span>
+<span class="dir">&boxvr;&boxh;&boxh; /video/</span>                   <span class="comment">&larr; Script + audio brief</span>
+<span class="dir">&boxvr;&boxh;&boxh; /retainer/</span>                <span class="comment">&larr; Monthly content log</span>
+<span class="dir">&boxur;&boxh;&boxh; /wireframes/</span>              <span class="comment">&larr; Wireframe deck + screenshots</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       5. TECH STACK (alt light bg)
+       ═══════════════════════════════════════════ -->
+  <section class="section-alt" id="stack">
+    <div class="container" data-reveal>
+      <div class="s-label">Built With</div>
+      <h2 class="s-title s-title-shimmer">The default stack</h2>
+
+      <div class="stack-table-wrap">
+        <table class="stack-table">
+          <tr>
+            <td>Mobile App</td>
+            <td>Expo (React Native) + Gluestack UI</td>
+          </tr>
+          <tr>
+            <td>Backend</td>
+            <td>Firebase (Auth + Firestore + Storage)</td>
+          </tr>
+          <tr>
+            <td>Analytics</td>
+            <td>PostHog</td>
+          </tr>
+          <tr>
+            <td>Marketing Website</td>
+            <td>Next.js + Tailwind + shadcn/ui</td>
+          </tr>
+          <tr>
+            <td>Design System Site</td>
+            <td>Next.js + Tailwind + shadcn/ui</td>
+          </tr>
+          <tr>
+            <td>CMS</td>
+            <td>Sanity</td>
+          </tr>
+          <tr>
+            <td>Hosting</td>
+            <td>Vercel (web) + EAS (mobile)</td>
+          </tr>
+          <tr>
+            <td>PDF Generation</td>
+            <td>Puppeteer</td>
+          </tr>
+          <tr>
+            <td>Social Scheduling</td>
+            <td>Buffer</td>
+          </tr>
+          <tr>
+            <td>Payments</td>
+            <td>Stripe</td>
+          </tr>
+          <tr>
+            <td>Charts (Mobile)</td>
+            <td>react-native-gifted-charts</td>
+          </tr>
+          <tr>
+            <td>Charts (Web)</td>
+            <td>Recharts</td>
+          </tr>
+          <tr>
+            <td>Icons (Mobile)</td>
+            <td>MaterialCommunityIcons</td>
+          </tr>
+          <tr>
+            <td>Icons (Web)</td>
+            <td>Material Symbols</td>
+          </tr>
+          <tr>
+            <td>Video Production</td>
+            <td>ElevenLabs + FFmpeg</td>
+          </tr>
+          <tr>
+            <td>Brand Photography</td>
+            <td>Unsplash + Pexels APIs</td>
+          </tr>
+          <tr>
+            <td>QA</td>
+            <td>Custom markdown + PDF validators</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       6. WHAT'S INCLUDED CHECKLIST (light bg)
+       ═══════════════════════════════════════════ -->
+  <section class="section" id="included">
+    <div class="container" data-reveal>
+      <div class="s-label">What&rsquo;s Included</div>
+      <h2 class="s-title s-title-shimmer">Everything. One purchase.</h2>
+
+      <div style="max-width:640px;margin-top:2.5rem;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.25rem 2rem;">
+          <div style="display:flex;align-items:center;gap:10px;padding:0.6rem 0;border-bottom:1px solid rgba(0,0,0,0.04);font-size:0.92rem;color:var(--text-dark-muted);"><span style="color:var(--primary);font-weight:600;flex-shrink:0;">&#10003;</span> Phase 1&ndash;5 core workflow</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:0.6rem 0;border-bottom:1px solid rgba(0,0,0,0.04);font-size:0.92rem;color:var(--text-dark-muted);"><span style="color:var(--primary);font-weight:600;flex-shrink:0;">&#10003;</span> MVP App</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:0.6rem 0;border-bottom:1px solid rgba(0,0,0,0.04);font-size:0.92rem;color:var(--text-dark-muted);"><span style="color:var(--primary);font-weight:600;flex-shrink:0;">&#10003;</span> Design System + DS site</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:0.6rem 0;border-bottom:1px solid rgba(0,0,0,0.04);font-size:0.92rem;color:var(--text-dark-muted);"><span style="color:var(--primary);font-weight:600;flex-shrink:0;">&#10003;</span> Research Deck</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:0.6rem 0;border-bottom:1px solid rgba(0,0,0,0.04);font-size:0.92rem;color:var(--text-dark-muted);"><span style="color:var(--primary);font-weight:600;flex-shrink:0;">&#10003;</span> Vision Deck</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:0.6rem 0;border-bottom:1px solid rgba(0,0,0,0.04);font-size:0.92rem;color:var(--text-dark-muted);"><span style="color:var(--primary);font-weight:600;flex-shrink:0;">&#10003;</span> Strategy Deck</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:0.6rem 0;border-bottom:1px solid rgba(0,0,0,0.04);font-size:0.92rem;color:var(--text-dark-muted);"><span style="color:var(--primary);font-weight:600;flex-shrink:0;">&#10003;</span> Investor Deck</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:0.6rem 0;border-bottom:1px solid rgba(0,0,0,0.04);font-size:0.92rem;color:var(--text-dark-muted);"><span style="color:var(--primary);font-weight:600;flex-shrink:0;">&#10003;</span> Marketing Website</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:0.6rem 0;border-bottom:1px solid rgba(0,0,0,0.04);font-size:0.92rem;color:var(--text-dark-muted);"><span style="color:var(--primary);font-weight:600;flex-shrink:0;">&#10003;</span> Social Media (20 posts)</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:0.6rem 0;border-bottom:1px solid rgba(0,0,0,0.04);font-size:0.92rem;color:var(--text-dark-muted);"><span style="color:var(--primary);font-weight:600;flex-shrink:0;">&#10003;</span> Blog Content (5 posts)</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:0.6rem 0;border-bottom:1px solid rgba(0,0,0,0.04);font-size:0.92rem;color:var(--text-dark-muted);"><span style="color:var(--primary);font-weight:600;flex-shrink:0;">&#10003;</span> Video Brief</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:0.6rem 0;border-bottom:1px solid rgba(0,0,0,0.04);font-size:0.92rem;color:var(--text-dark-muted);"><span style="color:var(--primary);font-weight:600;flex-shrink:0;">&#10003;</span> Client Portal</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:0.6rem 0;border-bottom:1px solid rgba(0,0,0,0.04);font-size:0.92rem;color:var(--text-dark-muted);"><span style="color:var(--primary);font-weight:600;flex-shrink:0;">&#10003;</span> Brand Photography (37 images)</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:0.6rem 0;border-bottom:1px solid rgba(0,0,0,0.04);font-size:0.92rem;color:var(--text-dark-muted);"><span style="color:var(--primary);font-weight:600;flex-shrink:0;">&#10003;</span> Social Graphics</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:0.6rem 0;border-bottom:1px solid rgba(0,0,0,0.04);font-size:0.92rem;color:var(--text-dark-muted);"><span style="color:var(--primary);font-weight:600;flex-shrink:0;">&#10003;</span> Promo Video (automated)</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:0.6rem 0;border-bottom:1px solid rgba(0,0,0,0.04);font-size:0.92rem;color:var(--text-dark-muted);"><span style="color:var(--primary);font-weight:600;flex-shrink:0;">&#10003;</span> Information Architecture</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:0.6rem 0;border-bottom:1px solid rgba(0,0,0,0.04);font-size:0.92rem;color:var(--text-dark-muted);"><span style="color:var(--primary);font-weight:600;flex-shrink:0;">&#10003;</span> QA Validators</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:0.6rem 0;border-bottom:1px solid rgba(0,0,0,0.04);font-size:0.92rem;color:var(--text-dark-muted);"><span style="color:var(--primary);font-weight:600;flex-shrink:0;">&#10003;</span> 3-month Retainer Framework</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       7. FINAL CTA — Dark bookend
+       ═══════════════════════════════════════════ -->
+  <section class="final-cta">
+    <div class="cta-content" data-reveal>
+      <h2>Seen enough?</h2>
+      <div class="cta-buttons">
+        <a href="pricing.html" class="btn btn-dark-primary btn-lg">Get the Workflow &mdash; <span data-price-gbp="500">&pound;500</span></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       FOOTER — Dark
+       ═══════════════════════════════════════════ -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <div class="logo">VENTRIFY <span class="os">OS</span></div>
+          <p>A product by Ventrify &mdash; the AI-powered venture studio.</p>
+        </div>
+        <div class="footer-links">
+          <a href="system.html">System</a>
+          <a href="showcase.html">Showcase</a>
+          <a href="pricing.html">Pricing</a>
+          <a href="faqs.html">FAQs</a>
+          <a href="../index.html">Ventrify Studio</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 Ventrify. All rights reserved.</p>
+        <p>A product by Ventrify &mdash; <a href="https://ventrify.io" style="color:rgba(255,255,255,0.4);">ventrify.io</a></p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ═══════════════════════════════════════════
+       JAVASCRIPT
+       ═══════════════════════════════════════════ -->
+  <script>
+    // Hamburger Toggle
+    const hamburger = document.querySelector('.hamburger');
+    const mobileMenu = document.querySelector('.mobile-menu');
+
+    hamburger.addEventListener('click', () => {
+      hamburger.classList.toggle('open');
+      mobileMenu.classList.toggle('open');
+      document.body.style.overflow = mobileMenu.classList.contains('open') ? 'hidden' : '';
+    });
+
+    // Close mobile menu on link click
+    mobileMenu.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => {
+        hamburger.classList.remove('open');
+        mobileMenu.classList.remove('open');
+        document.body.style.overflow = '';
+      });
+    });
+
+    // Scroll Reveal Observer
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('revealed');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, {
+      threshold: 0.01,
+      rootMargin: '0px 0px 120px 0px'
+    });
+
+    document.querySelectorAll('[data-reveal]').forEach(el => {
+      revealObserver.observe(el);
+    });
+
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function(e) {
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          e.preventDefault();
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    });
+  </script>
+  <script src="currency.js" defer></script>
+</body>
+</html>
