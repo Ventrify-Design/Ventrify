@@ -568,6 +568,24 @@
       width:1px; height:32px; background:rgba(255,255,255,0.1); flex-shrink:0;
     }
 
+    /* Intro Stats Row (page-intro-section) */
+    .intro-stats-row {
+      display:flex; align-items:center; justify-content:center;
+      gap:0; margin-top:2rem; flex-wrap:wrap;
+    }
+    .intro-stat { text-align:center; padding:0 2rem; }
+    .intro-stat-val {
+      font-family:var(--font-heading);
+      font-size:clamp(1.6rem,3vw,2.2rem);
+      font-weight:600; color:#FFFFFF; letter-spacing:-0.02em;
+    }
+    .intro-stat-lbl {
+      font-size:0.82rem; color:var(--text-light-muted); margin-top:0.25rem;
+    }
+    .intro-stat-divider {
+      width:1px; height:40px; background:rgba(255,255,255,0.1); flex-shrink:0;
+    }
+
     /* ============================================
        FOOTER — Dark
        ============================================ */
@@ -1224,6 +1242,10 @@
       .hero-stats .stat-divider:nth-of-type(2) { display:none; }
       .hero-stats .stat-block:nth-of-type(3),
       .hero-stats .stat-block:nth-of-type(4) { margin-top:1.5rem; }
+
+      .intro-stats-row { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem 0; }
+      .intro-stat { padding:0 0.5rem; }
+      .intro-stat-divider { display:none; }
     }
   </style>
 </head>
@@ -1283,25 +1305,25 @@
       <div style="max-width:780px;margin:0 auto;text-align:center;">
         <p style="font-size:clamp(1.15rem,2.5vw,1.4rem);line-height:1.75;color:var(--text-light-muted);font-weight:400;">In March 2026, we ran the Ventrify workflow on a real client. <span style="color:#FFFFFF;font-weight:500;">Seven days later, the founder had paid AED 132,000, four investor-grade decks had been auto-generated, and 2,060 lines of market research were complete.</span> One operator. Zero subcontractors. Here&rsquo;s exactly what shipped.</p>
       </div>
-      <div style="display:flex;align-items:center;justify-content:center;gap:0;margin-top:2rem;flex-wrap:wrap;">
-        <div style="text-align:center;padding:0 2rem;">
-          <div style="font-family:var(--font-heading);font-size:clamp(1.6rem,3vw,2.2rem);font-weight:600;color:#FFFFFF;letter-spacing:-0.02em;">7 Days</div>
-          <div style="font-size:0.82rem;color:var(--text-light-muted);margin-top:0.25rem;">Brief to Gate 2</div>
+      <div class="intro-stats-row">
+        <div class="intro-stat">
+          <div class="intro-stat-val">7 Days</div>
+          <div class="intro-stat-lbl">Brief to Gate 2</div>
         </div>
-        <div style="width:1px;height:40px;background:rgba(255,255,255,0.1);flex-shrink:0;"></div>
-        <div style="text-align:center;padding:0 2rem;">
-          <div style="font-family:var(--font-heading);font-size:clamp(1.6rem,3vw,2.2rem);font-weight:600;color:#FFFFFF;letter-spacing:-0.02em;">AED 132K</div>
-          <div style="font-size:0.82rem;color:var(--text-light-muted);margin-top:0.25rem;">Revenue Day One</div>
+        <div class="intro-stat-divider"></div>
+        <div class="intro-stat">
+          <div class="intro-stat-val">AED 132K</div>
+          <div class="intro-stat-lbl">Revenue Day One</div>
         </div>
-        <div style="width:1px;height:40px;background:rgba(255,255,255,0.1);flex-shrink:0;"></div>
-        <div style="text-align:center;padding:0 2rem;">
-          <div style="font-family:var(--font-heading);font-size:clamp(1.6rem,3vw,2.2rem);font-weight:600;color:#FFFFFF;letter-spacing:-0.02em;">27</div>
-          <div style="font-size:0.82rem;color:var(--text-light-muted);margin-top:0.25rem;">Commits in 48hrs</div>
+        <div class="intro-stat-divider"></div>
+        <div class="intro-stat">
+          <div class="intro-stat-val">27</div>
+          <div class="intro-stat-lbl">Commits in 48hrs</div>
         </div>
-        <div style="width:1px;height:40px;background:rgba(255,255,255,0.1);flex-shrink:0;"></div>
-        <div style="text-align:center;padding:0 2rem;">
-          <div style="font-family:var(--font-heading);font-size:clamp(1.6rem,3vw,2.2rem);font-weight:600;color:#FFFFFF;letter-spacing:-0.02em;">1</div>
-          <div style="font-size:0.82rem;color:var(--text-light-muted);margin-top:0.25rem;">Operator</div>
+        <div class="intro-stat-divider"></div>
+        <div class="intro-stat">
+          <div class="intro-stat-val">1</div>
+          <div class="intro-stat-lbl">Operator</div>
         </div>
       </div>
     </div>
