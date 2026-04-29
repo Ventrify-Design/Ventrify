@@ -975,8 +975,9 @@
       });
     });
 
-    // Portal Login Handler — preserves original behaviour
-    function handlePortalLogin(e) {
+    // Portal Login Handler — POSTs to /api/portal-auth, redirects on success.
+    // Two scopes accepted: client (full hub access) and investor (financials only).
+    async function handlePortalLogin(e) {
       e.preventDefault();
       const code = document.getElementById('portalCode').value.trim();
       const btn = document.getElementById('portalBtn');
@@ -988,12 +989,28 @@
       btn.textContent = 'Verifying…';
       error.style.display = 'none';
 
-      // Simulate verification delay — replace with real auth when portal is built
-      setTimeout(() => {
+      try {
+        const res = await fetch('/api/portal-auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({ code }),
+        });
+        const data = await res.json();
+        if (data.ok) {
+          window.location.href = data.redirectTo || '/portal-app.html';
+        } else {
+          error.textContent = 'Incorrect access code. Please try again, or contact your Ventrify lead if you’ve lost the code.';
+          error.style.display = 'block';
+          btn.disabled = false;
+          btn.textContent = 'Log In';
+        }
+      } catch (err) {
+        error.textContent = 'Could not verify the code. Please try again — and let us know at antony@ventrify.io if it persists.';
         error.style.display = 'block';
         btn.disabled = false;
         btn.textContent = 'Log In';
-      }, 1200);
+      }
 
       return false;
     }
