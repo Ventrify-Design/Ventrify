@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Client Portal — Ventrify</title>
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #0036FF;
+      --primary-light: #3366FF;
+      --primary-rgb: 0,54,255;
+      --bg-light: #FFFFFF;
+      --surface-alt: #FAFAFA;
+      --surface-card: #F5F5F7;
+      --text-dark: #141414;
+      --text-muted: #656565;
+      --border-light: rgba(0,0,0,0.06);
+      --border-strong: rgba(0,0,0,0.12);
+      --hero-gradient: linear-gradient(180deg, #080B1A 0%, #0C1035 30%, #111B52 65%, #1A2E78 100%);
+      --text-light: #FFFFFF;
+      --text-light-muted: rgba(255,255,255,0.78);
+      --radius-card: 20px;
+      --radius-pill: 980px;
+      --radius-sm: 12px;
+      --radius-md: 16px;
+      --font-heading: 'Inter', -apple-system, sans-serif;
+      --font-body: 'Inter', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+    }
+    *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+    html { scroll-behavior:smooth; }
+    body {
+      font-family: var(--font-body);
+      font-size: 17px; line-height: 1.65;
+      color: var(--text-dark); background: var(--bg-light);
+      -webkit-font-smoothing: antialiased;
+      font-weight: 400;
+    }
+    a { color: inherit; text-decoration: none; }
+
+    /* Accessibility primitives */
+    :focus { outline: none; }
+    :focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; border-radius: 4px; }
+    .skip-link { position: absolute; top: -48px; left: 16px; z-index: 10000; background: var(--primary); color: #fff; padding: 10px 18px; border-radius: 0 0 8px 8px; font-size: 14px; font-weight: 600; transition: top 140ms; }
+    .skip-link:focus { top: 0; }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+    }
+
+    /* ── Brand bar ──────────────────────────────────────────────────────── */
+    .brand-bar { background: var(--bg-light); border-bottom: 1px solid var(--border-light); position: sticky; top: 0; z-index: 50; }
+    .brand-bar-inner { max-width: 1280px; margin: 0 auto; padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .brand-bar-home { display: flex; align-items: center; gap: 12px; }
+    .ventrify-mark { font-family: var(--font-heading); font-weight: 700; font-size: 16px; letter-spacing: 0.04em; color: var(--text-dark); }
+    .brand-bar-divider { color: var(--text-muted); opacity: 0.55; }
+    .brand-bar-project { font-weight: 500; font-size: 14px; color: var(--text-muted); }
+    .brand-bar-nav { display: flex; gap: 8px; align-items: center; }
+    .brand-link { font-size: 14px; font-weight: 500; color: var(--text-dark); padding: 7px 14px; border-radius: var(--radius-pill); transition: background 120ms, color 120ms; cursor: pointer; }
+    .brand-link:hover { background: rgba(var(--primary-rgb), 0.06); color: var(--primary); }
+    @media (max-width: 640px) {
+      .brand-bar-divider, .brand-bar-project { display: none; }
+      .brand-link { font-size: 12px; padding: 6px 10px; }
+    }
+
+    /* ── Hero ──────────────────────────────────────────────────────────── */
+    .hub-hero { padding: 56px 24px 44px; background: var(--hero-gradient); color: var(--text-light); }
+    .hub-hero-inner { max-width: 1100px; margin: 0 auto; }
+    .hub-hero-eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.78); margin-bottom: 14px; display: inline-flex; align-items: center; gap: 10px; }
+    .hub-hero-eyebrow::before { content: ''; width: 28px; height: 1px; background: rgba(255,255,255,0.78); }
+    .hub-hero h1 { font-size: 48px; line-height: 1.05; font-weight: 600; letter-spacing: -0.04em; max-width: 900px; }
+    .hub-hero-subtitle { font-size: 18px; line-height: 1.55; color: rgba(255,255,255,0.78); max-width: 720px; margin-top: 14px; }
+    .hub-hero-meta { display: flex; gap: 24px; margin-top: 24px; flex-wrap: wrap; font-size: 13px; color: rgba(255,255,255,0.65); }
+    .hub-hero-meta strong { color: var(--text-light); margin-right: 6px; font-weight: 500; }
+    @media (max-width: 640px) { .hub-hero h1 { font-size: 32px; } }
+
+    /* ── Hub list / cards ──────────────────────────────────────────────── */
+    .container { max-width: 1100px; margin: 40px auto 80px; padding: 0 24px; }
+    .hub-section { margin-bottom: 48px; }
+    .hub-section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--border-light); }
+    .hub-section-title { font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
+    .hub-section-meta { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--primary); }
+    .section-grid { display: grid; gap: 12px; grid-template-columns: 1fr; }
+    @media (min-width: 760px) { .section-grid { grid-template-columns: 1fr 1fr; } }
+    .section-card { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 20px; background: var(--surface-card); border-radius: var(--radius-card); border: 1px solid transparent; cursor: pointer; transition: transform 200ms, box-shadow 200ms, border-color 200ms; }
+    .section-card:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(8,11,26,0.08); border-color: rgba(0,54,255,0.15); }
+    .section-card.disabled { opacity: 0.5; cursor: not-allowed; }
+    .section-card.disabled:hover { transform: none; box-shadow: none; }
+    .section-card-body { flex: 1; min-width: 0; }
+    .section-card-name { font-size: 16px; font-weight: 600; margin-bottom: 2px; }
+    .section-card-status { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-muted); }
+    .section-card-arrow { font-size: 22px; color: var(--text-muted); opacity: 0.4; transition: transform 200ms, color 200ms, opacity 200ms; }
+    .section-card:hover .section-card-arrow { color: var(--primary); transform: translateX(4px); opacity: 1; }
+    .status-pill { display: inline-block; padding: 2px 8px; border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: 10px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; margin-right: 8px; }
+    .status-pill.approved { background: #D8F5DC; color: #14642C; }
+    .status-pill.feedback { background: #FFF4D6; color: #8A5A00; }
+    .status-pill.pending { background: rgba(0,0,0,0.06); color: var(--text-muted); }
+
+    /* ── Sign-off panel ────────────────────────────────────────────────── */
+    .gate-panel { padding: 22px 24px; border-radius: var(--radius-card); margin-top: 18px; display: flex; align-items: flex-start; gap: 18px; }
+    .gate-panel.signed { background: #D8F5DC; border: 1px solid rgba(20,100,44,0.25); }
+    .gate-panel.ready { background: linear-gradient(135deg, #EEF2FF 0%, #F8FAFF 100%); border: 1px solid rgba(0,54,255,0.15); }
+    .gate-panel.blocked { background: var(--surface-alt); border: 1px solid var(--border-light); }
+    .gate-icon { font-size: 24px; flex: 0 0 auto; color: var(--primary); }
+    .gate-panel.signed .gate-icon { color: #14642C; }
+    .gate-body h4 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+    .gate-body p { font-size: 14px; color: var(--text-muted); line-height: 1.55; }
+    .gate-btn { margin-top: 12px; background: var(--primary); color: #fff; border: none; padding: 11px 22px; border-radius: var(--radius-pill); font-weight: 600; font-size: 14px; cursor: pointer; font-family: inherit; transition: background 200ms; }
+    .gate-btn:hover { background: var(--primary-light); }
+    .gate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── Section view (markdown content) ───────────────────────────────── */
+    .section-view { max-width: 760px; margin: 0 auto; padding: 32px 24px 80px; }
+    .section-back { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--primary); display: inline-flex; align-items: center; gap: 6px; margin-bottom: 18px; cursor: pointer; }
+    .section-back:hover { text-decoration: underline; }
+    .section-eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--primary); margin-bottom: 12px; display: inline-flex; align-items: center; gap: 10px; }
+    .section-eyebrow::before { content: ''; width: 24px; height: 1px; background: var(--primary); }
+    .section-content h1 { font-size: 40px; line-height: 1.1; letter-spacing: -0.04em; margin-bottom: 14px; font-weight: 700; }
+    .section-content h2 { font-size: 26px; line-height: 1.3; letter-spacing: -0.01em; margin: 48px 0 14px; font-weight: 700; padding-top: 8px; }
+    .section-content h3 { font-size: 19px; line-height: 1.35; margin: 32px 0 10px; font-weight: 600; }
+    .section-content h4 { font-size: 16px; margin: 24px 0 8px; font-weight: 600; }
+    .section-content p { margin-bottom: 16px; line-height: 1.72; }
+    .section-content strong { font-weight: 600; color: var(--text-dark); }
+    .section-content em { font-style: italic; }
+    .section-content ul, .section-content ol { margin: 12px 0 20px; padding-left: 0; }
+    .section-content li { position: relative; margin-bottom: 8px; padding-left: 24px; line-height: 1.65; }
+    .section-content ul li::before { content: ''; position: absolute; left: 4px; top: 11px; width: 6px; height: 6px; border-radius: 50%; background: var(--primary); }
+    .section-content ol { counter-reset: ol-counter; }
+    .section-content ol li { counter-increment: ol-counter; }
+    .section-content ol li::before { content: counter(ol-counter) '.'; position: absolute; left: 0; top: 0; font-family: var(--font-mono); font-size: 13px; color: var(--primary); font-weight: 600; }
+    .section-content table { width: 100%; border-collapse: separate; border-spacing: 0; margin: 22px 0; font-size: 14px; line-height: 1.55; border: 1px solid var(--border-light); border-radius: var(--radius-sm); overflow: hidden; display: block; overflow-x: auto; }
+    .section-content thead { background: var(--surface-alt); }
+    .section-content th { padding: 11px 13px; text-align: left; font-weight: 600; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; border-bottom: 1px solid var(--border-strong); }
+    .section-content td { padding: 10px 13px; vertical-align: top; border-bottom: 1px solid var(--border-light); }
+    .section-content tbody tr:last-child td { border-bottom: none; }
+    .section-content tbody tr:nth-child(even) { background: rgba(0,0,0,0.012); }
+    .section-content blockquote { margin: 22px 0; padding: 14px 20px; background: var(--surface-alt); border-left: 3px solid var(--primary); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; color: var(--text-dark); font-size: 15px; }
+    .section-content blockquote p { margin-bottom: 8px; }
+    .section-content blockquote p:last-child { margin-bottom: 0; }
+    .section-content code { background: var(--surface-card); padding: 2px 6px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.88em; }
+    .section-content pre { background: var(--surface-card); color: var(--text-dark); padding: 16px; border-radius: var(--radius-sm); overflow-x: auto; margin: 18px 0; border: 1px solid var(--border-light); font-family: var(--font-mono); font-size: 13px; line-height: 1.6; }
+    .section-content pre code { background: none; padding: 0; color: inherit; }
+    .section-content hr { border: none; height: 1px; background: var(--border-light); margin: 36px 0; }
+    .section-content a { color: var(--primary); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 2px; }
+
+    /* ── Feedback panel ────────────────────────────────────────────────── */
+    .feedback-panel { margin-top: 56px; padding: 28px; background: var(--surface-alt); border-radius: var(--radius-card); border: 1px solid var(--border-light); }
+    .feedback-panel h3 { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
+    .feedback-intro { font-size: 14px; color: var(--text-muted); margin-bottom: 18px; line-height: 1.55; }
+    .rating-buttons { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+    .rating-btn { padding: 11px 18px; background: var(--bg-light); border: 1px solid var(--border-strong); border-radius: var(--radius-pill); font-size: 14px; cursor: pointer; transition: all 200ms; font-family: inherit; color: var(--text-dark); }
+    .rating-btn:hover { border-color: var(--primary); transform: translateY(-1px); }
+    .rating-btn.active { border-color: var(--primary); background: rgba(var(--primary-rgb), 0.06); color: var(--primary); font-weight: 500; }
+    .feedback-textarea, .feedback-input { width: 100%; padding: 12px 14px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); font-family: inherit; font-size: 14px; margin-bottom: 12px; background: var(--bg-light); color: var(--text-dark); transition: border-color 140ms, box-shadow 140ms; }
+    .feedback-textarea { min-height: 90px; resize: vertical; line-height: 1.55; }
+    .feedback-textarea:focus, .feedback-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.15); }
+    .feedback-name-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 560px) { .feedback-name-row { grid-template-columns: 1fr; } }
+    .feedback-submit { background: var(--primary); color: #fff; border: none; padding: 12px 24px; border-radius: var(--radius-pill); cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 600; transition: background 200ms; }
+    .feedback-submit:hover:not(:disabled) { background: var(--primary-light); }
+    .feedback-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+    .feedback-confirmation { display: none; padding: 14px 16px; background: #D8F5DC; border-radius: var(--radius-sm); color: #14642C; font-size: 14px; margin-top: 12px; }
+    .feedback-confirmation.show { display: block; }
+
+    /* ── Modal ─────────────────────────────────────────────────────────── */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(8,11,26,0.55); z-index: 100; align-items: center; justify-content: center; padding: 24px; }
+    .modal-overlay.active { display: flex; }
+    .modal { background: #fff; border-radius: var(--radius-card); max-width: 520px; width: 100%; padding: 32px; }
+    .modal h3 { font-size: 22px; font-weight: 600; margin-bottom: 8px; }
+    .modal p { font-size: 14px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.55; }
+    .modal label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; color: var(--text-dark); }
+    .modal input { width: 100%; padding: 11px 14px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); font-family: inherit; font-size: 14px; margin-bottom: 14px; transition: border-color 140ms, box-shadow 140ms; }
+    .modal input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.15); }
+    .modal-confirm { display: flex; gap: 10px; padding: 14px; background: #FFF4D6; border-radius: var(--radius-sm); margin-bottom: 18px; align-items: flex-start; }
+    .modal-confirm input[type="checkbox"] { width: auto; margin: 4px 0 0; flex: 0 0 auto; }
+    .modal-confirm label { font-size: 13px; color: #5A3D00; line-height: 1.5; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+    .btn-primary { background: var(--primary); color: #fff; border: none; padding: 11px 22px; border-radius: var(--radius-pill); font-weight: 600; cursor: pointer; font-family: inherit; font-size: 14px; }
+    .btn-secondary { background: transparent; color: var(--text-dark); border: 1px solid var(--border-strong); padding: 11px 22px; border-radius: var(--radius-pill); font-weight: 500; cursor: pointer; font-family: inherit; font-size: 14px; }
+
+    /* ── Loading + error states ────────────────────────────────────────── */
+    .center-msg { padding: 80px 24px; text-align: center; color: var(--text-muted); }
+    .center-msg .spinner { display: inline-block; width: 24px; height: 24px; border: 3px solid var(--border-light); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Investor banner ───────────────────────────────────────────────── */
+    .investor-banner { padding: 8px 24px; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; text-align: center; background: #14642C; color: #fff; }
+  </style>
+</head>
+<body>
+  <a href="#main" class="skip-link">Skip to content</a>
+
+  <header class="brand-bar">
+    <div class="brand-bar-inner">
+      <a href="/" class="brand-bar-home" aria-label="Ventrify home">
+        <span class="ventrify-mark">VENTRIFY</span>
+        <span class="brand-bar-divider" id="bar-divider" hidden>·</span>
+        <span class="brand-bar-project" id="bar-project"></span>
+      </a>
+      <nav class="brand-bar-nav" aria-label="Primary">
+        <a class="brand-link" id="bar-home" href="#" hidden>Hub</a>
+        <a class="brand-link" id="bar-logout" href="#">Sign out</a>
+      </nav>
+    </div>
+  </header>
+
+  <div id="investor-banner" class="investor-banner" hidden>Investor View · Financials only</div>
+
+  <main id="main">
+    <!-- Loading state -->
+    <div id="loading" class="center-msg">
+      <div class="spinner"></div>
+      <p style="margin-top:14px;">Loading your portal…</p>
+    </div>
+
+    <!-- Hub list view (default after auth) -->
+    <div id="hub-list" hidden>
+      <section class="hub-hero">
+        <div class="hub-hero-inner">
+          <div class="hub-hero-eyebrow" id="hero-eyebrow">Client Portal</div>
+          <h1 id="hero-title">Project</h1>
+          <p class="hub-hero-subtitle" id="hero-subtitle"></p>
+          <div class="hub-hero-meta" id="hero-meta"></div>
+        </div>
+      </section>
+      <div class="container" id="hub-list-body"></div>
+    </div>
+
+    <!-- Section view (when a section is opened) -->
+    <div id="section-view" hidden>
+      <div class="section-view">
+        <a class="section-back" id="section-back-link" href="#">← Back to hub</a>
+        <div class="section-eyebrow" id="section-eyebrow"></div>
+        <article id="section-content" class="section-content"></article>
+
+        <!-- Feedback form -->
+        <section class="feedback-panel" id="feedback-panel">
+          <h3>Feedback on this section</h3>
+          <p class="feedback-intro">Mark "Looks good" to approve. Add a comment if anything needs adjusting.</p>
+          <div class="rating-buttons" role="radiogroup" aria-label="Feedback rating">
+            <button type="button" class="rating-btn" data-rating="looks-good">👍 Looks good</button>
+            <button type="button" class="rating-btn" data-rating="has-feedback">⚠️ Has feedback</button>
+            <button type="button" class="rating-btn" data-rating="needs-rework">🚫 Needs rework</button>
+          </div>
+          <textarea class="feedback-textarea" id="feedback-comment" placeholder="Optional — what needs adjusting?" style="display:none;"></textarea>
+          <div class="feedback-name-row" id="feedback-name-row" style="display:none;">
+            <input class="feedback-input" type="text" id="feedback-name" placeholder="Your name (optional)" autocomplete="name">
+            <input class="feedback-input" type="email" id="feedback-email" placeholder="Email (optional)" autocomplete="email">
+          </div>
+          <button type="button" class="feedback-submit" id="feedback-submit" disabled>Submit feedback</button>
+          <div class="feedback-confirmation" id="feedback-confirmation">✓ Thanks — your feedback has been logged. We'll get back to you shortly.</div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- Sign-off modal -->
+  <div class="modal-overlay" id="signoff-modal" role="dialog" aria-modal="true" aria-labelledby="signoff-modal-title" hidden>
+    <div class="modal">
+      <h3 id="signoff-modal-title">Sign off Gate</h3>
+      <p id="signoff-modal-desc"></p>
+      <label for="signoff-name">Your name</label>
+      <input type="text" id="signoff-name" autocomplete="name" placeholder="e.g. Jonathan Charles">
+      <label for="signoff-email">Email (optional)</label>
+      <input type="email" id="signoff-email" autocomplete="email">
+      <div class="modal-confirm">
+        <input type="checkbox" id="signoff-confirm">
+        <label for="signoff-confirm" id="signoff-confirm-label">I confirm I have reviewed every section and approve the work as written.</label>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" id="signoff-cancel">Cancel</button>
+        <button type="button" class="btn-primary" id="signoff-submit" disabled>Confirm sign-off</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+'use strict';
+
+// ── Tiny markdown → HTML renderer (no dependencies) ───────────────────────
+// Handles: H1-H6, paragraphs, bold/italic, code spans, links, hr,
+// fenced code, blockquotes, unordered + ordered lists, tables.
+const md = (function () {
+  function escapeHtml(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+  function inline(text) {
+    let out = text;
+    out = out.replace(/`([^`]+)`/g, (_, c) => `<code>${escapeHtml(c)}</code>`);
+    out = out.replace(/\*\*\*([^*]+)\*\*\*/g, '<strong><em>$1</em></strong>');
+    out = out.replace(/\*\*([^*]+?)\*\*/g, '<strong>$1</strong>');
+    out = out.replace(/(^|\W)\*([^*\s][^*]*?)\*(?=\W|$)/g, '$1<em>$2</em>');
+    out = out.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+    return out;
+  }
+  function table(rows) {
+    if (!rows.length) return '';
+    const head = rows[0];
+    const body = rows.slice(1);
+    let html = '<table><thead><tr>';
+    head.forEach(c => html += `<th>${inline(escapeHtml(c))}</th>`);
+    html += '</tr></thead><tbody>';
+    body.forEach(r => {
+      html += '<tr>';
+      r.forEach(c => html += `<td>${inline(escapeHtml(c))}</td>`);
+      html += '</tr>';
+    });
+    return html + '</tbody></table>';
+  }
+  function parseRow(line) {
+    return line.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map(c => c.trim());
+  }
+  function isSeparator(line) {
+    return /^\|\s*[-:|\s]+\|\s*$/.test(line.trim());
+  }
+  function render(text) {
+    const lines = text.split('\n');
+    const out = [];
+    let i = 0;
+    while (i < lines.length) {
+      const line = lines[i];
+      if (/^---+\s*$/.test(line)) { out.push('<hr>'); i++; continue; }
+      const heading = line.match(/^(#{1,6})\s+(.+?)\s*$/);
+      if (heading) {
+        const level = heading[1].length;
+        const id = heading[2].toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        out.push(`<h${level} id="${id}">${inline(escapeHtml(heading[2]))}</h${level}>`);
+        i++; continue;
+      }
+      if (line.trim().startsWith('|') && i + 1 < lines.length && isSeparator(lines[i + 1])) {
+        const rows = [parseRow(line)];
+        i += 2;
+        while (i < lines.length && lines[i].trim().startsWith('|')) {
+          rows.push(parseRow(lines[i])); i++;
+        }
+        out.push(table(rows)); continue;
+      }
+      if (line.startsWith('> ')) {
+        const block = [];
+        while (i < lines.length && lines[i].startsWith('> ')) { block.push(lines[i].slice(2)); i++; }
+        out.push('<blockquote>' + render(block.join('\n')) + '</blockquote>'); continue;
+      }
+      if (/^[-*] /.test(line)) {
+        out.push('<ul>');
+        while (i < lines.length && /^[-*] /.test(lines[i])) {
+          let item = lines[i].replace(/^[-*] /, '');
+          while (i + 1 < lines.length && /^\s{2,}\S/.test(lines[i + 1])) { item += ' ' + lines[i + 1].trim(); i++; }
+          out.push(`<li>${inline(escapeHtml(item))}</li>`); i++;
+        }
+        out.push('</ul>'); continue;
+      }
+      if (/^\d+\. /.test(line)) {
+        out.push('<ol>');
+        while (i < lines.length && /^\d+\. /.test(lines[i])) {
+          let item = lines[i].replace(/^\d+\. /, '');
+          while (i + 1 < lines.length && /^\s{2,}\S/.test(lines[i + 1])) { item += ' ' + lines[i + 1].trim(); i++; }
+          out.push(`<li>${inline(escapeHtml(item))}</li>`); i++;
+        }
+        out.push('</ol>'); continue;
+      }
+      if (/^```/.test(line)) {
+        i++; const code = [];
+        while (i < lines.length && !/^```/.test(lines[i])) { code.push(lines[i]); i++; }
+        i++; out.push(`<pre><code>${escapeHtml(code.join('\n'))}</code></pre>`); continue;
+      }
+      if (line.trim() === '') { i++; continue; }
+      const para = [line]; i++;
+      while (i < lines.length && lines[i].trim() !== '' && !/^#{1,6}\s/.test(lines[i]) && !/^[-*] /.test(lines[i]) && !/^\d+\. /.test(lines[i]) && !lines[i].startsWith('> ') && !lines[i].trim().startsWith('|') && !/^---+\s*$/.test(lines[i]) && !/^```/.test(lines[i])) {
+        para.push(lines[i]); i++;
+      }
+      out.push(`<p>${inline(escapeHtml(para.join(' ')))}</p>`);
+    }
+    return out.join('\n');
+  }
+  return { render };
+}());
+
+// ── State ──────────────────────────────────────────────────────────────
+const state = {
+  client: null,
+  hubs: [],
+  feedback: {},        // { 'hub/section': 'looks-good' | ... }
+  signOffs: {},        // { hub: { approvedAt, approvedBy } }
+  currentHub: null,
+  currentSection: null,
+};
+
+const els = {
+  loading: document.getElementById('loading'),
+  hubList: document.getElementById('hub-list'),
+  sectionView: document.getElementById('section-view'),
+  heroEyebrow: document.getElementById('hero-eyebrow'),
+  heroTitle: document.getElementById('hero-title'),
+  heroSubtitle: document.getElementById('hero-subtitle'),
+  heroMeta: document.getElementById('hero-meta'),
+  hubListBody: document.getElementById('hub-list-body'),
+  sectionContent: document.getElementById('section-content'),
+  sectionEyebrow: document.getElementById('section-eyebrow'),
+  backLink: document.getElementById('section-back-link'),
+  barProject: document.getElementById('bar-project'),
+  barDivider: document.getElementById('bar-divider'),
+  barHome: document.getElementById('bar-home'),
+  barLogout: document.getElementById('bar-logout'),
+  investorBanner: document.getElementById('investor-banner'),
+  signoffModal: document.getElementById('signoff-modal'),
+  signoffTitle: document.getElementById('signoff-modal-title'),
+  signoffDesc: document.getElementById('signoff-modal-desc'),
+  signoffName: document.getElementById('signoff-name'),
+  signoffEmail: document.getElementById('signoff-email'),
+  signoffConfirm: document.getElementById('signoff-confirm'),
+  signoffConfirmLabel: document.getElementById('signoff-confirm-label'),
+  signoffCancel: document.getElementById('signoff-cancel'),
+  signoffSubmit: document.getElementById('signoff-submit'),
+};
+
+function api(path, opts) {
+  return fetch(path, Object.assign({ credentials: 'same-origin', headers: { 'Content-Type': 'application/json' } }, opts || {}))
+    .then(r => r.json().then(d => ({ status: r.status, body: d })));
+}
+
+async function loadList() {
+  els.loading.hidden = false;
+  const r = await api('/api/portal-list');
+  if (r.status === 401) { window.location.href = '/portal'; return; }
+  if (!r.body.ok) { els.loading.innerHTML = '<p>Could not load portal.</p>'; return; }
+  state.client = r.body.client;
+  state.hubs = r.body.hubs;
+
+  // Header
+  els.barProject.textContent = state.client.name;
+  els.barDivider.hidden = false;
+  els.barHome.hidden = false;
+  els.barHome.addEventListener('click', e => { e.preventDefault(); navigate('hub-list'); });
+  els.barLogout.addEventListener('click', e => { e.preventDefault(); logout(); });
+
+  // Investor banner
+  if (state.client.scope === 'investor') {
+    els.investorBanner.hidden = false;
+  }
+
+  // Hero
+  els.heroEyebrow.textContent = state.client.scope === 'investor' ? 'Due Diligence · Financials Hub' : 'Client Portal';
+  els.heroTitle.textContent = state.client.name;
+  els.heroSubtitle.textContent = state.client.oneLiner || (state.client.scope === 'investor' ? 'Financial plan and the funding ask.' : 'Track project progress, review deliverables, give feedback, and sign off each gate.');
+  const tier = state.client.tier ? `<div><strong>${state.client.tier}</strong></div>` : '';
+  const hubCount = state.hubs.length;
+  els.heroMeta.innerHTML = `${tier}<div><strong>${hubCount}</strong> hub${hubCount === 1 ? '' : 's'} live</div>`;
+
+  // Render hubs
+  els.hubListBody.innerHTML = '';
+  state.hubs.forEach(hub => {
+    const section = document.createElement('section');
+    section.className = 'hub-section';
+    const head = `
+      <div class="hub-section-head">
+        <div class="hub-section-title">${esc(hub.name)}</div>
+        ${hub.gate ? `<div class="hub-section-meta">${esc(hub.gate)}</div>` : ''}
+      </div>
+    `;
+    const cards = hub.sections.map(s => {
+      const statusKey = `${hub.slug}/${s.slug}`;
+      const fb = state.feedback[statusKey];
+      const pill = fb === 'looks-good'
+        ? '<span class="status-pill approved">Approved</span>'
+        : fb ? '<span class="status-pill feedback">Feedback sent</span>'
+        : '<span class="status-pill pending">Not yet reviewed</span>';
+      const cls = s.exists ? 'section-card' : 'section-card disabled';
+      const onclick = s.exists ? `onclick="openSection('${esc(hub.slug)}','${esc(s.slug)}')"` : '';
+      return `
+        <div class="${cls}" role="button" tabindex="${s.exists ? '0' : '-1'}" ${onclick}>
+          <div class="section-card-body">
+            <div class="section-card-name">${esc(s.name)}</div>
+            <div class="section-card-status">${pill}${s.exists ? '' : 'Not yet generated'}</div>
+          </div>
+          <div class="section-card-arrow">→</div>
+        </div>`;
+    }).join('');
+
+    let gatePanel = '';
+    if (hub.gate && state.client.scope === 'client') {
+      const signed = state.signOffs[hub.slug];
+      const allLookGood = hub.sections.every(s => state.feedback[`${hub.slug}/${s.slug}`] === 'looks-good');
+      if (signed) {
+        gatePanel = `
+          <div class="gate-panel signed">
+            <div class="gate-icon">✓</div>
+            <div class="gate-body">
+              <h4>${esc(hub.gate)} — Approved</h4>
+              <p>Signed off by <strong>${esc(signed.approvedBy)}</strong> on ${new Date(signed.approvedAt).toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' })}.</p>
+            </div>
+          </div>`;
+      } else {
+        gatePanel = `
+          <div class="gate-panel ${allLookGood ? 'ready' : 'blocked'}">
+            <div class="gate-icon">${allLookGood ? '◉' : '○'}</div>
+            <div class="gate-body">
+              <h4>${esc(hub.gate)} — Sign-off</h4>
+              <p>${allLookGood ? 'All sections approved. Ready to sign off this gate.' : 'Approve every section to unlock the sign-off button.'}</p>
+              ${allLookGood ? `<button class="gate-btn" onclick="openSignoff('${esc(hub.slug)}','${esc(hub.name)}','${esc(hub.gate)}')">Sign off ${esc(hub.gate)} →</button>` : ''}
+            </div>
+          </div>`;
+      }
+    }
+
+    section.innerHTML = head + `<div class="section-grid">${cards}</div>` + gatePanel;
+    els.hubListBody.appendChild(section);
+  });
+
+  navigate('hub-list');
+}
+
+function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+
+async function openSection(hubSlug, sectionSlug) {
+  state.currentHub = hubSlug;
+  state.currentSection = sectionSlug;
+  navigate('section-view');
+  els.sectionContent.innerHTML = '<div class="center-msg"><div class="spinner"></div><p style="margin-top:14px;">Loading…</p></div>';
+  els.sectionEyebrow.textContent = '';
+  resetFeedbackForm();
+
+  const r = await api(`/api/portal-content?hub=${encodeURIComponent(hubSlug)}&section=${encodeURIComponent(sectionSlug)}`);
+  if (r.status === 401) { window.location.href = '/portal'; return; }
+  if (!r.body.ok) {
+    els.sectionContent.innerHTML = `<p style="color:var(--text-muted);">Could not load this section${r.body.error ? ' (' + r.body.error + ')' : ''}.</p>`;
+    return;
+  }
+  els.sectionEyebrow.textContent = `${r.body.hub.name} — ${r.body.section.name}`;
+  els.sectionContent.innerHTML = md.render(r.body.markdown);
+  window.scrollTo(0, 0);
+}
+window.openSection = openSection;
+
+function navigate(view) {
+  els.loading.hidden = true;
+  els.hubList.hidden = view !== 'hub-list';
+  els.sectionView.hidden = view !== 'section-view';
+}
+
+els.backLink.addEventListener('click', e => { e.preventDefault(); navigate('hub-list'); });
+
+// ── Feedback form ──────────────────────────────────────────────────────
+let selectedRating = null;
+const ratingBtns = document.querySelectorAll('.rating-btn');
+const feedbackComment = document.getElementById('feedback-comment');
+const feedbackNameRow = document.getElementById('feedback-name-row');
+const feedbackName = document.getElementById('feedback-name');
+const feedbackEmail = document.getElementById('feedback-email');
+const feedbackSubmit = document.getElementById('feedback-submit');
+const feedbackConfirm = document.getElementById('feedback-confirmation');
+
+function resetFeedbackForm() {
+  selectedRating = null;
+  ratingBtns.forEach(b => b.classList.remove('active'));
+  feedbackComment.value = '';
+  feedbackComment.style.display = 'none';
+  feedbackNameRow.style.display = 'none';
+  feedbackSubmit.disabled = true;
+  feedbackSubmit.textContent = 'Submit feedback';
+  feedbackSubmit.style.display = '';
+  feedbackConfirm.classList.remove('show');
+}
+
+ratingBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    ratingBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedRating = btn.dataset.rating;
+    feedbackComment.style.display = 'block';
+    feedbackNameRow.style.display = 'grid';
+    feedbackSubmit.disabled = false;
+  });
+});
+
+feedbackSubmit.addEventListener('click', async () => {
+  if (!selectedRating || !state.currentHub || !state.currentSection) return;
+  feedbackSubmit.disabled = true;
+  feedbackSubmit.textContent = 'Submitting…';
+  const r = await api('/api/portal-feedback', {
+    method: 'POST',
+    body: JSON.stringify({
+      hub: state.currentHub,
+      section: state.currentSection,
+      rating: selectedRating,
+      comment: feedbackComment.value.trim(),
+      name: feedbackName.value.trim() || null,
+      email: feedbackEmail.value.trim() || null,
+    }),
+  });
+  if (!r.body.ok) {
+    alert('Submission failed: ' + (r.body.error || 'Unknown error'));
+    feedbackSubmit.disabled = false;
+    feedbackSubmit.textContent = 'Submit feedback';
+    return;
+  }
+  state.feedback[`${state.currentHub}/${state.currentSection}`] = selectedRating;
+  feedbackConfirm.classList.add('show');
+  feedbackSubmit.style.display = 'none';
+});
+
+// ── Sign-off modal ─────────────────────────────────────────────────────
+let signoffHub = null;
+window.openSignoff = function (hubSlug, hubName, gate) {
+  signoffHub = hubSlug;
+  els.signoffTitle.textContent = `Sign off ${gate}`;
+  els.signoffDesc.textContent = `By signing below, you approve all sections in ${hubName} as the basis for ${gate === 'Gate 2.5' ? 'fundraising and the SOW' : gate === 'Gate 2' ? 'the SOW (scope is locked from this point)' : 'the next phase of the engagement'}.`;
+  els.signoffConfirmLabel.textContent = `I confirm I have reviewed every section in ${hubName} and approve the work as written.`;
+  els.signoffName.value = '';
+  els.signoffEmail.value = '';
+  els.signoffConfirm.checked = false;
+  els.signoffSubmit.disabled = true;
+  els.signoffSubmit.textContent = 'Confirm sign-off';
+  els.signoffModal.hidden = false;
+  els.signoffModal.classList.add('active');
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => els.signoffName.focus(), 30);
+  document.addEventListener('keydown', signoffKeyHandler);
+};
+
+function closeSignoff() {
+  els.signoffModal.classList.remove('active');
+  els.signoffModal.hidden = true;
+  document.body.style.overflow = '';
+  document.removeEventListener('keydown', signoffKeyHandler);
+}
+function signoffKeyHandler(e) {
+  if (e.key === 'Escape') { e.preventDefault(); closeSignoff(); }
+}
+els.signoffModal.addEventListener('click', e => { if (e.target === els.signoffModal) closeSignoff(); });
+els.signoffCancel.addEventListener('click', closeSignoff);
+
+function updateSignoffSubmit() {
+  els.signoffSubmit.disabled = !(els.signoffName.value.trim().length > 0 && els.signoffConfirm.checked);
+}
+els.signoffName.addEventListener('input', updateSignoffSubmit);
+els.signoffConfirm.addEventListener('change', updateSignoffSubmit);
+
+els.signoffSubmit.addEventListener('click', async () => {
+  if (!signoffHub) return;
+  els.signoffSubmit.disabled = true;
+  els.signoffSubmit.textContent = 'Signing…';
+  const r = await api('/api/portal-signoff', {
+    method: 'POST',
+    body: JSON.stringify({
+      hub: signoffHub,
+      name: els.signoffName.value.trim(),
+      email: els.signoffEmail.value.trim() || null,
+      confirmation: true,
+    }),
+  });
+  if (!r.body.ok) {
+    alert('Sign-off failed: ' + (r.body.error || 'Unknown error'));
+    els.signoffSubmit.disabled = false;
+    els.signoffSubmit.textContent = 'Confirm sign-off';
+    return;
+  }
+  state.signOffs[signoffHub] = { approvedAt: r.body.approvedAt, approvedBy: els.signoffName.value.trim() };
+  closeSignoff();
+  loadList(); // refresh
+});
+
+async function logout() {
+  document.cookie = 'portal_token=; Max-Age=0; Path=/';
+  window.location.href = '/portal';
+}
+
+loadList();
+</script>
+</body>
+</html>
