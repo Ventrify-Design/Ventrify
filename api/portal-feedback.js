@@ -9,7 +9,7 @@
  *      engagement repo (preserves a versioned audit trail)
  */
 
-const { loadClients, requireAuth, readJsonBody, ghReadFile, ghCommitFile, sendEmail, HUBS } = require('./_lib');
+const { loadClients, requireAuth, readJsonBody, ghReadFile, ghCommitFile, buildEmailPayload, HUBS } = require('./_lib');
 
 const VALID_RATINGS = ['looks-good', 'has-feedback', 'needs-rework'];
 
@@ -93,32 +93,28 @@ module.exports = async function handler(req, res) {
     addressedNote: null,
   };
 
-  // ── 1. Email the operator (best-effort — failure shouldn't break the flow) ──
-  let emailSent = false;
-  try {
-    const subject = `[Portal Feedback] ${client.name || auth.slug} · ${hub.name} → ${section.name}`;
-    const lines = [
-      `Project: ${client.name || auth.slug}`,
-      `Hub: ${hub.name}  ·  Section: ${section.name}`,
-      `Rating: ${RATING_LABELS[rating]}`,
-      `Submitted by: ${name || '(anonymous)'}${email ? ' <' + email + '>' : ''}`,
-      `Scope: ${auth.scope}`,
-      `Submitted: ${submittedAt}`,
-      '',
-      'Comment:',
-      comment || '(no comment)',
-      '',
-      `View source: https://github.com/${client.repo}/blob/${client.branch || 'main'}/${section.file.startsWith('../') ? section.file.replace('../', '') : hub.dir + '/' + section.file}`,
-      `Feedback ID: ${id}`,
-    ];
-    emailSent = await sendEmail({
-      subject,
-      body: lines.join('\n'),
-      replyTo: email || undefined,
-    });
-  } catch (e) {
-    console.error('[portal-feedback] email failed:', e.message);
-  }
+  // ── 1. Build the email payload — the BROWSER sends it (web3forms blocks
+  //       server-side submissions on the free plan; only client-side works) ──
+  const subject = `[Portal Feedback] ${client.name || auth.slug} · ${hub.name} → ${section.name}`;
+  const lines = [
+    `Project: ${client.name || auth.slug}`,
+    `Hub: ${hub.name}  ·  Section: ${section.name}`,
+    `Rating: ${RATING_LABELS[rating]}`,
+    `Submitted by: ${name || '(anonymous)'}${email ? ' <' + email + '>' : ''}`,
+    `Scope: ${auth.scope}`,
+    `Submitted: ${submittedAt}`,
+    '',
+    'Comment:',
+    comment || '(no comment)',
+    '',
+    `View source: https://github.com/${client.repo}/blob/${client.branch || 'main'}/${section.file.startsWith('../') ? section.file.replace('../', '') : hub.dir + '/' + section.file}`,
+    `Feedback ID: ${id}`,
+  ];
+  const emailPayload = buildEmailPayload({
+    subject,
+    body: lines.join('\n'),
+    replyTo: email || undefined,
+  });
 
   // ── 2. Commit to engagement repo (only if GITHUB_TOKEN available) ──────────
   let committed = false;
@@ -145,8 +141,8 @@ module.exports = async function handler(req, res) {
   res.end(JSON.stringify({
     ok: true,
     id,
-    emailSent,
     committed,
     commitError,
+    email: emailPayload, // browser POSTs this directly to web3forms
   }));
 };

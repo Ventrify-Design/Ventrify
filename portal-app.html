@@ -575,6 +575,30 @@ ratingBtns.forEach(btn => {
   });
 });
 
+// Send the email payload directly to web3forms from the browser (same
+// pattern the contact form uses — web3forms blocks server-side submissions
+// on their free plan, so this MUST happen client-side).
+async function sendBrowserEmail(payload) {
+  if (!payload || !payload.web3formsKey) return false;
+  try {
+    const formData = new FormData();
+    formData.append('access_key', payload.web3formsKey);
+    formData.append('subject', payload.subject || '');
+    formData.append('from_name', payload.fromName || 'Ventrify Portal');
+    formData.append('message', payload.message || '');
+    if (payload.replyto) formData.append('replyto', payload.replyto);
+    formData.append('botcheck', '');
+    const res = await fetch('https://api.web3forms.com/submit', {
+      method: 'POST',
+      body: formData,
+    });
+    return res.ok;
+  } catch (e) {
+    console.warn('[portal] email send failed:', e);
+    return false;
+  }
+}
+
 feedbackSubmit.addEventListener('click', async () => {
   if (!selectedRating || !state.currentHub || !state.currentSection) return;
   feedbackSubmit.disabled = true;
@@ -596,6 +620,8 @@ feedbackSubmit.addEventListener('click', async () => {
     feedbackSubmit.textContent = 'Submit feedback';
     return;
   }
+  // Browser-side email send (web3forms doesn't allow server-side on free plan)
+  if (r.body.email) sendBrowserEmail(r.body.email);
   state.feedback[`${state.currentHub}/${state.currentSection}`] = selectedRating;
   feedbackConfirm.classList.add('show');
   feedbackSubmit.style.display = 'none';
@@ -657,6 +683,8 @@ els.signoffSubmit.addEventListener('click', async () => {
     els.signoffSubmit.textContent = 'Confirm sign-off';
     return;
   }
+  // Browser-side email send for the sign-off notification
+  if (r.body.email) sendBrowserEmail(r.body.email);
   state.signOffs[signoffHub] = { approvedAt: r.body.approvedAt, approvedBy: els.signoffName.value.trim() };
   closeSignoff();
   loadList(); // refresh
