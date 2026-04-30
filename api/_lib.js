@@ -160,20 +160,22 @@ async function ghCommitFile(repo, branch, path, content, message) {
   return res.json();
 }
 
-// ── Email delivery via web3forms (already in use on contact page) ──────────
-async function sendEmail({ subject, body, replyTo }) {
-  const formData = new URLSearchParams();
-  formData.append('access_key', WEB3FORMS_KEY);
-  formData.append('subject', subject);
-  formData.append('from_name', 'Ventrify Portal');
-  formData.append('to', OPERATOR_EMAIL);
-  formData.append('message', body);
-  if (replyTo) formData.append('replyto', replyTo);
-  const res = await fetch('https://api.web3forms.com/submit', {
-    method: 'POST',
-    body: formData,
-  });
-  return res.ok;
+// ── Email payload builder (browser sends, not server) ──────────────────────
+// Web3forms blocks all server-side submissions on the free plan. So instead
+// of POSTing from the Vercel function, we build the payload here and the
+// browser (portal-app.html) sends it directly to web3forms — the same
+// pattern the contact form uses.
+//
+// Returns: { web3formsKey, subject, message, fromName, replyto? }
+function buildEmailPayload({ subject, body, replyTo }) {
+  const payload = {
+    web3formsKey: WEB3FORMS_KEY,
+    subject,
+    message: body,
+    fromName: 'Ventrify Portal',
+  };
+  if (replyTo) payload.replyto = replyTo;
+  return payload;
 }
 
 // ── Hub catalogue (single source of truth for what each hub renders) ───────
@@ -256,7 +258,7 @@ module.exports = {
   ghFetch,
   ghReadFile,
   ghCommitFile,
-  sendEmail,
+  buildEmailPayload,
   HUBS,
   hubsForScope,
   OPERATOR_EMAIL,

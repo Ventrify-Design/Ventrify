@@ -8,7 +8,7 @@
  * Investor scope cannot sign off (only the client owner can).
  */
 
-const { loadClients, requireAuth, readJsonBody, ghReadFile, ghCommitFile, sendEmail, HUBS } = require('./_lib');
+const { loadClients, requireAuth, readJsonBody, ghReadFile, ghCommitFile, buildEmailPayload, HUBS } = require('./_lib');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -66,29 +66,24 @@ module.exports = async function handler(req, res) {
     approvedEmail: email || null,
   };
 
-  // ── 1. Email the operator ────────────────────────────────────────────────
-  let emailSent = false;
-  try {
-    const subject = `[Portal Sign-off] ${client.name || auth.slug} · ${hub.gate} approved`;
-    const lines = [
-      `Project: ${client.name || auth.slug}`,
-      `Gate: ${hub.gate} (${hub.name})`,
-      `Approved by: ${name}${email ? ' <' + email + '>' : ''}`,
-      `Approved at: ${approvedAt}`,
-      '',
-      'STATUS.md should now show this gate as Approved.',
-      'If GITHUB_TOKEN is configured on Vercel, the engagement repo will reflect this sign-off in portal-feedback.json under signOffs.',
-      '',
-      `Engagement repo: https://github.com/${client.repo}`,
-    ];
-    emailSent = await sendEmail({
-      subject,
-      body: lines.join('\n'),
-      replyTo: email || undefined,
-    });
-  } catch (e) {
-    console.error('[portal-signoff] email failed:', e.message);
-  }
+  // ── 1. Build the email payload — browser sends to web3forms client-side ──
+  const subject = `[Portal Sign-off] ${client.name || auth.slug} · ${hub.gate} approved`;
+  const lines = [
+    `Project: ${client.name || auth.slug}`,
+    `Gate: ${hub.gate} (${hub.name})`,
+    `Approved by: ${name}${email ? ' <' + email + '>' : ''}`,
+    `Approved at: ${approvedAt}`,
+    '',
+    'STATUS.md should now show this gate as Approved.',
+    'If GITHUB_TOKEN is configured on Vercel, the engagement repo will reflect this sign-off in portal-feedback.json under signOffs.',
+    '',
+    `Engagement repo: https://github.com/${client.repo}`,
+  ];
+  const emailPayload = buildEmailPayload({
+    subject,
+    body: lines.join('\n'),
+    replyTo: email || undefined,
+  });
 
   // ── 2. Commit to engagement repo ────────────────────────────────────────
   let committed = false;
@@ -116,8 +111,8 @@ module.exports = async function handler(req, res) {
     ok: true,
     gate: hub.gate,
     approvedAt,
-    emailSent,
     committed,
     commitError,
+    email: emailPayload, // browser POSTs this directly to web3forms
   }));
 };
