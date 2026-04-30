@@ -30,6 +30,17 @@
       --font-heading: 'Inter', -apple-system, sans-serif;
       --font-body: 'Inter', -apple-system, sans-serif;
       --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+
+      --status-approved-bg: #D8F5DC;
+      --status-approved-fg: #14642C;
+      --status-feedback-bg: #FFF4D6;
+      --status-feedback-fg: #8A5A00;
+      --status-rework-bg: #FFE2E2;
+      --status-rework-fg: #B91C1C;
+      --status-addressed-bg: #DCE5FF;
+      --status-addressed-fg: #1F38A0;
+      --status-pending-bg: rgba(0,0,0,0.06);
+      --status-pending-fg: #656565;
     }
     *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
     html { scroll-behavior:smooth; }
@@ -42,14 +53,19 @@
     }
     a { color: inherit; text-decoration: none; }
 
-    /* Accessibility primitives */
+    /* ── Accessibility primitives ────────────────────────────────────── */
     :focus { outline: none; }
     :focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; border-radius: 4px; }
     .skip-link { position: absolute; top: -48px; left: 16px; z-index: 10000; background: var(--primary); color: #fff; padding: 10px 18px; border-radius: 0 0 8px 8px; font-size: 14px; font-weight: 600; transition: top 140ms; }
     .skip-link:focus { top: 0; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
     }
+
+    /* ── Reading progress bar (top of viewport) ──────────────────────── */
+    .reading-progress { position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 200; background: transparent; pointer-events: none; }
+    .reading-progress-fill { height: 100%; width: 0; background: var(--primary); transition: width 80ms linear; }
 
     /* ── Brand bar ──────────────────────────────────────────────────────── */
     .brand-bar { background: var(--bg-light); border-bottom: 1px solid var(--border-light); position: sticky; top: 0; z-index: 50; }
@@ -66,132 +82,560 @@
       .brand-link { font-size: 12px; padding: 6px 10px; }
     }
 
-    /* ── Hero ──────────────────────────────────────────────────────────── */
-    .hub-hero { padding: 56px 24px 44px; background: var(--hero-gradient); color: var(--text-light); }
+    /* ── Investor banner (top of all investor pages) ─────────────────── */
+    .investor-banner { padding: 8px 24px; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; text-align: center; background: #14642C; color: #fff; }
+
+    /* ── Hub hero (landing page) ─────────────────────────────────────── */
+    .hub-hero { padding: 56px 24px 36px; background: var(--hero-gradient); color: var(--text-light); }
     .hub-hero-inner { max-width: 1100px; margin: 0 auto; }
     .hub-hero-eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.78); margin-bottom: 14px; display: inline-flex; align-items: center; gap: 10px; }
     .hub-hero-eyebrow::before { content: ''; width: 28px; height: 1px; background: rgba(255,255,255,0.78); }
     .hub-hero h1 { font-size: 48px; line-height: 1.05; font-weight: 600; letter-spacing: -0.04em; max-width: 900px; }
     .hub-hero-subtitle { font-size: 18px; line-height: 1.55; color: rgba(255,255,255,0.78); max-width: 720px; margin-top: 14px; }
-    .hub-hero-meta { display: flex; gap: 24px; margin-top: 24px; flex-wrap: wrap; font-size: 13px; color: rgba(255,255,255,0.65); }
-    .hub-hero-meta strong { color: var(--text-light); margin-right: 6px; font-weight: 500; }
     @media (max-width: 640px) { .hub-hero h1 { font-size: 32px; } }
 
+    /* ── Hero metric strip (NEW) ─────────────────────────────────────── */
+    .hero-metric-strip {
+      display: grid; gap: 16px; margin-top: 24px;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      max-width: 760px;
+    }
+    .hero-metric {
+      padding: 14px 18px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: var(--radius-sm);
+    }
+    .hero-metric-label {
+      font-family: var(--font-mono);
+      font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+      color: rgba(255,255,255,0.6);
+      margin-bottom: 6px;
+    }
+    .hero-metric-value {
+      font-size: 24px; font-weight: 600; line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+
+    /* ── Project overview card (hub list, below hero) ────────────────── */
+    .project-overview {
+      max-width: 1100px; margin: 28px auto 0; padding: 0 24px;
+    }
+    .project-overview-card {
+      display: grid; grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
+      padding: 22px 26px;
+      background: var(--surface-card);
+      border-radius: var(--radius-card);
+      border: 1px solid var(--border-light);
+    }
+    @media (max-width: 720px) {
+      .project-overview-card { grid-template-columns: 1fr; gap: 16px; padding: 20px; }
+    }
+    .project-stat-label {
+      font-family: var(--font-mono);
+      font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--text-muted); margin-bottom: 4px;
+    }
+    .project-stat-value {
+      font-size: 18px; font-weight: 600; color: var(--text-dark);
+      line-height: 1.3;
+    }
+    .project-stat-sub {
+      font-size: 13px; color: var(--text-muted); margin-top: 2px;
+    }
+
     /* ── Hub list / cards ──────────────────────────────────────────────── */
-    .container { max-width: 1100px; margin: 40px auto 80px; padding: 0 24px; }
-    .hub-section { margin-bottom: 48px; }
-    .hub-section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--border-light); }
+    .container { max-width: 1100px; margin: 32px auto 80px; padding: 0 24px; }
+    .hub-section { margin-bottom: 40px; }
+    .hub-section-head {
+      display: flex; align-items: baseline; justify-content: space-between;
+      gap: 16px; margin-bottom: 14px; padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-light);
+    }
     .hub-section-title { font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
-    .hub-section-meta { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--primary); }
+    .hub-section-meta {
+      font-family: var(--font-mono); font-size: 11px;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--primary);
+    }
     .section-grid { display: grid; gap: 12px; grid-template-columns: 1fr; }
     @media (min-width: 760px) { .section-grid { grid-template-columns: 1fr 1fr; } }
-    .section-card { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 20px; background: var(--surface-card); border-radius: var(--radius-card); border: 1px solid transparent; cursor: pointer; transition: transform 200ms, box-shadow 200ms, border-color 200ms; }
-    .section-card:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(8,11,26,0.08); border-color: rgba(0,54,255,0.15); }
+    .section-card {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px; padding: 16px 20px;
+      background: var(--surface-card);
+      border-radius: var(--radius-card);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: transform 200ms, box-shadow 200ms, border-color 200ms;
+    }
+    .section-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px rgba(8,11,26,0.08);
+      border-color: rgba(0,54,255,0.15);
+    }
     .section-card.disabled { opacity: 0.5; cursor: not-allowed; }
     .section-card.disabled:hover { transform: none; box-shadow: none; }
     .section-card-body { flex: 1; min-width: 0; }
-    .section-card-name { font-size: 16px; font-weight: 600; margin-bottom: 2px; }
-    .section-card-status { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-muted); }
-    .section-card-arrow { font-size: 22px; color: var(--text-muted); opacity: 0.4; transition: transform 200ms, color 200ms, opacity 200ms; }
+    .section-card-name { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+    .section-card-meta {
+      font-size: 12px; color: var(--text-muted);
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    }
+    .section-card-arrow {
+      font-size: 22px; color: var(--text-muted); opacity: 0.4;
+      transition: transform 200ms, color 200ms, opacity 200ms;
+    }
     .section-card:hover .section-card-arrow { color: var(--primary); transform: translateX(4px); opacity: 1; }
-    .status-pill { display: inline-block; padding: 2px 8px; border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: 10px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; margin-right: 8px; }
-    .status-pill.approved { background: #D8F5DC; color: #14642C; }
-    .status-pill.feedback { background: #FFF4D6; color: #8A5A00; }
-    .status-pill.pending { background: rgba(0,0,0,0.06); color: var(--text-muted); }
 
-    /* ── Sign-off panel ────────────────────────────────────────────────── */
-    .gate-panel { padding: 22px 24px; border-radius: var(--radius-card); margin-top: 18px; display: flex; align-items: flex-start; gap: 18px; }
-    .gate-panel.signed { background: #D8F5DC; border: 1px solid rgba(20,100,44,0.25); }
+    /* ── Status badge (per-section, per-hub) ─────────────────────────── */
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 3px 10px; border-radius: var(--radius-pill);
+      font-family: var(--font-mono);
+      font-size: 10px; font-weight: 600;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .status-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .status-badge[data-status="approved"]      { background: var(--status-approved-bg); color: var(--status-approved-fg); }
+    .status-badge[data-status="approved"]::before { background: var(--status-approved-fg); }
+    .status-badge[data-status="has-feedback"]  { background: var(--status-feedback-bg); color: var(--status-feedback-fg); }
+    .status-badge[data-status="has-feedback"]::before { background: var(--status-feedback-fg); }
+    .status-badge[data-status="needs-rework"]  { background: var(--status-rework-bg); color: var(--status-rework-fg); }
+    .status-badge[data-status="needs-rework"]::before { background: var(--status-rework-fg); }
+    .status-badge[data-status="addressed"]     { background: var(--status-addressed-bg); color: var(--status-addressed-fg); }
+    .status-badge[data-status="addressed"]::before { background: var(--status-addressed-fg); }
+    .status-badge[data-status="pending"]       { background: var(--status-pending-bg); color: var(--status-pending-fg); }
+    .status-badge[data-status="pending"]::before { background: var(--status-pending-fg); }
+
+    /* ── Gate sign-off panel (existing) ──────────────────────────────── */
+    .gate-panel {
+      padding: 22px 24px; border-radius: var(--radius-card);
+      margin-top: 18px; display: flex; align-items: flex-start; gap: 18px;
+    }
+    .gate-panel.signed { background: var(--status-approved-bg); border: 1px solid rgba(20,100,44,0.25); }
     .gate-panel.ready { background: linear-gradient(135deg, #EEF2FF 0%, #F8FAFF 100%); border: 1px solid rgba(0,54,255,0.15); }
     .gate-panel.blocked { background: var(--surface-alt); border: 1px solid var(--border-light); }
     .gate-icon { font-size: 24px; flex: 0 0 auto; color: var(--primary); }
-    .gate-panel.signed .gate-icon { color: #14642C; }
+    .gate-panel.signed .gate-icon { color: var(--status-approved-fg); }
     .gate-body h4 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
     .gate-body p { font-size: 14px; color: var(--text-muted); line-height: 1.55; }
-    .gate-btn { margin-top: 12px; background: var(--primary); color: #fff; border: none; padding: 11px 22px; border-radius: var(--radius-pill); font-weight: 600; font-size: 14px; cursor: pointer; font-family: inherit; transition: background 200ms; }
+    .gate-btn {
+      margin-top: 12px; background: var(--primary); color: #fff;
+      border: none; padding: 11px 22px; border-radius: var(--radius-pill);
+      font-weight: 600; font-size: 14px; cursor: pointer;
+      font-family: inherit; transition: background 200ms;
+    }
     .gate-btn:hover { background: var(--primary-light); }
     .gate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    /* ── Section view (markdown content) ───────────────────────────────── */
-    .section-view { max-width: 760px; margin: 0 auto; padding: 32px 24px 80px; }
-    .section-back { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--primary); display: inline-flex; align-items: center; gap: 6px; margin-bottom: 18px; cursor: pointer; }
+    /* ── Section view shell — sidebar + content (NEW) ────────────────── */
+    .section-shell {
+      max-width: 1240px; margin: 0 auto; padding: 32px 24px 80px;
+      display: grid; gap: 40px;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 1000px) {
+      .section-shell { grid-template-columns: 240px 1fr; }
+    }
+    .sidebar {
+      position: sticky; top: 80px; align-self: start;
+      max-height: calc(100vh - 100px); overflow-y: auto;
+      padding-right: 8px;
+    }
+    @media (max-width: 999px) {
+      .sidebar {
+        position: relative; top: auto; max-height: none;
+        background: var(--surface-card);
+        border-radius: var(--radius-sm);
+        padding: 14px 16px; margin-bottom: 16px;
+      }
+      .sidebar-blocks { display: none; }
+      .sidebar.is-open .sidebar-blocks { display: block; padding-top: 12px; }
+      .sidebar-toggle { display: flex !important; }
+    }
+    .sidebar-toggle {
+      display: none; width: 100%;
+      align-items: center; justify-content: space-between;
+      gap: 8px; padding: 0; background: none; border: none; cursor: pointer;
+      font-family: var(--font-mono); font-size: 12px;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--primary); font-weight: 500;
+    }
+    .sidebar-toggle-arrow { transition: transform 200ms; font-size: 14px; }
+    .sidebar.is-open .sidebar-toggle-arrow { transform: rotate(180deg); }
+    .sidebar-block { margin-bottom: 28px; }
+    .sidebar-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--primary); font-weight: 500; margin-bottom: 12px;
+      display: inline-flex; align-items: center; gap: 8px;
+    }
+    .sidebar-eyebrow::before {
+      content: ''; width: 12px; height: 2px;
+      background: var(--primary); border-radius: 1px; opacity: 0.5;
+    }
+    .sidebar-list { list-style: none; }
+    .sidebar-list li { margin: 0; padding: 0; }
+    .sidebar-list li a {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 12px; border-radius: var(--radius-sm);
+      font-size: 13.5px; color: var(--text-muted);
+      transition: background 140ms, color 140ms;
+      cursor: pointer;
+    }
+    .sidebar-list li a:hover {
+      background: rgba(var(--primary-rgb), 0.05);
+      color: var(--text-dark);
+    }
+    .sidebar-list li.active a {
+      background: var(--primary); color: var(--text-light);
+      font-weight: 500;
+    }
+    .sidebar-toc-list { list-style: none; }
+    .sidebar-toc-list li { margin: 0; padding: 0; }
+    .sidebar-toc-list li a {
+      display: block; padding: 5px 0 5px 12px;
+      font-size: 12.5px; color: var(--text-muted);
+      line-height: 1.45;
+      border-left: 2px solid transparent;
+      transition: color 140ms, border-color 140ms;
+      cursor: pointer;
+    }
+    .sidebar-toc-list li a:hover {
+      color: var(--primary); border-left-color: var(--primary);
+    }
+    .sidebar-toc-list li.toc-l3 a {
+      padding-left: 22px; font-size: 11.5px;
+      color: rgba(101,101,101,0.7);
+    }
+
+    /* ── Content column ──────────────────────────────────────────────── */
+    .content { max-width: 760px; min-width: 0; }
+    .section-back {
+      font-family: var(--font-mono); font-size: 12px;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--primary);
+      display: inline-flex; align-items: center; gap: 6px;
+      margin-bottom: 14px; cursor: pointer;
+    }
     .section-back:hover { text-decoration: underline; }
-    .section-eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--primary); margin-bottom: 12px; display: inline-flex; align-items: center; gap: 10px; }
-    .section-eyebrow::before { content: ''; width: 24px; height: 1px; background: var(--primary); }
-    .section-content h1 { font-size: 40px; line-height: 1.1; letter-spacing: -0.04em; margin-bottom: 14px; font-weight: 700; }
-    .section-content h2 { font-size: 26px; line-height: 1.3; letter-spacing: -0.01em; margin: 48px 0 14px; font-weight: 700; padding-top: 8px; }
-    .section-content h3 { font-size: 19px; line-height: 1.35; margin: 32px 0 10px; font-weight: 600; }
-    .section-content h4 { font-size: 16px; margin: 24px 0 8px; font-weight: 600; }
+    .section-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--primary); margin-bottom: 12px;
+      display: inline-flex; align-items: center; gap: 10px;
+    }
+    .section-eyebrow::before {
+      content: ''; width: 24px; height: 1px; background: var(--primary);
+    }
+
+    /* ── View mode toggle (Highlights / Full Detail) ─────────────────── */
+    .view-toggle {
+      display: inline-flex; align-items: center;
+      background: var(--surface-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-pill);
+      padding: 4px; margin-bottom: 28px;
+      font-family: var(--font-mono);
+      font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+    }
+    .view-toggle button {
+      padding: 8px 16px; border: none; background: transparent;
+      border-radius: var(--radius-pill);
+      cursor: pointer; font-family: inherit; font-size: 11px;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--text-muted); font-weight: 500;
+      transition: background 160ms, color 160ms;
+    }
+    .view-toggle button[aria-pressed="true"] {
+      background: var(--primary); color: var(--text-light);
+    }
+    .view-toggle-hint {
+      font-size: 12px; color: var(--text-muted);
+      margin-bottom: 28px; line-height: 1.5;
+    }
+
+    /* ── Section content typography ──────────────────────────────────── */
+    .section-content h1 {
+      font-size: 40px; line-height: 1.1; letter-spacing: -0.04em;
+      margin-bottom: 16px; font-weight: 700;
+    }
+    .section-content h2 {
+      font-size: 26px; line-height: 1.3; letter-spacing: -0.01em;
+      margin: 48px 0 14px; font-weight: 700; padding-top: 8px;
+    }
+    .section-content h3 {
+      font-size: 19px; line-height: 1.35;
+      margin: 32px 0 10px; font-weight: 600;
+    }
+    .section-content h4 {
+      font-size: 16px; margin: 24px 0 8px; font-weight: 600;
+    }
     .section-content p { margin-bottom: 16px; line-height: 1.72; }
     .section-content strong { font-weight: 600; color: var(--text-dark); }
     .section-content em { font-style: italic; }
     .section-content ul, .section-content ol { margin: 12px 0 20px; padding-left: 0; }
     .section-content li { position: relative; margin-bottom: 8px; padding-left: 24px; line-height: 1.65; }
-    .section-content ul li::before { content: ''; position: absolute; left: 4px; top: 11px; width: 6px; height: 6px; border-radius: 50%; background: var(--primary); }
+    .section-content ul li::before {
+      content: ''; position: absolute; left: 4px; top: 11px;
+      width: 6px; height: 6px; border-radius: 50%; background: var(--primary);
+    }
     .section-content ol { counter-reset: ol-counter; }
     .section-content ol li { counter-increment: ol-counter; }
-    .section-content ol li::before { content: counter(ol-counter) '.'; position: absolute; left: 0; top: 0; font-family: var(--font-mono); font-size: 13px; color: var(--primary); font-weight: 600; }
-    .section-content table { width: 100%; border-collapse: separate; border-spacing: 0; margin: 22px 0; font-size: 14px; line-height: 1.55; border: 1px solid var(--border-light); border-radius: var(--radius-sm); overflow: hidden; display: block; overflow-x: auto; }
-    .section-content thead { background: var(--surface-alt); }
-    .section-content th { padding: 11px 13px; text-align: left; font-weight: 600; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; border-bottom: 1px solid var(--border-strong); }
-    .section-content td { padding: 10px 13px; vertical-align: top; border-bottom: 1px solid var(--border-light); }
-    .section-content tbody tr:last-child td { border-bottom: none; }
-    .section-content tbody tr:nth-child(even) { background: rgba(0,0,0,0.012); }
-    .section-content blockquote { margin: 22px 0; padding: 14px 20px; background: var(--surface-alt); border-left: 3px solid var(--primary); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; color: var(--text-dark); font-size: 15px; }
-    .section-content blockquote p { margin-bottom: 8px; }
-    .section-content blockquote p:last-child { margin-bottom: 0; }
-    .section-content code { background: var(--surface-card); padding: 2px 6px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.88em; }
-    .section-content pre { background: var(--surface-card); color: var(--text-dark); padding: 16px; border-radius: var(--radius-sm); overflow-x: auto; margin: 18px 0; border: 1px solid var(--border-light); font-family: var(--font-mono); font-size: 13px; line-height: 1.6; }
+    .section-content ol li::before {
+      content: counter(ol-counter) '.';
+      position: absolute; left: 0; top: 0;
+      font-family: var(--font-mono); font-size: 13px;
+      color: var(--primary); font-weight: 600;
+    }
+    .section-content code {
+      background: var(--surface-card);
+      padding: 2px 6px; border-radius: 4px;
+      font-family: var(--font-mono); font-size: 0.88em;
+    }
+    .section-content pre {
+      background: var(--surface-card); color: var(--text-dark);
+      padding: 16px; border-radius: var(--radius-sm);
+      overflow-x: auto; margin: 18px 0;
+      border: 1px solid var(--border-light);
+      font-family: var(--font-mono); font-size: 13px; line-height: 1.6;
+    }
     .section-content pre code { background: none; padding: 0; color: inherit; }
     .section-content hr { border: none; height: 1px; background: var(--border-light); margin: 36px 0; }
-    .section-content a { color: var(--primary); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 2px; }
+    .section-content a {
+      color: var(--primary); text-decoration: underline;
+      text-decoration-thickness: 1px; text-underline-offset: 2px;
+    }
 
-    /* ── Feedback panel ────────────────────────────────────────────────── */
-    .feedback-panel { margin-top: 56px; padding: 28px; background: var(--surface-alt); border-radius: var(--radius-card); border: 1px solid var(--border-light); }
+    /* ── Key Takeaways callout — much more prominent ─────────────────── */
+    .section-content blockquote.kt-callout {
+      margin: 28px 0;
+      padding: 22px 26px 22px 28px;
+      background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.06) 0%, rgba(var(--primary-rgb), 0.02) 100%);
+      border-left: 4px solid var(--primary);
+      border-radius: 0 var(--radius-card) var(--radius-card) 0;
+      position: relative;
+      font-size: 16px; line-height: 1.7; color: var(--text-dark);
+    }
+    .section-content blockquote.kt-callout::before {
+      content: 'KEY TAKEAWAYS';
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.12em;
+      color: var(--primary);
+      margin-bottom: 10px;
+    }
+    .section-content blockquote.kt-callout p { margin-bottom: 8px; font-weight: 400; }
+    .section-content blockquote.kt-callout p:last-child { margin-bottom: 0; }
+    .section-content blockquote.kt-callout strong { color: var(--text-dark); font-weight: 600; }
+
+    /* Plain blockquotes (not Key Takeaways) */
+    .section-content blockquote:not(.kt-callout) {
+      margin: 22px 0; padding: 14px 20px;
+      background: var(--surface-alt);
+      border-left: 3px solid var(--primary);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      color: var(--text-dark); font-size: 15px;
+    }
+    .section-content blockquote:not(.kt-callout) p { margin-bottom: 8px; }
+    .section-content blockquote:not(.kt-callout) p:last-child { margin-bottom: 0; }
+
+    /* ── Tables wrapped in <details> ─────────────────────────────────── */
+    .section-content details.data-table {
+      margin: 22px 0;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-sm);
+      background: var(--surface-alt);
+    }
+    .section-content details.data-table > summary {
+      list-style: none;
+      padding: 12px 16px;
+      cursor: pointer;
+      font-family: var(--font-mono);
+      font-size: 12px; font-weight: 500;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--primary);
+      display: flex; align-items: center; gap: 10px;
+      transition: background 140ms;
+    }
+    .section-content details.data-table > summary:hover { background: rgba(var(--primary-rgb), 0.04); }
+    .section-content details.data-table > summary::-webkit-details-marker { display: none; }
+    .section-content details.data-table > summary::before {
+      content: '▸'; font-size: 12px; transition: transform 200ms;
+      color: var(--primary);
+    }
+    .section-content details.data-table[open] > summary::before { transform: rotate(90deg); }
+    .section-content details.data-table > .data-table-inner {
+      padding: 0 16px 16px;
+    }
+    .section-content table {
+      width: 100%;
+      border-collapse: separate; border-spacing: 0;
+      font-size: 14px; line-height: 1.55;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-sm); overflow: hidden;
+      display: block; overflow-x: auto;
+    }
+    .section-content thead { background: var(--bg-light); }
+    .section-content th {
+      padding: 11px 13px; text-align: left;
+      font-weight: 600; font-size: 12px;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      border-bottom: 1px solid var(--border-strong);
+    }
+    .section-content td {
+      padding: 10px 13px; vertical-align: top;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .section-content tbody tr:last-child td { border-bottom: none; }
+    .section-content tbody tr:nth-child(even) { background: rgba(0,0,0,0.012); }
+
+    /* ── Highlights mode — hides detail prose, keeps headlines + KT ─── */
+    body[data-view="highlights"] .section-content > .detail-prose,
+    body[data-view="highlights"] .section-content > details.data-table,
+    body[data-view="highlights"] .section-content > .detail-list,
+    body[data-view="highlights"] .section-content > .detail-pre,
+    body[data-view="highlights"] .section-content > hr { display: none; }
+    body[data-view="highlights"] .section-content > .topic-sentence { display: block; }
+    /* Always-visible elements: H1, H2, H3, H4, .kt-callout, .topic-sentence */
+    /* In Highlights mode, also hide the Sources & References section entirely */
+    body[data-view="highlights"] .section-content > .sources-section { display: none; }
+
+    /* In full mode, topic-sentence renders as normal (no special styling needed) */
+
+    /* Keep first paragraph after H2 always visible (topic sentence) */
+    .section-content .topic-sentence {
+      font-size: 17px; line-height: 1.7;
+      color: var(--text-dark);
+    }
+
+    /* ── Feedback panel ──────────────────────────────────────────────── */
+    .feedback-panel {
+      margin-top: 56px; padding: 28px;
+      background: var(--surface-alt);
+      border-radius: var(--radius-card);
+      border: 1px solid var(--border-light);
+    }
     .feedback-panel h3 { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
-    .feedback-intro { font-size: 14px; color: var(--text-muted); margin-bottom: 18px; line-height: 1.55; }
+    .feedback-intro {
+      font-size: 14px; color: var(--text-muted);
+      margin-bottom: 18px; line-height: 1.55;
+    }
     .rating-buttons { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
-    .rating-btn { padding: 11px 18px; background: var(--bg-light); border: 1px solid var(--border-strong); border-radius: var(--radius-pill); font-size: 14px; cursor: pointer; transition: all 200ms; font-family: inherit; color: var(--text-dark); }
+    .rating-btn {
+      padding: 11px 18px;
+      background: var(--bg-light);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-pill);
+      font-size: 14px; cursor: pointer;
+      transition: all 200ms;
+      font-family: inherit; color: var(--text-dark);
+    }
     .rating-btn:hover { border-color: var(--primary); transform: translateY(-1px); }
-    .rating-btn.active { border-color: var(--primary); background: rgba(var(--primary-rgb), 0.06); color: var(--primary); font-weight: 500; }
-    .feedback-textarea, .feedback-input { width: 100%; padding: 12px 14px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); font-family: inherit; font-size: 14px; margin-bottom: 12px; background: var(--bg-light); color: var(--text-dark); transition: border-color 140ms, box-shadow 140ms; }
+    .rating-btn.active {
+      border-color: var(--primary);
+      background: rgba(var(--primary-rgb), 0.06);
+      color: var(--primary); font-weight: 500;
+    }
+    .feedback-textarea, .feedback-input {
+      width: 100%; padding: 12px 14px;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      font-family: inherit; font-size: 14px;
+      margin-bottom: 12px;
+      background: var(--bg-light); color: var(--text-dark);
+      transition: border-color 140ms, box-shadow 140ms;
+    }
     .feedback-textarea { min-height: 90px; resize: vertical; line-height: 1.55; }
-    .feedback-textarea:focus, .feedback-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.15); }
+    .feedback-textarea:focus, .feedback-input:focus {
+      outline: none; border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.15);
+    }
     .feedback-name-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     @media (max-width: 560px) { .feedback-name-row { grid-template-columns: 1fr; } }
-    .feedback-submit { background: var(--primary); color: #fff; border: none; padding: 12px 24px; border-radius: var(--radius-pill); cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 600; transition: background 200ms; }
+    .feedback-submit {
+      background: var(--primary); color: #fff; border: none;
+      padding: 12px 24px; border-radius: var(--radius-pill);
+      cursor: pointer; font-family: inherit;
+      font-size: 14px; font-weight: 600;
+      transition: background 200ms;
+    }
     .feedback-submit:hover:not(:disabled) { background: var(--primary-light); }
     .feedback-submit:disabled { opacity: 0.5; cursor: not-allowed; }
-    .feedback-confirmation { display: none; padding: 14px 16px; background: #D8F5DC; border-radius: var(--radius-sm); color: #14642C; font-size: 14px; margin-top: 12px; }
+    .feedback-confirmation {
+      display: none; padding: 14px 16px;
+      background: var(--status-approved-bg);
+      border-radius: var(--radius-sm);
+      color: var(--status-approved-fg);
+      font-size: 14px; margin-top: 12px;
+    }
     .feedback-confirmation.show { display: block; }
 
-    /* ── Modal ─────────────────────────────────────────────────────────── */
-    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(8,11,26,0.55); z-index: 100; align-items: center; justify-content: center; padding: 24px; }
+    /* ── Sign-off modal ──────────────────────────────────────────────── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(8,11,26,0.55); z-index: 100;
+      align-items: center; justify-content: center; padding: 24px;
+    }
     .modal-overlay.active { display: flex; }
-    .modal { background: #fff; border-radius: var(--radius-card); max-width: 520px; width: 100%; padding: 32px; }
+    .modal {
+      background: #fff; border-radius: var(--radius-card);
+      max-width: 520px; width: 100%; padding: 32px;
+    }
     .modal h3 { font-size: 22px; font-weight: 600; margin-bottom: 8px; }
     .modal p { font-size: 14px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.55; }
     .modal label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; color: var(--text-dark); }
-    .modal input { width: 100%; padding: 11px 14px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); font-family: inherit; font-size: 14px; margin-bottom: 14px; transition: border-color 140ms, box-shadow 140ms; }
+    .modal input {
+      width: 100%; padding: 11px 14px;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      font-family: inherit; font-size: 14px;
+      margin-bottom: 14px;
+      transition: border-color 140ms, box-shadow 140ms;
+    }
     .modal input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.15); }
-    .modal-confirm { display: flex; gap: 10px; padding: 14px; background: #FFF4D6; border-radius: var(--radius-sm); margin-bottom: 18px; align-items: flex-start; }
+    .modal-confirm {
+      display: flex; gap: 10px; padding: 14px;
+      background: var(--status-feedback-bg);
+      border-radius: var(--radius-sm);
+      margin-bottom: 18px; align-items: flex-start;
+    }
     .modal-confirm input[type="checkbox"] { width: auto; margin: 4px 0 0; flex: 0 0 auto; }
-    .modal-confirm label { font-size: 13px; color: #5A3D00; line-height: 1.5; }
+    .modal-confirm label { font-size: 13px; color: var(--status-feedback-fg); line-height: 1.5; }
     .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
-    .btn-primary { background: var(--primary); color: #fff; border: none; padding: 11px 22px; border-radius: var(--radius-pill); font-weight: 600; cursor: pointer; font-family: inherit; font-size: 14px; }
-    .btn-secondary { background: transparent; color: var(--text-dark); border: 1px solid var(--border-strong); padding: 11px 22px; border-radius: var(--radius-pill); font-weight: 500; cursor: pointer; font-family: inherit; font-size: 14px; }
+    .btn-primary {
+      background: var(--primary); color: #fff; border: none;
+      padding: 11px 22px; border-radius: var(--radius-pill);
+      font-weight: 600; cursor: pointer;
+      font-family: inherit; font-size: 14px;
+    }
+    .btn-secondary {
+      background: transparent; color: var(--text-dark);
+      border: 1px solid var(--border-strong);
+      padding: 11px 22px; border-radius: var(--radius-pill);
+      font-weight: 500; cursor: pointer;
+      font-family: inherit; font-size: 14px;
+    }
 
-    /* ── Loading + error states ────────────────────────────────────────── */
+    /* ── Loading + error states ──────────────────────────────────────── */
     .center-msg { padding: 80px 24px; text-align: center; color: var(--text-muted); }
-    .center-msg .spinner { display: inline-block; width: 24px; height: 24px; border: 3px solid var(--border-light); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.7s linear infinite; }
+    .center-msg .spinner {
+      display: inline-block; width: 24px; height: 24px;
+      border: 3px solid var(--border-light);
+      border-top-color: var(--primary);
+      border-radius: 50%; animation: spin 0.7s linear infinite;
+    }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── Investor banner ───────────────────────────────────────────────── */
-    .investor-banner { padding: 8px 24px; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; text-align: center; background: #14642C; color: #fff; }
   </style>
 </head>
-<body>
+<body data-view="highlights">
   <a href="#main" class="skip-link">Skip to content</a>
+  <div class="reading-progress" aria-hidden="true"><div class="reading-progress-fill" id="reading-progress-fill"></div></div>
 
   <header class="brand-bar">
     <div class="brand-bar-inner">
@@ -210,49 +654,92 @@
   <div id="investor-banner" class="investor-banner" hidden>Investor View · Financials only</div>
 
   <main id="main">
-    <!-- Loading state -->
     <div id="loading" class="center-msg">
       <div class="spinner"></div>
       <p style="margin-top:14px;">Loading your portal…</p>
     </div>
 
-    <!-- Hub list view (default after auth) -->
+    <!-- Hub list view -->
     <div id="hub-list" hidden>
       <section class="hub-hero">
         <div class="hub-hero-inner">
           <div class="hub-hero-eyebrow" id="hero-eyebrow">Client Portal</div>
           <h1 id="hero-title">Project</h1>
           <p class="hub-hero-subtitle" id="hero-subtitle"></p>
-          <div class="hub-hero-meta" id="hero-meta"></div>
+          <div class="hero-metric-strip" id="hero-metrics"></div>
         </div>
       </section>
+      <div class="project-overview" id="project-overview" hidden>
+        <div class="project-overview-card">
+          <div>
+            <div class="project-stat-label">Tier</div>
+            <div class="project-stat-value" id="po-tier">—</div>
+            <div class="project-stat-sub" id="po-tier-sub"></div>
+          </div>
+          <div>
+            <div class="project-stat-label">Phase</div>
+            <div class="project-stat-value" id="po-phase">—</div>
+            <div class="project-stat-sub" id="po-phase-sub"></div>
+          </div>
+          <div>
+            <div class="project-stat-label">Open Feedback</div>
+            <div class="project-stat-value" id="po-feedback">—</div>
+            <div class="project-stat-sub" id="po-feedback-sub"></div>
+          </div>
+        </div>
+      </div>
       <div class="container" id="hub-list-body"></div>
     </div>
 
-    <!-- Section view (when a section is opened) -->
+    <!-- Section view -->
     <div id="section-view" hidden>
-      <div class="section-view">
-        <a class="section-back" id="section-back-link" href="#">← Back to hub</a>
-        <div class="section-eyebrow" id="section-eyebrow"></div>
-        <article id="section-content" class="section-content"></article>
+      <div class="section-shell">
+        <aside class="sidebar" id="section-sidebar">
+          <button type="button" class="sidebar-toggle" aria-expanded="false" aria-controls="sidebar-blocks">
+            <span>Contents</span>
+            <span class="sidebar-toggle-arrow" aria-hidden="true">▼</span>
+          </button>
+          <div class="sidebar-blocks" id="sidebar-blocks">
+            <div class="sidebar-block">
+              <div class="sidebar-eyebrow" id="sidebar-hub-name">Hub</div>
+              <ul class="sidebar-list" id="sidebar-sections"></ul>
+            </div>
+            <div class="sidebar-block" id="sidebar-toc-wrap" hidden>
+              <div class="sidebar-eyebrow">On this page</div>
+              <ul class="sidebar-toc-list" id="sidebar-toc"></ul>
+            </div>
+          </div>
+        </aside>
 
-        <!-- Feedback form -->
-        <section class="feedback-panel" id="feedback-panel">
-          <h3>Feedback on this section</h3>
-          <p class="feedback-intro">Mark "Looks good" to approve. Add a comment if anything needs adjusting.</p>
-          <div class="rating-buttons" role="radiogroup" aria-label="Feedback rating">
-            <button type="button" class="rating-btn" data-rating="looks-good">👍 Looks good</button>
-            <button type="button" class="rating-btn" data-rating="has-feedback">⚠️ Has feedback</button>
-            <button type="button" class="rating-btn" data-rating="needs-rework">🚫 Needs rework</button>
+        <div class="content">
+          <a class="section-back" id="section-back-link" href="#">← Back to hub</a>
+          <div class="section-eyebrow" id="section-eyebrow"></div>
+
+          <div class="view-toggle" role="group" aria-label="View mode">
+            <button type="button" id="view-highlights" aria-pressed="true">Highlights</button>
+            <button type="button" id="view-full" aria-pressed="false">Full Detail</button>
           </div>
-          <textarea class="feedback-textarea" id="feedback-comment" placeholder="Optional — what needs adjusting?" style="display:none;"></textarea>
-          <div class="feedback-name-row" id="feedback-name-row" style="display:none;">
-            <input class="feedback-input" type="text" id="feedback-name" placeholder="Your name (optional)" autocomplete="name">
-            <input class="feedback-input" type="email" id="feedback-email" placeholder="Email (optional)" autocomplete="email">
-          </div>
-          <button type="button" class="feedback-submit" id="feedback-submit" disabled>Submit feedback</button>
-          <div class="feedback-confirmation" id="feedback-confirmation">✓ Thanks — your feedback has been logged. We'll get back to you shortly.</div>
-        </section>
+          <p class="view-toggle-hint" id="view-toggle-hint">Highlights mode shows headlines + Key Takeaways only. Switch to Full Detail for the deep analysis and source data.</p>
+
+          <article id="section-content" class="section-content"></article>
+
+          <section class="feedback-panel" id="feedback-panel">
+            <h3>Feedback on this section</h3>
+            <p class="feedback-intro">Mark "Looks good" to approve. Add a comment if anything needs adjusting.</p>
+            <div class="rating-buttons" role="radiogroup" aria-label="Feedback rating">
+              <button type="button" class="rating-btn" data-rating="looks-good">👍 Looks good</button>
+              <button type="button" class="rating-btn" data-rating="has-feedback">⚠️ Has feedback</button>
+              <button type="button" class="rating-btn" data-rating="needs-rework">🚫 Needs rework</button>
+            </div>
+            <textarea class="feedback-textarea" id="feedback-comment" placeholder="Optional — what needs adjusting?" style="display:none;"></textarea>
+            <div class="feedback-name-row" id="feedback-name-row" style="display:none;">
+              <input class="feedback-input" type="text" id="feedback-name" placeholder="Your name (optional)" autocomplete="name">
+              <input class="feedback-input" type="email" id="feedback-email" placeholder="Email (optional)" autocomplete="email">
+            </div>
+            <button type="button" class="feedback-submit" id="feedback-submit" disabled>Submit feedback</button>
+            <div class="feedback-confirmation" id="feedback-confirmation">✓ Thanks — your feedback has been logged. We'll get back to you shortly.</div>
+          </section>
+        </div>
       </div>
     </div>
   </main>
@@ -280,13 +767,9 @@
 <script>
 'use strict';
 
-// ── Tiny markdown → HTML renderer (no dependencies) ───────────────────────
-// Handles: H1-H6, paragraphs, bold/italic, code spans, links, hr,
-// fenced code, blockquotes, unordered + ordered lists, tables.
+// ── Tiny markdown → HTML renderer (zero deps) ─────────────────────────────
 const md = (function () {
-  function escapeHtml(s) {
-    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  }
+  function escapeHtml(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
   function inline(text) {
     let out = text;
     out = out.replace(/`([^`]+)`/g, (_, c) => `<code>${escapeHtml(c)}</code>`);
@@ -298,8 +781,7 @@ const md = (function () {
   }
   function table(rows) {
     if (!rows.length) return '';
-    const head = rows[0];
-    const body = rows.slice(1);
+    const head = rows[0]; const body = rows.slice(1);
     let html = '<table><thead><tr>';
     head.forEach(c => html += `<th>${inline(escapeHtml(c))}</th>`);
     html += '</tr></thead><tbody>';
@@ -310,16 +792,11 @@ const md = (function () {
     });
     return html + '</tbody></table>';
   }
-  function parseRow(line) {
-    return line.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map(c => c.trim());
-  }
-  function isSeparator(line) {
-    return /^\|\s*[-:|\s]+\|\s*$/.test(line.trim());
-  }
+  function parseRow(line) { return line.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map(c => c.trim()); }
+  function isSeparator(line) { return /^\|\s*[-:|\s]+\|\s*$/.test(line.trim()); }
   function render(text) {
     const lines = text.split('\n');
-    const out = [];
-    let i = 0;
+    const out = []; let i = 0;
     while (i < lines.length) {
       const line = lines[i];
       if (/^---+\s*$/.test(line)) { out.push('<hr>'); i++; continue; }
@@ -331,11 +808,8 @@ const md = (function () {
         i++; continue;
       }
       if (line.trim().startsWith('|') && i + 1 < lines.length && isSeparator(lines[i + 1])) {
-        const rows = [parseRow(line)];
-        i += 2;
-        while (i < lines.length && lines[i].trim().startsWith('|')) {
-          rows.push(parseRow(lines[i])); i++;
-        }
+        const rows = [parseRow(line)]; i += 2;
+        while (i < lines.length && lines[i].trim().startsWith('|')) { rows.push(parseRow(lines[i])); i++; }
         out.push(table(rows)); continue;
       }
       if (line.startsWith('> ')) {
@@ -378,14 +852,106 @@ const md = (function () {
   return { render };
 }());
 
+// ── Post-processor — runs after rendering. Marks Key Takeaways callouts,
+//    wraps tables in <details>, identifies first-paragraph-after-H2 as
+//    topic sentence (always visible in Highlights mode), tags everything
+//    else as detail-prose (hidden in Highlights mode).
+function postProcess(rootEl) {
+  // 1. Mark Key Takeaways callouts (blockquotes whose first <strong> says "Key Takeaways:")
+  rootEl.querySelectorAll('blockquote').forEach(bq => {
+    const firstStrong = bq.querySelector('strong');
+    if (firstStrong && /^key takeaways/i.test(firstStrong.textContent.trim())) {
+      bq.classList.add('kt-callout');
+      // Strip the "Key Takeaways:" prefix from the first paragraph since the
+      // callout has its own KEY TAKEAWAYS eyebrow rendered via ::before
+      const firstP = bq.querySelector('p');
+      if (firstP) {
+        firstP.innerHTML = firstP.innerHTML.replace(/^<strong>Key Takeaways:?<\/strong>\s*/i, '');
+      }
+    }
+  });
+
+  // 2. Wrap every <table> in <details class="data-table"> with a summary
+  rootEl.querySelectorAll('table').forEach((tbl) => {
+    const rowCount = tbl.querySelectorAll('tbody tr').length;
+    const details = document.createElement('details');
+    details.className = 'data-table';
+    const summary = document.createElement('summary');
+    summary.textContent = rowCount > 0 ? `Show data table (${rowCount} row${rowCount === 1 ? '' : 's'})` : 'Show data table';
+    details.appendChild(summary);
+    const inner = document.createElement('div');
+    inner.className = 'data-table-inner';
+    tbl.parentNode.insertBefore(details, tbl);
+    inner.appendChild(tbl);
+    details.appendChild(inner);
+  });
+
+  // 3. Walk top-level children. After each H2, the first <p> is the topic
+  //    sentence (always visible). Subsequent <p>, <ul>, <ol>, <pre> are detail.
+  let inSection = false;
+  let firstPAfterH2 = false;
+  for (const el of Array.from(rootEl.children)) {
+    const tag = el.tagName;
+    if (tag === 'H1') {
+      inSection = true; firstPAfterH2 = false;
+      continue;
+    }
+    if (tag === 'H2') {
+      inSection = true; firstPAfterH2 = true;
+      // Detect Sources & References section to hide entirely in Highlights mode
+      const heading = (el.textContent || '').trim().toLowerCase();
+      if (/^sources?\s*(&|and)\s*references/.test(heading) || heading === 'sources' || heading === 'references') {
+        // Mark this and ALL following siblings as sources-section
+        let ptr = el;
+        while (ptr) {
+          ptr.classList.add('sources-section');
+          ptr = ptr.nextElementSibling;
+        }
+        break;
+      }
+      continue;
+    }
+    if (tag === 'H3' || tag === 'H4') {
+      firstPAfterH2 = false;
+      continue;
+    }
+    if (tag === 'BLOCKQUOTE') continue;          // KT callouts always visible
+    if (tag === 'DETAILS') {
+      // data-table — let CSS hide in highlights mode
+      firstPAfterH2 = false;
+      continue;
+    }
+    if (tag === 'P') {
+      if (firstPAfterH2 && inSection) {
+        el.classList.add('topic-sentence');
+        firstPAfterH2 = false;
+      } else {
+        el.classList.add('detail-prose');
+      }
+      continue;
+    }
+    if (tag === 'UL' || tag === 'OL') {
+      el.classList.add('detail-list');
+      firstPAfterH2 = false;
+      continue;
+    }
+    if (tag === 'PRE') {
+      el.classList.add('detail-pre');
+      firstPAfterH2 = false;
+      continue;
+    }
+  }
+}
+
 // ── State ──────────────────────────────────────────────────────────────
 const state = {
   client: null,
   hubs: [],
-  feedback: {},        // { 'hub/section': 'looks-good' | ... }
-  signOffs: {},        // { hub: { approvedAt, approvedBy } }
+  totals: { sections: 0, words: 0 },
+  feedbackCounts: { open: 0, addressed: 0, wontFix: 0 },
   currentHub: null,
   currentSection: null,
+  viewMode: localStorage.getItem('portal_view_mode') || 'highlights', // default highlights
 };
 
 const els = {
@@ -395,7 +961,14 @@ const els = {
   heroEyebrow: document.getElementById('hero-eyebrow'),
   heroTitle: document.getElementById('hero-title'),
   heroSubtitle: document.getElementById('hero-subtitle'),
-  heroMeta: document.getElementById('hero-meta'),
+  heroMetrics: document.getElementById('hero-metrics'),
+  projectOverview: document.getElementById('project-overview'),
+  poTier: document.getElementById('po-tier'),
+  poTierSub: document.getElementById('po-tier-sub'),
+  poPhase: document.getElementById('po-phase'),
+  poPhaseSub: document.getElementById('po-phase-sub'),
+  poFeedback: document.getElementById('po-feedback'),
+  poFeedbackSub: document.getElementById('po-feedback-sub'),
   hubListBody: document.getElementById('hub-list-body'),
   sectionContent: document.getElementById('section-content'),
   sectionEyebrow: document.getElementById('section-eyebrow'),
@@ -405,6 +978,14 @@ const els = {
   barHome: document.getElementById('bar-home'),
   barLogout: document.getElementById('bar-logout'),
   investorBanner: document.getElementById('investor-banner'),
+  sidebar: document.getElementById('section-sidebar'),
+  sidebarHubName: document.getElementById('sidebar-hub-name'),
+  sidebarSections: document.getElementById('sidebar-sections'),
+  sidebarTocWrap: document.getElementById('sidebar-toc-wrap'),
+  sidebarToc: document.getElementById('sidebar-toc'),
+  viewHighlights: document.getElementById('view-highlights'),
+  viewFull: document.getElementById('view-full'),
+  viewHint: document.getElementById('view-toggle-hint'),
   signoffModal: document.getElementById('signoff-modal'),
   signoffTitle: document.getElementById('signoff-modal-title'),
   signoffDesc: document.getElementById('signoff-modal-desc'),
@@ -414,11 +995,87 @@ const els = {
   signoffConfirmLabel: document.getElementById('signoff-confirm-label'),
   signoffCancel: document.getElementById('signoff-cancel'),
   signoffSubmit: document.getElementById('signoff-submit'),
+  readingFill: document.getElementById('reading-progress-fill'),
 };
 
 function api(path, opts) {
   return fetch(path, Object.assign({ credentials: 'same-origin', headers: { 'Content-Type': 'application/json' } }, opts || {}))
     .then(r => r.json().then(d => ({ status: r.status, body: d })));
+}
+function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+
+// ── View mode (Highlights vs Full Detail) ──────────────────────────────
+function setView(mode) {
+  state.viewMode = mode;
+  localStorage.setItem('portal_view_mode', mode);
+  document.body.setAttribute('data-view', mode);
+  els.viewHighlights.setAttribute('aria-pressed', mode === 'highlights' ? 'true' : 'false');
+  els.viewFull.setAttribute('aria-pressed', mode === 'full' ? 'true' : 'false');
+  if (els.viewHint) {
+    els.viewHint.textContent = mode === 'highlights'
+      ? 'Highlights mode shows headlines + Key Takeaways only. Switch to Full Detail for the deep analysis and source data.'
+      : 'Full Detail mode shows everything. Tables collapsed below — click any "Show data table" to expand. Switch to Highlights to scan faster.';
+  }
+}
+els.viewHighlights.addEventListener('click', () => setView('highlights'));
+els.viewFull.addEventListener('click', () => setView('full'));
+setView(state.viewMode); // apply on load
+
+// ── Sidebar toggle (mobile only) ───────────────────────────────────────
+(function () {
+  const btn = els.sidebar.querySelector('.sidebar-toggle');
+  if (!btn) return;
+  btn.addEventListener('click', () => {
+    const open = els.sidebar.classList.toggle('is-open');
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+}());
+
+// ── Reading progress bar ───────────────────────────────────────────────
+(function () {
+  function update() {
+    const doc = document.documentElement;
+    const max = doc.scrollHeight - window.innerHeight;
+    const pct = max <= 0 ? 0 : Math.min(100, (window.scrollY / max) * 100);
+    els.readingFill.style.width = pct + '%';
+  }
+  window.addEventListener('scroll', update, { passive: true });
+  window.addEventListener('resize', update);
+  update();
+}());
+
+// ── Status badge HTML helper ──────────────────────────────────────────
+const STATUS_LABEL = {
+  'approved':     'Approved',
+  'has-feedback': 'Feedback open',
+  'needs-rework': 'Needs rework',
+  'addressed':    'Addressed',
+  'pending':      'Not yet reviewed',
+};
+function statusBadge(status) {
+  const s = STATUS_LABEL[status] ? status : 'pending';
+  return `<span class="status-badge" data-status="${s}">${esc(STATUS_LABEL[s])}</span>`;
+}
+
+// ── Format helpers ─────────────────────────────────────────────────────
+function fmtNumber(n) { return Number(n || 0).toLocaleString(); }
+function fmtWords(n) {
+  if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+  return String(n);
+}
+
+// ── Phase derivation (rough — based on which hubs exist + are signed off) ─
+function derivePhase(hubs) {
+  const research = hubs.find(h => h.slug === 'research');
+  const vision = hubs.find(h => h.slug === 'vision');
+  const financials = hubs.find(h => h.slug === 'financials');
+  if (financials && financials.signedOff) return { name: 'Phase 3 — Design', sub: 'Phase 2.5 sign-off received' };
+  if (financials && financials.sections.some(s => s.exists)) return { name: 'Phase 2.5 — Financial Plan', sub: 'Awaiting Gate 2.5 sign-off' };
+  if (vision && vision.signedOff) return { name: 'Phase 2.5 — Financial Plan', sub: 'Gate 2 closed; financial plan incoming' };
+  if (vision && vision.sections.some(s => s.exists)) return { name: 'Phase 2 — Define', sub: 'Awaiting Gate 2 sign-off' };
+  if (research && research.signedOff) return { name: 'Phase 2 — Define', sub: 'Gate 1 closed; vision incoming' };
+  if (research && research.sections.some(s => s.exists)) return { name: 'Phase 1 — Discover', sub: 'Awaiting Gate 1 sign-off' };
+  return { name: 'Phase 0 — Setup', sub: 'Engagement in progress' };
 }
 
 async function loadList() {
@@ -426,10 +1083,13 @@ async function loadList() {
   const r = await api('/api/portal-list');
   if (r.status === 401) { window.location.href = '/portal'; return; }
   if (!r.body.ok) { els.loading.innerHTML = '<p>Could not load portal.</p>'; return; }
+
   state.client = r.body.client;
   state.hubs = r.body.hubs;
+  state.totals = r.body.totals || { sections: 0, words: 0 };
+  state.feedbackCounts = r.body.feedbackCounts || { open: 0, addressed: 0, wontFix: 0 };
 
-  // Header
+  // Brand bar
   els.barProject.textContent = state.client.name;
   els.barDivider.hidden = false;
   els.barHome.hidden = false;
@@ -437,19 +1097,46 @@ async function loadList() {
   els.barLogout.addEventListener('click', e => { e.preventDefault(); logout(); });
 
   // Investor banner
-  if (state.client.scope === 'investor') {
-    els.investorBanner.hidden = false;
-  }
+  if (state.client.scope === 'investor') els.investorBanner.hidden = false;
 
   // Hero
   els.heroEyebrow.textContent = state.client.scope === 'investor' ? 'Due Diligence · Financials Hub' : 'Client Portal';
   els.heroTitle.textContent = state.client.name;
-  els.heroSubtitle.textContent = state.client.oneLiner || (state.client.scope === 'investor' ? 'Financial plan and the funding ask.' : 'Track project progress, review deliverables, give feedback, and sign off each gate.');
-  const tier = state.client.tier ? `<div><strong>${state.client.tier}</strong></div>` : '';
-  const hubCount = state.hubs.length;
-  els.heroMeta.innerHTML = `${tier}<div><strong>${hubCount}</strong> hub${hubCount === 1 ? '' : 's'} live</div>`;
+  els.heroSubtitle.textContent = state.client.oneLiner || (state.client.scope === 'investor'
+    ? 'Financial plan and the funding ask.'
+    : 'Track project progress, review deliverables, give feedback, and sign off each gate.');
 
-  // Render hubs
+  // Hero metric strip
+  const totalSections = state.totals.sections;
+  const totalWords = state.totals.words;
+  const openFeedback = state.feedbackCounts.open;
+  els.heroMetrics.innerHTML = `
+    <div class="hero-metric"><div class="hero-metric-label">Sections</div><div class="hero-metric-value">${fmtNumber(totalSections)}</div></div>
+    <div class="hero-metric"><div class="hero-metric-label">Total Content</div><div class="hero-metric-value">${fmtWords(totalWords)} words</div></div>
+    ${state.client.scope === 'investor' ? '' : `<div class="hero-metric"><div class="hero-metric-label">Open Feedback</div><div class="hero-metric-value">${fmtNumber(openFeedback)}</div></div>`}
+  `;
+
+  // Project overview card (operator/client only — investor view skips it)
+  if (state.client.scope !== 'investor') {
+    els.projectOverview.hidden = false;
+    const phase = derivePhase(state.hubs);
+    els.poTier.textContent = state.client.tier || '—';
+    els.poTierSub.textContent = state.client.tier ? 'Engagement tier' : '';
+    els.poPhase.textContent = phase.name;
+    els.poPhaseSub.textContent = phase.sub;
+    if (state.feedbackCounts.open > 0) {
+      els.poFeedback.textContent = `${state.feedbackCounts.open} open`;
+      els.poFeedbackSub.textContent = `${state.feedbackCounts.addressed} addressed · ${state.feedbackCounts.wontFix} won't-fix`;
+    } else if (state.feedbackCounts.addressed > 0) {
+      els.poFeedback.textContent = 'All addressed';
+      els.poFeedbackSub.textContent = `${state.feedbackCounts.addressed} items resolved`;
+    } else {
+      els.poFeedback.textContent = 'None yet';
+      els.poFeedbackSub.textContent = 'Submit feedback per section';
+    }
+  }
+
+  // Hub cards
   els.hubListBody.innerHTML = '';
   state.hubs.forEach(hub => {
     const section = document.createElement('section');
@@ -461,19 +1148,17 @@ async function loadList() {
       </div>
     `;
     const cards = hub.sections.map(s => {
-      const statusKey = `${hub.slug}/${s.slug}`;
-      const fb = state.feedback[statusKey];
-      const pill = fb === 'looks-good'
-        ? '<span class="status-pill approved">Approved</span>'
-        : fb ? '<span class="status-pill feedback">Feedback sent</span>'
-        : '<span class="status-pill pending">Not yet reviewed</span>';
+      const status = s.feedbackStatus || (s.exists ? 'pending' : 'pending');
       const cls = s.exists ? 'section-card' : 'section-card disabled';
       const onclick = s.exists ? `onclick="openSection('${esc(hub.slug)}','${esc(s.slug)}')"` : '';
       return `
         <div class="${cls}" role="button" tabindex="${s.exists ? '0' : '-1'}" ${onclick}>
           <div class="section-card-body">
             <div class="section-card-name">${esc(s.name)}</div>
-            <div class="section-card-status">${pill}${s.exists ? '' : 'Not yet generated'}</div>
+            <div class="section-card-meta">
+              ${s.exists ? statusBadge(status) : '<span class="status-badge" data-status="pending">Not yet generated</span>'}
+              ${s.exists && s.wordCount ? `<span>${fmtWords(s.wordCount)} words</span>` : ''}
+            </div>
           </div>
           <div class="section-card-arrow">→</div>
         </div>`;
@@ -481,15 +1166,14 @@ async function loadList() {
 
     let gatePanel = '';
     if (hub.gate && state.client.scope === 'client') {
-      const signed = state.signOffs[hub.slug];
-      const allLookGood = hub.sections.every(s => state.feedback[`${hub.slug}/${s.slug}`] === 'looks-good');
-      if (signed) {
+      const allLookGood = hub.sections.every(s => s.feedbackStatus === 'approved');
+      if (hub.signedOff && hub.signOff) {
         gatePanel = `
           <div class="gate-panel signed">
             <div class="gate-icon">✓</div>
             <div class="gate-body">
               <h4>${esc(hub.gate)} — Approved</h4>
-              <p>Signed off by <strong>${esc(signed.approvedBy)}</strong> on ${new Date(signed.approvedAt).toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' })}.</p>
+              <p>Signed off by <strong>${esc(hub.signOff.approvedBy)}</strong> on ${new Date(hub.signOff.approvedAt).toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' })}.</p>
             </div>
           </div>`;
       } else {
@@ -512,15 +1196,30 @@ async function loadList() {
   navigate('hub-list');
 }
 
-function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
-
+// ── Section view ───────────────────────────────────────────────────────
 async function openSection(hubSlug, sectionSlug) {
   state.currentHub = hubSlug;
   state.currentSection = sectionSlug;
   navigate('section-view');
   els.sectionContent.innerHTML = '<div class="center-msg"><div class="spinner"></div><p style="margin-top:14px;">Loading…</p></div>';
   els.sectionEyebrow.textContent = '';
+  els.sidebarTocWrap.hidden = true;
+  els.sidebarToc.innerHTML = '';
   resetFeedbackForm();
+
+  // Build sidebar — hub name + sibling sections
+  const hub = state.hubs.find(h => h.slug === hubSlug);
+  if (hub) {
+    els.sidebarHubName.textContent = hub.name;
+    els.sidebarSections.innerHTML = hub.sections.map(s => {
+      if (!s.exists) return '';
+      const isActive = s.slug === sectionSlug;
+      return `
+        <li class="${isActive ? 'active' : ''}">
+          <a onclick="openSection('${esc(hubSlug)}','${esc(s.slug)}')">${esc(s.name)}</a>
+        </li>`;
+    }).join('');
+  }
 
   const r = await api(`/api/portal-content?hub=${encodeURIComponent(hubSlug)}&section=${encodeURIComponent(sectionSlug)}`);
   if (r.status === 401) { window.location.href = '/portal'; return; }
@@ -530,6 +1229,19 @@ async function openSection(hubSlug, sectionSlug) {
   }
   els.sectionEyebrow.textContent = `${r.body.hub.name} — ${r.body.section.name}`;
   els.sectionContent.innerHTML = md.render(r.body.markdown);
+  postProcess(els.sectionContent);
+
+  // Build TOC from rendered H2/H3
+  const headings = els.sectionContent.querySelectorAll('h2, h3');
+  if (headings.length > 0) {
+    const tocItems = Array.from(headings).map(h => {
+      const level = h.tagName === 'H3' ? 'toc-l3' : 'toc-l2';
+      return `<li class="${level}"><a href="#${h.id}">${esc(h.textContent)}</a></li>`;
+    }).join('');
+    els.sidebarToc.innerHTML = tocItems;
+    els.sidebarTocWrap.hidden = false;
+  }
+
   window.scrollTo(0, 0);
 }
 window.openSection = openSection;
@@ -539,7 +1251,6 @@ function navigate(view) {
   els.hubList.hidden = view !== 'hub-list';
   els.sectionView.hidden = view !== 'section-view';
 }
-
 els.backLink.addEventListener('click', e => { e.preventDefault(); navigate('hub-list'); });
 
 // ── Feedback form ──────────────────────────────────────────────────────
@@ -575,9 +1286,7 @@ ratingBtns.forEach(btn => {
   });
 });
 
-// Send the email payload directly to web3forms from the browser (same
-// pattern the contact form uses — web3forms blocks server-side submissions
-// on their free plan, so this MUST happen client-side).
+// Browser-side email send (web3forms blocks server-side on free plan)
 async function sendBrowserEmail(payload) {
   if (!payload || !payload.web3formsKey) return false;
   try {
@@ -588,15 +1297,9 @@ async function sendBrowserEmail(payload) {
     formData.append('message', payload.message || '');
     if (payload.replyto) formData.append('replyto', payload.replyto);
     formData.append('botcheck', '');
-    const res = await fetch('https://api.web3forms.com/submit', {
-      method: 'POST',
-      body: formData,
-    });
+    const res = await fetch('https://api.web3forms.com/submit', { method: 'POST', body: formData });
     return res.ok;
-  } catch (e) {
-    console.warn('[portal] email send failed:', e);
-    return false;
-  }
+  } catch (e) { console.warn('[portal] email send failed:', e); return false; }
 }
 
 feedbackSubmit.addEventListener('click', async () => {
@@ -620,9 +1323,7 @@ feedbackSubmit.addEventListener('click', async () => {
     feedbackSubmit.textContent = 'Submit feedback';
     return;
   }
-  // Browser-side email send (web3forms doesn't allow server-side on free plan)
   if (r.body.email) sendBrowserEmail(r.body.email);
-  state.feedback[`${state.currentHub}/${state.currentSection}`] = selectedRating;
   feedbackConfirm.classList.add('show');
   feedbackSubmit.style.display = 'none';
 });
@@ -634,27 +1335,20 @@ window.openSignoff = function (hubSlug, hubName, gate) {
   els.signoffTitle.textContent = `Sign off ${gate}`;
   els.signoffDesc.textContent = `By signing below, you approve all sections in ${hubName} as the basis for ${gate === 'Gate 2.5' ? 'fundraising and the SOW' : gate === 'Gate 2' ? 'the SOW (scope is locked from this point)' : 'the next phase of the engagement'}.`;
   els.signoffConfirmLabel.textContent = `I confirm I have reviewed every section in ${hubName} and approve the work as written.`;
-  els.signoffName.value = '';
-  els.signoffEmail.value = '';
-  els.signoffConfirm.checked = false;
-  els.signoffSubmit.disabled = true;
-  els.signoffSubmit.textContent = 'Confirm sign-off';
+  els.signoffName.value = ''; els.signoffEmail.value = ''; els.signoffConfirm.checked = false;
+  els.signoffSubmit.disabled = true; els.signoffSubmit.textContent = 'Confirm sign-off';
   els.signoffModal.hidden = false;
   els.signoffModal.classList.add('active');
   document.body.style.overflow = 'hidden';
   setTimeout(() => els.signoffName.focus(), 30);
   document.addEventListener('keydown', signoffKeyHandler);
 };
-
 function closeSignoff() {
-  els.signoffModal.classList.remove('active');
-  els.signoffModal.hidden = true;
+  els.signoffModal.classList.remove('active'); els.signoffModal.hidden = true;
   document.body.style.overflow = '';
   document.removeEventListener('keydown', signoffKeyHandler);
 }
-function signoffKeyHandler(e) {
-  if (e.key === 'Escape') { e.preventDefault(); closeSignoff(); }
-}
+function signoffKeyHandler(e) { if (e.key === 'Escape') { e.preventDefault(); closeSignoff(); } }
 els.signoffModal.addEventListener('click', e => { if (e.target === els.signoffModal) closeSignoff(); });
 els.signoffCancel.addEventListener('click', closeSignoff);
 
@@ -666,8 +1360,7 @@ els.signoffConfirm.addEventListener('change', updateSignoffSubmit);
 
 els.signoffSubmit.addEventListener('click', async () => {
   if (!signoffHub) return;
-  els.signoffSubmit.disabled = true;
-  els.signoffSubmit.textContent = 'Signing…';
+  els.signoffSubmit.disabled = true; els.signoffSubmit.textContent = 'Signing…';
   const r = await api('/api/portal-signoff', {
     method: 'POST',
     body: JSON.stringify({
@@ -679,15 +1372,12 @@ els.signoffSubmit.addEventListener('click', async () => {
   });
   if (!r.body.ok) {
     alert('Sign-off failed: ' + (r.body.error || 'Unknown error'));
-    els.signoffSubmit.disabled = false;
-    els.signoffSubmit.textContent = 'Confirm sign-off';
+    els.signoffSubmit.disabled = false; els.signoffSubmit.textContent = 'Confirm sign-off';
     return;
   }
-  // Browser-side email send for the sign-off notification
   if (r.body.email) sendBrowserEmail(r.body.email);
-  state.signOffs[signoffHub] = { approvedAt: r.body.approvedAt, approvedBy: els.signoffName.value.trim() };
   closeSignoff();
-  loadList(); // refresh
+  loadList();
 });
 
 async function logout() {
