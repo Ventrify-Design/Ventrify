@@ -161,19 +161,41 @@ async function ghCommitFile(repo, branch, path, content, message) {
 }
 
 // ── Email delivery via web3forms (already in use on contact page) ──────────
+// Returns: { ok: boolean, status: number, response: object|string }
+// — caller can log response when debugging delivery issues.
 async function sendEmail({ subject, body, replyTo }) {
-  const formData = new URLSearchParams();
-  formData.append('access_key', WEB3FORMS_KEY);
-  formData.append('subject', subject);
-  formData.append('from_name', 'Ventrify Portal');
-  formData.append('to', OPERATOR_EMAIL);
-  formData.append('message', body);
-  if (replyTo) formData.append('replyto', replyTo);
+  const payload = {
+    access_key: WEB3FORMS_KEY,
+    subject,
+    from_name: 'Ventrify Portal',
+    message: body,
+    botcheck: '',
+  };
+  if (replyTo) payload.replyto = replyTo;
+
   const res = await fetch('https://api.web3forms.com/submit', {
     method: 'POST',
-    body: formData,
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    body: JSON.stringify(payload),
   });
-  return res.ok;
+  let parsedResponse;
+  try { parsedResponse = await res.json(); }
+  catch (e) { parsedResponse = await res.text().catch(() => '(unparseable)'); }
+  // Log to Vercel function logs for debugging — visible in Vercel UI under Logs
+  console.log('[sendEmail] web3forms responded', {
+    status: res.status,
+    ok: res.ok,
+    keyPrefix: (WEB3FORMS_KEY || '').slice(0, 8),
+    response: parsedResponse,
+  });
+  return {
+    ok: res.ok && parsedResponse && parsedResponse.success !== false,
+    status: res.status,
+    response: parsedResponse,
+  };
 }
 
 // ── Hub catalogue (single source of truth for what each hub renders) ───────

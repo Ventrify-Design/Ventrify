@@ -67,7 +67,7 @@ module.exports = async function handler(req, res) {
   };
 
   // ── 1. Email the operator ────────────────────────────────────────────────
-  let emailSent = false;
+  let emailResult = { ok: false, status: 0, response: 'not-attempted' };
   try {
     const subject = `[Portal Sign-off] ${client.name || auth.slug} · ${hub.gate} approved`;
     const lines = [
@@ -81,13 +81,14 @@ module.exports = async function handler(req, res) {
       '',
       `Engagement repo: https://github.com/${client.repo}`,
     ];
-    emailSent = await sendEmail({
+    emailResult = await sendEmail({
       subject,
       body: lines.join('\n'),
       replyTo: email || undefined,
     });
   } catch (e) {
-    console.error('[portal-signoff] email failed:', e.message);
+    console.error('[portal-signoff] email threw:', e.message);
+    emailResult = { ok: false, status: 0, response: { error: e.message } };
   }
 
   // ── 2. Commit to engagement repo ────────────────────────────────────────
@@ -116,7 +117,9 @@ module.exports = async function handler(req, res) {
     ok: true,
     gate: hub.gate,
     approvedAt,
-    emailSent,
+    emailSent: emailResult.ok,
+    emailStatus: emailResult.status,
+    emailResponse: emailResult.response,
     committed,
     commitError,
   }));

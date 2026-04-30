@@ -94,7 +94,7 @@ module.exports = async function handler(req, res) {
   };
 
   // ── 1. Email the operator (best-effort — failure shouldn't break the flow) ──
-  let emailSent = false;
+  let emailResult = { ok: false, status: 0, response: 'not-attempted' };
   try {
     const subject = `[Portal Feedback] ${client.name || auth.slug} · ${hub.name} → ${section.name}`;
     const lines = [
@@ -111,13 +111,14 @@ module.exports = async function handler(req, res) {
       `View source: https://github.com/${client.repo}/blob/${client.branch || 'main'}/${section.file.startsWith('../') ? section.file.replace('../', '') : hub.dir + '/' + section.file}`,
       `Feedback ID: ${id}`,
     ];
-    emailSent = await sendEmail({
+    emailResult = await sendEmail({
       subject,
       body: lines.join('\n'),
       replyTo: email || undefined,
     });
   } catch (e) {
-    console.error('[portal-feedback] email failed:', e.message);
+    console.error('[portal-feedback] email threw:', e.message);
+    emailResult = { ok: false, status: 0, response: { error: e.message } };
   }
 
   // ── 2. Commit to engagement repo (only if GITHUB_TOKEN available) ──────────
@@ -145,7 +146,9 @@ module.exports = async function handler(req, res) {
   res.end(JSON.stringify({
     ok: true,
     id,
-    emailSent,
+    emailSent: emailResult.ok,
+    emailStatus: emailResult.status,
+    emailResponse: emailResult.response, // surface for debugging in browser DevTools
     committed,
     commitError,
   }));
