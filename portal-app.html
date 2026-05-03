@@ -210,6 +210,225 @@
     .status-badge[data-status="pending"]       { background: var(--status-pending-bg); color: var(--status-pending-fg); }
     .status-badge[data-status="pending"]::before { background: var(--status-pending-fg); }
 
+    /* ── Provocation Cards (data-room L1 layer) ──────────────────────── */
+    /* Hard rules from .claude/memory/reference_data_room_rules.md in the
+       engagement repo: max 7 cards per Hub, 5 card types only, founder
+       makes every final call. */
+
+    .prov-intro {
+      background: linear-gradient(135deg, #F8FAFF 0%, #EEF2FF 100%);
+      border: 1px solid rgba(0,54,255,0.10);
+      padding: 20px 22px; border-radius: var(--radius-card);
+      margin-bottom: 20px;
+      font-size: 14px; line-height: 1.6; color: var(--text-muted);
+    }
+    .prov-intro strong { color: var(--text); }
+
+    .prov-card {
+      background: #fff; border: 1px solid var(--border-light);
+      border-radius: var(--radius-card);
+      margin-bottom: 14px; overflow: hidden;
+      transition: box-shadow 0.18s ease, border-color 0.18s ease;
+    }
+    .prov-card:hover { box-shadow: 0 4px 16px rgba(15,17,32,0.06); }
+    .prov-card.expanded { border-color: rgba(0,54,255,0.18); box-shadow: 0 4px 20px rgba(15,17,32,0.08); }
+
+    .prov-card-head {
+      display: flex; align-items: flex-start; gap: 16px;
+      padding: 20px 22px; cursor: pointer;
+      user-select: none;
+    }
+    .prov-card-head:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+
+    .prov-card-meta { flex: 1; min-width: 0; }
+    .prov-card-eyebrow {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 0.10em; text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .prov-card-eyebrow::before { content: ''; width: 6px; height: 6px; border-radius: 50%; }
+    .prov-card[data-type="strategic-fork"] .prov-card-eyebrow { color: #7C3AED; }
+    .prov-card[data-type="strategic-fork"] .prov-card-eyebrow::before { background: #7C3AED; }
+    .prov-card[data-type="surprising-finding"] .prov-card-eyebrow { color: #B45309; }
+    .prov-card[data-type="surprising-finding"] .prov-card-eyebrow::before { background: #F59E0B; }
+    .prov-card[data-type="assumption-flag"] .prov-card-eyebrow { color: #B91C1C; }
+    .prov-card[data-type="assumption-flag"] .prov-card-eyebrow::before { background: #EF4444; }
+    .prov-card[data-type="hidden-insight"] .prov-card-eyebrow { color: #1D4ED8; }
+    .prov-card[data-type="hidden-insight"] .prov-card-eyebrow::before { background: #3B82F6; }
+    .prov-card[data-type="open-question"] .prov-card-eyebrow { color: #475569; }
+    .prov-card[data-type="open-question"] .prov-card-eyebrow::before { background: #64748B; }
+
+    .prov-card-headline {
+      font-size: 19px; font-weight: 600; line-height: 1.35;
+      letter-spacing: -0.005em; color: var(--text);
+    }
+
+    .prov-card-side {
+      display: flex; flex-direction: column; align-items: flex-end; gap: 10px;
+      flex-shrink: 0;
+    }
+    .prov-card-toggle {
+      font-family: var(--font-mono); font-size: 12px;
+      color: var(--text-muted); transition: transform 0.18s ease;
+      width: 24px; height: 24px;
+      display: inline-flex; align-items: center; justify-content: center;
+      border-radius: 50%; background: var(--surface-alt);
+    }
+    .prov-card.expanded .prov-card-toggle { transform: rotate(90deg); color: var(--primary); background: rgba(0,54,255,0.08); }
+
+    .status-badge[data-status="open"]         { background: var(--status-pending-bg); color: var(--status-pending-fg); }
+    .status-badge[data-status="open"]::before { background: var(--status-pending-fg); }
+    .status-badge[data-status="commented"]    { background: var(--status-approved-bg); color: var(--status-approved-fg); }
+    .status-badge[data-status="commented"]::before { background: var(--status-approved-fg); }
+    .status-badge[data-status="acknowledged"] { background: var(--status-addressed-bg); color: var(--status-addressed-fg); }
+    .status-badge[data-status="acknowledged"]::before { background: var(--status-addressed-fg); }
+
+    .prov-card-body {
+      padding: 0 22px 22px;
+      border-top: 1px solid var(--border-light);
+      display: none;
+    }
+    .prov-card.expanded .prov-card-body { display: block; }
+    .prov-card-body-prose {
+      padding-top: 18px;
+      font-size: 15px; line-height: 1.65; color: var(--text);
+    }
+    .prov-card-body-prose p { margin-bottom: 12px; }
+    .prov-card-body-prose p:last-child { margin-bottom: 0; }
+    .prov-card-body-prose strong { font-weight: 600; }
+    .prov-card-body-prose ul { padding-left: 22px; margin: 12px 0; }
+    .prov-card-body-prose li { margin-bottom: 8px; line-height: 1.55; }
+    .prov-card-body-prose h1 {
+      font-size: 19px; font-weight: 600; margin-bottom: 14px;
+      line-height: 1.35; letter-spacing: -0.005em;
+    }
+    /* h1 is the card headline — already shown in head, hide in body */
+    .prov-card-body-prose > h1:first-child { display: none; }
+    .prov-card-body-prose blockquote {
+      border-left: 3px solid var(--primary);
+      padding: 14px 18px; margin: 14px 0;
+      background: rgba(0,54,255,0.04);
+      border-radius: 0 6px 6px 0;
+      font-style: normal;
+    }
+
+    .prov-card-evidence-line {
+      margin-top: 14px;
+      font-size: 13px; color: var(--text-muted);
+      font-family: var(--font-mono); letter-spacing: 0.02em;
+    }
+
+    .prov-card-actions {
+      margin-top: 22px; padding-top: 20px;
+      border-top: 1px dashed var(--border-light);
+    }
+    .prov-card-actions-label {
+      font-family: var(--font-mono);
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--text-muted); margin-bottom: 10px;
+    }
+    .prov-card-comment-input {
+      width: 100%; min-height: 100px; resize: vertical;
+      padding: 12px 14px; border: 1px solid var(--border-light);
+      border-radius: 10px;
+      font-family: inherit; font-size: 14px; line-height: 1.55;
+      background: var(--surface-alt); color: var(--text);
+    }
+    .prov-card-comment-input:focus {
+      outline: none; border-color: var(--primary);
+      background: #fff; box-shadow: 0 0 0 3px rgba(0,54,255,0.08);
+    }
+    .prov-card-action-row {
+      display: flex; gap: 10px; flex-wrap: wrap;
+      align-items: center; margin-top: 12px;
+    }
+    .prov-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 18px; border-radius: var(--radius-pill);
+      font-size: 13px; font-weight: 600; letter-spacing: 0.01em;
+      cursor: pointer; transition: all 0.15s ease;
+      border: 1px solid transparent;
+    }
+    .prov-btn-primary { background: var(--primary); color: #fff; }
+    .prov-btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+    .prov-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .prov-btn-ghost { background: transparent; color: var(--text-muted); border-color: var(--border-light); }
+    .prov-btn-ghost:hover { background: var(--surface-alt); color: var(--text); }
+    .prov-btn-link {
+      background: transparent; color: var(--text-muted);
+      padding: 10px 4px; font-weight: 500;
+    }
+    .prov-btn-link:hover { color: var(--primary); }
+
+    .prov-card-already-commented {
+      padding: 12px 16px; border-radius: 10px;
+      background: var(--status-approved-bg); color: var(--status-approved-fg);
+      font-size: 13px; font-weight: 500;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .prov-card-already-commented::before { content: '✓'; font-weight: 700; }
+
+    /* "View source documents" expander shown beneath the cards */
+    .prov-deep-toggle {
+      margin: 28px 0 12px;
+      padding: 14px 18px;
+      background: var(--surface-alt);
+      border: 1px dashed var(--border-light);
+      border-radius: 10px;
+      cursor: pointer; user-select: none;
+      font-size: 13px; font-weight: 500; color: var(--text-muted);
+      display: flex; align-items: center; gap: 10px;
+      transition: background 0.15s ease;
+    }
+    .prov-deep-toggle:hover { background: #ECEEF5; color: var(--text); }
+    .prov-deep-toggle::before { content: '▸'; font-family: var(--font-mono); transition: transform 0.18s ease; }
+    .prov-deep-toggle.open::before { transform: rotate(90deg); }
+    .prov-deep-empty {
+      margin: 12px 0;
+      padding: 18px 20px;
+      background: var(--surface-alt);
+      border-radius: 10px;
+      font-size: 14px; line-height: 1.55; color: var(--text-muted);
+    }
+
+    /* Hub progress strip (top of card list) */
+    .prov-progress {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px; flex-wrap: wrap;
+      margin-bottom: 18px;
+      padding: 14px 18px;
+      background: var(--surface-alt); border-radius: 10px;
+    }
+    .prov-progress-label {
+      font-family: var(--font-mono);
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .prov-progress-count {
+      font-size: 18px; font-weight: 600; color: var(--text);
+    }
+    .prov-progress-bar {
+      flex: 1; min-width: 120px;
+      height: 6px; border-radius: 3px;
+      background: var(--border-light); overflow: hidden;
+    }
+    .prov-progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary) 0%, #5B7FFF 100%);
+      transition: width 0.35s ease;
+    }
+
+    @media (max-width: 600px) {
+      .prov-card-head { padding: 16px 16px; gap: 12px; }
+      .prov-card-headline { font-size: 17px; }
+      .prov-card-body { padding: 0 16px 18px; }
+      .prov-card-side { gap: 8px; }
+    }
+
     /* ── Gate sign-off panel (existing) ──────────────────────────────── */
     .gate-panel {
       padding: 22px 24px; border-radius: var(--radius-card);
@@ -1136,7 +1355,8 @@ async function loadList() {
     }
   }
 
-  // Hub cards
+  // Hub rendering — cards-driven (data-room L1) when hub.cardDriven, else
+  // legacy section-list view for hubs not yet re-curated.
   els.hubListBody.innerHTML = '';
   state.hubs.forEach(hub => {
     const section = document.createElement('section');
@@ -1147,27 +1367,40 @@ async function loadList() {
         ${hub.gate ? `<div class="hub-section-meta">${esc(hub.gate)}</div>` : ''}
       </div>
     `;
-    const cards = hub.sections.map(s => {
-      const status = s.feedbackStatus || (s.exists ? 'pending' : 'pending');
-      const cls = s.exists ? 'section-card' : 'section-card disabled';
-      const onclick = s.exists ? `onclick="openSection('${esc(hub.slug)}','${esc(s.slug)}')"` : '';
-      return `
-        <div class="${cls}" role="button" tabindex="${s.exists ? '0' : '-1'}" ${onclick}>
-          <div class="section-card-body">
-            <div class="section-card-name">${esc(s.name)}</div>
-            <div class="section-card-meta">
-              ${s.exists ? statusBadge(status) : '<span class="status-badge" data-status="pending">Not yet generated</span>'}
-              ${s.exists && s.wordCount ? `<span>${fmtWords(s.wordCount)} words</span>` : ''}
+
+    let body = '';
+    if (hub.cardDriven) {
+      body = renderHubProvocations(hub);
+    } else {
+      const cards = hub.sections.map(s => {
+        const status = s.feedbackStatus || (s.exists ? 'pending' : 'pending');
+        const cls = s.exists ? 'section-card' : 'section-card disabled';
+        const onclick = s.exists ? `onclick="openSection('${esc(hub.slug)}','${esc(s.slug)}')"` : '';
+        return `
+          <div class="${cls}" role="button" tabindex="${s.exists ? '0' : '-1'}" ${onclick}>
+            <div class="section-card-body">
+              <div class="section-card-name">${esc(s.name)}</div>
+              <div class="section-card-meta">
+                ${s.exists ? statusBadge(status) : '<span class="status-badge" data-status="pending">Not yet generated</span>'}
+                ${s.exists && s.wordCount ? `<span>${fmtWords(s.wordCount)} words</span>` : ''}
+              </div>
             </div>
-          </div>
-          <div class="section-card-arrow">→</div>
-        </div>`;
-    }).join('');
+            <div class="section-card-arrow">→</div>
+          </div>`;
+      }).join('');
+      body = `<div class="section-grid">${cards}</div>`;
+    }
 
     let gatePanel = '';
     if (hub.gate && state.client.scope === 'client') {
-      const allLookGood = hub.sections.every(s => s.feedbackStatus === 'approved');
-      if (hub.signedOff && hub.signOff) {
+      // Card-driven hubs gate on card status; legacy hubs gate on section status.
+      let ready, signed = hub.signedOff && hub.signOff;
+      if (hub.cardDriven) {
+        ready = hub.cardsTotal > 0 && hub.cardsCommented === hub.cardsTotal;
+      } else {
+        ready = hub.sections.every(s => s.feedbackStatus === 'approved');
+      }
+      if (signed) {
         gatePanel = `
           <div class="gate-panel signed">
             <div class="gate-icon">✓</div>
@@ -1177,23 +1410,292 @@ async function loadList() {
             </div>
           </div>`;
       } else {
+        const blocker = hub.cardDriven
+          ? 'Comment on or acknowledge every Provocation Card to unlock the sign-off button.'
+          : 'Approve every section to unlock the sign-off button.';
         gatePanel = `
-          <div class="gate-panel ${allLookGood ? 'ready' : 'blocked'}">
-            <div class="gate-icon">${allLookGood ? '◉' : '○'}</div>
+          <div class="gate-panel ${ready ? 'ready' : 'blocked'}">
+            <div class="gate-icon">${ready ? '◉' : '○'}</div>
             <div class="gate-body">
               <h4>${esc(hub.gate)} — Sign-off</h4>
-              <p>${allLookGood ? 'All sections approved. Ready to sign off this gate.' : 'Approve every section to unlock the sign-off button.'}</p>
-              ${allLookGood ? `<button class="gate-btn" onclick="openSignoff('${esc(hub.slug)}','${esc(hub.name)}','${esc(hub.gate)}')">Sign off ${esc(hub.gate)} →</button>` : ''}
+              <p>${ready ? 'You have weighed in on every card. Ready to sign off this gate.' : blocker}</p>
+              ${ready ? `<button class="gate-btn" onclick="openSignoff('${esc(hub.slug)}','${esc(hub.name)}','${esc(hub.gate)}')">Sign off ${esc(hub.gate)} →</button>` : ''}
             </div>
           </div>`;
       }
     }
 
-    section.innerHTML = head + `<div class="section-grid">${cards}</div>` + gatePanel;
+    section.innerHTML = head + body + gatePanel;
     els.hubListBody.appendChild(section);
   });
 
+  // Wire card head click handlers (event delegation would also work; explicit
+  // is easier to reason about given the small N).
+  els.hubListBody.querySelectorAll('.prov-card-head').forEach(head => {
+    head.addEventListener('click', e => {
+      // Don't toggle if click came from an interactive child
+      if (e.target.closest('button, a, textarea, input')) return;
+      const card = head.closest('.prov-card');
+      card.classList.toggle('expanded');
+    });
+    head.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        head.click();
+      }
+    });
+  });
+
   navigate('hub-list');
+}
+
+// ── Provocation Cards (L1 of the data-room model) ─────────────────────
+// Renders the Hub's cards with a progress strip on top + a "View source
+// documents" expander on the bottom (which reveals the legacy section
+// grid as the L3 layer, or shows a "deep research pending" message
+// when no L3 docs exist yet).
+
+const TYPE_LABELS = {
+  'strategic-fork': 'Strategic Fork',
+  'surprising-finding': 'Surprising Finding',
+  'assumption-flag': 'Assumption Flag',
+  'hidden-insight': 'Hidden Insight',
+  'open-question': 'Open Question',
+};
+
+const STATUS_LABELS = {
+  'open': 'Awaiting input',
+  'commented': 'Commented',
+  'acknowledged': 'Acknowledged',
+};
+
+function renderHubProvocations(hub) {
+  const total = hub.cardsTotal;
+  const done = hub.cardsCommented;
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+
+  const intro = `
+    <div class="prov-intro">
+      Each card below asks one decision-shaping question — a strategic fork, a surprising finding, an assumption that shapes the plan, an insight worth surfacing, or an open question only you can call. Comment on each, or click <strong>Acknowledge</strong> if you don't want to weigh in. The Hub is ready to sign off when every card has your input.
+    </div>
+    <div class="prov-progress">
+      <span class="prov-progress-label">Your input</span>
+      <span class="prov-progress-count">${done} of ${total} cards</span>
+      <div class="prov-progress-bar"><div class="prov-progress-bar-fill" style="width: ${pct}%"></div></div>
+    </div>
+  `;
+
+  const cards = hub.provocations.map(card => renderProvocationCard(hub, card)).join('');
+
+  // L3 — full research expander. For Research Hub right now this is empty
+  // (we cleared deep research post-pivot). Show an honest pending message.
+  const hasL3 = hub.sections.some(s => s.exists);
+  let deep;
+  if (hasL3) {
+    const sectionsHtml = hub.sections.map(s => {
+      if (!s.exists) return '';
+      return `
+        <div class="section-card" role="button" tabindex="0" onclick="openSection('${esc(hub.slug)}','${esc(s.slug)}')">
+          <div class="section-card-body">
+            <div class="section-card-name">${esc(s.name)}</div>
+            <div class="section-card-meta">${s.wordCount ? fmtWords(s.wordCount) + ' words' : ''}</div>
+          </div>
+          <div class="section-card-arrow">→</div>
+        </div>`;
+    }).join('');
+    deep = `
+      <div class="prov-deep-toggle" onclick="this.classList.toggle('open'); this.nextElementSibling.style.display = this.classList.contains('open') ? 'grid' : 'none';">
+        View source documents (deep research)
+      </div>
+      <div class="section-grid" style="display: none; margin-top: 6px;">${sectionsHtml}</div>
+    `;
+  } else {
+    deep = `
+      <div class="prov-deep-toggle" onclick="this.classList.toggle('open'); this.nextElementSibling.style.display = this.classList.contains('open') ? 'block' : 'none';">
+        View source documents (deep research)
+      </div>
+      <div class="prov-deep-empty" style="display: none;">
+        Deep research will be built against the direction you set in the cards above. Once you've commented (or acknowledged) every card, we'll dispatch the deep-research agents on the topics you confirmed — your investor-grade narrative, evidence, and sourced data will land here as the L3 layer.
+      </div>
+    `;
+  }
+
+  return intro + cards + deep;
+}
+
+function renderProvocationCard(hub, card) {
+  // Strip the H1 from body before markdown render (we show it in the head)
+  // — md.render handles ATX headings; we just keep the body as-is.
+  const bodyHtml = md.render(card.body || '');
+
+  // Headline = first H1 in body. Fall back gracefully.
+  const h1Match = (card.body || '').match(/^#\s+(.+)$/m);
+  const headline = h1Match ? h1Match[1] : '(No headline)';
+
+  // Pull existing comments for this card from the feedback log we already
+  // loaded — we don't have them in state.hubs, derive from status only for
+  // now (full conversation history is a future enhancement).
+  const alreadyDone = card.status === 'commented' || card.status === 'acknowledged';
+
+  const evidence = (card.evidenceLinks || []).map(e => {
+    const label = e.file.split('/').pop().replace('.md', '');
+    return `<span style="margin-right: 16px;">→ ${esc(label)}${e.anchor ? ' ' + esc(e.anchor) : ''}</span>`;
+  }).join('');
+
+  return `
+    <article class="prov-card" data-type="${esc(card.type)}" data-card-id="${esc(card.id)}">
+      <div class="prov-card-head" role="button" tabindex="0" aria-expanded="false">
+        <div class="prov-card-meta">
+          <div class="prov-card-eyebrow">${esc(TYPE_LABELS[card.type] || card.type)}</div>
+          <div class="prov-card-headline">${esc(headline)}</div>
+        </div>
+        <div class="prov-card-side">
+          <span class="status-badge" data-status="${esc(card.status)}">${esc(STATUS_LABELS[card.status] || card.status)}</span>
+          <span class="prov-card-toggle">▸</span>
+        </div>
+      </div>
+      <div class="prov-card-body">
+        <div class="prov-card-body-prose">${bodyHtml}</div>
+        ${evidence ? `<div class="prov-card-evidence-line">${evidence}</div>` : ''}
+        <div class="prov-card-actions">
+          ${alreadyDone ? `
+            <div class="prov-card-already-commented">You've ${card.status} this card. Re-open to add more, if you'd like.</div>
+            <div class="prov-card-action-row" style="margin-top: 12px;">
+              <button class="prov-btn prov-btn-ghost" onclick="reopenProvocationInput(this)">Add another comment</button>
+            </div>
+          ` : `
+            <div class="prov-card-actions-label">Your direction</div>
+            <textarea class="prov-card-comment-input" placeholder="Confirm, redirect, or override — what's your call?" data-card-comment="${esc(card.id)}"></textarea>
+            <div class="prov-card-action-row">
+              <button class="prov-btn prov-btn-primary" onclick="submitProvocation('${esc(hub.slug)}','${esc(card.id)}','comment', this)">Send comment</button>
+              <button class="prov-btn prov-btn-ghost" onclick="submitProvocation('${esc(hub.slug)}','${esc(card.id)}','acknowledge', this)">✓ Acknowledge (no input)</button>
+            </div>
+          `}
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+function reopenProvocationInput(btn) {
+  const card = btn.closest('.prov-card');
+  const cardId = card.dataset.cardId;
+  const hubSlug = card.closest('.hub-section').querySelector('.hub-section-title').textContent.trim().toLowerCase();
+  const actions = card.querySelector('.prov-card-actions');
+  actions.innerHTML = `
+    <div class="prov-card-actions-label">Add another comment</div>
+    <textarea class="prov-card-comment-input" placeholder="What more would you like to say?" data-card-comment="${esc(cardId)}"></textarea>
+    <div class="prov-card-action-row">
+      <button class="prov-btn prov-btn-primary" onclick="submitProvocation('${esc(hubSlug)}','${esc(cardId)}','comment', this)">Send comment</button>
+    </div>
+  `;
+}
+
+async function submitProvocation(hubSlug, cardId, kind, btn) {
+  const card = btn.closest('.prov-card');
+  const actions = card.querySelector('.prov-card-actions');
+  let comment = '';
+  if (kind === 'comment') {
+    const ta = card.querySelector(`textarea[data-card-comment="${cardId}"]`);
+    comment = (ta && ta.value || '').trim();
+    if (!comment) {
+      alert('Please write a comment first, or use Acknowledge.');
+      return;
+    }
+  }
+  // Name/email could be wired in if the operator wants per-comment attribution.
+  // For now the founder is implicit (cookie-authed), audit trail captures the
+  // submission via the GitHub commit author.
+  const name = null;
+  const email = null;
+
+  // Disable the buttons + show in-flight state
+  actions.querySelectorAll('button').forEach(b => b.disabled = true);
+  const originalLabel = btn.textContent;
+  btn.textContent = 'Sending…';
+
+  const r = await api('/api/portal-provocation', {
+    method: 'POST',
+    body: JSON.stringify({ hub: hubSlug, cardId, kind, comment, name, email }),
+  });
+  if (r.status === 401) { window.location.href = '/portal'; return; }
+  if (!r.body.ok) {
+    btn.textContent = originalLabel;
+    actions.querySelectorAll('button').forEach(b => b.disabled = false);
+    alert('Could not save: ' + (r.body.error || 'unknown error'));
+    return;
+  }
+
+  // Browser-side email send (web3forms blocks server-side per
+  // .claude/memory/feedback_web3forms_server_side_block.md)
+  if (r.body.email) sendBrowserEmail(r.body.email);
+
+  // Optimistic UI: replace the actions area with a confirmation
+  const newStatus = kind === 'comment' ? 'commented' : 'acknowledged';
+  card.setAttribute('data-status', newStatus);
+  const badge = card.querySelector('.status-badge');
+  if (badge) {
+    badge.setAttribute('data-status', newStatus);
+    badge.textContent = STATUS_LABELS[newStatus];
+  }
+  actions.innerHTML = `
+    <div class="prov-card-already-commented">${kind === 'comment' ? 'Comment sent. We will address it in the next iteration.' : 'Card acknowledged. No input needed.'}</div>
+    <div class="prov-card-action-row" style="margin-top: 12px;">
+      <button class="prov-btn prov-btn-ghost" onclick="reopenProvocationInput(this)">Add another comment</button>
+    </div>
+  `;
+
+  // Refresh the hub progress strip
+  await refreshHubProgress(hubSlug);
+}
+
+async function refreshHubProgress(hubSlug) {
+  // Cheap re-fetch of the hub-list to update progress + sign-off readiness.
+  // Could be smarter; for now this is fine.
+  try {
+    const r = await api('/api/portal-list');
+    if (!r.body.ok) return;
+    const hub = (r.body.hubs || []).find(h => h.slug === hubSlug);
+    if (!hub) return;
+    // Update the matching hub's state in place
+    const idx = state.hubs.findIndex(h => h.slug === hubSlug);
+    if (idx !== -1) state.hubs[idx] = hub;
+    // Re-render the progress strip + gate panel only (less disruptive than full reload)
+    const sectionEl = Array.from(els.hubListBody.querySelectorAll('.hub-section'))
+      .find(el => el.querySelector('.hub-section-title').textContent.trim() === hub.name);
+    if (!sectionEl) return;
+    const progressStrip = sectionEl.querySelector('.prov-progress');
+    if (progressStrip) {
+      const pct = hub.cardsTotal > 0 ? Math.round((hub.cardsCommented / hub.cardsTotal) * 100) : 0;
+      progressStrip.querySelector('.prov-progress-count').textContent = `${hub.cardsCommented} of ${hub.cardsTotal} cards`;
+      progressStrip.querySelector('.prov-progress-bar-fill').style.width = pct + '%';
+    }
+    // Also refresh the gate panel's ready/blocked state
+    if (hub.gate && state.client.scope === 'client' && !hub.signedOff) {
+      const ready = hub.cardsTotal > 0 && hub.cardsCommented === hub.cardsTotal;
+      const gatePanel = sectionEl.querySelector('.gate-panel');
+      if (gatePanel) {
+        gatePanel.classList.remove('ready', 'blocked');
+        gatePanel.classList.add(ready ? 'ready' : 'blocked');
+        const gateBody = gatePanel.querySelector('.gate-body');
+        if (gateBody) {
+          gateBody.querySelector('p').textContent = ready ? 'You have weighed in on every card. Ready to sign off this gate.' : 'Comment on or acknowledge every Provocation Card to unlock the sign-off button.';
+          const existingBtn = gateBody.querySelector('.gate-btn');
+          if (ready && !existingBtn) {
+            const btn = document.createElement('button');
+            btn.className = 'gate-btn';
+            btn.textContent = `Sign off ${hub.gate} →`;
+            btn.onclick = () => openSignoff(hub.slug, hub.name, hub.gate);
+            gateBody.appendChild(btn);
+          } else if (!ready && existingBtn) {
+            existingBtn.remove();
+          }
+        }
+        const icon = gatePanel.querySelector('.gate-icon');
+        if (icon) icon.textContent = ready ? '◉' : '○';
+      }
+    }
+  } catch (e) { console.error('refreshHubProgress', e); }
 }
 
 // ── Section view ───────────────────────────────────────────────────────
