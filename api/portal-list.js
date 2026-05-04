@@ -10,7 +10,18 @@
  * like scope-change-recommendations.md are filtered out).
  */
 
-const { loadClients, requireAuth, ghFetch, ghReadFile, hubsForScope } = require('./_lib');
+const { loadClients, requireAuth, ghFetch, ghReadFile, hubsForScope, readProvocations } = require('./_lib');
+
+// Per-card status derivation for the data-room L1 layer. A card is:
+//   'commented'    — founder has left a free-text comment
+//   'acknowledged' — founder has clicked the acknowledge button (no input)
+//   'open'         — no founder input yet
+function deriveCardStatus(provocationComments, hubSlug, cardId) {
+  const items = (provocationComments || []).filter(c => c.hub === hubSlug && c.cardId === cardId);
+  if (items.length === 0) return 'open';
+  if (items.some(c => c.kind === 'comment')) return 'commented';
+  return 'acknowledged';
+}
 
 // Reduce the per-section status to a single label the UI can render as a badge.
 // `feedback` is the array from portal-feedback.json. Returns one of:
@@ -63,7 +74,21 @@ module.exports = async function handler(req, res) {
     if (raw) feedbackLog = JSON.parse(raw);
   } catch (e) { /* fine — file may not exist yet */ }
 
+  const provocationComments = feedbackLog.provocationComments || [];
+
   const hubData = await Promise.all(hubs.map(async (hub) => {
+    // L1 — Provocation Cards from `[hub.dir]/_provocations/*.md`
+    let provocations = [];
+    try {
+      const cards = await readProvocations(repo, branch, hub.dir);
+      provocations = cards.map(c => ({
+        ...c,
+        status: deriveCardStatus(provocationComments, hub.slug, c.id),
+      }));
+    } catch (e) {
+      console.error(`[portal-list] readProvocations(${hub.dir}) failed:`, e.message);
+    }
+
     const sections = await Promise.all(hub.sections.map(async (s) => {
       const path = s.file.startsWith('../')
         ? s.file.replace('../', '')
@@ -92,10 +117,21 @@ module.exports = async function handler(req, res) {
         feedbackStatus: deriveSectionStatus(feedbackLog.feedback, hub.slug, s.slug),
       };
     }));
+    // Hub is "card-driven" when it has any L1 cards. Otherwise the legacy
+    // section-list view renders (for hubs not yet re-curated under the
+    // data-room model).
+    const cardDriven = provocations.length > 0;
+    const cardsCommented = provocations.filter(c => c.status === 'commented' || c.status === 'acknowledged').length;
+    const cardsTotal = provocations.length;
+
     return {
       slug: hub.slug,
       name: hub.name,
       gate: hub.gate,
+      cardDriven,
+      provocations,
+      cardsCommented,
+      cardsTotal,
       sections,
       signedOff: !!(feedbackLog.signOffs && feedbackLog.signOffs[hub.slug]),
       signOff: feedbackLog.signOffs ? feedbackLog.signOffs[hub.slug] || null : null,

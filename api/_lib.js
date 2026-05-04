@@ -160,6 +160,104 @@ async function ghCommitFile(repo, branch, path, content, message) {
   return res.json();
 }
 
+// ── Provocation cards (data-room L1 layer) ─────────────────────────────────
+// Reads `[hub-dir]/_provocations/*.md` from the engagement repo, parses
+// frontmatter, returns sorted card list. Per the protected data-room rules
+// at .claude/memory/reference_data_room_rules.md in every engagement repo.
+//
+// Hub gets 0 cards = hasn't been re-curated under the data-room model yet
+// (legacy section-list view falls back to existing behaviour).
+
+async function ghListDir(repo, branch, path) {
+  const data = await ghFetch(repo, branch, path);
+  if (!data) return [];
+  if (!Array.isArray(data)) return [];
+  return data;
+}
+
+// Minimal YAML frontmatter parser — handles the curator's schema only:
+// scalars, arrays of objects with file + anchor.
+function parseFrontmatter(text) {
+  if (!text.startsWith('---')) return { frontmatter: {}, body: text };
+  const end = text.indexOf('\n---', 3);
+  if (end === -1) return { frontmatter: {}, body: text };
+  const fmRaw = text.slice(3, end).trim();
+  const body = text.slice(end + 4).replace(/^\s*\n/, '');
+  const fm = {};
+  let currentArrayKey = null;
+  let currentArrayItem = null;
+  for (const line of fmRaw.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    const indent = line.length - line.trimStart().length;
+    if (indent === 0) {
+      currentArrayKey = null;
+      currentArrayItem = null;
+      const colon = trimmed.indexOf(':');
+      if (colon === -1) continue;
+      const key = trimmed.slice(0, colon).trim();
+      const value = trimmed.slice(colon + 1).trim();
+      if (value === '') {
+        fm[key] = [];
+        currentArrayKey = key;
+      } else {
+        fm[key] = value.replace(/^["']|["']$/g, '');
+      }
+    } else if (currentArrayKey) {
+      // arrays of objects — '- file: x' starts an item, '  anchor: y' adds to it
+      if (trimmed.startsWith('- ')) {
+        currentArrayItem = {};
+        fm[currentArrayKey].push(currentArrayItem);
+        const inner = trimmed.slice(2).trim();
+        const colon = inner.indexOf(':');
+        if (colon !== -1) {
+          const key = inner.slice(0, colon).trim();
+          const value = inner.slice(colon + 1).trim().replace(/^["']|["']$/g, '');
+          currentArrayItem[key] = value;
+        }
+      } else if (currentArrayItem) {
+        const colon = trimmed.indexOf(':');
+        if (colon !== -1) {
+          const key = trimmed.slice(0, colon).trim();
+          const value = trimmed.slice(colon + 1).trim().replace(/^["']|["']$/g, '');
+          currentArrayItem[key] = value;
+        }
+      }
+    }
+  }
+  return { frontmatter: fm, body };
+}
+
+async function readProvocations(repo, branch, hubDir) {
+  const dirPath = `${hubDir}/_provocations`;
+  const entries = await ghListDir(repo, branch, dirPath);
+  if (!entries.length) return [];
+  const cardFiles = entries.filter(e =>
+    e.type === 'file' &&
+    e.name.startsWith('prov-') &&
+    e.name.endsWith('.md')
+  );
+  const cards = [];
+  for (const f of cardFiles) {
+    try {
+      const content = await ghReadFile(repo, branch, `${dirPath}/${f.name}`);
+      if (!content) continue;
+      const { frontmatter, body } = parseFrontmatter(content);
+      cards.push({
+        id: frontmatter.id || f.name.replace('.md', ''),
+        type: frontmatter.type || 'open-question',
+        priority: parseInt(frontmatter.priority || '99', 10),
+        status: frontmatter.status || 'open',
+        evidenceLinks: frontmatter.evidence_links || [],
+        body,
+      });
+    } catch (e) {
+      console.error('[provocations] parse failed for', f.name, ':', e.message);
+    }
+  }
+  return cards.sort((a, b) => a.priority - b.priority);
+}
+
 // ── Email payload builder (browser sends, not server) ──────────────────────
 // Web3forms blocks all server-side submissions on the free plan. So instead
 // of POSTing from the Vercel function, we build the payload here and the
@@ -258,6 +356,9 @@ module.exports = {
   ghFetch,
   ghReadFile,
   ghCommitFile,
+  ghListDir,
+  parseFrontmatter,
+  readProvocations,
   buildEmailPayload,
   HUBS,
   hubsForScope,
