@@ -1288,12 +1288,15 @@ function derivePhase(hubs) {
   const research = hubs.find(h => h.slug === 'research');
   const vision = hubs.find(h => h.slug === 'vision');
   const financials = hubs.find(h => h.slug === 'financials');
+  // A hub "has content" if it has cards (data-room mode) OR existing
+  // section L3 docs (legacy mode). Phase derivation works in both.
+  const hasContent = h => h && (h.cardDriven || h.sections.some(s => s.exists));
   if (financials && financials.signedOff) return { name: 'Phase 3 — Design', sub: 'Phase 2.5 sign-off received' };
-  if (financials && financials.sections.some(s => s.exists)) return { name: 'Phase 2.5 — Financial Plan', sub: 'Awaiting Gate 2.5 sign-off' };
+  if (hasContent(financials)) return { name: 'Phase 2.5 — Financial Plan', sub: 'Awaiting Gate 2.5 sign-off' };
   if (vision && vision.signedOff) return { name: 'Phase 2.5 — Financial Plan', sub: 'Gate 2 closed; financial plan incoming' };
-  if (vision && vision.sections.some(s => s.exists)) return { name: 'Phase 2 — Define', sub: 'Awaiting Gate 2 sign-off' };
+  if (hasContent(vision)) return { name: 'Phase 2 — Define', sub: 'Awaiting Gate 2 sign-off' };
   if (research && research.signedOff) return { name: 'Phase 2 — Define', sub: 'Gate 1 closed; vision incoming' };
-  if (research && research.sections.some(s => s.exists)) return { name: 'Phase 1 — Discover', sub: 'Awaiting Gate 1 sign-off' };
+  if (hasContent(research)) return { name: 'Phase 1 — Discover', sub: 'Awaiting Gate 1 sign-off' };
   return { name: 'Phase 0 — Setup', sub: 'Engagement in progress' };
 }
 
@@ -1305,6 +1308,7 @@ async function loadList() {
 
   state.client = r.body.client;
   state.hubs = r.body.hubs;
+  state.dataRoomMode = r.body.dataRoomMode === true;
   state.totals = r.body.totals || { sections: 0, words: 0 };
   state.feedbackCounts = r.body.feedbackCounts || { open: 0, addressed: 0, wontFix: 0 };
 
@@ -1325,15 +1329,28 @@ async function loadList() {
     ? 'Financial plan and the funding ask.'
     : 'Track project progress, review deliverables, give feedback, and sign off each gate.');
 
-  // Hero metric strip
-  const totalSections = state.totals.sections;
-  const totalWords = state.totals.words;
-  const openFeedback = state.feedbackCounts.open;
-  els.heroMetrics.innerHTML = `
-    <div class="hero-metric"><div class="hero-metric-label">Sections</div><div class="hero-metric-value">${fmtNumber(totalSections)}</div></div>
-    <div class="hero-metric"><div class="hero-metric-label">Total Content</div><div class="hero-metric-value">${fmtWords(totalWords)} words</div></div>
-    ${state.client.scope === 'investor' ? '' : `<div class="hero-metric"><div class="hero-metric-label">Open Feedback</div><div class="hero-metric-value">${fmtNumber(openFeedback)}</div></div>`}
-  `;
+  // Hero metric strip — adapts to mode
+  if (state.dataRoomMode) {
+    // Data-room mode: surface card-level progress, not document counts
+    const totalCards = state.hubs.reduce((sum, h) => sum + (h.cardsTotal || 0), 0);
+    const doneCards = state.hubs.reduce((sum, h) => sum + (h.cardsCommented || 0), 0);
+    const visibleHubs = state.hubs.length;
+    els.heroMetrics.innerHTML = `
+      <div class="hero-metric"><div class="hero-metric-label">Live Hubs</div><div class="hero-metric-value">${fmtNumber(visibleHubs)}</div></div>
+      <div class="hero-metric"><div class="hero-metric-label">Provocations</div><div class="hero-metric-value">${fmtNumber(totalCards)}</div></div>
+      ${state.client.scope === 'investor' ? '' : `<div class="hero-metric"><div class="hero-metric-label">Your Input</div><div class="hero-metric-value">${doneCards} of ${totalCards}</div></div>`}
+    `;
+  } else {
+    // Legacy mode: existing section-based metrics
+    const totalSections = state.totals.sections;
+    const totalWords = state.totals.words;
+    const openFeedback = state.feedbackCounts.open;
+    els.heroMetrics.innerHTML = `
+      <div class="hero-metric"><div class="hero-metric-label">Sections</div><div class="hero-metric-value">${fmtNumber(totalSections)}</div></div>
+      <div class="hero-metric"><div class="hero-metric-label">Total Content</div><div class="hero-metric-value">${fmtWords(totalWords)} words</div></div>
+      ${state.client.scope === 'investor' ? '' : `<div class="hero-metric"><div class="hero-metric-label">Open Feedback</div><div class="hero-metric-value">${fmtNumber(openFeedback)}</div></div>`}
+    `;
+  }
 
   // Project overview card (operator/client only — investor view skips it)
   if (state.client.scope !== 'investor') {
@@ -1343,7 +1360,21 @@ async function loadList() {
     els.poTierSub.textContent = state.client.tier ? 'Engagement tier' : '';
     els.poPhase.textContent = phase.name;
     els.poPhaseSub.textContent = phase.sub;
-    if (state.feedbackCounts.open > 0) {
+    if (state.dataRoomMode) {
+      // Card-level progress, not section-feedback counts
+      const totalCards = state.hubs.reduce((sum, h) => sum + (h.cardsTotal || 0), 0);
+      const doneCards = state.hubs.reduce((sum, h) => sum + (h.cardsCommented || 0), 0);
+      if (totalCards === 0) {
+        els.poFeedback.textContent = '—';
+        els.poFeedbackSub.textContent = 'No provocations yet';
+      } else if (doneCards === totalCards) {
+        els.poFeedback.textContent = 'All addressed';
+        els.poFeedbackSub.textContent = `${totalCards} cards · ready for sign-off`;
+      } else {
+        els.poFeedback.textContent = `${totalCards - doneCards} awaiting`;
+        els.poFeedbackSub.textContent = `${doneCards} of ${totalCards} cards commented`;
+      }
+    } else if (state.feedbackCounts.open > 0) {
       els.poFeedback.textContent = `${state.feedbackCounts.open} open`;
       els.poFeedbackSub.textContent = `${state.feedbackCounts.addressed} addressed · ${state.feedbackCounts.wontFix} won't-fix`;
     } else if (state.feedbackCounts.addressed > 0) {
