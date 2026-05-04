@@ -138,8 +138,22 @@ module.exports = async function handler(req, res) {
     };
   }));
 
-  // Hub-list-level aggregates for the hero metric strip
-  const totals = hubData.reduce((acc, hub) => {
+  // ── Data-room mode filter ───────────────────────────────────────────────
+  // If ANY hub on this engagement has Provocation Cards, the engagement is
+  // in data-room mode — only card-driven hubs are exposed to the founder.
+  // Hubs whose L3 docs exist but haven't been re-curated yet stay hidden
+  // until the curator agent produces their cards. This prevents the "JC
+  // sees stale Vision/Strategy/Financials on first contact" failure mode.
+  //
+  // Legacy clients (no _provocations/ folders anywhere) keep all hubs
+  // visible — the section-list view renders unchanged.
+  const dataRoomMode = hubData.some(h => h.cardDriven);
+  const visibleHubs = dataRoomMode
+    ? hubData.filter(h => h.cardDriven || h.signedOff)
+    : hubData;
+
+  // Hub-list-level aggregates for the hero metric strip — count visible only
+  const totals = visibleHubs.reduce((acc, hub) => {
     for (const s of hub.sections) {
       if (s.exists) {
         acc.sections += 1;
@@ -161,7 +175,8 @@ module.exports = async function handler(req, res) {
       tier: client.tier || null,
       oneLiner: client.oneLiner || null,
     },
-    hubs: hubData,
+    hubs: visibleHubs,
+    dataRoomMode,
     totals,
     feedbackCounts: {
       open: (feedbackLog.feedback || []).filter(f => f.status === 'open').length,
