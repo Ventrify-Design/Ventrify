@@ -258,6 +258,35 @@ async function readProvocations(repo, branch, hubDir) {
   return cards.sort((a, b) => a.priority - b.priority);
 }
 
+// L3 status comes from the Hub's `_provocations/_index.md` frontmatter.
+// Possible values:
+//   'pending'         — default. Cards may exist; L3 not yet built/refreshed
+//                        against the resolved card directions
+//   'pending-retrofit' — Hub was signed off before this rule was established
+//                        (e.g. Research Hub on MoneyGym pre-2026-05-06).
+//                        L3 will be retrofitted; treat as visible-on-portal
+//                        for the operator to ship
+//   'building'        — deep-research agents are mid-flight
+//   'built'           — L3 is current as of the latest resolved cards.
+//                        "View source documents" expander shows on the
+//                        founder's portal view; sign-off button is unlocked
+//                        (when combined with all-cards-commented).
+//   'superseded'      — cards were refined; L3 needs another pass
+//
+// Per .claude/memory/feedback_l3_review_before_signoff.md (PROTECTED) in
+// every engagement repo.
+async function readHubL3Status(repo, branch, hubDir) {
+  try {
+    const indexPath = `${hubDir}/_provocations/_index.md`;
+    const content = await ghReadFile(repo, branch, indexPath);
+    if (!content) return 'pending';
+    const { frontmatter } = parseFrontmatter(content);
+    return frontmatter['l3-status'] || 'pending';
+  } catch (e) {
+    return 'pending';
+  }
+}
+
 // ── Email payload builder (browser sends, not server) ──────────────────────
 // Web3forms blocks all server-side submissions on the free plan. So instead
 // of POSTing from the Vercel function, we build the payload here and the
@@ -359,6 +388,7 @@ module.exports = {
   ghListDir,
   parseFrontmatter,
   readProvocations,
+  readHubL3Status,
   buildEmailPayload,
   HUBS,
   hubsForScope,
