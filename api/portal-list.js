@@ -10,7 +10,7 @@
  * like scope-change-recommendations.md are filtered out).
  */
 
-const { loadClients, requireAuth, ghFetch, ghReadFile, hubsForScope, readProvocations } = require('./_lib');
+const { loadClients, requireAuth, ghFetch, ghReadFile, hubsForScope, readProvocations, readHubL3Status } = require('./_lib');
 
 // Per-card status derivation for the data-room L1 layer. A card is:
 //   'commented'    — founder has left a free-text comment
@@ -124,6 +124,16 @@ module.exports = async function handler(req, res) {
     const cardsCommented = provocations.filter(c => c.status === 'commented' || c.status === 'acknowledged').length;
     const cardsTotal = provocations.length;
 
+    // L3 status — read from `_provocations/_index.md` frontmatter. Drives:
+    //   (1) "View source documents" expander visibility on the founder view
+    //   (2) sign-off button activation (must be 'built' or 'pending-retrofit')
+    // Per .claude/memory/feedback_l3_review_before_signoff.md (PROTECTED) in
+    // the engagement repo.
+    const l3Status = cardDriven ? await readHubL3Status(repo, branch, hub.dir) : null;
+    const l3Visible = cardDriven
+      ? (l3Status === 'built' || l3Status === 'pending-retrofit')
+      : true; // legacy hubs: existing visibility rules apply
+
     return {
       slug: hub.slug,
       name: hub.name,
@@ -132,6 +142,8 @@ module.exports = async function handler(req, res) {
       provocations,
       cardsCommented,
       cardsTotal,
+      l3Status,
+      l3Visible,
       sections,
       signedOff: !!(feedbackLog.signOffs && feedbackLog.signOffs[hub.slug]),
       signOff: feedbackLog.signOffs ? feedbackLog.signOffs[hub.slug] || null : null,

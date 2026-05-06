@@ -1424,12 +1424,23 @@ async function loadList() {
 
     let gatePanel = '';
     if (hub.gate && state.client.scope === 'client') {
-      // Card-driven hubs gate on card status; legacy hubs gate on section status.
+      // Per .claude/memory/feedback_l3_review_before_signoff.md (PROTECTED):
+      // card-driven hubs require BOTH all cards commented AND L3 built/visible
+      // before sign-off unlocks. Legacy hubs gate on section status.
       let ready, signed = hub.signedOff && hub.signOff;
+      let blocker = '';
       if (hub.cardDriven) {
-        ready = hub.cardsTotal > 0 && hub.cardsCommented === hub.cardsTotal;
+        const cardsComplete = hub.cardsTotal > 0 && hub.cardsCommented === hub.cardsTotal;
+        const l3Ready = hub.l3Visible === true; // true when l3Status is 'built' or 'pending-retrofit'
+        ready = cardsComplete && l3Ready;
+        if (!cardsComplete) {
+          blocker = 'Comment on or acknowledge every Provocation Card above.';
+        } else if (!l3Ready) {
+          blocker = 'Deep research is being prepared against your direction. We will notify you once it is ready for your review — sign-off unlocks then.';
+        }
       } else {
         ready = hub.sections.every(s => s.feedbackStatus === 'approved');
+        blocker = 'Approve every section to unlock the sign-off button.';
       }
       if (signed) {
         gatePanel = `
@@ -1441,15 +1452,12 @@ async function loadList() {
             </div>
           </div>`;
       } else {
-        const blocker = hub.cardDriven
-          ? 'Comment on or acknowledge every Provocation Card to unlock the sign-off button.'
-          : 'Approve every section to unlock the sign-off button.';
         gatePanel = `
           <div class="gate-panel ${ready ? 'ready' : 'blocked'}">
             <div class="gate-icon">${ready ? '◉' : '○'}</div>
             <div class="gate-body">
               <h4>${esc(hub.gate)} — Sign-off</h4>
-              <p>${ready ? 'You have weighed in on every card. Ready to sign off this gate.' : blocker}</p>
+              <p>${ready ? 'Cards commented and deep research published. Ready to sign off this gate.' : blocker}</p>
               ${ready ? `<button class="gate-btn" onclick="openSignoff('${esc(hub.slug)}','${esc(hub.name)}','${esc(hub.gate)}')">Sign off ${esc(hub.gate)} →</button>` : ''}
             </div>
           </div>`;
@@ -1518,11 +1526,25 @@ function renderHubProvocations(hub) {
 
   const cards = hub.provocations.map(card => renderProvocationCard(hub, card)).join('');
 
-  // L3 — full research expander. For Research Hub right now this is empty
-  // (we cleared deep research post-pivot). Show an honest pending message.
+  // L3 — full research expander. Visibility is gated by `l3Visible` from the
+  // API (which derives from `_provocations/_index.md` frontmatter `l3-status`).
+  // Per .claude/memory/feedback_l3_review_before_signoff.md (PROTECTED) in
+  // every engagement repo:
+  //   - Hidden while any cards are still 'open' (founder shouldn't see L3
+  //     before cards have settled)
+  //   - Hidden while L3 has not been refreshed against the latest resolved
+  //     cards (l3Status === 'pending' or 'building' or 'superseded')
+  //   - Visible when l3Status === 'built' or 'pending-retrofit'
   const hasL3 = hub.sections.some(s => s.exists);
+  const cardsAllResolved = hub.cardsTotal > 0 && hub.cardsCommented === hub.cardsTotal;
+  const l3Ready = hub.l3Visible === true;
+
   let deep;
-  if (hasL3) {
+  if (!cardsAllResolved) {
+    // Cards still open — don't surface L3 at all. Founder focuses on cards.
+    deep = '';
+  } else if (l3Ready && hasL3) {
+    // L3 is built and reviewable
     const sectionsHtml = hub.sections.map(s => {
       if (!s.exists) return '';
       return `
@@ -1541,12 +1563,12 @@ function renderHubProvocations(hub) {
       <div class="section-grid" style="display: none; margin-top: 6px;">${sectionsHtml}</div>
     `;
   } else {
+    // Cards resolved but L3 not yet built/refreshed against the resolved
+    // direction. Show a pending placeholder so the founder knows what's
+    // happening. Sign-off button is locked.
     deep = `
-      <div class="prov-deep-toggle" onclick="this.classList.toggle('open'); this.nextElementSibling.style.display = this.classList.contains('open') ? 'block' : 'none';">
-        View source documents (deep research)
-      </div>
-      <div class="prov-deep-empty" style="display: none;">
-        Deep research will be built against the direction you set in the cards above. Once you've commented (or acknowledged) every card, we'll dispatch the deep-research agents on the topics you confirmed — your investor-grade narrative, evidence, and sourced data will land here as the L3 layer.
+      <div class="prov-deep-empty" style="margin-top: 28px;">
+        <strong>Deep research is being prepared against your direction.</strong> Now that you've commented on every card above, our deep-research agents are building the supporting documentation — narrative, sourced evidence, and detailed analysis anchored to the strategic direction you set. We'll notify you when it's ready for your review. Gate sign-off unlocks then.
       </div>
     `;
   }
@@ -1701,16 +1723,23 @@ async function refreshHubProgress(hubSlug) {
       progressStrip.querySelector('.prov-progress-count').textContent = `${hub.cardsCommented} of ${hub.cardsTotal} cards`;
       progressStrip.querySelector('.prov-progress-bar-fill').style.width = pct + '%';
     }
-    // Also refresh the gate panel's ready/blocked state
+    // Also refresh the gate panel's ready/blocked state.
+    // Sign-off requires BOTH all cards commented AND L3 ready (l3Visible).
     if (hub.gate && state.client.scope === 'client' && !hub.signedOff) {
-      const ready = hub.cardsTotal > 0 && hub.cardsCommented === hub.cardsTotal;
+      const cardsComplete = hub.cardsTotal > 0 && hub.cardsCommented === hub.cardsTotal;
+      const l3Ready = hub.l3Visible === true;
+      const ready = cardsComplete && l3Ready;
+      let blocker = '';
+      if (!cardsComplete) blocker = 'Comment on or acknowledge every Provocation Card above.';
+      else if (!l3Ready) blocker = 'Deep research is being prepared against your direction. We will notify you once it is ready for your review — sign-off unlocks then.';
+
       const gatePanel = sectionEl.querySelector('.gate-panel');
       if (gatePanel) {
         gatePanel.classList.remove('ready', 'blocked');
         gatePanel.classList.add(ready ? 'ready' : 'blocked');
         const gateBody = gatePanel.querySelector('.gate-body');
         if (gateBody) {
-          gateBody.querySelector('p').textContent = ready ? 'You have weighed in on every card. Ready to sign off this gate.' : 'Comment on or acknowledge every Provocation Card to unlock the sign-off button.';
+          gateBody.querySelector('p').textContent = ready ? 'Cards commented and deep research published. Ready to sign off this gate.' : blocker;
           const existingBtn = gateBody.querySelector('.gate-btn');
           if (ready && !existingBtn) {
             const btn = document.createElement('button');
