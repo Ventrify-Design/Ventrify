@@ -86,6 +86,94 @@
     /* ── Investor banner (top of all investor pages) ─────────────────── */
     .investor-banner { padding: 8px 24px; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; text-align: center; background: var(--primary); color: #fff; }
 
+    /* ── Investor Landing Page (replaces dashboard for scope=investor) ─── */
+    .investor-landing { max-width: 1100px; margin: 56px auto 96px; padding: 0 24px; }
+    .investor-landing-hero {
+      background: var(--surface-card);
+      border-radius: 24px;
+      padding: 56px 48px;
+      box-shadow: 0 24px 64px rgba(8,11,26,0.06);
+      border: 1px solid var(--border-light);
+    }
+    .investor-landing-eyebrow {
+      font-family: var(--font-mono); font-size: 11px; font-weight: 500;
+      letter-spacing: 0.16em; text-transform: uppercase;
+      color: var(--primary);
+      margin-bottom: 18px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .investor-landing-eyebrow::before {
+      content: ''; display: inline-block; width: 16px; height: 2px; background: var(--primary);
+    }
+    .investor-landing-project { font-size: 36px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 8px; color: var(--text-dark); }
+    .investor-landing-tagline { font-size: 17px; color: var(--text-muted); margin-bottom: 40px; line-height: 1.55; }
+    .investor-ask-block {
+      padding: 32px 0 8px;
+      border-top: 1px solid var(--border-light);
+    }
+    .investor-ask-label {
+      font-family: var(--font-mono); font-size: 11px; font-weight: 500;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+    }
+    .investor-ask-amount {
+      font-size: 56px; font-weight: 600; letter-spacing: -0.025em;
+      color: var(--text-dark);
+      line-height: 1.05;
+    }
+    .investor-ask-sub { margin-top: 10px; font-size: 14px; color: var(--text-muted); }
+
+    .investor-stat-strip {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      margin-top: 32px;
+    }
+    @media (min-width: 760px) { .investor-stat-strip { grid-template-columns: repeat(3, 1fr); } }
+    .investor-stat {
+      background: var(--surface-card);
+      border-radius: var(--radius-card);
+      border: 1px solid var(--border-light);
+      padding: 24px 28px;
+    }
+    .investor-stat-label {
+      font-family: var(--font-mono); font-size: 10px; font-weight: 500;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+    .investor-stat-value { font-size: 26px; font-weight: 600; letter-spacing: -0.01em; color: var(--text-dark); line-height: 1.1; }
+    .investor-stat-sub { margin-top: 6px; font-size: 13px; color: var(--text-muted); }
+
+    .investor-cta-row { margin-top: 40px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+    .investor-primary-cta {
+      display: inline-flex; align-items: center; gap: 12px;
+      background: var(--primary); color: #fff;
+      padding: 18px 32px; border-radius: 980px;
+      font-size: 16px; font-weight: 600; letter-spacing: -0.005em;
+      text-decoration: none;
+      min-height: 44px;
+      transition: background 200ms, transform 200ms, box-shadow 200ms;
+      box-shadow: 0 8px 24px rgba(0,54,255,0.25);
+    }
+    .investor-primary-cta:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 12px 32px rgba(0,54,255,0.32); }
+    .investor-primary-cta:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+    .investor-primary-cta-arrow { font-size: 18px; line-height: 1; }
+    .investor-cta-secondary {
+      font-family: var(--font-mono); font-size: 12px;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .investor-landing-footer {
+      margin-top: 56px;
+      padding-top: 32px;
+      border-top: 1px solid var(--border-light);
+      font-size: 13px; color: var(--text-muted);
+      line-height: 1.6;
+    }
+    .investor-landing-footer strong { color: var(--text-dark); font-weight: 600; }
+
     /* ── Hub hero (landing page) ─────────────────────────────────────── */
     .hub-hero { padding: 56px 24px 36px; background: var(--hero-gradient); color: var(--text-light); }
     .hub-hero-inner { max-width: 1100px; margin: 0 auto; }
@@ -1171,7 +1259,9 @@
 
     <!-- Hub list view -->
     <div id="hub-list" hidden>
-      <section class="hub-hero">
+      <!-- Investor Landing Page (audit batch 5) — replaces dashboard for scope=investor -->
+      <div id="investor-landing" class="investor-landing" hidden></div>
+      <section class="hub-hero" id="hub-hero">
         <div class="hub-hero-inner">
           <div class="hub-hero-eyebrow" id="hero-eyebrow">Client Portal</div>
           <h1 id="hero-title">Project</h1>
@@ -1533,6 +1623,8 @@ const els = {
   barHome: document.getElementById('bar-home'),
   barLogout: document.getElementById('bar-logout'),
   investorBanner: document.getElementById('investor-banner'),
+  investorLanding: document.getElementById('investor-landing'),
+  hubHero: document.getElementById('hub-hero'),
   sidebar: document.getElementById('section-sidebar'),
   sidebarHubName: document.getElementById('sidebar-hub-name'),
   sidebarSections: document.getElementById('sidebar-sections'),
@@ -1775,6 +1867,139 @@ function renderNextAction(hubs) {
   els.nextAction.hidden = false;
 }
 
+// ── Investor Landing Page (audit batch 5) ─────────────────────────────────
+// Replaces the dashboard for scope=investor. The investor view must feel like
+// a slick, metrics-first, single-purpose deal-room document — not a multi-hub
+// navigation shell with one hub visible. Per principle 5 of
+// feedback_portal_design_rules.md (PROTECTED).
+//
+// We fetch _financial-summary.md and parse out the funding ask + 3 anchor
+// metrics (raise · runway · break-even). If the file isn't yet present we
+// fall back to a placeholder hero so the landing still renders gracefully.
+async function renderInvestorLanding() {
+  const projectName = state.client.name;
+  const tagline = state.client.oneLiner || 'Financial plan and the funding ask.';
+
+  // Find the Financials hub + its summary section
+  const financialsHub = (state.hubs || []).find(h => h.slug === 'financials');
+  const summarySection = financialsHub
+    ? (financialsHub.sections || []).find(s => s.slug === 'financial-summary' || s.slug === '_financial-summary')
+    : null;
+  const firstSectionSlug = financialsHub && financialsHub.sections && financialsHub.sections[0]
+    ? financialsHub.sections[0].slug
+    : null;
+
+  // Render placeholder skeleton while fetching
+  els.investorLanding.hidden = false;
+  els.investorLanding.innerHTML = `
+    <div class="investor-landing-hero">
+      ${skeletonHtml()}
+    </div>
+  `;
+
+  // Try to fetch + parse the financial summary
+  let parsed = { ask: null, askSub: null, raise: null, runway: null, breakeven: null };
+  if (financialsHub && summarySection) {
+    try {
+      const r = await api(`/api/portal-content?hub=${encodeURIComponent(financialsHub.slug)}&section=${encodeURIComponent(summarySection.slug)}`);
+      if (r.status === 200 && r.body && r.body.markdown) {
+        parsed = parseFinancialSummary(r.body.markdown);
+      }
+    } catch (e) { console.error('renderInvestorLanding fetch', e); }
+  }
+
+  const askLine = parsed.ask
+    ? `<div class="investor-ask-amount">${esc(parsed.ask)}</div>${parsed.askSub ? `<div class="investor-ask-sub">${esc(parsed.askSub)}</div>` : ''}`
+    : `<div class="investor-ask-amount" style="font-size:32px;color:var(--text-muted);">Funding ask in preparation</div>
+       <div class="investor-ask-sub">The financial summary is being finalised. Check back shortly.</div>`;
+
+  const stat = (label, value, sub) => value
+    ? `<div class="investor-stat">
+         <div class="investor-stat-label">${esc(label)}</div>
+         <div class="investor-stat-value">${esc(value)}</div>
+         ${sub ? `<div class="investor-stat-sub">${esc(sub)}</div>` : ''}
+       </div>`
+    : `<div class="investor-stat">
+         <div class="investor-stat-label">${esc(label)}</div>
+         <div class="investor-stat-value" style="color:var(--text-muted);font-size:18px;">Pending</div>
+       </div>`;
+
+  const ctaTarget = firstSectionSlug
+    ? `javascript:void(0)" onclick="openSection('${esc(financialsHub.slug)}','${esc(firstSectionSlug)}'); return false;`
+    : '#';
+  const ctaDisabled = !firstSectionSlug;
+
+  els.investorLanding.innerHTML = `
+    <div class="investor-landing-hero">
+      <div class="investor-landing-eyebrow">Due Diligence · ${esc(projectName)}</div>
+      <h1 class="investor-landing-project">${esc(projectName)}</h1>
+      <p class="investor-landing-tagline">${esc(tagline)}</p>
+
+      <div class="investor-ask-block">
+        <div class="investor-ask-label">Funding Ask</div>
+        ${askLine}
+      </div>
+
+      <div class="investor-stat-strip">
+        ${stat('Raise Size', parsed.raise, parsed.raise ? 'Total round' : '')}
+        ${stat('Runway', parsed.runway, parsed.runway ? 'Post-raise' : '')}
+        ${stat('Break-Even', parsed.breakeven, parsed.breakeven ? 'Projected' : '')}
+      </div>
+
+      <div class="investor-cta-row">
+        <a class="investor-primary-cta" href="${ctaTarget}"${ctaDisabled ? ' aria-disabled="true" style="opacity:0.5;pointer-events:none"' : ''}>
+          View Financial Plan <span class="investor-primary-cta-arrow">→</span>
+        </a>
+        <span class="investor-cta-secondary">Read-only · Confidential</span>
+      </div>
+
+      <div class="investor-landing-footer">
+        <strong>Access scope:</strong> Financials only. You have read-only access to the Financials Hub —
+        cash-flow forecast, unit economics, marketing budget, hiring plan, sensitivity analysis, and the
+        funding ask. Other hubs (Research, Vision, Strategy) are not exposed under this access link.
+        Questions? Reply to the introduction email from the Ventrify team.
+      </div>
+    </div>
+  `;
+}
+
+// Parse `_financial-summary.md` for the four anchor numbers. The summary is
+// authored by the investor-readiness-reviewer agent — we look for explicit
+// label patterns first ("Raise size:", "Runway:", "Break-even:") and fall
+// back to common bold-stat patterns. Returns nulls if a value isn't found —
+// the renderer shows graceful "Pending" fallbacks.
+function parseFinancialSummary(md) {
+  const out = { ask: null, askSub: null, raise: null, runway: null, breakeven: null };
+  if (!md || typeof md !== 'string') return out;
+
+  // 1. Funding Ask — usually the headline number on the deck
+  //    Patterns: "Raising $2.5M", "**$2.5M Seed**", "Funding Ask: $2.5M (Seed)"
+  const askMatch =
+    md.match(/(?:funding\s+ask|the\s+ask|raising)\s*[:—-]?\s*\*{0,2}([£$€]\s?[\d.]+\s?[MmKkBb]?)\*{0,2}\s*(?:\(([^)]+)\))?/i) ||
+    md.match(/\*\*([£$€]\s?[\d.]+\s?[MmKkBb])\s+(seed|series\s+[a-z]|pre-seed|bridge)\*\*/i);
+  if (askMatch) {
+    out.ask = askMatch[1].replace(/\s+/g, '');
+    out.askSub = askMatch[2] || null;
+  }
+
+  // 2. Raise size — line like "Raise size: $2.5M" or "**Raise:** $2.5M"
+  const raiseMatch = md.match(/(?:raise\s+size|round\s+size|target\s+raise)\s*[:—-]?\s*\*{0,2}([£$€]\s?[\d.]+\s?[MmKkBb]?)\*{0,2}/i);
+  if (raiseMatch) out.raise = raiseMatch[1].replace(/\s+/g, '');
+  else if (out.ask) out.raise = out.ask; // fallback
+
+  // 3. Runway — line like "Runway: 18 months" or "**Runway:** 24 months post-raise"
+  const runwayMatch = md.match(/runway\s*[:—-]?\s*\*{0,2}(\d{1,3})\s*(months?|mos?|years?)\*{0,2}/i);
+  if (runwayMatch) out.runway = `${runwayMatch[1]} ${runwayMatch[2].toLowerCase().startsWith('mo') ? 'months' : 'years'}`;
+
+  // 4. Break-even — line like "Break-even: Month 18" or "Break-even month: 22"
+  const beMatch =
+    md.match(/break[-\s]?even(?:\s+month)?\s*[:—-]?\s*\*{0,2}(?:month\s+)?(\d{1,3})\*{0,2}/i) ||
+    md.match(/cash[-\s]?flow\s+positive\s+(?:by\s+)?\*{0,2}month\s+(\d{1,3})\*{0,2}/i);
+  if (beMatch) out.breakeven = `Month ${beMatch[1]}`;
+
+  return out;
+}
+
 // ── State card builders (portal audit batch 3) ────────────────────────────
 // Branded empty + error states. Replaces blank content failures + generic
 // "Could not load" text strings.
@@ -1836,12 +2061,24 @@ async function loadList() {
   // Brand bar
   els.barProject.textContent = state.client.name;
   els.barDivider.hidden = false;
-  els.barHome.hidden = false;
+  // Hub link hidden for investors — there is no dashboard to navigate "back" to.
+  // Investor view is a single purpose-built landing per audit batch 5.
+  els.barHome.hidden = state.client.scope === 'investor';
   els.barHome.addEventListener('click', e => { e.preventDefault(); navigate('hub-list'); });
   els.barLogout.addEventListener('click', e => { e.preventDefault(); logout(); });
 
   // Investor banner
   if (state.client.scope === 'investor') els.investorBanner.hidden = false;
+
+  // ── Investor Landing branch (audit batch 5) ──────────────────────────
+  // Investors get a purpose-built landing — not a filtered dashboard.
+  // We replace the entire dashboard rendering and skip every widget below.
+  if (state.client.scope === 'investor') {
+    els.hubHero.hidden = true;
+    await renderInvestorLanding();
+    navigate('hub-list');
+    return;
+  }
 
   // Hero
   els.heroEyebrow.textContent = state.client.scope === 'investor' ? 'Due Diligence · Financials Hub' : 'Client Portal';
