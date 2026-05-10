@@ -697,6 +697,14 @@
       transition: color 140ms, border-color 140ms;
       cursor: pointer;
     }
+    /* portal audit batch 2 — TOC active state highlighted via IntersectionObserver */
+    .sidebar-toc-list li.active a {
+      color: var(--primary);
+      font-weight: 600;
+      background: rgba(0,54,255,0.06);
+      border-left: 2px solid var(--primary);
+      padding-left: 10px;
+    }
     .sidebar-toc-list li a:hover {
       color: var(--primary); border-left-color: var(--primary);
     }
@@ -913,6 +921,31 @@
       border-radius: var(--radius-card);
       border: 1px solid var(--border-light);
     }
+
+    /* portal audit batch 2 — floating feedback trigger on long sections */
+    .feedback-fab {
+      position: fixed; bottom: 24px; right: 24px; z-index: 90;
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 14px 22px; min-height: 48px;
+      background: var(--primary); color: #fff;
+      border-radius: var(--radius-pill);
+      font-family: inherit; font-size: 14px; font-weight: 600;
+      border: none; cursor: pointer; text-decoration: none;
+      box-shadow: 0 8px 24px rgba(0,54,255,0.32);
+      transition: transform 200ms, box-shadow 200ms, opacity 200ms;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .feedback-fab.visible { opacity: 1; pointer-events: auto; }
+    .feedback-fab:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(0,54,255,0.42); background: var(--primary-hover); }
+    .feedback-fab-icon { font-family: var(--font-mono); font-size: 16px; line-height: 1; }
+    @media (max-width: 640px) {
+      .feedback-fab { bottom: 16px; right: 16px; padding: 12px 18px; font-size: 13px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .feedback-fab { transition: opacity 200ms; }
+      .feedback-fab:hover { transform: none; }
+    }
     .feedback-panel h3 { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
     .feedback-intro {
       font-size: 14px; color: var(--text-muted);
@@ -1118,6 +1151,11 @@
 
     <!-- Section view -->
     <div id="section-view" hidden>
+      <!-- portal audit batch 2 — floating feedback trigger -->
+      <button type="button" class="feedback-fab" id="feedback-fab" aria-label="Jump to feedback">
+        <span class="feedback-fab-icon">▼</span>
+        <span>Feedback</span>
+      </button>
       <div class="section-shell">
         <aside class="sidebar" id="section-sidebar">
           <button type="button" class="sidebar-toggle" aria-expanded="false" aria-controls="sidebar-blocks">
@@ -1377,13 +1415,14 @@ const state = {
   feedbackCounts: { open: 0, addressed: 0, wontFix: 0 },
   currentHub: null,
   currentSection: null,
-  viewMode: localStorage.getItem('portal_view_mode') || 'highlights', // default highlights
+  viewMode: 'highlights', // default; per-hub value loaded on openSection (audit batch 2)
 };
 
 const els = {
   loading: document.getElementById('loading'),
   hubList: document.getElementById('hub-list'),
   sectionView: document.getElementById('section-view'),
+  feedbackFab: document.getElementById('feedback-fab'),
   heroEyebrow: document.getElementById('hero-eyebrow'),
   heroTitle: document.getElementById('hero-title'),
   heroSubtitle: document.getElementById('hero-subtitle'),
@@ -1442,7 +1481,10 @@ function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').repla
 // ── View mode (Highlights vs Full Detail) ──────────────────────────────
 function setView(mode) {
   state.viewMode = mode;
-  localStorage.setItem('portal_view_mode', mode);
+  // portal audit batch 2 — persist per-hub, not globally. Avoids the
+  // "stuck in Highlights mode on Vision because Research was set there" issue.
+  const key = state.currentHub ? `portal_view_mode_${state.currentHub}` : 'portal_view_mode';
+  localStorage.setItem(key, mode);
   document.body.setAttribute('data-view', mode);
   els.viewHighlights.setAttribute('aria-pressed', mode === 'highlights' ? 'true' : 'false');
   els.viewFull.setAttribute('aria-pressed', mode === 'full' ? 'true' : 'false');
@@ -2141,12 +2183,17 @@ async function refreshHubProgress(hubSlug) {
 async function openSection(hubSlug, sectionSlug) {
   state.currentHub = hubSlug;
   state.currentSection = sectionSlug;
+  // portal audit batch 2 — load per-hub view mode (defaults to 'highlights')
+  const savedMode = localStorage.getItem(`portal_view_mode_${hubSlug}`) || 'highlights';
+  if (savedMode !== state.viewMode) setView(savedMode);
   navigate('section-view');
   els.sectionContent.innerHTML = '<div class="center-msg"><div class="spinner"></div><p style="margin-top:14px;">Loading…</p></div>';
   els.sectionEyebrow.textContent = '';
   els.sidebarTocWrap.hidden = true;
   els.sidebarToc.innerHTML = '';
   resetFeedbackForm();
+  // Hide the FAB while loading; will be shown after content + observer wired
+  if (els.feedbackFab) els.feedbackFab.classList.remove('visible');
 
   // Build sidebar — hub name + sibling sections
   const hub = state.hubs.find(h => h.slug === hubSlug);
@@ -2177,13 +2224,81 @@ async function openSection(hubSlug, sectionSlug) {
   if (headings.length > 0) {
     const tocItems = Array.from(headings).map(h => {
       const level = h.tagName === 'H3' ? 'toc-l3' : 'toc-l2';
-      return `<li class="${level}"><a href="#${h.id}">${esc(h.textContent)}</a></li>`;
+      return `<li class="${level}" data-toc-id="${esc(h.id)}"><a href="#${h.id}">${esc(h.textContent)}</a></li>`;
     }).join('');
     els.sidebarToc.innerHTML = tocItems;
     els.sidebarTocWrap.hidden = false;
+
+    // portal audit batch 2 — scroll-linked TOC active state via IntersectionObserver
+    setupScrollLinkedToc(headings);
   }
 
+  // portal audit batch 2 — wire the floating feedback FAB
+  setupFeedbackFab();
+
   window.scrollTo(0, 0);
+}
+
+// ── Scroll-linked TOC active state (portal audit batch 2) ────────────────
+// Highlights the currently-visible H2/H3 in the sidebar TOC. Tracks all
+// observed headings and picks the topmost-visible to mark active.
+let tocObserver = null;
+function setupScrollLinkedToc(headings) {
+  if (tocObserver) tocObserver.disconnect();
+  const tocLinks = {};
+  els.sidebarToc.querySelectorAll('li[data-toc-id]').forEach(li => {
+    tocLinks[li.dataset.tocId] = li;
+  });
+  if (Object.keys(tocLinks).length === 0) return;
+
+  // Track which headings are intersecting; pick the topmost (smallest top)
+  const intersecting = new Set();
+  tocObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) intersecting.add(e.target.id);
+      else intersecting.delete(e.target.id);
+    });
+    // Find the topmost intersecting heading by document order
+    let activeId = null;
+    headings.forEach(h => {
+      if (intersecting.has(h.id) && !activeId) activeId = h.id;
+    });
+    Object.entries(tocLinks).forEach(([id, li]) => {
+      li.classList.toggle('active', id === activeId);
+    });
+  }, {
+    // Trigger when heading is in upper portion of viewport
+    rootMargin: '0px 0px -70% 0px',
+    threshold: 0,
+  });
+  headings.forEach(h => tocObserver.observe(h));
+}
+
+// ── Floating feedback FAB (portal audit batch 2) ─────────────────────────
+// Shows the FAB until the feedback panel scrolls into view, then hides it.
+let fabObserver = null;
+function setupFeedbackFab() {
+  if (!els.feedbackFab) return;
+  if (fabObserver) fabObserver.disconnect();
+  // Show FAB by default once content is loaded
+  els.feedbackFab.classList.add('visible');
+  // Wire click to scroll to feedback panel
+  els.feedbackFab.onclick = (e) => {
+    e.preventDefault();
+    const panel = document.getElementById('feedback-panel');
+    if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+  // Hide FAB when feedback panel comes into view (no need to jump if already there)
+  const panel = document.getElementById('feedback-panel');
+  if (panel) {
+    fabObserver = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) els.feedbackFab.classList.remove('visible');
+        else els.feedbackFab.classList.add('visible');
+      });
+    }, { threshold: 0.1 });
+    fabObserver.observe(panel);
+  }
 }
 window.openSection = openSection;
 
@@ -2191,6 +2306,12 @@ function navigate(view) {
   els.loading.hidden = true;
   els.hubList.hidden = view !== 'hub-list';
   els.sectionView.hidden = view !== 'section-view';
+  // portal audit batch 2 — clean up section-view observers + hide FAB on dashboard return
+  if (view === 'hub-list') {
+    if (els.feedbackFab) els.feedbackFab.classList.remove('visible');
+    if (tocObserver) tocObserver.disconnect();
+    if (fabObserver) fabObserver.disconnect();
+  }
 }
 els.backLink.addEventListener('click', e => { e.preventDefault(); navigate('hub-list'); });
 
