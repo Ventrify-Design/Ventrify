@@ -344,6 +344,43 @@ const HUBS = [
     ],
     gate: null,
   },
+  // ── Marketing Launch (Workstream B execution layer) ──────────────────
+  // Replaces the legacy Marketing Launch Pack PDF. Surfaces the 20 launch
+  // posts ready for Buffer scheduling, paired (in v2) with branded graphic
+  // previews fetched via raw.githubusercontent.com.
+  {
+    slug: 'marketing-launch', name: 'Marketing Launch', dir: 'marketing',
+    sections: [
+      { slug: 'launch-posts', file: 'post-copy/launch-posts.md', name: '20 Launch Social Posts' },
+    ],
+    gate: null,
+  },
+  // ── Video (Workstream C production brief) ────────────────────────────
+  // Replaces the legacy Video Production Brief PDF. The video pipeline at
+  // tools/video/generate.js consumes this hub's source markdown.
+  {
+    slug: 'video', name: 'Video', dir: 'video',
+    sections: [
+      { slug: 'script', file: 'script.md', name: '60-second Promo Script' },
+      { slug: 'audio-brief', file: 'audio-brief.md', name: 'Audio + Voiceover Brief' },
+    ],
+    gate: null,
+  },
+  // ── Blog (Workstream D editorial review) ─────────────────────────────
+  // Replaces the legacy Blog Content Pack PDF. Operator review surface for
+  // blog drafts before Sanity CMS publish. Public blog renders through the
+  // marketing site at /blog (Sanity source).
+  {
+    slug: 'blog', name: 'Blog Drafts', dir: 'marketing/blog-posts',
+    sections: [
+      { slug: 'theory-vs-execution', file: 'theory-vs-execution-personal-finance.md', name: 'Theory vs Execution in Personal Finance' },
+      { slug: 'subscription-audit', file: 'subscription-audit-saved-97-interest.md', name: 'How a Subscription Audit Saved $97 in Interest' },
+      { slug: 'category-creation', file: 'behavioural-finance-category-creation.md', name: 'Behavioural Finance — Category Creation' },
+      { slug: 'four-pain-points', file: 'four-pain-points-one-system-failure.md', name: 'Four Pain Points, One System Failure' },
+      { slug: 'workout-fuel', file: 'workout-fuel-explained-personal-finance.md', name: 'Workout Fuel — Explained' },
+    ],
+    gate: null,
+  },
   {
     slug: 'financials', name: 'Financials', dir: 'financials',
     sections: [
