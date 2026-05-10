@@ -321,11 +321,34 @@
       gap: 16px; margin-bottom: 14px; padding-bottom: 12px;
       border-bottom: 1px solid var(--border-light);
     }
-    .hub-section-title { font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
+    .hub-section-title { font-size: 22px; font-weight: 600; letter-spacing: -0.01em; display: flex; align-items: center; gap: 10px; }
     .hub-section-meta {
       font-family: var(--font-mono); font-size: 11px;
       letter-spacing: 0.1em; text-transform: uppercase;
       color: var(--primary);
+    }
+    .hub-updated-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-family: var(--font-mono); font-size: 10px; font-weight: 500;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--primary);
+      padding: 4px 10px;
+      background: rgba(0,54,255,0.08);
+      border-radius: 980px;
+      line-height: 1;
+    }
+    .hub-updated-badge::before {
+      content: ''; width: 6px; height: 6px; border-radius: 50%;
+      background: var(--primary);
+      box-shadow: 0 0 0 0 rgba(0,54,255,0.5);
+      animation: hubUpdatedPulse 2.4s ease-in-out infinite;
+    }
+    @keyframes hubUpdatedPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(0,54,255,0.5); }
+      50%      { box-shadow: 0 0 0 6px rgba(0,54,255,0); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .hub-updated-badge::before { animation: none; }
     }
     .section-grid { display: grid; gap: 12px; grid-template-columns: 1fr; }
     @media (min-width: 760px) { .section-grid { grid-template-columns: 1fr 1fr; } }
@@ -1902,9 +1925,18 @@ async function loadList() {
     const section = document.createElement('section');
     section.className = 'hub-section';
     section.setAttribute('data-hub-slug', hub.slug);
+    // Unread-changes indicator (audit batch 4): compare hub.lastActivityAt
+    // to the founder's last visit timestamp stored per-hub in localStorage.
+    const lastVisitRaw = localStorage.getItem('portal_last_hub_visit_' + hub.slug);
+    const lastVisit = lastVisitRaw ? parseInt(lastVisitRaw, 10) : 0;
+    const lastActivity = hub.lastActivityAt ? new Date(hub.lastActivityAt).getTime() : 0;
+    const hasUnread = lastActivity > 0 && lastActivity > lastVisit;
+    const updatedBadge = hasUnread
+      ? '<span class="hub-updated-badge" title="Updated since your last visit">Updated</span>'
+      : '';
     const head = `
       <div class="hub-section-head">
-        <div class="hub-section-title">${esc(hub.name)}</div>
+        <div class="hub-section-title">${esc(hub.name)}${updatedBadge}</div>
         ${hub.gate ? `<div class="hub-section-meta">${esc(hub.gate)}</div>` : ''}
       </div>
     `;
@@ -2303,6 +2335,9 @@ async function refreshHubProgress(hubSlug) {
 async function openSection(hubSlug, sectionSlug) {
   state.currentHub = hubSlug;
   state.currentSection = sectionSlug;
+  // portal audit batch 4 — record per-hub last-visit timestamp so the
+  // dashboard "Updated" badge clears on next render
+  try { localStorage.setItem('portal_last_hub_visit_' + hubSlug, String(Date.now())); } catch (e) {}
   // portal audit batch 2 — load per-hub view mode (defaults to 'highlights')
   const savedMode = localStorage.getItem(`portal_view_mode_${hubSlug}`) || 'highlights';
   if (savedMode !== state.viewMode) setView(savedMode);

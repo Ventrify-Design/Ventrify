@@ -134,6 +134,22 @@ module.exports = async function handler(req, res) {
       ? (l3Status === 'built' || l3Status === 'pending-retrofit')
       : true; // legacy hubs: existing visibility rules apply
 
+    // ── Last activity timestamp ──────────────────────────────────────────
+    // Max of all feedback + provocation comment timestamps for this hub.
+    // Drives the "● Updated since your last visit" badge on the dashboard.
+    // Founder's per-hub last-visit timestamp lives in localStorage on the
+    // client; the comparison happens in portal-app.html.
+    const hubFeedbackTimes = (feedbackLog.feedback || [])
+      .filter(f => f.hub === hub.slug)
+      .map(f => f.submittedAt).filter(Boolean);
+    const hubProvocationTimes = (provocationComments || [])
+      .filter(c => c.hub === hub.slug)
+      .map(c => c.submittedAt).filter(Boolean);
+    const allTimes = [...hubFeedbackTimes, ...hubProvocationTimes]
+      .map(t => new Date(t).getTime())
+      .filter(t => !isNaN(t));
+    const lastActivityAt = allTimes.length ? new Date(Math.max(...allTimes)).toISOString() : null;
+
     return {
       slug: hub.slug,
       name: hub.name,
@@ -148,6 +164,7 @@ module.exports = async function handler(req, res) {
       sections,
       signedOff: !!(feedbackLog.signOffs && feedbackLog.signOffs[hub.slug]),
       signOff: feedbackLog.signOffs ? feedbackLog.signOffs[hub.slug] || null : null,
+      lastActivityAt,
     };
   }));
 
