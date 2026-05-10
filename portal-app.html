@@ -1052,6 +1052,64 @@
 
     /* ── Loading + error states ──────────────────────────────────────── */
     .center-msg { padding: 80px 24px; text-align: center; color: var(--text-muted); }
+
+    /* portal audit batch 3 — empty + error states (replaces blank content failure) */
+    .state-card {
+      max-width: 560px; margin: 64px auto; padding: 48px 32px;
+      background: var(--surface-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-card);
+      text-align: center;
+    }
+    .state-card-icon {
+      width: 56px; height: 56px; border-radius: 50%;
+      background: var(--surface-alt);
+      display: inline-flex; align-items: center; justify-content: center;
+      margin-bottom: 20px;
+      font-family: var(--font-mono); font-size: 24px;
+      color: var(--primary); font-weight: 600;
+    }
+    .state-card.error .state-card-icon { color: var(--status-rework-fg); background: var(--status-rework-bg); }
+    .state-card h3 {
+      font-size: 22px; font-weight: 600; color: var(--text-dark);
+      margin: 0 0 10px; letter-spacing: -0.01em;
+    }
+    .state-card p {
+      font-size: 15px; color: var(--text-muted);
+      margin: 0 0 24px; line-height: 1.6;
+      max-width: 420px; margin-left: auto; margin-right: auto;
+    }
+    .state-card-action {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 24px; min-height: 44px;
+      background: var(--primary); color: #fff;
+      border-radius: var(--radius-pill);
+      font-family: inherit; font-size: 14px; font-weight: 600;
+      border: none; cursor: pointer; text-decoration: none;
+      transition: background 200ms;
+    }
+    .state-card-action:hover { background: var(--primary-hover); }
+
+    /* Skeleton loading for section content (audit batch 3) */
+    .skeleton-block { padding: 32px 0; }
+    .skeleton-line {
+      background: linear-gradient(90deg, var(--surface-alt) 0%, var(--bg-light) 50%, var(--surface-alt) 100%);
+      background-size: 200% 100%;
+      border-radius: 6px;
+      animation: skeleton-shimmer 1.6s ease-in-out infinite;
+    }
+    .skeleton-line.h1 { height: 36px; width: 65%; margin-bottom: 24px; }
+    .skeleton-line.h2 { height: 24px; width: 40%; margin: 32px 0 16px; }
+    .skeleton-line.body { height: 16px; margin-bottom: 12px; }
+    .skeleton-line.body.short { width: 80%; }
+    .skeleton-line.body.medium { width: 95%; }
+    @keyframes skeleton-shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .skeleton-line { animation: none; }
+    }
     .center-msg .spinner {
       display: inline-block; width: 24px; height: 24px;
       border: 3px solid var(--border-light);
@@ -1694,11 +1752,57 @@ function renderNextAction(hubs) {
   els.nextAction.hidden = false;
 }
 
+// ── State card builders (portal audit batch 3) ────────────────────────────
+// Branded empty + error states. Replaces blank content failures + generic
+// "Could not load" text strings.
+function stateCardHtml({ variant = 'empty', icon = '?', title, body, actionLabel, actionId }) {
+  const action = actionLabel
+    ? `<button type="button" class="state-card-action" id="${actionId || 'state-card-action'}">${esc(actionLabel)}</button>`
+    : '';
+  return `
+    <div class="state-card ${variant}">
+      <div class="state-card-icon">${esc(icon)}</div>
+      <h3>${esc(title)}</h3>
+      <p>${esc(body)}</p>
+      ${action}
+    </div>`;
+}
+
+// Skeleton loading block — used in section view while content fetches.
+function skeletonHtml() {
+  return `
+    <div class="skeleton-block">
+      <div class="skeleton-line h1"></div>
+      <div class="skeleton-line body medium"></div>
+      <div class="skeleton-line body"></div>
+      <div class="skeleton-line body short"></div>
+      <div class="skeleton-line h2"></div>
+      <div class="skeleton-line body"></div>
+      <div class="skeleton-line body medium"></div>
+      <div class="skeleton-line body short"></div>
+    </div>`;
+}
+
 async function loadList() {
   els.loading.hidden = false;
   const r = await api('/api/portal-list');
   if (r.status === 401) { window.location.href = '/portal'; return; }
-  if (!r.body.ok) { els.loading.innerHTML = '<p>Could not load portal.</p>'; return; }
+  if (!r.body.ok) {
+    // portal audit batch 3 — branded error state with retry
+    els.loading.innerHTML = stateCardHtml({
+      variant: 'error',
+      icon: '!',
+      title: 'Could not load your portal',
+      body: r.body.error
+        ? `The server returned an error (${r.body.error}). This is usually temporary — please try again.`
+        : 'Something went wrong loading your portal. This is usually temporary.',
+      actionLabel: 'Try again',
+      actionId: 'portal-retry',
+    });
+    const retry = document.getElementById('portal-retry');
+    if (retry) retry.onclick = () => { els.loading.innerHTML = '<div class="spinner"></div><p style="margin-top:14px;">Loading…</p>'; loadList(); };
+    return;
+  }
 
   state.client = r.body.client;
   state.hubs = r.body.hubs;
@@ -1874,19 +1978,35 @@ async function loadList() {
     els.hubListBody.appendChild(section);
   };
 
-  // Render strategic hubs first
-  strategicHubs.forEach(renderHub);
-  // Then the operational divider + operational hubs (only when both groups exist)
-  if (strategicHubs.length > 0 && operationalHubs.length > 0) {
-    const divider = document.createElement('div');
-    divider.className = 'hub-group-divider';
-    divider.innerHTML = `
-      <span class="hub-group-divider-eyebrow">Execution Deliverables</span>
-      <span class="hub-group-divider-line"></span>
-    `;
-    els.hubListBody.appendChild(divider);
+  // portal audit batch 3 — empty state when all hubs are filtered out by
+  // data-room mode (new engagement, curator agent not yet run).
+  if (state.hubs.length === 0) {
+    els.hubListBody.innerHTML = stateCardHtml({
+      variant: 'empty',
+      icon: '◯',
+      title: 'Your portal is being set up',
+      body: 'Research and discovery is underway. The first Provocation Cards will appear here for your review once Phase 1 is complete. We\'ll notify you when there\'s something to review.',
+    });
+    // Hide the secondary widgets when there's nothing to anchor them to
+    els.phaseTimeline.hidden = true;
+    els.outstandingBanner.hidden = true;
+    els.nextAction.hidden = true;
+    els.projectOverview.hidden = true;
+  } else {
+    // Render strategic hubs first
+    strategicHubs.forEach(renderHub);
+    // Then the operational divider + operational hubs (only when both groups exist)
+    if (strategicHubs.length > 0 && operationalHubs.length > 0) {
+      const divider = document.createElement('div');
+      divider.className = 'hub-group-divider';
+      divider.innerHTML = `
+        <span class="hub-group-divider-eyebrow">Execution Deliverables</span>
+        <span class="hub-group-divider-line"></span>
+      `;
+      els.hubListBody.appendChild(divider);
+    }
+    operationalHubs.forEach(renderHub);
   }
-  operationalHubs.forEach(renderHub);
 
   // Wire card head click handlers (event delegation would also work; explicit
   // is easier to reason about given the small N).
@@ -2187,7 +2307,8 @@ async function openSection(hubSlug, sectionSlug) {
   const savedMode = localStorage.getItem(`portal_view_mode_${hubSlug}`) || 'highlights';
   if (savedMode !== state.viewMode) setView(savedMode);
   navigate('section-view');
-  els.sectionContent.innerHTML = '<div class="center-msg"><div class="spinner"></div><p style="margin-top:14px;">Loading…</p></div>';
+  // portal audit batch 3 — skeleton loading shape matches target layout
+  els.sectionContent.innerHTML = skeletonHtml();
   els.sectionEyebrow.textContent = '';
   els.sidebarTocWrap.hidden = true;
   els.sidebarToc.innerHTML = '';
@@ -2212,7 +2333,19 @@ async function openSection(hubSlug, sectionSlug) {
   const r = await api(`/api/portal-content?hub=${encodeURIComponent(hubSlug)}&section=${encodeURIComponent(sectionSlug)}`);
   if (r.status === 401) { window.location.href = '/portal'; return; }
   if (!r.body.ok) {
-    els.sectionContent.innerHTML = `<p style="color:var(--text-muted);">Could not load this section${r.body.error ? ' (' + r.body.error + ')' : ''}.</p>`;
+    // portal audit batch 3 — branded error state with retry button
+    els.sectionContent.innerHTML = stateCardHtml({
+      variant: 'error',
+      icon: '!',
+      title: 'Could not load this section',
+      body: r.body.error
+        ? `The server returned an error (${r.body.error}). This is usually temporary — please try refreshing.`
+        : 'Something went wrong loading this section. This is usually temporary.',
+      actionLabel: 'Try again',
+      actionId: 'section-retry',
+    });
+    const retry = document.getElementById('section-retry');
+    if (retry) retry.onclick = () => openSection(hubSlug, sectionSlug);
     return;
   }
   els.sectionEyebrow.textContent = `${r.body.hub.name} — ${r.body.section.name}`;
