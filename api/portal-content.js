@@ -81,6 +81,26 @@ module.exports = async function handler(req, res) {
       return;
     }
 
+    // Sibling structured-data lookup (presentation-pattern consistency).
+    // Per .claude/memory/feedback_presentation_pattern_consistency.md (PROTECTED
+    // in the engagement repo): when a section has a structured-data sibling
+    // (e.g. personas.md → personas.json), the portal renders it via the
+    // canonical card pattern instead of raw markdown. Engagement repos opt
+    // in by shipping the .json sibling. Backwards compatible — when the
+    // sibling is absent, behaviour is unchanged (markdown only).
+    let structuredData = null;
+    const jsonPath = path.replace(/\.md$/, '.json');
+    if (jsonPath !== path) {
+      try {
+        const jsonRaw = await ghReadFile(client.repo, client.branch || 'main', jsonPath);
+        if (jsonRaw) {
+          structuredData = JSON.parse(jsonRaw);
+        }
+      } catch (e) {
+        // Silent fail — structured data is optional
+      }
+    }
+
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');
     res.setHeader('Cache-Control', 'private, max-age=60');
@@ -90,6 +110,7 @@ module.exports = async function handler(req, res) {
       section: { slug: section.slug, name: section.name },
       path,
       markdown,
+      structuredData,
     }));
   } catch (e) {
     res.statusCode = 500;

@@ -174,6 +174,148 @@
     }
     .investor-landing-footer strong { color: var(--text-dark); font-weight: 600; }
 
+    /* ── Persona cards (structured-data renderer) ────────────────────────
+       Canonical persona-card execution. Same data shape as the DS site
+       personas page; chrome adapted to Ventrify (Inter, electric blue
+       eyebrows, --radius-card 20px, JetBrains Mono labels). The persona's
+       OWN accent colour (e.g. #FF5A36 Maya orange) stays — it's a content
+       attribute, not chrome. Per .claude/memory/feedback_presentation_pattern_consistency.md
+       (PROTECTED — pending). */
+    .personas-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 28px;
+      margin-top: 8px;
+    }
+    @media (min-width: 760px) {
+      .personas-grid { grid-template-columns: 1fr; gap: 32px; }
+    }
+    .persona-card {
+      background: var(--bg-light);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-card);
+      overflow: hidden;
+      transition: box-shadow 200ms, transform 200ms;
+    }
+    .persona-card:hover {
+      box-shadow: 0 12px 32px rgba(8,11,26,0.06);
+    }
+    .persona-card-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 760px) {
+      .persona-card-grid { grid-template-columns: 280px 1fr; }
+    }
+    .persona-card-side {
+      padding: 28px;
+      background: var(--surface-card);
+      border-bottom: 1px solid var(--border-light);
+    }
+    @media (min-width: 760px) {
+      .persona-card-side { border-bottom: none; border-right: 1px solid var(--border-light); }
+    }
+    .persona-card-head { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+    .persona-avatar {
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-family: var(--font-heading); font-weight: 700; font-size: 18px;
+      color: var(--text-dark);
+      background: var(--bg-light);
+      box-shadow: 0 0 0 2px var(--persona-accent, var(--primary));
+      flex-shrink: 0;
+    }
+    .persona-name {
+      font-family: var(--font-heading);
+      font-size: 18px; font-weight: 700;
+      color: var(--text-dark);
+      letter-spacing: -0.01em;
+      line-height: 1.2;
+    }
+    .persona-archetype {
+      font-family: var(--font-mono);
+      font-size: 11px; font-weight: 500;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--persona-accent, var(--primary));
+      margin-top: 4px;
+    }
+    .persona-meta-list {
+      list-style: none; padding: 0; margin: 0;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .persona-meta-list li {
+      font-size: 13px; color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .persona-meta-list strong {
+      color: var(--text-dark); font-weight: 600;
+      display: inline-block; min-width: 64px;
+    }
+    .persona-card-body { padding: 28px; }
+    .persona-quote {
+      font-family: var(--font-heading);
+      font-size: 16px; font-style: italic;
+      line-height: 1.55; color: var(--text-dark);
+      margin: 0 0 24px;
+      padding-left: 16px;
+      border-left: 3px solid var(--persona-accent, var(--primary));
+    }
+    .persona-cols {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+    @media (min-width: 600px) {
+      .persona-cols { grid-template-columns: 1fr 1fr; gap: 28px; }
+    }
+    .persona-col-label {
+      font-family: var(--font-mono);
+      font-size: 10px; font-weight: 500;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .persona-col-label::before {
+      content: ''; width: 14px; height: 2px;
+    }
+    .persona-col-label.goals { color: #1B7A3E; }
+    .persona-col-label.goals::before { background: #34D17A; }
+    .persona-col-label.frustrations { color: #B8341C; }
+    .persona-col-label.frustrations::before { background: #FF5A36; }
+    .persona-col-list {
+      list-style: none; padding: 0; margin: 0;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .persona-col-list li {
+      font-size: 14px; line-height: 1.55;
+      color: var(--text-dark);
+      padding-left: 20px; position: relative;
+    }
+    .persona-col-list li::before {
+      content: ''; position: absolute; left: 0; top: 9px;
+      width: 6px; height: 6px; border-radius: 50%;
+    }
+    .persona-col-list.goals li::before { background: #34D17A; }
+    .persona-col-list.frustrations li::before { background: #FF5A36; }
+    .persona-fit {
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--text-muted);
+      padding: 16px;
+      background: var(--surface-card);
+      border-radius: var(--radius-md);
+      border-left: 3px solid var(--primary);
+    }
+    .persona-fit strong {
+      color: var(--text-dark); font-weight: 600;
+      font-family: var(--font-mono); font-size: 10px;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      display: block; margin-bottom: 6px;
+    }
+
     /* ── Hub hero (landing page) ─────────────────────────────────────── */
     .hub-hero { padding: 56px 24px 36px; background: var(--hero-gradient); color: var(--text-light); }
     .hub-hero-inner { max-width: 1100px; margin: 0 auto; }
@@ -1487,6 +1629,66 @@ const md = (function () {
   return { render };
 }());
 
+// ── Persona-card renderer (structured-data path) ───────────────────────────
+// Renders an array of persona objects as Ventrify-chromed cards. Same data
+// shape and visual hierarchy as the DS site personas page; chrome is
+// adapted (Inter, electric blue eyebrows, JetBrains Mono labels, --radius-card
+// 20px). The persona's own accent colour is content (e.g. archetype-coloured
+// avatar ring) — not chrome — so it stays.
+function renderPersonaCards(personas) {
+  const cards = personas.map(p => {
+    const meta = [];
+    if (p.age) meta.push(`<li><strong>Age</strong> ${esc(String(p.age))}</li>`);
+    if (p.location) meta.push(`<li><strong>City</strong> ${esc(p.location)}</li>`);
+    if (p.occupation) meta.push(`<li><strong>Role</strong> ${esc(p.occupation)}</li>`);
+    if (p.income) meta.push(`<li><strong>Income</strong> ${esc(p.income)}</li>`);
+
+    const goals = (p.goals || []).map(g => `<li>${esc(g)}</li>`).join('');
+    const frustrations = (p.frustrations || []).map(f => `<li>${esc(f)}</li>`).join('');
+
+    // Inline custom property scopes the accent to this card without polluting CSS
+    const accentStyle = p.accent ? ` style="--persona-accent: ${esc(p.accent)};"` : '';
+
+    return `
+      <article class="persona-card"${accentStyle}>
+        <div class="persona-card-grid">
+          <aside class="persona-card-side">
+            <div class="persona-card-head">
+              <div class="persona-avatar">${esc(p.initials || (p.name || '').slice(0, 2).toUpperCase())}</div>
+              <div>
+                <div class="persona-name">${esc(p.name)}</div>
+                ${p.archetype ? `<div class="persona-archetype">${esc(p.archetype)}</div>` : ''}
+              </div>
+            </div>
+            <ul class="persona-meta-list">${meta.join('')}</ul>
+          </aside>
+          <div class="persona-card-body">
+            ${p.quote ? `<blockquote class="persona-quote">&ldquo;${esc(p.quote)}&rdquo;</blockquote>` : ''}
+            <div class="persona-cols">
+              ${goals ? `
+                <div>
+                  <div class="persona-col-label goals">Goals</div>
+                  <ul class="persona-col-list goals">${goals}</ul>
+                </div>` : ''}
+              ${frustrations ? `
+                <div>
+                  <div class="persona-col-label frustrations">Frustrations</div>
+                  <ul class="persona-col-list frustrations">${frustrations}</ul>
+                </div>` : ''}
+            </div>
+            ${p.fit ? `
+              <div class="persona-fit">
+                <strong>System fit</strong>
+                ${esc(p.fit)}
+              </div>` : ''}
+          </div>
+        </div>
+      </article>`;
+  }).join('');
+
+  return `<div class="personas-grid">${cards}</div>`;
+}
+
 // ── Post-processor — runs after rendering. Marks Key Takeaways callouts,
 //    wraps tables in <details>, identifies first-paragraph-after-H2 as
 //    topic sentence (always visible in Highlights mode), tags everything
@@ -2621,7 +2823,18 @@ async function openSection(hubSlug, sectionSlug) {
     return;
   }
   els.sectionEyebrow.textContent = `${r.body.hub.name} — ${r.body.section.name}`;
-  els.sectionContent.innerHTML = md.render(r.body.markdown);
+
+  // Structured-data renderer (presentation-pattern consistency).
+  // When the engagement repo ships a sibling .json file with structured
+  // content, render via the canonical pattern instead of raw markdown.
+  // Currently supports: personas. Extending to user-stories, user-flows,
+  // wireframes is a future-work item codified in the PROTECTED rule.
+  const sd = r.body.structuredData;
+  if (sd && Array.isArray(sd.personas) && sd.personas.length > 0) {
+    els.sectionContent.innerHTML = renderPersonaCards(sd.personas);
+  } else {
+    els.sectionContent.innerHTML = md.render(r.body.markdown);
+  }
   postProcess(els.sectionContent);
 
   // Build TOC from rendered H2/H3
