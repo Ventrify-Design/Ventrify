@@ -348,8 +348,11 @@ const HUBS = [
   // Replaces the legacy Marketing Launch Pack PDF. Surfaces the 20 launch
   // posts ready for Buffer scheduling, paired (in v2) with branded graphic
   // previews fetched via raw.githubusercontent.com.
+  // alwaysVisible: bypasses the data-room mode filter — operational
+  // deliverable, not legacy uncurated content.
   {
     slug: 'marketing-launch', name: 'Marketing Launch', dir: 'marketing',
+    alwaysVisible: true,
     sections: [
       { slug: 'launch-posts', file: 'post-copy/launch-posts.md', name: '20 Launch Social Posts' },
     ],
@@ -360,6 +363,7 @@ const HUBS = [
   // tools/video/generate.js consumes this hub's source markdown.
   {
     slug: 'video', name: 'Video', dir: 'video',
+    alwaysVisible: true,
     sections: [
       { slug: 'script', file: 'script.md', name: '60-second Promo Script' },
       { slug: 'audio-brief', file: 'audio-brief.md', name: 'Audio + Voiceover Brief' },
@@ -372,6 +376,7 @@ const HUBS = [
   // marketing site at /blog (Sanity source).
   {
     slug: 'blog', name: 'Blog Drafts', dir: 'marketing/blog-posts',
+    alwaysVisible: true,
     sections: [
       { slug: 'theory-vs-execution', file: 'theory-vs-execution-personal-finance.md', name: 'Theory vs Execution in Personal Finance' },
       { slug: 'subscription-audit', file: 'subscription-audit-saved-97-interest.md', name: 'How a Subscription Audit Saved $97 in Interest' },

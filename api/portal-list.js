@@ -139,6 +139,7 @@ module.exports = async function handler(req, res) {
       name: hub.name,
       gate: hub.gate,
       cardDriven,
+      alwaysVisible: !!hub.alwaysVisible,
       provocations,
       cardsCommented,
       cardsTotal,
@@ -157,11 +158,16 @@ module.exports = async function handler(req, res) {
   // until the curator agent produces their cards. This prevents the "JC
   // sees stale Vision/Strategy/Financials on first contact" failure mode.
   //
+  // alwaysVisible escape hatch: operational deliverable hubs (Marketing
+  // Launch, Video, Blog) are explicit execution artefacts, not legacy
+  // uncurated content. They bypass the data-room filter regardless of
+  // whether they have Provocation Cards or sign-off state.
+  //
   // Legacy clients (no _provocations/ folders anywhere) keep all hubs
   // visible — the section-list view renders unchanged.
   const dataRoomMode = hubData.some(h => h.cardDriven);
   const visibleHubs = dataRoomMode
-    ? hubData.filter(h => h.cardDriven || h.signedOff)
+    ? hubData.filter(h => h.cardDriven || h.signedOff || h.alwaysVisible)
     : hubData;
 
   // Hub-list-level aggregates for the hero metric strip — count visible only
