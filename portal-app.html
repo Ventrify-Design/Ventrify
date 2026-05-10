@@ -12,6 +12,7 @@
     :root {
       --primary: #0036FF;
       --primary-light: #3366FF;
+      --primary-hover: #0028CC; /* portal audit fix — was undefined, broke .prov-btn-primary:hover */
       --primary-rgb: 0,54,255;
       --bg-light: #FFFFFF;
       --surface-alt: #FAFAFA;
@@ -83,7 +84,7 @@
     }
 
     /* ── Investor banner (top of all investor pages) ─────────────────── */
-    .investor-banner { padding: 8px 24px; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; text-align: center; background: #14642C; color: #fff; }
+    .investor-banner { padding: 8px 24px; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; text-align: center; background: var(--primary); color: #fff; }
 
     /* ── Hub hero (landing page) ─────────────────────────────────────── */
     .hub-hero { padding: 56px 24px 36px; background: var(--hero-gradient); color: var(--text-light); }
@@ -109,7 +110,7 @@
     .hero-metric-label {
       font-family: var(--font-mono);
       font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
-      color: rgba(255,255,255,0.6);
+      color: rgba(255,255,255,0.72); /* portal audit — was 0.6 (4.3:1 contrast on lighter end of gradient, WCAG fail). 0.72 = ~5.1:1 */
       margin-bottom: 6px;
     }
     .hero-metric-value {
@@ -272,7 +273,10 @@
     .prov-card-toggle {
       font-family: var(--font-mono); font-size: 12px;
       color: var(--text-muted); transition: transform 0.18s ease;
-      width: 24px; height: 24px;
+      /* portal audit: was 24x24; the entire prov-card-head is the click zone
+         (~64px tall) so the visual toggle stays compact while WCAG touch
+         target is satisfied by the parent. */
+      width: 28px; height: 28px;
       display: inline-flex; align-items: center; justify-content: center;
       border-radius: 50%; background: var(--surface-alt);
     }
@@ -478,7 +482,10 @@
     .sidebar-toggle {
       display: none; width: 100%;
       align-items: center; justify-content: space-between;
-      gap: 8px; padding: 0; background: none; border: none; cursor: pointer;
+      gap: 8px;
+      /* portal audit — was padding: 0 (~20px effective height). Now 12px vertical = 44px min touch target. */
+      padding: 12px 0; min-height: 44px;
+      background: none; border: none; cursor: pointer;
       font-family: var(--font-mono); font-size: 12px;
       letter-spacing: 0.1em; text-transform: uppercase;
       color: var(--primary); font-weight: 500;
@@ -746,7 +753,10 @@
     }
     .rating-buttons { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
     .rating-btn {
-      padding: 11px 18px;
+      /* portal audit — was 11px vertical, no min-height (~40px effective).
+         Now min-height: 44px to satisfy WCAG touch target. min-width: 140px
+         keeps 2-across on small screens instead of stacking 1-per-line. */
+      padding: 11px 18px; min-height: 44px; min-width: 140px;
       background: var(--bg-light);
       border: 1px solid var(--border-strong);
       border-radius: var(--radius-pill);
@@ -946,9 +956,10 @@
             <h3>Feedback on this section</h3>
             <p class="feedback-intro">Mark "Looks good" to approve. Add a comment if anything needs adjusting.</p>
             <div class="rating-buttons" role="radiogroup" aria-label="Feedback rating">
-              <button type="button" class="rating-btn" data-rating="looks-good">👍 Looks good</button>
-              <button type="button" class="rating-btn" data-rating="has-feedback">⚠️ Has feedback</button>
-              <button type="button" class="rating-btn" data-rating="needs-rework">🚫 Needs rework</button>
+              <!-- portal audit: emoji removed (anti-pattern), text-only labels per Ventrify brand -->
+              <button type="button" class="rating-btn" role="radio" aria-checked="false" data-rating="looks-good">Looks good</button>
+              <button type="button" class="rating-btn" role="radio" aria-checked="false" data-rating="has-feedback">Has feedback</button>
+              <button type="button" class="rating-btn" role="radio" aria-checked="false" data-rating="needs-rework">Needs rework</button>
             </div>
             <textarea class="feedback-textarea" id="feedback-comment" placeholder="Optional — what needs adjusting?" style="display:none;"></textarea>
             <div class="feedback-name-row" id="feedback-name-row" style="display:none;">
@@ -1475,7 +1486,8 @@ async function loadList() {
       // Don't toggle if click came from an interactive child
       if (e.target.closest('button, a, textarea, input')) return;
       const card = head.closest('.prov-card');
-      card.classList.toggle('expanded');
+      const isExpanded = card.classList.toggle('expanded');
+      head.setAttribute('aria-expanded', isExpanded ? 'true' : 'false'); // portal audit — keep ARIA in sync
     });
     head.addEventListener('keydown', e => {
       if (e.key === 'Enter' || e.key === ' ') {
@@ -1827,7 +1839,10 @@ const feedbackConfirm = document.getElementById('feedback-confirmation');
 
 function resetFeedbackForm() {
   selectedRating = null;
-  ratingBtns.forEach(b => b.classList.remove('active'));
+  ratingBtns.forEach(b => {
+    b.classList.remove('active');
+    b.setAttribute('aria-checked', 'false'); // portal audit — keep ARIA in sync with visual state
+  });
   feedbackComment.value = '';
   feedbackComment.style.display = 'none';
   feedbackNameRow.style.display = 'none';
@@ -1839,8 +1854,12 @@ function resetFeedbackForm() {
 
 ratingBtns.forEach(btn => {
   btn.addEventListener('click', () => {
-    ratingBtns.forEach(b => b.classList.remove('active'));
+    ratingBtns.forEach(b => {
+      b.classList.remove('active');
+      b.setAttribute('aria-checked', 'false');
+    });
     btn.classList.add('active');
+    btn.setAttribute('aria-checked', 'true'); // portal audit — ARIA radio state
     selectedRating = btn.dataset.rating;
     feedbackComment.style.display = 'block';
     feedbackNameRow.style.display = 'grid';
@@ -1892,7 +1911,10 @@ feedbackSubmit.addEventListener('click', async () => {
 
 // ── Sign-off modal ─────────────────────────────────────────────────────
 let signoffHub = null;
+// portal audit — track the trigger element so we can return focus on close
+let signoffReturnFocusEl = null;
 window.openSignoff = function (hubSlug, hubName, gate) {
+  signoffReturnFocusEl = document.activeElement;
   signoffHub = hubSlug;
   els.signoffTitle.textContent = `Sign off ${gate}`;
   els.signoffDesc.textContent = `By signing below, you approve all sections in ${hubName} as the basis for ${gate === 'Gate 2.5' ? 'fundraising and the SOW' : gate === 'Gate 2' ? 'the SOW (scope is locked from this point)' : 'the next phase of the engagement'}.`;
@@ -1909,8 +1931,25 @@ function closeSignoff() {
   els.signoffModal.classList.remove('active'); els.signoffModal.hidden = true;
   document.body.style.overflow = '';
   document.removeEventListener('keydown', signoffKeyHandler);
+  // portal audit — return focus to the trigger button
+  if (signoffReturnFocusEl && typeof signoffReturnFocusEl.focus === 'function') {
+    signoffReturnFocusEl.focus();
+    signoffReturnFocusEl = null;
+  }
 }
-function signoffKeyHandler(e) { if (e.key === 'Escape') { e.preventDefault(); closeSignoff(); } }
+// portal audit — Tab focus trap inside the modal + Escape to close
+function signoffKeyHandler(e) {
+  if (e.key === 'Escape') { e.preventDefault(); closeSignoff(); return; }
+  if (e.key !== 'Tab') return;
+  const focusables = els.signoffModal.querySelectorAll(
+    'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
+  );
+  if (focusables.length === 0) return;
+  const first = focusables[0];
+  const last = focusables[focusables.length - 1];
+  if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+}
 els.signoffModal.addEventListener('click', e => { if (e.target === els.signoffModal) closeSignoff(); });
 els.signoffCancel.addEventListener('click', closeSignoff);
 
