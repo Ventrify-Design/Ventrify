@@ -118,6 +118,173 @@
       letter-spacing: -0.02em;
     }
 
+    /* ── Phase Timeline Widget (portal audit batch 1 — primary status anchor) ─── */
+    .phase-timeline {
+      max-width: 1100px; margin: 36px auto 0; padding: 0 24px;
+    }
+    .phase-timeline-card {
+      background: var(--surface-card);
+      border-radius: var(--radius-card);
+      border: 1px solid var(--border-light);
+      padding: 28px 32px 24px;
+    }
+    .phase-timeline-eyebrow {
+      font-family: var(--font-mono); font-size: 11px;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--primary); margin-bottom: 4px;
+      display: inline-flex; align-items: center; gap: 10px;
+    }
+    .phase-timeline-eyebrow::before {
+      content: ''; width: 16px; height: 2px; background: var(--primary);
+    }
+    .phase-timeline-title {
+      font-size: 22px; font-weight: 600; color: var(--text-dark);
+      margin: 0 0 24px; letter-spacing: -0.01em;
+    }
+    .phase-timeline-steps {
+      display: grid; grid-template-columns: repeat(6, 1fr); gap: 0;
+      position: relative;
+    }
+    .phase-step {
+      display: flex; flex-direction: column; align-items: center;
+      position: relative; padding: 0 6px;
+    }
+    .phase-step:not(:last-child)::after {
+      content: ''; position: absolute; top: 13px; right: -50%; left: 50%;
+      height: 2px; background: var(--border-strong); z-index: 0;
+    }
+    .phase-step.complete:not(:last-child)::after {
+      background: var(--status-approved-fg);
+    }
+    .phase-step-dot {
+      width: 28px; height: 28px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-mono); font-size: 12px; font-weight: 600;
+      position: relative; z-index: 1; margin-bottom: 12px;
+      border: 2px solid var(--border-strong); background: var(--bg-light);
+      color: var(--text-muted);
+    }
+    .phase-step.complete .phase-step-dot {
+      background: var(--status-approved-fg); border-color: var(--status-approved-fg);
+      color: #fff;
+    }
+    .phase-step.current .phase-step-dot {
+      background: var(--primary); border-color: var(--primary);
+      color: #fff;
+      box-shadow: 0 0 0 4px rgba(0,54,255,0.18);
+      animation: phase-pulse 2.4s ease-in-out infinite;
+    }
+    @keyframes phase-pulse {
+      0%, 100% { box-shadow: 0 0 0 4px rgba(0,54,255,0.18); }
+      50% { box-shadow: 0 0 0 8px rgba(0,54,255,0.10); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .phase-step.current .phase-step-dot { animation: none; }
+    }
+    .phase-step-label {
+      font-size: 12px; font-weight: 600; color: var(--text-dark);
+      text-align: center; line-height: 1.3;
+    }
+    .phase-step.locked .phase-step-label { color: var(--text-muted); font-weight: 400; }
+    .phase-step.current .phase-step-label { color: var(--primary); }
+    .phase-step-sub {
+      font-family: var(--font-mono); font-size: 10px;
+      color: var(--text-muted); margin-top: 2px;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      text-align: center;
+    }
+    @media (max-width: 720px) {
+      .phase-timeline-card { padding: 22px 20px; }
+      .phase-timeline-steps {
+        grid-template-columns: 1fr; gap: 14px;
+      }
+      .phase-step { flex-direction: row; align-items: center; padding: 0; gap: 14px; }
+      .phase-step:not(:last-child)::after {
+        top: 28px; left: 13px; right: auto; bottom: -14px;
+        width: 2px; height: 14px;
+      }
+      .phase-step-dot { margin-bottom: 0; flex-shrink: 0; }
+      .phase-step-label { text-align: left; flex: 1; }
+      .phase-step-sub { display: inline-block; margin-top: 0; margin-left: 8px; }
+    }
+
+    /* ── Outstanding Input Banner (conditional — shown when open cards exist) ─── */
+    .outstanding-banner {
+      max-width: 1100px; margin: 24px auto 0; padding: 0 24px;
+    }
+    .outstanding-banner-inner {
+      display: flex; align-items: center; gap: 18px;
+      padding: 18px 22px;
+      background: #FFF8E1;
+      border-left: 4px solid var(--primary);
+      border-radius: var(--radius-card);
+    }
+    .outstanding-banner-icon {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: var(--primary); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 600; font-size: 16px; flex-shrink: 0;
+      font-family: var(--font-mono);
+    }
+    .outstanding-banner-body { flex: 1; min-width: 0; }
+    .outstanding-banner-title {
+      font-size: 15px; font-weight: 600; color: var(--text-dark);
+      margin: 0 0 2px;
+    }
+    .outstanding-banner-sub {
+      font-size: 13px; color: var(--text-muted); margin: 0;
+    }
+    .outstanding-banner-cta {
+      flex-shrink: 0;
+      padding: 10px 18px; border-radius: var(--radius-pill);
+      background: var(--primary); color: #fff;
+      font-family: inherit; font-size: 13px; font-weight: 600;
+      text-decoration: none; border: none; cursor: pointer;
+      transition: background 200ms;
+      min-height: 40px; display: inline-flex; align-items: center;
+    }
+    .outstanding-banner-cta:hover { background: var(--primary-hover); }
+    @media (max-width: 640px) {
+      .outstanding-banner-inner { flex-wrap: wrap; }
+      .outstanding-banner-cta { width: 100%; justify-content: center; }
+    }
+
+    /* ── Next-action prompt (above hub list) ────────────────────────── */
+    .next-action {
+      max-width: 1100px; margin: 28px auto 0; padding: 0 24px;
+    }
+    .next-action-inner {
+      padding: 14px 20px;
+      background: var(--surface-alt);
+      border-radius: var(--radius-card);
+      font-size: 14px; color: var(--text-dark);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .next-action-eyebrow {
+      font-family: var(--font-mono); font-size: 10px;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--primary); font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    /* ── Hub group divider (strategic / operational split) ──────────── */
+    .hub-group-divider {
+      max-width: 1100px; margin: 48px auto 16px; padding: 0 24px;
+      display: flex; align-items: center; gap: 16px;
+    }
+    .hub-group-divider-eyebrow {
+      font-family: var(--font-mono); font-size: 11px;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--text-muted); font-weight: 600;
+      display: inline-flex; align-items: center; gap: 10px; flex-shrink: 0;
+    }
+    .hub-group-divider-eyebrow::before {
+      content: ''; width: 16px; height: 2px; background: var(--primary);
+    }
+    .hub-group-divider-line {
+      flex: 1; height: 1px; background: var(--border-light);
+    }
+
     /* ── Project overview card (hub list, below hero) ────────────────── */
     .project-overview {
       max-width: 1100px; margin: 28px auto 0; padding: 0 24px;
@@ -898,6 +1065,35 @@
           <div class="hero-metric-strip" id="hero-metrics"></div>
         </div>
       </section>
+      <!-- Phase Timeline Widget — primary status anchor (portal audit batch 1) -->
+      <div class="phase-timeline" id="phase-timeline" hidden>
+        <div class="phase-timeline-card">
+          <div class="phase-timeline-eyebrow">Project Status</div>
+          <h2 class="phase-timeline-title" id="phase-timeline-title">Engagement Progress</h2>
+          <div class="phase-timeline-steps" id="phase-timeline-steps"></div>
+        </div>
+      </div>
+
+      <!-- Outstanding Input Banner — conditional, shown when open cards exist -->
+      <div class="outstanding-banner" id="outstanding-banner" hidden>
+        <div class="outstanding-banner-inner">
+          <div class="outstanding-banner-icon" id="outstanding-banner-count">!</div>
+          <div class="outstanding-banner-body">
+            <p class="outstanding-banner-title" id="outstanding-banner-title">Cards awaiting your input</p>
+            <p class="outstanding-banner-sub" id="outstanding-banner-sub"></p>
+          </div>
+          <a class="outstanding-banner-cta" id="outstanding-banner-cta" href="#">Go →</a>
+        </div>
+      </div>
+
+      <!-- Next-action prompt — single sentence, derived from engagement state -->
+      <div class="next-action" id="next-action" hidden>
+        <div class="next-action-inner">
+          <span class="next-action-eyebrow">Next</span>
+          <span id="next-action-text"></span>
+        </div>
+      </div>
+
       <div class="project-overview" id="project-overview" hidden>
         <div class="project-overview-card">
           <div>
@@ -1193,6 +1389,15 @@ const els = {
   heroSubtitle: document.getElementById('hero-subtitle'),
   heroMetrics: document.getElementById('hero-metrics'),
   projectOverview: document.getElementById('project-overview'),
+  phaseTimeline: document.getElementById('phase-timeline'),
+  phaseTimelineSteps: document.getElementById('phase-timeline-steps'),
+  outstandingBanner: document.getElementById('outstanding-banner'),
+  outstandingBannerCount: document.getElementById('outstanding-banner-count'),
+  outstandingBannerTitle: document.getElementById('outstanding-banner-title'),
+  outstandingBannerSub: document.getElementById('outstanding-banner-sub'),
+  outstandingBannerCta: document.getElementById('outstanding-banner-cta'),
+  nextAction: document.getElementById('next-action'),
+  nextActionText: document.getElementById('next-action-text'),
   poTier: document.getElementById('po-tier'),
   poTierSub: document.getElementById('po-tier-sub'),
   poPhase: document.getElementById('po-phase'),
@@ -1311,6 +1516,142 @@ function derivePhase(hubs) {
   return { name: 'Phase 0 — Setup', sub: 'Engagement in progress' };
 }
 
+// ── Phase Timeline derivation (portal audit batch 1) ────────────────────
+// Returns 6 nodes representing the engagement journey. Each node has:
+//   { label, sublabel, state: 'complete' | 'current' | 'locked' }
+function derivePhaseTimeline(hubs) {
+  const research = hubs.find(h => h.slug === 'research');
+  const vision = hubs.find(h => h.slug === 'vision');
+  const financials = hubs.find(h => h.slug === 'financials');
+  const hasContent = h => h && (h.cardDriven || h.sections.some(s => s.exists));
+  const isSignedOff = h => h && h.signedOff;
+
+  // Determine current step (last reached, not yet sign-off complete)
+  const stepStates = ['locked', 'locked', 'locked', 'locked', 'locked', 'locked'];
+  // 0: Setup — always complete once any hub exists
+  if (research || vision || financials) stepStates[0] = 'complete';
+  else stepStates[0] = 'current';
+  // 1: Gate 1 — Research signed off
+  if (isSignedOff(research)) stepStates[1] = 'complete';
+  else if (hasContent(research)) stepStates[1] = 'current';
+  // 2: Phase 2 — Vision content exists
+  if (isSignedOff(vision)) stepStates[2] = 'complete';
+  else if (hasContent(vision)) stepStates[2] = 'current';
+  // 3: Gate 2 — Vision signed off
+  if (isSignedOff(vision)) stepStates[3] = 'complete';
+  else if (isSignedOff(research)) stepStates[3] = 'current';
+  // 4: Phase 2.5 — Financials signed off
+  if (isSignedOff(financials)) stepStates[4] = 'complete';
+  else if (hasContent(financials)) stepStates[4] = 'current';
+  // 5: Phase 3+ — Build (always locked or current, never complete on this view)
+  if (isSignedOff(financials)) stepStates[5] = 'current';
+
+  // Promote the LAST 'current' to actual current — there should only be one
+  // current at a time visually. The earlier ones become 'complete'.
+  let lastCurrent = -1;
+  stepStates.forEach((s, i) => { if (s === 'current') lastCurrent = i; });
+  stepStates.forEach((s, i) => {
+    if (s === 'current' && i < lastCurrent) stepStates[i] = 'complete';
+  });
+
+  return [
+    { label: 'Setup',      sublabel: 'Phase 0',   state: stepStates[0] },
+    { label: 'Research',   sublabel: 'Gate 1',    state: stepStates[1] },
+    { label: 'Define',     sublabel: 'Phase 2',   state: stepStates[2] },
+    { label: 'Vision',     sublabel: 'Gate 2',    state: stepStates[3] },
+    { label: 'Financials', sublabel: 'Phase 2.5', state: stepStates[4] },
+    { label: 'Build',      sublabel: 'Phase 3+',  state: stepStates[5] },
+  ];
+}
+
+// Render the Phase Timeline into the dashboard header zone.
+function renderPhaseTimeline(hubs) {
+  const nodes = derivePhaseTimeline(hubs);
+  const html = nodes.map((n, i) => {
+    const stateMark = n.state === 'complete' ? '✓' : (n.state === 'current' ? (i + 1) : (i + 1));
+    return `
+      <div class="phase-step ${n.state}" aria-label="${esc(n.label)} (${esc(n.state)})">
+        <div class="phase-step-dot">${stateMark}</div>
+        <div class="phase-step-label">${esc(n.label)}</div>
+        <div class="phase-step-sub">${esc(n.sublabel)}</div>
+      </div>`;
+  }).join('');
+  els.phaseTimelineSteps.innerHTML = html;
+  els.phaseTimeline.hidden = false;
+}
+
+// ── Outstanding Input Banner derivation ────────────────────────────────
+// Returns { count, hubName, hubSlug } when there are open Provocation Cards
+// across any hub, or null if all cards are commented/acknowledged.
+function deriveOutstandingInput(hubs) {
+  // Find the first hub with the most open cards
+  let bestHub = null;
+  let bestOpen = 0;
+  let totalOpen = 0;
+  hubs.forEach(h => {
+    if (!h.cardDriven) return;
+    const openCount = (h.provocations || []).filter(c => c.status === 'open').length;
+    totalOpen += openCount;
+    if (openCount > bestOpen) {
+      bestOpen = openCount;
+      bestHub = h;
+    }
+  });
+  if (totalOpen === 0) return null;
+  return { count: totalOpen, hubName: bestHub.name, hubSlug: bestHub.slug, primaryHubOpen: bestOpen };
+}
+
+function renderOutstandingBanner(hubs) {
+  const out = deriveOutstandingInput(hubs);
+  if (!out) { els.outstandingBanner.hidden = true; return; }
+  els.outstandingBannerCount.textContent = out.count;
+  els.outstandingBannerTitle.textContent = `${out.count} ${out.count === 1 ? 'card' : 'cards'} awaiting your input`;
+  els.outstandingBannerSub.textContent = out.primaryHubOpen === out.count
+    ? `On the ${out.hubName} Hub`
+    : `${out.primaryHubOpen} on ${out.hubName} (start there) · others across the rest`;
+  els.outstandingBannerCta.textContent = `Go to ${out.hubName} →`;
+  els.outstandingBannerCta.href = `#${out.hubSlug}`;
+  els.outstandingBannerCta.onclick = (e) => {
+    e.preventDefault();
+    const hubEl = document.querySelector(`.hub-section[data-hub-slug="${out.hubSlug}"]`);
+    if (hubEl) hubEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+  els.outstandingBanner.hidden = false;
+}
+
+// ── Next-Action prompt derivation ──────────────────────────────────────
+// One-sentence guidance derived from current engagement state.
+function deriveNextAction(hubs) {
+  const out = deriveOutstandingInput(hubs);
+  if (out) {
+    return `${out.count} Provocation Card${out.count === 1 ? '' : 's'} awaiting your input on the ${out.hubName} Hub.`;
+  }
+  // Check for hubs ready to sign off (all cards commented + L3 built + not signed off)
+  const readyToSignOff = hubs.find(h =>
+    h.cardDriven && !h.signedOff && h.gate &&
+    h.cardsCommented === h.cardsTotal && h.cardsTotal > 0 &&
+    (h.l3Status === 'built' || h.l3Status === 'pending-retrofit')
+  );
+  if (readyToSignOff) {
+    return `${readyToSignOff.gate} is ready for sign-off on the ${readyToSignOff.name} Hub.`;
+  }
+  // Check for hubs with cards commented but L3 still building
+  const l3Building = hubs.find(h =>
+    h.cardDriven && !h.signedOff && h.cardsCommented === h.cardsTotal && h.cardsTotal > 0 &&
+    h.l3Status !== 'built' && h.l3Status !== 'pending-retrofit'
+  );
+  if (l3Building) {
+    return `Deep research is being prepared against your direction on ${l3Building.name}. We'll notify you when it's ready for review.`;
+  }
+  // All quiet
+  return `All caught up — we'll notify you when there's something new to review.`;
+}
+
+function renderNextAction(hubs) {
+  els.nextActionText.textContent = deriveNextAction(hubs);
+  els.nextAction.hidden = false;
+}
+
 async function loadList() {
   els.loading.hidden = false;
   const r = await api('/api/portal-list');
@@ -1397,12 +1738,24 @@ async function loadList() {
     }
   }
 
+  // Render the new dashboard upgrades (portal audit batch 1)
+  renderPhaseTimeline(state.hubs);
+  renderOutstandingBanner(state.hubs);
+  renderNextAction(state.hubs);
+
   // Hub rendering — cards-driven (data-room L1) when hub.cardDriven, else
   // legacy section-list view for hubs not yet re-curated.
+  // Strategic / Operational split (audit batch 1) — strategic hubs render
+  // first, then a divider with s-label, then operational (alwaysVisible) hubs.
   els.hubListBody.innerHTML = '';
-  state.hubs.forEach(hub => {
+  const strategicHubs = state.hubs.filter(h => !h.alwaysVisible);
+  const operationalHubs = state.hubs.filter(h => h.alwaysVisible);
+  let renderedOperationalDivider = false;
+
+  const renderHub = (hub) => {
     const section = document.createElement('section');
     section.className = 'hub-section';
+    section.setAttribute('data-hub-slug', hub.slug);
     const head = `
       <div class="hub-section-head">
         <div class="hub-section-title">${esc(hub.name)}</div>
@@ -1477,7 +1830,21 @@ async function loadList() {
 
     section.innerHTML = head + body + gatePanel;
     els.hubListBody.appendChild(section);
-  });
+  };
+
+  // Render strategic hubs first
+  strategicHubs.forEach(renderHub);
+  // Then the operational divider + operational hubs (only when both groups exist)
+  if (strategicHubs.length > 0 && operationalHubs.length > 0) {
+    const divider = document.createElement('div');
+    divider.className = 'hub-group-divider';
+    divider.innerHTML = `
+      <span class="hub-group-divider-eyebrow">Execution Deliverables</span>
+      <span class="hub-group-divider-line"></span>
+    `;
+    els.hubListBody.appendChild(divider);
+  }
+  operationalHubs.forEach(renderHub);
 
   // Wire card head click handlers (event delegation would also work; explicit
   // is easier to reason about given the small N).
