@@ -1,0 +1,6 @@
+Vercel deploy trigger — refresh env vars
+2026-05-11T23:00:13Z
+
+Triggers a fresh Vercel deployment so PORTAL_CLIENTS is re-read.
+Specifically: Styloupe slug was added to PORTAL_CLIENTS but the previously
+active deployment was using a cached env-var snapshot.
