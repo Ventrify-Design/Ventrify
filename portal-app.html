@@ -2550,12 +2550,19 @@ function renderHubProvocations(hub) {
   const hasL3 = hub.sections.some(s => s.exists);
   const cardsAllResolved = hub.cardsTotal > 0 && hub.cardsCommented === hub.cardsTotal;
   const l3Ready = hub.l3Visible === true;
+  // Surprise-proposal mode: L3 was authored before cards (with operator
+  // approval — see engagement repo's STATUS.md). Founder needs both layers
+  // visible in one visit because no mid-build round-trips are happening.
+  // Opts in by setting `l3-status: parallel-review` in `_provocations/_index.md`.
+  // Bypasses the canonical "cards-first, L3-after-resolution" gate without
+  // affecting engagements that use 'built' or 'pending-retrofit' canonically.
+  const parallelReview = hub.l3Status === 'parallel-review';
 
   let deep;
-  if (!cardsAllResolved) {
+  if (!cardsAllResolved && !parallelReview) {
     // Cards still open — don't surface L3 at all. Founder focuses on cards.
     deep = '';
-  } else if (l3Ready && hasL3) {
+  } else if ((l3Ready || parallelReview) && hasL3) {
     // L3 is built and reviewable
     const sectionsHtml = hub.sections.map(s => {
       if (!s.exists) return '';

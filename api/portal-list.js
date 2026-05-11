@@ -126,12 +126,15 @@ module.exports = async function handler(req, res) {
 
     // L3 status — read from `_provocations/_index.md` frontmatter. Drives:
     //   (1) "View source documents" expander visibility on the founder view
-    //   (2) sign-off button activation (must be 'built' or 'pending-retrofit')
+    //   (2) sign-off button activation (must be 'built', 'pending-retrofit',
+    //       or 'parallel-review')
     // Per .claude/memory/feedback_l3_review_before_signoff.md (PROTECTED) in
-    // the engagement repo.
+    // the engagement repo. The 'parallel-review' state is the surprise-
+    // proposal mode where L3 was authored before cards (operator-approved
+    // deviation) — both layers visible simultaneously to the founder.
     const l3Status = cardDriven ? await readHubL3Status(repo, branch, hub.dir) : null;
     const l3Visible = cardDriven
-      ? (l3Status === 'built' || l3Status === 'pending-retrofit')
+      ? (l3Status === 'built' || l3Status === 'pending-retrofit' || l3Status === 'parallel-review')
       : true; // legacy hubs: existing visibility rules apply
 
     // ── Last activity timestamp ──────────────────────────────────────────

@@ -271,6 +271,12 @@ async function readProvocations(repo, branch, hubDir) {
 //                        "View source documents" expander shows on the
 //                        founder's portal view; sign-off button is unlocked
 //                        (when combined with all-cards-commented).
+//   'parallel-review' — Surprise-proposal mode: L3 was authored BEFORE cards
+//                        (with operator approval per engagement STATUS.md).
+//                        Both cards and L3 visible simultaneously, founder
+//                        walks both in one visit. Sign-off still requires
+//                        all-cards-commented (the cards-first gate stays
+//                        in place — only the L3 hiding is bypassed).
 //   'superseded'      — cards were refined; L3 needs another pass
 //
 // Per .claude/memory/feedback_l3_review_before_signoff.md (PROTECTED) in
