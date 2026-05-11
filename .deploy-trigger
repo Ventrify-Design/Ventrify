@@ -1,6 +1,6 @@
-Vercel deploy trigger — refresh env vars
-2026-05-11T23:00:13Z
+Vercel deploy trigger — Production/Preview env vars now updated
+2026-05-11T23:16:28Z
 
-Triggers a fresh Vercel deployment so PORTAL_CLIENTS is re-read.
-Specifically: Styloupe slug was added to PORTAL_CLIENTS but the previously
-active deployment was using a cached env-var snapshot.
+User updated PORTAL_CLIENTS in Production + Preview rows after diagnosis
+confirmed the old (MoneyGym-only, 402 char) value was being served while
+the new (977 char merged) value was only set in Development.
