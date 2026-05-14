@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flicksy — Ventrify Work</title>
+  <meta name="description" content="Flicksy case study — a modern streaming platform with intelligent recommendations, social viewing, and cinematic UI built by Ventrify.">
+  <meta property="og:title" content="Flicksy — Ventrify Case Study">
+  <meta property="og:description" content="A complete venture build — streaming platform with intelligent content discovery, social viewing rooms, and a cinematic playback experience.">
+  <meta property="og:image" content="assets/showcase/Flicksy/flicksy-hero.jpg">
+  <meta property="og:type" content="article">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================
+       DESIGN TOKENS
+       ============================================ */
+    :root {
+      --primary: #0036FF;
+      --primary-light: #3366FF;
+      --primary-rgb: 0,54,255;
+      --bg-dark: #0A0118;
+      --bg-light: #FFFFFF;
+      --surface-dark: #120826;
+      --surface-dark-2: #1A0E30;
+      --text-light: #FFFFFF;
+      --text-light-muted: rgba(255,255,255,0.6);
+      --text-dark: #141414;
+      --text-dark-muted: #656565;
+      --border-dark: rgba(255,255,255,0.08);
+      --border-light: rgba(0,0,0,0.06);
+
+      --font-heading: 'Inter', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      --radius-sm: 12px;
+      --radius-md: 16px;
+      --radius-card: 20px;
+      --radius-lg: 24px;
+      --radius-pill: 980px;
+
+      --ease-smooth: cubic-bezier(0.6, 0.6, 0, 1);
+      --transition: 0.45s cubic-bezier(0.6, 0.6, 0, 1);
+    }
+
+    /* ============================================
+       BASE RESET
+       ============================================ */
+    *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+    html { scroll-behavior:smooth; }
+    body {
+      background:var(--bg-dark);
+      color:var(--text-dark);
+      font-family:var(--font-body);
+      font-size:17px;
+      overflow-x:hidden;
+      line-height:1.65;
+      font-weight:400;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+    h1,h2,h3,h4,h5 { font-family:var(--font-heading); letter-spacing:-0.02em; font-weight:600; }
+    a { text-decoration:none; color:inherit; }
+    img { max-width:100%; }
+    .skip-link {
+      position:absolute; top:-100px; left:50%;
+      transform:translateX(-50%);
+      background:var(--primary); color:#fff;
+      padding:8px 16px; border-radius:0 0 8px 8px;
+      font-size:0.82rem; font-weight:600;
+      z-index:9999; transition:top 0.2s ease;
+    }
+    .skip-link:focus { top:0; }
+
+    /* Shimmer */
+    @keyframes shimmer {
+      0% { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+    .shimmer-text {
+      background: linear-gradient(90deg,
+        rgba(255,255,255,0.95) 0%,
+        rgba(255,255,255,0.95) 35%,
+        rgba(var(--primary-rgb),0.7) 50%,
+        rgba(255,255,255,0.95) 65%,
+        rgba(255,255,255,0.95) 100%);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: shimmer 3s ease-in-out 1s 1 forwards;
+    }
+    @keyframes shimmerDark {
+      0% { background-position: 200% center; }
+      100% { background-position: -200% center; }
+    }
+    .s-title-shimmer {
+      background: linear-gradient(90deg,
+        #141414 0%, #141414 35%,
+        rgba(var(--primary-rgb),0.65) 50%,
+        #141414 65%, #141414 100%);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      background-position: -200% center;
+    }
+    [data-reveal].revealed .s-title-shimmer {
+      animation: shimmerDark 2s ease-in-out 0.2s 1;
+    }
+
+    /* ============================================
+       NAVIGATION — Floating Pill + Extras Pill
+       ============================================ */
+    .nav-wrap {
+      position:fixed; top:16px; left:50%;
+      transform:translateX(-50%);
+      z-index:200;
+      display:flex; align-items:center; gap:8px;
+      max-width:calc(100% - 24px);
+    }
+    nav {
+      display:flex; align-items:center; gap:2px;
+      padding:6px 8px 6px 20px;
+      height:60px;
+      background:rgba(255,255,255,0.88);
+      backdrop-filter:blur(12px);
+      -webkit-backdrop-filter:blur(12px);
+      border-radius:var(--radius-pill);
+      box-shadow:0 1px 2px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.08), 0 16px 56px rgba(0,0,0,0.08);
+    }
+    .logo {
+      font-family:var(--font-heading);
+      font-size:1rem; font-weight:600;
+      letter-spacing:-0.02em;
+      color:var(--text-dark);
+      margin-right:auto;
+      white-space:nowrap;
+      padding-right:1rem;
+    }
+    .logo .os { font-weight:400; color:var(--text-dark-muted); }
+    .nav-links { display:flex; gap:0; align-items:center; }
+    .nav-links a {
+      font-size:0.82rem; font-weight:500;
+      color:var(--text-dark-muted);
+      padding:6px 14px; border-radius:8px;
+      transition:background var(--transition), color var(--transition);
+      white-space:nowrap;
+    }
+    .nav-links a:hover { background:rgba(0,0,0,0.04); color:var(--text-dark); }
+    .nav-links a.active { color:var(--text-dark); background:rgba(0,0,0,0.05); }
+    .nav-links a:focus-visible {
+      outline:2px solid var(--primary);
+      outline-offset:2px; border-radius:4px;
+    }
+    .nav-extras { display:flex; align-items:center; gap:4px; }
+    .nav-extras .btn {
+      background:var(--primary); color:#fff; border:none;
+      border-radius:var(--radius-pill);
+      padding:6px 16px;
+      font-weight:600; font-size:0.82rem;
+      cursor:pointer;
+      transition:opacity var(--transition), transform var(--transition);
+      white-space:nowrap;
+    }
+    .nav-extras .btn:hover { opacity:0.9; transform:translateY(-1px); }
+
+    /* Buttons */
+    .btn {
+      display:inline-flex; align-items:center; justify-content:center;
+      font-family:var(--font-heading); font-weight:600; font-size:0.88rem;
+      letter-spacing:-0.01em;
+      border-radius:var(--radius-pill);
+      padding:0.75rem 1.75rem;
+      min-height:44px; cursor:pointer;
+      transition:transform 0.2s ease, box-shadow var(--transition), background var(--transition), border-color var(--transition), opacity var(--transition);
+      text-decoration:none;
+    }
+    .btn-primary {
+      background:var(--primary); color:#fff; border:none;
+      position:relative; overflow:hidden;
+      box-shadow:0 1px 2px rgba(var(--primary-rgb),0.2), 0 4px 12px rgba(var(--primary-rgb),0.15);
+    }
+    .btn-primary::before {
+      content:''; position:absolute; inset:0;
+      background:linear-gradient(180deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
+      border-radius:inherit; pointer-events:none;
+    }
+    .btn-primary:hover {
+      box-shadow:0 4px 16px rgba(var(--primary-rgb),0.25), 0 1px 2px rgba(var(--primary-rgb),0.15);
+      transform:translateY(-1px);
+    }
+    .btn-primary:active { opacity:0.9; transform:translateY(0); }
+    .btn:focus-visible { outline:2px solid var(--primary); outline-offset:3px; }
+    .btn-outline {
+      background:rgba(0,0,0,0.04);
+      color:var(--text-dark);
+      border:1px solid rgba(0,0,0,0.08);
+    }
+    .btn-outline:hover { background:rgba(0,0,0,0.06); border-color:rgba(0,0,0,0.12); }
+    .btn-sm { padding:0.5rem 1.25rem; font-size:0.82rem; min-height:36px; }
+    .btn-lg { padding:0.85rem 2.2rem; font-size:0.92rem; }
+
+    /* Hero buttons */
+    .btn-hero-primary {
+      background:var(--primary); color:#fff; border:none;
+      position:relative; overflow:hidden;
+      box-shadow:0 1px 2px rgba(var(--primary-rgb),0.3), 0 4px 16px rgba(var(--primary-rgb),0.25);
+    }
+    .btn-hero-primary::before {
+      content:''; position:absolute; inset:0;
+      background:linear-gradient(180deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05));
+      border-radius:inherit; pointer-events:none;
+    }
+    .btn-hero-primary:hover {
+      box-shadow:0 4px 24px rgba(var(--primary-rgb),0.35), 0 1px 2px rgba(var(--primary-rgb),0.2);
+      transform:translateY(-1px);
+    }
+    .btn-hero-outline {
+      background:rgba(255,255,255,0.08);
+      color:rgba(255,255,255,0.85);
+      border:1px solid rgba(255,255,255,0.14);
+    }
+    .btn-hero-outline:hover {
+      background:rgba(255,255,255,0.12);
+      border-color:rgba(255,255,255,0.22);
+    }
+    .btn-dark-primary {
+      background:var(--primary); color:#fff; border:none;
+      position:relative; overflow:hidden;
+      box-shadow:0 1px 2px rgba(var(--primary-rgb),0.3), 0 4px 16px rgba(var(--primary-rgb),0.25);
+    }
+    .btn-dark-primary::before {
+      content:''; position:absolute; inset:0;
+      background:linear-gradient(180deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05));
+      border-radius:inherit; pointer-events:none;
+    }
+    .btn-dark-primary:hover {
+      box-shadow:0 4px 24px rgba(var(--primary-rgb),0.35);
+      transform:translateY(-1px);
+    }
+    .btn-dark-outline {
+      background:rgba(255,255,255,0.06);
+      color:rgba(255,255,255,0.7);
+      border:1px solid rgba(255,255,255,0.1);
+    }
+    .btn-dark-outline:hover {
+      background:rgba(255,255,255,0.1);
+      border-color:rgba(255,255,255,0.18);
+    }
+
+    /* Layout */
+    .container { max-width:1080px; margin:0 auto; }
+    .section { padding:5.5rem 3rem; background:var(--bg-light); }
+    .section-alt { padding:5.5rem 3rem; background:#FAFAFA; }
+
+    /* Section labels */
+    .s-label {
+      display:inline-flex; align-items:center; gap:8px;
+      font-size:0.75rem; font-weight:500; letter-spacing:0.1em;
+      text-transform:uppercase; color:var(--primary);
+      margin-bottom:0.75rem;
+      font-family:var(--font-mono);
+    }
+    .s-label::before {
+      content:''; display:block; width:16px; height:2px;
+      background:var(--primary); border-radius:1px; opacity:0.5;
+    }
+    .s-title {
+      font-size:clamp(2rem, 4.5vw, 3rem);
+      letter-spacing:-0.03em; line-height:1.15;
+      margin-bottom:1rem;
+      font-weight:600; color:var(--text-dark);
+    }
+    .s-sub {
+      font-size:1.1rem; line-height:1.7;
+      color:var(--text-dark-muted);
+      max-width:640px; font-weight:400;
+      margin-bottom:2rem;
+    }
+
+    /* Scroll reveal */
+    [data-reveal] {
+      opacity:0; transform:translateY(24px);
+      transition:opacity 0.8s var(--ease-smooth), transform 0.8s var(--ease-smooth);
+    }
+    [data-reveal].revealed { opacity:1; transform:translateY(0); }
+    [data-reveal][data-delay="1"] { transition-delay:0.08s; }
+    [data-reveal][data-delay="2"] { transition-delay:0.16s; }
+    [data-reveal][data-delay="3"] { transition-delay:0.24s; }
+    [data-reveal][data-delay="4"] { transition-delay:0.32s; }
+
+    /* ============================================
+       HERO — Dark 4-stop navy gradient
+       ============================================ */
+    .hero {
+      min-height:70vh;
+      display:flex; align-items:center; justify-content:center;
+      padding:10rem 3rem 5rem;
+      position:relative; overflow:hidden;
+      text-align:center;
+      background:linear-gradient(180deg,
+        #080B1A 0%, #0C1035 30%, #111B52 65%, #1A2E78 100%);
+      color:white;
+    }
+    .hero-content {
+      max-width:1080px; margin:0 auto; width:100%;
+      position:relative; z-index:1;
+      display:flex; flex-direction:column; align-items:center;
+    }
+    .hero-content > * { animation:heroFadeUp 0.9s var(--ease-smooth) both; }
+    .hero-content > *:nth-child(1) { animation-delay:0.05s; }
+    .hero-content > *:nth-child(2) { animation-delay:0.15s; }
+    .hero-content > *:nth-child(3) { animation-delay:0.25s; }
+    .hero-content > *:nth-child(4) { animation-delay:0.35s; }
+    @keyframes heroFadeUp {
+      from { opacity:0; transform:translateY(32px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    .hero-mono-label {
+      font-family:var(--font-mono); font-size:0.78rem; font-weight:400;
+      color:rgba(255,255,255,0.4); letter-spacing:0.12em;
+      margin-bottom:1.5rem;
+      text-transform:uppercase;
+    }
+    .hero h1 {
+      font-size:clamp(2.6rem, 6.5vw, 4.5rem);
+      letter-spacing:-0.04em;
+      line-height:1.05;
+      margin-bottom:1.5rem;
+      max-width:860px; font-weight:600;
+      background:linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.72));
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      background-clip:text;
+    }
+    .hero-sub {
+      font-size:1.15rem; line-height:1.7;
+      color:rgba(255,255,255,0.6);
+      max-width:640px;
+      margin-bottom:3rem; font-weight:400;
+    }
+    .hero-meta-row {
+      display:grid; grid-template-columns:repeat(4,1fr);
+      gap:1rem; width:100%; max-width:860px;
+      padding-top:2.5rem;
+      border-top:1px solid rgba(255,255,255,0.08);
+    }
+    .meta-block { text-align:left; }
+    .meta-label {
+      font-family:var(--font-mono); font-size:0.7rem; font-weight:400;
+      letter-spacing:0.12em; text-transform:uppercase;
+      color:rgba(255,255,255,0.4);
+      margin-bottom:0.5rem;
+    }
+    .meta-val {
+      font-family:var(--font-heading);
+      font-size:0.98rem; font-weight:500;
+      color:rgba(255,255,255,0.95);
+      letter-spacing:-0.01em;
+    }
+
+    /* Back link */
+    .back-link {
+      position:absolute; top:6.5rem; left:3rem;
+      display:inline-flex; align-items:center; gap:8px;
+      font-family:var(--font-mono);
+      font-size:0.78rem; font-weight:400;
+      letter-spacing:0.08em; text-transform:uppercase;
+      color:rgba(255,255,255,0.5);
+      transition:color var(--transition);
+      z-index:2;
+    }
+    .back-link:hover { color:rgba(255,255,255,0.9); }
+
+    /* ============================================
+       HERO IMAGE (on navy gradient end)
+       ============================================ */
+    .hero-image-section {
+      background:transparent;
+      padding:0;
+      margin-top:-3rem;
+      position:relative;
+      z-index:1;
+    }
+    .hero-image-inner {
+      max-width:1100px; margin:0 auto; padding:0 3rem;
+    }
+    .hero-showcase-img {
+      width:100%; height:auto; display:block;
+      border-radius:var(--radius-card);
+      max-height:640px; object-fit:cover; object-position:center;
+      box-shadow:0 30px 80px rgba(0,0,0,0.35);
+    }
+
+    /* ============================================
+       PAGE INTRO — dark narrative band
+       ============================================ */
+    .page-intro-section {
+      background:var(--bg-dark);
+      padding:5.5rem 3rem;
+    }
+    .page-intro-section .intro-lead {
+      font-size:clamp(1.15rem,2.5vw,1.4rem);
+      line-height:1.75;
+      color:var(--text-light-muted);
+      font-weight:400;
+    }
+    .page-intro-section .intro-lead .hl {
+      color:#FFFFFF; font-weight:500;
+    }
+
+    /* ============================================
+       PROJECT CONTENT (white sections)
+       ============================================ */
+    .project-body { max-width:800px; margin:0 auto; }
+    .project-body p {
+      font-size:1.02rem; line-height:1.8;
+      color:var(--text-dark-muted);
+      margin-bottom:1.15rem;
+    }
+    .project-body p:last-child { margin-bottom:0; }
+    .project-body p strong { color:var(--text-dark); font-weight:600; }
+
+    /* Deliverable list */
+    .deliver-list {
+      display:grid; grid-template-columns:repeat(2,1fr);
+      gap:0.75rem; margin-top:2rem;
+    }
+    .deliver-item {
+      display:flex; align-items:center; gap:0.75rem;
+      padding:0.9rem 1.1rem;
+      background:#F5F5F7;
+      border-radius:var(--radius-sm);
+      font-size:0.95rem;
+      color:var(--text-dark);
+    }
+    .deliver-item svg { flex-shrink:0; color:var(--primary); }
+
+    /* Outcome stats */
+    .outcome-stats {
+      display:grid; grid-template-columns:repeat(3,1fr);
+      gap:1rem; margin-top:2.25rem;
+    }
+    .outcome-stat {
+      padding:1.75rem 1.5rem;
+      background:#F5F5F7;
+      border-radius:var(--radius-card);
+      text-align:center;
+    }
+    .outcome-stat-val {
+      font-family:var(--font-heading);
+      font-size:clamp(1.8rem,3vw,2.2rem);
+      font-weight:600; color:var(--text-dark);
+      letter-spacing:-0.02em; line-height:1;
+    }
+    .outcome-stat-lbl {
+      font-family:var(--font-mono);
+      font-size:0.72rem;
+      letter-spacing:0.1em;
+      text-transform:uppercase;
+      color:var(--primary);
+      margin-top:0.75rem;
+    }
+
+    /* ============================================
+       GALLERY
+       ============================================ */
+    .gallery-grid {
+      display:grid; grid-template-columns:repeat(2,1fr);
+      gap:1.25rem; margin-top:3rem;
+      max-width:1080px; margin-left:auto; margin-right:auto;
+    }
+    .gallery-item {
+      border-radius:var(--radius-card); overflow:hidden; position:relative;
+      background:#F5F5F7;
+      box-shadow:0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.04);
+      transition:box-shadow var(--transition), transform var(--transition);
+    }
+    .gallery-item:hover {
+      box-shadow:0 8px 32px rgba(0,0,0,0.08);
+      transform:translateY(-2px);
+    }
+    .gallery-item img {
+      width:100%; display:block;
+      transition:transform 0.5s var(--ease-smooth);
+    }
+    .gallery-item:hover img { transform:scale(1.02); }
+    .gallery-item.full { grid-column:span 2; }
+
+    /* ============================================
+       NEXT PROJECT (dark CTA)
+       ============================================ */
+    .next-project {
+      background:var(--bg-dark);
+      padding:5.5rem 3rem;
+      border-top:1px solid rgba(255,255,255,0.06);
+    }
+    .np-inner { max-width:1080px; margin:0 auto; }
+    .np-eyebrow {
+      font-family:var(--font-mono);
+      font-size:0.75rem; font-weight:400;
+      letter-spacing:0.12em; text-transform:uppercase;
+      color:var(--primary);
+      margin-bottom:1.25rem;
+    }
+    .np-grid {
+      display:grid; grid-template-columns:1fr 1fr;
+      gap:3.5rem; align-items:center;
+    }
+    .np-title {
+      font-size:clamp(1.8rem,3.5vw,2.6rem);
+      letter-spacing:-0.03em; line-height:1.1;
+      margin-bottom:0.85rem; font-weight:600;
+      background:linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.7));
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      background-clip:text;
+    }
+    .np-desc {
+      font-size:1rem; line-height:1.7;
+      color:rgba(255,255,255,0.55);
+      margin-bottom:1.75rem;
+      max-width:420px;
+    }
+    .np-thumb {
+      display:block; border-radius:var(--radius-card); overflow:hidden;
+      aspect-ratio:16/10; position:relative;
+      box-shadow:0 30px 60px rgba(0,0,0,0.4);
+    }
+    .np-thumb img {
+      width:100%; height:100%; object-fit:cover;
+      transition:transform 0.5s var(--ease-smooth);
+      display:block;
+    }
+    .np-thumb:hover img { transform:scale(1.04); }
+
+    /* ============================================
+       FOOTER — Dark
+       ============================================ */
+    footer {
+      background:var(--bg-dark);
+      border-top:1px solid rgba(255,255,255,0.06);
+      padding:4rem 3rem 2.5rem;
+    }
+    .footer-inner { max-width:1080px; margin:0 auto; }
+    .footer-top {
+      display:flex; justify-content:space-between;
+      align-items:start; margin-bottom:3rem;
+      gap:2rem;
+    }
+    .footer-brand .logo {
+      margin-bottom:0.75rem;
+      color:rgba(255,255,255,0.8);
+    }
+    .footer-brand .logo .os { color:rgba(255,255,255,0.4); }
+    .footer-brand p {
+      font-size:0.88rem;
+      color:rgba(255,255,255,0.55);
+      line-height:1.7;
+      max-width:280px; font-weight:400;
+    }
+    .footer-links { display:flex; gap:3rem; }
+    .footer-links a {
+      font-size:0.88rem;
+      color:rgba(255,255,255,0.6);
+      transition:color var(--transition);
+      font-weight:400;
+    }
+    .footer-links a:hover { color:rgba(255,255,255,0.9); }
+    .footer-bottom {
+      padding-top:2rem;
+      border-top:1px solid rgba(255,255,255,0.06);
+      display:flex; justify-content:space-between;
+      align-items:center; flex-wrap:wrap; gap:1rem;
+    }
+    .footer-bottom p {
+      font-size:0.82rem; color:rgba(255,255,255,0.5);
+    }
+
+    /* ============================================
+       HAMBURGER & MOBILE MENU
+       ============================================ */
+    .hamburger {
+      display:none; flex-direction:column; justify-content:center;
+      align-items:center; width:44px; height:44px; gap:5px;
+      background:transparent; border:none; cursor:pointer;
+      padding:4px; border-radius:var(--radius-sm); flex-shrink:0;
+      transition:background var(--transition);
+    }
+    .hamburger:hover { background:rgba(0,0,0,0.04); }
+    .hamburger-line {
+      display:block; width:20px; height:1.5px;
+      background:var(--text-dark);
+      border-radius:1px; transform-origin:center;
+      transition:transform 0.3s var(--ease-smooth), opacity 0.2s ease, background 0.2s ease;
+    }
+    .hamburger.open .hamburger-line:nth-child(1) { transform:translateY(6.5px) rotate(45deg); }
+    .hamburger.open .hamburger-line:nth-child(2) { opacity:0; transform:scaleX(0); }
+    .hamburger.open .hamburger-line:nth-child(3) { transform:translateY(-6.5px) rotate(-45deg); }
+    .hamburger.open .hamburger-line { background:#fff; }
+
+    .mobile-menu {
+      display:none; position:fixed; top:0; left:0; right:0; bottom:0;
+      z-index:190;
+      background:rgba(10,1,24,0.98);
+      backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+      flex-direction:column; padding:7rem 2rem 3rem;
+      opacity:0; transform:translateY(-8px);
+      transition:opacity 0.35s ease, transform 0.3s var(--ease-smooth);
+      pointer-events:none;
+    }
+    .mobile-menu.open { opacity:1; transform:translateY(0); pointer-events:all; }
+    .mobile-menu a.m-nav-link {
+      display:block; font-family:var(--font-heading);
+      font-size:1.4rem; font-weight:500;
+      letter-spacing:-0.01em; color:rgba(255,255,255,0.75);
+      padding:1.1rem 0;
+      border-bottom:1px solid rgba(255,255,255,0.06);
+      transition:color var(--transition);
+      min-height:44px;
+    }
+    .mobile-menu a.m-nav-link:hover { color:#fff; }
+    .mobile-menu a.m-nav-link.active { color:#fff; }
+    .mobile-menu .m-cta { margin-top:2.5rem; }
+    .mobile-menu .m-cta .btn {
+      width:100%; justify-content:center;
+      font-size:0.92rem; padding:0.95rem 1.5rem;
+      min-height:48px;
+    }
+
+    /* ============================================
+       RESPONSIVE — TABLET (900px)
+       ============================================ */
+    @media(max-width:900px) {
+      nav { padding:6px 12px 6px 16px; }
+      .section, .section-alt { padding:5rem 1.5rem; }
+      .hero { padding:9rem 1.5rem 4rem; min-height:auto; }
+      .page-intro-section { padding:5rem 1.5rem; }
+      .next-project { padding:5rem 1.5rem; }
+      .hero-image-inner { padding:0 1.5rem; }
+      .back-link { top:5.5rem; left:1.5rem; }
+
+      .hero-meta-row { grid-template-columns:repeat(2,1fr); gap:1.25rem; }
+      .outcome-stats { grid-template-columns:1fr; }
+      .np-grid { grid-template-columns:1fr; gap:2rem; }
+
+      .footer-top { flex-direction:column; }
+      .footer-links { flex-wrap:wrap; gap:1.5rem; }
+    }
+
+    /* ============================================
+       RESPONSIVE — MOBILE (640px)
+       ============================================ */
+    @media(max-width:640px) {
+      .nav-links { display:none; }
+      .nav-extras { display:none; }
+      .hamburger { display:flex; }
+      .mobile-menu { display:flex; }
+
+      .nav-wrap { max-width:calc(100% - 24px); }
+
+      .section, .section-alt { padding:4rem 1.25rem; }
+      .hero { padding:8rem 1.25rem 3rem; }
+      .hero h1 { font-size:clamp(2rem, 8vw, 3rem); }
+      .hero-sub { font-size:1.02rem; margin-bottom:2rem; }
+      .back-link { top:5rem; left:1.25rem; font-size:0.72rem; }
+
+      .hero-image-section { margin-top:-2rem; }
+      .hero-image-inner { padding:0 1.25rem; }
+
+      .page-intro-section { padding:4rem 1.25rem; }
+      .next-project { padding:4rem 1.25rem; }
+
+      .hero-meta-row {
+        grid-template-columns:1fr 1fr;
+        gap:1.25rem 1rem;
+        padding-top:2rem;
+      }
+
+      .deliver-list { grid-template-columns:1fr; }
+      .gallery-grid { grid-template-columns:1fr; }
+      .gallery-item.full { grid-column:span 1; }
+
+      footer { padding:3rem 1.25rem 2rem; }
+      .footer-bottom { flex-direction:column; align-items:flex-start; }
+    }
+    /* Currency selector — injected via currency.js into .footer-currency */
+    .footer-currency { display:flex; align-items:center; gap:4px; }
+    .currency-selector {
+      display:flex; align-items:center; gap:2px;
+      padding:0; background:transparent;
+    }
+    .currency-btn {
+      background:transparent; border:none; cursor:pointer;
+      width:30px; height:30px;
+      border-radius:50%;
+      font-size:0.9rem;
+      display:flex; align-items:center; justify-content:center;
+      transition:background 0.2s ease, opacity 0.2s ease;
+      padding:0;
+      opacity:0.5;
+    }
+    .currency-btn:hover { background:rgba(255,255,255,0.08); opacity:0.85; }
+    .currency-btn.active { background:rgba(255,255,255,0.12); opacity:1; }
+
+  </style>
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to content</a>
+
+  <!-- NAVIGATION — Floating Pill -->
+  <div class="nav-wrap">
+    <nav>
+    <a href="index.html" class="logo">VENTRIFY <span class="os">OS</span></a>
+    <div class="nav-links">
+      <a href="system.html">System</a>
+      <a href="the-data-room.html">Data Room</a>
+      <a href="the-workspace.html">Workspace</a>
+      <a href="showcase.html" class="active">Showcase</a>
+      <a href="pricing.html">Pricing</a>
+    </div>
+    <div class="nav-extras">
+      <a href="mailto:hello@ventrify.io?subject=Ventrify%20OS%20demo%20request" class="btn">Book a demo</a>
+    </div>
+    <button class="hamburger" aria-label="Menu">
+      <span class="hamburger-line"></span>
+      <span class="hamburger-line"></span>
+      <span class="hamburger-line"></span>
+    </button>
+  </nav>
+  </div>
+
+  <!-- Mobile Menu -->
+  <div class="mobile-menu">
+    <a href="system.html" class="m-nav-link">System</a>
+    <a href="the-data-room.html" class="m-nav-link">Data Room</a>
+    <a href="the-workspace.html" class="m-nav-link">Workspace</a>
+    <a href="showcase.html" class="m-nav-link active">Showcase</a>
+    <a href="pricing.html" class="m-nav-link">Pricing</a>
+    <div class="m-cta">
+      <a href="mailto:hello@ventrify.io?subject=Ventrify%20OS%20demo%20request" class="btn btn-dark-primary btn-lg">Book a demo</a>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════
+       HERO — Dark navy gradient
+       ═══════════════════════════════════════════ -->
+  <section class="hero" id="main-content">
+    <a href="showcase.html" class="back-link">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Back to showcase
+    </a>
+    <div class="hero-content">
+      <div class="hero-mono-label">Case Study &middot; Venture tier</div>
+      <h1 class="shimmer-text">Flicksy</h1>
+      <p class="hero-sub">Content discovery, reimagined &mdash; a modern streaming platform with intelligent recommendations, social viewing rooms, and a cinematic playback experience.</p>
+      <div class="hero-meta-row">
+        <div class="meta-block">
+          <div class="meta-label">Client</div>
+          <div class="meta-val">Flicksy</div>
+        </div>
+        <div class="meta-block">
+          <div class="meta-label">Industry</div>
+          <div class="meta-val">Streaming</div>
+        </div>
+        <div class="meta-block">
+          <div class="meta-label">Timeline</div>
+          <div class="meta-val">10 Weeks</div>
+        </div>
+        <div class="meta-block">
+          <div class="meta-label">Tier</div>
+          <div class="meta-val">Venture Pro</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HERO IMAGE — on navy gradient end -->
+  <div class="hero-image-section">
+    <div class="hero-image-inner">
+      <img src="assets/showcase/Flicksy/flicksy-hero.jpg" alt="Flicksy — Streaming Platform" class="hero-showcase-img">
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       PAGE INTRO — dark narrative band
+       ═══════════════════════════════════════════ -->
+  <section class="page-intro-section">
+    <div class="container" data-reveal>
+      <div style="max-width:820px;margin:0 auto;text-align:center;">
+        <p class="intro-lead">The streaming landscape is saturated &mdash; audiences have more choices than ever, yet finding something worth watching remains frustrating. <span class="hl">Flicksy joined Ventrify Studio with a clear conviction: the problem wasn&rsquo;t a lack of content, it was a failure of discovery.</span> The program ran on Ventrify OS &mdash; 10 weeks, three signed gates, seven portal hubs, ten specialist agents. The platform produced a streaming product that surfaces the right content to the right person, with social discovery that doesn&rsquo;t feel bolted on.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       THE CHALLENGE — white section
+       ═══════════════════════════════════════════ -->
+  <section class="section" id="challenge">
+    <div class="container" data-reveal>
+      <div class="project-body">
+        <div class="s-label">The Challenge</div>
+        <h2 class="s-title s-title-shimmer">Content without discovery</h2>
+        <p>The streaming landscape is saturated &mdash; audiences have more choices than ever, yet finding something worth watching remains genuinely frustrating. Flicksy came to us with a clear conviction: the problem wasn&rsquo;t a lack of content, it was a failure of discovery.</p>
+        <p>The brief was to design and build a streaming platform that felt meaningfully different &mdash; one that surfaced the right content to the right person at the right moment, while fostering a sense of shared viewing culture through social features that didn&rsquo;t feel bolted on.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       OUR APPROACH — alt section
+       ═══════════════════════════════════════════ -->
+  <section class="section-alt" id="approach">
+    <div class="container" data-reveal>
+      <div class="project-body">
+        <div class="s-label">Phase 1 &middot; Phase 2 &middot; The Data Room</div>
+        <h2 class="s-title s-title-shimmer">Three Provocation Cards.<br>One product locked at Gate 2.</h2>
+        <p>Phase 1 Discover produced the Research Hub L3 &mdash; mapping content-consumption journeys across Netflix, Disney+, and niche platforms, identifying the exact friction points where users disengage or default to rewatching. <code style="font-family:var(--font-mono);font-size:0.85em;background:rgba(0,54,255,0.06);padding:1px 6px;border-radius:5px;color:var(--primary);">source-verifier</code> validated every citation. The insight was consistent: recommendation systems optimised for engagement over satisfaction leave users feeling algorithmically trapped.</p>
+        <p>Phase 2 Define produced 7 Vision Hub Provocation Cards. The founder resolved three as scope-locking strategic forks: <strong>transparent recommendations</strong> (users see why something is suggested), <strong>social discovery</strong> (friends and communities as a discovery layer), and <strong>frictionless playback</strong> that steps out of the way the moment a decision is made. Gate 2 closed with founder sign-off in the portal; L3 rebuilt against the decisions.</p>
+        <p>In Phase 3 Design, <code style="font-family:var(--font-mono);font-size:0.85em;background:rgba(0,54,255,0.06);padding:1px 6px;border-radius:5px;color:var(--primary);">ux-designer</code> produced three audit rounds against the recommendation surfaces. The platform shipped a cinematic visual language &mdash; dark surfaces, rich imagery, hierarchy that guides the eye toward content rather than chrome. <code style="font-family:var(--font-mono);font-size:0.85em;background:rgba(0,54,255,0.06);padding:1px 6px;border-radius:5px;color:var(--primary);">information-architect</code> mapped 52 screens to the founder-resolved cards.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       WHAT WE BUILT — white section + deliverables
+       ═══════════════════════════════════════════ -->
+  <section class="section" id="built">
+    <div class="container" data-reveal>
+      <div class="project-body">
+        <div class="s-label">What We Built</div>
+        <h2 class="s-title s-title-shimmer">A full-stack streaming platform</h2>
+        <p>Web and mobile &mdash; from the content browse and discovery experience through to the playback layer, social viewing rooms, and personalisation engine. We also delivered the full design system and marketing site.</p>
+        <div class="deliver-list">
+          <div class="deliver-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Discovery &amp; Browse Experience
+          </div>
+          <div class="deliver-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Recommendation Engine
+          </div>
+          <div class="deliver-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Cinematic Playback Layer
+          </div>
+          <div class="deliver-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Social Viewing Rooms
+          </div>
+          <div class="deliver-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Personalisation System
+          </div>
+          <div class="deliver-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Full Design System
+          </div>
+          <div class="deliver-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Responsive Web Build
+          </div>
+          <div class="deliver-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Mobile Applications
+          </div>
+          <div class="deliver-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Marketing Website
+          </div>
+          <div class="deliver-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Brand Identity System
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       GALLERY — alt section
+       ═══════════════════════════════════════════ -->
+  <section class="section-alt" id="gallery">
+    <div class="container" data-reveal>
+      <div style="text-align:center;display:flex;flex-direction:column;align-items:center;">
+        <div class="s-label">Platform Design</div>
+        <h2 class="s-title s-title-shimmer">Every screen, built end to end</h2>
+        <p class="s-sub" style="text-align:center;margin-left:auto;margin-right:auto;">From home feed and title detail to social viewing rooms and full-screen playback.</p>
+      </div>
+      <div class="gallery-grid">
+        <div class="gallery-item full">
+          <img src="assets/showcase/Flicksy/screenshot_1.jpg" alt="Flicksy — Home and discovery feed" loading="lazy">
+        </div>
+        <div class="gallery-item">
+          <img src="assets/showcase/Flicksy/screenshot_2.jpg" alt="Content browse — genre categories" loading="lazy">
+        </div>
+        <div class="gallery-item">
+          <img src="assets/showcase/Flicksy/screenshot_3.jpg" alt="Title detail — synopsis and cast" loading="lazy">
+        </div>
+        <div class="gallery-item full">
+          <img src="assets/showcase/Flicksy/screenshot_4.jpg" alt="Recommendation engine — personalised feed" loading="lazy">
+        </div>
+        <div class="gallery-item">
+          <img src="assets/showcase/Flicksy/screenshot_5.jpg" alt="Watchlist and saved content" loading="lazy">
+        </div>
+        <div class="gallery-item">
+          <img src="assets/showcase/Flicksy/screenshot_6.jpg" alt="Social viewing — watch rooms" loading="lazy">
+        </div>
+        <div class="gallery-item full">
+          <img src="assets/showcase/Flicksy/screenshot_7.jpg" alt="Playback interface — full-screen controls" loading="lazy">
+        </div>
+        <div class="gallery-item">
+          <img src="assets/showcase/Flicksy/screenshot_8.jpg" alt="Profile and preferences" loading="lazy">
+        </div>
+        <div class="gallery-item">
+          <img src="assets/showcase/Flicksy/screenshot_9.jpg" alt="Mobile experience — content cards" loading="lazy">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       THE OUTCOME — white section
+       ═══════════════════════════════════════════ -->
+  <section class="section" id="outcome">
+    <div class="container" data-reveal>
+      <div class="project-body">
+        <div class="s-label">The Outcome</div>
+        <h2 class="s-title s-title-shimmer">Investor-demo-ready in 10 weeks.</h2>
+        <p>Flicksy ran end-to-end on Ventrify OS under the Venture tier ($55,000). The platform orchestrated 10 specialist agents across 5 phases. Seven portal hubs delivered as live data rooms. Three gates closed with founder sign-off in the portal. <code>research-curator</code> drafted 26 Provocation Cards; the founder resolved every one before scope locked. <code>backend-architect</code> defined the recommendation engine schema before app code was written.</p>
+        <p>The platform shipped a streaming product with transparent recommendations, social discovery, and frictionless playback &mdash; plus a 9-page marketing site, design system site, Investor Pitch Deck (PDF), SOW, brand photo set, and a 60-second promo video. One program manager orchestrated. The agents executed.</p>
+        <div class="outcome-stats">
+          <div class="outcome-stat">
+            <div class="outcome-stat-val">3 / 3</div>
+            <div class="outcome-stat-lbl">Gates signed off in portal</div>
+          </div>
+          <div class="outcome-stat">
+            <div class="outcome-stat-val">10</div>
+            <div class="outcome-stat-lbl">Specialist agents engaged</div>
+          </div>
+          <div class="outcome-stat">
+            <div class="outcome-stat-val">26</div>
+            <div class="outcome-stat-lbl">Provocation Cards resolved</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       NEXT PROJECT — dark CTA
+       ═══════════════════════════════════════════ -->
+  <section class="next-project">
+    <div class="np-inner" data-reveal>
+      <div class="np-eyebrow">Next Project</div>
+      <div class="np-grid">
+        <div>
+          <h2 class="np-title">CuraGo</h2>
+          <p class="np-desc">An AI-powered healthcare platform connecting patients with personalised wellness solutions, telemedicine, and preventive care.</p>
+          <a href="showcase-curago.html" class="btn btn-dark-primary btn-lg">
+            View Project
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:8px;"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+        </div>
+        <a href="showcase-curago.html" class="np-thumb">
+          <img src="assets/showcase/CuraGo/curago-hero.jpg" alt="CuraGo — Healthcare Platform" loading="lazy">
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER — Dark -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <div class="logo">VENTRIFY <span class="os">OS</span></div>
+          <p>The operating system for startup programs.</p>
+        </div>
+        <div class="footer-links">
+          <a href="system.html">System</a>
+          <a href="the-data-room.html">Data Room</a>
+          <a href="the-workspace.html">Workspace</a>
+          <a href="showcase.html">Showcase</a>
+          <a href="pricing.html">Pricing</a>
+          <a href="faqs.html">FAQs</a>
+          <a href="mailto:hello@ventrify.io?subject=Ventrify%20OS%20demo%20request">Book a demo</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 Ventrify. All rights reserved.</p>
+        <p>A product by Ventrify &mdash; <a href="https://ventrify.io" style="color:rgba(255,255,255,0.4);">ventrify.io</a></p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Hamburger Toggle
+    const hamburger = document.querySelector('.hamburger');
+    const mobileMenu = document.querySelector('.mobile-menu');
+    if (hamburger && mobileMenu) {
+      hamburger.addEventListener('click', () => {
+        hamburger.classList.toggle('open');
+        mobileMenu.classList.toggle('open');
+        document.body.style.overflow = mobileMenu.classList.contains('open') ? 'hidden' : '';
+      });
+      mobileMenu.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', () => {
+          hamburger.classList.remove('open');
+          mobileMenu.classList.remove('open');
+          document.body.style.overflow = '';
+        });
+      });
+    }
+
+    // Scroll reveal
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('revealed');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -60px 0px' });
+    document.querySelectorAll('[data-reveal]').forEach(el => revealObserver.observe(el));
+  </script>
+  <script src="scripts/currency.js" defer></script>
+</body>
+</html>

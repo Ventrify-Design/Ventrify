@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Action queue — Ventrify OS Workspace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="root"></div>
+  <script src="sample-data.js"></script>
+  <script src="app.js"></script>
+  <script>
+    const W = window.WORKSPACE;
+    const { actions, helpers } = W;
+
+    const typeIcon = {
+      'gate-ready': '&#x2713;',
+      'cards-to-review': '&#x270E;',
+      'stuck-program': '&#x26A0;',
+      'qa-flag': '&#x1F50D;',
+      'l3-rebuild': '&#x21BB;',
+      'intake': '&#x2728;'
+    };
+    const typeLabel = {
+      'gate-ready': 'Gate ready',
+      'cards-to-review': 'Cards to review',
+      'stuck-program': 'Stuck',
+      'qa-flag': 'QA flag',
+      'l3-rebuild': 'L3 rebuild',
+      'intake': 'New intake'
+    };
+
+    function actionCardHTML(a) {
+      const program = helpers.getProgram(a.programId);
+      return `
+        <div class="action-card urgency-${a.urgency}">
+          <div class="action-icon type-${a.type}">${typeIcon[a.type] || '&#x2022;'}</div>
+          <div class="action-body">
+            <div class="action-title">${a.title}</div>
+            <div class="action-detail">${a.detail}</div>
+            <div class="action-meta">
+              <span class="text-mono">${typeLabel[a.type]}</span> &middot;
+              ${program ? `<span>${program.name}</span> &middot;` : ''}
+              <span>${a.age}</span>
+            </div>
+          </div>
+          <div class="action-cta">
+            <button class="btn btn-primary btn-sm">${a.cta}</button>
+            <a href="program.html?id=${a.programId}" class="text-small dim" style="font-size:0.78rem;">Open program &rarr;</a>
+          </div>
+        </div>
+      `;
+    }
+
+    const byUrgency = { high: [], medium: [], low: [] };
+    actions.forEach(a => { byUrgency[a.urgency].push(a); });
+
+    function sectionHTML(label, items, sub) {
+      if (!items.length) return '';
+      return `
+        <div class="section">
+          <div class="section-head">
+            <div>
+              <div class="section-title">${label} <span class="text-mono dim" style="font-size:0.78rem;letter-spacing:0.06em;">&middot; ${items.length}</span></div>
+              <div class="section-sub">${sub}</div>
+            </div>
+          </div>
+          <div class="action-list">
+            ${items.map(actionCardHTML).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    const main = `
+      <div class="page-header">
+        <div class="page-eyebrow">Action queue</div>
+        <h1 class="page-title">Your work this week</h1>
+        <p class="page-sub">Everything the platform needs from you, across every program. Prioritised by urgency. Gate sign-offs and stuck founders surface to the top.</p>
+      </div>
+
+      ${sectionHTML('High urgency', byUrgency.high, 'Blocking a gate or a founder. Address first.')}
+      ${sectionHTML('Medium urgency', byUrgency.medium, 'Should be cleared this week.')}
+      ${sectionHTML('Low urgency', byUrgency.low, 'Awareness items. No immediate action required.')}
+    `;
+
+    window.renderShell(main);
+  </script>
+</body>
+</html>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Program — Ventrify OS Workspace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="root"></div>
+  <script src="sample-data.js"></script>
+  <script src="app.js"></script>
+  <script>
+    const W = window.WORKSPACE;
+    const { helpers, labels } = W;
+
+    // Read ?id= from URL, default to first program
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('id') || W.programs[0].id;
+    const p = helpers.getProgram(id) || W.programs[0];
+    const operator = helpers.getOperator(p.assignedOperator);
+
+    function hubCardHTML(key, data) {
+      const status = data.status || 'pending';
+      const meta = (data.cards ? `${data.cards} cards` : 'Awaiting activation');
+      const action = {
+        'signed': 'View hub &rarr;',
+        'ready-to-sign': 'Review &amp; close gate &rarr;',
+        'awaiting-founder': 'Open in founder portal &rarr;',
+        'in-progress': 'Open hub &rarr;',
+        'pending': 'Locked until phase opens'
+      }[status];
+      return `
+        <div class="hub-card ${status}">
+          <div class="hub-card-head">
+            <div class="hub-card-name">${labels.hub[key]}</div>
+            <span class="hub-card-status ${status}">${helpers.hubStatusLabel(status)}</span>
+          </div>
+          <div class="hub-card-detail">${meta}</div>
+          <div style="margin-top:auto;padding-top:0.5rem;">
+            <span class="text-mono dim" style="font-size:0.78rem;">${action}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    const hubOrder = ['research','vision','strategy','financials','marketing','video','blog'];
+    const hubsHTML = hubOrder.map(k => hubCardHTML(k, p.hubs[k] || {})).join('');
+
+    // Sample timeline events for this program
+    const timelineHTML = `
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="timeline-time">${p.lastActivity}</div>
+          <div class="timeline-detail">${p.lastActivityDetail}</div>
+        </div>
+        <div class="timeline-item faded">
+          <div class="timeline-time">Yesterday</div>
+          <div class="timeline-detail">Founder resolved 3 Strategy Hub cards &middot; <span class="agent">research-curator</span> began L3 rebuild</div>
+        </div>
+        <div class="timeline-item faded">
+          <div class="timeline-time">3 days ago</div>
+          <div class="timeline-detail"><span class="agent">source-verifier</span> verified 14 citations in Research Hub L3 &middot; 1 flagged for review</div>
+        </div>
+        <div class="timeline-item faded">
+          <div class="timeline-time">5 days ago</div>
+          <div class="timeline-detail">Gate 1 signed off by founder &middot; Phase 2 unlocked</div>
+        </div>
+        <div class="timeline-item faded">
+          <div class="timeline-time">2 weeks ago</div>
+          <div class="timeline-detail"><span class="agent">research-curator</span> drafted 6 Provocation Cards for Research Hub</div>
+        </div>
+      </div>
+    `;
+
+    const main = `
+      <div style="margin-bottom:1rem;">
+        <a href="dashboard.html" class="text-small dim" style="font-size:0.85rem;">&larr; All programs</a>
+      </div>
+
+      <div class="program-detail-head">
+        <div class="program-detail-identity">
+          <div class="avatar avatar-lg" style="background:${p.founderAvatarColor};width:56px;height:56px;font-size:1.05rem;">${p.founderAvatar}</div>
+          <div>
+            <h1 class="program-detail-title">${p.name}</h1>
+            <p class="program-detail-pitch">${p.venturePitch}</p>
+            <div class="program-detail-meta">
+              <span class="pill">${p.industry}</span>
+              <span class="pill pill-primary">${helpers.phaseLabel(p.phase)}</span>
+              <span class="pill ${window.healthClass(p.health)}"><span class="dot"></span> ${window.healthLabel(p.health)}</span>
+              ${p.mvpDemoModeReady ? '<span class="pill pill-success"><span class="dot"></span> DEMO_MODE ready</span>' : ''}
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:0.5rem;align-items:flex-end;">
+          <button class="btn btn-primary">Open founder portal &rarr;</button>
+          <button class="btn btn-outline btn-sm">Reassign operator</button>
+        </div>
+      </div>
+
+      <div class="program-detail-stats">
+        <div class="card">
+          <div class="stat-block">
+            <div class="stat-val">${p.cards.resolved}/${p.cards.drafted}</div>
+            <div class="stat-lbl">Cards resolved by founder</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="stat-block">
+            <div class="stat-val">${p.daysActive}</div>
+            <div class="stat-lbl">Days active</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="stat-block">
+            <div class="stat-val" style="font-size:1.05rem;">${p.gateStatus}</div>
+            <div class="stat-lbl">Gate status</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-title">Program hubs</div>
+            <div class="section-sub">7 data-room hubs &middot; each renders L1 Provocation Cards, L2 Evidence, L3 Full Research for the founder.</div>
+          </div>
+        </div>
+        <div class="hub-grid">
+          ${hubsHTML}
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-title">Recent activity</div>
+            <div class="section-sub">Agent runs, founder actions, gate transitions. Persistent audit trail in the engagement repo.</div>
+          </div>
+          <a href="#" class="btn btn-ghost btn-sm">View full timeline &rarr;</a>
+        </div>
+        <div class="card">
+          ${timelineHTML}
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-title">Assignment</div>
+          </div>
+        </div>
+        <div class="card" style="display:flex;align-items:center;justify-content:space-between;gap:1rem;">
+          <div style="display:flex;gap:12px;align-items:center;">
+            <div class="avatar avatar-lg" style="background:${operator.avatarColor};">${operator.avatar}</div>
+            <div>
+              <div style="font-weight:600;">${operator.name}</div>
+              <div class="text-small dim">${operator.role} &middot; ${operator.email}</div>
+            </div>
+          </div>
+          <button class="btn btn-outline btn-sm">Reassign</button>
+        </div>
+      </div>
+    `;
+
+    window.renderShell(main);
+  </script>
+</body>
+</html>

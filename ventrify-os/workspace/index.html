@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign in — Ventrify OS Workspace</title>
+  <meta name="description" content="Sign in to your Ventrify OS Workspace. Multi-program command center for accelerators, incubators, and venture studios licensing the platform.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="login-shell">
+    <div class="login-card">
+      <div class="login-logo">
+        VENTRIFY <span class="os">OS</span>
+        <span class="tag">Workspace</span>
+      </div>
+
+      <h1 class="login-title">Sign in to your Workspace</h1>
+      <p class="login-sub">The operator command center for every program your team is running on Ventrify OS.</p>
+
+      <form class="login-form" onsubmit="event.preventDefault(); window.location.href='dashboard.html';">
+        <input type="email" class="login-input" placeholder="you@yourstudio.com" value="alex@mercer.vc" autocomplete="email">
+        <input type="password" class="login-input" placeholder="Password" value="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" autocomplete="current-password">
+        <button type="submit" class="login-btn">Sign in to Workspace</button>
+      </form>
+
+      <p class="login-meta">
+        Forgot your password? <a href="#">Recover it</a>
+      </p>
+    </div>
+
+    <p class="login-foot">
+      Don&rsquo;t have a Workspace yet?
+      <a href="../pricing.html">View pricing</a> &middot;
+      <a href="mailto:hello@ventrify.io?subject=Ventrify%20OS%20demo%20request">Book a demo</a>
+    </p>
+  </div>
+</body>
+</html>

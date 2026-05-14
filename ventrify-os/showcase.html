@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Showcase — Three Projects, One Workflow | Ventrify OS</title>
-  <meta name="description" content="See Ventrify OS in action. Three real project showcases — from brief to launch.">
-  <meta property="og:title" content="Showcase — Three Projects, One Workflow | Ventrify OS">
-  <meta property="og:description" content="See Ventrify OS in action. Three real project showcases — from brief to launch.">
+  <title>Showcase — Programs Delivered on Ventrify OS</title>
+  <meta name="description" content="Ventures delivered using Ventrify OS. Brief to launch, every deliverable, every gate review — coming soon.">
+  <meta property="og:title" content="Showcase — Programs Delivered on Ventrify OS">
+  <meta property="og:description" content="Ventures delivered using Ventrify OS. Brief to launch, every deliverable, every gate review — coming soon.">
   <meta property="og:type" content="website">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -164,7 +164,7 @@
       -webkit-backdrop-filter:blur(12px);
       border-radius:var(--radius-pill);
       box-shadow:0 1px 2px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.08), 0 16px 56px rgba(0,0,0,0.08);
-      max-width:650px;
+      max-width:780px;
       width:auto;
     }
     .logo {
@@ -683,7 +683,7 @@
       max-width:1080px;
       margin:0 auto;
       display:grid;
-      grid-template-columns:repeat(3,1fr);
+      grid-template-columns:repeat(2,1fr);
       gap:1.75rem;
     }
     .project-card {
@@ -717,13 +717,47 @@
       color:#fff;
       position:relative;
       overflow:hidden;
+      background:linear-gradient(135deg,#080B1A 0%,#111B52 100%);
+    }
+    .project-card-visual img {
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      transition:transform 0.5s var(--ease-smooth);
+    }
+    .project-card:hover .project-card-visual img {
+      transform:scale(1.03);
     }
     .project-card-visual::after {
       content:'';
       position:absolute;
       inset:0;
-      background:radial-gradient(120% 80% at 50% 100%, rgba(0,0,0,0.18) 0%, rgba(0,0,0,0) 60%);
+      background:linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 50%, rgba(0,0,0,0.35) 100%);
       pointer-events:none;
+    }
+    .project-card-tags {
+      position:absolute;
+      top:1rem;
+      left:1rem;
+      display:flex;
+      gap:6px;
+      z-index:2;
+    }
+    .project-card-tag {
+      font-family:var(--font-mono);
+      font-size:0.66rem;
+      font-weight:500;
+      letter-spacing:0.08em;
+      text-transform:uppercase;
+      color:#FFFFFF;
+      background:rgba(255,255,255,0.14);
+      backdrop-filter:blur(8px);
+      -webkit-backdrop-filter:blur(8px);
+      padding:5px 10px;
+      border-radius:980px;
+      border:1px solid rgba(255,255,255,0.2);
     }
     .project-card-visual .pcv-mark {
       font-family:var(--font-heading);
@@ -880,11 +914,13 @@
     <a href="index.html" class="logo">VENTRIFY <span class="os">OS</span></a>
     <div class="nav-links">
       <a href="system.html">System</a>
+      <a href="the-data-room.html">Data Room</a>
+      <a href="the-workspace.html">Workspace</a>
       <a href="showcase.html" class="active">Showcase</a>
       <a href="pricing.html">Pricing</a>
     </div>
     <div class="nav-cta">
-      <a href="pricing.html" class="btn">Get the Workflow</a>
+      <a href="mailto:hello@ventrify.io?subject=Ventrify%20OS%20demo%20request" class="btn">Book a demo</a>
     </div>
     <button class="hamburger" aria-label="Menu">
       <span class="hamburger-line"></span>
@@ -896,10 +932,12 @@
   <!-- Mobile Menu -->
   <div class="mobile-menu">
     <a href="system.html" class="m-nav-link">System</a>
+    <a href="the-data-room.html" class="m-nav-link">Data Room</a>
+    <a href="the-workspace.html" class="m-nav-link">Workspace</a>
     <a href="showcase.html" class="m-nav-link active">Showcase</a>
     <a href="pricing.html" class="m-nav-link">Pricing</a>
     <div class="m-cta">
-      <a href="pricing.html" class="btn btn-dark-primary btn-lg">Get the Workflow &mdash; <span data-price-gbp="500">&pound;500</span></a>
+      <a href="mailto:hello@ventrify.io?subject=Ventrify%20OS%20demo%20request" class="btn btn-dark-primary btn-lg">Book a demo</a>
     </div>
   </div>
 
@@ -908,8 +946,8 @@
        =================================================== -->
   <section class="hero" id="main-content">
     <div class="hero-content">
-      <h1 class="shimmer-text">See the workflow<br>in action</h1>
-      <p class="hero-sub">Three real projects. Every deliverable, every phase, every gate review &mdash; documented. This is what shipping with the Ventrify workflow actually looks like.</p>
+      <h1 class="shimmer-text">Ventures built<br>on Ventrify OS.</h1>
+      <p class="hero-sub">Four ventures. Same workflow. AI agents executed every phase. A Ventrify program manager orchestrated. Each founder signed off three gates in the portal. Brief to investor-demo-ready in 8&ndash;14 weeks.</p>
     </div>
   </section>
 
@@ -924,7 +962,7 @@
   <section class="page-intro-section">
     <div class="container" data-reveal>
       <div style="max-width:780px;margin:0 auto;text-align:center;">
-        <p style="font-size:clamp(1.15rem,2.5vw,1.4rem);line-height:1.75;color:var(--text-light-muted);font-weight:400;">Each case study below walks through a complete engagement &mdash; from raw brief to Gate 2 approval. You&rsquo;ll see every research doc, every deliverable, every piece of content the workflow produced. <span style="color:#FFFFFF;font-weight:500;">No polished highlight reels &mdash; just the full output.</span></p>
+        <p style="font-size:clamp(1.15rem,2.5vw,1.4rem);line-height:1.75;color:var(--text-light-muted);font-weight:400;">Each case study walks through a complete venture &mdash; Phase 0 through Phase 5, three signed gates, seven portal hubs, ten specialist agents. <span style="color:#FFFFFF;font-weight:500;">No polished highlight reels &mdash; the actual outputs the platform produced.</span> Every venture below ran end-to-end on Ventrify OS under one of the four Studio tiers.</p>
       </div>
     </div>
   </section>
@@ -935,76 +973,108 @@
   <section class="projects-section" id="projects">
     <div class="projects-header" data-reveal>
       <div class="s-label">Case Studies</div>
-      <h2 class="s-title s-title-shimmer">Three projects. Same workflow.</h2>
-      <p class="s-sub">Each one a complete engagement &mdash; brief, research, decks, build, launch.</p>
+      <h2 class="s-title s-title-shimmer">Ventures delivered on Ventrify OS.</h2>
+      <p class="s-sub">Four programs. Same workflow. AI agents executed every phase, a Ventrify program manager orchestrated, the founder signed off three gates in the portal. Click any case study to see how the platform ran end-to-end.</p>
     </div>
 
     <div class="projects-grid">
-      <!-- Card 1 — Inside & Out -->
-      <a href="showcase-inside-and-out.html" class="project-card" data-reveal data-delay="1">
-        <div class="project-card-visual" style="background:linear-gradient(135deg,#6B46C1,#D53F8C);">
-          <div class="pcv-mark">I&amp;O</div>
-          <div class="pcv-sub">Mental Wellness App</div>
+
+      <!-- DebtFit — Venture Pro -->
+      <a href="showcase-debtfit.html" class="project-card" data-reveal data-delay="1">
+        <div class="project-card-visual">
+          <div class="project-card-tags">
+            <span class="project-card-tag">Venture Pro</span>
+          </div>
+          <img src="assets/showcase/Debtfit/Debtfit-hero.jpg" alt="DebtFit — Personal Finance &amp; Debt Management Platform" loading="lazy">
+        </div>
+        <div class="project-card-body">
+          <div class="project-card-category">Fintech</div>
+          <div class="project-card-title">DebtFit</div>
+          <div class="project-card-divider"></div>
+          <p class="project-card-desc">A personal-finance platform that treats debt management like fitness training. Brand, MVP, marketing site &mdash; shipped together. Studio Venture Pro tier, 12 weeks, three gates.</p>
+          <div class="project-card-stats">
+            <span>12 weeks</span>
+            <span class="dot"></span>
+            <span>3 / 3 gates</span>
+            <span class="dot"></span>
+            <span>DEMO_MODE ready</span>
+          </div>
+          <span class="project-card-cta">View case study <span class="arrow">&rarr;</span></span>
+        </div>
+      </a>
+
+      <!-- Flicksy — Venture -->
+      <a href="showcase-flicksy.html" class="project-card" data-reveal data-delay="2">
+        <div class="project-card-visual">
+          <div class="project-card-tags">
+            <span class="project-card-tag">Venture</span>
+          </div>
+          <img src="assets/showcase/Flicksy/flicksy-hero.jpg" alt="Flicksy — Content Discovery Platform" loading="lazy">
+        </div>
+        <div class="project-card-body">
+          <div class="project-card-category">SaaS</div>
+          <div class="project-card-title">Flicksy</div>
+          <div class="project-card-divider"></div>
+          <p class="project-card-desc">A content discovery platform reimagining how people find and watch. Transparent recommendations, social discovery, frictionless playback &mdash; locked at Gate 2 in the founder portal.</p>
+          <div class="project-card-stats">
+            <span>10 weeks</span>
+            <span class="dot"></span>
+            <span>26 cards resolved</span>
+            <span class="dot"></span>
+            <span>10 agents</span>
+          </div>
+          <span class="project-card-cta">View case study <span class="arrow">&rarr;</span></span>
+        </div>
+      </a>
+
+      <!-- CuraGo — Venture Pro -->
+      <a href="showcase-curago.html" class="project-card" data-reveal data-delay="3">
+        <div class="project-card-visual">
+          <div class="project-card-tags">
+            <span class="project-card-tag">Venture Pro</span>
+          </div>
+          <img src="assets/showcase/CuraGo/curago-hero.jpg" alt="CuraGo — AI-Powered Healthcare Platform" loading="lazy">
         </div>
         <div class="project-card-body">
           <div class="project-card-category">Health &amp; Wellness</div>
-          <div class="project-card-title">Inside &amp; Out</div>
+          <div class="project-card-title">CuraGo</div>
           <div class="project-card-divider"></div>
-          <p class="project-card-desc">A mental wellness app taken from raw brief to Gate 2 approval in 7 days. AED 132,000 paid day one. 4 investor-grade decks auto-generated.</p>
+          <p class="project-card-desc">AI-powered healthcare connecting patients with personalised care. Seven portal hubs, 47 IA screens, telemedicine + AI tracking &mdash; the full Venture Pro engagement.</p>
           <div class="project-card-stats">
-            <span>7 days</span>
+            <span>12 weeks</span>
             <span class="dot"></span>
-            <span>AED 132K</span>
+            <span>3 / 3 gates</span>
             <span class="dot"></span>
-            <span>27 commits</span>
+            <span>7 portal hubs</span>
           </div>
           <span class="project-card-cta">View case study <span class="arrow">&rarr;</span></span>
         </div>
       </a>
 
-      <!-- Card 2 — Project 2 (placeholder) -->
-      <a href="showcase-project-2.html" class="project-card is-placeholder" data-reveal data-delay="2">
-        <div class="project-card-visual" style="background:linear-gradient(135deg,#1E3A8A,#0EA5E9);">
-          <div class="pcv-mark">P2</div>
-          <div class="pcv-sub">Coming Soon</div>
+      <!-- Wallix — Launchpad -->
+      <a href="showcase-wallix.html" class="project-card" data-reveal data-delay="4">
+        <div class="project-card-visual">
+          <div class="project-card-tags">
+            <span class="project-card-tag">Launchpad</span>
+          </div>
+          <img src="assets/showcase/Wallix/wallix-hero.jpg" alt="Wallix — Portfolio Analytics Platform" loading="lazy">
         </div>
         <div class="project-card-body">
-          <div class="project-card-category">Coming Soon</div>
-          <div class="project-card-title">Project 2</div>
+          <div class="project-card-category">Fintech</div>
+          <div class="project-card-title">Wallix</div>
           <div class="project-card-divider"></div>
-          <p class="project-card-desc">A second case study showing the workflow in action. Full engagement details coming soon.</p>
+          <p class="project-card-desc">Portfolio analytics with real-time tracking + advanced visualisation. The platform produced the data model, IA, design system, and MVP for the Launchpad tier in 8 weeks.</p>
           <div class="project-card-stats">
-            <span>TBD</span>
+            <span>8 weeks</span>
             <span class="dot"></span>
-            <span>TBD</span>
+            <span>10 agents</span>
             <span class="dot"></span>
-            <span>TBD</span>
+            <span>DEMO_MODE ready</span>
           </div>
           <span class="project-card-cta">View case study <span class="arrow">&rarr;</span></span>
         </div>
       </a>
 
-      <!-- Card 3 — Project 3 (placeholder) -->
-      <a href="showcase-project-3.html" class="project-card is-placeholder" data-reveal data-delay="3">
-        <div class="project-card-visual" style="background:linear-gradient(135deg,#047857,#10B981);">
-          <div class="pcv-mark">P3</div>
-          <div class="pcv-sub">Coming Soon</div>
-        </div>
-        <div class="project-card-body">
-          <div class="project-card-category">Coming Soon</div>
-          <div class="project-card-title">Project 3</div>
-          <div class="project-card-divider"></div>
-          <p class="project-card-desc">A third case study showing the workflow in action. Full engagement details coming soon.</p>
-          <div class="project-card-stats">
-            <span>TBD</span>
-            <span class="dot"></span>
-            <span>TBD</span>
-            <span class="dot"></span>
-            <span>TBD</span>
-          </div>
-          <span class="project-card-cta">View case study <span class="arrow">&rarr;</span></span>
-        </div>
-      </a>
     </div>
   </section>
 
@@ -1013,10 +1083,11 @@
        =================================================== -->
   <section class="final-cta">
     <div class="cta-content" data-reveal>
-      <h2>This is what the workflow produces.</h2>
-      <p class="cta-sub">Every engagement. Every time. One operator. Ready to run your own?</p>
+      <h2>This is what the platform delivers.</h2>
+      <p class="cta-sub">Every venture. Every program. One operator + AI agents. License the platform and run programs at your own scale.</p>
       <div class="cta-buttons">
-        <a href="pricing.html" class="btn btn-dark-primary btn-lg">Get the Workflow &mdash; <span data-price-gbp="500">&pound;500</span></a>
+        <a href="mailto:hello@ventrify.io?subject=Ventrify%20OS%20demo%20request" class="btn btn-dark-primary btn-lg">Book a platform demo</a>
+        <a href="pricing.html" class="btn btn-dark-outline btn-lg">View pricing</a>
       </div>
     </div>
   </section>
@@ -1029,14 +1100,16 @@
       <div class="footer-top">
         <div class="footer-brand">
           <div class="logo">VENTRIFY <span class="os">OS</span></div>
-          <p>A product by Ventrify &mdash; the AI-powered venture studio.</p>
+          <p>The operating system for startup programs.</p>
         </div>
         <div class="footer-links">
           <a href="system.html">System</a>
-          <a href="showcase.html">Showcase</a>
+          <a href="the-data-room.html">Data Room</a>
+      <a href="the-workspace.html">Workspace</a>
+      <a href="showcase.html">Showcase</a>
           <a href="pricing.html">Pricing</a>
           <a href="faqs.html">FAQs</a>
-          <a href="../index.html">Ventrify Studio</a>
+          <a href="mailto:hello@ventrify.io?subject=Ventrify%20OS%20demo%20request">Book a demo</a>
         </div>
       </div>
       <div class="footer-bottom">
@@ -1097,6 +1170,5 @@
       });
     });
   </script>
-  <script src="currency.js" defer></script>
 </body>
 </html>

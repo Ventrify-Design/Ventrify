@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Team — Ventrify OS Workspace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="root"></div>
+  <script src="sample-data.js"></script>
+  <script src="app.js"></script>
+  <script>
+    const W = window.WORKSPACE;
+    const { operators, org, helpers } = W;
+
+    function operatorCardHTML(op) {
+      const assignedPrograms = helpers.programsForOperator(op.id);
+      const programNames = assignedPrograms.map(p => p.name).join(' &middot; ') || '<span class="dim">No programs assigned</span>';
+      return `
+        <div class="team-card">
+          <div class="team-card-head">
+            <div class="avatar avatar-lg" style="background:${op.avatarColor};">${op.avatar}</div>
+            <div>
+              <div class="team-card-name">${op.name}</div>
+              <div class="team-card-email">${op.email}</div>
+            </div>
+          </div>
+          <div class="team-card-role">${op.role}</div>
+          <div class="team-card-programs">
+            <div class="text-small dim text-mono" style="letter-spacing:0.06em;text-transform:uppercase;font-size:0.66rem;margin-bottom:0.5rem;">Assigned (${assignedPrograms.length})</div>
+            ${programNames}
+          </div>
+        </div>
+      `;
+    }
+
+    const main = `
+      <div class="page-header">
+        <div class="page-eyebrow">Team</div>
+        <h1 class="page-title">Operators on ${org.name}</h1>
+        <p class="page-sub">Everyone with Workspace access for your organisation. ${org.tier} tier &mdash; ${org.operatorSeatsLimit.toLowerCase ? org.operatorSeatsLimit : 'unlimited'} operator seats. Assign programs, manage roles.</p>
+      </div>
+
+      <div class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-title">Active operators &middot; ${operators.length}</div>
+            <div class="section-sub">Seats used: ${operators.length} of ${org.operatorSeatsLimit}</div>
+          </div>
+          <button class="btn btn-primary btn-sm">Invite operator</button>
+        </div>
+
+        <div class="team-grid">
+          ${operators.map(operatorCardHTML).join('')}
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-head">
+          <div>
+            <div class="section-title">Pending invites</div>
+            <div class="section-sub">Invitations sent but not yet accepted.</div>
+          </div>
+        </div>
+        <div class="card" style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-size:0.92rem;color:var(--text-muted);">No pending invites.</div>
+        </div>
+      </div>
+    `;
+
+    window.renderShell(main);
+  </script>
+</body>
+</html>

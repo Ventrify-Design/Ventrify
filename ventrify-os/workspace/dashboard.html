@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portfolio — Ventrify OS Workspace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="root"></div>
+  <script src="sample-data.js"></script>
+  <script src="app.js"></script>
+  <script>
+    const W = window.WORKSPACE;
+    const { programs, actions, operators, helpers } = W;
+
+    // Aggregate stats
+    const totalPrograms = programs.length;
+    const inFlight = programs.filter(p => p.phase < 5 && p.phase > 0).length;
+    const cardsAwaiting = programs.reduce((acc, p) => acc + p.cards.awaitingFounder, 0);
+    const highUrgencyActions = actions.filter(a => a.urgency === 'high').length;
+
+    function programCardHTML(p) {
+      return `
+        <a href="program.html?id=${p.id}" class="program-card">
+          <div class="program-card-head">
+            <div class="program-card-identity">
+              <div class="avatar avatar-lg" style="background:${p.founderAvatarColor};">${p.founderAvatar}</div>
+              <div>
+                <div class="program-card-name">${p.name}</div>
+                <div class="program-card-founder">${p.founderName} &middot; ${p.industry}</div>
+              </div>
+            </div>
+            <span class="pill ${window.healthClass(p.health)}">
+              <span class="dot"></span>
+              ${window.healthLabel(p.health)}
+            </span>
+          </div>
+
+          <div>
+            <div class="program-card-phase">${helpers.phaseLabel(p.phase)}</div>
+            <div class="program-card-gate">${p.gateStatus}</div>
+            <div class="progress"><div class="progress-bar" style="width:${helpers.phaseProgressPct(p.phase)}%"></div></div>
+          </div>
+
+          <div class="program-card-meta">
+            <span>Started ${p.startDate}</span>
+            <span class="sep"></span>
+            <span>${p.daysActive} days active</span>
+            <span class="sep"></span>
+            <span>Last activity: ${p.lastActivity}</span>
+          </div>
+
+          <div class="program-card-stats">
+            <div class="program-card-stat">
+              <div class="v">${p.cards.resolved}</div>
+              <div class="l">Cards resolved</div>
+            </div>
+            <div class="program-card-stat">
+              <div class="v">${p.cards.awaitingFounder}</div>
+              <div class="l">Awaiting founder</div>
+            </div>
+            <div class="program-card-stat">
+              <div class="v">${p.cards.drafted}</div>
+              <div class="l">Total drafted</div>
+            </div>
+          </div>
+        </a>
+      `;
+    }
+
+    const main = `
+      <div class="page-header">
+        <div class="page-eyebrow">Portfolio</div>
+        <h1 class="page-title">All programs · ${totalPrograms} active</h1>
+        <p class="page-sub">Every venture running on your Workspace. Click a program for the full hub view and timeline.</p>
+      </div>
+
+      <div class="dashboard-stats">
+        <div class="card">
+          <div class="stat-block">
+            <div class="stat-val">${totalPrograms}</div>
+            <div class="stat-lbl">Active programs</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="stat-block">
+            <div class="stat-val">${inFlight}</div>
+            <div class="stat-lbl">In flight (Phase 1–4)</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="stat-block">
+            <div class="stat-val">${cardsAwaiting}</div>
+            <div class="stat-lbl">Cards awaiting founder</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="stat-block">
+            <div class="stat-val" style="color:${highUrgencyActions ? 'var(--danger)' : 'var(--text)'};">${highUrgencyActions}</div>
+            <div class="stat-lbl">High-urgency actions</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="filter-bar">
+        <button class="filter-pill active">All</button>
+        <button class="filter-pill">On track</button>
+        <button class="filter-pill">Needs attention</button>
+        <button class="filter-pill">Stuck</button>
+        <button class="filter-pill">Assigned to me</button>
+        <div class="filter-spacer"></div>
+        <div class="search">
+          <span class="search-icon">&#x1F50D;</span>
+          <input type="text" placeholder="Search programs or founders...">
+        </div>
+      </div>
+
+      <div class="programs-grid">
+        ${programs.map(programCardHTML).join('')}
+      </div>
+    `;
+
+    window.renderShell(main);
+  </script>
+</body>
+</html>

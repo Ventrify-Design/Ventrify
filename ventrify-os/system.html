@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>What's Inside — Ventrify OS System Deep Dive</title>
-  <meta name="description" content="A complete technical breakdown of every file, tool, and workflow in Ventrify OS. For practitioners who want to know exactly what they're getting.">
-  <meta property="og:title" content="What's Inside — Ventrify OS System Deep Dive">
-  <meta property="og:description" content="4,242 lines of instruction. 15+ automated tools. 5 phases. Everything has a place.">
+  <title>What's Inside — Ventrify OS Platform Deep Dive</title>
+  <meta name="description" content="A complete technical breakdown of every file, tool, and agent in Ventrify OS. For the platform teams and operators who run programs on it.">
+  <meta property="og:title" content="What's Inside — Ventrify OS Platform Deep Dive">
+  <meta property="og:description" content="4,242 lines of instruction. 10 specialist agents. 15+ automated tools. The platform components every licensee runs.">
   <meta property="og:type" content="website">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -147,7 +147,7 @@
       -webkit-backdrop-filter:blur(12px);
       border-radius:var(--radius-pill);
       box-shadow:0 1px 2px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.08), 0 16px 56px rgba(0,0,0,0.08);
-      max-width:650px;
+      max-width:780px;
       width:auto;
     }
     .logo {
@@ -602,6 +602,132 @@
     }
 
     /* ============================================
+       AGENTS GRID — 10 specialist agents
+       ============================================ */
+    .agents-grid {
+      display:grid;
+      grid-template-columns:repeat(3, 1fr);
+      gap:1.25rem;
+      margin-top:3rem;
+    }
+    .agent-card {
+      background:#FFFFFF;
+      border:1px solid rgba(0,0,0,0.05);
+      border-radius:var(--radius-card);
+      padding:1.5rem;
+      display:flex;
+      flex-direction:column;
+      transition:box-shadow var(--transition), transform var(--transition), border-color var(--transition);
+    }
+    .agent-card:hover {
+      box-shadow:0 8px 24px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.03);
+      transform:translateY(-2px);
+      border-color:rgba(var(--primary-rgb),0.15);
+    }
+    .agent-name {
+      font-family:var(--font-mono);
+      font-size:0.9rem;
+      font-weight:500;
+      color:var(--text-dark);
+      margin-bottom:0.4rem;
+      letter-spacing:-0.01em;
+    }
+    .agent-name code {
+      font-family:var(--font-mono);
+      background:rgba(var(--primary-rgb),0.06);
+      color:var(--primary);
+      padding:2px 8px;
+      border-radius:6px;
+      font-size:0.95em;
+    }
+    .agent-phase {
+      font-family:var(--font-mono);
+      font-size:0.7rem;
+      font-weight:500;
+      letter-spacing:0.06em;
+      text-transform:uppercase;
+      color:var(--text-dark-muted);
+      margin-bottom:0.85rem;
+      padding-bottom:0.85rem;
+      border-bottom:1px solid rgba(0,0,0,0.05);
+    }
+    .agent-output {
+      font-size:0.88rem;
+      line-height:1.6;
+      color:var(--text-dark-muted);
+    }
+    @media (max-width:900px) {
+      .agents-grid { grid-template-columns:repeat(2, 1fr); }
+    }
+    @media (max-width:560px) {
+      .agents-grid { grid-template-columns:1fr; }
+    }
+
+    /* ============================================
+       DEMO_MODE — Investor-demo-ready section
+       ============================================ */
+    .demo-grid {
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:1.5rem;
+      margin-top:3rem;
+    }
+    .demo-card {
+      background:#F5F5F7;
+      border-radius:var(--radius-card);
+      padding:2rem 1.75rem;
+      display:flex;
+      flex-direction:column;
+      transition:box-shadow var(--transition), transform var(--transition);
+    }
+    .demo-card:hover {
+      box-shadow:0 6px 20px rgba(0,0,0,0.05);
+      transform:translateY(-2px);
+    }
+    .demo-num {
+      font-family:var(--font-heading);
+      font-weight:600;
+      font-size:1.6rem;
+      color:var(--primary);
+      letter-spacing:-0.02em;
+      line-height:1;
+      margin-bottom:1rem;
+    }
+    .demo-card h4 {
+      font-size:1.05rem;
+      font-weight:600;
+      color:var(--text-dark);
+      margin-bottom:0.5rem;
+      letter-spacing:-0.01em;
+    }
+    .demo-card p {
+      font-size:0.88rem;
+      line-height:1.6;
+      color:var(--text-dark-muted);
+    }
+    .demo-callout {
+      margin-top:2.5rem;
+      background:linear-gradient(180deg, #080B1A 0%, #1A2E78 100%);
+      border-radius:var(--radius-card);
+      padding:2rem 2.5rem;
+      text-align:center;
+    }
+    .demo-callout p {
+      font-size:1.05rem;
+      color:rgba(255,255,255,0.85);
+      line-height:1.6;
+      max-width:680px;
+      margin:0 auto;
+    }
+    .demo-callout strong {
+      color:#FFFFFF;
+      font-weight:600;
+    }
+    @media (max-width:900px) {
+      .demo-grid { grid-template-columns:1fr; }
+    }
+
+    /* ============================================
        TOOLS GRID (alt light bg)
        ============================================ */
     .tools-grid {
@@ -939,11 +1065,13 @@
     <a href="index.html" class="logo">VENTRIFY <span class="os">OS</span></a>
     <div class="nav-links">
       <a href="system.html" class="active">System</a>
+      <a href="the-data-room.html">Data Room</a>
+      <a href="the-workspace.html">Workspace</a>
       <a href="showcase.html">Showcase</a>
       <a href="pricing.html">Pricing</a>
     </div>
     <div class="nav-cta">
-      <a href="pricing.html" class="btn">Get the Workflow</a>
+      <a href="mailto:hello@ventrify.io?subject=Ventrify%20OS%20demo%20request" class="btn">Book a demo</a>
     </div>
     <button class="hamburger" aria-label="Menu">
       <span class="hamburger-line"></span>
@@ -955,10 +1083,12 @@
   <!-- Mobile Menu -->
   <div class="mobile-menu">
     <a href="system.html" class="m-nav-link active">System</a>
+    <a href="the-data-room.html" class="m-nav-link">Data Room</a>
+    <a href="the-workspace.html" class="m-nav-link">Workspace</a>
     <a href="showcase.html" class="m-nav-link">Showcase</a>
     <a href="pricing.html" class="m-nav-link">Pricing</a>
     <div class="m-cta">
-      <a href="pricing.html" class="btn btn-dark-primary btn-lg">Get the Workflow</a>
+      <a href="mailto:hello@ventrify.io?subject=Ventrify%20OS%20demo%20request" class="btn btn-dark-primary btn-lg">Book a demo</a>
     </div>
   </div>
 
@@ -967,8 +1097,8 @@
        ═══════════════════════════════════════════ -->
   <section class="hero" id="main-content">
     <div class="hero-content">
-      <h1>What&rsquo;s inside the system</h1>
-      <p class="hero-sub">A complete technical breakdown of every file, tool, and workflow in Ventrify OS. For practitioners who want to know exactly what they&rsquo;re getting.</p>
+      <h1>What&rsquo;s inside the platform</h1>
+      <p class="hero-sub">A complete technical breakdown of every file, tool, and agent in Ventrify OS. For the platform teams and program operators evaluating what they&rsquo;d be licensing.</p>
     </div>
   </section>
 
@@ -983,7 +1113,7 @@
   <section class="page-intro-section">
     <div class="container" data-reveal>
       <div style="max-width:780px;margin:0 auto;text-align:center;">
-        <p style="font-size:clamp(1.15rem,2.5vw,1.4rem);line-height:1.75;color:var(--text-light-muted);font-weight:400;">4,242 lines of structured instruction. 15+ automated tools. 5 specialist AI agents. 3 Figma plugins. 11 PDF generators. <span style="color:#FFFFFF;font-weight:500;">Every file, every phase, every deliverable &mdash; codified.</span> This is what you get when you drop CLAUDE.md into a project folder.</p>
+        <p style="font-size:clamp(1.15rem,2.5vw,1.4rem);line-height:1.75;color:var(--text-light-muted);font-weight:400;">4,242 lines of structured instruction. 10 specialist AI agents. 15+ automated tools. 3 Figma plugins. Five phases plus financials. A three-layer data room. <span style="color:#FFFFFF;font-weight:500;">Every file, every phase, every deliverable &mdash; codified.</span> This is what you license: the operating system every program your team runs sits on top of.</p>
       </div>
     </div>
   </section>
@@ -997,8 +1127,8 @@
       <h2 class="s-title s-title-shimmer">4,242 lines of<br>operating instruction</h2>
       <div class="system-layout">
         <div class="system-text">
-          <p>The CLAUDE.md file is the brain of the system. When dropped into a project folder, Claude Code reads it and becomes a full-stack venture studio operator.</p>
-          <p>It contains every phase, every deliverable specification, every quality gate, every payment checkpoint, and every prompt template &mdash; structured so that a single operator can run a complete engagement from brief to delivery.</p>
+          <p>The CLAUDE.md file is the brain of the platform. It defines every phase the agents execute, every deliverable specification, every quality gate, every checkpoint, and every prompt template the system runs.</p>
+          <p>When your program manager initialises a venture, the platform reads it and orchestrates a full-stack delivery team &mdash; structured so a single operator can run a complete engagement from brief to launch.</p>
         </div>
         <div class="code-block">
           <div class="code-block-bar">
@@ -1040,9 +1170,119 @@
         </div>
         <div class="stat-divider"></div>
         <div class="stat-block" data-reveal data-delay="3">
-          <div class="stat-val">2</div>
+          <div class="stat-val">3</div>
           <div class="stat-lbl">Formal Gates</div>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       2.5 THE 10 SPECIALIST AGENTS
+       ═══════════════════════════════════════════ -->
+  <section class="section-alt" id="agents">
+    <div class="container" data-reveal>
+      <div class="s-label">The Agents</div>
+      <h2 class="s-title s-title-shimmer">10 specialist AI agents.<br>One orchestra.</h2>
+      <p class="s-sub">Each agent has a specific phase, a specific input, and a specific output. The platform runs them in sequence so a single program manager can ship what used to take 10 people.</p>
+
+      <div class="agents-grid">
+
+        <div class="agent-card" data-reveal data-delay="1">
+          <div class="agent-name"><code>research-curator</code></div>
+          <div class="agent-phase">Phases 1, 2, 2.5</div>
+          <p class="agent-output">Reads each L3 research document and drafts 5&ndash;7 Provocation Cards per hub. The card layer of the data room.</p>
+        </div>
+
+        <div class="agent-card" data-reveal data-delay="2">
+          <div class="agent-name"><code>source-verifier</code></div>
+          <div class="agent-phase">End of Phase 1</div>
+          <p class="agent-output">Fact-checks every source in the Research Hub. Flags hallucinated citations and impossible numbers before the gate.</p>
+        </div>
+
+        <div class="agent-card" data-reveal data-delay="3">
+          <div class="agent-name"><code>information-architect</code></div>
+          <div class="agent-phase">Phase 2</div>
+          <p class="agent-output">Maps every feature to a screen. Produces the full IA &mdash; typically 40&ndash;65 screens mapped per MVP.</p>
+        </div>
+
+        <div class="agent-card" data-reveal data-delay="1">
+          <div class="agent-name"><code>backend-architect</code></div>
+          <div class="agent-phase">Phase 3</div>
+          <p class="agent-output">Firestore schema, security rules, indexes, and cost model &mdash; before a single line of app code is written.</p>
+        </div>
+
+        <div class="agent-card" data-reveal data-delay="2">
+          <div class="agent-name"><code>ux-designer</code></div>
+          <div class="agent-phase">Phase 4 (3 audit rounds)</div>
+          <p class="agent-output">Catches structural rule violations, nav UX failures, WCAG AA contrast issues, and Featured-app polish gaps. Beta cannot ship until critical issues are closed.</p>
+        </div>
+
+        <div class="agent-card" data-reveal data-delay="3">
+          <div class="agent-name"><code>copy-reviewer</code></div>
+          <div class="agent-phase">After marketing copy</div>
+          <p class="agent-output">Audits every line of marketing copy against the venture&rsquo;s tone-of-voice rules. No agency-speak slips through.</p>
+        </div>
+
+        <div class="agent-card" data-reveal data-delay="1">
+          <div class="agent-name"><code>financial-modeler</code></div>
+          <div class="agent-phase">Phase 2.5</div>
+          <p class="agent-output">Eight financial files: build costs, opex, revenue model, unit economics, cash flow, marketing budget, hiring plan, sensitivity analysis.</p>
+        </div>
+
+        <div class="agent-card" data-reveal data-delay="2">
+          <div class="agent-name"><code>investor-readiness-reviewer</code></div>
+          <div class="agent-phase">Phase 2.5</div>
+          <p class="agent-output">Recommended raise size, valuation range, dilution, red flags. Used to pressure-test the Financials Hub before Gate 2.5.</p>
+        </div>
+
+        <div class="agent-card" data-reveal data-delay="3">
+          <div class="agent-name"><code>scope-loop-reviewer</code></div>
+          <div class="agent-phase">Phase 2.5</div>
+          <p class="agent-output">Scope-change recommendations that loop back into Research and Define. Catches misaligned scope before the SOW is signed.</p>
+        </div>
+
+        <div class="agent-card" data-reveal data-delay="1">
+          <div class="agent-name"><code>video-producer</code></div>
+          <div class="agent-phase">Workstream C</div>
+          <p class="agent-output">Promotional video script, scene-by-scene breakdown, audio brief. Hand-off ready for production.</p>
+        </div>
+
+      </div>
+
+      <p style="text-align:center;margin-top:2.5rem;font-size:0.95rem;color:var(--text-dark-muted);font-style:italic;max-width:680px;margin-left:auto;margin-right:auto;" data-reveal>Each agent runs in sequence with defined inputs and outputs. The platform orchestrates the orchestra. Your program manager orchestrates the platform.</p>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       2.6 DEMO_MODE — Investor-demo-ready
+       ═══════════════════════════════════════════ -->
+  <section class="section" id="demo-mode">
+    <div class="container" data-reveal>
+      <div class="s-label">Investor-Demo-Ready</div>
+      <h2 class="s-title s-title-shimmer">Every MVP ships<br>with <code style="font-family:var(--font-mono);font-size:0.85em;background:rgba(var(--primary-rgb),0.08);padding:2px 10px;border-radius:6px;color:var(--primary);font-weight:500;">DEMO_MODE</code>.</h2>
+      <p class="s-sub">A platform-level flag every venture inherits. Pre-loaded persona data, scripted state advancement, no auth required &mdash; so the founder can walk an investor through a working product before they&rsquo;re funded.</p>
+
+      <div class="demo-grid">
+        <div class="demo-card" data-reveal data-delay="1">
+          <div class="demo-num">01</div>
+          <h4>Pre-loaded personas</h4>
+          <p>Each persona&rsquo;s data is bundled with the app. The founder picks one, the app loads their world &mdash; no Firebase, no real users, no setup.</p>
+        </div>
+        <div class="demo-card" data-reveal data-delay="2">
+          <div class="demo-num">02</div>
+          <h4>Scripted state advancement</h4>
+          <p>Action-based demo paths show the platform&rsquo;s value loop end-to-end. Tap a session &rarr; see the Coach react &rarr; reach the climax screen &mdash; in under a minute.</p>
+        </div>
+        <div class="demo-card" data-reveal data-delay="3">
+          <div class="demo-num">03</div>
+          <h4>Screenshot-pipeline ready</h4>
+          <p>Maestro drives the app through every screen. Marketing assets and Investor Deck visuals get produced automatically &mdash; no manual captures.</p>
+        </div>
+      </div>
+
+      <div class="demo-callout" data-reveal>
+        <p>&ldquo;<strong>Investor-demo-ready in 6 weeks</strong>&rdquo; isn&rsquo;t a marketing line &mdash; it&rsquo;s a structural property of every MVP the platform ships.</p>
       </div>
     </div>
   </section>
@@ -1119,32 +1359,32 @@
         </div>
         <div class="tool-card" data-reveal data-delay="1">
           <div class="tool-card-visual" style="background:linear-gradient(135deg,#E8ECF4,#D8DCE8);">
-            <div class="tool-card-port">PDF Generator</div>
+            <div class="tool-card-port">Portal Hub</div>
           </div>
           <div class="tool-card-body">
-            <h3>Research Deck</h3>
+            <h3>Research Hub</h3>
             <div class="card-divider"></div>
-            <p>Auto-generated branded PDF from research files</p>
+            <p>L1 Provocation Cards + L2 Evidence + L3 research &mdash; live in the founder portal</p>
           </div>
         </div>
         <div class="tool-card" data-reveal data-delay="2">
           <div class="tool-card-visual" style="background:linear-gradient(135deg,#E8ECF4,#D8DCE8);">
-            <div class="tool-card-port">PDF Generator</div>
+            <div class="tool-card-port">Portal Hub</div>
           </div>
           <div class="tool-card-body">
-            <h3>Vision Deck</h3>
+            <h3>Vision Hub</h3>
             <div class="card-divider"></div>
-            <p>Auto-generated from define files + wireframe screenshots</p>
+            <p>Personas, MVP, IA, journeys, roadmap &middot; Gate 2 sign-off panel</p>
           </div>
         </div>
         <div class="tool-card" data-reveal data-delay="3">
           <div class="tool-card-visual" style="background:linear-gradient(135deg,#E8ECF4,#D8DCE8);">
-            <div class="tool-card-port">PDF Generator</div>
+            <div class="tool-card-port">Portal Hub</div>
           </div>
           <div class="tool-card-body">
-            <h3>Strategy Deck</h3>
+            <h3>Strategy Hub</h3>
             <div class="card-divider"></div>
-            <p>Auto-generated from marketing files</p>
+            <p>Tone of voice, social strategy, 30-day content calendar</p>
           </div>
         </div>
         <div class="tool-card" data-reveal data-delay="1">
@@ -1152,9 +1392,9 @@
             <div class="tool-card-port">PDF Generator</div>
           </div>
           <div class="tool-card-body">
-            <h3>Investor Deck</h3>
+            <h3>Investor Pitch Deck</h3>
             <div class="card-divider"></div>
-            <p>Auto-generated with financial projections + product screenshots</p>
+            <p>The one deck still as a PDF &mdash; investors annotate offline</p>
           </div>
         </div>
         <div class="tool-card" data-reveal data-delay="2">
@@ -1239,26 +1479,28 @@
 <span class="dir">&boxv;   &boxvr;&boxh;&boxh; /social/</span>              <span class="comment">&larr; Social scheduler (port 3012)</span>
 <span class="dir">&boxv;   &boxvr;&boxh;&boxh; /blog/</span>                <span class="comment">&larr; Blog publisher (port 3013)</span>
 <span class="dir">&boxv;   &boxvr;&boxh;&boxh; /portal/</span>              <span class="comment">&larr; Client portal (port 3015)</span>
-<span class="dir">&boxv;   &boxur;&boxh;&boxh; /pdf/</span>                 <span class="comment">&larr; All PDF generators</span>
+<span class="dir">&boxv;   &boxur;&boxh;&boxh; /pdf/</span>                 <span class="comment">&larr; Investor + SOW + welcome pack</span>
 <span class="dir">&boxvr;&boxh;&boxh; /.claude/</span>                  <span class="comment">&larr; Agent config</span>
-<span class="dir">&boxv;   &boxvr;&boxh;&boxh; /agents/</span>              <span class="comment">&larr; Custom agent definitions</span>
+<span class="dir">&boxv;   &boxvr;&boxh;&boxh; /agents/</span>              <span class="comment">&larr; 10 specialist agents</span>
 <span class="dir">&boxv;   &boxur;&boxh;&boxh; /memory/</span>              <span class="comment">&larr; Persistent memory files</span>
 <span class="dir">&boxvr;&boxh;&boxh; /brand/</span>                   <span class="comment">&larr; Brand kit + logos</span>
 <span class="dir">&boxv;   &boxur;&boxh;&boxh; /imagery/</span>             <span class="comment">&larr; 37 sourced brand photos</span>
-<span class="dir">&boxvr;&boxh;&boxh; /research/</span>                <span class="comment">&larr; 7 research documents</span>
-<span class="dir">&boxvr;&boxh;&boxh; /define/</span>                  <span class="comment">&larr; 6 definition documents</span>
+<span class="dir">&boxvr;&boxh;&boxh; /research/</span>                <span class="comment">&larr; L3 docs &middot; rendered to Research Hub</span>
+<span class="dir">&boxvr;&boxh;&boxh; /define/</span>                  <span class="comment">&larr; L3 docs &middot; rendered to Vision Hub</span>
+<span class="dir">&boxvr;&boxh;&boxh; /strategy/</span>                <span class="comment">&larr; L3 docs &middot; rendered to Strategy Hub</span>
+<span class="dir">&boxvr;&boxh;&boxh; /financials/</span>              <span class="comment">&larr; 11 files &middot; rendered to Financials Hub</span>
+<span class="dir">&boxvr;&boxh;&boxh; /cards/</span>                   <span class="comment">&larr; Provocation Cards per hub</span>
+<span class="dir">&boxvr;&boxh;&boxh; /portal/</span>                  <span class="comment">&larr; Founder portal (Next.js)</span>
 <span class="dir">&boxvr;&boxh;&boxh; /design/</span>                  <span class="comment">&larr; Component specifications</span>
-<span class="dir">&boxvr;&boxh;&boxh; /decks/</span>                   <span class="comment">&larr; 4 branded PDF decks</span>
-<span class="dir">&boxvr;&boxh;&boxh; /invoices/</span>                <span class="comment">&larr; Milestone invoices</span>
-<span class="dir">&boxvr;&boxh;&boxh; /marketing/</span>               <span class="comment">&larr; Tone, strategy, calendar, posts</span>
-<span class="dir">&boxvr;&boxh;&boxh; /product/</span>                 <span class="comment">&larr; MVP app code (Expo)</span>
+<span class="dir">&boxvr;&boxh;&boxh; /design-system/</span>           <span class="comment">&larr; Live DS site (24 components)</span>
+<span class="dir">&boxvr;&boxh;&boxh; /product/</span>                 <span class="comment">&larr; MVP app code (Expo) &middot; DEMO_MODE</span>
 <span class="dir">&boxvr;&boxh;&boxh; /website/</span>                 <span class="comment">&larr; Marketing site (Next.js)</span>
-<span class="dir">&boxvr;&boxh;&boxh; /design-system/</span>           <span class="comment">&larr; 33+ page DS site</span>
 <span class="dir">&boxvr;&boxh;&boxh; /figma-plugins/</span>           <span class="comment">&larr; 3 Figma plugins</span>
 <span class="dir">&boxv;   &boxur;&boxh;&boxh; /screens/</span>             <span class="comment">&larr; Screen export plugin</span>
+<span class="dir">&boxvr;&boxh;&boxh; /marketing/</span>               <span class="comment">&larr; Tone, strategy, calendar, posts</span>
 <span class="dir">&boxvr;&boxh;&boxh; /video/</span>                   <span class="comment">&larr; Script + audio brief</span>
-<span class="dir">&boxvr;&boxh;&boxh; /retainer/</span>                <span class="comment">&larr; Monthly content log</span>
-<span class="dir">&boxur;&boxh;&boxh; /wireframes/</span>              <span class="comment">&larr; Wireframe deck + screenshots</span>
+<span class="dir">&boxvr;&boxh;&boxh; /invoices/</span>                <span class="comment">&larr; Milestone invoices</span>
+<span class="dir">&boxur;&boxh;&boxh; /retainer/</span>                <span class="comment">&larr; Monthly content log</span>
         </div>
       </div>
     </div>
@@ -1357,13 +1599,14 @@
 
       <div style="max-width:640px;margin-top:2.5rem;">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.25rem 2rem;">
-          <div style="display:flex;align-items:center;gap:10px;padding:0.6rem 0;border-bottom:1px solid rgba(0,0,0,0.04);font-size:0.92rem;color:var(--text-dark-muted);"><span style="color:var(--primary);font-weight:600;flex-shrink:0;">&#10003;</span> Phase 1&ndash;5 core workflow</div>
-          <div style="display:flex;align-items:center;gap:10px;padding:0.6rem 0;border-bottom:1px solid rgba(0,0,0,0.04);font-size:0.92rem;color:var(--text-dark-muted);"><span style="color:var(--primary);font-weight:600;flex-shrink:0;">&#10003;</span> MVP App</div>
-          <div style="display:flex;align-items:center;gap:10px;padding:0.6rem 0;border-bottom:1px solid rgba(0,0,0,0.04);font-size:0.92rem;color:var(--text-dark-muted);"><span style="color:var(--primary);font-weight:600;flex-shrink:0;">&#10003;</span> Design System + DS site</div>
-          <div style="display:flex;align-items:center;gap:10px;padding:0.6rem 0;border-bottom:1px solid rgba(0,0,0,0.04);font-size:0.92rem;color:var(--text-dark-muted);"><span style="color:var(--primary);font-weight:600;flex-shrink:0;">&#10003;</span> Research Deck</div>
-          <div style="display:flex;align-items:center;gap:10px;padding:0.6rem 0;border-bottom:1px solid rgba(0,0,0,0.04);font-size:0.92rem;color:var(--text-dark-muted);"><span style="color:var(--primary);font-weight:600;flex-shrink:0;">&#10003;</span> Vision Deck</div>
-          <div style="display:flex;align-items:center;gap:10px;padding:0.6rem 0;border-bottom:1px solid rgba(0,0,0,0.04);font-size:0.92rem;color:var(--text-dark-muted);"><span style="color:var(--primary);font-weight:600;flex-shrink:0;">&#10003;</span> Strategy Deck</div>
-          <div style="display:flex;align-items:center;gap:10px;padding:0.6rem 0;border-bottom:1px solid rgba(0,0,0,0.04);font-size:0.92rem;color:var(--text-dark-muted);"><span style="color:var(--primary);font-weight:600;flex-shrink:0;">&#10003;</span> Investor Deck</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:0.6rem 0;border-bottom:1px solid rgba(0,0,0,0.04);font-size:0.92rem;color:var(--text-dark-muted);"><span style="color:var(--primary);font-weight:600;flex-shrink:0;">&#10003;</span> Phase 0&ndash;5 workflow + 3 Gates</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:0.6rem 0;border-bottom:1px solid rgba(0,0,0,0.04);font-size:0.92rem;color:var(--text-dark-muted);"><span style="color:var(--primary);font-weight:600;flex-shrink:0;">&#10003;</span> MVP App (with DEMO_MODE)</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:0.6rem 0;border-bottom:1px solid rgba(0,0,0,0.04);font-size:0.92rem;color:var(--text-dark-muted);"><span style="color:var(--primary);font-weight:600;flex-shrink:0;">&#10003;</span> Per-engagement DS Site</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:0.6rem 0;border-bottom:1px solid rgba(0,0,0,0.04);font-size:0.92rem;color:var(--text-dark-muted);"><span style="color:var(--primary);font-weight:600;flex-shrink:0;">&#10003;</span> Research Hub (live data room)</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:0.6rem 0;border-bottom:1px solid rgba(0,0,0,0.04);font-size:0.92rem;color:var(--text-dark-muted);"><span style="color:var(--primary);font-weight:600;flex-shrink:0;">&#10003;</span> Vision Hub (live data room)</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:0.6rem 0;border-bottom:1px solid rgba(0,0,0,0.04);font-size:0.92rem;color:var(--text-dark-muted);"><span style="color:var(--primary);font-weight:600;flex-shrink:0;">&#10003;</span> Strategy Hub (live data room)</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:0.6rem 0;border-bottom:1px solid rgba(0,0,0,0.04);font-size:0.92rem;color:var(--text-dark-muted);"><span style="color:var(--primary);font-weight:600;flex-shrink:0;">&#10003;</span> Financials Hub (live data room)</div>
+          <div style="display:flex;align-items:center;gap:10px;padding:0.6rem 0;border-bottom:1px solid rgba(0,0,0,0.04);font-size:0.92rem;color:var(--text-dark-muted);"><span style="color:var(--primary);font-weight:600;flex-shrink:0;">&#10003;</span> Investor Pitch Deck (PDF)</div>
           <div style="display:flex;align-items:center;gap:10px;padding:0.6rem 0;border-bottom:1px solid rgba(0,0,0,0.04);font-size:0.92rem;color:var(--text-dark-muted);"><span style="color:var(--primary);font-weight:600;flex-shrink:0;">&#10003;</span> Marketing Website</div>
           <div style="display:flex;align-items:center;gap:10px;padding:0.6rem 0;border-bottom:1px solid rgba(0,0,0,0.04);font-size:0.92rem;color:var(--text-dark-muted);"><span style="color:var(--primary);font-weight:600;flex-shrink:0;">&#10003;</span> Social Media (20 posts)</div>
           <div style="display:flex;align-items:center;gap:10px;padding:0.6rem 0;border-bottom:1px solid rgba(0,0,0,0.04);font-size:0.92rem;color:var(--text-dark-muted);"><span style="color:var(--primary);font-weight:600;flex-shrink:0;">&#10003;</span> Blog Content (5 posts)</div>
@@ -1386,8 +1629,10 @@
   <section class="final-cta">
     <div class="cta-content" data-reveal>
       <h2>Seen enough?</h2>
+      <p class="cta-sub">Walk through the platform in a 30-minute demo &mdash; sized to your program volume.</p>
       <div class="cta-buttons">
-        <a href="pricing.html" class="btn btn-dark-primary btn-lg">Get the Workflow &mdash; <span data-price-gbp="500">&pound;500</span></a>
+        <a href="mailto:hello@ventrify.io?subject=Ventrify%20OS%20demo%20request" class="btn btn-dark-primary btn-lg">Book a platform demo</a>
+        <a href="pricing.html" class="btn btn-dark-outline btn-lg">View pricing</a>
       </div>
     </div>
   </section>
@@ -1400,14 +1645,16 @@
       <div class="footer-top">
         <div class="footer-brand">
           <div class="logo">VENTRIFY <span class="os">OS</span></div>
-          <p>A product by Ventrify &mdash; the AI-powered venture studio.</p>
+          <p>The operating system for startup programs.</p>
         </div>
         <div class="footer-links">
           <a href="system.html">System</a>
-          <a href="showcase.html">Showcase</a>
+          <a href="the-data-room.html">Data Room</a>
+      <a href="the-workspace.html">Workspace</a>
+      <a href="showcase.html">Showcase</a>
           <a href="pricing.html">Pricing</a>
           <a href="faqs.html">FAQs</a>
-          <a href="../index.html">Ventrify Studio</a>
+          <a href="mailto:hello@ventrify.io?subject=Ventrify%20OS%20demo%20request">Book a demo</a>
         </div>
       </div>
       <div class="footer-bottom">
@@ -1468,6 +1715,5 @@
       });
     });
   </script>
-  <script src="currency.js" defer></script>
 </body>
 </html>

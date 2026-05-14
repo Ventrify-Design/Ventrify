@@ -4,9 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pricing — Ventrify OS</title>
-  <meta name="description" content="One workflow. One price. Everything you need to run your own venture studio. £500 one-time.">
+  <meta name="description" content="Annual platform licences from $4,800 to $150,000+. Plus Ventrify Studio direct programmes from $9,500 to $85,000. No per-engagement fees.">
   <meta property="og:title" content="Pricing — Ventrify OS">
-  <meta property="og:description" content="The complete AI operating system for venture studios. £500 one-time. No subscriptions.">
+  <meta property="og:description" content="Four-tier annual licensing for accelerators, incubators, studios, and corporate innovation labs. USD pricing.">
   <meta property="og:type" content="website">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -147,7 +147,7 @@
       -webkit-backdrop-filter:blur(12px);
       border-radius:var(--radius-pill);
       box-shadow:0 1px 2px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.08), 0 16px 56px rgba(0,0,0,0.08);
-      max-width:650px;
+      max-width:780px;
       width:auto;
     }
     .logo {
@@ -663,6 +663,122 @@
     .tier-body .btn { width:100%; }
 
     /* ============================================
+       TIER GRID — Platform & Studio pricing cards
+       ============================================ */
+    .tier-grid {
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:1.25rem;
+      align-items:stretch;
+    }
+    .tier-card {
+      background:#F5F5F7;
+      border:1px solid rgba(0,0,0,0.04);
+      border-radius:var(--radius-card);
+      padding:2rem 1.75rem;
+      display:flex;
+      flex-direction:column;
+      position:relative;
+      transition:box-shadow var(--transition), transform var(--transition), border-color var(--transition);
+    }
+    .tier-card:hover {
+      box-shadow:0 8px 32px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04);
+      transform:translateY(-2px);
+      border-color:rgba(0,0,0,0.06);
+    }
+    .tier-card-featured {
+      background:#FFFFFF;
+      border:1.5px solid rgba(var(--primary-rgb),0.35);
+      box-shadow:0 4px 24px rgba(var(--primary-rgb),0.08), 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .tier-card-featured:hover {
+      box-shadow:0 8px 36px rgba(var(--primary-rgb),0.12), 0 2px 6px rgba(0,0,0,0.05);
+      border-color:rgba(var(--primary-rgb),0.5);
+    }
+    .tier-badge {
+      position:absolute;
+      top:-10px;
+      left:50%;
+      transform:translateX(-50%);
+      background:var(--primary);
+      color:#fff;
+      font-family:var(--font-mono);
+      font-size:0.66rem;
+      font-weight:500;
+      letter-spacing:0.08em;
+      text-transform:uppercase;
+      padding:4px 10px;
+      border-radius:var(--radius-pill);
+      white-space:nowrap;
+    }
+    .tier-eyebrow {
+      font-family:var(--font-mono);
+      font-size:0.74rem;
+      font-weight:500;
+      letter-spacing:0.08em;
+      text-transform:uppercase;
+      color:var(--primary);
+      margin-bottom:0.65rem;
+    }
+    .tier-price {
+      font-family:var(--font-heading);
+      font-weight:600;
+      font-size:clamp(1.7rem, 2.4vw, 2rem);
+      letter-spacing:-0.02em;
+      color:var(--text-dark);
+      line-height:1;
+      margin-bottom:0.6rem;
+    }
+    .tier-per {
+      font-size:0.55em;
+      font-weight:400;
+      color:var(--text-dark-muted);
+      letter-spacing:0;
+    }
+    .tier-tag {
+      font-size:0.85rem;
+      color:var(--text-dark-muted);
+      line-height:1.5;
+      margin:0 0 1.25rem;
+      min-height:2.55em;
+    }
+    .tier-list {
+      list-style:none;
+      padding:0;
+      margin:0 0 1.5rem;
+      flex:1;
+    }
+    .tier-list li {
+      font-size:0.85rem;
+      color:var(--text-dark);
+      line-height:1.5;
+      padding:0.45rem 0 0.45rem 1.25rem;
+      position:relative;
+      border-top:1px solid rgba(0,0,0,0.04);
+    }
+    .tier-list li:first-child { border-top:none; }
+    .tier-dot {
+      position:absolute;
+      left:0;
+      top:0.85rem;
+      width:6px;
+      height:6px;
+      border-radius:50%;
+      background:rgba(var(--primary-rgb),0.18);
+      border:1.5px solid rgba(var(--primary-rgb),0.35);
+    }
+    .tier-cta {
+      width:100%;
+      margin-top:auto;
+    }
+    @media (max-width:900px) {
+      .tier-grid { grid-template-columns:repeat(2,1fr); }
+    }
+    @media (max-width:560px) {
+      .tier-grid { grid-template-columns:1fr; }
+    }
+
+    /* ============================================
        ROI SECTION
        ============================================ */
     .roi-grid {
@@ -900,11 +1016,13 @@
     <a href="index.html" class="logo">VENTRIFY <span class="os">OS</span></a>
     <div class="nav-links">
       <a href="system.html">System</a>
+      <a href="the-data-room.html">Data Room</a>
+      <a href="the-workspace.html">Workspace</a>
       <a href="showcase.html">Showcase</a>
       <a href="pricing.html" class="active">Pricing</a>
     </div>
     <div class="nav-cta">
-      <a href="pricing.html" class="btn">Get the Workflow</a>
+      <a href="mailto:hello@ventrify.io?subject=Ventrify%20OS%20demo%20request" class="btn">Book a demo</a>
     </div>
     <button class="hamburger" aria-label="Menu">
       <span class="hamburger-line"></span>
@@ -916,10 +1034,12 @@
   <!-- Mobile Menu -->
   <div class="mobile-menu">
     <a href="system.html" class="m-nav-link">System</a>
+    <a href="the-data-room.html" class="m-nav-link">Data Room</a>
+    <a href="the-workspace.html" class="m-nav-link">Workspace</a>
     <a href="showcase.html" class="m-nav-link">Showcase</a>
     <a href="pricing.html" class="m-nav-link active">Pricing</a>
     <div class="m-cta">
-      <a href="pricing.html" class="btn btn-dark-primary btn-lg">Get the Workflow</a>
+      <a href="mailto:hello@ventrify.io?subject=Ventrify%20OS%20demo%20request" class="btn btn-dark-primary btn-lg">Book a demo</a>
     </div>
   </div>
 
@@ -928,8 +1048,8 @@
        ═══════════════════════════════════════════ -->
   <section class="hero" id="main-content">
     <div class="hero-content">
-      <h1 class="shimmer-text">One workflow.<br>One price.</h1>
-      <p class="hero-sub">Everything you need to run your own venture studio.</p>
+      <h1 class="shimmer-text">Annual platform licences.<br>Predictable economics.</h1>
+      <p class="hero-sub">Four tiers from $4,800 to $150,000+. No per-engagement fees. Plus our direct founder programme &mdash; Ventrify Studio &mdash; sold separately as the platform&rsquo;s reference implementation.</p>
     </div>
   </section>
 
@@ -943,44 +1063,159 @@
   <!-- PAGE INTRO — dark band -->
   <section class="page-intro-section">
     <div class="container" data-reveal>
-      <div style="max-width:780px;margin:0 auto;text-align:center;">
-        <p style="font-size:clamp(1.15rem,2.5vw,1.4rem);line-height:1.75;color:var(--text-light-muted);font-weight:400;">No tiers. No upsells. No recurring fees. <span style="color:#FFFFFF;font-weight:500;">A single &pound;500 purchase gives you the complete workflow, a demo video, and a step-by-step setup guide.</span> One client engagement at &pound;25K pays back your investment 50 times over &mdash; before you&rsquo;ve even finished the first phase.</p>
+      <div style="max-width:820px;margin:0 auto;text-align:center;">
+        <p style="font-size:clamp(1.15rem,2.5vw,1.4rem);line-height:1.75;color:var(--text-light-muted);font-weight:400;">Two pricing structures. The platform licence is annual and tied to throughput &mdash; how many programs your team runs, how many operators you have. <span style="color:#FFFFFF;font-weight:500;">Ventrify Studio programmes are sold per-engagement to direct founders</span> and exist primarily as a reference implementation that proves the platform on real ventures. All prices in USD.</p>
       </div>
     </div>
   </section>
 
   <!-- ═══════════════════════════════════════════
-       2. SINGLE PRICING CARD (light bg)
+       2. PLATFORM LICENCES — 4-tier grid
        ═══════════════════════════════════════════ -->
-  <section class="section" id="pricing-card">
+  <section class="section" id="platform-tiers">
     <div class="container" data-reveal>
-      <div style="max-width:640px;margin:0 auto;text-align:center;">
-        <div style="background:#F5F5F7;border-radius:var(--radius-card);padding:3.5rem 3rem;margin-bottom:1.5rem;">
-          <div style="font-family:var(--font-heading);font-size:clamp(3rem,6vw,4.5rem);font-weight:600;color:var(--text-dark);letter-spacing:-0.03em;line-height:1;" data-price-gbp="500">&pound;500</div>
-          <p style="font-size:1.05rem;color:var(--text-dark-muted);margin:1rem 0 0.25rem;font-weight:400;">One-time purchase. No subscription.</p>
-
-          <div style="margin:2.5rem 0;text-align:left;max-width:480px;margin-left:auto;margin-right:auto;">
-            <div style="font-family:var(--font-mono);font-size:0.75rem;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--primary);margin-bottom:1rem;">What&rsquo;s included</div>
-            <ul style="list-style:none;padding:0;margin:0;">
-              <li style="font-size:0.92rem;color:var(--text-dark-muted);line-height:1.5;padding:0.5rem 0;padding-left:1.5rem;position:relative;border-top:1px solid rgba(0,0,0,0.04);">
-                <span style="position:absolute;left:0;top:0.7rem;width:6px;height:6px;border-radius:50%;background:rgba(0,54,255,0.15);border:1.5px solid rgba(0,54,255,0.3);"></span>
-                The complete Ventrify Workflow file (4,242 lines)
-              </li>
-              <li style="font-size:0.92rem;color:var(--text-dark-muted);line-height:1.5;padding:0.5rem 0;padding-left:1.5rem;position:relative;border-top:1px solid rgba(0,0,0,0.04);">
-                <span style="position:absolute;left:0;top:0.7rem;width:6px;height:6px;border-radius:50%;background:rgba(0,54,255,0.15);border:1.5px solid rgba(0,54,255,0.3);"></span>
-                Demo video showing the workflow in action
-              </li>
-              <li style="font-size:0.92rem;color:var(--text-dark-muted);line-height:1.5;padding:0.5rem 0;padding-left:1.5rem;position:relative;border-top:1px solid rgba(0,0,0,0.04);">
-                <span style="position:absolute;left:0;top:0.7rem;width:6px;height:6px;border-radius:50%;background:rgba(0,54,255,0.15);border:1.5px solid rgba(0,54,255,0.3);"></span>
-                Step-by-step setup guide
-              </li>
-            </ul>
-          </div>
-
-          <p style="font-size:0.82rem;color:var(--text-dark-muted);margin-bottom:2rem;font-style:italic;">You&rsquo;ll need VS Code, Claude Code, and Node.js 18+ to run the workflow.</p>
-          <a href="#" class="btn btn-primary btn-lg">Get the Workflow</a>
-        </div>
+      <div style="text-align:center;max-width:640px;margin:0 auto 3rem;">
+        <div class="s-label" style="justify-content:center;">Platform Licences</div>
+        <h2 class="s-title s-title-shimmer">License the operating system.</h2>
+        <p class="s-sub" style="margin:0 auto;">Annual subscription. Scale tiers to your program volume. No per-engagement fees, ever.</p>
       </div>
+
+      <div class="tier-grid">
+
+        <!-- Starter -->
+        <div class="tier-card" data-reveal data-delay="1">
+          <div class="tier-eyebrow">Starter</div>
+          <div class="tier-price">$4,800<span class="tier-per">/yr</span></div>
+          <p class="tier-tag">For boutique studios and individual operators.</p>
+          <ul class="tier-list">
+            <li><span class="tier-dot"></span>1 Workspace operator seat</li>
+            <li><span class="tier-dot"></span>Up to 6 programs / year</li>
+            <li><span class="tier-dot"></span>Full platform &amp; Workspace access</li>
+            <li><span class="tier-dot"></span>Async support</li>
+          </ul>
+          <a href="mailto:hello@ventrify.io?subject=Starter%20tier%20enquiry" class="btn btn-outline btn-sm tier-cta">Book a demo</a>
+        </div>
+
+        <!-- Studio -->
+        <div class="tier-card" data-reveal data-delay="2">
+          <div class="tier-eyebrow">Studio</div>
+          <div class="tier-price">$18,000<span class="tier-per">/yr</span></div>
+          <p class="tier-tag">For venture studios and small accelerators.</p>
+          <ul class="tier-list">
+            <li><span class="tier-dot"></span>Up to 4 Workspace operator seats</li>
+            <li><span class="tier-dot"></span>Up to 24 programs / year</li>
+            <li><span class="tier-dot"></span>Full platform &amp; Workspace access</li>
+            <li><span class="tier-dot"></span>Office hours support</li>
+          </ul>
+          <a href="mailto:hello@ventrify.io?subject=Studio%20tier%20enquiry" class="btn btn-outline btn-sm tier-cta">Book a demo</a>
+        </div>
+
+        <!-- Cohort (highlighted) -->
+        <div class="tier-card tier-card-featured" data-reveal data-delay="3">
+          <div class="tier-badge">Most popular</div>
+          <div class="tier-eyebrow">Cohort</div>
+          <div class="tier-price">$48,000<span class="tier-per">/yr</span></div>
+          <p class="tier-tag">For accelerators and incubators running cohorts.</p>
+          <ul class="tier-list">
+            <li><span class="tier-dot"></span>Unlimited Workspace operator seats</li>
+            <li><span class="tier-dot"></span>Unlimited programs</li>
+            <li><span class="tier-dot"></span>Dedicated success contact</li>
+            <li><span class="tier-dot"></span>Full platform &amp; Workspace access</li>
+          </ul>
+          <a href="mailto:hello@ventrify.io?subject=Cohort%20tier%20enquiry" class="btn btn-primary btn-sm tier-cta">Book a demo</a>
+        </div>
+
+        <!-- Enterprise -->
+        <div class="tier-card" data-reveal data-delay="4">
+          <div class="tier-eyebrow">Enterprise</div>
+          <div class="tier-price">$150,000<span class="tier-per">+/yr</span></div>
+          <p class="tier-tag">For corporate innovation labs and large institutions.</p>
+          <ul class="tier-list">
+            <li><span class="tier-dot"></span>Unlimited Workspace seats</li>
+            <li><span class="tier-dot"></span>White-label Workspace &amp; portal</li>
+            <li><span class="tier-dot"></span>SLA &amp; embedded onboarding</li>
+            <li><span class="tier-dot"></span>Procurement-ready &middot; custom config</li>
+          </ul>
+          <a href="mailto:hello@ventrify.io?subject=Enterprise%20tier%20enquiry" class="btn btn-outline btn-sm tier-cta">Talk to us</a>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       3. VENTRIFY STUDIO — Direct founder programme
+       ═══════════════════════════════════════════ -->
+  <section class="section-alt" id="studio">
+    <div class="container" data-reveal>
+      <div style="text-align:center;max-width:680px;margin:0 auto 3rem;">
+        <div class="s-label" style="justify-content:center;">Our Own Program &mdash; Ventrify Studio</div>
+        <h2 class="s-title s-title-shimmer">Direct founder programmes.<br>The reference implementation.</h2>
+        <p class="s-sub" style="margin:0 auto;">Sold per engagement to a small, capped number of founders each year. The same platform every licensee runs &mdash; with our own programme manager orchestrating. Pitched in explicit contrast to the $80&ndash;200K, six-to-nine-month US agency alternative.</p>
+      </div>
+
+      <div class="tier-grid">
+
+        <!-- Discovery Sprint -->
+        <div class="tier-card" data-reveal data-delay="1">
+          <div class="tier-eyebrow">Discovery Sprint</div>
+          <div class="tier-price">$9,500</div>
+          <p class="tier-tag">Validate direction before committing to a build. ~2 weeks.</p>
+          <ul class="tier-list">
+            <li><span class="tier-dot"></span>Research data room</li>
+            <li><span class="tier-dot"></span>Market framing</li>
+            <li><span class="tier-dot"></span>Product vision</li>
+            <li><span class="tier-dot"></span>Initial investor narrative</li>
+          </ul>
+          <a href="mailto:studio@ventrify.io?subject=Discovery%20Sprint%20application" class="btn btn-outline btn-sm tier-cta">Apply</a>
+        </div>
+
+        <!-- Launchpad -->
+        <div class="tier-card" data-reveal data-delay="2">
+          <div class="tier-eyebrow">Launchpad</div>
+          <div class="tier-price">$32,000</div>
+          <p class="tier-tag">A credible MVP and startup foundation, fast. ~6 weeks.</p>
+          <ul class="tier-list">
+            <li><span class="tier-dot"></span>Working MVP</li>
+            <li><span class="tier-dot"></span>Brand identity</li>
+            <li><span class="tier-dot"></span>Design system</li>
+            <li><span class="tier-dot"></span>Core investor story</li>
+          </ul>
+          <a href="mailto:studio@ventrify.io?subject=Launchpad%20application" class="btn btn-outline btn-sm tier-cta">Apply</a>
+        </div>
+
+        <!-- Venture (highlighted) -->
+        <div class="tier-card tier-card-featured" data-reveal data-delay="3">
+          <div class="tier-badge">Most popular</div>
+          <div class="tier-eyebrow">Venture</div>
+          <div class="tier-price">$55,000</div>
+          <p class="tier-tag">Launch and raise. ~10 weeks.</p>
+          <ul class="tier-list">
+            <li><span class="tier-dot"></span>MVP + marketing site</li>
+            <li><span class="tier-dot"></span>Financial model</li>
+            <li><span class="tier-dot"></span>Full data room</li>
+            <li><span class="tier-dot"></span>Launch assets</li>
+          </ul>
+          <a href="mailto:studio@ventrify.io?subject=Venture%20application" class="btn btn-primary btn-sm tier-cta">Apply</a>
+        </div>
+
+        <!-- Venture Pro -->
+        <div class="tier-card" data-reveal data-delay="4">
+          <div class="tier-eyebrow">Venture Pro</div>
+          <div class="tier-price">$85,000</div>
+          <p class="tier-tag">Launch plus structured post-launch support. ~14 weeks.</p>
+          <ul class="tier-list">
+            <li><span class="tier-dot"></span>Everything in Venture</li>
+            <li><span class="tier-dot"></span>3-month post-launch retainer</li>
+            <li><span class="tier-dot"></span>Monthly analytics</li>
+            <li><span class="tier-dot"></span>Quarterly financial refresh</li>
+          </ul>
+          <a href="mailto:studio@ventrify.io?subject=Venture%20Pro%20application" class="btn btn-outline btn-sm tier-cta">Apply</a>
+        </div>
+
+      </div>
+
+      <p style="font-size:0.88rem;color:var(--text-dark-muted);text-align:center;margin-top:2.5rem;font-style:italic;max-width:640px;margin-left:auto;margin-right:auto;">Add-ons &mdash; additional decks, social packs, extended retainer months and post-handoff support &mdash; available at $1,500&ndash;$3,500 per item.</p>
     </div>
   </section>
 
@@ -990,72 +1225,117 @@
   <section class="section-alt" id="produces">
     <div class="container" data-reveal>
       <div class="s-label">What Ships</div>
-      <h2 class="s-title s-title-shimmer">What the workflow produces</h2>
-      <p class="s-sub">Every engagement generates 70+ production-grade deliverables. Here are the key outputs.</p>
+      <h2 class="s-title s-title-shimmer">What every program produces</h2>
+      <p class="s-sub">70+ production-grade deliverables per venture. Mostly live &mdash; not PDFs. Same output whether your team runs it on a platform licence or it&rsquo;s delivered through a Studio programme.</p>
 
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:3rem;">
-        <div style="background:#F5F5F7;border-radius:var(--radius-card);padding:2rem;text-align:center;" data-reveal data-delay="1">
-          <div style="font-size:2rem;margin-bottom:0.75rem;">&#x1F4F1;</div>
-          <h3 style="font-size:1rem;font-weight:600;color:var(--text-dark);margin-bottom:0.5rem;">MVP App</h3>
-          <p style="font-size:0.85rem;color:var(--text-dark-muted);line-height:1.6;">iOS + Android</p>
+
+        <!-- 1. Founder portal — Layers icon -->
+        <div style="background:#F5F5F7;border-radius:var(--radius-card);padding:2rem 1.75rem;text-align:center;" data-reveal data-delay="1">
+          <div style="display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,#0036FF 0%,#3366FF 100%);box-shadow:0 6px 16px rgba(0,54,255,0.22),0 1px 3px rgba(0,0,0,0.08);margin-bottom:1.1rem;">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 L21 8 L12 13 L3 8 Z"/><path d="M3 12 L12 17 L21 12"/><path d="M3 16 L12 21 L21 16" opacity="0.55"/></svg>
+          </div>
+          <h3 style="font-size:1rem;font-weight:600;color:var(--text-dark);margin-bottom:0.5rem;letter-spacing:-0.01em;">Founder portal &mdash; 7 hubs</h3>
+          <p style="font-size:0.85rem;color:var(--text-dark-muted);line-height:1.6;">Research, Vision, Strategy, Financials, Marketing, Video, Blog &mdash; all as three-layer data rooms.</p>
         </div>
-        <div style="background:#F5F5F7;border-radius:var(--radius-card);padding:2rem;text-align:center;" data-reveal data-delay="2">
-          <div style="font-size:2rem;margin-bottom:0.75rem;">&#x1F310;</div>
-          <h3 style="font-size:1rem;font-weight:600;color:var(--text-dark);margin-bottom:0.5rem;">Marketing Website</h3>
-          <p style="font-size:0.85rem;color:var(--text-dark-muted);line-height:1.6;">9 pages, SEO-ready</p>
+
+        <!-- 2. MVP App — Phone icon -->
+        <div style="background:#F5F5F7;border-radius:var(--radius-card);padding:2rem 1.75rem;text-align:center;" data-reveal data-delay="2">
+          <div style="display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,#0036FF 0%,#3366FF 100%);box-shadow:0 6px 16px rgba(0,54,255,0.22),0 1px 3px rgba(0,0,0,0.08);margin-bottom:1.1rem;">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+          </div>
+          <h3 style="font-size:1rem;font-weight:600;color:var(--text-dark);margin-bottom:0.5rem;letter-spacing:-0.01em;">MVP App</h3>
+          <p style="font-size:0.85rem;color:var(--text-dark-muted);line-height:1.6;">iOS + Android. Ships with <code style="font-family:var(--font-mono);font-size:0.85em;background:rgba(0,0,0,0.04);padding:1px 5px;border-radius:4px;">DEMO_MODE</code> &mdash; investor-demo-ready.</p>
         </div>
-        <div style="background:#F5F5F7;border-radius:var(--radius-card);padding:2rem;text-align:center;" data-reveal data-delay="3">
-          <div style="font-size:2rem;margin-bottom:0.75rem;">&#x1F3A8;</div>
-          <h3 style="font-size:1rem;font-weight:600;color:var(--text-dark);margin-bottom:0.5rem;">Design System</h3>
-          <p style="font-size:0.85rem;color:var(--text-dark-muted);line-height:1.6;">3 Figma Plugins</p>
+
+        <!-- 3. Design system site — Grid icon -->
+        <div style="background:#F5F5F7;border-radius:var(--radius-card);padding:2rem 1.75rem;text-align:center;" data-reveal data-delay="3">
+          <div style="display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,#0036FF 0%,#3366FF 100%);box-shadow:0 6px 16px rgba(0,54,255,0.22),0 1px 3px rgba(0,0,0,0.08);margin-bottom:1.1rem;">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.5"><rect x="3.5" y="3.5" width="7" height="7" rx="1.2"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.2"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.2"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.2" fill="#FFFFFF"/></svg>
+          </div>
+          <h3 style="font-size:1rem;font-weight:600;color:var(--text-dark);margin-bottom:0.5rem;letter-spacing:-0.01em;">Design system site</h3>
+          <p style="font-size:0.85rem;color:var(--text-dark-muted);line-height:1.6;">Per-engagement. 24 components, 8 lockups, tokens, accessibility &mdash; live.</p>
         </div>
-        <div style="background:#F5F5F7;border-radius:var(--radius-card);padding:2rem;text-align:center;" data-reveal data-delay="1">
-          <div style="font-size:2rem;margin-bottom:0.75rem;">&#x1F4C4;</div>
-          <h3 style="font-size:1rem;font-weight:600;color:var(--text-dark);margin-bottom:0.5rem;">4 Branded PDF Decks</h3>
-          <p style="font-size:0.85rem;color:var(--text-dark-muted);line-height:1.6;">Research, Vision, Strategy, Investor</p>
+
+        <!-- 4. Marketing website — Browser icon -->
+        <div style="background:#F5F5F7;border-radius:var(--radius-card);padding:2rem 1.75rem;text-align:center;" data-reveal data-delay="1">
+          <div style="display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,#0036FF 0%,#3366FF 100%);box-shadow:0 6px 16px rgba(0,54,255,0.22),0 1px 3px rgba(0,0,0,0.08);margin-bottom:1.1rem;">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="15" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><circle cx="6" cy="6.75" r="0.6" fill="#FFFFFF"/><circle cx="8.4" cy="6.75" r="0.6" fill="#FFFFFF"/><circle cx="10.8" cy="6.75" r="0.6" fill="#FFFFFF"/></svg>
+          </div>
+          <h3 style="font-size:1rem;font-weight:600;color:var(--text-dark);margin-bottom:0.5rem;letter-spacing:-0.01em;">Marketing website</h3>
+          <p style="font-size:0.85rem;color:var(--text-dark-muted);line-height:1.6;">9 pages, SEO-ready, brand-aligned.</p>
         </div>
-        <div style="background:#F5F5F7;border-radius:var(--radius-card);padding:2rem;text-align:center;" data-reveal data-delay="2">
-          <div style="font-size:2rem;margin-bottom:0.75rem;">&#x1F4F7;</div>
-          <h3 style="font-size:1rem;font-weight:600;color:var(--text-dark);margin-bottom:0.5rem;">37 Brand Photos</h3>
-          <p style="font-size:0.85rem;color:var(--text-dark-muted);line-height:1.6;">Auto-sourced &amp; branded</p>
+
+        <!-- 5. Investor pitch deck — Document icon -->
+        <div style="background:#F5F5F7;border-radius:var(--radius-card);padding:2rem 1.75rem;text-align:center;" data-reveal data-delay="2">
+          <div style="display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,#0036FF 0%,#3366FF 100%);box-shadow:0 6px 16px rgba(0,54,255,0.22),0 1px 3px rgba(0,0,0,0.08);margin-bottom:1.1rem;">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2.5 L6 2.5 C4.9 2.5 4 3.4 4 4.5 L4 19.5 C4 20.6 4.9 21.5 6 21.5 L18 21.5 C19.1 21.5 20 20.6 20 19.5 L20 8.5 Z"/><polyline points="14 2.5 14 8.5 20 8.5"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="16.5" x2="13.5" y2="16.5"/></svg>
+          </div>
+          <h3 style="font-size:1rem;font-weight:600;color:var(--text-dark);margin-bottom:0.5rem;letter-spacing:-0.01em;">Investor pitch deck</h3>
+          <p style="font-size:0.85rem;color:var(--text-dark-muted);line-height:1.6;">The one deck still as a PDF &mdash; investors annotate offline.</p>
         </div>
-        <div style="background:#F5F5F7;border-radius:var(--radius-card);padding:2rem;text-align:center;" data-reveal data-delay="3">
-          <div style="font-size:2rem;margin-bottom:0.75rem;">&#x1F5BC;</div>
-          <h3 style="font-size:1rem;font-weight:600;color:var(--text-dark);margin-bottom:0.5rem;">20 Social Posts</h3>
-          <p style="font-size:0.85rem;color:var(--text-dark-muted);line-height:1.6;">Branded graphics included</p>
+
+        <!-- 6. Brand photos — Image icon -->
+        <div style="background:#F5F5F7;border-radius:var(--radius-card);padding:2rem 1.75rem;text-align:center;" data-reveal data-delay="3">
+          <div style="display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,#0036FF 0%,#3366FF 100%);box-shadow:0 6px 16px rgba(0,54,255,0.22),0 1px 3px rgba(0,0,0,0.08);margin-bottom:1.1rem;">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2.2"/><circle cx="9" cy="9" r="1.6"/><polyline points="21 15 16 10 5 21"/></svg>
+          </div>
+          <h3 style="font-size:1rem;font-weight:600;color:var(--text-dark);margin-bottom:0.5rem;letter-spacing:-0.01em;">37 brand photos</h3>
+          <p style="font-size:0.85rem;color:var(--text-dark-muted);line-height:1.6;">Auto-sourced and brand-treated to the venture&rsquo;s industry.</p>
         </div>
-        <div style="background:#F5F5F7;border-radius:var(--radius-card);padding:2rem;text-align:center;" data-reveal data-delay="1">
-          <div style="font-size:2rem;margin-bottom:0.75rem;">&#x1F3AC;</div>
-          <h3 style="font-size:1rem;font-weight:600;color:var(--text-dark);margin-bottom:0.5rem;">Promo Video</h3>
-          <p style="font-size:0.85rem;color:var(--text-dark-muted);line-height:1.6;">Automated, 60&ndash;65 seconds</p>
+
+        <!-- 7. Social + content pack — Calendar icon -->
+        <div style="background:#F5F5F7;border-radius:var(--radius-card);padding:2rem 1.75rem;text-align:center;" data-reveal data-delay="1">
+          <div style="display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,#0036FF 0%,#3366FF 100%);box-shadow:0 6px 16px rgba(0,54,255,0.22),0 1px 3px rgba(0,0,0,0.08);margin-bottom:1.1rem;">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="17" rx="2"/><line x1="3" y1="9.5" x2="21" y2="9.5"/><line x1="8" y1="2.5" x2="8" y2="6.5"/><line x1="16" y1="2.5" x2="16" y2="6.5"/><circle cx="8.5" cy="14" r="0.8" fill="#FFFFFF"/><circle cx="15.5" cy="14" r="0.8" fill="#FFFFFF"/><circle cx="12" cy="17.5" r="0.8" fill="#FFFFFF"/></svg>
+          </div>
+          <h3 style="font-size:1rem;font-weight:600;color:var(--text-dark);margin-bottom:0.5rem;letter-spacing:-0.01em;">Social + content pack</h3>
+          <p style="font-size:0.85rem;color:var(--text-dark-muted);line-height:1.6;">30-day content calendar, branded graphics, blog seed posts.</p>
         </div>
-        <div style="background:#F5F5F7;border-radius:var(--radius-card);padding:2rem;text-align:center;" data-reveal data-delay="2">
-          <div style="font-size:2rem;margin-bottom:0.75rem;">&#x1F5A5;</div>
-          <h3 style="font-size:1rem;font-weight:600;color:var(--text-dark);margin-bottom:0.5rem;">Client Portal + SOW</h3>
-          <p style="font-size:0.85rem;color:var(--text-dark-muted);line-height:1.6;">Invoicing &amp; payments</p>
+
+        <!-- 8. Promo video — Play icon -->
+        <div style="background:#F5F5F7;border-radius:var(--radius-card);padding:2rem 1.75rem;text-align:center;" data-reveal data-delay="2">
+          <div style="display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,#0036FF 0%,#3366FF 100%);box-shadow:0 6px 16px rgba(0,54,255,0.22),0 1px 3px rgba(0,0,0,0.08);margin-bottom:1.1rem;">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><polygon points="10.5 8.5 16 12 10.5 15.5" fill="#FFFFFF" stroke="none"/></svg>
+          </div>
+          <h3 style="font-size:1rem;font-weight:600;color:var(--text-dark);margin-bottom:0.5rem;letter-spacing:-0.01em;">Promo video</h3>
+          <p style="font-size:0.85rem;color:var(--text-dark-muted);line-height:1.6;">60&ndash;65s, scripted and produced &mdash; or full-production hand-off pack.</p>
         </div>
-        <div style="background:#F5F5F7;border-radius:var(--radius-card);padding:2rem;text-align:center;" data-reveal data-delay="3">
-          <div style="font-size:2rem;margin-bottom:0.75rem;">&#x1F916;</div>
-          <h3 style="font-size:1rem;font-weight:600;color:var(--text-dark);margin-bottom:0.5rem;">3 QA Validators</h3>
-          <p style="font-size:0.85rem;color:var(--text-dark-muted);line-height:1.6;">5 Specialist Agents</p>
+
+        <!-- 9. 10 specialist agents — Network icon -->
+        <div style="background:#F5F5F7;border-radius:var(--radius-card);padding:2rem 1.75rem;text-align:center;" data-reveal data-delay="3">
+          <div style="display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,#0036FF 0%,#3366FF 100%);box-shadow:0 6px 16px rgba(0,54,255,0.22),0 1px 3px rgba(0,0,0,0.08);margin-bottom:1.1rem;">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="6"/><line x1="6" y1="6" x2="12" y2="18"/><line x1="18" y1="6" x2="12" y2="18"/><circle cx="6" cy="6" r="2.4" fill="#FFFFFF" stroke="none"/><circle cx="18" cy="6" r="2.4" fill="#FFFFFF" stroke="none"/><circle cx="12" cy="18" r="2.4" fill="#FFFFFF" stroke="none"/></svg>
+          </div>
+          <h3 style="font-size:1rem;font-weight:600;color:var(--text-dark);margin-bottom:0.5rem;letter-spacing:-0.01em;">10 specialist agents</h3>
+          <p style="font-size:0.85rem;color:var(--text-dark-muted);line-height:1.6;">The workforce behind every venture &mdash; one program manager orchestrates.</p>
         </div>
+
       </div>
     </div>
   </section>
 
   <!-- ═══════════════════════════════════════════
-       4. ROI SECTION (light bg)
+       4. ECONOMICS — Cost of agency vs platform
        ═══════════════════════════════════════════ -->
-  <section class="section" id="roi">
+  <section class="section" id="economics">
     <div class="container" data-reveal>
       <div class="s-label">The Maths</div>
-      <h2 class="s-title s-title-shimmer">It pays for itself on day one</h2>
-      <p class="s-sub">One client engagement at &pound;25,000 = 50x return on a &pound;500 investment. The workflow pays for itself on day one.</p>
+      <h2 class="s-title s-title-shimmer">The licence pays for itself<br>in one venture.</h2>
+      <p class="s-sub">A single agency engagement costs $80&ndash;200K and takes six to nine months. The Studio tier ($18K/yr) covers up to 24 of those programs. The Cohort tier ($48K/yr) is unlimited.</p>
 
-      <div style="display:grid;grid-template-columns:1fr;gap:1.5rem;margin-top:3rem;max-width:400px;margin-left:auto;margin-right:auto;">
+      <div class="roi-grid" style="margin-top:3rem;">
         <div class="roi-card" data-reveal data-delay="1">
-          <div class="roi-val">50x</div>
-          <div class="roi-lbl">Return on your first engagement</div>
+          <div class="roi-val">$80&ndash;200K</div>
+          <div class="roi-lbl">Cost of one comparable agency engagement (US)</div>
+        </div>
+        <div class="roi-card" data-reveal data-delay="2">
+          <div class="roi-val">6&ndash;9 mo</div>
+          <div class="roi-lbl">Typical agency timeline per engagement</div>
+        </div>
+        <div class="roi-card" data-reveal data-delay="3">
+          <div class="roi-val">24+</div>
+          <div class="roi-lbl">Programs / yr on the Studio tier</div>
         </div>
       </div>
     </div>
@@ -1075,58 +1355,58 @@
 
         <details class="faq-item">
           <summary>
-            What exactly do I get when I purchase?
+            How does annual licensing work?
             <svg class="faq-chevron" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 8 10 13 15 8"/></svg>
           </summary>
-          <div class="faq-answer">You get the complete Ventrify Workflow file (4,242 lines), a demo video showing the workflow running on a real client engagement, and a step-by-step setup guide. One purchase, everything included.</div>
+          <div class="faq-answer">You pick a tier, sign a one-year licence, and get unlimited programs within that tier&rsquo;s operator and program limits. No per-engagement fees. Renew or upgrade annually. Procurement-friendly invoicing on Cohort and Enterprise tiers.</div>
         </details>
 
         <details class="faq-item">
           <summary>
-            Do I need to know how to code?
+            Which tier is right for us?
             <svg class="faq-chevron" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 8 10 13 15 8"/></svg>
           </summary>
-          <div class="faq-answer">You need basic terminal comfort &mdash; navigating directories, running npm scripts, using Git. You do not need deep programming skills. The system handles the complexity; you handle the decisions. If you can open a terminal and follow instructions, you can run Ventrify OS.</div>
+          <div class="faq-answer">Boutique studios and individual operators &mdash; Starter. Venture studios and small accelerators &mdash; Studio. Accelerators or incubators running cohort-style programs &mdash; Cohort. Corporate innovation labs and procurement-driven institutions &mdash; Enterprise. Book a demo and we&rsquo;ll size it with you.</div>
         </details>
 
         <details class="faq-item">
           <summary>
-            What tools do I need?
+            Can we white-label the platform?
             <svg class="faq-chevron" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 8 10 13 15 8"/></svg>
           </summary>
-          <div class="faq-answer">VS Code (free), Claude Code (included with Claude subscription), Node.js 18+ (free), Git (free), and Figma Desktop (free tier). Everything you need is either free or included with tools you likely already have.</div>
+          <div class="faq-answer">Yes &mdash; on the Enterprise tier. White-label includes your branding, your domain for the program portal, and configuration to match your operating model. Available as an add-on on Cohort by exception.</div>
         </details>
 
         <details class="faq-item">
           <summary>
-            Can I use this for multiple clients?
+            Who owns the work the platform produces?
             <svg class="faq-chevron" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 8 10 13 15 8"/></svg>
           </summary>
-          <div class="faq-answer">Yes, unlimited. One purchase, unlimited engagements. You create a new project folder for each client, copy in the CLAUDE.md, and run the system again. There are no per-client fees or usage limits.</div>
+          <div class="faq-answer">Your program owns every output of every venture. Code, brand assets, decks, research, design system &mdash; all delivered to the founder under your program&rsquo;s arrangement. Ventrify retains no rights to the venture outputs.</div>
         </details>
 
         <details class="faq-item">
           <summary>
-            Is this a subscription?
+            What does onboarding look like?
             <svg class="faq-chevron" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 8 10 13 15 8"/></svg>
           </summary>
-          <div class="faq-answer">No. &pound;500 one-time payment. You pay once, you own the workflow. No recurring charges.</div>
+          <div class="faq-answer">Starter and Studio tiers: self-serve setup with documentation and async support. Cohort: dedicated success contact and operator certification within the first two weeks. Enterprise: embedded onboarding, SLA, and a customised configuration cycle.</div>
         </details>
 
         <details class="faq-item">
           <summary>
-            What if I get stuck?
+            How is Ventrify Studio different from the platform?
             <svg class="faq-chevron" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 8 10 13 15 8"/></svg>
           </summary>
-          <div class="faq-answer">The demo video walks through a complete real engagement from start to finish, and the setup guide covers every step. The workflow itself is heavily documented &mdash; 4,242 lines of structured instruction with comments throughout.</div>
+          <div class="faq-answer">The platform is what you license. Ventrify Studio is a small, capped direct programme we run on the same platform &mdash; for a tiny number of founders each year. It exists as the reference implementation that proves the platform delivers, and the case studies feed back into every licensee&rsquo;s deal.</div>
         </details>
 
         <details class="faq-item">
           <summary>
-            How is this different from a prompt template?
+            How is this different from hiring an agency?
             <svg class="faq-chevron" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 8 10 13 15 8"/></svg>
           </summary>
-          <div class="faq-answer">It&rsquo;s 4,242 lines with gate reviews, payment enforcement, parallel workstreams, and 15+ automated tools. Not a prompt. A prompt template gives you a starting point. Ventrify OS gives you an entire operating system &mdash; with enforced phases, automated deliverable generation, quality gates, and integrated tooling that runs a full engagement from brief to launch.</div>
+          <div class="faq-answer">An agency engagement is project-priced, headcount-bound, and 6&ndash;9 months long &mdash; one venture at a time. Licensing the platform converts that delivery capacity into infrastructure your own team owns. Same outputs, fixed annual cost, repeatable across every program in your portfolio.</div>
         </details>
 
       </div>
@@ -1139,10 +1419,10 @@
   <section class="final-cta">
     <div class="cta-content" data-reveal>
       <div class="s-label-dark">Get Started</div>
-      <h2>Ready to run your own<br>venture studio?</h2>
-      <p class="cta-sub">One workflow. One operator. Unlimited clients.</p>
+      <h2>License the platform.<br>Run programs that ship.</h2>
+      <p class="cta-sub">A 30-minute demo, sized to your program volume. We&rsquo;ll walk through tier fit, onboarding, and outcomes from real ventures.</p>
       <div class="cta-buttons">
-        <a href="#" class="btn btn-dark-primary btn-lg">Get the Workflow &mdash; <span data-price-gbp="500">&pound;500</span></a>
+        <a href="mailto:hello@ventrify.io?subject=Ventrify%20OS%20demo%20request" class="btn btn-dark-primary btn-lg">Book a platform demo</a>
       </div>
     </div>
   </section>
@@ -1155,14 +1435,16 @@
       <div class="footer-top">
         <div class="footer-brand">
           <div class="logo">VENTRIFY <span class="os">OS</span></div>
-          <p>A product by Ventrify &mdash; the AI-powered venture studio.</p>
+          <p>The operating system for startup programs.</p>
         </div>
         <div class="footer-links">
           <a href="system.html">System</a>
-          <a href="showcase.html">Showcase</a>
+          <a href="the-data-room.html">Data Room</a>
+      <a href="the-workspace.html">Workspace</a>
+      <a href="showcase.html">Showcase</a>
           <a href="pricing.html">Pricing</a>
           <a href="faqs.html">FAQs</a>
-          <a href="../index.html">Ventrify Studio</a>
+          <a href="mailto:hello@ventrify.io?subject=Ventrify%20OS%20demo%20request">Book a demo</a>
         </div>
       </div>
       <div class="footer-bottom">
@@ -1223,6 +1505,5 @@
       });
     });
   </script>
-  <script src="currency.js" defer></script>
 </body>
 </html>

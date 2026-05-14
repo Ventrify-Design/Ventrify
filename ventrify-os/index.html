@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ventrify OS — The AI Operating System for Venture Studios</title>
-  <meta name="description" content="One CLAUDE.md file. One operator. 70+ production-grade deliverables in 6–8 weeks. The complete AI operating system for venture studios.">
-  <meta property="og:title" content="Ventrify OS — The AI Operating System for Venture Studios">
-  <meta property="og:description" content="4,242 lines of instruction. 70+ deliverables. One operator. From client brief to launched product in 6–8 weeks.">
+  <title>Ventrify OS — The Operating System for Startup Programs</title>
+  <meta name="description" content="The AI-orchestrated platform licensed by accelerators, incubators, studios, and corporate innovation labs. One program manager runs entire ventures. 70+ deliverables per program in 6–16 weeks.">
+  <meta property="og:title" content="Ventrify OS — The Operating System for Startup Programs">
+  <meta property="og:description" content="License the platform that replaces a 10-person agency with one program manager and AI agents. From idea to launched venture in 6–16 weeks.">
   <meta property="og:type" content="website">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -191,7 +191,7 @@
       -webkit-backdrop-filter:blur(12px);
       border-radius:var(--radius-pill);
       box-shadow:0 1px 2px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.08), 0 16px 56px rgba(0,0,0,0.08);
-      max-width:650px;
+      max-width:780px;
       width:auto;
     }
     .logo {
@@ -777,6 +777,275 @@
     }
 
     /* ============================================
+       DATA ROOM — L1/L2/L3 layered cards
+       ============================================ */
+    .dr-grid {
+      display:grid;
+      grid-template-columns:repeat(3, 1fr);
+      gap:1.5rem;
+      margin-top:3rem;
+      align-items:stretch;
+    }
+    .dr-card {
+      background:#F5F5F7;
+      border:1px solid rgba(0,0,0,0.04);
+      border-radius:var(--radius-card);
+      padding:1.75rem;
+      display:flex;
+      flex-direction:column;
+      transition:box-shadow var(--transition), transform var(--transition);
+      position:relative;
+    }
+    .dr-card:hover {
+      box-shadow:0 8px 32px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.03);
+      transform:translateY(-2px);
+    }
+    .dr-card-l1 {
+      background:#FFFFFF;
+      border:1.5px solid rgba(var(--primary-rgb), 0.25);
+      box-shadow:0 4px 20px rgba(var(--primary-rgb),0.06), 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .dr-card-l2 {
+      background:#F0F2F7;
+      opacity:0.95;
+    }
+    .dr-card-l3 {
+      background:#EAEDF3;
+      opacity:0.85;
+    }
+    .dr-layer-tag {
+      font-family:var(--font-mono);
+      font-size:0.7rem;
+      font-weight:500;
+      letter-spacing:0.08em;
+      text-transform:uppercase;
+      color:var(--primary);
+      margin-bottom:0.85rem;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+    }
+    .dr-layer-tag::before {
+      content:'';
+      display:block;
+      width:16px;
+      height:2px;
+      background:var(--primary);
+      border-radius:1px;
+      opacity:0.5;
+    }
+    .dr-card-l2 .dr-layer-tag,
+    .dr-card-l3 .dr-layer-tag {
+      color:var(--text-dark-muted);
+    }
+    .dr-card-l2 .dr-layer-tag::before,
+    .dr-card-l3 .dr-layer-tag::before {
+      background:var(--text-dark-muted);
+    }
+    .dr-card-title {
+      font-size:1.2rem;
+      font-weight:600;
+      letter-spacing:-0.02em;
+      color:var(--text-dark);
+      margin-bottom:0.5rem;
+    }
+    .dr-card-lede {
+      font-size:0.88rem;
+      line-height:1.6;
+      color:var(--text-dark-muted);
+      margin-bottom:1.25rem;
+    }
+    .dr-sample-card {
+      background:linear-gradient(180deg, rgba(var(--primary-rgb),0.04), rgba(var(--primary-rgb),0.02));
+      border:1px solid rgba(var(--primary-rgb),0.18);
+      border-radius:var(--radius-md);
+      padding:1rem 1.1rem;
+      margin-bottom:1.25rem;
+      flex:1;
+    }
+    .dr-sample-tag {
+      font-family:var(--font-mono);
+      font-size:0.66rem;
+      letter-spacing:0.08em;
+      text-transform:uppercase;
+      color:var(--primary);
+      margin-bottom:0.5rem;
+    }
+    .dr-sample-q {
+      font-size:0.9rem;
+      line-height:1.5;
+      color:var(--text-dark);
+      margin-bottom:0.85rem;
+      font-weight:500;
+    }
+    .dr-sample-q em {
+      color:var(--primary);
+      font-style:normal;
+      font-weight:600;
+    }
+    .dr-sample-controls {
+      display:flex;
+      gap:6px;
+      flex-wrap:wrap;
+    }
+    .dr-chip {
+      font-family:var(--font-mono);
+      font-size:0.66rem;
+      letter-spacing:0.04em;
+      text-transform:uppercase;
+      padding:5px 9px;
+      border-radius:var(--radius-pill);
+      background:rgba(0,0,0,0.04);
+      color:var(--text-dark-muted);
+      white-space:nowrap;
+    }
+    .dr-chip-agree { background:rgba(var(--primary-rgb), 0.1); color:var(--primary); }
+    .dr-chip-discuss { background:rgba(0,0,0,0.06); color:var(--text-dark); }
+    .dr-chip-text { background:rgba(0,0,0,0.03); color:var(--text-dark-muted); }
+    .dr-stack {
+      display:flex;
+      flex-direction:column;
+      gap:0.65rem;
+      margin-bottom:1.25rem;
+      flex:1;
+    }
+    .dr-stack-row {
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:0.65rem 0.85rem;
+      background:rgba(0,0,0,0.025);
+      border-radius:var(--radius-sm);
+    }
+    .dr-stack-icon {
+      flex-shrink:0;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width:22px;
+      height:22px;
+      border-radius:6px;
+      background:rgba(var(--primary-rgb), 0.08);
+      color:var(--primary);
+    }
+    .dr-stack-icon svg { display:block; }
+    .dr-stack-text {
+      font-size:0.82rem;
+      color:var(--text-dark-muted);
+      line-height:1.4;
+    }
+    .dr-research-stack {
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      margin-bottom:1.25rem;
+      flex:1;
+      position:relative;
+      overflow:hidden;
+    }
+    .dr-research-line {
+      height:8px;
+      background:rgba(0,0,0,0.06);
+      border-radius:2px;
+      width:100%;
+    }
+    .dr-research-line-short { width:60%; }
+    .dr-research-line-medium { width:80%; }
+    .dr-research-fade {
+      position:absolute;
+      bottom:0;
+      left:0;
+      right:0;
+      height:60px;
+      background:linear-gradient(180deg, transparent 0%, #EAEDF3 100%);
+      pointer-events:none;
+    }
+    .dr-card-meta {
+      display:flex;
+      align-items:center;
+      gap:8px;
+      font-size:0.78rem;
+      color:var(--text-dark-muted);
+      padding-top:0.85rem;
+      border-top:1px solid rgba(0,0,0,0.05);
+      margin-top:auto;
+    }
+    .dr-dot {
+      display:block;
+      width:7px;
+      height:7px;
+      border-radius:50%;
+      background:rgba(0,0,0,0.18);
+      flex-shrink:0;
+    }
+    .dr-dot-on {
+      background:var(--primary);
+      box-shadow:0 0 0 3px rgba(var(--primary-rgb), 0.12);
+    }
+
+    /* Sign-off loop strip */
+    .dr-signoff {
+      margin-top:3rem;
+      background:linear-gradient(180deg, #080B1A 0%, #111B52 100%);
+      border-radius:var(--radius-card);
+      padding:2.5rem 2rem;
+      color:#FFFFFF;
+      text-align:center;
+    }
+    .dr-signoff-eyebrow {
+      font-family:var(--font-mono);
+      font-size:0.72rem;
+      font-weight:500;
+      letter-spacing:0.12em;
+      text-transform:uppercase;
+      color:rgba(255,255,255,0.5);
+      margin-bottom:1.5rem;
+    }
+    .dr-signoff-chain {
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:0.85rem;
+      flex-wrap:wrap;
+    }
+    .dr-signoff-step {
+      display:flex;
+      flex-direction:column;
+      gap:0.4rem;
+      min-width:120px;
+      max-width:180px;
+    }
+    .dr-signoff-num {
+      font-family:var(--font-heading);
+      font-size:1.4rem;
+      font-weight:600;
+      color:rgba(255,255,255,0.95);
+      letter-spacing:-0.02em;
+      line-height:1;
+    }
+    .dr-signoff-label {
+      font-size:0.82rem;
+      color:rgba(255,255,255,0.6);
+      line-height:1.4;
+    }
+    .dr-signoff-arrow {
+      color:rgba(var(--primary-rgb), 0.7);
+      font-size:1.1rem;
+      flex-shrink:0;
+    }
+    .dr-signoff-foot {
+      margin-top:1.5rem;
+      font-size:0.85rem;
+      color:rgba(255,255,255,0.45);
+      font-style:italic;
+    }
+    @media (max-width:900px) {
+      .dr-grid { grid-template-columns:1fr; }
+      .dr-signoff-chain { flex-direction:column; gap:0.5rem; }
+      .dr-signoff-arrow { transform:rotate(90deg); }
+    }
+
+    /* ============================================
        HOW IT WORKS — 3 Steps
        ============================================ */
     .steps-container {
@@ -895,23 +1164,32 @@
     .mini-deliv {
       display:flex;
       align-items:center;
-      gap:8px;
-      padding:0.65rem 0.85rem;
+      gap:10px;
+      padding:0.7rem 0.85rem;
       background:#F5F5F7;
       border-radius:var(--radius-sm);
       font-size:0.85rem;
       font-weight:500;
       color:var(--text-dark);
-      transition:background 0.2s ease;
+      transition:background 0.2s ease, transform 0.2s ease;
     }
     .mini-deliv:hover {
       background:rgba(0,0,0,0.04);
+      transform:translateY(-1px);
     }
     .mini-deliv-icon {
-      font-size:1rem;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width:28px;
+      height:28px;
+      border-radius:8px;
+      background:linear-gradient(135deg,var(--primary) 0%,var(--primary-light) 100%);
+      color:#FFFFFF;
       flex-shrink:0;
-      opacity:0.7;
+      box-shadow:0 2px 6px rgba(var(--primary-rgb),0.18);
     }
+    .mini-deliv-icon svg { display:block; }
 
     /* ============================================
        DELIVERABLES — Expandable
@@ -1465,14 +1743,16 @@
        NAVIGATION — Floating Pill
        ═══════════════════════════════════════════ -->
   <nav>
-    <a href="#" class="logo">VENTRIFY <span class="os">OS</span></a>
+    <a href="index.html" class="logo">VENTRIFY <span class="os">OS</span></a>
     <div class="nav-links">
       <a href="system.html">System</a>
+      <a href="the-data-room.html">Data Room</a>
+      <a href="the-workspace.html">Workspace</a>
       <a href="showcase.html">Showcase</a>
       <a href="pricing.html">Pricing</a>
     </div>
     <div class="nav-cta">
-      <a href="pricing.html" class="btn">Get the Workflow</a>
+      <a href="mailto:hello@ventrify.io?subject=Ventrify%20OS%20demo%20request" class="btn">Book a demo</a>
     </div>
     <button class="hamburger" aria-label="Menu">
       <span class="hamburger-line"></span>
@@ -1484,10 +1764,12 @@
   <!-- Mobile Menu -->
   <div class="mobile-menu">
     <a href="system.html" class="m-nav-link">System</a>
+    <a href="the-data-room.html" class="m-nav-link">Data Room</a>
+    <a href="the-workspace.html" class="m-nav-link">Workspace</a>
     <a href="showcase.html" class="m-nav-link">Showcase</a>
     <a href="pricing.html" class="m-nav-link">Pricing</a>
     <div class="m-cta">
-      <a href="pricing.html" class="btn btn-dark-primary btn-lg">Get the Workflow</a>
+      <a href="mailto:hello@ventrify.io?subject=Ventrify%20OS%20demo%20request" class="btn btn-dark-primary btn-lg">Book a demo</a>
     </div>
   </div>
 
@@ -1496,10 +1778,11 @@
        ═══════════════════════════════════════════ -->
   <section class="hero" id="main-content">
     <div class="hero-content">
-      <h1 class="shimmer-text">One person. One file.<br>An entire venture studio.</h1>
-      <p class="hero-sub">Drop a single file into VS Code. 70+ deliverables ship in 6&ndash;8 weeks. App, website, decks, brand, marketing &mdash; everything a founder needs to launch. No team. No subcontractors. Just you and the workflow.</p>
+      <h1 class="shimmer-text">The operating system<br>for startup programs.</h1>
+      <p class="hero-sub">Licensed by accelerators, incubators, venture studios, and corporate innovation labs. AI agents do the work. Your program manager orchestrates. 70+ deliverables per venture in 6&ndash;16 weeks &mdash; without a 10-person agency.</p>
       <div class="hero-ctas">
-        <a href="pricing.html" class="btn btn-hero-primary btn-lg">Get the Workflow &mdash; <span data-price-gbp="500">&pound;500</span></a>
+        <a href="mailto:hello@ventrify.io?subject=Ventrify%20OS%20demo%20request" class="btn btn-hero-primary btn-lg">Book a platform demo</a>
+        <a href="#contrast" class="btn btn-hero-outline btn-lg">See how it works</a>
       </div>
     </div>
   </section>
@@ -1517,7 +1800,7 @@
   <section class="page-intro-section" id="in-short">
     <div class="container" data-reveal>
       <div style="max-width:780px;margin:0 auto;text-align:center;">
-        <p style="font-size:clamp(1.15rem,2.5vw,1.4rem);line-height:1.75;color:var(--text-light-muted);font-weight:400;">Imagine charging &pound;25&ndash;50K per client and delivering everything &mdash; research, strategy, MVP, website, investor deck, design system, social content, promo video &mdash; without hiring a single person. <span style="color:#FFFFFF;font-weight:500;">That&rsquo;s what this workflow does.</span> One file. 4,242 lines. 5 AI agents. 3 QA tools. Formal gate reviews. Payment enforcement. Drop it into a project folder and Claude Code becomes your entire agency.</p>
+        <p style="font-size:clamp(1.15rem,2.5vw,1.4rem);line-height:1.75;color:var(--text-light-muted);font-weight:400;">Imagine running 24 ventures a year through your program with a single program manager. Research, strategy, MVP, brand, investor narrative, launch &mdash; every deliverable produced by 10 specialist AI agents working inside one orchestrated workflow. <span style="color:#FFFFFF;font-weight:500;">That&rsquo;s the platform you license.</span> Three-layer data room. Formal gate reviews. Investor-demo-ready MVPs in 6 weeks. The leverage of a 10-person agency, behind one annual licence.</p>
       </div>
       <div style="display:flex;align-items:center;justify-content:center;gap:0;margin-top:2rem;flex-wrap:wrap;">
         <div style="text-align:center;padding:0 3rem;">
@@ -1527,12 +1810,12 @@
         <div style="width:1px;height:40px;background:rgba(255,255,255,0.1);flex-shrink:0;"></div>
         <div style="text-align:center;padding:0 3rem;">
           <div style="font-family:var(--font-heading);font-size:clamp(1.8rem,3.5vw,2.5rem);font-weight:600;color:#FFFFFF;letter-spacing:-0.02em;">70+</div>
-          <div style="font-size:0.82rem;color:var(--text-light-muted);margin-top:0.25rem;">Deliverables per engagement</div>
+          <div style="font-size:0.82rem;color:var(--text-light-muted);margin-top:0.25rem;">Deliverables per program</div>
         </div>
         <div style="width:1px;height:40px;background:rgba(255,255,255,0.1);flex-shrink:0;"></div>
         <div style="text-align:center;padding:0 3rem;">
-          <div style="font-family:var(--font-heading);font-size:clamp(1.8rem,3.5vw,2.5rem);font-weight:600;color:#FFFFFF;letter-spacing:-0.02em;">6&ndash;8</div>
-          <div style="font-size:0.82rem;color:var(--text-light-muted);margin-top:0.25rem;">Weeks. Brief to launch.</div>
+          <div style="font-family:var(--font-heading);font-size:clamp(1.8rem,3.5vw,2.5rem);font-weight:600;color:#FFFFFF;letter-spacing:-0.02em;">6&ndash;16</div>
+          <div style="font-size:0.82rem;color:var(--text-light-muted);margin-top:0.25rem;">Weeks. Idea to launch.</div>
         </div>
       </div>
     </div>
@@ -1544,16 +1827,16 @@
   <section class="section" id="contrast">
     <div class="container" data-reveal>
       <div class="s-label">The Contrast</div>
-      <h2 class="s-title s-title-shimmer">One operator. Not five agencies.</h2>
+      <h2 class="s-title s-title-shimmer">One program manager.<br>Not a 10-person agency.</h2>
       <div class="contrast-card">
         <div class="contrast-side traditional">
           <h3>Traditional Agency</h3>
           <div class="contrast-row">
             <span class="cr-label">Team size</span>
-            <span class="cr-value">5&ndash;8 people</span>
+            <span class="cr-value">8&ndash;12 people</span>
           </div>
           <div class="contrast-row">
-            <span class="cr-label">Timeline</span>
+            <span class="cr-label">Timeline per venture</span>
             <span class="cr-value">6&ndash;9 months</span>
           </div>
           <div class="contrast-row">
@@ -1561,57 +1844,221 @@
             <span class="cr-value">3&ndash;5</span>
           </div>
           <div class="contrast-row">
-            <span class="cr-label">Cost to deliver</span>
-            <span class="cr-value">&pound;80&ndash;150K overhead</span>
+            <span class="cr-label">Cost per engagement</span>
+            <span class="cr-value">$80&ndash;200K</span>
           </div>
           <div class="contrast-row">
-            <span class="cr-label">Margin</span>
-            <span class="cr-value">15&ndash;25%</span>
+            <span class="cr-label">Throughput</span>
+            <span class="cr-value">2&ndash;4 ventures / yr</span>
           </div>
         </div>
         <div class="contrast-side os-side">
           <h3>Ventrify OS</h3>
           <div class="contrast-row">
             <span class="cr-label">Team size</span>
-            <span class="cr-value">1 operator</span>
+            <span class="cr-value">1 program manager + AI agents</span>
           </div>
           <div class="contrast-row">
-            <span class="cr-label">Timeline</span>
-            <span class="cr-value">6&ndash;8 weeks</span>
+            <span class="cr-label">Timeline per venture</span>
+            <span class="cr-value">6&ndash;16 weeks</span>
           </div>
           <div class="contrast-row">
             <span class="cr-label">Deliverables</span>
             <span class="cr-value">70+</span>
           </div>
           <div class="contrast-row">
-            <span class="cr-label">Cost to deliver</span>
-            <span class="cr-value">&pound;500 workflow cost</span>
+            <span class="cr-label">Cost per engagement</span>
+            <span class="cr-value">Fixed annual licence</span>
           </div>
           <div class="contrast-row">
-            <span class="cr-label">Margin</span>
-            <span class="cr-value">85&ndash;95%</span>
+            <span class="cr-label">Throughput</span>
+            <span class="cr-value">Up to 24+ ventures / yr</span>
           </div>
         </div>
       </div>
-      <p class="contrast-punchline" data-reveal>Same client. Same fee. 4x the speed. 20x the deliverables. 60x the margin.</p>
+      <p class="contrast-punchline" data-reveal>Same outcome. 4x the speed. 20x the deliverables. 6x the throughput. One annual licence.</p>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       3.5 THE DATA ROOM — L1 / L2 / L3 architecture
+       ═══════════════════════════════════════════ -->
+  <section class="section" id="data-room">
+    <div class="container" data-reveal>
+      <div class="s-label">The Data Room</div>
+      <h2 class="s-title s-title-shimmer">Founders don&rsquo;t read decks.<br>They resolve cards.</h2>
+      <p class="s-sub">Every program hub on Ventrify OS renders as a three-layer data room. The engagement gates on founders resolving questions, not on weeks of deck revisions. This is what makes 6&ndash;16 weeks credible.</p>
+
+      <div class="dr-grid" data-reveal>
+
+        <!-- L1 — Provocation Cards -->
+        <div class="dr-card dr-card-l1" data-reveal data-delay="1">
+          <div class="dr-layer-tag">L1 &mdash; Default view</div>
+          <h3 class="dr-card-title">Provocation Cards</h3>
+          <p class="dr-card-lede">5&ndash;7 strategic forks per hub. One question per card. Founder reads, comments inline, resolves.</p>
+
+          <div class="dr-sample-card">
+            <div class="dr-sample-tag">Card 03 &middot; Strategy</div>
+            <p class="dr-sample-q">The data says your real competitor isn&rsquo;t another fintech &mdash; it&rsquo;s Reddit. Do we build <em>for</em> that or <em>against</em> it?</p>
+            <div class="dr-sample-controls">
+              <span class="dr-chip dr-chip-agree">Agree</span>
+              <span class="dr-chip dr-chip-discuss">Let&rsquo;s discuss</span>
+              <span class="dr-chip dr-chip-text">Reply&hellip;</span>
+            </div>
+          </div>
+
+          <div class="dr-card-meta">
+            <span class="dr-dot dr-dot-on"></span>
+            <span>Always visible to the founder</span>
+          </div>
+        </div>
+
+        <!-- L2 — Evidence -->
+        <div class="dr-card dr-card-l2" data-reveal data-delay="2">
+          <div class="dr-layer-tag">L2 &mdash; Click &lsquo;See why&rsquo;</div>
+          <h3 class="dr-card-title">Evidence</h3>
+          <p class="dr-card-lede">The 2&ndash;3 charts, quotes, or numbers that drove each question. Surfaced on demand &mdash; not in the founder&rsquo;s face.</p>
+
+          <div class="dr-stack">
+            <div class="dr-stack-row">
+              <span class="dr-stack-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="12"/><line x1="12" y1="20" x2="12" y2="6"/><line x1="18" y1="20" x2="18" y2="14"/><line x1="3" y1="20" x2="21" y2="20"/></svg></span>
+              <span class="dr-stack-text">User-research: 41% engagement on community forums</span>
+            </div>
+            <div class="dr-stack-row">
+              <span class="dr-stack-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8v.5z"/></svg></span>
+              <span class="dr-stack-text">5 founder interviews flagged Reddit by name</span>
+            </div>
+            <div class="dr-stack-row">
+              <span class="dr-stack-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></span>
+              <span class="dr-stack-text">Competitor map: 0 incumbents claim the social wedge</span>
+            </div>
+          </div>
+
+          <div class="dr-card-meta">
+            <span class="dr-dot"></span>
+            <span>Collapsed by default</span>
+          </div>
+        </div>
+
+        <!-- L3 — Full Research -->
+        <div class="dr-card dr-card-l3" data-reveal data-delay="3">
+          <div class="dr-layer-tag">L3 &mdash; &lsquo;Go deep&rsquo;</div>
+          <h3 class="dr-card-title">Full Research</h3>
+          <p class="dr-card-lede">The complete 3,000&ndash;8,000 word document per hub. What an agency would have shipped as a PDF. Here, the supporting reference &mdash; only if the founder wants the depth.</p>
+
+          <div class="dr-research-stack">
+            <div class="dr-research-line"></div>
+            <div class="dr-research-line dr-research-line-short"></div>
+            <div class="dr-research-line"></div>
+            <div class="dr-research-line"></div>
+            <div class="dr-research-line dr-research-line-short"></div>
+            <div class="dr-research-line"></div>
+            <div class="dr-research-line dr-research-line-medium"></div>
+            <div class="dr-research-fade"></div>
+          </div>
+
+          <div class="dr-card-meta">
+            <span class="dr-dot"></span>
+            <span>3,000&ndash;8,000 words, citation-attributed</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Sign-off loop -->
+      <div class="dr-signoff" data-reveal>
+        <div class="dr-signoff-eyebrow">The sign-off loop</div>
+        <div class="dr-signoff-chain">
+          <div class="dr-signoff-step">
+            <div class="dr-signoff-num">01</div>
+            <div class="dr-signoff-label">Cards resolved</div>
+          </div>
+          <div class="dr-signoff-arrow">&rarr;</div>
+          <div class="dr-signoff-step">
+            <div class="dr-signoff-num">02</div>
+            <div class="dr-signoff-label">L3 current against decisions</div>
+          </div>
+          <div class="dr-signoff-arrow">&rarr;</div>
+          <div class="dr-signoff-step">
+            <div class="dr-signoff-num">03</div>
+            <div class="dr-signoff-label">Gate sign-off auto-unlocks</div>
+          </div>
+          <div class="dr-signoff-arrow">&rarr;</div>
+          <div class="dr-signoff-step">
+            <div class="dr-signoff-num">04</div>
+            <div class="dr-signoff-label">Next phase begins</div>
+          </div>
+        </div>
+        <p class="dr-signoff-foot">Permanent audit trail in git. Every comment, every &lsquo;won&rsquo;t fix&rsquo;, every sign-off &mdash; tracked forever.</p>
+      </div>
+
+      <div style="text-align:center;margin-top:3rem;" data-reveal>
+        <a href="the-data-room.html" class="btn btn-primary btn-lg">How the data room works &rarr;</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       3.7 THE WORKSPACE — operator command center
+       ═══════════════════════════════════════════ -->
+  <section class="section-alt" id="workspace">
+    <div class="container" data-reveal>
+      <div class="s-label">The Workspace</div>
+      <h2 class="s-title s-title-shimmer">Where your operators<br>run the whole portfolio.</h2>
+      <p class="s-sub">Founders get their portal. Operators get the Workspace &mdash; one screen showing every program your team is running, every gate that needs closing, every founder who&rsquo;s gone quiet. The surface that makes annual licensing actually work.</p>
+
+      <div style="margin-top:3rem;max-width:1080px;margin-left:auto;margin-right:auto;background:linear-gradient(135deg,#F0F2F7 0%,#E8ECF4 100%);border-radius:var(--radius-card);padding:12px;box-shadow:0 24px 48px rgba(0,0,0,0.08),0 4px 12px rgba(0,0,0,0.04),0 0 0 1px rgba(0,0,0,0.04);" data-reveal>
+        <div style="display:flex;align-items:center;gap:6px;padding:0 4px 10px;">
+          <span style="width:10px;height:10px;border-radius:50%;background:#FF5F57;"></span>
+          <span style="width:10px;height:10px;border-radius:50%;background:#FEBC2E;"></span>
+          <span style="width:10px;height:10px;border-radius:50%;background:#28C840;"></span>
+          <span style="flex:1;margin-left:10px;padding:4px 12px;background:rgba(255,255,255,0.7);border-radius:var(--radius-pill);font-family:var(--font-mono);font-size:0.72rem;color:var(--text-dark-muted);letter-spacing:0.02em;">ventrify.io/workspace/dashboard</span>
+        </div>
+        <div style="position:relative;max-height:520px;overflow:hidden;border-radius:8px;background:#fff;">
+          <img src="workspace/assets/screenshots/dashboard.png" alt="Ventrify OS Workspace — portfolio dashboard" style="width:100%;height:auto;display:block;background:#fff;">
+          <div style="position:absolute;bottom:0;left:0;right:0;height:120px;background:linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.7) 65%, rgba(255,255,255,0.97) 100%);pointer-events:none;"></div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:3rem;">
+        <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.04);border-radius:var(--radius-card);padding:1.75rem;" data-reveal data-delay="1">
+          <div style="font-family:var(--font-mono);font-size:0.7rem;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.6rem;">Portfolio view</div>
+          <h3 style="font-size:1.1rem;font-weight:600;letter-spacing:-0.015em;margin-bottom:0.5rem;color:var(--text-dark);">Every program at a glance</h3>
+          <p style="font-size:0.9rem;color:var(--text-dark-muted);line-height:1.6;">Phase, gate, health, last activity, card resolution &mdash; one card per venture. Filter by phase, health, or operator.</p>
+        </div>
+        <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.04);border-radius:var(--radius-card);padding:1.75rem;" data-reveal data-delay="2">
+          <div style="font-family:var(--font-mono);font-size:0.7rem;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.6rem;">Action queue</div>
+          <h3 style="font-size:1.1rem;font-weight:600;letter-spacing:-0.015em;margin-bottom:0.5rem;color:var(--text-dark);">Your work this week</h3>
+          <p style="font-size:0.9rem;color:var(--text-dark-muted);line-height:1.6;">Gates ready to close. Cards awaiting your review. Stuck founders. Aggregated across every program your team runs.</p>
+        </div>
+        <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.04);border-radius:var(--radius-card);padding:1.75rem;" data-reveal data-delay="3">
+          <div style="font-family:var(--font-mono);font-size:0.7rem;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.6rem;">Drill-down</div>
+          <h3 style="font-size:1.1rem;font-weight:600;letter-spacing:-0.015em;margin-bottom:0.5rem;color:var(--text-dark);">Per-program detail</h3>
+          <p style="font-size:0.9rem;color:var(--text-dark-muted);line-height:1.6;">7 hubs per program, status-coded. Timeline of agent runs and founder actions. One click to the founder portal view.</p>
+        </div>
+      </div>
+
+      <div style="text-align:center;margin-top:3rem;" data-reveal>
+        <a href="the-workspace.html" class="btn btn-primary btn-lg">Tour the Workspace &rarr;</a>
+      </div>
     </div>
   </section>
 
   <!-- ═══════════════════════════════════════════
        4. HOW IT WORKS — 3 Steps
        ═══════════════════════════════════════════ -->
-  <section class="section-alt" id="system">
+  <section class="section" id="system">
     <div class="container" data-reveal>
       <div class="s-label">How It Works</div>
-      <h2 class="s-title s-title-shimmer">Three steps. One file.<br>Everything ships.</h2>
+      <h2 class="s-title s-title-shimmer">Three steps. One platform.<br>Every venture ships.</h2>
       <div class="steps-container">
 
         <!-- Step 1 -->
         <div class="step-row" data-reveal data-delay="1">
           <div class="step-text">
             <div class="step-number">01</div>
-            <h3>Drop the file</h3>
-            <p>Add CLAUDE.md to any project folder. 4,242 lines of structured instruction &mdash; with 5 specialist AI agents, a token architecture, and a brand photography pipeline &mdash; turn Claude Code into your full-stack venture studio.</p>
+            <h3>Spin up the program</h3>
+            <p>Your program manager initialises a venture in the platform. 4,242 lines of structured instruction &mdash; with 10 specialist AI agents, a token architecture, and a brand photography pipeline &mdash; come online instantly. The platform configures itself around the brief.</p>
           </div>
           <div class="code-block">
             <div class="code-block-bar">
@@ -1626,7 +2073,7 @@
 <span class="dir">&boxv;&boxh;&boxh; /research/</span>         <span class="comment">&larr; 7 documents</span>
 <span class="dir">&boxv;&boxh;&boxh; /define/</span>           <span class="comment">&larr; 7 documents</span>
 <span class="dir">&boxv;&boxh;&boxh; /design/</span>           <span class="comment">&larr; Component specs</span>
-<span class="dir">&boxv;&boxh;&boxh; /decks/</span>            <span class="comment">&larr; 4 PDF decks</span>
+<span class="dir">&boxv;&boxh;&boxh; /decks/</span>            <span class="comment">&larr; Investor PDF + archives</span>
 <span class="dir">&boxv;&boxh;&boxh; /marketing/</span>        <span class="comment">&larr; Social + blog</span>
 <span class="dir">&boxv;&boxh;&boxh; /product/</span>          <span class="comment">&larr; MVP app code</span>
 <span class="dir">&boxv;&boxh;&boxh; /website/</span>          <span class="comment">&larr; Next.js site</span>
@@ -1636,7 +2083,7 @@
 <span class="dir">&boxv;&boxh;&boxh; /tools/</span>            <span class="comment">&larr; PDF generators</span>
 <span class="dir">&boxv;&boxh;&boxh; /qa/</span>               <span class="comment">&larr; 3 QA validators</span>
 <span class="dir">&boxv;&boxh;&boxh; /brand/imagery/</span>    <span class="comment">&larr; 37 auto-sourced photos</span>
-<span class="dir">&boxv;&boxh;&boxh; /.claude/agents/</span>   <span class="comment">&larr; 5 specialist agents</span>
+<span class="dir">&boxv;&boxh;&boxh; /.claude/agents/</span>   <span class="comment">&larr; 10 specialist agents</span>
 <span class="dir">&boxdr;&boxh;&boxh; /.claude/memory/</span>   <span class="comment">&larr; Persistent memory</span>
             </div>
           </div>
@@ -1646,8 +2093,8 @@
         <div class="step-row" data-reveal data-delay="2">
           <div class="step-text">
             <div class="step-number">02</div>
-            <h3>Run the workflow</h3>
-            <p>Five phases fire in sequence. Research, definition, design, development, delivery. Two formal gates lock scope. Three payment milestones enforce cash flow. Parallel workstreams maximise speed. QA tools validate every deliverable before it ships.</p>
+            <h3>Agents run the workflow</h3>
+            <p>Five phases fire in sequence. Discover, Define, Financials (2.5), Design, Develop, Deliver. AI agents execute. Your program manager orchestrates. Three formal gates lock scope &mdash; Gate 1, Gate 2, Gate 2.5. Parallel workstreams maximise speed. QA validators check every deliverable before it ships.</p>
           </div>
           <div class="phase-list">
             <div class="phase-list-item">
@@ -1682,41 +2129,41 @@
         <div class="step-row" data-reveal data-delay="3">
           <div class="step-text">
             <div class="step-number">03</div>
-            <h3>Ship everything</h3>
-            <p>70+ production-grade deliverables. MVP app, 9-page marketing website, 4 branded decks, design system with 3 Figma plugins, 37 brand photos, social graphics, automated promo video, investor materials, client portal. All generated. All branded. All yours.</p>
+            <h3>Every venture ships</h3>
+            <p>70+ production-grade deliverables per venture. Founder portal with 7 live hubs, MVP app, 9-page marketing website, per-engagement design system, 37 brand photos, social content, promo video, investor deck. Branded for the founder. Owned by your program.</p>
           </div>
           <div class="mini-deliv-grid">
             <div class="mini-deliv">
-              <span class="mini-deliv-icon">&#x1F4F1;</span>
+              <span class="mini-deliv-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 L21 8 L12 13 L3 8 Z"/><path d="M3 12 L12 17 L21 12"/><path d="M3 16 L12 21 L21 16" opacity="0.55"/></svg></span>
+              Founder Portal (7 hubs)
+            </div>
+            <div class="mini-deliv">
+              <span class="mini-deliv-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><line x1="11" y1="18" x2="13" y2="18"/></svg></span>
               MVP App
             </div>
             <div class="mini-deliv">
-              <span class="mini-deliv-icon">&#x1F310;</span>
-              Marketing Website (9 pages)
+              <span class="mini-deliv-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.8"><rect x="3.5" y="3.5" width="7" height="7" rx="1.2"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.2"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.2"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.2" fill="#FFFFFF"/></svg></span>
+              Design System Site
             </div>
             <div class="mini-deliv">
-              <span class="mini-deliv-icon">&#x1F3A8;</span>
-              Design System (3 plugins)
+              <span class="mini-deliv-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="15" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/></svg></span>
+              Marketing Website
             </div>
             <div class="mini-deliv">
-              <span class="mini-deliv-icon">&#x1F4C4;</span>
-              4 PDF Decks
+              <span class="mini-deliv-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2.5 L6 2.5 C5 2.5 4 3.5 4 4.5 L4 19.5 C4 20.5 5 21.5 6 21.5 L18 21.5 C19 21.5 20 20.5 20 19.5 L20 8.5 Z"/><polyline points="14 2.5 14 8.5 20 8.5"/></svg></span>
+              Investor Pitch Deck
             </div>
             <div class="mini-deliv">
-              <span class="mini-deliv-icon">&#x1F4F7;</span>
+              <span class="mini-deliv-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2.2"/><circle cx="9" cy="9" r="1.6"/><polyline points="21 15 16 10 5 21"/></svg></span>
               37 Brand Photos
             </div>
             <div class="mini-deliv">
-              <span class="mini-deliv-icon">&#x1F5BC;</span>
-              Social Graphics
+              <span class="mini-deliv-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="17" rx="2"/><line x1="3" y1="9.5" x2="21" y2="9.5"/><line x1="8" y1="2.5" x2="8" y2="6.5"/><line x1="16" y1="2.5" x2="16" y2="6.5"/></svg></span>
+              Social + Content Pack
             </div>
             <div class="mini-deliv">
-              <span class="mini-deliv-icon">&#x1F3AC;</span>
+              <span class="mini-deliv-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><polygon points="10.5 8.5 16 12 10.5 15.5" fill="#FFFFFF" stroke="none"/></svg></span>
               Promo Video
-            </div>
-            <div class="mini-deliv">
-              <span class="mini-deliv-icon">&#x1F5A5;</span>
-              Client Portal
             </div>
           </div>
         </div>
@@ -1726,34 +2173,38 @@
   </section>
 
   <!-- ═══════════════════════════════════════════
-       LIVE PROOF — Dark bg narrative (moved here)
+       REFERENCE IMPLEMENTATION — Ventrify Studio
        ═══════════════════════════════════════════ -->
-  <section class="proof-section" id="proof">
+  <section class="proof-section" id="studio">
     <div class="container" data-reveal>
-      <div class="s-label">Live Proof</div>
-      <h2 class="s-title s-title-shimmer">We ran this on a real client.<br>Here&rsquo;s what happened.</h2>
+      <div class="s-label">Our Own Program</div>
+      <h2 class="s-title s-title-shimmer">Ventrify Studio.<br>The proof the platform delivers.</h2>
       <div class="proof-narrative">
         <div class="proof-text">
-          <p>In March 2026, we onboarded Inside &amp; Out &mdash; a mental wellness app. The founder paid AED 132,000 on day one. Seven days later, Phase 0 through Gate 2 was complete. Four investor-grade presentation decks were auto-generated. 2,060 lines of market research were produced with full source attribution. 37 brand photos were sourced automatically. 27 git commits landed in the first 48 hours.</p>
-          <p class="proof-punchline">One person ran the entire engagement. No designers. No developers. No project managers. Just the system.</p>
-          <p style="font-size:0.88rem;color:var(--text-dark-muted);margin-top:1.25rem;font-style:italic;">The founder saw the research deck and said &ldquo;this is more thorough than what my last agency produced in three months.&rdquo; It was generated in 48 hours.</p>
+          <p>We run our own direct founder programme on Ventrify OS &mdash; a small, capped number of engagements every year. It exists for one reason: to prove the platform works on real ventures, with real founders, in real conditions. Every engagement generates case studies, outcome data, and product improvements that flow back into the operating system every licensee runs.</p>
+          <p class="proof-punchline">The Studio is not the business. It&rsquo;s the reference implementation that shows every prospective licensee what their own program could deliver.</p>
+          <p style="font-size:0.88rem;color:var(--text-dark-muted);margin-top:1.25rem;font-style:italic;">Studio programmes run from $9,500 (Discovery Sprint) to $85,000 (Venture Pro) &mdash; pitched in explicit contrast to the $80&ndash;200K, six-to-nine-month US agency alternative.</p>
+          <div style="margin-top:1.75rem;display:flex;gap:12px;flex-wrap:wrap;">
+            <a href="pricing.html#studio" class="btn btn-outline btn-sm">See Studio programmes</a>
+            <a href="mailto:studio@ventrify.io?subject=Ventrify%20Studio%20application" class="btn btn-primary btn-sm">Apply to Studio</a>
+          </div>
         </div>
         <div class="proof-stats-grid">
           <div class="proof-stat-card" data-reveal data-delay="1">
-            <div class="ps-val">7</div>
-            <div class="ps-lbl">Days to Gate 2</div>
+            <div class="ps-val">6&ndash;16</div>
+            <div class="ps-lbl">Weeks per programme</div>
           </div>
           <div class="proof-stat-card" data-reveal data-delay="2">
-            <div class="ps-val">AED 132K</div>
-            <div class="ps-lbl">Paid Day One</div>
+            <div class="ps-val">$9.5K&ndash;$85K</div>
+            <div class="ps-lbl">Programme price range</div>
           </div>
           <div class="proof-stat-card" data-reveal data-delay="3">
-            <div class="ps-val">27</div>
-            <div class="ps-lbl">Commits in 48hrs</div>
+            <div class="ps-val">8&ndash;12</div>
+            <div class="ps-lbl">Capped at engagements / yr</div>
           </div>
           <div class="proof-stat-card" data-reveal data-delay="4">
-            <div class="ps-val">4</div>
-            <div class="ps-lbl">Decks Auto-Generated</div>
+            <div class="ps-val">70+</div>
+            <div class="ps-lbl">Deliverables per programme</div>
           </div>
         </div>
       </div>
@@ -1766,361 +2217,143 @@
   <section class="section deliv-section" id="deliverables">
     <div class="container" data-reveal>
       <div class="s-label">What Ships</div>
-      <h2 class="s-title s-title-shimmer">70+ deliverables. Every engagement.</h2>
+      <h2 class="s-title s-title-shimmer">70+ deliverables. Every venture.</h2>
+      <p class="s-sub" style="max-width:760px;">Mostly live &mdash; not PDFs. Each venture ships seven portal hubs as three-layer data rooms, a per-venture design system site, a working MVP investors can demo on day one, and a tight set of PDFs only for what genuinely needs to be a file.</p>
       <p class="deliv-teaser">
-        <span>Research (7)</span> &middot;
-        <span>Definition (7)</span> &middot;
-        <span>Presentations (4)</span> &middot;
-        <span>Product (4)</span> &middot;
-        <span>Marketing (8)</span> &middot;
-        <span>Infrastructure (6)</span> &middot;
-        <span>QA &amp; Tooling (5)</span>
+        <span>7 Portal hubs</span> &middot;
+        <span>DS site (24 components)</span> &middot;
+        <span>MVP (iOS + Android)</span> &middot;
+        <span>Marketing site (9 pages)</span> &middot;
+        <span>37 brand photos</span> &middot;
+        <span>Investor deck (PDF)</span> &middot;
+        <span>SOW + contracts (PDF)</span>
       </p>
 
       <details class="deliv-details">
         <summary>View the complete deliverables list</summary>
         <div class="deliv-details-content">
 
-          <!-- Research -->
+          <!-- 1. Founder Portal — 7 Hubs -->
           <div class="deliv-category">
-            <div class="deliv-category-header">Research &mdash; 7 Documents</div>
-            <p style="font-size:0.88rem;color:var(--text-dark-muted);margin:-0.5rem 0 1rem;font-style:italic;">Because you can&rsquo;t charge &pound;25K without showing your work.</p>
+            <div class="deliv-category-header">Founder Portal &mdash; 7 Live Data Room Hubs</div>
+            <p style="font-size:0.88rem;color:var(--text-dark-muted);margin:-0.5rem 0 1rem;font-style:italic;">The data room every founder lives inside the engagement. Each hub renders as L1 Provocation Cards &middot; L2 Evidence &middot; L3 Full Research.</p>
             <div class="deliv-grid">
-              <div class="deliv-item">
-                <div class="deliv-dot"></div>
-                <div>
-                  <h4>Market Analysis</h4>
-                  <p>TAM/SAM/SOM sizing, market trends, growth vectors</p>
-                </div>
-              </div>
-              <div class="deliv-item">
-                <div class="deliv-dot"></div>
-                <div>
-                  <h4>Competitor Analysis</h4>
-                  <p>Feature matrices, positioning gaps, pricing benchmarks</p>
-                </div>
-              </div>
-              <div class="deliv-item">
-                <div class="deliv-dot"></div>
-                <div>
-                  <h4>User Insights</h4>
-                  <p>Pain points, motivations, behavioural patterns</p>
-                </div>
-              </div>
-              <div class="deliv-item">
-                <div class="deliv-dot"></div>
-                <div>
-                  <h4>SWOT</h4>
-                  <p>Strengths, weaknesses, opportunities, threats matrix</p>
-                </div>
-              </div>
-              <div class="deliv-item">
-                <div class="deliv-dot"></div>
-                <div>
-                  <h4>Opportunities</h4>
-                  <p>Whitespace analysis and strategic entry points</p>
-                </div>
-              </div>
-              <div class="deliv-item">
-                <div class="deliv-dot"></div>
-                <div>
-                  <h4>Unit Economics</h4>
-                  <p>CAC, LTV, margins, break-even projections</p>
-                </div>
-              </div>
-              <div class="deliv-item">
-                <div class="deliv-dot"></div>
-                <div>
-                  <h4>Partnerships</h4>
-                  <p>Strategic partnership mapping and outreach framework</p>
-                </div>
-              </div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Research Hub</h4><p>5&ndash;7 Provocation Cards + 3,000&ndash;8,000-word L3 research</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Vision Hub</h4><p>Personas, MVP, IA, journeys &middot; signoff at Gate 2</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Strategy Hub</h4><p>Tone of voice, social strategy, 30-day calendar</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Financials Hub</h4><p>11 financial files with embedded charts &middot; signoff at Gate 2.5</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Marketing Launch Hub</h4><p>Operational hub for launch coordination</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Video Hub</h4><p>Video brief + production assets (Venture Pro)</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Blog Hub</h4><p>Blog content + promo posts</p></div></div>
             </div>
           </div>
 
-          <!-- Definition -->
+          <!-- 2. Underlying Research — L3 documents -->
           <div class="deliv-category">
-            <div class="deliv-category-header">Definition &mdash; 7 Documents</div>
-            <p style="font-size:0.88rem;color:var(--text-dark-muted);margin:-0.5rem 0 1rem;font-style:italic;">The product foundation that prevents scope creep and wasted sprints.</p>
+            <div class="deliv-category-header">Underlying Research &amp; Definition &mdash; 24 Documents</div>
+            <p style="font-size:0.88rem;color:var(--text-dark-muted);margin:-0.5rem 0 1rem;font-style:italic;">The fully-cited L3 layer behind every Provocation Card. Source-verified by the <code style="font-family:var(--font-mono);font-size:0.85em;background:rgba(var(--primary-rgb),0.07);padding:1px 6px;border-radius:5px;color:var(--primary);">source-verifier</code> agent.</p>
             <div class="deliv-grid">
-              <div class="deliv-item">
-                <div class="deliv-dot"></div>
-                <div>
-                  <h4>Personas</h4>
-                  <p>Detailed user archetypes with goals and frustrations</p>
-                </div>
-              </div>
-              <div class="deliv-item">
-                <div class="deliv-dot"></div>
-                <div>
-                  <h4>Product Vision</h4>
-                  <p>North star definition, value props, differentiators</p>
-                </div>
-              </div>
-              <div class="deliv-item">
-                <div class="deliv-dot"></div>
-                <div>
-                  <h4>MVP Features</h4>
-                  <p>Prioritised feature set with MoSCoW framework</p>
-                </div>
-              </div>
-              <div class="deliv-item">
-                <div class="deliv-dot"></div>
-                <div>
-                  <h4>Tech Stack</h4>
-                  <p>Architecture decisions, framework selection, hosting</p>
-                </div>
-              </div>
-              <div class="deliv-item">
-                <div class="deliv-dot"></div>
-                <div>
-                  <h4>User Journeys</h4>
-                  <p>End-to-end flows for each persona across key tasks</p>
-                </div>
-              </div>
-              <div class="deliv-item">
-                <div class="deliv-dot"></div>
-                <div>
-                  <h4>Roadmap</h4>
-                  <p>Phased rollout plan from MVP to V2 and beyond</p>
-                </div>
-              </div>
-              <div class="deliv-item">
-                <div class="deliv-dot"></div>
-                <div>
-                  <h4>Information Architecture</h4>
-                  <p>Site maps, navigation structures, content hierarchy</p>
-                </div>
-              </div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Market Analysis</h4><p>TAM/SAM/SOM sizing, market trends, growth vectors</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Competitor Analysis</h4><p>Feature matrices, positioning gaps, pricing benchmarks</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>User Insights</h4><p>Pain points, motivations, behavioural patterns</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>SWOT &amp; Opportunities</h4><p>Strategic positioning + whitespace analysis</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Unit Economics</h4><p>CAC, LTV, margins, break-even projections</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Partnerships</h4><p>Strategic partnership mapping and outreach framework</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Personas, Vision, MVP Features</h4><p>The product foundation that prevents scope creep</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Tech Stack, Journeys, Roadmap, IA</h4><p>40&ndash;65 screens mapped by the <code style="font-family:var(--font-mono);font-size:0.85em;">information-architect</code> agent</p></div></div>
             </div>
           </div>
 
-          <!-- Presentations -->
+          <!-- 3. Financials Hub — Phase 2.5 -->
           <div class="deliv-category">
-            <div class="deliv-category-header">Presentations &mdash; 4 Decks</div>
-            <p style="font-size:0.88rem;color:var(--text-dark-muted);margin:-0.5rem 0 1rem;font-style:italic;">Auto-generated from project data. Zero PowerPoint. Investor-ready on arrival.</p>
+            <div class="deliv-category-header">Financials &mdash; 11 Files (Phase 2.5)</div>
+            <p style="font-size:0.88rem;color:var(--text-dark-muted);margin:-0.5rem 0 1rem;font-style:italic;">Generated by the <code style="font-family:var(--font-mono);font-size:0.85em;background:rgba(var(--primary-rgb),0.07);padding:1px 6px;border-radius:5px;color:var(--primary);">financial-modeler</code> &rarr; <code style="font-family:var(--font-mono);font-size:0.85em;background:rgba(var(--primary-rgb),0.07);padding:1px 6px;border-radius:5px;color:var(--primary);">investor-readiness-reviewer</code> &rarr; <code style="font-family:var(--font-mono);font-size:0.85em;background:rgba(var(--primary-rgb),0.07);padding:1px 6px;border-radius:5px;color:var(--primary);">scope-loop-reviewer</code> sequence.</p>
             <div class="deliv-grid">
-              <div class="deliv-item">
-                <div class="deliv-dot"></div>
-                <div>
-                  <h4>Research Deck</h4>
-                  <p>Auto-generated PDF with all research findings</p>
-                </div>
-              </div>
-              <div class="deliv-item">
-                <div class="deliv-dot"></div>
-                <div>
-                  <h4>Vision Deck</h4>
-                  <p>Product vision, strategy, and positioning narrative</p>
-                </div>
-              </div>
-              <div class="deliv-item">
-                <div class="deliv-dot"></div>
-                <div>
-                  <h4>Strategy Deck</h4>
-                  <p>Go-to-market strategy with channel priorities</p>
-                </div>
-              </div>
-              <div class="deliv-item">
-                <div class="deliv-dot"></div>
-                <div>
-                  <h4>Investor Deck</h4>
-                  <p>Investor-grade pitch with financials and traction</p>
-                </div>
-              </div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Build Costs &amp; OpEx</h4><p>Project costs + ongoing operational spend</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Revenue Model</h4><p>Pricing tiers, unit economics, repeatability</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Cash Flow</h4><p>Embedded charts, monthly projections, runway</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Marketing Budget</h4><p>Channel-by-channel spend plan</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Hiring Plan</h4><p>Role-by-role timeline and burn modelling</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Sensitivity Analysis</h4><p>What breaks at what threshold &mdash; surfaced as cards</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Funding Ask &amp; Valuation</h4><p>Recommended raise, range, dilution, red flags</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Scope-Change Recommendations</h4><p>Looped back into Research and Define before SOW</p></div></div>
             </div>
           </div>
 
-          <!-- Product -->
+          <!-- 4. Design System Site -->
+          <div class="deliv-category">
+            <div class="deliv-category-header">Design System Site &mdash; Per Engagement</div>
+            <p style="font-size:0.88rem;color:var(--text-dark-muted);margin:-0.5rem 0 1rem;font-style:italic;">A live design-system site per venture &mdash; built with the founder, not handed off as a PDF.</p>
+            <div class="deliv-grid">
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>24 Components</h4><p>Live previews, variants, tokens, usage rules</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>8 Lockups</h4><p>Component compositions (Timestamp, Stat, etc.)</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Design Tokens</h4><p>Colours, typography, spacing, icons, elevation</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Personas page</h4><p>Canonical persona cards rendered from JSON</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>User Stories &amp; Flows</h4><p>MoSCoW grid, decision-point flow cards</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Wireframes</h4><p>iPhone-bezel frames + per-screen specs (replaces the old wireframe PDF)</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Accessibility</h4><p>WCAG 2.1 AA compliance documentation</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Tone of Voice &amp; UI Copy</h4><p>Brand voice + UI copy patterns</p></div></div>
+            </div>
+          </div>
+
+          <!-- 5. Product — built assets -->
           <div class="deliv-category">
             <div class="deliv-category-header">Product &mdash; Built Assets</div>
-            <p style="font-size:0.88rem;color:var(--text-dark-muted);margin:-0.5rem 0 1rem;font-style:italic;">The things your client actually sees, uses, and shows to investors.</p>
+            <p style="font-size:0.88rem;color:var(--text-dark-muted);margin:-0.5rem 0 1rem;font-style:italic;">The things the founder actually launches. Every MVP ships with <code style="font-family:var(--font-mono);font-size:0.85em;background:rgba(var(--primary-rgb),0.07);padding:1px 6px;border-radius:5px;color:var(--primary);">DEMO_MODE</code> &mdash; investor-demo-ready on day one.</p>
             <div class="deliv-grid">
-              <div class="deliv-item">
-                <div class="deliv-dot"></div>
-                <div>
-                  <h4>MVP App</h4>
-                  <p>Full iOS + Android app with demo mode</p>
-                </div>
-              </div>
-              <div class="deliv-item">
-                <div class="deliv-dot"></div>
-                <div>
-                  <h4>Marketing Website</h4>
-                  <p>Next.js marketing site with SEO and analytics</p>
-                </div>
-              </div>
-              <div class="deliv-item">
-                <div class="deliv-dot"></div>
-                <div>
-                  <h4>Design System Site</h4>
-                  <p>33+ page living design system documentation</p>
-                </div>
-              </div>
-              <div class="deliv-item">
-                <div class="deliv-dot"></div>
-                <div>
-                  <h4>2 Figma Plugins</h4>
-                  <p>Custom plugins for design-to-code workflow</p>
-                </div>
-              </div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>MVP App</h4><p>iOS + Android (Expo + React Native). DEMO_MODE built in.</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Marketing Website</h4><p>Next.js, 9 pages, SEO + analytics, brand-aligned</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>3 Figma Plugins</h4><p>Variables, components, screens &mdash; populate the founder&rsquo;s Figma file</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>3 GitHub Repos</h4><p>App, marketing, DS site &mdash; transferred at handoff</p></div></div>
             </div>
           </div>
 
-          <!-- Marketing -->
+          <!-- 6. Marketing & Content -->
           <div class="deliv-category">
-            <div class="deliv-category-header">Marketing &mdash; 8 Assets</div>
-            <p style="font-size:0.88rem;color:var(--text-dark-muted);margin:-0.5rem 0 1rem;font-style:italic;">Launch day isn&rsquo;t &ldquo;we&rsquo;ll figure out marketing later.&rdquo; It&rsquo;s day one, content ready.</p>
+            <div class="deliv-category-header">Marketing &amp; Content &mdash; 8 Assets</div>
+            <p style="font-size:0.88rem;color:var(--text-dark-muted);margin:-0.5rem 0 1rem;font-style:italic;">Launch-day ready on day one &mdash; not promised &ldquo;later.&rdquo;</p>
             <div class="deliv-grid">
-              <div class="deliv-item">
-                <div class="deliv-dot"></div>
-                <div>
-                  <h4>Tone of Voice</h4>
-                  <p>Brand voice guidelines with examples</p>
-                </div>
-              </div>
-              <div class="deliv-item">
-                <div class="deliv-dot"></div>
-                <div>
-                  <h4>Social Strategy</h4>
-                  <p>Platform-specific strategy and content pillars</p>
-                </div>
-              </div>
-              <div class="deliv-item">
-                <div class="deliv-dot"></div>
-                <div>
-                  <h4>Content Calendar</h4>
-                  <p>12-week publishing schedule across channels</p>
-                </div>
-              </div>
-              <div class="deliv-item">
-                <div class="deliv-dot"></div>
-                <div>
-                  <h4>20 Social Posts</h4>
-                  <p>Platform-ready posts with copy and CTAs</p>
-                </div>
-              </div>
-              <div class="deliv-item">
-                <div class="deliv-dot"></div>
-                <div>
-                  <h4>5 Blog Posts</h4>
-                  <p>SEO-optimised long-form content</p>
-                </div>
-              </div>
-              <div class="deliv-item">
-                <div class="deliv-dot"></div>
-                <div>
-                  <h4>Video Script</h4>
-                  <p>Product walkthrough video brief and script</p>
-                </div>
-              </div>
-              <div class="deliv-item">
-                <div class="deliv-dot"></div>
-                <div>
-                  <h4>Social Graphics</h4>
-                  <p>20 branded PNGs for social media campaigns</p>
-                </div>
-              </div>
-              <div class="deliv-item">
-                <div class="deliv-dot"></div>
-                <div>
-                  <h4>Promo Video</h4>
-                  <p>Automated, 60&ndash;65 second branded promo video</p>
-                </div>
-              </div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Tone of Voice</h4><p>Brand voice guidelines &middot; audited by <code style="font-family:var(--font-mono);font-size:0.85em;">copy-reviewer</code></p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Social Strategy</h4><p>Platform-specific strategy and content pillars</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>30-day Content Calendar</h4><p>Publishing schedule across channels</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>20 Social Posts</h4><p>Platform-ready copy + CTAs</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>5 Blog Posts</h4><p>SEO-optimised long-form content</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Social Graphics</h4><p>20 branded PNGs for campaigns</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Promo Video</h4><p>Automated 60&ndash;65s branded promo &middot; <code style="font-family:var(--font-mono);font-size:0.85em;">video-producer</code></p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>37 Brand Photos</h4><p>Auto-sourced + treated to the venture&rsquo;s industry</p></div></div>
             </div>
           </div>
 
-          <!-- Infrastructure -->
+          <!-- 7. PDFs — only what needs to be a file -->
           <div class="deliv-category">
-            <div class="deliv-category-header">Infrastructure &mdash; Operations</div>
-            <p style="font-size:0.88rem;color:var(--text-dark-muted);margin:-0.5rem 0 1rem;font-style:italic;">The professional backbone that makes you look like a real studio, not a freelancer.</p>
+            <div class="deliv-category-header">PDFs &mdash; Sent as Files</div>
+            <p style="font-size:0.88rem;color:var(--text-dark-muted);margin:-0.5rem 0 1rem;font-style:italic;">The targeted set of deliverables that genuinely need to be a file &mdash; for investors, legal, or hand-off.</p>
             <div class="deliv-grid">
-              <div class="deliv-item">
-                <div class="deliv-dot"></div>
-                <div>
-                  <h4>Client Portal</h4>
-                  <p>Live project dashboard for client visibility</p>
-                </div>
-              </div>
-              <div class="deliv-item">
-                <div class="deliv-dot"></div>
-                <div>
-                  <h4>SOW PDF</h4>
-                  <p>Auto-generated scope of work document</p>
-                </div>
-              </div>
-              <div class="deliv-item">
-                <div class="deliv-dot"></div>
-                <div>
-                  <h4>3 Invoices</h4>
-                  <p>Milestone-linked invoices (40/30/30 split)</p>
-                </div>
-              </div>
-              <div class="deliv-item">
-                <div class="deliv-dot"></div>
-                <div>
-                  <h4>Welcome Pack</h4>
-                  <p>Client onboarding kit with timelines and access</p>
-                </div>
-              </div>
-              <div class="deliv-item">
-                <div class="deliv-dot"></div>
-                <div>
-                  <h4>Wireframe Deck</h4>
-                  <p>Complete wireframe documentation for all screens</p>
-                </div>
-              </div>
-              <div class="deliv-item">
-                <div class="deliv-dot"></div>
-                <div>
-                  <h4>Handoff Pack</h4>
-                  <p>Complete documentation and access credentials</p>
-                </div>
-              </div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Investor Pitch Deck</h4><p>The one deck investors actually want as a file</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>SOW</h4><p>Statement of Work &middot; signed legal document</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Welcome Pack</h4><p>Ventrify-branded onboarding artefact</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Marketing Launch Pack</h4><p>Comprehensive launch reference</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Video Production Brief</h4><p>Hand-off to video production (Venture Pro)</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Blog Content Pack</h4><p>Reference for blog publishing</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Invoices</h4><p>Milestone-linked, sent to the founder</p></div></div>
             </div>
           </div>
 
-          <!-- QA & Tooling -->
+          <!-- 8. 10 Specialist Agents -->
           <div class="deliv-category">
-            <div class="deliv-category-header">QA &amp; Tooling &mdash; 5 Tools</div>
-            <p style="font-size:0.88rem;color:var(--text-dark-muted);margin:-0.5rem 0 1rem;font-style:italic;">The safety net that catches errors before your client does.</p>
+            <div class="deliv-category-header">10 Specialist Agents &mdash; The Workforce</div>
+            <p style="font-size:0.88rem;color:var(--text-dark-muted);margin:-0.5rem 0 1rem;font-style:italic;">The AI agents that execute every phase. One program manager orchestrates them all.</p>
             <div class="deliv-grid">
-              <div class="deliv-item">
-                <div class="deliv-dot"></div>
-                <div>
-                  <h4>Markdown Validator</h4>
-                  <p>Automated structure and formatting checks</p>
-                </div>
-              </div>
-              <div class="deliv-item">
-                <div class="deliv-dot"></div>
-                <div>
-                  <h4>PDF Quality Review</h4>
-                  <p>Layout, branding, and content validation</p>
-                </div>
-              </div>
-              <div class="deliv-item">
-                <div class="deliv-dot"></div>
-                <div>
-                  <h4>5 Specialist Agents</h4>
-                  <p>UX, IA, Backend, Copy, Source &mdash; dedicated AI agents</p>
-                </div>
-              </div>
-              <div class="deliv-item">
-                <div class="deliv-dot"></div>
-                <div>
-                  <h4>Brand Photography Pipeline</h4>
-                  <p>37 auto-sourced, branded images per engagement</p>
-                </div>
-              </div>
-              <div class="deliv-item">
-                <div class="deliv-dot"></div>
-                <div>
-                  <h4>Token Architecture</h4>
-                  <p>6 consumers &mdash; structured resource management</p>
-                </div>
-              </div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4><code>research-curator</code></h4><p>Drafts 5&ndash;7 Provocation Cards per hub from L3</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4><code>source-verifier</code></h4><p>Fact-checks every source in Research Hub</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4><code>information-architect</code></h4><p>Maps every feature to a screen (40&ndash;65 screens)</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4><code>backend-architect</code></h4><p>Firestore schema + security rules + cost model</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4><code>ux-designer</code></h4><p>3 design audit rounds &middot; structural, nav, WCAG AA, polish</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4><code>copy-reviewer</code></h4><p>Tone-of-voice audit on every marketing line</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4><code>financial-modeler</code></h4><p>8 financial files in Phase 2.5</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4><code>investor-readiness-reviewer</code></h4><p>Raise size, valuation, dilution, red flags</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4><code>scope-loop-reviewer</code></h4><p>Scope-change recommendations before SOW</p></div></div>
+              <div class="deliv-item"><div class="deliv-dot"></div><div><h4><code>video-producer</code></h4><p>Video script, scene breakdown, audio brief</p></div></div>
             </div>
           </div>
 
@@ -2137,34 +2370,126 @@
       <div class="s-label">Common Questions</div>
       <h2 class="s-title s-title-shimmer">Before you ask</h2>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:2rem;margin-top:2.5rem;">
+
+        <!-- Card 1: Operator orchestration -->
         <div class="card" data-reveal data-delay="1">
-          <div class="card-visual" style="background:linear-gradient(135deg,#E8ECF4,#D8DCE8);">
-            <div style="font-size:2rem;">💻</div>
+          <div class="card-visual" style="background:linear-gradient(135deg,#EEF1F8 0%,#DCE3F0 100%);height:220px;display:flex;align-items:center;justify-content:center;padding:1.25rem;overflow:hidden;position:relative;">
+            <!-- ambient blob -->
+            <div style="position:absolute;top:-40px;right:-30px;width:140px;height:140px;border-radius:50%;background:radial-gradient(circle,rgba(0,54,255,0.12),transparent 70%);pointer-events:none;"></div>
+            <!-- mini app panel -->
+            <div style="background:#FFFFFF;border-radius:12px;padding:0.9rem;box-shadow:0 10px 28px rgba(0,0,0,0.1),0 1px 3px rgba(0,0,0,0.04);width:100%;max-width:240px;position:relative;z-index:1;">
+              <!-- operator row -->
+              <div style="display:flex;align-items:center;gap:9px;padding-bottom:0.7rem;border-bottom:1px solid rgba(0,0,0,0.05);">
+                <div style="width:26px;height:26px;border-radius:50%;background:#0036FF;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-family:'Inter',sans-serif;font-size:0.66rem;font-weight:600;letter-spacing:-0.01em;flex-shrink:0;">AD</div>
+                <div style="flex:1;min-width:0;">
+                  <div style="font-family:'Inter',sans-serif;font-size:0.74rem;font-weight:600;color:#141414;letter-spacing:-0.01em;line-height:1.15;">Alex Doré</div>
+                  <div style="font-family:'Inter',sans-serif;font-size:0.62rem;color:#656565;line-height:1.2;margin-top:1px;">Program Lead</div>
+                </div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:0.56rem;font-weight:500;letter-spacing:0.07em;text-transform:uppercase;color:#0036FF;background:rgba(0,54,255,0.09);padding:3px 7px;border-radius:980px;white-space:nowrap;">Orchestrating</div>
+              </div>
+              <!-- agent rows -->
+              <div style="margin-top:0.65rem;display:flex;flex-direction:column;gap:5px;">
+                <div style="display:flex;align-items:center;gap:7px;padding:5px 8px;background:rgba(0,0,0,0.025);border-radius:7px;">
+                  <span style="width:6px;height:6px;border-radius:50%;background:#00B872;flex-shrink:0;box-shadow:0 0 0 2px rgba(0,184,114,0.18);"></span>
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:0.64rem;color:#0036FF;font-weight:500;letter-spacing:-0.005em;">research-curator</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:7px;padding:5px 8px;background:rgba(0,0,0,0.025);border-radius:7px;">
+                  <span style="width:6px;height:6px;border-radius:50%;background:#00B872;flex-shrink:0;box-shadow:0 0 0 2px rgba(0,184,114,0.18);"></span>
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:0.64rem;color:#0036FF;font-weight:500;letter-spacing:-0.005em;">ux-designer</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:7px;padding:5px 8px;background:rgba(0,0,0,0.025);border-radius:7px;">
+                  <span style="width:6px;height:6px;border-radius:50%;background:#E6A91A;flex-shrink:0;box-shadow:0 0 0 2px rgba(230,169,26,0.2);"></span>
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:0.64rem;color:#0036FF;font-weight:500;letter-spacing:-0.005em;">financial-modeler</span>
+                </div>
+              </div>
+            </div>
           </div>
           <div class="card-body">
-            <h3>Do I need to be a developer?</h3>
+            <h3>Who actually runs the workflow?</h3>
             <div class="card-divider"></div>
-            <p>No. Basic comfort with VS Code and a terminal is enough. The setup guide walks you through everything step by step. If you can run <code style="font-family:var(--font-mono);font-size:0.85em;background:rgba(0,0,0,0.05);padding:1px 5px;border-radius:4px;">npm install</code>, you can run this workflow.</p>
+            <p>Your own program managers. The platform replaces specialist headcount &mdash; not the human leading the engagement. AI agents execute every phase. Your operator orchestrates, reviews, and approves at the gates.</p>
           </div>
         </div>
+
+        <!-- Card 2: Gate review status -->
         <div class="card" data-reveal data-delay="2">
-          <div class="card-visual" style="background:linear-gradient(135deg,#E8ECF4,#D8DCE8);">
-            <div style="font-size:2rem;">🛡️</div>
+          <div class="card-visual" style="background:linear-gradient(135deg,#EEF1F8 0%,#DCE3F0 100%);height:220px;display:flex;align-items:center;justify-content:center;padding:1.25rem;overflow:hidden;position:relative;">
+            <div style="position:absolute;bottom:-50px;left:-40px;width:160px;height:160px;border-radius:50%;background:radial-gradient(circle,rgba(0,184,114,0.14),transparent 70%);pointer-events:none;"></div>
+            <!-- mini app panel -->
+            <div style="background:#FFFFFF;border-radius:12px;padding:0.9rem;box-shadow:0 10px 28px rgba(0,0,0,0.1),0 1px 3px rgba(0,0,0,0.04);width:100%;max-width:240px;position:relative;z-index:1;">
+              <!-- gate header -->
+              <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:0.7rem;border-bottom:1px solid rgba(0,0,0,0.05);">
+                <div>
+                  <div style="font-family:'JetBrains Mono',monospace;font-size:0.56rem;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:#656565;margin-bottom:2px;">Gate 2.5 &middot; Review</div>
+                  <div style="font-family:'Inter',sans-serif;font-size:0.74rem;font-weight:600;color:#141414;letter-spacing:-0.01em;">Financials Hub</div>
+                </div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:0.56rem;font-weight:500;letter-spacing:0.07em;text-transform:uppercase;color:#00B872;background:rgba(0,184,114,0.1);padding:3px 7px;border-radius:980px;white-space:nowrap;">Ready</div>
+              </div>
+              <!-- check rows -->
+              <div style="margin-top:0.65rem;display:flex;flex-direction:column;gap:6px;">
+                <div style="display:flex;align-items:center;gap:7px;font-size:0.66rem;color:#141414;line-height:1.3;">
+                  <span style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;background:rgba(0,184,114,0.12);color:#00B872;font-weight:600;flex-shrink:0;font-size:0.7rem;line-height:1;">&#10003;</span>
+                  <span><span style="font-family:'JetBrains Mono',monospace;color:#0036FF;font-size:0.62rem;">source-verifier</span> &middot; 14 sources</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:7px;font-size:0.66rem;color:#141414;line-height:1.3;">
+                  <span style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;background:rgba(0,184,114,0.12);color:#00B872;font-weight:600;flex-shrink:0;font-size:0.7rem;line-height:1;">&#10003;</span>
+                  <span><span style="font-family:'JetBrains Mono',monospace;color:#0036FF;font-size:0.62rem;">ux-designer</span> &middot; R2 complete</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:7px;font-size:0.66rem;color:#141414;line-height:1.3;">
+                  <span style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;background:rgba(0,184,114,0.12);color:#00B872;font-weight:600;flex-shrink:0;font-size:0.7rem;line-height:1;">&#10003;</span>
+                  <span><span style="font-family:'JetBrains Mono',monospace;color:#0036FF;font-size:0.62rem;">scope-loop-reviewer</span></span>
+                </div>
+              </div>
+            </div>
           </div>
           <div class="card-body">
-            <h3>What if something breaks?</h3>
+            <h3>How is quality enforced at scale?</h3>
             <div class="card-divider"></div>
-            <p>The workflow includes 3 QA validators that catch errors before they reach your client. A persistent memory system learns from every session. Most issues are caught and fixed automatically.</p>
+            <p>Every venture runs through 3 QA validators, three formal gate reviews (Gate 1, Gate 2, Gate 2.5), and a persistent memory system that learns from every program. The platform catches issues before deliverables reach the founder.</p>
           </div>
         </div>
+
+        <!-- Card 3: Onboarding timeline -->
         <div class="card" data-reveal data-delay="3">
-          <div class="card-visual" style="background:linear-gradient(135deg,#E8ECF4,#D8DCE8);">
-            <div style="font-size:2rem;">🚀</div>
+          <div class="card-visual" style="background:linear-gradient(135deg,#EEF1F8 0%,#DCE3F0 100%);height:220px;display:flex;align-items:center;justify-content:center;padding:1.25rem;overflow:hidden;position:relative;">
+            <div style="position:absolute;top:-50px;left:50%;transform:translateX(-50%);width:200px;height:140px;background:radial-gradient(ellipse,rgba(0,54,255,0.1),transparent 70%);pointer-events:none;"></div>
+            <!-- mini app panel -->
+            <div style="background:#FFFFFF;border-radius:12px;padding:0.95rem 1rem;box-shadow:0 10px 28px rgba(0,0,0,0.1),0 1px 3px rgba(0,0,0,0.04);width:100%;max-width:240px;position:relative;z-index:1;">
+              <!-- header -->
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.85rem;">
+                <div style="font-family:'JetBrains Mono',monospace;font-size:0.56rem;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:#0036FF;">Onboarding</div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:0.56rem;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:#656565;">7 days</div>
+              </div>
+              <!-- timeline -->
+              <div style="position:relative;padding:0 6px;">
+                <!-- progress line bg -->
+                <div style="position:absolute;left:6px;right:6px;top:7px;height:2px;background:rgba(0,0,0,0.06);border-radius:1px;"></div>
+                <!-- progress line filled -->
+                <div style="position:absolute;left:6px;width:calc(50% - 6px);top:7px;height:2px;background:#0036FF;border-radius:1px;"></div>
+                <div style="display:flex;justify-content:space-between;position:relative;">
+                  <div style="display:flex;flex-direction:column;align-items:flex-start;">
+                    <span style="width:16px;height:16px;border-radius:50%;background:#0036FF;border:2px solid #FFFFFF;box-shadow:0 0 0 2px #0036FF;display:block;"></span>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:0.56rem;color:#0036FF;font-weight:600;letter-spacing:0.04em;margin-top:8px;text-transform:uppercase;">Day 1</span>
+                    <span style="font-family:'Inter',sans-serif;font-size:0.62rem;color:#141414;font-weight:500;margin-top:2px;">Kick-off</span>
+                  </div>
+                  <div style="display:flex;flex-direction:column;align-items:center;">
+                    <span style="width:16px;height:16px;border-radius:50%;background:#0036FF;border:2px solid #FFFFFF;box-shadow:0 0 0 2px #0036FF;display:block;"></span>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:0.56rem;color:#0036FF;font-weight:600;letter-spacing:0.04em;margin-top:8px;text-transform:uppercase;">Day 4</span>
+                    <span style="font-family:'Inter',sans-serif;font-size:0.62rem;color:#141414;font-weight:500;margin-top:2px;">Certified</span>
+                  </div>
+                  <div style="display:flex;flex-direction:column;align-items:flex-end;">
+                    <span style="width:16px;height:16px;border-radius:50%;background:#FFFFFF;border:2px solid rgba(0,54,255,0.5);display:block;"></span>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:0.56rem;color:#656565;font-weight:600;letter-spacing:0.04em;margin-top:8px;text-transform:uppercase;">Day 7</span>
+                    <span style="font-family:'Inter',sans-serif;font-size:0.62rem;color:#141414;font-weight:500;margin-top:2px;">Venture starts</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
           <div class="card-body">
-            <h3>Can I use this for clients immediately?</h3>
+            <h3>How fast can a program start?</h3>
             <div class="card-divider"></div>
-            <p>Yes. The showcase on this site shows you exactly what a finished engagement looks like. The demo video walks through a real project. You can run your first client engagement the same week you buy it.</p>
+            <p>Onboarding takes days, not months. Once your operators are certified on the platform, your first venture can begin the same week. Cohort and Enterprise tiers include embedded onboarding and a dedicated success contact.</p>
           </div>
         </div>
       </div>
@@ -2176,49 +2501,123 @@
        ═══════════════════════════════════════════ -->
   <section class="section-alt" id="pricing">
     <div class="container" data-reveal>
-      <div class="s-label">Who Runs This</div>
-      <h2 class="s-title s-title-shimmer">Three practitioners. One workflow.</h2>
+      <div class="s-label">Who Licenses This</div>
+      <h2 class="s-title s-title-shimmer">Built for the institutions<br>that run startup programs.</h2>
       <div class="who-pricing-grid">
 
-        <!-- Card 1: Freelance Designers -->
+        <!-- Card 1: Accelerators & Incubators — Cohort dashboard mockup -->
         <div class="wp-card" data-reveal data-delay="1">
-          <div class="wp-card-visual">
-            <div class="wp-emoji">&#x1F3A8;</div>
-            <div class="wp-type">Freelance Designers</div>
+          <div class="wp-card-visual" style="height:220px;padding:1.25rem;display:flex;align-items:center;justify-content:center;gap:0;flex-direction:row;position:relative;overflow:hidden;background:linear-gradient(135deg,#EEF1F8 0%,#DCE3F0 100%);">
+            <div style="position:absolute;top:-30px;right:-40px;width:160px;height:160px;border-radius:50%;background:radial-gradient(circle,rgba(0,54,255,0.12),transparent 70%);pointer-events:none;"></div>
+            <div style="background:#FFFFFF;border-radius:12px;padding:0.85rem 0.9rem;box-shadow:0 10px 28px rgba(0,0,0,0.1),0 1px 3px rgba(0,0,0,0.04);width:100%;max-width:240px;position:relative;z-index:1;">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:0.6rem;border-bottom:1px solid rgba(0,0,0,0.05);">
+                <div style="font-family:'JetBrains Mono',monospace;font-size:0.56rem;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:#656565;">Spring &rsquo;26 Cohort</div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;font-weight:600;color:#0036FF;background:rgba(0,54,255,0.09);padding:2px 7px;border-radius:980px;">12</div>
+              </div>
+              <div style="margin-top:0.55rem;display:flex;flex-direction:column;gap:4px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 7px;background:rgba(0,0,0,0.025);border-radius:6px;">
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <span style="width:5px;height:5px;border-radius:50%;background:#00B872;flex-shrink:0;"></span>
+                    <span style="font-family:'Inter',sans-serif;font-size:0.66rem;font-weight:500;color:#141414;letter-spacing:-0.01em;">Stellaria</span>
+                  </div>
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:0.54rem;color:#0036FF;letter-spacing:0.04em;text-transform:uppercase;">Define</span>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 7px;background:rgba(0,0,0,0.025);border-radius:6px;">
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <span style="width:5px;height:5px;border-radius:50%;background:#00B872;flex-shrink:0;"></span>
+                    <span style="font-family:'Inter',sans-serif;font-size:0.66rem;font-weight:500;color:#141414;letter-spacing:-0.01em;">Quill</span>
+                  </div>
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:0.54rem;color:#0036FF;letter-spacing:0.04em;text-transform:uppercase;">Gate 2.5</span>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 7px;background:rgba(0,0,0,0.025);border-radius:6px;">
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <span style="width:5px;height:5px;border-radius:50%;background:#E6A91A;flex-shrink:0;"></span>
+                    <span style="font-family:'Inter',sans-serif;font-size:0.66rem;font-weight:500;color:#141414;letter-spacing:-0.01em;">Halo Sound</span>
+                  </div>
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:0.54rem;color:#E6A91A;letter-spacing:0.04em;text-transform:uppercase;">Stuck</span>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 7px;background:rgba(0,0,0,0.025);border-radius:6px;">
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <span style="width:5px;height:5px;border-radius:50%;background:#00B872;flex-shrink:0;"></span>
+                    <span style="font-family:'Inter',sans-serif;font-size:0.66rem;font-weight:500;color:#141414;letter-spacing:-0.01em;">Northwind</span>
+                  </div>
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:0.54rem;color:#0036FF;letter-spacing:0.04em;text-transform:uppercase;">Develop</span>
+                </div>
+              </div>
+            </div>
           </div>
           <div class="wp-card-body">
-            <p>You&rsquo;ve been leaving &pound;40K on the table every engagement. You design the product but hand off the strategy, the deck, the marketing, the investor materials. Not anymore. The workflow handles everything you can&rsquo;t &mdash; so you keep the full fee.</p>
+            <h3 style="font-family:var(--font-heading);font-size:1.15rem;font-weight:600;color:var(--text-dark);letter-spacing:-0.015em;margin-bottom:1rem;">Accelerators &amp; Incubators</h3>
+            <p>Every cohort is the same problem at scale: 10&ndash;30 ventures, each needing research, brand, MVP, pitch materials. License the platform and your existing program managers ship investor-ready outputs for every founder &mdash; without growing headcount.</p>
           </div>
         </div>
 
-        <!-- Card 2: Solo Developers -->
+        <!-- Card 2: Venture Studios — Throughput stat panel -->
         <div class="wp-card" data-reveal data-delay="2">
-          <div class="wp-card-visual">
-            <div class="wp-emoji">&#x26A1;</div>
-            <div class="wp-type">Solo Developers</div>
+          <div class="wp-card-visual" style="height:220px;padding:1.25rem;display:flex;align-items:center;justify-content:center;gap:0;flex-direction:row;position:relative;overflow:hidden;background:linear-gradient(135deg,#EEF1F8 0%,#DCE3F0 100%);">
+            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(0,54,255,0.1),transparent 70%);pointer-events:none;"></div>
+            <div style="background:#FFFFFF;border-radius:12px;padding:1rem 1.1rem;box-shadow:0 10px 28px rgba(0,0,0,0.1),0 1px 3px rgba(0,0,0,0.04);width:100%;max-width:240px;position:relative;z-index:1;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.65rem;">
+                <div style="font-family:'JetBrains Mono',monospace;font-size:0.56rem;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:#656565;">Throughput &middot; Q2</div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:0.56rem;font-weight:500;letter-spacing:0.06em;color:#00B872;background:rgba(0,184,114,0.1);padding:2px 7px;border-radius:980px;">+8</div>
+              </div>
+              <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:0.35rem;">
+                <div style="font-family:var(--font-heading);font-size:2.4rem;font-weight:600;color:#141414;letter-spacing:-0.03em;line-height:1;">24</div>
+                <div style="font-family:'Inter',sans-serif;font-size:0.7rem;color:#656565;letter-spacing:-0.01em;">ventures shipped</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;padding-top:0.6rem;border-top:1px solid rgba(0,0,0,0.05);margin-top:0.65rem;">
+                <div style="width:22px;height:22px;border-radius:50%;background:#7A3FFF;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-family:'Inter',sans-serif;font-size:0.6rem;font-weight:600;flex-shrink:0;">PS</div>
+                <div style="font-family:'Inter',sans-serif;font-size:0.7rem;color:#141414;font-weight:500;line-height:1.2;">
+                  Priya Singh
+                  <div style="font-size:0.6rem;color:#656565;font-weight:400;margin-top:1px;">1 operator &middot; AI agents</div>
+                </div>
+              </div>
+            </div>
           </div>
           <div class="wp-card-body">
-            <p>You can build anything &mdash; but when a client asks for market research, an investor deck, or a go-to-market strategy, you&rsquo;re stuck. The workflow turns your technical skills into a complete venture studio. You write the code. It handles everything else.</p>
+            <h3 style="font-family:var(--font-heading);font-size:1.15rem;font-weight:600;color:var(--text-dark);letter-spacing:-0.015em;margin-bottom:1rem;">Venture Studios</h3>
+            <p>Studios live and die on throughput. The platform turns one operator into a full delivery team and lets you run more parallel ventures with predictable economics. Compounding case studies. Compounding outcome data. Compounding leverage.</p>
           </div>
         </div>
 
-        <!-- Card 3: Small Agencies -->
+        <!-- Card 3: Corporate Innovation Labs — Enterprise config panel -->
         <div class="wp-card" data-reveal data-delay="3">
-          <div class="wp-card-visual">
-            <div class="wp-emoji">&#x1F3E2;</div>
-            <div class="wp-type">Small Agencies</div>
+          <div class="wp-card-visual" style="height:220px;padding:1.25rem;display:flex;align-items:center;justify-content:center;gap:0;flex-direction:row;position:relative;overflow:hidden;background:linear-gradient(135deg,#EEF1F8 0%,#DCE3F0 100%);">
+            <div style="position:absolute;bottom:-40px;right:-30px;width:160px;height:160px;border-radius:50%;background:radial-gradient(circle,rgba(0,54,255,0.12),transparent 70%);pointer-events:none;"></div>
+            <div style="background:#FFFFFF;border-radius:12px;padding:0.95rem 1rem;box-shadow:0 10px 28px rgba(0,0,0,0.1),0 1px 3px rgba(0,0,0,0.04);width:100%;max-width:240px;position:relative;z-index:1;">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:0.6rem;border-bottom:1px solid rgba(0,0,0,0.05);">
+                <div style="font-family:'JetBrains Mono',monospace;font-size:0.56rem;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:#656565;">Enterprise &middot; Licence</div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:0.56rem;font-weight:500;letter-spacing:0.07em;text-transform:uppercase;color:#0036FF;background:rgba(0,54,255,0.09);padding:3px 7px;border-radius:980px;">Active</div>
+              </div>
+              <div style="margin-top:0.65rem;display:flex;flex-direction:column;gap:5px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;">
+                  <span style="font-family:'Inter',sans-serif;font-size:0.7rem;color:#141414;font-weight:500;">White-label</span>
+                  <div style="width:26px;height:14px;background:#0036FF;border-radius:980px;padding:2px;display:flex;align-items:center;justify-content:flex-end;"><div style="width:10px;height:10px;background:#FFFFFF;border-radius:50%;"></div></div>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;">
+                  <span style="font-family:'Inter',sans-serif;font-size:0.7rem;color:#141414;font-weight:500;">Custom domain</span>
+                  <div style="width:26px;height:14px;background:#0036FF;border-radius:980px;padding:2px;display:flex;align-items:center;justify-content:flex-end;"><div style="width:10px;height:10px;background:#FFFFFF;border-radius:50%;"></div></div>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;">
+                  <span style="font-family:'Inter',sans-serif;font-size:0.7rem;color:#141414;font-weight:500;">SLA contract</span>
+                  <div style="width:26px;height:14px;background:#0036FF;border-radius:980px;padding:2px;display:flex;align-items:center;justify-content:flex-end;"><div style="width:10px;height:10px;background:#FFFFFF;border-radius:50%;"></div></div>
+                </div>
+              </div>
+            </div>
           </div>
           <div class="wp-card-body">
-            <p>Every venture build means hiring freelancers for the bits your team can&rsquo;t do &mdash; decks, research, content, design systems. Half your margin disappears. The workflow eliminates the subcontracting. Your team delivers everything, end to end.</p>
+            <h3 style="font-family:var(--font-heading);font-size:1.15rem;font-weight:600;color:var(--text-dark);letter-spacing:-0.015em;margin-bottom:1rem;">Corporate Innovation Labs</h3>
+            <p>Internal innovation programs need agency-grade output without paying agency rates. White-label the platform, run it inside your security perimeter, and produce launch-ready ventures on a fixed annual licence. Enterprise tier includes SLA and embedded onboarding.</p>
           </div>
         </div>
 
       </div>
       <div style="text-align:center;margin-top:3.5rem;padding:3rem;background:#F5F5F7;border-radius:var(--radius-card);" data-reveal>
-        <div style="font-family:var(--font-heading);font-size:clamp(2rem,4vw,3rem);font-weight:600;color:var(--text-dark);letter-spacing:-0.02em;" data-price-gbp="500">&pound;500</div>
-        <p style="font-size:1rem;color:var(--text-dark-muted);margin:0.75rem 0 0.25rem;">One purchase. Everything included.</p>
-        <p style="font-size:0.88rem;color:var(--text-dark-muted);margin-bottom:2rem;">The complete workflow file, demo video, and setup guide.</p>
-        <a href="pricing.html" class="btn btn-primary btn-lg">Get the Workflow</a>
+        <div style="font-family:var(--font-mono);font-size:0.78rem;color:var(--text-dark-muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.5rem;">Platform licence &mdash; from</div>
+        <div style="font-family:var(--font-heading);font-size:clamp(2rem,4vw,3rem);font-weight:600;color:var(--text-dark);letter-spacing:-0.02em;">$4,800<span style="font-size:0.5em;color:var(--text-dark-muted);font-weight:400;"> /yr</span></div>
+        <p style="font-size:1rem;color:var(--text-dark-muted);margin:0.75rem 0 0.25rem;">Four annual tiers. No per-engagement fees.</p>
+        <p style="font-size:0.88rem;color:var(--text-dark-muted);margin-bottom:2rem;">Starter through Enterprise &mdash; scale the licence to your program volume.</p>
+        <a href="pricing.html" class="btn btn-primary btn-lg">View pricing</a>
       </div>
     </div>
   </section>
@@ -2231,57 +2630,57 @@
       <div style="text-align:center;">
         <div class="s-label" style="justify-content:center;">FAQs</div>
         <h2 class="s-title s-title-shimmer">Common questions</h2>
-        <p class="s-sub" style="margin:0 auto 2.5rem;">The five questions everyone asks before they buy.</p>
+        <p class="s-sub" style="margin:0 auto 2.5rem;">The five questions every prospective licensee asks first.</p>
       </div>
 
       <div class="faq-list">
         <details class="faq-item" data-reveal data-delay="1">
           <summary>
-            <span>Do I need to be a developer?</span>
+            <span>Who is Ventrify OS for?</span>
             <span class="faq-icon" aria-hidden="true">+</span>
           </summary>
           <div class="faq-answer">
-            <p>No. Basic comfort with VS Code and a terminal is enough. The included setup guide walks you through everything step by step. If you can run <code>npm install</code>, you can run this workflow.</p>
+            <p>Accelerators, incubators, venture studios, and corporate innovation labs that run multiple ventures a year. The Starter tier also fits boutique studios and individual operators running their own programs at smaller volumes.</p>
           </div>
         </details>
 
         <details class="faq-item" data-reveal data-delay="1">
           <summary>
-            <span>What exactly do I get when I purchase?</span>
-            <span class="faq-icon" aria-hidden="true">+</span>
-          </summary>
-          <div class="faq-answer">
-            <p>Three things: the complete Ventrify Workflow file (4,242 lines), a demo video showing the workflow producing real outputs, and a step-by-step setup guide. Everything is delivered to your inbox immediately after payment.</p>
-          </div>
-        </details>
-
-        <details class="faq-item" data-reveal data-delay="2">
-          <summary>
             <span>Is this a subscription?</span>
             <span class="faq-icon" aria-hidden="true">+</span>
           </summary>
           <div class="faq-answer">
-            <p>No. <span data-price-gbp="500">&pound;500</span> is a one-time payment. You own the workflow forever and can use it on unlimited client engagements with no further fees.</p>
+            <p>Yes. Ventrify OS is licensed annually. Four tiers from Starter ($4,800/yr) to Enterprise ($150,000+/yr) covering everything from a single operator running 6 programs a year to a full institution with unlimited operators and white-labelling.</p>
           </div>
         </details>
 
         <details class="faq-item" data-reveal data-delay="2">
           <summary>
-            <span>Can I use this for my own clients immediately?</span>
+            <span>Are there per-engagement fees?</span>
             <span class="faq-icon" aria-hidden="true">+</span>
           </summary>
           <div class="faq-answer">
-            <p>Yes. The showcase pages on this site show you exactly what a finished engagement looks like. You can run your first client engagement the same week you buy it.</p>
+            <p>No. The annual licence covers unlimited programs within your tier. Predictable economics &mdash; you can model the cost of every venture before it starts.</p>
+          </div>
+        </details>
+
+        <details class="faq-item" data-reveal data-delay="2">
+          <summary>
+            <span>Who actually delivers the work?</span>
+            <span class="faq-icon" aria-hidden="true">+</span>
+          </summary>
+          <div class="faq-answer">
+            <p>Your own program manager, orchestrating the platform. AI agents execute every phase &mdash; research, design, build, brand, marketing. Your operator reviews, approves at the gates, and runs the founder relationship.</p>
           </div>
         </details>
 
         <details class="faq-item" data-reveal data-delay="3">
           <summary>
-            <span>What if something breaks?</span>
+            <span>How long does onboarding take?</span>
             <span class="faq-icon" aria-hidden="true">+</span>
           </summary>
           <div class="faq-answer">
-            <p>The workflow includes 3 QA validators that catch errors before they reach your client, plus a persistent memory system that learns from every session. Most issues are caught and fixed automatically. The setup guide also covers common troubleshooting.</p>
+            <p>Days, not months. Cohort and Enterprise tiers include embedded onboarding and a dedicated success contact. Once your first operator is certified, your first venture can start that week.</p>
           </div>
         </details>
       </div>
@@ -2297,10 +2696,11 @@
        ═══════════════════════════════════════════ -->
   <section class="final-cta">
     <div class="cta-content" data-reveal>
-      <h2>Your first client pays<br>for everything.</h2>
-      <p class="cta-sub">Land one &pound;25K freelance engagement. That&rsquo;s a 50x return on a <span data-price-gbp="500">&pound;500</span> investment &mdash; before you&rsquo;ve even finished the first phase. The workflow pays for itself on day one. Every engagement after that is pure margin.</p>
+      <h2>License the platform.<br>Run programs that ship.</h2>
+      <p class="cta-sub">A single fixed annual licence replaces what used to take a 10-person agency. Your program managers gain the leverage of an entire delivery team. Your throughput compounds every cohort. Book a 30-minute platform demo &mdash; we&rsquo;ll walk through tier fit, onboarding, and outcomes from real programs.</p>
       <div class="cta-buttons">
-        <a href="pricing.html" class="btn btn-dark-primary btn-lg">Get the Workflow &mdash; <span data-price-gbp="500">&pound;500</span></a>
+        <a href="mailto:hello@ventrify.io?subject=Ventrify%20OS%20demo%20request" class="btn btn-dark-primary btn-lg">Book a platform demo</a>
+        <a href="pricing.html" class="btn btn-dark-outline btn-lg">View pricing</a>
       </div>
     </div>
   </section>
@@ -2313,14 +2713,16 @@
       <div class="footer-top">
         <div class="footer-brand">
           <div class="logo">VENTRIFY <span class="os">OS</span></div>
-          <p>A product by Ventrify &mdash; the AI-powered venture studio.</p>
+          <p>The operating system for startup programs.</p>
         </div>
         <div class="footer-links">
           <a href="system.html">System</a>
-          <a href="showcase.html">Showcase</a>
+          <a href="the-data-room.html">Data Room</a>
+      <a href="the-workspace.html">Workspace</a>
+      <a href="showcase.html">Showcase</a>
           <a href="pricing.html">Pricing</a>
           <a href="faqs.html">FAQs</a>
-          <a href="../index.html">Ventrify Studio</a>
+          <a href="mailto:hello@ventrify.io?subject=Ventrify%20OS%20demo%20request">Book a demo</a>
         </div>
       </div>
       <div class="footer-bottom">
@@ -2383,11 +2785,12 @@
 
     // Rotating text in hero
     const rotatingPhrases = [
-      '70+ deliverables per client',
-      '4 auto-generated PDF decks',
-      '1 operator, zero subcontractors',
-      '6\u20138 weeks, brief to launch',
-      '$90K+ revenue per engagement'
+      'Three-layer data room',
+      '10 specialist AI agents',
+      '70+ deliverables per venture',
+      'Investor-demo-ready MVPs',
+      '6\u201316 weeks, idea to launch',
+      'Up to 24+ ventures per year'
     ];
     let rotatingIndex = 0;
     const rotatingEl = document.getElementById('rotating-text');
@@ -2402,6 +2805,5 @@
 
     setInterval(cycleRotatingText, 3000);
   </script>
-  <script src="currency.js" defer></script>
 </body>
 </html>
