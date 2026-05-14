@@ -746,22 +746,178 @@
       transform:translateY(-2px);
     }
     .tool-card-visual {
-      height:120px;
-      background:#EBEBED;
+      height:160px;
+      background:linear-gradient(135deg,#EEF1F8 0%,#DCE3F0 100%);
       display:flex;
       align-items:center;
       justify-content:center;
       overflow:hidden;
       position:relative;
+      padding:1rem;
     }
-    .tool-card-port {
-      font-family:var(--font-mono); font-size:0.72rem;
-      font-weight:500; letter-spacing:0.02em;
+
+    /* Reusable mini-mockup panel */
+    .tcv-panel {
+      background:#FFFFFF;
+      border-radius:8px;
+      box-shadow:0 6px 18px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+      width:100%;
+      max-width:200px;
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
+    }
+
+    /* Browser-style chrome */
+    .tcv-chrome {
+      display:flex;
+      align-items:center;
+      gap:4px;
+      padding:6px 8px;
+      border-bottom:1px solid rgba(0,0,0,0.05);
+    }
+    .tcv-chrome .dot {
+      width:6px; height:6px; border-radius:50%;
+    }
+    .tcv-chrome .dot.red { background:#FF5F57; }
+    .tcv-chrome .dot.yellow { background:#FEBC2E; }
+    .tcv-chrome .dot.green { background:#28C840; }
+    .tcv-chrome .url {
+      flex:1;
+      margin-left:6px;
+      padding:2px 8px;
+      background:rgba(0,0,0,0.04);
+      border-radius:980px;
+      font-family:var(--font-mono);
+      font-size:0.58rem;
+      color:#656565;
+      letter-spacing:0.02em;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    /* Inner content area */
+    .tcv-body {
+      flex:1;
+      padding:0.55rem 0.7rem;
+      display:flex;
+      flex-direction:column;
+      gap:5px;
+      justify-content:center;
+    }
+    .tcv-line {
+      height:5px;
+      background:rgba(0,0,0,0.06);
+      border-radius:2px;
+    }
+    .tcv-line.accent { background:rgba(var(--primary-rgb),0.22); }
+
+    /* PDF-style preview */
+    .tcv-pdf {
+      background:#FFFFFF;
+      border-radius:6px;
+      box-shadow:0 6px 18px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+      padding:0.7rem 0.75rem;
+      width:135px;
+      position:relative;
+    }
+    .tcv-pdf::after {
+      content:'';
+      position:absolute;
+      top:0; right:0;
+      width:14px; height:14px;
+      background:linear-gradient(135deg,transparent 50%,rgba(0,0,0,0.06) 50%);
+      border-radius:0 6px 0 6px;
+    }
+    .tcv-pdf-lines {
+      display:flex; flex-direction:column; gap:3px;
+      margin-bottom:7px;
+    }
+    .tcv-pdf-foot {
+      display:flex; align-items:center; justify-content:space-between;
+      padding-top:6px;
+      border-top:1px solid rgba(0,0,0,0.06);
+    }
+    .tcv-pdf-name {
+      font-family:var(--font-mono);
+      font-size:0.55rem;
+      color:#656565;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width:84px;
+    }
+    .tcv-pdf-badge {
+      font-family:var(--font-mono);
+      font-size:0.48rem;
+      font-weight:600;
+      letter-spacing:0.06em;
+      color:#FFFFFF;
+      background:var(--primary);
+      padding:1px 5px;
+      border-radius:3px;
+      flex-shrink:0;
+    }
+
+    /* Portal Hub stacked-layer style */
+    .tcv-hub {
+      display:flex; flex-direction:column; gap:5px;
+      width:100%; max-width:200px;
+    }
+    .tcv-hub-card {
+      background:#FFFFFF;
+      border:1px solid rgba(var(--primary-rgb),0.18);
+      border-radius:6px;
+      padding:6px 9px;
+      box-shadow:0 3px 10px rgba(0,0,0,0.06);
+    }
+    .tcv-hub-card.l2 {
+      background:rgba(255,255,255,0.65);
+      border-color:rgba(0,0,0,0.05);
+      box-shadow:none;
+    }
+    .tcv-hub-card.l3 {
+      background:rgba(255,255,255,0.4);
+      border-color:rgba(0,0,0,0.04);
+      box-shadow:none;
+    }
+    .tcv-hub-tag {
+      font-family:var(--font-mono);
+      font-size:0.52rem;
+      font-weight:500;
+      letter-spacing:0.08em;
+      text-transform:uppercase;
       color:var(--primary);
-      padding:4px 12px; display:inline-block;
-      background:rgba(var(--primary-rgb),0.08);
-      border-radius:var(--radius-pill);
+      margin-bottom:3px;
     }
+    .tcv-hub-card.l2 .tcv-hub-tag { color:#656565; }
+    .tcv-hub-card.l3 .tcv-hub-tag { color:#9AA0AE; }
+    .tcv-hub-hint {
+      height:4px;
+      background:rgba(0,0,0,0.06);
+      border-radius:2px;
+      width:75%;
+    }
+
+    /* Terminal-style for CLI tools */
+    .tcv-term {
+      background:#0C1035;
+      border-radius:6px;
+      padding:0.7rem 0.8rem;
+      width:100%; max-width:200px;
+      box-shadow:0 6px 18px rgba(0,0,0,0.18), 0 1px 2px rgba(0,0,0,0.06);
+      font-family:var(--font-mono);
+      font-size:0.58rem;
+      line-height:1.6;
+      color:rgba(255,255,255,0.85);
+    }
+    .tcv-term-line { display:block; }
+    .tcv-term-prompt { color:rgba(255,255,255,0.4); margin-right:4px; }
+    .tcv-term-cmd { color:#FFFFFF; }
+    .tcv-term-out { color:rgba(255,255,255,0.6); }
+    .tcv-term-accent { color:#5C8BFF; }
+    .tcv-term-ok { color:#28C840; }
     .tool-card-body {
       padding:1.5rem;
     }
@@ -1297,9 +1453,18 @@
       <p class="s-sub">Every tool runs locally via npm scripts. No external services required except Stripe for invoicing.</p>
 
       <div class="tools-grid">
+        <!-- 1. Brief Intake — browser form mockup -->
         <div class="tool-card" data-reveal data-delay="1">
-          <div class="tool-card-visual" style="background:linear-gradient(135deg,#E8ECF4,#D8DCE8);">
-            <div class="tool-card-port">localhost:3010</div>
+          <div class="tool-card-visual">
+            <div class="tcv-panel">
+              <div class="tcv-chrome"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span><span class="url">localhost:3010/brief</span></div>
+              <div class="tcv-body">
+                <div class="tcv-line" style="width:35%;"></div>
+                <div class="tcv-line accent" style="width:70%;"></div>
+                <div class="tcv-line" style="width:30%;"></div>
+                <div class="tcv-line accent" style="width:60%;"></div>
+              </div>
+            </div>
           </div>
           <div class="tool-card-body">
             <h3>Brief Intake</h3>
@@ -1307,9 +1472,21 @@
             <p>Browser form that captures the 8-section client brief</p>
           </div>
         </div>
+
+        <!-- 2. Payment Dashboard — Stripe-style stat mockup -->
         <div class="tool-card" data-reveal data-delay="2">
-          <div class="tool-card-visual" style="background:linear-gradient(135deg,#E8ECF4,#D8DCE8);">
-            <div class="tool-card-port">localhost:3014</div>
+          <div class="tool-card-visual">
+            <div class="tcv-panel">
+              <div class="tcv-chrome"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span><span class="url">localhost:3014/payments</span></div>
+              <div class="tcv-body" style="gap:3px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;">
+                  <span style="font-family:var(--font-mono);font-size:0.56rem;letter-spacing:0.06em;text-transform:uppercase;color:#656565;">Milestone 2</span>
+                  <span style="font-family:var(--font-mono);font-size:0.48rem;font-weight:600;color:#00B872;background:rgba(0,184,114,0.12);padding:1px 5px;border-radius:3px;letter-spacing:0.04em;">PAID</span>
+                </div>
+                <div style="font-family:var(--font-heading);font-size:0.95rem;font-weight:600;color:#141414;letter-spacing:-0.02em;line-height:1;margin-top:2px;">$27,500</div>
+                <div style="height:3px;background:rgba(0,0,0,0.05);border-radius:2px;margin-top:4px;overflow:hidden;"><div style="height:100%;width:66%;background:var(--primary);"></div></div>
+              </div>
+            </div>
           </div>
           <div class="tool-card-body">
             <h3>Payment Dashboard</h3>
@@ -1317,9 +1494,28 @@
             <p>Stripe integration, milestone tracking, invoice generation</p>
           </div>
         </div>
+
+        <!-- 3. Social Scheduler — calendar pill grid -->
         <div class="tool-card" data-reveal data-delay="3">
-          <div class="tool-card-visual" style="background:linear-gradient(135deg,#E8ECF4,#D8DCE8);">
-            <div class="tool-card-port">localhost:3012</div>
+          <div class="tool-card-visual">
+            <div class="tcv-panel">
+              <div class="tcv-chrome"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span><span class="url">localhost:3012/social</span></div>
+              <div class="tcv-body" style="padding:0.45rem 0.7rem;">
+                <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:3px;">
+                  <div style="height:9px;border-radius:2px;background:rgba(var(--primary-rgb),0.5);"></div>
+                  <div style="height:9px;border-radius:2px;background:rgba(var(--primary-rgb),0.3);"></div>
+                  <div style="height:9px;border-radius:2px;background:rgba(0,0,0,0.08);"></div>
+                  <div style="height:9px;border-radius:2px;background:rgba(var(--primary-rgb),0.5);"></div>
+                  <div style="height:9px;border-radius:2px;background:rgba(0,0,0,0.08);"></div>
+                  <div style="height:9px;border-radius:2px;background:rgba(0,0,0,0.08);"></div>
+                  <div style="height:9px;border-radius:2px;background:rgba(var(--primary-rgb),0.5);"></div>
+                  <div style="height:9px;border-radius:2px;background:rgba(var(--primary-rgb),0.3);"></div>
+                  <div style="height:9px;border-radius:2px;background:rgba(0,0,0,0.08);"></div>
+                  <div style="height:9px;border-radius:2px;background:rgba(var(--primary-rgb),0.5);"></div>
+                </div>
+                <div style="font-family:var(--font-mono);font-size:0.52rem;color:#656565;letter-spacing:0.04em;margin-top:6px;">20 posts &middot; 4 wks queued</div>
+              </div>
+            </div>
           </div>
           <div class="tool-card-body">
             <h3>Social Scheduler</h3>
@@ -1327,9 +1523,19 @@
             <p>20-post approval interface + Buffer scheduling</p>
           </div>
         </div>
+
+        <!-- 4. Blog Publisher — editor mockup -->
         <div class="tool-card" data-reveal data-delay="1">
-          <div class="tool-card-visual" style="background:linear-gradient(135deg,#E8ECF4,#D8DCE8);">
-            <div class="tool-card-port">localhost:3013</div>
+          <div class="tool-card-visual">
+            <div class="tcv-panel">
+              <div class="tcv-chrome"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span><span class="url">localhost:3013/blog</span></div>
+              <div class="tcv-body" style="gap:3px;">
+                <div style="font-family:'Inter',sans-serif;font-size:0.56rem;font-weight:600;color:#141414;letter-spacing:-0.01em;">Why founders read 7 cards, not 80-page decks</div>
+                <div class="tcv-line" style="width:90%;margin-top:2px;"></div>
+                <div class="tcv-line" style="width:78%;"></div>
+                <div class="tcv-line accent" style="width:55%;"></div>
+              </div>
+            </div>
           </div>
           <div class="tool-card-body">
             <h3>Blog Publisher</h3>
@@ -1337,19 +1543,50 @@
             <p>Blog post review + Sanity CMS publishing</p>
           </div>
         </div>
+
+        <!-- 5. Client Portal — hub-pill stack -->
         <div class="tool-card" data-reveal data-delay="2">
-          <div class="tool-card-visual" style="background:linear-gradient(135deg,#E8ECF4,#D8DCE8);">
-            <div class="tool-card-port">localhost:3015</div>
+          <div class="tool-card-visual">
+            <div class="tcv-panel">
+              <div class="tcv-chrome"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span><span class="url">localhost:3015/portal</span></div>
+              <div class="tcv-body" style="padding:0.45rem 0.7rem;gap:3px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:3px 6px;background:rgba(0,0,0,0.025);border-radius:4px;">
+                  <span style="font-family:var(--font-mono);font-size:0.52rem;color:#0036FF;letter-spacing:0.04em;">Research Hub</span>
+                  <span style="width:5px;height:5px;border-radius:50%;background:#00B872;"></span>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:3px 6px;background:rgba(0,0,0,0.025);border-radius:4px;">
+                  <span style="font-family:var(--font-mono);font-size:0.52rem;color:#0036FF;letter-spacing:0.04em;">Vision Hub</span>
+                  <span style="width:5px;height:5px;border-radius:50%;background:#E6A91A;"></span>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:3px 6px;background:rgba(0,0,0,0.025);border-radius:4px;">
+                  <span style="font-family:var(--font-mono);font-size:0.52rem;color:#0036FF;letter-spacing:0.04em;">Financials Hub</span>
+                  <span style="width:5px;height:5px;border-radius:50%;background:rgba(0,0,0,0.18);"></span>
+                </div>
+              </div>
+            </div>
           </div>
           <div class="tool-card-body">
             <h3>Client Portal</h3>
             <div class="card-divider"></div>
-            <p>Client-facing progress tracker, deliverable downloads</p>
+            <p>Founder-facing progress tracker, deliverable downloads</p>
           </div>
         </div>
+
+        <!-- 6. SOW Generator — PDF mockup -->
         <div class="tool-card" data-reveal data-delay="3">
-          <div class="tool-card-visual" style="background:linear-gradient(135deg,#E8ECF4,#D8DCE8);">
-            <div class="tool-card-port">PDF Generator</div>
+          <div class="tool-card-visual">
+            <div class="tcv-pdf">
+              <div class="tcv-pdf-lines">
+                <div class="tcv-line" style="width:85%;"></div>
+                <div class="tcv-line" style="width:70%;"></div>
+                <div class="tcv-line" style="width:78%;"></div>
+                <div class="tcv-line" style="width:55%;"></div>
+              </div>
+              <div class="tcv-pdf-foot">
+                <span class="tcv-pdf-name">sow.pdf</span>
+                <span class="tcv-pdf-badge">PDF</span>
+              </div>
+            </div>
           </div>
           <div class="tool-card-body">
             <h3>SOW Generator</h3>
@@ -1357,9 +1594,18 @@
             <p>Puppeteer PDF, auto-populates from brief + define files</p>
           </div>
         </div>
+
+        <!-- 7. Research Hub — L1/L2/L3 stack -->
         <div class="tool-card" data-reveal data-delay="1">
-          <div class="tool-card-visual" style="background:linear-gradient(135deg,#E8ECF4,#D8DCE8);">
-            <div class="tool-card-port">Portal Hub</div>
+          <div class="tool-card-visual">
+            <div class="tcv-hub">
+              <div class="tcv-hub-card">
+                <div class="tcv-hub-tag">L1 &middot; Card 03</div>
+                <div class="tcv-hub-hint" style="width:80%;"></div>
+              </div>
+              <div class="tcv-hub-card l2"><div class="tcv-hub-tag">L2 &middot; Evidence</div></div>
+              <div class="tcv-hub-card l3"><div class="tcv-hub-tag">L3 &middot; Full Research</div></div>
+            </div>
           </div>
           <div class="tool-card-body">
             <h3>Research Hub</h3>
@@ -1367,9 +1613,21 @@
             <p>L1 Provocation Cards + L2 Evidence + L3 research &mdash; live in the founder portal</p>
           </div>
         </div>
+
+        <!-- 8. Vision Hub — L1/L2/L3 stack with Gate 2 pill -->
         <div class="tool-card" data-reveal data-delay="2">
-          <div class="tool-card-visual" style="background:linear-gradient(135deg,#E8ECF4,#D8DCE8);">
-            <div class="tool-card-port">Portal Hub</div>
+          <div class="tool-card-visual">
+            <div class="tcv-hub">
+              <div class="tcv-hub-card">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
+                  <span class="tcv-hub-tag" style="margin-bottom:0;">L1 &middot; Card 02</span>
+                  <span style="font-family:var(--font-mono);font-size:0.45rem;font-weight:500;color:#00B872;background:rgba(0,184,114,0.1);padding:1px 4px;border-radius:980px;letter-spacing:0.06em;text-transform:uppercase;">Gate 2</span>
+                </div>
+                <div class="tcv-hub-hint" style="width:70%;"></div>
+              </div>
+              <div class="tcv-hub-card l2"><div class="tcv-hub-tag">L2 &middot; Evidence</div></div>
+              <div class="tcv-hub-card l3"><div class="tcv-hub-tag">L3 &middot; Full Research</div></div>
+            </div>
           </div>
           <div class="tool-card-body">
             <h3>Vision Hub</h3>
@@ -1377,9 +1635,18 @@
             <p>Personas, MVP, IA, journeys, roadmap &middot; Gate 2 sign-off panel</p>
           </div>
         </div>
+
+        <!-- 9. Strategy Hub — L1/L2/L3 stack -->
         <div class="tool-card" data-reveal data-delay="3">
-          <div class="tool-card-visual" style="background:linear-gradient(135deg,#E8ECF4,#D8DCE8);">
-            <div class="tool-card-port">Portal Hub</div>
+          <div class="tool-card-visual">
+            <div class="tcv-hub">
+              <div class="tcv-hub-card">
+                <div class="tcv-hub-tag">L1 &middot; Card 01</div>
+                <div class="tcv-hub-hint" style="width:65%;"></div>
+              </div>
+              <div class="tcv-hub-card l2"><div class="tcv-hub-tag">L2 &middot; Evidence</div></div>
+              <div class="tcv-hub-card l3"><div class="tcv-hub-tag">L3 &middot; Full Research</div></div>
+            </div>
           </div>
           <div class="tool-card-body">
             <h3>Strategy Hub</h3>
@@ -1387,9 +1654,22 @@
             <p>Tone of voice, social strategy, 30-day content calendar</p>
           </div>
         </div>
+
+        <!-- 10. Investor Pitch Deck — PDF mockup -->
         <div class="tool-card" data-reveal data-delay="1">
-          <div class="tool-card-visual" style="background:linear-gradient(135deg,#E8ECF4,#D8DCE8);">
-            <div class="tool-card-port">PDF Generator</div>
+          <div class="tool-card-visual">
+            <div class="tcv-pdf">
+              <div class="tcv-pdf-lines">
+                <div class="tcv-line" style="width:80%;height:6px;"></div>
+                <div class="tcv-line" style="width:62%;"></div>
+                <div class="tcv-line accent" style="width:48%;"></div>
+                <div class="tcv-line" style="width:70%;"></div>
+              </div>
+              <div class="tcv-pdf-foot">
+                <span class="tcv-pdf-name">investor-deck.pdf</span>
+                <span class="tcv-pdf-badge">PDF</span>
+              </div>
+            </div>
           </div>
           <div class="tool-card-body">
             <h3>Investor Pitch Deck</h3>
@@ -1397,9 +1677,30 @@
             <p>The one deck still as a PDF &mdash; investors annotate offline</p>
           </div>
         </div>
+
+        <!-- 11. Invoice Generator — PDF mockup -->
         <div class="tool-card" data-reveal data-delay="2">
-          <div class="tool-card-visual" style="background:linear-gradient(135deg,#E8ECF4,#D8DCE8);">
-            <div class="tool-card-port">PDF Generator</div>
+          <div class="tool-card-visual">
+            <div class="tcv-pdf">
+              <div class="tcv-pdf-lines">
+                <div style="display:flex;justify-content:space-between;">
+                  <div class="tcv-line" style="width:45%;"></div>
+                  <div class="tcv-line accent" style="width:30%;"></div>
+                </div>
+                <div style="display:flex;justify-content:space-between;">
+                  <div class="tcv-line" style="width:50%;"></div>
+                  <div class="tcv-line" style="width:25%;"></div>
+                </div>
+                <div style="display:flex;justify-content:space-between;">
+                  <div class="tcv-line" style="width:40%;"></div>
+                  <div class="tcv-line accent" style="width:32%;"></div>
+                </div>
+              </div>
+              <div class="tcv-pdf-foot">
+                <span class="tcv-pdf-name">invoice-m02.pdf</span>
+                <span class="tcv-pdf-badge">PDF</span>
+              </div>
+            </div>
           </div>
           <div class="tool-card-body">
             <h3>Invoice Generator</h3>
@@ -1407,9 +1708,22 @@
             <p>Branded PDF invoices per milestone</p>
           </div>
         </div>
+
+        <!-- 12. Welcome Pack — PDF mockup -->
         <div class="tool-card" data-reveal data-delay="3">
-          <div class="tool-card-visual" style="background:linear-gradient(135deg,#E8ECF4,#D8DCE8);">
-            <div class="tool-card-port">PDF Generator</div>
+          <div class="tool-card-visual">
+            <div class="tcv-pdf">
+              <div class="tcv-pdf-lines">
+                <div class="tcv-line accent" style="width:60%;height:7px;"></div>
+                <div class="tcv-line" style="width:80%;"></div>
+                <div class="tcv-line" style="width:72%;"></div>
+                <div class="tcv-line" style="width:55%;"></div>
+              </div>
+              <div class="tcv-pdf-foot">
+                <span class="tcv-pdf-name">welcome-pack.pdf</span>
+                <span class="tcv-pdf-badge">PDF</span>
+              </div>
+            </div>
           </div>
           <div class="tool-card-body">
             <h3>Welcome Pack</h3>
@@ -1417,9 +1731,18 @@
             <p>Ventrify-branded onboarding document</p>
           </div>
         </div>
+
+        <!-- 13. Brand Photography — 4-image grid -->
         <div class="tool-card" data-reveal data-delay="1">
-          <div class="tool-card-visual" style="background:linear-gradient(135deg,#E8ECF4,#D8DCE8);">
-            <div class="tool-card-port">CLI</div>
+          <div class="tool-card-visual">
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr);gap:4px;width:140px;height:100px;">
+              <div style="background:linear-gradient(135deg,#0036FF,#3366FF);border-radius:4px;"></div>
+              <div style="background:linear-gradient(135deg,#7A3FFF,#9B6FFF);border-radius:4px;"></div>
+              <div style="background:linear-gradient(135deg,#00B8A0,#00D9C5);border-radius:4px;"></div>
+              <div style="background:linear-gradient(135deg,#FF7A3F,#FFA869);border-radius:4px;"></div>
+              <div style="background:linear-gradient(135deg,#FF3F7A,#FF6B95);border-radius:4px;"></div>
+              <div style="background:linear-gradient(135deg,#1A2E78,#3366FF);border-radius:4px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.9);font-family:var(--font-mono);font-size:0.6rem;font-weight:500;">+32</div>
+            </div>
           </div>
           <div class="tool-card-body">
             <h3>Brand Photography</h3>
@@ -1427,9 +1750,24 @@
             <p>Auto-sources 37 on-brand photos from Unsplash and Pexels</p>
           </div>
         </div>
+
+        <!-- 14. Social Graphics — 3 social cards -->
         <div class="tool-card" data-reveal data-delay="2">
-          <div class="tool-card-visual" style="background:linear-gradient(135deg,#E8ECF4,#D8DCE8);">
-            <div class="tool-card-port">CLI</div>
+          <div class="tool-card-visual">
+            <div style="display:flex;gap:5px;align-items:center;">
+              <div style="width:48px;height:60px;background:#FFFFFF;border-radius:5px;box-shadow:0 4px 12px rgba(0,0,0,0.08);padding:5px;display:flex;flex-direction:column;justify-content:flex-end;transform:rotate(-4deg);">
+                <div style="height:4px;background:rgba(var(--primary-rgb),0.3);border-radius:2px;width:80%;margin-bottom:3px;"></div>
+                <div style="height:3px;background:rgba(0,0,0,0.08);border-radius:2px;width:60%;"></div>
+              </div>
+              <div style="width:54px;height:68px;background:linear-gradient(135deg,#0036FF,#3366FF);border-radius:5px;box-shadow:0 6px 16px rgba(0,54,255,0.18);padding:6px;display:flex;flex-direction:column;justify-content:flex-end;z-index:1;">
+                <div style="height:4px;background:rgba(255,255,255,0.5);border-radius:2px;width:90%;margin-bottom:3px;"></div>
+                <div style="height:3px;background:rgba(255,255,255,0.3);border-radius:2px;width:65%;"></div>
+              </div>
+              <div style="width:48px;height:60px;background:#FFFFFF;border-radius:5px;box-shadow:0 4px 12px rgba(0,0,0,0.08);padding:5px;display:flex;flex-direction:column;justify-content:flex-end;transform:rotate(4deg);">
+                <div style="height:4px;background:rgba(var(--primary-rgb),0.3);border-radius:2px;width:75%;margin-bottom:3px;"></div>
+                <div style="height:3px;background:rgba(0,0,0,0.08);border-radius:2px;width:55%;"></div>
+              </div>
+            </div>
           </div>
           <div class="tool-card-body">
             <h3>Social Graphics</h3>
@@ -1437,9 +1775,17 @@
             <p>Generates branded PNGs for all 20 social posts</p>
           </div>
         </div>
+
+        <!-- 15. QA Validators — terminal output -->
         <div class="tool-card" data-reveal data-delay="3">
-          <div class="tool-card-visual" style="background:linear-gradient(135deg,#E8ECF4,#D8DCE8);">
-            <div class="tool-card-port">CLI</div>
+          <div class="tool-card-visual">
+            <div class="tcv-term">
+              <span class="tcv-term-line"><span class="tcv-term-prompt">&rsaquo;</span> <span class="tcv-term-cmd">qa validate</span></span>
+              <span class="tcv-term-line"><span class="tcv-term-ok">&#10003;</span> <span class="tcv-term-out">markdown &middot; 14 files</span></span>
+              <span class="tcv-term-line"><span class="tcv-term-ok">&#10003;</span> <span class="tcv-term-out">citations &middot; 47 verified</span></span>
+              <span class="tcv-term-line"><span class="tcv-term-ok">&#10003;</span> <span class="tcv-term-out">pdf quality &middot; pass</span></span>
+              <span class="tcv-term-line"><span class="tcv-term-accent">&rsaquo;</span> <span class="tcv-term-out">3/3 validators passed</span></span>
+            </div>
           </div>
           <div class="tool-card-body">
             <h3>QA Validators</h3>
