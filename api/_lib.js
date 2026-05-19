@@ -421,7 +421,7 @@ const HUBS = [
     surfaceType: 'preview-link',
     urlField: 'marketingSiteUrl',
     description: 'The public marketing site that lives at the production URL. Share with anyone — no auth required.',
-    placeholderText: 'Preview deploys after Workstream A is built.',
+    placeholderText: 'URL not yet registered. Deploy the site to Vercel, then register the URL via npm run publish-portal.',
     sections: [],
     gate: null,
   },
@@ -437,7 +437,7 @@ const HUBS = [
     surfaceType: 'preview-link',
     urlField: 'dsSiteUrl',
     description: 'The complete design system documentation — tokens, components, patterns, wireframes, personas, user flows.',
-    placeholderText: 'Deploys after Phase 3 — Design.',
+    placeholderText: 'URL not yet registered. Deploy the site to Vercel, then register the URL via npm run publish-portal.',
     quickLinks: [
       { label: 'Personas', path: '/product/personas' },
       { label: 'Wireframes', path: '/product/wireframes' },
