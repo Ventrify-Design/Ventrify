@@ -409,6 +409,44 @@ const HUBS = [
     ],
     gate: 'Gate 2.5',
   },
+  // ── Marketing Site (Workstream A deliverable surface) ────────────────
+  // Per .claude/memory/feedback_deliverable_surfaces_hub.md (PROTECTED in
+  // every engagement repo). Link-out hub — no markdown sections. Renders
+  // a preview-link card pointing at the live deployment. URL stored in
+  // PORTAL_CLIENTS[slug].marketingSiteUrl. Empty-frame placeholder shown
+  // until the URL is registered.
+  {
+    slug: 'marketing-site', name: 'Marketing Site',
+    alwaysVisible: true,
+    surfaceType: 'preview-link',
+    urlField: 'marketingSiteUrl',
+    description: 'The public marketing site that lives at the production URL. Share with anyone — no auth required.',
+    placeholderText: 'Preview deploys after Workstream A is built.',
+    sections: [],
+    gate: null,
+  },
+  // ── Design System Site (Workstream E deliverable surface) ────────────
+  // Per .claude/memory/feedback_deliverable_surfaces_hub.md (PROTECTED).
+  // Same pattern as marketing-site. URL stored in
+  // PORTAL_CLIENTS[slug].dsSiteUrl. The DS site is the complete design
+  // documentation: tokens, components, patterns, the Wireframes page,
+  // personas, user stories, user flows.
+  {
+    slug: 'design-system', name: 'Design System',
+    alwaysVisible: true,
+    surfaceType: 'preview-link',
+    urlField: 'dsSiteUrl',
+    description: 'The complete design system documentation — tokens, components, patterns, wireframes, personas, user flows.',
+    placeholderText: 'Deploys after Phase 3 — Design.',
+    quickLinks: [
+      { label: 'Personas', path: '/product/personas' },
+      { label: 'Wireframes', path: '/product/wireframes' },
+      { label: 'User Flows', path: '/product/user-flows' },
+      { label: 'Components', path: '/components/button' },
+    ],
+    sections: [],
+    gate: null,
+  },
 ];
 
 // Investor scope: financials only (sensitive scope-loop hidden from investors)

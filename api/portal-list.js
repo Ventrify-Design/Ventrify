@@ -153,12 +153,28 @@ module.exports = async function handler(req, res) {
       .filter(t => !isNaN(t));
     const lastActivityAt = allTimes.length ? new Date(Math.max(...allTimes)).toISOString() : null;
 
+    // ── Preview-link surface (Marketing Site / Design System hubs) ────────
+    // Per .claude/memory/feedback_deliverable_surfaces_hub.md (PROTECTED in
+    // every engagement repo). These hubs render as link-out cards pointing
+    // at the live deployment URL. The URL lives on the client config (set
+    // in PORTAL_CLIENTS env var per engagement). Empty-frame placeholder
+    // shown when the URL isn't registered yet.
+    let previewUrl = null;
+    if (hub.surfaceType === 'preview-link' && hub.urlField) {
+      previewUrl = client[hub.urlField] || null;
+    }
+
     return {
       slug: hub.slug,
       name: hub.name,
       gate: hub.gate,
       cardDriven,
       alwaysVisible: !!hub.alwaysVisible,
+      surfaceType: hub.surfaceType || 'data-room',
+      previewUrl,
+      description: hub.description || null,
+      placeholderText: hub.placeholderText || null,
+      quickLinks: hub.quickLinks || null,
       provocations,
       cardsCommented,
       cardsTotal,

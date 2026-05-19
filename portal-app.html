@@ -610,6 +610,111 @@
     }
     .section-card:hover .section-card-arrow { color: var(--primary); transform: translateX(4px); opacity: 1; }
 
+    /* ── Preview-link card (marketing-site / design-system hubs) ───────
+       Per .claude/memory/feedback_deliverable_surfaces_hub.md (PROTECTED).
+       Renders the live deployment URL as a link-out card with CTA + quick
+       links. Empty-frame placeholder shown when no URL is registered yet. */
+    .preview-link-card {
+      background: var(--surface-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-card);
+      padding: 24px 28px;
+      transition: box-shadow 200ms, transform 200ms;
+    }
+    .preview-link-card:hover {
+      box-shadow: 0 12px 32px rgba(8,11,26,0.06);
+    }
+    .preview-link-card-body {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 24px; flex-wrap: wrap;
+    }
+    .preview-link-card-main { flex: 1; min-width: 240px; }
+    .preview-link-card-desc {
+      font-size: 14px; line-height: 1.55; color: var(--text-dark);
+      margin-bottom: 12px;
+    }
+    .preview-link-card-url {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-family: var(--font-mono); font-size: 12px;
+      color: var(--text-muted);
+      letter-spacing: -0.005em;
+      word-break: break-all;
+    }
+    .preview-link-card-url::before {
+      content: ''; display: inline-block;
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #34D17A;
+      flex-shrink: 0;
+    }
+    .preview-link-cta {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--primary); color: #fff;
+      padding: 12px 20px;
+      border-radius: var(--radius-pill);
+      font-size: 14px; font-weight: 600;
+      text-decoration: none;
+      min-height: 44px;
+      transition: background 200ms, transform 200ms;
+      box-shadow: 0 4px 12px rgba(0,54,255,0.18);
+      flex-shrink: 0;
+    }
+    .preview-link-cta:hover { background: var(--primary-hover); transform: translateY(-1px); }
+    .preview-link-cta:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+    .preview-link-quick {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-light);
+    }
+    .preview-link-quick-eyebrow {
+      font-family: var(--font-mono); font-size: 10px; font-weight: 500;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--text-muted);
+      width: 100%;
+      margin-bottom: 6px;
+    }
+    .preview-link-quick a {
+      font-size: 12px; font-weight: 500;
+      color: var(--text-dark);
+      padding: 6px 12px;
+      background: var(--bg-light);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-pill);
+      text-decoration: none;
+      transition: background 120ms, border-color 120ms, color 120ms;
+    }
+    .preview-link-quick a:hover {
+      background: rgba(0,54,255,0.06);
+      border-color: rgba(0,54,255,0.2);
+      color: var(--primary);
+    }
+    .preview-link-placeholder {
+      display: flex; align-items: center; gap: 16px;
+      padding: 24px 28px;
+      background: var(--surface-card);
+      border: 1px dashed var(--border-light);
+      border-radius: var(--radius-card);
+    }
+    .preview-link-placeholder-icon {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: var(--text-dark);
+      color: var(--primary);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      font-family: var(--font-mono); font-size: 18px; font-weight: 500;
+    }
+    .preview-link-placeholder-body { flex: 1; }
+    .preview-link-placeholder-title {
+      font-size: 14px; font-weight: 600; color: var(--text-dark);
+      margin-bottom: 4px;
+    }
+    .preview-link-placeholder-sub {
+      font-family: var(--font-mono); font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+    }
+
     /* ── Status badge (per-section, per-hub) ─────────────────────────── */
     .status-badge {
       display: inline-flex; align-items: center; gap: 6px;
@@ -2381,7 +2486,9 @@ async function loadList() {
     `;
 
     let body = '';
-    if (hub.cardDriven) {
+    if (hub.surfaceType === 'preview-link') {
+      body = renderPreviewLinkHub(hub);
+    } else if (hub.cardDriven) {
       body = renderHubProvocations(hub);
     } else {
       const cards = hub.sections.map(s => {
@@ -2498,6 +2605,53 @@ async function loadList() {
   });
 
   navigate('hub-list');
+}
+
+// ── Preview-link hubs (Marketing Site / Design System) ───────────────
+// Per .claude/memory/feedback_deliverable_surfaces_hub.md (PROTECTED):
+// The portal is the single front door. External deliverables (marketing
+// site, DS site) surface as link-out cards — not data-room hubs.
+//
+// When the URL is registered on the client config (PORTAL_CLIENTS env
+// var), the card renders a clickable "Open site →" CTA. When not yet
+// registered, the empty-frame placeholder renders — auto-upgrades once
+// the operator adds the URL.
+
+function renderPreviewLinkHub(hub) {
+  if (!hub.previewUrl) {
+    return `
+      <div class="preview-link-placeholder">
+        <div class="preview-link-placeholder-icon">↗</div>
+        <div class="preview-link-placeholder-body">
+          <div class="preview-link-placeholder-title">${esc(hub.name)} — preview pending</div>
+          <div class="preview-link-placeholder-sub">${esc(hub.placeholderText || 'Will appear here once the live URL is registered.')}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  // Strip protocol for the visible URL label — cleaner read for the founder
+  const urlLabel = hub.previewUrl.replace(/^https?:\/\//, '');
+
+  const quickLinks = (hub.quickLinks && hub.quickLinks.length > 0) ? `
+    <div class="preview-link-quick">
+      <span class="preview-link-quick-eyebrow">Jump to</span>
+      ${hub.quickLinks.map(q => `<a href="${esc(hub.previewUrl + q.path)}" target="_blank" rel="noopener noreferrer">${esc(q.label)}</a>`).join('')}
+    </div>
+  ` : '';
+
+  return `
+    <div class="preview-link-card">
+      <div class="preview-link-card-body">
+        <div class="preview-link-card-main">
+          ${hub.description ? `<div class="preview-link-card-desc">${esc(hub.description)}</div>` : ''}
+          <div class="preview-link-card-url">${esc(urlLabel)}</div>
+        </div>
+        <a class="preview-link-cta" href="${esc(hub.previewUrl)}" target="_blank" rel="noopener noreferrer">Open site →</a>
+      </div>
+      ${quickLinks}
+    </div>
+  `;
 }
 
 // ── Provocation Cards (L1 of the data-room model) ─────────────────────
