@@ -447,6 +447,26 @@ const HUBS = [
     sections: [],
     gate: null,
   },
+  // ── App Preview (Phase 4 deliverable surface) ─────────────────────────
+  // The experimental React Native app exported via Expo's web build and
+  // hosted on Vercel as a standalone preview. The founder/investor can
+  // click through the actual app — persona picker, FSS dial, Workout
+  // (Interest Burnt + GymStrengthBars), Performance (RadarChart +
+  // Shields), Coach's Corner page-stack — in their browser, no install.
+  // URL stored in PORTAL_CLIENTS[slug].previewUrl.
+  {
+    slug: 'app-preview', name: 'App Preview',
+    alwaysVisible: true,
+    surfaceType: 'preview-link',
+    urlField: 'previewUrl',
+    description: 'The live MoneyGym app, running in your browser. Pick a persona, walk through My Finances → My Workout → My Performance, open Coach\'s Corner — same code as the iOS build, just rendered via react-native-web.',
+    placeholderText: 'URL not yet registered. Run npx expo export --platform web in product/, deploy to Vercel, then register the URL via npm run publish-portal.',
+    quickLinks: [
+      { label: 'Pick a persona', path: '/' },
+    ],
+    sections: [],
+    gate: null,
+  },
 ];
 
 // Investor scope: financials only (sensitive scope-loop hidden from investors)
