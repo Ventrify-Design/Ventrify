@@ -467,6 +467,26 @@ const HUBS = [
     sections: [],
     gate: null,
   },
+  // ── Social Launch Preview (Workstream B deliverable surface) ──────────
+  // Static page that mocks every launch social post on its actual platform
+  // UI (LinkedIn / X / Instagram). Lets the founder see exactly how each
+  // post will read in-feed before any scheduling decisions are made.
+  // URL stored in PORTAL_CLIENTS[slug].socialPreviewUrl.
+  {
+    slug: 'social-preview', name: 'Social Launch Preview',
+    alwaysVisible: true,
+    surfaceType: 'preview-link',
+    urlField: 'socialPreviewUrl',
+    description: 'Every launch social post mocked on its actual platform UI — Robert on LinkedIn, Devon on X, Maya on Instagram. See exactly how each post will read in-feed before scheduling. 20 posts across 3 platforms, 5 content pillars.',
+    placeholderText: 'URL not yet registered. Build social-preview/ → deploy to Vercel → register the URL via npm run publish-portal.',
+    quickLinks: [
+      { label: 'LinkedIn (7)', path: '/' },
+      { label: 'X / Twitter (7)', path: '/' },
+      { label: 'Instagram (6)', path: '/' },
+    ],
+    sections: [],
+    gate: null,
+  },
 ];
 
 // Investor scope: financials only (sensitive scope-loop hidden from investors)
