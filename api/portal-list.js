@@ -10,7 +10,7 @@
  * like scope-change-recommendations.md are filtered out).
  */
 
-const { loadClients, requireAuth, ghFetch, ghReadFile, hubsForScope, readProvocations, readHubL3Status } = require('./_lib');
+const { loadClients, requireAuth, ghFetch, ghReadFile, hubsForScope, readProvocations, readHubL3Status, listDeckVersions } = require('./_lib');
 
 // Per-card status derivation for the data-room L1 layer. A card is:
 //   'commented'    — founder has left a free-text comment
@@ -36,10 +36,34 @@ function deriveSectionStatus(feedback, hubSlug, sectionSlug) {
   const open = items.filter(f => f.status === 'open');
   if (open.some(f => f.rating === 'needs-rework')) return 'needs-rework';
   if (open.some(f => f.rating === 'has-feedback')) return 'has-feedback';
+  if (open.some(f => f.rating === 'question')) return 'question';
   if (open.some(f => f.rating === 'looks-good')) return 'approved';
   // No open items left — the most recent 'looks-good' is treated as approved
   if (items.some(f => f.rating === 'looks-good')) return 'approved';
   return 'addressed';
+}
+
+// Hub-level status (Phase 2): for deliverables that take feedback at the
+// hub level (link-out previews — Marketing Site, DS, App Preview, Social
+// Preview), section is null. Same status ladder as deriveSectionStatus.
+function deriveHubLevelStatus(feedback, hubSlug) {
+  const items = (feedback || []).filter(f => f.hub === hubSlug && (f.section == null || f.section === ''));
+  if (items.length === 0) return 'pending';
+  const open = items.filter(f => f.status === 'open');
+  if (open.some(f => f.rating === 'needs-rework')) return 'needs-rework';
+  if (open.some(f => f.rating === 'has-feedback')) return 'has-feedback';
+  if (open.some(f => f.rating === 'question')) return 'question';
+  if (open.some(f => f.rating === 'looks-good')) return 'approved';
+  if (items.some(f => f.rating === 'looks-good')) return 'approved';
+  return 'addressed';
+}
+
+// Count of open hub-level feedback items (used by the landing card badge so
+// the visitor sees "3 open" without drilling into the deliverable).
+function countOpenHubLevel(feedback, hubSlug) {
+  return (feedback || []).filter(
+    f => f.hub === hubSlug && (f.section == null || f.section === '') && f.status === 'open'
+  ).length;
 }
 
 module.exports = async function handler(req, res) {
@@ -164,14 +188,50 @@ module.exports = async function handler(req, res) {
       previewUrl = client[hub.urlField] || null;
     }
 
+    // ── Deck-deliverable surface (Investor Pitch Deck hub) ─────────────────
+    // Scans the engagement repo's deckDir/ for versioned .pptx + .pdf pairs.
+    // Returns { versions: [...], latest: {...} } so the portal can render
+    // version history and embed the latest .pdf as a preview iframe.
+    //
+    // Fails open: if the directory doesn't exist or contains no matching
+    // files, versions = [] and the portal shows the placeholderText.
+    let deckVersions = null;
+    let deckLatest = null;
+    if (hub.surfaceType === 'deck-deliverable' && hub.deckDir && hub.deckBaseName) {
+      try {
+        const result = await listDeckVersions(repo, branch, hub.deckDir, hub.deckBaseName);
+        deckVersions = result.versions;
+        deckLatest = result.latest;
+      } catch (e) {
+        console.error(`[portal-list] deck listing failed for ${hub.slug}:`, e.message);
+        deckVersions = [];
+        deckLatest = null;
+      }
+    }
+
+    // Hub-level feedback (Phase 2 — 2026-05-27): for link-out deliverables
+    // and any future hub-level comments. Status drives the landing badge;
+    // openCount drives the "3 open" pill on the deliverable card.
+    const hubLevelFeedbackStatus = deriveHubLevelStatus(feedbackLog.feedback, hub.slug);
+    const hubLevelFeedbackOpen = countOpenHubLevel(feedbackLog.feedback, hub.slug);
+
     return {
       slug: hub.slug,
       name: hub.name,
       gate: hub.gate,
+      // Three-zone IA (added 2026-05-27): 'data-room' (strategic, gate-bearing),
+      // 'deliverable' (operational artefacts), 'status' (synthesised project
+      // state — reserved for the Project Status surface). Falls back to
+      // 'deliverable' if missing so hubs without the field still render.
+      category: hub.category || 'deliverable',
+      hubLevelFeedbackStatus,
+      hubLevelFeedbackOpen,
       cardDriven,
       alwaysVisible: !!hub.alwaysVisible,
       surfaceType: hub.surfaceType || 'data-room',
       previewUrl,
+      deckVersions,
+      deckLatest,
       description: hub.description || null,
       placeholderText: hub.placeholderText || null,
       quickLinks: hub.quickLinks || null,

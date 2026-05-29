@@ -7,7 +7,7 @@
   <meta name="robots" content="noindex,nofollow">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --primary: #0036FF;
@@ -24,10 +24,19 @@
       --hero-gradient: linear-gradient(180deg, #080B1A 0%, #0C1035 30%, #111B52 65%, #1A2E78 100%);
       --text-light: #FFFFFF;
       --text-light-muted: rgba(255,255,255,0.78);
-      --radius-card: 20px;
+      /* Phase 3 visual refresh (2026-05-27): sharpened radii — Stripe-energy
+         is 6–12px corners, not 16–20px. Cards now read confident, not
+         soft-edged consumer-app. Pill stays for buttons/badges only. */
+      --radius-card: 12px;
       --radius-pill: 980px;
-      --radius-sm: 12px;
-      --radius-md: 16px;
+      --radius-sm: 8px;
+      --radius-md: 10px;
+      /* Plus Jakarta Sans (700) anchors every display headline — page titles,
+         zone titles, hub names, modal titles. Inter holds body + UI. JetBrains
+         Mono holds eyebrows + small uppercase. The triad mirrors the Ventrify
+         studio brand so the portal reads as a Ventrify product, not a Notion
+         page. */
+      --font-display: 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif;
       --font-heading: 'Inter', -apple-system, sans-serif;
       --font-body: 'Inter', -apple-system, sans-serif;
       --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
@@ -85,6 +94,147 @@
 
     /* ── Investor banner (top of all investor pages) ─────────────────── */
     .investor-banner { padding: 8px 24px; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; text-align: center; background: var(--primary); color: #fff; }
+
+    /* ── App shell: sidebar + main (2026-05-27 redesign) ──────────────
+       Replaces the all-on-one-page landing. Sidebar always visible on
+       desktop; main pane swaps between Status, Hub detail, and Section
+       views. Mobile: sidebar collapses to a slide-in overlay. */
+    .portal-shell {
+      display: flex; align-items: stretch;
+      max-width: 1400px; margin: 0 auto;
+      min-height: calc(100vh - 56px); /* brand-bar offset */
+    }
+    .portal-sidebar {
+      width: 260px; flex-shrink: 0;
+      border-right: 1px solid var(--border-light);
+      padding: 28px 0 28px;
+      background: var(--bg-light);
+      position: sticky; top: 56px; align-self: flex-start;
+      max-height: calc(100vh - 56px); overflow-y: auto;
+      transition: transform 220ms;
+    }
+    .portal-main { flex: 1; min-width: 0; padding: 0; }
+    /* Sidebar group */
+    .sidebar-group { padding: 0 16px 18px; }
+    .sidebar-group + .sidebar-group { border-top: 1px solid var(--border-light); padding-top: 18px; }
+    .sidebar-group-label {
+      font-family: var(--font-mono); font-size: 10px;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      font-weight: 600; color: var(--text-muted);
+      padding: 4px 10px; margin-bottom: 8px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .sidebar-group-label::before {
+      content: ''; width: 14px; height: 2px; background: var(--primary);
+      display: inline-block; flex-shrink: 0;
+    }
+    /* Sidebar item */
+    .sidebar-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px; min-height: 36px;
+      border-radius: var(--radius-sm);
+      font-size: 14px; font-weight: 500;
+      color: var(--text-dark);
+      text-decoration: none; cursor: pointer;
+      transition: background 140ms, color 140ms;
+      border: 1px solid transparent;
+    }
+    .sidebar-item:hover:not(.locked) {
+      background: rgba(var(--primary-rgb), 0.06);
+      color: var(--primary);
+    }
+    .sidebar-item.active {
+      background: rgba(var(--primary-rgb), 0.08);
+      color: var(--primary);
+      font-weight: 600;
+      border-color: rgba(var(--primary-rgb), 0.15);
+    }
+    .sidebar-item.locked {
+      color: var(--text-muted); opacity: 0.65; cursor: not-allowed;
+    }
+    .sidebar-item-lead { font-size: 13px; flex-shrink: 0; opacity: 0.7; }
+    .sidebar-item.active .sidebar-item-lead { opacity: 1; }
+    .sidebar-item-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .sidebar-item-badge {
+      font-size: 10px; padding: 2px 6px;
+      background: rgba(var(--primary-rgb), 0.10); color: var(--primary);
+      border-radius: 4px; font-weight: 600; flex-shrink: 0;
+      font-family: var(--font-mono); letter-spacing: 0.04em;
+    }
+    .sidebar-item-lock { font-size: 11px; opacity: 0.6; flex-shrink: 0; }
+    /* Sidebar footer */
+    .sidebar-footer {
+      padding: 16px; border-top: 1px solid var(--border-light);
+      margin-top: 18px;
+    }
+    .sidebar-signout {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px; min-height: 36px;
+      border-radius: var(--radius-sm);
+      font-size: 13px; color: var(--text-muted);
+      text-decoration: none; cursor: pointer;
+      transition: color 140ms, background 140ms;
+    }
+    .sidebar-signout:hover { background: rgba(0,0,0,0.04); color: var(--text-dark); }
+    /* Sidebar brand mark */
+    .sidebar-brand {
+      padding: 0 24px 22px; margin-bottom: 4px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .sidebar-brand-name {
+      font-family: var(--font-display); font-weight: 700;
+      font-size: 18px; letter-spacing: -0.02em;
+      color: var(--text-strong);
+      margin-top: 6px;
+      max-width: 100%; word-wrap: break-word;
+    }
+    .sidebar-brand-sub {
+      font-family: var(--font-mono); font-size: 10px;
+      letter-spacing: 0.16em; text-transform: uppercase;
+      color: var(--text-muted); font-weight: 600;
+    }
+
+    /* Lock tooltip — soft pop on click of locked item */
+    .lock-tooltip {
+      position: fixed; z-index: 200;
+      background: var(--text-strong); color: #fff;
+      padding: 10px 14px; border-radius: var(--radius-sm);
+      font-size: 13px; max-width: 280px; line-height: 1.45;
+      box-shadow: 0 8px 28px rgba(8,11,26,0.20);
+      opacity: 0; pointer-events: none;
+      transition: opacity 180ms;
+    }
+    .lock-tooltip.visible { opacity: 1; }
+
+    /* Mobile sidebar — slide-in overlay below 1000px */
+    .sidebar-toggle {
+      display: none; align-items: center; gap: 8px;
+      padding: 8px 14px; min-height: 40px;
+      background: transparent; border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      font-size: 13px; font-weight: 500; cursor: pointer;
+      color: var(--text-dark); font-family: inherit;
+    }
+    .sidebar-toggle:hover { border-color: var(--primary); color: var(--primary); }
+    .sidebar-backdrop {
+      display: none; position: fixed; inset: 0;
+      background: rgba(8,11,26,0.42); z-index: 49;
+    }
+    @media (max-width: 999px) {
+      .sidebar-toggle { display: inline-flex; }
+      .portal-sidebar {
+        position: fixed; top: 0; left: 0; bottom: 0;
+        z-index: 60; transform: translateX(-100%);
+        height: 100vh; max-height: 100vh;
+        box-shadow: 4px 0 24px rgba(8,11,26,0.10);
+      }
+      .portal-shell.sidebar-open .portal-sidebar { transform: translateX(0); }
+      .portal-shell.sidebar-open .sidebar-backdrop { display: block; }
+    }
+
+    /* Hide the legacy "Hub" brand-bar link — sidebar handles navigation */
+    .brand-bar #bar-home { display: none !important; }
+    .brand-bar #bar-divider, .brand-bar #bar-project { display: none; }
 
     /* ── Investor Landing Page (replaces dashboard for scope=investor) ─── */
     .investor-landing { max-width: 1100px; margin: 56px auto 96px; padding: 0 24px; }
@@ -321,7 +471,7 @@
     .hub-hero-inner { max-width: 1100px; margin: 0 auto; }
     .hub-hero-eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.78); margin-bottom: 14px; display: inline-flex; align-items: center; gap: 10px; }
     .hub-hero-eyebrow::before { content: ''; width: 28px; height: 1px; background: rgba(255,255,255,0.78); }
-    .hub-hero h1 { font-size: 48px; line-height: 1.05; font-weight: 600; letter-spacing: -0.04em; max-width: 900px; }
+    .hub-hero h1 { font-family: var(--font-display); font-size: 48px; line-height: 1.05; font-weight: 700; letter-spacing: -0.035em; max-width: 900px; }
     .hub-hero-subtitle { font-size: 18px; line-height: 1.55; color: rgba(255,255,255,0.78); max-width: 720px; margin-top: 14px; }
     @media (max-width: 640px) { .hub-hero h1 { font-size: 32px; } }
 
@@ -368,8 +518,9 @@
       content: ''; width: 16px; height: 2px; background: var(--primary);
     }
     .phase-timeline-title {
-      font-size: 22px; font-weight: 600; color: var(--text-dark);
-      margin: 0 0 24px; letter-spacing: -0.01em;
+      font-family: var(--font-display);
+      font-size: 22px; font-weight: 700; color: var(--text-dark);
+      margin: 0 0 24px; letter-spacing: -0.02em;
     }
     .phase-timeline-steps {
       display: grid; grid-template-columns: repeat(6, 1fr); gap: 0;
@@ -497,23 +648,39 @@
       flex-shrink: 0;
     }
 
-    /* ── Hub group divider (strategic / operational split) ──────────── */
-    .hub-group-divider {
-      max-width: 1100px; margin: 48px auto 16px; padding: 0 24px;
-      display: flex; align-items: center; gap: 16px;
+    /* ── Hub zones (three-zone IA: Data Room / Deliverables / Status) ─
+       Each zone is a labelled section with a strong header card so the
+       visitor can mentally place themselves before reading hubs. The
+       header carries a Zone NN eyebrow + bold title + lede paragraph.
+       Used by the landing render in JS (renderZone). */
+    .hub-zone { margin: 48px 0 0; }
+    .hub-zone:first-of-type { margin-top: 8px; }
+    .hub-zone-header {
+      max-width: 1100px; margin: 0 auto 16px; padding: 0 24px;
     }
-    .hub-group-divider-eyebrow {
+    .hub-zone-header-eyebrow {
       font-family: var(--font-mono); font-size: 11px;
-      letter-spacing: 0.12em; text-transform: uppercase;
-      color: var(--text-muted); font-weight: 600;
-      display: inline-flex; align-items: center; gap: 10px; flex-shrink: 0;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--primary); font-weight: 600;
+      display: inline-flex; align-items: center; gap: 10px;
     }
-    .hub-group-divider-eyebrow::before {
-      content: ''; width: 16px; height: 2px; background: var(--primary);
+    .hub-zone-header-eyebrow::before {
+      content: ''; width: 18px; height: 2px; background: var(--primary);
     }
-    .hub-group-divider-line {
-      flex: 1; height: 1px; background: var(--border-light);
+    .hub-zone-header-title {
+      font-family: var(--font-display); font-weight: 700;
+      font-size: 32px; line-height: 1.1; letter-spacing: -0.025em;
+      color: var(--text-strong); margin: 12px 0 10px;
     }
+    @media (max-width: 640px) { .hub-zone-header-title { font-size: 26px; } }
+    .hub-zone-header-lede {
+      font-size: 15px; line-height: 1.55; color: var(--text-muted);
+      max-width: 64ch; margin: 0;
+    }
+    .hub-zone-body { display: flex; flex-direction: column; gap: 0; }
+    /* Legacy divider class kept for any holdover usage; new layout uses
+       hub-zone-header instead. Safe to remove once all renderers migrated. */
+    .hub-group-divider { display: none; }
 
     /* ── Project overview card (hub list, below hero) ────────────────── */
     .project-overview {
@@ -551,7 +718,7 @@
       gap: 16px; margin-bottom: 14px; padding-bottom: 12px;
       border-bottom: 1px solid var(--border-light);
     }
-    .hub-section-title { font-size: 22px; font-weight: 600; letter-spacing: -0.01em; display: flex; align-items: center; gap: 10px; }
+    .hub-section-title { font-family: var(--font-display); font-size: 22px; font-weight: 700; letter-spacing: -0.02em; display: flex; align-items: center; gap: 10px; color: var(--text-strong); }
     .hub-section-meta {
       font-family: var(--font-mono); font-size: 11px;
       letter-spacing: 0.1em; text-transform: uppercase;
@@ -715,6 +882,169 @@
       letter-spacing: 0.04em;
     }
 
+    /* ── Deck-deliverable surface (Investor Pitch Deck hub) ──────────────
+       PDF preview iframe + download + versioned upload + history. Designed
+       to feel like a polished deliverable card, not a file manager. */
+    .deck-deliverable { display: flex; flex-direction: column; gap: 18px; }
+    .deck-header {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 20px; flex-wrap: wrap;
+    }
+    .deck-description {
+      font-size: 14px; line-height: 1.55; color: var(--text-dark);
+      flex: 1; min-width: 240px;
+    }
+    .deck-version-strip {
+      display: inline-flex; align-items: center; gap: 10px;
+      flex-shrink: 0;
+    }
+    .deck-version-badge {
+      display: inline-flex; align-items: center;
+      padding: 5px 12px;
+      background: var(--text-dark); color: var(--primary);
+      font-family: var(--font-mono); font-size: 11px; font-weight: 600;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      border-radius: var(--radius-pill);
+    }
+    .deck-version-meta {
+      font-family: var(--font-mono); font-size: 11px;
+      color: var(--text-muted); letter-spacing: 0.04em;
+    }
+    .deck-preview-frame {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: var(--bg-light);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-card);
+      overflow: hidden;
+      box-shadow: 0 4px 16px rgba(8,11,26,0.06);
+    }
+    .deck-preview-frame iframe {
+      width: 100%; height: 100%;
+      border: 0; display: block;
+      background: #fff;
+    }
+    .deck-preview-missing {
+      display: flex; align-items: flex-start; gap: 14px;
+      padding: 18px 22px;
+      background: rgba(255, 196, 0, 0.08);
+      border: 1px solid rgba(255, 196, 0, 0.35);
+      border-radius: var(--radius-card);
+    }
+    .deck-preview-missing-icon {
+      font-size: 18px; color: var(--text-dark); flex-shrink: 0; margin-top: 1px;
+    }
+    .deck-preview-missing-body { display: flex; flex-direction: column; gap: 4px; }
+    .deck-preview-missing-body strong { font-size: 14px; color: var(--text-dark); }
+    .deck-preview-missing-body span { font-size: 13px; color: var(--text-muted); }
+
+    .deck-actions {
+      display: flex; gap: 12px; flex-wrap: wrap;
+    }
+    .deck-action {
+      flex: 1; min-width: 220px;
+      display: flex; flex-direction: column; gap: 4px;
+      padding: 14px 20px;
+      background: var(--surface-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      text-decoration: none;
+      transition: border-color 200ms, box-shadow 200ms, transform 200ms;
+    }
+    .deck-action:hover {
+      border-color: var(--primary);
+      box-shadow: 0 6px 16px rgba(0,54,255,0.08);
+      transform: translateY(-1px);
+    }
+    .deck-action > span:first-child {
+      font-size: 14px; font-weight: 600; color: var(--text-dark);
+    }
+    .deck-action-sub {
+      font-family: var(--font-mono); font-size: 11px;
+      color: var(--text-muted); letter-spacing: 0.02em;
+    }
+    .deck-action-primary {
+      background: var(--text-dark);
+      border-color: var(--text-dark);
+    }
+    .deck-action-primary > span:first-child { color: var(--primary); }
+    .deck-action-primary .deck-action-sub { color: rgba(199,255,61,0.55); }
+    .deck-action-primary:hover { background: #000; border-color: #000; }
+
+    .deck-upload {
+      display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+      padding: 16px 20px;
+      background: rgba(0,54,255,0.04);
+      border: 1px dashed rgba(0,54,255,0.25);
+      border-radius: var(--radius-md);
+    }
+    .deck-upload-button {
+      display: flex; flex-direction: column; gap: 2px;
+      cursor: pointer;
+      flex: 1; min-width: 220px;
+    }
+    .deck-upload-button > span:first-child {
+      font-size: 14px; font-weight: 600; color: var(--primary);
+    }
+    .deck-upload-sub {
+      font-family: var(--font-mono); font-size: 11px;
+      color: var(--text-muted); letter-spacing: 0.02em;
+    }
+    .deck-upload-status {
+      font-family: var(--font-mono); font-size: 11px;
+      color: var(--text-muted);
+    }
+    .deck-upload-status[data-kind="error"] { color: #DC2626; }
+    .deck-upload-status[data-kind="success"] { color: #15803D; }
+
+    .deck-history {
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      background: var(--surface-card);
+    }
+    .deck-history summary {
+      padding: 14px 20px;
+      cursor: pointer;
+      font-size: 13px; font-weight: 600; color: var(--text-dark);
+      list-style: none;
+    }
+    .deck-history summary::-webkit-details-marker { display: none; }
+    .deck-history summary::before {
+      content: '▸';
+      display: inline-block;
+      margin-right: 10px;
+      color: var(--text-muted);
+      transition: transform 150ms;
+    }
+    .deck-history[open] summary::before { transform: rotate(90deg); }
+    .deck-history-list { padding: 0 20px 14px; }
+    .deck-history-row {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px;
+      padding: 10px 0;
+      border-top: 1px solid var(--border-light);
+    }
+    .deck-history-meta {
+      display: flex; flex-direction: column; gap: 2px;
+    }
+    .deck-history-meta strong {
+      font-family: var(--font-mono); font-size: 12px; font-weight: 600;
+      color: var(--text-dark); letter-spacing: 0.04em;
+    }
+    .deck-history-meta span {
+      font-family: var(--font-mono); font-size: 11px;
+      color: var(--text-muted);
+    }
+    .deck-history-actions {
+      display: flex; gap: 12px;
+    }
+    .deck-history-actions a {
+      font-size: 12px; font-weight: 500;
+      color: var(--primary);
+      text-decoration: none;
+    }
+    .deck-history-actions a:hover { text-decoration: underline; }
+
     /* ── Status badge (per-section, per-hub) ─────────────────────────── */
     .status-badge {
       display: inline-flex; align-items: center; gap: 6px;
@@ -735,6 +1065,9 @@
     .status-badge[data-status="addressed"]::before { background: var(--status-addressed-fg); }
     .status-badge[data-status="pending"]       { background: var(--status-pending-bg); color: var(--status-pending-fg); }
     .status-badge[data-status="pending"]::before { background: var(--status-pending-fg); }
+    /* Question status (Phase 2) — neutral grey, non-blocking severity. */
+    .status-badge[data-status="question"]      { background: rgba(0,0,0,0.05); color: var(--text-muted); }
+    .status-badge[data-status="question"]::before { background: var(--text-muted); }
 
     /* ── Provocation Cards (data-room L1 layer) ──────────────────────── */
     /* Hard rules from .claude/memory/reference_data_room_rules.md in the
@@ -1362,6 +1695,82 @@
     }
     .feedback-confirmation.show { display: block; }
 
+    /* ── Screenshot upload (Phase 2) ─────────────────────────────────── */
+    .feedback-screenshot-row {
+      display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start;
+      margin-bottom: 12px;
+    }
+    .feedback-screenshot-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 14px; min-height: 44px;
+      background: var(--bg-light);
+      border: 1px dashed var(--border-strong);
+      border-radius: var(--radius-sm);
+      cursor: pointer; font-size: 13px;
+      color: var(--text-muted);
+      transition: all 160ms;
+    }
+    .feedback-screenshot-btn:hover {
+      border-color: var(--primary); color: var(--primary);
+      background: rgba(var(--primary-rgb), 0.04);
+    }
+    .feedback-screenshot-btn-icon { font-size: 15px; }
+    .feedback-screenshot-preview {
+      position: relative; display: inline-block;
+      max-width: 200px; border-radius: var(--radius-sm); overflow: hidden;
+      border: 1px solid var(--border-strong);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .feedback-screenshot-img {
+      display: block; max-width: 100%; max-height: 140px;
+      object-fit: cover;
+    }
+    .feedback-screenshot-remove {
+      position: absolute; top: 6px; right: 6px;
+      width: 24px; height: 24px; border-radius: 50%;
+      background: rgba(8, 11, 26, 0.78); color: #fff;
+      border: none; cursor: pointer; font-size: 13px; line-height: 1;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .feedback-screenshot-remove:hover { background: rgba(8, 11, 26, 0.95); }
+
+    /* Question rating btn — softer accent than the 3 gating severities. */
+    .rating-btn[data-rating="question"].active {
+      border-color: var(--text-muted);
+      background: rgba(0, 0, 0, 0.04);
+      color: var(--text-muted);
+    }
+
+    /* ── Preview-link card · feedback footer (Phase 2) ────────────────
+       Adds a soft CTA strip below preview-link cards inviting the visitor
+       to leave hub-level feedback on the deliverable. Status badge shows
+       what's already been said. */
+    .preview-link-feedback {
+      margin-top: 14px; padding: 14px 16px;
+      background: var(--bg-light);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; flex-wrap: wrap;
+    }
+    .preview-link-feedback-label {
+      font-size: 13px; color: var(--text-muted);
+      display: inline-flex; align-items: center; gap: 8px;
+    }
+    .preview-link-feedback-cta {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 14px; min-height: 36px;
+      background: transparent;
+      border: 1px solid var(--primary);
+      border-radius: var(--radius-pill);
+      color: var(--primary); font-size: 13px; font-weight: 500;
+      cursor: pointer; text-decoration: none;
+      transition: all 160ms;
+    }
+    .preview-link-feedback-cta:hover {
+      background: var(--primary); color: #fff;
+    }
+
     /* ── Sign-off modal ──────────────────────────────────────────────── */
     .modal-overlay {
       display: none; position: fixed; inset: 0;
@@ -1373,7 +1782,7 @@
       background: #fff; border-radius: var(--radius-card);
       max-width: 520px; width: 100%; padding: 32px;
     }
-    .modal h3 { font-size: 22px; font-weight: 600; margin-bottom: 8px; }
+    .modal h3 { font-family: var(--font-display); font-size: 22px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8px; }
     .modal p { font-size: 14px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.55; }
     .modal label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; color: var(--text-dark); }
     .modal input {
@@ -1429,8 +1838,9 @@
     }
     .state-card.error .state-card-icon { color: var(--status-rework-fg); background: var(--status-rework-bg); }
     .state-card h3 {
-      font-size: 22px; font-weight: 600; color: var(--text-dark);
-      margin: 0 0 10px; letter-spacing: -0.01em;
+      font-family: var(--font-display);
+      font-size: 22px; font-weight: 700; color: var(--text-dark);
+      margin: 0 0 10px; letter-spacing: -0.02em;
     }
     .state-card p {
       font-size: 15px; color: var(--text-muted);
@@ -1490,6 +1900,10 @@
         <span class="brand-bar-project" id="bar-project"></span>
       </a>
       <nav class="brand-bar-nav" aria-label="Primary">
+        <button type="button" class="sidebar-toggle" id="sidebar-toggle" aria-label="Open navigation" aria-controls="portal-sidebar">
+          <span aria-hidden>☰</span>
+          <span>Menu</span>
+        </button>
         <a class="brand-link" id="bar-home" href="#" hidden>Hub</a>
         <a class="brand-link" id="bar-logout" href="#">Sign out</a>
       </nav>
@@ -1498,7 +1912,29 @@
 
   <div id="investor-banner" class="investor-banner" hidden>Investor View · Financials only</div>
 
-  <main id="main">
+  <div class="portal-shell" id="portal-shell">
+    <!-- Mobile backdrop — taps to close the slide-in sidebar -->
+    <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
+    <!-- ── Sidebar ─────────────────────────────────────────────── -->
+    <aside class="portal-sidebar" id="portal-sidebar" aria-label="Portal navigation">
+      <div class="sidebar-brand">
+        <span class="sidebar-brand-sub">Client Portal</span>
+        <div class="sidebar-brand-name" id="sidebar-brand-name">—</div>
+      </div>
+      <nav id="sidebar-nav" aria-label="Sections"></nav>
+      <div class="sidebar-footer">
+        <a class="sidebar-signout" id="sidebar-signout" href="#">
+          <span aria-hidden>◯</span>
+          <span>Sign out</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- Lock tooltip — global, repositioned per-click -->
+    <div class="lock-tooltip" id="lock-tooltip" role="tooltip"></div>
+
+  <main id="main" class="portal-main">
     <div id="loading" class="center-msg">
       <div class="spinner"></div>
       <p style="margin-top:14px;">Loading your portal…</p>
@@ -1516,6 +1952,19 @@
           <div class="hero-metric-strip" id="hero-metrics"></div>
         </div>
       </section>
+      <!-- ── Zone 01 · Project Status ──────────────────────────────────
+           Wraps the phase timeline, outstanding-card banner, next action,
+           and project overview into a single labelled zone so the three
+           landing zones (Status / Data Room / Deliverables) read in
+           lockstep. The wrapper hides itself when every status widget is
+           hidden (so a fresh engagement with no state doesn't show an
+           empty zone header). -->
+      <section class="hub-zone hub-zone-status" id="zone-status" hidden>
+        <div class="hub-zone-header">
+          <div class="hub-zone-header-eyebrow">Zone 01</div>
+          <h2 class="hub-zone-header-title">Project Status</h2>
+          <p class="hub-zone-header-lede">Where you are in the engagement, what we're waiting on, and the next decision the Coach needs from you.</p>
+        </div>
       <!-- Phase Timeline Widget — primary status anchor (portal audit batch 1) -->
       <div class="phase-timeline" id="phase-timeline" hidden>
         <div class="phase-timeline-card">
@@ -1564,6 +2013,7 @@
           </div>
         </div>
       </div>
+      </section>
       <div class="container" id="hub-list-body"></div>
     </div>
 
@@ -1605,15 +2055,32 @@
           <article id="section-content" class="section-content"></article>
 
           <section class="feedback-panel" id="feedback-panel">
-            <h3>Feedback on this section</h3>
-            <p class="feedback-intro">Mark "Looks good" to approve. Add a comment if anything needs adjusting.</p>
+            <h3 id="feedback-panel-title">Feedback on this section</h3>
+            <p class="feedback-intro" id="feedback-panel-intro">Mark "Looks good" to approve. Add a comment if anything needs adjusting.</p>
             <div class="rating-buttons" role="radiogroup" aria-label="Feedback rating">
-              <!-- portal audit: emoji removed (anti-pattern), text-only labels per Ventrify brand -->
               <button type="button" class="rating-btn" role="radio" aria-checked="false" data-rating="looks-good">Looks good</button>
               <button type="button" class="rating-btn" role="radio" aria-checked="false" data-rating="has-feedback">Has feedback</button>
               <button type="button" class="rating-btn" role="radio" aria-checked="false" data-rating="needs-rework">Needs rework</button>
+              <!-- Question (Phase 2, 2026-05-27): non-blocking severity for
+                   queries that don't require a Gate to wait. Status appears
+                   in the operator queue but doesn't gate sign-off. -->
+              <button type="button" class="rating-btn" role="radio" aria-checked="false" data-rating="question">Question</button>
             </div>
             <textarea class="feedback-textarea" id="feedback-comment" placeholder="Optional — what needs adjusting?" style="display:none;"></textarea>
+            <!-- Screenshot row (Phase 2): optional inline image attachment.
+                 Saved as a base64 data URL inside portal-feedback.json so the
+                 audit trail is self-contained (no S3 / object store needed). -->
+            <div class="feedback-screenshot-row" id="feedback-screenshot-row" style="display:none;">
+              <label class="feedback-screenshot-btn" for="feedback-screenshot-input">
+                <span class="feedback-screenshot-btn-icon">📎</span>
+                <span id="feedback-screenshot-btn-label">Add screenshot</span>
+                <input type="file" id="feedback-screenshot-input" accept="image/png,image/jpeg,image/webp" hidden>
+              </label>
+              <div class="feedback-screenshot-preview" id="feedback-screenshot-preview" hidden>
+                <img class="feedback-screenshot-img" id="feedback-screenshot-img" alt="Screenshot preview">
+                <button type="button" class="feedback-screenshot-remove" id="feedback-screenshot-remove" aria-label="Remove screenshot">✕</button>
+              </div>
+            </div>
             <div class="feedback-name-row" id="feedback-name-row" style="display:none;">
               <input class="feedback-input" type="text" id="feedback-name" placeholder="Your name (optional)" autocomplete="name">
               <input class="feedback-input" type="email" id="feedback-email" placeholder="Email (optional)" autocomplete="email">
@@ -1625,6 +2092,7 @@
       </div>
     </div>
   </main>
+  </div><!-- /.portal-shell -->
 
   <!-- Sign-off modal -->
   <div class="modal-overlay" id="signoff-modal" role="dialog" aria-modal="true" aria-labelledby="signoff-modal-title" hidden>
@@ -1894,6 +2362,9 @@ const state = {
   currentHub: null,
   currentSection: null,
   viewMode: 'highlights', // default; per-hub value loaded on openSection (audit batch 2)
+  // Sidebar layout (2026-05-27): null = Overview / Status mode (default
+  // landing). When set to a hub slug, the main pane renders only that hub.
+  viewHub: null,
 };
 
 const els = {
@@ -1907,6 +2378,7 @@ const els = {
   heroMetrics: document.getElementById('hero-metrics'),
   projectOverview: document.getElementById('project-overview'),
   phaseTimeline: document.getElementById('phase-timeline'),
+  zoneStatus: document.getElementById('zone-status'),
   phaseTimelineSteps: document.getElementById('phase-timeline-steps'),
   outstandingBanner: document.getElementById('outstanding-banner'),
   outstandingBannerCount: document.getElementById('outstanding-banner-count'),
@@ -2008,6 +2480,7 @@ const STATUS_LABEL = {
   'needs-rework': 'Needs rework',
   'addressed':    'Addressed',
   'pending':      'Not yet reviewed',
+  'question':     'Question open',
 };
 function statusBadge(status) {
   const s = STATUS_LABEL[status] ? status : 'pending';
@@ -2100,6 +2573,19 @@ function renderPhaseTimeline(hubs) {
   }).join('');
   els.phaseTimelineSteps.innerHTML = html;
   els.phaseTimeline.hidden = false;
+  syncStatusZoneVisibility();
+}
+
+// Project Status zone wrapper reveals/hides based on whether any of its
+// four child widgets has content. Called from each child's show/hide path.
+function syncStatusZoneVisibility() {
+  if (!els.zoneStatus) return;
+  const anyVisible =
+    (els.phaseTimeline && !els.phaseTimeline.hidden) ||
+    (els.outstandingBanner && !els.outstandingBanner.hidden) ||
+    (els.nextAction && !els.nextAction.hidden) ||
+    (els.projectOverview && !els.projectOverview.hidden);
+  els.zoneStatus.hidden = !anyVisible;
 }
 
 // ── Outstanding Input Banner derivation ────────────────────────────────
@@ -2125,7 +2611,7 @@ function deriveOutstandingInput(hubs) {
 
 function renderOutstandingBanner(hubs) {
   const out = deriveOutstandingInput(hubs);
-  if (!out) { els.outstandingBanner.hidden = true; return; }
+  if (!out) { els.outstandingBanner.hidden = true; syncStatusZoneVisibility(); return; }
   els.outstandingBannerCount.textContent = out.count;
   els.outstandingBannerTitle.textContent = `${out.count} ${out.count === 1 ? 'card' : 'cards'} awaiting your input`;
   els.outstandingBannerSub.textContent = out.primaryHubOpen === out.count
@@ -2139,6 +2625,7 @@ function renderOutstandingBanner(hubs) {
     if (hubEl) hubEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
   els.outstandingBanner.hidden = false;
+  syncStatusZoneVisibility();
 }
 
 // ── Next-Action prompt derivation ──────────────────────────────────────
@@ -2172,6 +2659,7 @@ function deriveNextAction(hubs) {
 function renderNextAction(hubs) {
   els.nextActionText.textContent = deriveNextAction(hubs);
   els.nextAction.hidden = false;
+  syncStatusZoneVisibility();
 }
 
 // ── Investor Landing Page (audit batch 5) ─────────────────────────────────
@@ -2371,8 +2859,15 @@ async function loadList() {
   // Hub link hidden for investors — there is no dashboard to navigate "back" to.
   // Investor view is a single purpose-built landing per audit batch 5.
   els.barHome.hidden = state.client.scope === 'investor';
-  els.barHome.addEventListener('click', e => { e.preventDefault(); navigate('hub-list'); });
+  els.barHome.addEventListener('click', e => { e.preventDefault(); navigateToStatus(); });
   els.barLogout.addEventListener('click', e => { e.preventDefault(); logout(); });
+  // Sidebar sign-out + mobile toggle (2026-05-27 layout redesign)
+  const sidebarSignout = document.getElementById('sidebar-signout');
+  if (sidebarSignout) sidebarSignout.addEventListener('click', e => { e.preventDefault(); logout(); });
+  const sidebarToggle = document.getElementById('sidebar-toggle');
+  if (sidebarToggle) sidebarToggle.addEventListener('click', e => { e.preventDefault(); openMobileSidebar(); });
+  const sidebarBackdrop = document.getElementById('sidebar-backdrop');
+  if (sidebarBackdrop) sidebarBackdrop.addEventListener('click', closeMobileSidebar);
 
   // Investor banner
   if (state.client.scope === 'investor') els.investorBanner.hidden = false;
@@ -2420,6 +2915,7 @@ async function loadList() {
   // Project overview card (operator/client only — investor view skips it)
   if (state.client.scope !== 'investor') {
     els.projectOverview.hidden = false;
+    syncStatusZoneVisibility();
     const phase = derivePhase(state.hubs);
     els.poTier.textContent = state.client.tier || '—';
     els.poTierSub.textContent = state.client.tier ? 'Engagement tier' : '';
@@ -2458,14 +2954,52 @@ async function loadList() {
 
   // Hub rendering — cards-driven (data-room L1) when hub.cardDriven, else
   // legacy section-list view for hubs not yet re-curated.
-  // Strategic / Operational split (audit batch 1) — strategic hubs render
-  // first, then a divider with s-label, then operational (alwaysVisible) hubs.
   els.hubListBody.innerHTML = '';
-  const strategicHubs = state.hubs.filter(h => !h.alwaysVisible);
-  const operationalHubs = state.hubs.filter(h => h.alwaysVisible);
-  let renderedOperationalDivider = false;
+  // Sidebar layout (2026-05-27): when `state.viewHub` is set, render only
+  // that one hub in the main pane + hide the status widgets above. When
+  // null, render NO hubs (Status-only landing) and show the status zone.
+  // Category filter is still computed so the empty/empty case still works.
+  const dataRoomHubs = state.hubs.filter(h => (h.category || (h.alwaysVisible ? 'deliverable' : 'data-room')) === 'data-room');
+  const deliverableHubs = state.hubs.filter(h => (h.category || (h.alwaysVisible ? 'deliverable' : 'data-room')) === 'deliverable');
 
-  const renderHub = (hub) => {
+  if (state.viewHub) {
+    // Hub detail mode — render JUST this hub. Hide every status widget so
+    // the visitor focuses on the hub content alone.
+    const hub = state.hubs.find(h => h.slug === state.viewHub);
+    if (hub) {
+      els.phaseTimeline.hidden = true;
+      els.outstandingBanner.hidden = true;
+      els.nextAction.hidden = true;
+      els.projectOverview.hidden = true;
+      syncStatusZoneVisibility();
+      // Hero adopts the hub's identity
+      els.heroEyebrow.textContent = (hub.category || 'deliverable').replace('-', ' ').replace(/\b\w/g, c => c.toUpperCase());
+      els.heroTitle.textContent = hub.name;
+      els.heroSubtitle.textContent = hub.description || (hub.gate ? `${hub.gate} bearing hub — comment on the provocation cards to unlock sign-off.` : '');
+      els.heroMetrics.innerHTML = '';
+      renderHub(hub);
+    }
+    renderSidebar();
+    // Wire the provocation-card expand/collapse click handlers — the same
+    // wiring at the bottom of loadList() gets skipped by the early return
+    // below, so cards rendered in hub-detail mode would never get their
+    // event listeners attached. (2026-05-27 fix.)
+    wireProvocationCardToggles();
+    // Critical: navigate('hub-list') hides the loading spinner that
+    // loadList() turned on at its start. The early return below would
+    // otherwise skip the final navigate() at the end of this function.
+    navigate('hub-list');
+    return; // skip the multi-zone render below
+  }
+  // Status mode (viewHub == null) — render NO hubs on the landing. Sidebar
+  // carries the navigation; the main pane only shows status widgets.
+  renderSidebar();
+
+  // Function declaration (not const arrow) — gets hoisted to the top of
+  // loadList() so the hub-detail branch above can call it. Switching to a
+  // const arrow caused a temporal-dead-zone error: sidebar clicks would
+  // silently throw and the page wouldn't update. (2026-05-27 fix.)
+  function renderHub(hub) {
     const section = document.createElement('section');
     section.className = 'hub-section';
     section.setAttribute('data-hub-slug', hub.slug);
@@ -2488,6 +3022,8 @@ async function loadList() {
     let body = '';
     if (hub.surfaceType === 'preview-link') {
       body = renderPreviewLinkHub(hub);
+    } else if (hub.surfaceType === 'deck-deliverable') {
+      body = renderDeckDeliverableHub(hub);
     } else if (hub.cardDriven) {
       body = renderHubProvocations(hub);
     } else {
@@ -2554,7 +3090,7 @@ async function loadList() {
 
     section.innerHTML = head + body + gatePanel;
     els.hubListBody.appendChild(section);
-  };
+  }
 
   // portal audit batch 3 — empty state when all hubs are filtered out by
   // data-room mode (new engagement, curator agent not yet run).
@@ -2570,39 +3106,16 @@ async function loadList() {
     els.outstandingBanner.hidden = true;
     els.nextAction.hidden = true;
     els.projectOverview.hidden = true;
-  } else {
-    // Render strategic hubs first
-    strategicHubs.forEach(renderHub);
-    // Then the operational divider + operational hubs (only when both groups exist)
-    if (strategicHubs.length > 0 && operationalHubs.length > 0) {
-      const divider = document.createElement('div');
-      divider.className = 'hub-group-divider';
-      divider.innerHTML = `
-        <span class="hub-group-divider-eyebrow">Execution Deliverables</span>
-        <span class="hub-group-divider-line"></span>
-      `;
-      els.hubListBody.appendChild(divider);
-    }
-    operationalHubs.forEach(renderHub);
+    syncStatusZoneVisibility();
   }
+  // Status mode renders no hub cards in the main pane — sidebar carries
+  // navigation, status widgets above carry the dashboard. Visitor clicks a
+  // hub in the sidebar to drill in (handled by navigateToHub).
 
-  // Wire card head click handlers (event delegation would also work; explicit
-  // is easier to reason about given the small N).
-  els.hubListBody.querySelectorAll('.prov-card-head').forEach(head => {
-    head.addEventListener('click', e => {
-      // Don't toggle if click came from an interactive child
-      if (e.target.closest('button, a, textarea, input')) return;
-      const card = head.closest('.prov-card');
-      const isExpanded = card.classList.toggle('expanded');
-      head.setAttribute('aria-expanded', isExpanded ? 'true' : 'false'); // portal audit — keep ARIA in sync
-    });
-    head.addEventListener('keydown', e => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        head.click();
-      }
-    });
-  });
+  // Wire card head click handlers — extracted so the hub-detail branch
+  // above can also wire them (the early return there would otherwise
+  // skip this line, leaving provocation cards un-toggleable).
+  wireProvocationCardToggles();
 
   navigate('hub-list');
 }
@@ -2640,6 +3153,21 @@ function renderPreviewLinkHub(hub) {
     </div>
   ` : '';
 
+  // Phase 2 — hub-level feedback CTA on preview-link cards. Status reflects
+  // whether anyone has already commented on this deliverable; the CTA jumps
+  // into the section-view shell with the panel re-configured for hub-level.
+  const fbStatus = hub.hubLevelFeedbackStatus || 'pending';
+  const fbOpen = hub.hubLevelFeedbackOpen || 0;
+  const fbLabelMap = {
+    pending: 'No feedback yet on this deliverable.',
+    approved: '✓ Marked looks-good.',
+    'has-feedback': `${fbOpen} open feedback item${fbOpen === 1 ? '' : 's'}.`,
+    'needs-rework': `${fbOpen} marked needs-rework.`,
+    question: `${fbOpen} open question${fbOpen === 1 ? '' : 's'}.`,
+    addressed: 'All feedback addressed.',
+  };
+  const fbLabel = fbLabelMap[fbStatus] || fbLabelMap.pending;
+
   return `
     <div class="preview-link-card">
       <div class="preview-link-card-body">
@@ -2650,8 +3178,188 @@ function renderPreviewLinkHub(hub) {
         <a class="preview-link-cta" href="${esc(hub.previewUrl)}" target="_blank" rel="noopener noreferrer">Open site →</a>
       </div>
       ${quickLinks}
+      <div class="preview-link-feedback">
+        <span class="preview-link-feedback-label">${statusBadge(fbStatus)} ${esc(fbLabel)}</span>
+        <button type="button" class="preview-link-feedback-cta" onclick="openHubFeedback('${esc(hub.slug)}')">
+          Leave feedback
+          <span aria-hidden>→</span>
+        </button>
+      </div>
     </div>
   `;
+}
+
+// ── Deck-deliverable hub (Investor Pitch Deck) ───────────────────────
+// Renders an embedded PDF preview of the latest version plus a download
+// button for the editable .pptx and an upload widget for new versions.
+// Version history table sits below the preview.
+//
+// Empty state: no versions exist yet — shows the placeholder copy from
+// hub.placeholderText (set in api/_lib.js). Auto-upgrades once the
+// operator runs the generator + pushes.
+
+function renderDeckDeliverableHub(hub) {
+  const versions = hub.deckVersions || [];
+  const latest = hub.deckLatest;
+
+  if (!latest) {
+    return `
+      <div class="preview-link-placeholder">
+        <div class="preview-link-placeholder-icon">▣</div>
+        <div class="preview-link-placeholder-body">
+          <div class="preview-link-placeholder-title">${esc(hub.name)} — not generated yet</div>
+          <div class="preview-link-placeholder-sub">${esc(hub.placeholderText || 'The deck will appear here once the operator runs the generator.')}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  const pdfUrl = latest.pdf
+    ? `/api/portal-deck-binary?hub=${encodeURIComponent(hub.slug)}&version=${latest.version}&format=pdf`
+    : null;
+  const pptxDownloadUrl = `/api/portal-deck-binary?hub=${encodeURIComponent(hub.slug)}&version=${latest.version}&format=pptx`;
+
+  const preview = pdfUrl ? `
+    <div class="deck-preview-frame">
+      <iframe src="${esc(pdfUrl)}#toolbar=1&navpanes=0" title="${esc(hub.name)} preview"></iframe>
+    </div>
+  ` : `
+    <div class="deck-preview-missing">
+      <div class="deck-preview-missing-icon">⚠</div>
+      <div class="deck-preview-missing-body">
+        <strong>No PDF preview for v${latest.version}.</strong>
+        <span>Generate the deck locally with LibreOffice installed so the .pdf companion is committed alongside the .pptx.</span>
+      </div>
+    </div>
+  `;
+
+  // Upload widget — client+operator only (investor scope blocked server-side)
+  const canUpload = state.client.scope !== 'investor';
+  const uploadBlock = canUpload ? `
+    <div class="deck-upload">
+      <label class="deck-upload-button">
+        <span>Upload an edited version</span>
+        <span class="deck-upload-sub">→ becomes v${latest.version + 1}, never overwrites</span>
+        <input type="file" accept=".pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation" onchange="onDeckUpload(event, '${esc(hub.slug)}')" hidden>
+      </label>
+      <div class="deck-upload-status" id="deck-upload-status-${esc(hub.slug)}"></div>
+    </div>
+  ` : '';
+
+  // Version history (newest first, but skip latest since it's the active preview)
+  const olderVersions = versions.slice(1);
+  const historyBlock = olderVersions.length > 0 ? `
+    <details class="deck-history">
+      <summary>Version history (${olderVersions.length} earlier version${olderVersions.length === 1 ? '' : 's'})</summary>
+      <div class="deck-history-list">
+        ${olderVersions.map(v => `
+          <div class="deck-history-row">
+            <div class="deck-history-meta">
+              <strong>v${v.version}</strong>
+              <span>${fmtFileSize(v.pptx.size)} · ${v.pdf ? 'with PDF' : '.pptx only'}</span>
+            </div>
+            <div class="deck-history-actions">
+              ${v.pdf ? `<a href="/api/portal-deck-binary?hub=${encodeURIComponent(hub.slug)}&version=${v.version}&format=pdf" target="_blank" rel="noopener">Preview</a>` : ''}
+              <a href="/api/portal-deck-binary?hub=${encodeURIComponent(hub.slug)}&version=${v.version}&format=pptx">Download .pptx</a>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </details>
+  ` : '';
+
+  return `
+    <div class="deck-deliverable">
+      <div class="deck-header">
+        ${hub.description ? `<div class="deck-description">${esc(hub.description)}</div>` : ''}
+        <div class="deck-version-strip">
+          <span class="deck-version-badge">v${latest.version}</span>
+          <span class="deck-version-meta">${fmtFileSize(latest.pptx.size)}${latest.pdf ? ` · PDF ${fmtFileSize(latest.pdf.size)}` : ''}</span>
+        </div>
+      </div>
+      ${preview}
+      <div class="deck-actions">
+        <a class="deck-action deck-action-primary" href="${esc(pptxDownloadUrl)}">
+          <span>Download .pptx (editable)</span>
+          <span class="deck-action-sub">Open in Keynote, PowerPoint, or Google Slides</span>
+        </a>
+        ${pdfUrl ? `<a class="deck-action" href="${esc(pdfUrl)}" target="_blank" rel="noopener">
+          <span>Open PDF full-screen</span>
+          <span class="deck-action-sub">Best for sharing read-only</span>
+        </a>` : ''}
+      </div>
+      ${uploadBlock}
+      ${historyBlock}
+    </div>
+  `;
+}
+
+// Format a byte count as a human-readable string. Used by the deck hub.
+function fmtFileSize(bytes) {
+  if (!bytes && bytes !== 0) return '';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
+// File picker → base64 → POST to upload endpoint → reload the hub
+async function onDeckUpload(event, hubSlug) {
+  const input = event.target;
+  const file = input.files && input.files[0];
+  if (!file) return;
+  const statusEl = document.getElementById(`deck-upload-status-${hubSlug}`);
+  const setStatus = (msg, kind) => {
+    if (statusEl) {
+      statusEl.textContent = msg;
+      statusEl.dataset.kind = kind || 'info';
+    }
+  };
+
+  if (file.size > 4 * 1024 * 1024) {
+    setStatus('File too large (max 4 MB). Try compressing media in the deck first.', 'error');
+    input.value = '';
+    return;
+  }
+  if (!file.name.toLowerCase().endsWith('.pptx')) {
+    setStatus('Only .pptx files accepted.', 'error');
+    input.value = '';
+    return;
+  }
+
+  setStatus('Reading file…', 'info');
+  try {
+    const buf = await file.arrayBuffer();
+    // Encode as base64 (browsers don't have a direct ArrayBuffer→base64 — chunked encode)
+    let binary = '';
+    const bytes = new Uint8Array(buf);
+    const chunkSize = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+    }
+    const base64 = btoa(binary);
+
+    setStatus('Uploading…', 'info');
+    const res = await fetch('/api/portal-deck-upload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ hub: hubSlug, filename: file.name, base64 }),
+    });
+    const data = await res.json();
+    if (!data.ok) {
+      setStatus(`Upload failed: ${data.error || res.status}`, 'error');
+      input.value = '';
+      return;
+    }
+    setStatus(`✓ Uploaded as v${data.version}. Refreshing…`, 'success');
+    setTimeout(() => {
+      state.viewHub = hubSlug;
+      loadList();
+    }, 800);
+  } catch (e) {
+    setStatus(`Upload failed: ${e.message}`, 'error');
+  } finally {
+    input.value = '';
+  }
 }
 
 // ── Provocation Cards (L1 of the data-room model) ─────────────────────
@@ -2947,7 +3655,9 @@ async function openSection(hubSlug, sectionSlug) {
   els.sectionEyebrow.textContent = '';
   els.sidebarTocWrap.hidden = true;
   els.sidebarToc.innerHTML = '';
-  resetFeedbackForm();
+  // Phase 2 — reset the panel into section-feedback mode (panel is shared
+  // with the new hub-level deliverable feedback flow).
+  configureFeedbackPanel({ mode: 'section' });
   // Hide the FAB while loading; will be shown after content + observer wired
   if (els.feedbackFab) els.feedbackFab.classList.remove('visible');
 
@@ -3081,6 +3791,232 @@ function setupFeedbackFab() {
 }
 window.openSection = openSection;
 
+// Hub-level feedback (Phase 2): preview-link deliverables don't have
+// markdown sections — feedback attaches to the hub itself. Opens the same
+// section-view shell with the panel reconfigured for hub-level submission.
+async function openHubFeedback(hubSlug) {
+  const hub = state.hubs.find(h => h.slug === hubSlug);
+  if (!hub) return;
+  state.currentHub = hubSlug;
+  state.currentSection = null;
+  try { localStorage.setItem('portal_last_hub_visit_' + hubSlug, String(Date.now())); } catch (e) {}
+  navigate('section-view');
+  // Show a tight intro card instead of markdown content — there's no section.
+  els.sectionContent.innerHTML = `
+    <div class="state-card" style="margin-top: 8px;">
+      <div class="state-card-body">
+        <h3 class="state-card-title">Feedback on ${esc(hub.name)}</h3>
+        <p class="state-card-text">${esc(hub.description || 'Drop a comment, question, or screenshot below — it goes straight to the team.')}</p>
+        ${hub.previewUrl ? `<a class="state-card-action" href="${esc(hub.previewUrl)}" target="_blank" rel="noopener noreferrer">Open the deliverable in a new tab →</a>` : ''}
+      </div>
+    </div>
+  `;
+  els.sectionEyebrow.textContent = hub.name;
+  els.sidebarTocWrap.hidden = true;
+  els.sidebarToc.innerHTML = '';
+  els.sidebarHubName.textContent = hub.name;
+  els.sidebarSections.innerHTML = '';
+  configureFeedbackPanel({ hub: hubSlug, hubName: hub.name, mode: 'hub' });
+  // Scroll panel into view so the visitor sees the form immediately.
+  setTimeout(() => {
+    const p = document.getElementById('feedback-panel');
+    if (p) p.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 80);
+}
+window.openHubFeedback = openHubFeedback;
+
+// ── Sidebar nav + lock model (2026-05-27 layout redesign) ──────────────
+// Replaces the everything-on-one-page landing with a sidebar shell. The
+// sidebar always shows every hub (with lock state for hubs that haven't
+// reached the client's engagement yet). Clicking a hub opens it in the
+// main pane; Status is the default landing.
+
+function isHubLocked(hub) {
+  // A hub is "unlocked" the moment it has content the client can act on.
+  // For card-driven hubs: at least one provocation card published.
+  // For section-driven hubs: at least one section file exists.
+  // For preview-link hubs: a previewUrl is registered.
+  // Otherwise: locked — show with 🔒 + tooltip "Unlocks later in your engagement".
+  if (hub.cardDriven) return (hub.cardsTotal || 0) === 0;
+  if (hub.surfaceType === 'preview-link') return !hub.previewUrl;
+  if (hub.surfaceType === 'deck-deliverable') return !hub.deckLatest;
+  const hasAny = (hub.sections || []).some((s) => s.exists);
+  return !hasAny;
+}
+
+function hubLockReason(hub) {
+  // Per-hub copy explaining what unlocks the hub. Tied to the engagement's
+  // gate model — the operator's Phase 0-5 workflow. Reads humanly even when
+  // the visitor hasn't internalised the methodology.
+  const map = {
+    'vision': 'Unlocks once research is complete and you\'re ready to sign off the Gate 1 direction.',
+    'strategy': 'Unlocks once the product vision is signed off — the strategy builds on top of it.',
+    'financials': 'Unlocks once the vision is signed off — the financial plan grounds the locked scope.',
+    'marketing-site': 'Unlocks once the build phase begins — we register the live URL here as soon as it\'s deployed.',
+    'design-system': 'Unlocks once the design system is published — usually mid-build.',
+    'app-preview': 'Unlocks once the MVP build is live in a browser preview — typically late in Phase 4.',
+    'social-preview': 'Unlocks once the launch social posts are drafted — Workstream B execution layer.',
+    'marketing-launch': 'Unlocks once the launch calendar + 20 posts are drafted.',
+    'video': 'Unlocks once the promo video script + audio brief are drafted.',
+    'blog': 'Unlocks once the first blog drafts are written.',
+    'investor-deck': 'Unlocks once the investor pitch deck is generated — typically once your financial plan is signed off.',
+  };
+  return map[hub.slug] || 'Coming up later in your engagement — your team will publish content here when it\'s ready for review.';
+}
+
+function renderSidebar() {
+  const nav = document.getElementById('sidebar-nav');
+  const brandName = document.getElementById('sidebar-brand-name');
+  if (!nav) return;
+  if (brandName) brandName.textContent = state.client && state.client.name ? state.client.name : '—';
+
+  // Status zone is always rendered (it's the home page). Lock-aware hub
+  // groups below: Data Room (strategic, gate-bearing), then Deliverables
+  // (operational artefacts). Investor scope sees Financials only — handled
+  // by the API's hubsForScope upstream, so state.hubs is already filtered.
+  const dataRoomHubs = state.hubs.filter(h => (h.category || (h.alwaysVisible ? 'deliverable' : 'data-room')) === 'data-room');
+  const deliverableHubs = state.hubs.filter(h => (h.category || (h.alwaysVisible ? 'deliverable' : 'data-room')) === 'deliverable');
+
+  const itemHtml = (hub) => {
+    const locked = isHubLocked(hub);
+    const isActive = state.viewHub === hub.slug;
+    const reason = locked ? hubLockReason(hub) : '';
+    const badge = !locked && hub.gate && !hub.signedOff
+      ? `<span class="sidebar-item-badge" title="Gate-bearing hub">${esc(hub.gate.replace('Gate ', 'G'))}</span>`
+      : (!locked && hub.signedOff
+        ? `<span class="sidebar-item-badge" style="background: rgba(52,209,122,0.10); color: #16704a;" title="Signed off">✓</span>`
+        : '');
+    const lock = locked ? '<span class="sidebar-item-lock" aria-hidden>🔒</span>' : '';
+    const lead = '<span class="sidebar-item-lead" aria-hidden>▸</span>';
+    return `
+      <a class="sidebar-item ${isActive ? 'active' : ''} ${locked ? 'locked' : ''}"
+         role="link" tabindex="0"
+         data-hub="${esc(hub.slug)}"
+         data-locked="${locked ? '1' : '0'}"
+         data-lock-reason="${esc(reason)}"
+         aria-current="${isActive ? 'page' : 'false'}"
+         aria-disabled="${locked ? 'true' : 'false'}">
+        ${lead}
+        <span class="sidebar-item-text">${esc(hub.name)}</span>
+        ${badge}
+        ${lock}
+      </a>
+    `;
+  };
+
+  const statusItem = `
+    <a class="sidebar-item ${state.viewHub == null ? 'active' : ''}"
+       role="link" tabindex="0" data-status="1"
+       aria-current="${state.viewHub == null ? 'page' : 'false'}">
+      <span class="sidebar-item-lead" aria-hidden>▸</span>
+      <span class="sidebar-item-text">Overview</span>
+    </a>
+  `;
+
+  nav.innerHTML = `
+    <div class="sidebar-group">
+      <div class="sidebar-group-label">Status</div>
+      ${statusItem}
+    </div>
+    ${dataRoomHubs.length > 0 ? `
+      <div class="sidebar-group">
+        <div class="sidebar-group-label">Data Room</div>
+        ${dataRoomHubs.map(itemHtml).join('')}
+      </div>` : ''}
+    ${deliverableHubs.length > 0 ? `
+      <div class="sidebar-group">
+        <div class="sidebar-group-label">Deliverables</div>
+        ${deliverableHubs.map(itemHtml).join('')}
+      </div>` : ''}
+  `;
+
+  // Wire click handlers — handles status link + hub links + locked items.
+  nav.querySelectorAll('[data-status="1"]').forEach((el) => {
+    el.addEventListener('click', (e) => { e.preventDefault(); navigateToStatus(); });
+    el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigateToStatus(); } });
+  });
+  nav.querySelectorAll('[data-hub]').forEach((el) => {
+    const handler = (e) => {
+      e.preventDefault();
+      if (el.dataset.locked === '1') {
+        showLockTooltip(el, el.dataset.lockReason || '');
+        return;
+      }
+      navigateToHub(el.dataset.hub);
+    };
+    el.addEventListener('click', handler);
+    el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') handler(e); });
+  });
+}
+
+// Provocation-card expand/collapse wiring — runs after a render so newly
+// rendered cards get their click handlers. Idempotent: re-running on the
+// same card just re-attaches the listener (browser dedupes identical
+// addEventListener with the same handler function reference? Actually
+// it doesn't — so we mark wired cards to avoid double-attaches).
+function wireProvocationCardToggles() {
+  document.querySelectorAll('.prov-card-head').forEach((head) => {
+    if (head.dataset.wired === '1') return;
+    head.dataset.wired = '1';
+    head.addEventListener('click', (e) => {
+      if (e.target.closest('button, a, textarea, input')) return;
+      const card = head.closest('.prov-card');
+      const isExpanded = card.classList.toggle('expanded');
+      head.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+    });
+    head.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        head.click();
+      }
+    });
+  });
+}
+
+function showLockTooltip(anchor, message) {
+  const tt = document.getElementById('lock-tooltip');
+  if (!tt) return;
+  tt.textContent = message;
+  const rect = anchor.getBoundingClientRect();
+  tt.style.left = `${rect.right + 12}px`;
+  tt.style.top = `${rect.top}px`;
+  tt.classList.add('visible');
+  clearTimeout(showLockTooltip._t);
+  showLockTooltip._t = setTimeout(() => tt.classList.remove('visible'), 3200);
+}
+
+// Default landing = Overview. Renders the Status zone widgets; hubs are
+// reached via sidebar clicks, not stacked on the landing.
+function navigateToStatus() {
+  state.viewHub = null;
+  closeMobileSidebar();
+  navigate('hub-list');
+  // Re-run the render. loadList re-fetches the list (small + cached) and
+  // re-paints with the current state.viewHub which now drives the layout.
+  loadList();
+}
+
+function navigateToHub(hubSlug) {
+  state.viewHub = hubSlug;
+  closeMobileSidebar();
+  navigate('hub-list');
+  loadList();
+  // Scroll to top of main pane on hub change
+  const main = document.getElementById('main');
+  if (main) main.scrollTo ? main.scrollTo({ top: 0 }) : window.scrollTo(0, 0);
+}
+
+window.navigateToHub = navigateToHub;
+window.navigateToStatus = navigateToStatus;
+
+// Mobile sidebar toggle
+function openMobileSidebar() {
+  document.getElementById('portal-shell').classList.add('sidebar-open');
+}
+function closeMobileSidebar() {
+  document.getElementById('portal-shell').classList.remove('sidebar-open');
+}
+
 function navigate(view) {
   els.loading.hidden = true;
   els.hubList.hidden = view !== 'hub-list';
@@ -3095,9 +4031,26 @@ function navigate(view) {
 els.backLink.addEventListener('click', e => { e.preventDefault(); navigate('hub-list'); });
 
 // ── Feedback form ──────────────────────────────────────────────────────
+// Phase 2 (2026-05-27) — extended to support hub-level feedback (section=null)
+// and screenshot uploads. State is now scoped to a single panel instance —
+// the same DOM is reused for both section feedback and hub-level deliverable
+// feedback, with the target re-configured by `configureFeedbackPanel()`.
 let selectedRating = null;
+let selectedScreenshotDataUrl = null;
+// Hub-level feedback target — when set, submit fires with section=null
+// against the hub. When null, falls back to state.currentHub/Section.
+let hubLevelFeedbackTarget = null;
+
 const ratingBtns = document.querySelectorAll('.rating-btn');
+const feedbackPanelTitle = document.getElementById('feedback-panel-title');
+const feedbackPanelIntro = document.getElementById('feedback-panel-intro');
 const feedbackComment = document.getElementById('feedback-comment');
+const feedbackScreenshotRow = document.getElementById('feedback-screenshot-row');
+const feedbackScreenshotInput = document.getElementById('feedback-screenshot-input');
+const feedbackScreenshotPreview = document.getElementById('feedback-screenshot-preview');
+const feedbackScreenshotImg = document.getElementById('feedback-screenshot-img');
+const feedbackScreenshotRemove = document.getElementById('feedback-screenshot-remove');
+const feedbackScreenshotBtnLabel = document.getElementById('feedback-screenshot-btn-label');
 const feedbackNameRow = document.getElementById('feedback-name-row');
 const feedbackName = document.getElementById('feedback-name');
 const feedbackEmail = document.getElementById('feedback-email');
@@ -3106,17 +4059,41 @@ const feedbackConfirm = document.getElementById('feedback-confirmation');
 
 function resetFeedbackForm() {
   selectedRating = null;
+  selectedScreenshotDataUrl = null;
   ratingBtns.forEach(b => {
     b.classList.remove('active');
-    b.setAttribute('aria-checked', 'false'); // portal audit — keep ARIA in sync with visual state
+    b.setAttribute('aria-checked', 'false');
   });
   feedbackComment.value = '';
   feedbackComment.style.display = 'none';
+  feedbackScreenshotRow.style.display = 'none';
+  feedbackScreenshotPreview.hidden = true;
+  feedbackScreenshotImg.src = '';
+  if (feedbackScreenshotInput) feedbackScreenshotInput.value = '';
+  if (feedbackScreenshotBtnLabel) feedbackScreenshotBtnLabel.textContent = 'Add screenshot';
   feedbackNameRow.style.display = 'none';
   feedbackSubmit.disabled = true;
   feedbackSubmit.textContent = 'Submit feedback';
   feedbackSubmit.style.display = '';
   feedbackConfirm.classList.remove('show');
+}
+
+// Re-targets the (single) feedback panel between section + hub-level modes.
+// Called by:
+//   - openSection(): targetHub set, targetSection set → "Feedback on this section"
+//   - openHubFeedback(): targetHub set, targetSection null → "Feedback on [Deliverable]"
+function configureFeedbackPanel({ hub, section, hubName, sectionName, mode }) {
+  hubLevelFeedbackTarget = mode === 'hub' ? { hub, hubName } : null;
+  if (feedbackPanelTitle && feedbackPanelIntro) {
+    if (mode === 'hub') {
+      feedbackPanelTitle.textContent = `Feedback on ${hubName}`;
+      feedbackPanelIntro.textContent = `Comments, questions, or anything that needs adjusting on this deliverable. Attach a screenshot if it helps. Goes straight to the team.`;
+    } else {
+      feedbackPanelTitle.textContent = 'Feedback on this section';
+      feedbackPanelIntro.textContent = 'Mark "Looks good" to approve. Add a comment if anything needs adjusting.';
+    }
+  }
+  resetFeedbackForm();
 }
 
 ratingBtns.forEach(btn => {
@@ -3126,13 +4103,46 @@ ratingBtns.forEach(btn => {
       b.setAttribute('aria-checked', 'false');
     });
     btn.classList.add('active');
-    btn.setAttribute('aria-checked', 'true'); // portal audit — ARIA radio state
+    btn.setAttribute('aria-checked', 'true');
     selectedRating = btn.dataset.rating;
     feedbackComment.style.display = 'block';
+    feedbackScreenshotRow.style.display = 'flex';
     feedbackNameRow.style.display = 'grid';
     feedbackSubmit.disabled = false;
   });
 });
+
+// Screenshot upload — read as base64 data URL, capped at ~750KB raw to keep
+// the JSON audit trail under git-friendly file sizes (the API rejects >800KB
+// so we stay below that with headroom).
+if (feedbackScreenshotInput) {
+  feedbackScreenshotInput.addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    if (file.size > 750 * 1024) {
+      alert('Screenshot too large (max ~750KB). Crop or compress and try again.');
+      e.target.value = '';
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      selectedScreenshotDataUrl = reader.result;
+      feedbackScreenshotImg.src = reader.result;
+      feedbackScreenshotPreview.hidden = false;
+      if (feedbackScreenshotBtnLabel) feedbackScreenshotBtnLabel.textContent = 'Replace screenshot';
+    };
+    reader.readAsDataURL(file);
+  });
+}
+if (feedbackScreenshotRemove) {
+  feedbackScreenshotRemove.addEventListener('click', () => {
+    selectedScreenshotDataUrl = null;
+    feedbackScreenshotPreview.hidden = true;
+    feedbackScreenshotImg.src = '';
+    if (feedbackScreenshotInput) feedbackScreenshotInput.value = '';
+    if (feedbackScreenshotBtnLabel) feedbackScreenshotBtnLabel.textContent = 'Add screenshot';
+  });
+}
 
 // Browser-side email send (web3forms blocks server-side on free plan)
 async function sendBrowserEmail(payload) {
@@ -3151,18 +4161,30 @@ async function sendBrowserEmail(payload) {
 }
 
 feedbackSubmit.addEventListener('click', async () => {
-  if (!selectedRating || !state.currentHub || !state.currentSection) return;
+  if (!selectedRating) return;
+  // Resolve target — hub-level mode wins if configured, else fall back to
+  // the current section view's hub/section pair.
+  let targetHub, targetSection;
+  if (hubLevelFeedbackTarget) {
+    targetHub = hubLevelFeedbackTarget.hub;
+    targetSection = null;
+  } else {
+    if (!state.currentHub || !state.currentSection) return;
+    targetHub = state.currentHub;
+    targetSection = state.currentSection;
+  }
   feedbackSubmit.disabled = true;
   feedbackSubmit.textContent = 'Submitting…';
   const r = await api('/api/portal-feedback', {
     method: 'POST',
     body: JSON.stringify({
-      hub: state.currentHub,
-      section: state.currentSection,
+      hub: targetHub,
+      section: targetSection,
       rating: selectedRating,
       comment: feedbackComment.value.trim(),
       name: feedbackName.value.trim() || null,
       email: feedbackEmail.value.trim() || null,
+      screenshotDataUrl: selectedScreenshotDataUrl,
     }),
   });
   if (!r.body.ok) {

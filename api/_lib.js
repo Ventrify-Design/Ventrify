@@ -175,6 +175,78 @@ async function ghListDir(repo, branch, path) {
   return data;
 }
 
+// ── Binary file fetch (decks, screenshots, etc.) ──────────────────────────
+// Same shape as ghReadFile but returns { base64, sha, size, downloadUrl }
+// instead of decoding to utf8. Used by the Investor Pitch Deck hub to fetch
+// .pptx + .pdf bytes for in-portal preview and download.
+async function ghReadBinaryFile(repo, branch, path) {
+  const data = await ghFetch(repo, branch, path);
+  if (!data) return null;
+  if (data.encoding !== 'base64') return null;
+  return {
+    base64: data.content.replace(/\n/g, ''),
+    sha: data.sha,
+    size: data.size,
+    downloadUrl: data.download_url || null,
+  };
+}
+
+// ── Deck version listing (Investor Pitch Deck hub) ────────────────────────
+// Walks the engagement repo's decks/ directory and returns versioned .pptx
+// files (paired with their .pdf preview if present). Used by portal-list to
+// surface version history and the latest version's preview/download links.
+//
+// Filename pattern: <baseName>-v<N>.pptx  (e.g. moneygym-investor-deck-v3.pptx)
+async function listDeckVersions(repo, branch, deckDir, deckBaseName) {
+  const entries = await ghListDir(repo, branch, deckDir);
+  if (!entries || entries.length === 0) return { versions: [], latest: null };
+
+  // Regex like:  /^(?:[^\/]+-)?investor-deck-v(\d+)\.pptx$/
+  // We don't know the client slug at this layer — accept any prefix that
+  // ends with -<deckBaseName>-v<N>.pptx OR just <deckBaseName>-v<N>.pptx.
+  const pptxRegex = new RegExp(`^(.+?)-${deckBaseName}-v(\\d+)\\.pptx$`, 'i');
+  const pdfRegex = new RegExp(`^(.+?)-${deckBaseName}-v(\\d+)\\.pdf$`, 'i');
+
+  // Index PDFs by version number so we can pair them with the .pptx
+  const pdfByVersion = {};
+  for (const entry of entries) {
+    if (entry.type !== 'file') continue;
+    const m = pdfRegex.exec(entry.name);
+    if (m) {
+      const version = parseInt(m[2], 10);
+      pdfByVersion[version] = {
+        name: entry.name,
+        path: `${deckDir}/${entry.name}`,
+        size: entry.size,
+        downloadUrl: entry.download_url || null,
+      };
+    }
+  }
+
+  const versions = [];
+  for (const entry of entries) {
+    if (entry.type !== 'file') continue;
+    const m = pptxRegex.exec(entry.name);
+    if (!m) continue;
+    const version = parseInt(m[2], 10);
+    versions.push({
+      version,
+      pptx: {
+        name: entry.name,
+        path: `${deckDir}/${entry.name}`,
+        size: entry.size,
+        downloadUrl: entry.download_url || null,
+      },
+      pdf: pdfByVersion[version] || null,
+    });
+  }
+  versions.sort((a, b) => b.version - a.version);
+  return {
+    versions,
+    latest: versions.length > 0 ? versions[0] : null,
+  };
+}
+
 // Minimal YAML frontmatter parser — handles the curator's schema only:
 // scalars, arrays of objects with file + anchor.
 function parseFrontmatter(text) {
@@ -317,6 +389,7 @@ function buildEmailPayload({ subject, body, replyTo }) {
 const HUBS = [
   {
     slug: 'research', name: 'Research', dir: 'research',
+    category: 'data-room',
     sections: [
       { slug: 'market-analysis', file: 'market-analysis.md', name: 'Market Analysis' },
       { slug: 'competitor-analysis', file: 'competitor-analysis.md', name: 'Competitor Analysis' },
@@ -330,6 +403,7 @@ const HUBS = [
   },
   {
     slug: 'vision', name: 'Vision', dir: 'define',
+    category: 'data-room',
     sections: [
       { slug: 'product-vision', file: 'product-vision.md', name: 'Product Vision' },
       { slug: 'personas', file: 'personas.md', name: 'User Personas' },
@@ -343,6 +417,7 @@ const HUBS = [
   },
   {
     slug: 'strategy', name: 'Strategy', dir: 'marketing',
+    category: 'data-room',
     sections: [
       { slug: 'tone-of-voice', file: 'tone-of-voice.md', name: 'Tone of Voice' },
       { slug: 'social-strategy', file: 'social-strategy.md', name: 'Social Strategy' },
@@ -358,6 +433,7 @@ const HUBS = [
   // deliverable, not legacy uncurated content.
   {
     slug: 'marketing-launch', name: 'Marketing Launch', dir: 'marketing',
+    category: 'deliverable',
     alwaysVisible: true,
     sections: [
       { slug: 'launch-posts', file: 'post-copy/launch-posts.md', name: '20 Launch Social Posts' },
@@ -369,6 +445,7 @@ const HUBS = [
   // tools/video/generate.js consumes this hub's source markdown.
   {
     slug: 'video', name: 'Video', dir: 'video',
+    category: 'deliverable',
     alwaysVisible: true,
     sections: [
       { slug: 'script', file: 'script.md', name: '60-second Promo Script' },
@@ -382,6 +459,7 @@ const HUBS = [
   // marketing site at /blog (Sanity source).
   {
     slug: 'blog', name: 'Blog Drafts', dir: 'marketing/blog-posts',
+    category: 'deliverable',
     alwaysVisible: true,
     sections: [
       { slug: 'theory-vs-execution', file: 'theory-vs-execution-personal-finance.md', name: 'Theory vs Execution in Personal Finance' },
@@ -394,6 +472,7 @@ const HUBS = [
   },
   {
     slug: 'financials', name: 'Financials', dir: 'financials',
+    category: 'data-room',
     sections: [
       { slug: 'financial-summary', file: '_financial-summary.md', name: 'Financial Summary' },
       { slug: 'funding-ask', file: 'funding-ask.md', name: 'The Funding Ask' },
@@ -417,6 +496,7 @@ const HUBS = [
   // until the URL is registered.
   {
     slug: 'marketing-site', name: 'Marketing Site',
+    category: 'deliverable',
     alwaysVisible: true,
     surfaceType: 'preview-link',
     urlField: 'marketingSiteUrl',
@@ -433,6 +513,7 @@ const HUBS = [
   // personas, user stories, user flows.
   {
     slug: 'design-system', name: 'Design System',
+    category: 'deliverable',
     alwaysVisible: true,
     surfaceType: 'preview-link',
     urlField: 'dsSiteUrl',
@@ -456,6 +537,7 @@ const HUBS = [
   // URL stored in PORTAL_CLIENTS[slug].previewUrl.
   {
     slug: 'app-preview', name: 'App Preview',
+    category: 'deliverable',
     alwaysVisible: true,
     surfaceType: 'preview-link',
     urlField: 'previewUrl',
@@ -467,6 +549,41 @@ const HUBS = [
     sections: [],
     gate: null,
   },
+  // ── Investor Pitch Deck (binary deliverable surface) ──────────────────
+  // The Investor Pitch Deck is the only deck that ships as a file (rather
+  // than a portal hub or a DS-site page) because investors expect a
+  // shareable artifact they can download, annotate, send to partners.
+  //
+  // Build pipeline (engagement repo):
+  //   .pptx generated from a Google Slides template via
+  //   tools/pdf/investor-deck-from-template.py — text + colour + font swap
+  //   with brand tokens. LibreOffice headless converts the .pptx to .pdf
+  //   for in-portal preview. Both files commit to /decks/ in the
+  //   engagement repo and are versioned (-v1.pptx, -v2.pptx, ...).
+  //
+  // Portal renders:
+  //   - PDF preview (iframe of the latest version)
+  //   - Download .pptx button (editable copy for the client)
+  //   - Upload-new-version widget — operator or client can drop an edited
+  //     .pptx; the binary commits as -v(N+1).pptx without overwriting.
+  //   - Version history table — every prior version with timestamp +
+  //     download link
+  //
+  // surfaceType: 'deck-deliverable' tells portal-list.js to populate a
+  // .versions[] array by scanning decks/ in the engagement repo. The
+  // portal renderer reads that to show the version history.
+  {
+    slug: 'investor-deck', name: 'Investor Pitch Deck',
+    category: 'deliverable',
+    alwaysVisible: true,
+    surfaceType: 'deck-deliverable',
+    deckDir: 'decks',
+    deckBaseName: 'investor-deck',
+    description: 'The investor pitch deck — generated from your locked vision + financial plan, restyled with the brand palette. Preview in-browser, download the editable .pptx, upload a new version after edits.',
+    placeholderText: 'No deck generated yet. Run npm run pdf:investor in the engagement repo, then push — the latest version appears here.',
+    sections: [],
+    gate: null,
+  },
   // ── Social Launch Preview (Workstream B deliverable surface) ──────────
   // Static page that mocks every launch social post on its actual platform
   // UI (LinkedIn / X / Instagram). Lets the founder see exactly how each
@@ -474,15 +591,16 @@ const HUBS = [
   // URL stored in PORTAL_CLIENTS[slug].socialPreviewUrl.
   {
     slug: 'social-preview', name: 'Social Launch Preview',
+    category: 'deliverable',
     alwaysVisible: true,
     surfaceType: 'preview-link',
     urlField: 'socialPreviewUrl',
     description: 'Every launch social post mocked on its actual platform UI — Robert on LinkedIn, Devon on X, Maya on Instagram. See exactly how each post will read in-feed before scheduling. 20 posts across 3 platforms, 5 content pillars.',
     placeholderText: 'URL not yet registered. Build social-preview/ → deploy to Vercel → register the URL via npm run publish-portal.',
     quickLinks: [
-      { label: 'LinkedIn (7)', path: '/' },
-      { label: 'X / Twitter (7)', path: '/' },
-      { label: 'Instagram (6)', path: '/' },
+      { label: 'LinkedIn', path: '/#linkedin' },
+      { label: 'X / Twitter', path: '/#twitter' },
+      { label: 'Instagram', path: '/#instagram' },
     ],
     sections: [],
     gate: null,
@@ -490,6 +608,112 @@ const HUBS = [
 ];
 
 // Investor scope: financials only (sensitive scope-loop hidden from investors)
+// ── Phase 4 — Claude learning loop ────────────────────────────────────────
+// Turns the portal-feedback.json audit log into a Claude-readable memory
+// digest at `.claude/memory/feedback_pending.md` in the engagement repo.
+// Committed automatically by portal-feedback.js after each new submission
+// so the next time the operator opens Claude, the file is already in place
+// and Claude opens with: "You have N open items from the portal — want me
+// to walk them?"
+//
+// Format prioritises GROUPING and ACTIONABILITY over exhaustive metadata —
+// Claude needs to know what to do, not every detail. Detail lives in the
+// JSON; this is the "what's open + why + how to act on it" surface.
+function generateFeedbackPendingMarkdown(feedbackLog, clientName) {
+  const items = (feedbackLog && feedbackLog.feedback) || [];
+  const open = items.filter((f) => f.status === 'open');
+  const addressed = items.filter((f) => f.status === 'addressed' || f.status === 'wont-fix');
+  const lastUpdated = feedbackLog && feedbackLog.lastUpdated ? feedbackLog.lastUpdated : null;
+
+  const lines = [];
+  lines.push('---');
+  lines.push('name: feedback-pending');
+  lines.push(`description: Open feedback items from the ${clientName || 'project'} client portal — auto-generated by the portal API after every submission. Read at session start; ask the user "want me to address these?" before any other work.`);
+  lines.push('metadata:');
+  lines.push('  type: feedback');
+  lines.push(`  auto_generated: true`);
+  if (lastUpdated) lines.push(`  last_updated: ${lastUpdated}`);
+  lines.push('---');
+  lines.push('');
+  lines.push('# Portal Feedback — Pending');
+  lines.push('');
+  lines.push(`**Open items:** ${open.length}  ·  **Resolved (total):** ${addressed.length}`);
+  if (lastUpdated) {
+    lines.push(`**Last activity:** ${new Date(lastUpdated).toISOString().replace('T', ' ').replace('Z', ' UTC')}`);
+  }
+  lines.push('');
+
+  if (open.length === 0) {
+    lines.push('No open feedback right now. The client has not surfaced anything that needs attention.');
+    lines.push('');
+    if (addressed.length > 0) {
+      lines.push(`(${addressed.length} item${addressed.length === 1 ? '' : 's'} previously addressed — see \`portal-feedback.json\` for the full audit trail.)`);
+    }
+    return lines.join('\n');
+  }
+
+  lines.push('## How to act on this file');
+  lines.push('');
+  lines.push('When the user says **"address open feedback"**, walk every item below in order:');
+  lines.push('1. Read the comment + open the source file mentioned (if hub-section feedback) or the deliverable (if hub-level).');
+  lines.push('2. Make the change. Keep the scope tight — fix exactly what was flagged, no extras.');
+  lines.push('3. Mark the item addressed: edit `portal-feedback.json` → find the entry by `id` → set `status: "addressed"`, `addressedAt: "<ISO>"`, `addressedNote: "one-line summary of what changed"`.');
+  lines.push('4. After all items addressed (or partway through if you hit a blocker), run `npm run feedback:sync` to regenerate this file so it reflects the new state.');
+  lines.push('5. Commit + push so the next session and the portal see the resolution.');
+  lines.push('');
+  lines.push('If 2+ open items share a theme (e.g., "client doesn\'t like card-heavy designs"), write a proposal to `.claude/proposed-claude-md-updates/YYYY-MM-DD-<slug>.md` flagging it as a candidate systemic rule for CLAUDE.md.');
+  lines.push('');
+
+  // Group open items by hub for readability.
+  const byHub = {};
+  open.forEach((f) => {
+    const key = f.hubName || f.hub || '(unknown)';
+    if (!byHub[key]) byHub[key] = [];
+    byHub[key].push(f);
+  });
+
+  for (const hubName of Object.keys(byHub).sort()) {
+    lines.push(`## ${hubName}  ·  ${byHub[hubName].length} open`);
+    lines.push('');
+    byHub[hubName].forEach((f) => {
+      const ratingEmoji = {
+        'looks-good': '👍',
+        'has-feedback': '⚠️',
+        'needs-rework': '🚫',
+        'question': '💭',
+      }[f.rating] || '•';
+      const target = f.sectionName ? `${f.sectionName}` : 'Hub-level';
+      const when = f.submittedAt ? new Date(f.submittedAt).toISOString().slice(0, 10) : '';
+      const who = f.submittedBy
+        ? `${f.submittedBy}${f.submittedEmail ? ` <${f.submittedEmail}>` : ''}`
+        : '(anonymous)';
+      lines.push(`### ${ratingEmoji} ${target} — ${f.ratingLabel || f.rating}`);
+      lines.push('');
+      lines.push(`- **Submitted:** ${when} by ${who} (${f.scope || 'client'})`);
+      lines.push(`- **Feedback ID:** \`${f.id}\``);
+      if (f.screenshotDataUrl) {
+        lines.push(`- **Screenshot attached** — see \`portal-feedback.json\` entry for the inline base64 image.`);
+      }
+      lines.push('');
+      lines.push('**Comment:**');
+      lines.push('');
+      const comment = f.comment ? f.comment.trim() : '(no comment text — visitor rated but didn\'t leave a note)';
+      // Indent comment as a blockquote so it visually separates from the metadata.
+      comment.split('\n').forEach((line) => lines.push(`> ${line || ''}`.trimEnd()));
+      lines.push('');
+    });
+  }
+
+  if (addressed.length > 0) {
+    lines.push('---');
+    lines.push('');
+    lines.push(`**Previously addressed:** ${addressed.length} item${addressed.length === 1 ? '' : 's'}. Full audit trail in \`portal-feedback.json\`.`);
+    lines.push('');
+  }
+
+  return lines.join('\n');
+}
+
 function hubsForScope(scope) {
   if (scope === 'investor') {
     return [{
@@ -510,14 +734,17 @@ module.exports = {
   readJsonBody,
   ghFetch,
   ghReadFile,
+  ghReadBinaryFile,
   ghCommitFile,
   ghListDir,
+  listDeckVersions,
   parseFrontmatter,
   readProvocations,
   readHubL3Status,
   buildEmailPayload,
   HUBS,
   hubsForScope,
+  generateFeedbackPendingMarkdown,
   OPERATOR_EMAIL,
   TOKEN_TTL_SECONDS,
 };
