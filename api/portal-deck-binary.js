@@ -79,7 +79,7 @@ module.exports = async function handler(req, res) {
       return;
     }
 
-    const buffer = Buffer.from(binary.base64, 'base64');
+    const buffer = binary.buffer;
     const contentType = format === 'pdf'
       ? 'application/pdf'
       : 'application/vnd.openxmlformats-officedocument.presentationml.presentation';

@@ -176,18 +176,45 @@ async function ghListDir(repo, branch, path) {
 }
 
 // ── Binary file fetch (decks, screenshots, etc.) ──────────────────────────
-// Same shape as ghReadFile but returns { base64, sha, size, downloadUrl }
-// instead of decoding to utf8. Used by the Investor Pitch Deck hub to fetch
-// .pptx + .pdf bytes for in-portal preview and download.
+// Returns { buffer, sha, size, downloadUrl } for any file in the engagement
+// repo. Used by the Investor Pitch Deck hub to fetch .pptx + .pdf bytes for
+// in-portal preview and download.
+//
+// CRITICAL: GitHub's /contents API has a 1MB cap on inline base64 content.
+// Files larger than 1MB return { encoding: "none", content: "" } and require
+// fetching from the raw download_url instead. Decks routinely exceed 1MB
+// (typical .pptx ~3MB, .pdf ~5-10MB) — this fallback is essential.
+//
+// Private repos require Bearer auth on raw.githubusercontent.com too, so we
+// retry with GITHUB_TOKEN if the unauthenticated raw fetch 404s/403s.
 async function ghReadBinaryFile(repo, branch, path) {
   const data = await ghFetch(repo, branch, path);
   if (!data) return null;
-  if (data.encoding !== 'base64') return null;
+
+  // Inline path — file ≤ 1MB
+  if (data.encoding === 'base64' && data.content) {
+    return {
+      buffer: Buffer.from(data.content.replace(/\n/g, ''), 'base64'),
+      sha: data.sha,
+      size: data.size,
+      downloadUrl: data.download_url || null,
+    };
+  }
+
+  // Large-file path — fetch from download_url with auth
+  if (!data.download_url) return null;
+  const headers = { 'User-Agent': 'Ventrify-Portal' };
+  if (process.env.GITHUB_TOKEN) headers['Authorization'] = `Bearer ${process.env.GITHUB_TOKEN}`;
+  const rawRes = await fetch(data.download_url, { headers });
+  if (!rawRes.ok) {
+    throw new Error(`raw fetch ${rawRes.status} for ${path}`);
+  }
+  const arrayBuf = await rawRes.arrayBuffer();
   return {
-    base64: data.content.replace(/\n/g, ''),
+    buffer: Buffer.from(arrayBuf),
     sha: data.sha,
     size: data.size,
-    downloadUrl: data.download_url || null,
+    downloadUrl: data.download_url,
   };
 }
 
