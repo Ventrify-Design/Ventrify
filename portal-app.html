@@ -1153,42 +1153,30 @@
     .appetize-iframe-shell::after {
       right: -80px; bottom: -120px; background: rgba(120,180,255,0.20);
     }
-    /* Custom iPhone-frame around the iframe. Replaces Appetize's bezel
-       (hidden via screenOnly=true) with our own — gives us full control
-       over corner radius, side rails, and the subtle screen inset. */
-    .appetize-iframe-device {
-      position: relative; z-index: 1;
-      width: 460px;
-      padding: 14px;
-      border-radius: 56px;
-      background: linear-gradient(180deg, #1a1a22 0%, #2a2a35 100%);
-      box-shadow:
-        0 0 0 1px rgba(255,255,255,0.06),
-        0 8px 16px rgba(0,0,0,0.35),
-        0 32px 64px rgba(0,0,0,0.40);
-    }
-    /* Side button rails — subtle highlights on the left + right edges of
-       the device frame. Cosmetic, makes it read more clearly as "iPhone." */
-    .appetize-iframe-device::before,
-    .appetize-iframe-device::after {
-      content: ''; position: absolute; width: 3px; border-radius: 3px;
-      background: rgba(255,255,255,0.08);
-      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.5);
-    }
-    .appetize-iframe-device::before { left: -2px; top: 120px; height: 30px; }
-    .appetize-iframe-device::after { right: -2px; top: 100px; height: 70px; }
+    /* Iframe dimensions sized to Appetize's natural iPhone 15 Pro device
+       output at scale=100. Appetize renders the whole device (bezel +
+       screen + Dynamic Island) at logical CSS pixels — the screen is
+       393×852 and the chrome adds ~24px each side + ~30px top/bottom for
+       the bezel. 460×920 leaves comfortable breathing room while keeping
+       the device close to edge-to-edge in the iframe (no Appetize void).
+       z-index: 1 lifts the iframe above the shell's ambient glow pseudo-
+       elements so the device sits cleanly on the backdrop. */
     .appetize-iframe {
+      position: relative; z-index: 1;
       display: block;
-      width: 100%;
-      height: 940px;
+      width: 460px;
+      height: 920px;
+      max-width: 100%;
       border: 0;
-      border-radius: 42px;
-      background: #000;
+      background: transparent;
+      box-shadow:
+        0 8px 16px rgba(0,0,0,0.25),
+        0 32px 64px rgba(0,0,0,0.30);
+      border-radius: 8px;
     }
     @media (max-width: 640px) {
       .appetize-iframe-shell { padding: 28px 12px; }
-      .appetize-iframe-device { width: 100%; max-width: 360px; padding: 10px; border-radius: 40px; }
-      .appetize-iframe { height: 720px; border-radius: 30px; }
+      .appetize-iframe { width: 100%; max-width: 340px; height: 720px; }
     }
     .appetize-embed-meta {
       display: flex; justify-content: space-between; align-items: center;
@@ -3669,31 +3657,29 @@ function renderAppetizeEmbedHub(hub) {
     `;
   }
   // Appetize embed URL — passes the publicKey + sane defaults.
-  //   • scale=90 — large rendered size, the device fills most of the iframe
-  //   • screenOnly=true — hides Appetize's iPhone bezel chrome. Our own CSS
-  //     adds a subtle phone-frame around the screen so the embed reads as
-  //     "the app on a device" without the dead black space Appetize ships
-  //     by default. If you want Appetize's bezel back, drop the screenOnly
-  //     param and reduce scale to ~80.
-  //   • autoplay=false — session paused until the visitor taps the screen,
-  //     conserves the Starter-tier monthly minute pool.
-  //   • deviceColor — unused when screenOnly=true; kept here for clarity in
-  //     case we ever flip back to bezel mode.
+  //   • scale=100 — natural device size; Appetize ships its bezel + screen
+  //     at 1:1 logical resolution and our iframe wraps the whole device.
+  //   • No screenOnly — we let Appetize be the device (their bezel is
+  //     pixel-accurate to the iPhone 15 Pro). A previous attempt with
+  //     screenOnly=true + custom CSS bezel produced fit issues because
+  //     screenOnly renders ONLY the 393×852 screen regardless of iframe
+  //     size, leaving empty space we had to chase.
+  //   • autoplay=false — session paused until the visitor taps the screen.
+  //     Conserves the Starter-tier monthly minute pool.
+  //   • deviceColor=black — bezel colour.
   const embedUrl = `https://appetize.io/embed/${encodeURIComponent(key)}`
-    + `?device=iphone15pro&osVersion=17.0&scale=90&screenOnly=true&autoplay=false&deviceColor=black`;
+    + `?device=iphone15pro&osVersion=17.0&scale=100&autoplay=false&deviceColor=black`;
   return `
     <div class="appetize-embed-wrap">
       ${hub.description ? `<p class="appetize-embed-desc">${esc(hub.description)}</p>` : ''}
       <div class="appetize-iframe-shell">
-        <div class="appetize-iframe-device">
-          <iframe
-            class="appetize-iframe"
-            src="${esc(embedUrl)}"
-            title="MoneyGym iOS app preview"
-            allow="clipboard-read; clipboard-write; microphone; camera; gyroscope; accelerometer"
-            loading="lazy"
-          ></iframe>
-        </div>
+        <iframe
+          class="appetize-iframe"
+          src="${esc(embedUrl)}"
+          title="MoneyGym iOS app preview"
+          allow="clipboard-read; clipboard-write; microphone; camera; gyroscope; accelerometer"
+          loading="lazy"
+        ></iframe>
       </div>
       <div class="appetize-embed-meta">
         <span>Live iOS app · streamed via Appetize.io</span>
