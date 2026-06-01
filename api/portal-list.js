@@ -188,6 +188,18 @@ module.exports = async function handler(req, res) {
       previewUrl = client[hub.urlField] || null;
     }
 
+    // ── Appetize-embed surface (App Preview hub) ──────────────────────────
+    // The hub config carries `publicKeyField` — the property name on the
+    // client config that holds the Appetize publicKey (typically
+    // 'appetizePublicKey'). We expose the key directly to the frontend so
+    // portal-app.html can construct the iframe src as
+    // `https://appetize.io/embed/{key}`. Returns null when not configured
+    // so the portal renders the placeholderText empty state.
+    let appetizePublicKey = null;
+    if (hub.surfaceType === 'appetize-embed' && hub.publicKeyField) {
+      appetizePublicKey = client[hub.publicKeyField] || null;
+    }
+
     // ── Deck-deliverable surface (Investor Pitch Deck hub) ─────────────────
     // Scans the engagement repo's deckDir/ for versioned .pptx + .pdf pairs.
     // Returns { versions: [...], latest: {...} } so the portal can render
@@ -230,6 +242,7 @@ module.exports = async function handler(req, res) {
       alwaysVisible: !!hub.alwaysVisible,
       surfaceType: hub.surfaceType || 'data-room',
       previewUrl,
+      appetizePublicKey,
       deckVersions,
       deckLatest,
       description: hub.description || null,

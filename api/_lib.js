@@ -556,23 +556,32 @@ const HUBS = [
     gate: null,
   },
   // ── App Preview (Phase 4 deliverable surface) ─────────────────────────
-  // The experimental React Native app exported via Expo's web build and
-  // hosted on Vercel as a standalone preview. The founder/investor can
-  // click through the actual app — persona picker, FSS dial, Workout
-  // (Interest Burnt + GymStrengthBars), Performance (RadarChart +
-  // Shields), Coach's Corner page-stack — in their browser, no install.
-  // URL stored in PORTAL_CLIENTS[slug].previewUrl.
+  // The real iOS app build, streamed in-portal via Appetize.io's embeddable
+  // simulator. Investors interact with the actual signed .app — true touch
+  // emulation, pixel-identical to iOS — without leaving the portal.
+  //
+  // surfaceType: 'appetize-embed' tells portal-list.js + portal-app.html to
+  // render an iframe pointing at https://appetize.io/embed/{publicKey}
+  // with the standard iPhone frame dimensions. publicKey lives on the
+  // client config: PORTAL_CLIENTS[slug].appetizePublicKey.
+  //
+  // FREE TIER: Appetize displays a "Powered by Appetize" overlay on the
+  // simulator + caps total monthly simulator-minutes to ~100. Upgrading
+  // to Starter removes most of the branding and increases the minute cap.
+  // The hub structure here is identical for both tiers — only the visible
+  // overlay differs.
+  //
+  // FALLBACK: when appetizePublicKey is not configured for a client, the
+  // hub renders a placeholder card with instructions for uploading a build
+  // to Appetize and registering the key.
   {
     slug: 'app-preview', name: 'App Preview',
     category: 'deliverable',
     alwaysVisible: true,
-    surfaceType: 'preview-link',
-    urlField: 'previewUrl',
-    description: 'The live MoneyGym app, running in your browser. Pick a persona, walk through My Finances → My Workout → My Performance, open Coach\'s Corner — same code as the iOS build, just rendered via react-native-web.',
-    placeholderText: 'URL not yet registered. Run npx expo export --platform web in product/, deploy to Vercel, then register the URL via npm run publish-portal.',
-    quickLinks: [
-      { label: 'Pick a persona', path: '/' },
-    ],
+    surfaceType: 'appetize-embed',
+    publicKeyField: 'appetizePublicKey',
+    description: 'The MoneyGym iOS app, running live in your browser via an embedded simulator. Pick a persona, walk through My Finances → My Workout → My Performance, open Coach\'s Corner — every interaction is the real signed app build, not a mock.',
+    placeholderText: 'Appetize publicKey not yet registered. Upload the iOS .app build to appetize.io, copy the publicKey, and register it via npm run publish-portal.',
     sections: [],
     gate: null,
   },

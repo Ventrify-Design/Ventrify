@@ -1102,6 +1102,57 @@
     }
     .preview-link-cta:hover { background: var(--primary-hover); transform: translateY(-1px); }
     .preview-link-cta:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+
+    /* ── Appetize-embed (App Preview hub — live iOS simulator) ─────────────
+       Container holds a centred iPhone-frame iframe. Iframe dimensions are
+       fixed at 420 × 870 — that matches Appetize's default scale=75 iPhone
+       15 Pro embed bounds with their chrome accounted for. The shell uses
+       a subtle elevation card to anchor the simulator on the page. On
+       mobile we drop scale to keep the iframe inside the viewport. */
+    .appetize-embed-wrap {
+      display: flex; flex-direction: column; gap: 16px;
+      padding: 16px 0 4px;
+    }
+    .appetize-embed-desc {
+      color: var(--text-secondary, var(--text-muted));
+      font-size: 14px; line-height: 1.6;
+      max-width: 68ch; margin: 0;
+    }
+    .appetize-iframe-shell {
+      display: flex; justify-content: center; align-items: flex-start;
+      padding: 24px 16px;
+      background: var(--surface-card);
+      border: 1px solid var(--surface-border, rgba(0,0,0,0.05));
+      border-radius: var(--radius-card);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 12px 32px rgba(0,0,0,0.06);
+    }
+    .appetize-iframe {
+      width: 420px;
+      height: 870px;
+      max-width: 100%;
+      border: 0;
+      border-radius: 28px;
+      background: #000;
+      display: block;
+    }
+    @media (max-width: 520px) {
+      .appetize-iframe { width: 100%; height: 720px; }
+      .appetize-iframe-shell { padding: 12px 8px; }
+    }
+    .appetize-embed-meta {
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 12px;
+      font-family: var(--font-mono); font-size: 12px;
+      color: var(--text-muted);
+      padding: 0 4px;
+    }
+    .appetize-fullscreen {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .appetize-fullscreen:hover { text-decoration: underline; }
     .preview-link-quick {
       display: flex; flex-wrap: wrap; gap: 8px;
       margin-top: 16px;
@@ -3368,6 +3419,8 @@ async function loadList() {
     let body = '';
     if (hub.surfaceType === 'preview-link') {
       body = renderPreviewLinkHub(hub);
+    } else if (hub.surfaceType === 'appetize-embed') {
+      body = renderAppetizeEmbedHub(hub);
     } else if (hub.surfaceType === 'deck-deliverable') {
       body = renderDeckDeliverableHub(hub);
     } else if (hub.cardDriven) {
@@ -3530,6 +3583,61 @@ function renderPreviewLinkHub(hub) {
           Leave feedback
           <span aria-hidden>→</span>
         </button>
+      </div>
+    </div>
+  `;
+}
+
+// ── Appetize-embed hub (App Preview — live iOS simulator) ──────────────
+// Renders the iOS app build streamed via Appetize.io's embeddable
+// simulator. The hub config (api/_lib.js) sets surfaceType:
+// 'appetize-embed' + publicKeyField: 'appetizePublicKey'; portal-list.js
+// resolves the publicKey from client config and passes it through as
+// hub.appetizePublicKey.
+//
+// Investor experience: scrolls past Sentiment Score, sees a centred
+// iPhone-frame iframe streaming the real .app, taps anywhere to start
+// the session. No new tab.
+//
+// Free tier: Appetize displays a "Powered by Appetize" overlay on the
+// simulator. Starter tier removes most branding. The portal-side framing
+// is identical for both — only the visible overlay differs.
+//
+// Empty state: no publicKey configured yet — shows the placeholderText
+// from the hub config.
+
+function renderAppetizeEmbedHub(hub) {
+  const key = hub.appetizePublicKey;
+  if (!key) {
+    return `
+      <div class="state-card" data-variant="info">
+        <div class="state-card-icon">📱</div>
+        <h3 class="state-card-title">App preview not yet configured</h3>
+        <p class="state-card-body">${esc(hub.placeholderText || 'Appetize publicKey is not yet registered for this engagement.')}</p>
+      </div>
+    `;
+  }
+  // Appetize embed URL — passes the publicKey + sane defaults. The
+  // `autoplay=false` keeps the session paused until the visitor taps the
+  // simulator (saves minutes on free/starter tiers). The device + scale
+  // params can be overridden later via the hub config if needed.
+  const embedUrl = `https://appetize.io/embed/${encodeURIComponent(key)}`
+    + `?device=iphone15pro&osVersion=17.0&scale=75&autoplay=false&deviceColor=black`;
+  return `
+    <div class="appetize-embed-wrap">
+      ${hub.description ? `<p class="appetize-embed-desc">${esc(hub.description)}</p>` : ''}
+      <div class="appetize-iframe-shell">
+        <iframe
+          class="appetize-iframe"
+          src="${esc(embedUrl)}"
+          title="MoneyGym iOS app preview"
+          allow="clipboard-read; clipboard-write; microphone; camera; gyroscope; accelerometer"
+          loading="lazy"
+        ></iframe>
+      </div>
+      <div class="appetize-embed-meta">
+        <span>Live iOS app · streamed via Appetize.io</span>
+        <a class="appetize-fullscreen" href="https://appetize.io/app/${encodeURIComponent(key)}" target="_blank" rel="noopener noreferrer">Open fullscreen ↗</a>
       </div>
     </div>
   `;
@@ -4185,6 +4293,7 @@ function isHubLocked(hub) {
   // Otherwise: locked — show with 🔒 + tooltip "Unlocks later in your engagement".
   if (hub.cardDriven) return (hub.cardsTotal || 0) === 0;
   if (hub.surfaceType === 'preview-link') return !hub.previewUrl;
+  if (hub.surfaceType === 'appetize-embed') return !hub.appetizePublicKey;
   if (hub.surfaceType === 'deck-deliverable') return !hub.deckLatest;
   const hasAny = (hub.sections || []).some((s) => s.exists);
   return !hasAny;
