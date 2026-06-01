@@ -632,6 +632,35 @@ const HUBS = [
     sections: [],
     gate: null,
   },
+  // ── Intelligence Engine (MoneyGym backend coaching engine) ────────────
+  // Per .claude/memory/feedback_deliverable_surfaces_hub.md (PROTECTED in
+  // every engagement repo) — same preview-link pattern as the marketing,
+  // DS, app-preview and social-preview hubs above.
+  //
+  // The Intelligence Engine is a single-file HTML deliverable — Jonathan's
+  // self-contained coaching engine (persona simulation, intent classifier,
+  // session catalogue, traits + pentagon scoring, closed-loop ledger). It
+  // runs entirely in the visitor's browser; the visitor pastes a Claude API
+  // key at runtime and chats with the engine. The same engine, paired with
+  // a local Node bridge (/intelligence-engine/bridge.js in the engagement
+  // repo), powers Coach's Corner inside the MoneyGym RN app — proving the
+  // front-end ↔ backend round-trip.
+  //
+  // URL stored in PORTAL_CLIENTS[slug].intelligenceEngineUrl. Deployed as
+  // a standalone Vercel project (ventrify-engine-moneygym) under the
+  // ventrify-designs-projects scope per the standard recipe in
+  // feedback_vercel_site_deploys.md (PROTECTED).
+  {
+    slug: 'intelligence-engine', name: 'Intelligence Engine',
+    category: 'deliverable',
+    alwaysVisible: true,
+    surfaceType: 'preview-link',
+    urlField: 'intelligenceEngineUrl',
+    description: 'The backend coaching engine that powers Coach’s Corner in the MoneyGym app. Persona simulation, intent classification, a 25-template session catalogue, traits + pentagon scoring, closed-loop ledger — all running live in your browser. Paste a Claude API key in the engine’s top-right field to start chatting; the same engine (paired with a local bridge) is what drives Coach’s Corner inside the RN app.',
+    placeholderText: 'URL not yet registered. Deploy the engine HTML to Vercel as ventrify-engine-<slug>, then register the URL via npm run publish-portal.',
+    sections: [],
+    gate: null,
+  },
 ];
 
 // Investor scope: financials only (sensitive scope-loop hidden from investors)
