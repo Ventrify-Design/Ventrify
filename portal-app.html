@@ -682,6 +682,281 @@
        hub-zone-header instead. Safe to remove once all renderers migrated. */
     .hub-group-divider { display: none; }
 
+    /* ── Investability Tab (Venture Sentiment Score) ──────────────────────
+       2026-06-01 — dedicated top-level surface, sibling to Overview. Hero
+       score card (96px Plus Jakarta number, band pill, sparkline, attribution),
+       6-row dimension breakdown grid, Diligence Readiness chip, radar
+       chart expander, Recommendations panel. All built from existing
+       portal tokens — no new design language.                              */
+    .investability-body {
+      max-width: 1100px; margin: 0 auto; padding: 0 24px;
+      display: flex; flex-direction: column; gap: 28px;
+    }
+    .investability-empty {
+      padding: 60px 24px; text-align: center; color: var(--text-muted);
+    }
+
+    /* Hero score card */
+    .vss-hero {
+      background: var(--surface-card);
+      border-radius: var(--radius-card);
+      padding: 28px 28px 24px;
+      display: grid;
+      grid-template-columns: minmax(180px, auto) 1fr auto;
+      gap: 28px;
+      align-items: center;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.04);
+      border: 1px solid var(--surface-border, rgba(0,0,0,0.04));
+    }
+    @media (max-width: 768px) {
+      .vss-hero {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
+    }
+    .vss-hero-number {
+      font-family: var(--font-display);
+      font-size: 96px; font-weight: 700;
+      line-height: 1; letter-spacing: -0.03em;
+      color: var(--primary);
+      white-space: nowrap;
+    }
+    .vss-hero-number.unrated {
+      color: var(--text-muted); font-size: 56px;
+    }
+    .vss-hero-number-suffix {
+      font-size: 22px; color: var(--text-muted); font-weight: 500;
+      letter-spacing: -0.02em;
+    }
+    .vss-hero-body { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+    .vss-band {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 12px; border-radius: var(--radius-pill);
+      font-family: var(--font-mono); font-size: 11px; font-weight: 600;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      align-self: flex-start; max-width: max-content;
+    }
+    .vss-band[data-band="approved"] { background: var(--status-approved-bg); color: var(--status-approved-fg); }
+    .vss-band[data-band="feedback"] { background: var(--status-feedback-bg); color: var(--status-feedback-fg); }
+    .vss-band[data-band="rework"]   { background: var(--status-rework-bg);   color: var(--status-rework-fg); }
+    .vss-band[data-band="unrated"]  { background: rgba(0,0,0,0.05); color: var(--text-muted); }
+    .vss-band-label {
+      font-size: 14px; color: var(--text-strong); line-height: 1.4;
+      max-width: 52ch;
+    }
+    .vss-attribution {
+      font-family: var(--font-mono); font-size: 12px;
+      color: var(--text-muted); margin-top: 2px;
+    }
+    .vss-sparkline {
+      align-self: flex-end;
+      max-width: 160px; height: 40px;
+    }
+    @media (max-width: 768px) { .vss-sparkline { align-self: center; } }
+    .vss-sparkline svg { display: block; width: 100%; height: 100%; }
+
+    /* Diligence Readiness chip — sits in the hero corner, op+client only */
+    .vss-diligence-chip {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 7px 13px; border-radius: var(--radius-pill);
+      background: var(--status-approved-bg);
+      color: var(--status-approved-fg);
+      font-family: var(--font-mono); font-size: 12px; font-weight: 600;
+      letter-spacing: 0.04em; cursor: pointer; user-select: none;
+      border: 1px solid var(--status-approved-fg);
+      align-self: start;
+    }
+    .vss-diligence-chip[data-band="feedback"] { background: var(--status-feedback-bg); color: var(--status-feedback-fg); border-color: var(--status-feedback-fg); }
+    .vss-diligence-chip[data-band="rework"]   { background: var(--status-rework-bg);   color: var(--status-rework-fg);   border-color: var(--status-rework-fg); }
+    .vss-diligence-chip-num { font-size: 14px; font-weight: 700; }
+    .vss-diligence-chip-label { opacity: 0.85; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.07em; }
+    .vss-diligence-expander { font-size: 10px; opacity: 0.7; }
+
+    /* Diligence breakdown (expanded state) */
+    .vss-diligence-breakdown {
+      background: var(--surface-card); border-radius: var(--radius-card);
+      padding: 20px 24px; margin-top: -8px;
+      border: 1px solid var(--surface-border, rgba(0,0,0,0.04));
+      display: none;
+    }
+    .vss-diligence-breakdown.open { display: block; }
+    .vss-diligence-row {
+      display: grid; grid-template-columns: 200px 1fr 60px; gap: 16px;
+      padding: 10px 0; border-bottom: 1px solid var(--surface-border, rgba(0,0,0,0.04));
+      align-items: center;
+    }
+    .vss-diligence-row:last-child { border-bottom: none; }
+    .vss-diligence-row-label { font-family: var(--font-mono); font-size: 12px; color: var(--text-muted); letter-spacing: 0.04em; }
+    .vss-diligence-row-bar { height: 6px; background: rgba(0,0,0,0.06); border-radius: var(--radius-pill); overflow: hidden; }
+    .vss-diligence-row-bar > div { height: 100%; background: var(--status-approved-fg); transition: width 400ms ease; }
+    .vss-diligence-row-num { font-family: var(--font-mono); font-size: 13px; font-weight: 600; color: var(--text-strong); text-align: right; }
+    .vss-diligence-breakdown-sub { font-size: 12px; color: var(--text-muted); margin: 4px 0 0 0; font-style: italic; }
+
+    /* Dimension breakdown grid */
+    .vss-dimensions {
+      background: var(--surface-card); border-radius: var(--radius-card);
+      padding: 24px 28px;
+      border: 1px solid var(--surface-border, rgba(0,0,0,0.04));
+    }
+    .vss-dimensions-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 18px; gap: 16px; flex-wrap: wrap;
+    }
+    .vss-dimensions-title {
+      font-family: var(--font-mono); font-size: 11px; font-weight: 600;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .vss-dimensions-toggles { display: flex; gap: 8px; }
+    .vss-toggle-btn {
+      font-family: var(--font-mono); font-size: 11px;
+      padding: 6px 12px; border-radius: var(--radius-pill);
+      background: transparent; color: var(--text-muted);
+      border: 1px solid var(--surface-border, rgba(0,0,0,0.10));
+      cursor: pointer; letter-spacing: 0.04em;
+    }
+    .vss-toggle-btn:hover { color: var(--primary); border-color: var(--primary); }
+    .vss-toggle-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+    .vss-dim-row {
+      display: grid; grid-template-columns: 200px 1fr 56px;
+      gap: 16px; padding: 12px 0; align-items: center;
+      border-bottom: 1px solid var(--surface-border, rgba(0,0,0,0.04));
+    }
+    .vss-dim-row:last-child { border-bottom: none; }
+    @media (max-width: 640px) {
+      .vss-dim-row { grid-template-columns: 1fr 56px; gap: 12px; }
+      .vss-dim-row-label { grid-column: 1 / -1; margin-bottom: 4px; }
+    }
+    .vss-dim-row-label {
+      font-size: 14px; font-weight: 500; color: var(--text-strong);
+      letter-spacing: -0.01em;
+    }
+    .vss-dim-row-bar {
+      height: 8px; background: rgba(0,0,0,0.06);
+      border-radius: var(--radius-pill); overflow: hidden;
+    }
+    .vss-dim-row-bar-fill {
+      height: 100%; background: var(--primary);
+      border-radius: var(--radius-pill);
+      transition: width 600ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .vss-dim-row-bar-fill[data-band="approved"] { background: var(--status-approved-fg); }
+    .vss-dim-row-bar-fill[data-band="feedback"] { background: var(--status-feedback-fg); }
+    .vss-dim-row-bar-fill[data-band="rework"]   { background: var(--status-rework-fg); }
+    .vss-dim-row-bar-fill[data-band="pending"]  { background: rgba(0,0,0,0.15); }
+    .vss-dim-row-num {
+      font-family: var(--font-display); font-size: 20px; font-weight: 600;
+      color: var(--text-strong); text-align: right;
+      letter-spacing: -0.02em;
+    }
+    .vss-dim-row-num.pending { color: var(--text-muted); font-size: 13px; font-family: var(--font-mono); }
+    .vss-dim-row-rationale {
+      grid-column: 1 / -1; font-size: 13px;
+      color: var(--text-muted); margin-top: 6px;
+      padding: 10px 14px; background: rgba(0,0,0,0.02);
+      border-radius: 6px; border-left: 2px solid var(--primary);
+      display: none;
+    }
+    .vss-dim-row.expanded .vss-dim-row-rationale { display: block; }
+    .vss-dim-row-rationale-missing {
+      color: var(--status-rework-fg); font-style: italic;
+    }
+
+    /* Radar chart (expander) */
+    .vss-radar-wrap {
+      display: none; padding: 24px 0 8px;
+      align-items: center; justify-content: center;
+    }
+    .vss-radar-wrap.open { display: flex; }
+    .vss-radar { width: 340px; height: 340px; max-width: 100%; }
+    .vss-radar-axis-label { font-size: 11px; fill: var(--text-muted); font-family: var(--font-mono); letter-spacing: 0.04em; }
+    .vss-radar-axis-line { stroke: rgba(0,0,0,0.08); stroke-width: 1; fill: none; }
+    .vss-radar-poly-fill { fill: var(--primary); fill-opacity: 0.15; }
+    .vss-radar-poly-stroke { stroke: var(--primary); stroke-width: 2; fill: none; }
+    .vss-radar-dot { fill: var(--primary); }
+    @media (max-width: 640px) { .vss-radar { width: 280px; height: 280px; } }
+
+    /* Pending / Hard-cap banner */
+    .vss-cap-banner {
+      padding: 14px 18px; border-radius: var(--radius-card);
+      background: var(--status-rework-bg); color: var(--status-rework-fg);
+      font-size: 13px; line-height: 1.5;
+      border: 1px solid var(--status-rework-fg);
+    }
+    .vss-cap-banner-title { font-weight: 700; margin-right: 6px; }
+
+    /* Recommendations panel */
+    .vss-recs {
+      background: var(--surface-card); border-radius: var(--radius-card);
+      padding: 24px 28px;
+      border: 1px solid var(--surface-border, rgba(0,0,0,0.04));
+    }
+    .vss-recs-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 18px; flex-wrap: wrap; gap: 12px;
+    }
+    .vss-recs-title {
+      font-family: var(--font-mono); font-size: 11px; font-weight: 600;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .vss-recs-meta {
+      font-family: var(--font-mono); font-size: 11px;
+      color: var(--text-muted); letter-spacing: 0.04em;
+    }
+    .vss-recs-empty {
+      padding: 32px 0; text-align: center; color: var(--text-muted);
+      font-size: 14px; line-height: 1.5;
+    }
+    .vss-recs-empty code {
+      font-family: var(--font-mono); font-size: 12px;
+      background: rgba(0,0,0,0.05); padding: 3px 8px; border-radius: 4px;
+    }
+    .vss-recs-content {
+      font-size: 14px; line-height: 1.6; color: var(--text-strong);
+    }
+    .vss-recs-content h1, .vss-recs-content h2, .vss-recs-content h3 {
+      font-family: var(--font-display); font-weight: 600;
+      color: var(--text-strong); margin: 18px 0 8px;
+    }
+    .vss-recs-content h2 { font-size: 17px; }
+    .vss-recs-content h3 { font-size: 15px; letter-spacing: -0.005em; }
+    .vss-recs-content p { margin: 8px 0; }
+    .vss-recs-content ul, .vss-recs-content ol { margin: 10px 0 10px 22px; }
+    .vss-recs-content li { margin: 6px 0; }
+    .vss-recs-content code {
+      font-family: var(--font-mono); font-size: 13px;
+      background: rgba(0,0,0,0.04); padding: 2px 6px; border-radius: 4px;
+    }
+
+    /* Invalid / not-yet-rated states */
+    .vss-state-empty {
+      background: var(--surface-card); border-radius: var(--radius-card);
+      padding: 48px 28px; text-align: center;
+      border: 1px dashed var(--surface-border, rgba(0,0,0,0.10));
+    }
+    .vss-state-empty-icon { font-size: 32px; margin-bottom: 12px; opacity: 0.5; }
+    .vss-state-empty-title { font-family: var(--font-display); font-size: 20px; font-weight: 600; color: var(--text-strong); margin: 0 0 8px; }
+    .vss-state-empty-body { font-size: 14px; line-height: 1.5; color: var(--text-muted); max-width: 56ch; margin: 0 auto; }
+    .vss-state-empty-cta {
+      display: inline-block; margin-top: 16px;
+      padding: 8px 18px; border-radius: var(--radius-pill);
+      background: var(--primary); color: white; text-decoration: none;
+      font-family: var(--font-mono); font-size: 12px; font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+    .vss-state-invalid {
+      background: var(--status-rework-bg); border-color: var(--status-rework-fg);
+      border-style: solid;
+    }
+    .vss-state-invalid .vss-state-empty-title { color: var(--status-rework-fg); }
+    .vss-state-invalid pre {
+      text-align: left; margin: 12px 0 0; padding: 12px;
+      background: rgba(0,0,0,0.04); border-radius: 6px;
+      font-family: var(--font-mono); font-size: 12px;
+      max-height: 200px; overflow: auto; white-space: pre-wrap;
+    }
+
     /* ── Project overview card (hub list, below hero) ────────────────── */
     .project-overview {
       max-width: 1100px; margin: 28px auto 0; padding: 0 24px;
@@ -2014,6 +2289,31 @@
         </div>
       </div>
       </section>
+
+      <!-- ── Investability Tab ────────────────────────────────────────────
+           Renders the Venture Sentiment Score (operator-rated, 6 dimensions,
+           composite via tools/sentiment/compute.js) + Diligence Readiness
+           sub-meter (deterministic, /api/sentiment-signals) + AI Coach
+           recommendations (from /sentiment/recommendations.md). Shown when
+           state.viewInvestability is true; hidden otherwise. Investor scope
+           is gated server-side (api/sentiment-score returns 403) so this
+           section never renders for them.                                  -->
+      <section class="hub-zone hub-zone-investability" id="zone-investability" hidden>
+        <div class="hub-zone-header">
+          <div class="hub-zone-header-eyebrow">Investability</div>
+          <h2 class="hub-zone-header-title">Venture Sentiment Score</h2>
+          <p class="hub-zone-header-lede">Where the venture stands against an investor's published rubric. Rated by the studio lead. Refreshed at each gate and before every investor share.</p>
+        </div>
+
+        <!-- Rendered into via renderInvestability(payload) — see JS below. -->
+        <div class="investability-body" id="investability-body">
+          <div class="investability-empty">
+            <div class="spinner"></div>
+            <p>Loading score…</p>
+          </div>
+        </div>
+      </section>
+
       <div class="container" id="hub-list-body"></div>
     </div>
 
@@ -2365,6 +2665,13 @@ const state = {
   // Sidebar layout (2026-05-27): null = Overview / Status mode (default
   // landing). When set to a hub slug, the main pane renders only that hub.
   viewHub: null,
+  // Investability tab (2026-06-01): top-level surface alongside Overview,
+  // renders the Venture Sentiment Score + Diligence Readiness + AI Coach
+  // recommendations. When true, hides #zone-status and renders #zone-investability.
+  viewInvestability: false,
+  // Cached Sentiment Score payload (fetched on demand when the Investability
+  // tab is first opened; refreshed on subsequent navigations). Null until first fetch.
+  sentimentPayload: null,
 };
 
 const els = {
@@ -2379,6 +2686,8 @@ const els = {
   projectOverview: document.getElementById('project-overview'),
   phaseTimeline: document.getElementById('phase-timeline'),
   zoneStatus: document.getElementById('zone-status'),
+  zoneInvestability: document.getElementById('zone-investability'),
+  investabilityBody: document.getElementById('investability-body'),
   phaseTimelineSteps: document.getElementById('phase-timeline-steps'),
   outstandingBanner: document.getElementById('outstanding-banner'),
   outstandingBannerCount: document.getElementById('outstanding-banner-count'),
@@ -2578,14 +2887,29 @@ function renderPhaseTimeline(hubs) {
 
 // Project Status zone wrapper reveals/hides based on whether any of its
 // four child widgets has content. Called from each child's show/hide path.
+// When state.viewInvestability is true OR state.viewHub is set, the zone
+// is forced hidden regardless of child widget visibility (a single
+// authoritative view is shown at a time).
 function syncStatusZoneVisibility() {
   if (!els.zoneStatus) return;
+  if (state.viewInvestability || state.viewHub) {
+    els.zoneStatus.hidden = true;
+    return;
+  }
   const anyVisible =
     (els.phaseTimeline && !els.phaseTimeline.hidden) ||
     (els.outstandingBanner && !els.outstandingBanner.hidden) ||
     (els.nextAction && !els.nextAction.hidden) ||
     (els.projectOverview && !els.projectOverview.hidden);
   els.zoneStatus.hidden = !anyVisible;
+}
+
+// Investability zone visibility — shown ONLY when state.viewInvestability
+// is true. Independent of zone-status (they're sibling top-level surfaces
+// gated by sidebar nav state).
+function syncInvestabilityZoneVisibility() {
+  if (!els.zoneInvestability) return;
+  els.zoneInvestability.hidden = !state.viewInvestability;
 }
 
 // ── Outstanding Input Banner derivation ────────────────────────────────
@@ -2961,6 +3285,28 @@ async function loadList() {
   // Category filter is still computed so the empty/empty case still works.
   const dataRoomHubs = state.hubs.filter(h => (h.category || (h.alwaysVisible ? 'deliverable' : 'data-room')) === 'data-room');
   const deliverableHubs = state.hubs.filter(h => (h.category || (h.alwaysVisible ? 'deliverable' : 'data-room')) === 'deliverable');
+
+  // Investability mode — render the Sentiment Score tab. Hide every status
+  // widget + every hub. Sidebar renders so the user can navigate away.
+  if (state.viewInvestability) {
+    els.phaseTimeline.hidden = true;
+    els.outstandingBanner.hidden = true;
+    els.nextAction.hidden = true;
+    els.projectOverview.hidden = true;
+    syncStatusZoneVisibility();
+    syncInvestabilityZoneVisibility();
+    // Hide hub list, show the Investability zone (handled by render above).
+    els.heroEyebrow.textContent = 'Investability';
+    els.heroTitle.textContent = state.client.name;
+    els.heroSubtitle.textContent = state.client.oneLiner || '';
+    els.heroMetrics.innerHTML = '';
+    renderSidebar();
+    navigate('hub-list');
+    return;
+  }
+
+  // Make sure the Investability zone is hidden when we navigate AWAY from it.
+  if (els.zoneInvestability) els.zoneInvestability.hidden = true;
 
   if (state.viewHub) {
     // Hub detail mode — render JUST this hub. Hide every status widget so
@@ -3904,12 +4250,28 @@ function renderSidebar() {
     `;
   };
 
+  const onOverview = state.viewHub == null && !state.viewInvestability;
+  const onInvestability = state.viewInvestability === true;
   const statusItem = `
-    <a class="sidebar-item ${state.viewHub == null ? 'active' : ''}"
+    <a class="sidebar-item ${onOverview ? 'active' : ''}"
        role="link" tabindex="0" data-status="1"
-       aria-current="${state.viewHub == null ? 'page' : 'false'}">
+       aria-current="${onOverview ? 'page' : 'false'}">
       <span class="sidebar-item-lead" aria-hidden>▸</span>
       <span class="sidebar-item-text">Overview</span>
+    </a>
+  `;
+  // Investability tab — sibling to Overview. Operator + client scope only;
+  // the API is server-side scope-gated so investor scope never sees a payload
+  // even if the sidebar item were clicked, but we hide the item entirely for
+  // investors so the UI matches the auth model.
+  const investabilityItem = state.client && state.client.scope === 'investor'
+    ? ''
+    : `
+    <a class="sidebar-item ${onInvestability ? 'active' : ''}"
+       role="link" tabindex="0" data-investability="1"
+       aria-current="${onInvestability ? 'page' : 'false'}">
+      <span class="sidebar-item-lead" aria-hidden>▸</span>
+      <span class="sidebar-item-text">Investability</span>
     </a>
   `;
 
@@ -3917,6 +4279,7 @@ function renderSidebar() {
     <div class="sidebar-group">
       <div class="sidebar-group-label">Status</div>
       ${statusItem}
+      ${investabilityItem}
     </div>
     ${dataRoomHubs.length > 0 ? `
       <div class="sidebar-group">
@@ -3930,10 +4293,14 @@ function renderSidebar() {
       </div>` : ''}
   `;
 
-  // Wire click handlers — handles status link + hub links + locked items.
+  // Wire click handlers — handles status link + investability link + hub links + locked items.
   nav.querySelectorAll('[data-status="1"]').forEach((el) => {
     el.addEventListener('click', (e) => { e.preventDefault(); navigateToStatus(); });
     el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigateToStatus(); } });
+  });
+  nav.querySelectorAll('[data-investability="1"]').forEach((el) => {
+    el.addEventListener('click', (e) => { e.preventDefault(); navigateToInvestability(); });
+    el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigateToInvestability(); } });
   });
   nav.querySelectorAll('[data-hub]').forEach((el) => {
     const handler = (e) => {
@@ -3987,8 +4354,426 @@ function showLockTooltip(anchor, message) {
 
 // Default landing = Overview. Renders the Status zone widgets; hubs are
 // reached via sidebar clicks, not stacked on the landing.
+// =============================================================================
+// Investability Tab — Venture Sentiment Score renderer
+// =============================================================================
+// Renders the full Investability tab: hero score card, dimension breakdown,
+// Diligence Readiness chip + expandable breakdown, optional radar chart,
+// and the Coach recommendations panel. Driven by /api/sentiment-score.
+//
+// STATE HANDLING
+//   payload.state can be:
+//     'not-yet-rated'  → first-rating prompt (engagement template not yet authored)
+//     'invalid'        → schema validation errors shown to operator
+//     'rated'          → full hero + dimensions + diligence + recommendations
+//
+// The renderer is intentionally a pure-function-of-payload — no side-effects,
+// no global state writes — so it can be called from multiple entry points
+// (initial navigateToInvestability, refresh after a rating edit, etc.).
+// =============================================================================
+
+async function fetchAndRenderInvestability() {
+  if (!els.investabilityBody) return;
+  syncInvestabilityZoneVisibility();
+  try {
+    const r = await api('/api/sentiment-score');
+    if (r.status === 401) { window.location.href = '/portal'; return; }
+    if (r.status === 403) {
+      els.investabilityBody.innerHTML = renderInvestabilityForbidden();
+      return;
+    }
+    const payload = r.body;
+    state.sentimentPayload = payload;
+    renderInvestability(payload);
+  } catch (e) {
+    console.error('[investability] fetch failed:', e);
+    els.investabilityBody.innerHTML = renderInvestabilityError(e);
+  }
+}
+
+function renderInvestabilityForbidden() {
+  return `
+    <div class="vss-state-empty">
+      <div class="vss-state-empty-icon">🔒</div>
+      <h3 class="vss-state-empty-title">Not available on this scope</h3>
+      <p class="vss-state-empty-body">The Venture Sentiment Score is available on operator and client scopes. Investor view will roll out in a later release.</p>
+    </div>`;
+}
+
+function renderInvestabilityError(err) {
+  return `
+    <div class="vss-state-empty vss-state-invalid">
+      <div class="vss-state-empty-icon">!</div>
+      <h3 class="vss-state-empty-title">Could not load the Sentiment Score</h3>
+      <p class="vss-state-empty-body">Something went wrong fetching the score. This is usually temporary.</p>
+      <pre>${esc(String(err && err.message || err))}</pre>
+    </div>`;
+}
+
+function renderInvestability(payload) {
+  if (!els.investabilityBody) return;
+
+  // ── 'not-yet-rated' state — no /sentiment/score.md committed yet ───────
+  if (payload.state === 'not-yet-rated') {
+    const diligence = renderDiligenceChip(payload.diligenceReadiness, payload.diligenceBreakdown);
+    els.investabilityBody.innerHTML = `
+      ${diligence}
+      <div class="vss-state-empty">
+        <div class="vss-state-empty-icon">◯</div>
+        <h3 class="vss-state-empty-title">Sentiment Score pending</h3>
+        <p class="vss-state-empty-body">
+          ${esc(payload.message || 'First rating happens at the end of Phase 1, against the published rubric.')}
+        </p>
+      </div>
+    `;
+    return;
+  }
+
+  // ── 'invalid' state — score.md fails schema validation ────────────────
+  if (payload.state === 'invalid') {
+    const errsHtml = (payload.errors || []).map((e) => `<li>${esc(e)}</li>`).join('');
+    els.investabilityBody.innerHTML = `
+      <div class="vss-state-empty vss-state-invalid">
+        <div class="vss-state-empty-icon">!</div>
+        <h3 class="vss-state-empty-title">Score file has validation errors</h3>
+        <p class="vss-state-empty-body">${esc(payload.error || 'The /sentiment/score.md file did not pass schema validation.')}</p>
+        ${errsHtml ? `<pre><ul>${errsHtml}</ul></pre>` : ''}
+        ${payload.detail ? `<pre>${esc(payload.detail)}</pre>` : ''}
+      </div>`;
+    return;
+  }
+
+  // ── 'rated' state — render the full view ──────────────────────────────
+  const sc = payload.score;
+  const dims = payload.dimensions || [];
+  const recs = payload.recommendations || '';
+
+  // Sparkline placeholder — for v1 we render a single-point sparkline if
+  // there's no rating history yet. Future: the API can return a `history`
+  // array from git log; the sparkline renders all dots.
+  const sparklineSvg = renderSparkline(sc.composite ? [sc.composite] : []);
+
+  const diligenceChipHtml = renderDiligenceChip(payload.diligenceReadiness, payload.diligenceBreakdown);
+
+  const capBanner = sc.hardCapTriggered
+    ? `<div class="vss-cap-banner">
+         <span class="vss-cap-banner-title">Hard-cap applied:</span>
+         Foundational dimension below 40 — ${esc(sc.hardCapReason || 'see breakdown below')}.
+         The headline number cannot launder a foundational weakness behind aggregation.
+       </div>`
+    : '';
+
+  const pendingNote = sc.pendingCount > 0
+    ? `<div class="vss-band-label" style="margin-top: 4px;">
+         <em>${sc.pendingCount} of 6 dimensions pending — score is computed across the ${sc.ratedCount} rated.</em>
+       </div>`
+    : '';
+
+  // ── Hero ─────────────────────────────────────────────────────────────
+  const composite = sc.composite;
+  const compositeHtml = composite == null
+    ? `<div class="vss-hero-number unrated">— </div>`
+    : `<div class="vss-hero-number">${composite}<span class="vss-hero-number-suffix"> / 100</span></div>`;
+
+  const heroHtml = `
+    <div class="vss-hero">
+      ${compositeHtml}
+      <div class="vss-hero-body">
+        <div class="vss-band" data-band="${esc(sc.band || 'unrated')}">${esc(sc.bandLabel || 'No rating yet')}</div>
+        ${pendingNote}
+        ${sc.ratedBy ? `<div class="vss-attribution">Rated by ${esc(sc.ratedBy)}${sc.ratedAt ? ' · ' + formatDate(sc.ratedAt) : ''}${sc.profile ? ' · ' + esc(sc.profile) + ' profile' : ''}</div>` : ''}
+      </div>
+      <div class="vss-sparkline">${sparklineSvg}</div>
+    </div>
+  `;
+
+  // ── Dimensions ───────────────────────────────────────────────────────
+  const dimsHtml = dims.length === 0 ? '' : `
+    <div class="vss-dimensions">
+      <div class="vss-dimensions-header">
+        <div class="vss-dimensions-title">Dimension breakdown</div>
+        <div class="vss-dimensions-toggles">
+          <button type="button" class="vss-toggle-btn" id="vss-toggle-radar">View radar ▾</button>
+          <button type="button" class="vss-toggle-btn" id="vss-toggle-rationale">View rationale ▾</button>
+        </div>
+      </div>
+      ${dims.map((d) => renderDimensionRow(d)).join('')}
+      <div class="vss-radar-wrap" id="vss-radar-wrap">
+        ${renderRadar(dims)}
+      </div>
+    </div>
+  `;
+
+  // ── Recommendations ──────────────────────────────────────────────────
+  const recsHtml = `
+    <div class="vss-recs">
+      <div class="vss-recs-header">
+        <div class="vss-recs-title">Recommendations to lift the score</div>
+        <div class="vss-recs-meta">${recs ? 'From <code>/sentiment/recommendations.md</code>' : ''}</div>
+      </div>
+      ${recs
+        ? `<div class="vss-recs-content">${md.render(stripFrontmatter(recs))}</div>`
+        : `<div class="vss-recs-empty">
+             No Coach recommendations yet. Run <code>npm run sentiment:coach</code>
+             from the engagement repo to generate ranked actions, then commit
+             <code>/sentiment/recommendations.md</code>.
+           </div>`}
+    </div>
+  `;
+
+  els.investabilityBody.innerHTML = `
+    ${diligenceChipHtml}
+    ${capBanner}
+    ${heroHtml}
+    ${dimsHtml}
+    ${recsHtml}
+  `;
+
+  // Wire interactive toggles after rendering
+  wireInvestabilityInteractions();
+}
+
+function renderDimensionRow(d) {
+  const score = d.score;
+  const isPending = d.pending;
+  const band = isPending
+    ? 'pending'
+    : score >= 80 ? 'approved' : score >= 65 ? 'feedback' : 'rework';
+  const fillPct = isPending ? 0 : score;
+  const numHtml = isPending
+    ? `<div class="vss-dim-row-num pending">pending</div>`
+    : `<div class="vss-dim-row-num">${score}</div>`;
+  const rationaleHtml = isPending
+    ? ''
+    : d.rationale
+      ? `<div class="vss-dim-row-rationale">${esc(d.rationale)}</div>`
+      : d.rationaleRequired
+        ? `<div class="vss-dim-row-rationale vss-dim-row-rationale-missing">Rationale required for scores below 50. Edit <code>/sentiment/score.md</code>.</div>`
+        : `<div class="vss-dim-row-rationale"><em>No rationale provided. Recommended at scores below 70.</em></div>`;
+  return `
+    <div class="vss-dim-row" data-dim="${esc(d.key)}">
+      <div class="vss-dim-row-label">${esc(d.name)}</div>
+      <div class="vss-dim-row-bar">
+        <div class="vss-dim-row-bar-fill" data-band="${band}" style="width: ${fillPct}%"></div>
+      </div>
+      ${numHtml}
+      ${rationaleHtml}
+    </div>`;
+}
+
+function renderDiligenceChip(readiness, breakdown) {
+  if (readiness == null) return '';
+  const band = readiness >= 75 ? 'approved' : readiness >= 50 ? 'feedback' : 'rework';
+  // The breakdown is rendered inside a sibling expandable block.
+  const breakdownRows = breakdown ? Object.entries(breakdown).map(([key, sig]) => {
+    if (!sig || typeof sig.score !== 'number') return '';
+    const sigBand = sig.score >= 75 ? 'approved' : sig.score >= 50 ? 'feedback' : 'rework';
+    const label = humanSignalName(key);
+    return `
+      <div class="vss-diligence-row">
+        <div class="vss-diligence-row-label">${esc(label)}</div>
+        <div class="vss-diligence-row-bar"><div style="width: ${sig.score}%; background: var(--status-${sigBand}-fg);"></div></div>
+        <div class="vss-diligence-row-num">${sig.score}%</div>
+        ${sig.breakdown ? `<div class="vss-diligence-breakdown-sub" style="grid-column: 1 / -1;">${esc(sig.breakdown)}</div>` : ''}
+      </div>`;
+  }).join('') : '';
+
+  return `
+    <div style="display: flex; justify-content: flex-end; margin-top: -12px;">
+      <div class="vss-diligence-chip" data-band="${band}" id="vss-diligence-chip">
+        <span class="vss-diligence-chip-label">Diligence Readiness</span>
+        <span class="vss-diligence-chip-num">${readiness}%</span>
+        <span class="vss-diligence-expander">▾</span>
+      </div>
+    </div>
+    <div class="vss-diligence-breakdown" id="vss-diligence-breakdown">
+      ${breakdownRows}
+    </div>
+  `;
+}
+
+function humanSignalName(key) {
+  const map = {
+    gatesClosed: 'Gates Closed',
+    provocationsResolved: 'Provocations Resolved',
+    financialsComplete: 'Financials Complete',
+    feedbackAddressed: 'Feedback Addressed',
+    paymentsCurrent: 'Payments Current',
+  };
+  return map[key] || key;
+}
+
+// ── Inline SVG radar chart — 6-axis polygon, no library ────────────────────
+function renderRadar(dims) {
+  // Radar shows ALL 6 dimensions in their canonical order so the polygon
+  // shape is stable across renders. Pending dimensions render at 0 with a
+  // dashed-axis indicator.
+  const CANONICAL = ['marketStrength', 'problemSolution', 'financialDefensibility', 'strategicResolution', 'executionTangibility', 'evidenceIntegrity'];
+  const dimByKey = Object.fromEntries(dims.map((d) => [d.key, d]));
+  const ordered = CANONICAL.map((k) => dimByKey[k]).filter(Boolean);
+  if (ordered.length < 3) return '';
+
+  const SIZE = 340;
+  const CX = SIZE / 2;
+  const CY = SIZE / 2;
+  const R = 130;          // radius for score=100
+  const LABEL_R = 158;    // label distance from centre
+  const N = ordered.length;
+  const angleStep = (2 * Math.PI) / N;
+  // Start at top (12 o'clock) and go clockwise
+  const angleAt = (i) => -Math.PI / 2 + i * angleStep;
+
+  // ── Background grid: concentric polygons at 25/50/75/100 ────────────
+  const gridLevels = [0.25, 0.5, 0.75, 1.0];
+  const gridPolys = gridLevels.map((lv) => {
+    const pts = ordered.map((_, i) => {
+      const a = angleAt(i);
+      return `${CX + Math.cos(a) * R * lv},${CY + Math.sin(a) * R * lv}`;
+    }).join(' ');
+    return `<polygon class="vss-radar-axis-line" points="${pts}" />`;
+  }).join('');
+
+  // ── Axis lines from centre to outermost vertex ──────────────────────
+  const axisLines = ordered.map((_, i) => {
+    const a = angleAt(i);
+    return `<line class="vss-radar-axis-line" x1="${CX}" y1="${CY}" x2="${CX + Math.cos(a) * R}" y2="${CY + Math.sin(a) * R}" />`;
+  }).join('');
+
+  // ── Data polygon ───────────────────────────────────────────────────
+  const dataPoints = ordered.map((d, i) => {
+    const score = d.pending ? 0 : d.score;
+    const a = angleAt(i);
+    return `${CX + Math.cos(a) * R * (score / 100)},${CY + Math.sin(a) * R * (score / 100)}`;
+  }).join(' ');
+
+  // ── Data points (dots) ──────────────────────────────────────────────
+  const dots = ordered.map((d, i) => {
+    if (d.pending) return '';
+    const a = angleAt(i);
+    const score = d.score;
+    return `<circle class="vss-radar-dot" cx="${CX + Math.cos(a) * R * (score / 100)}" cy="${CY + Math.sin(a) * R * (score / 100)}" r="3" />`;
+  }).join('');
+
+  // ── Axis labels — short names + score ──────────────────────────────
+  const SHORT = {
+    marketStrength: 'Market',
+    problemSolution: 'Problem',
+    financialDefensibility: 'Financial',
+    strategicResolution: 'Strategic',
+    executionTangibility: 'Execution',
+    evidenceIntegrity: 'Evidence',
+  };
+  const labels = ordered.map((d, i) => {
+    const a = angleAt(i);
+    const x = CX + Math.cos(a) * LABEL_R;
+    const y = CY + Math.sin(a) * LABEL_R;
+    const text = SHORT[d.key] || d.key;
+    const scoreText = d.pending ? '—' : String(d.score);
+    let anchor = 'middle';
+    if (Math.cos(a) > 0.3) anchor = 'start';
+    else if (Math.cos(a) < -0.3) anchor = 'end';
+    let dy = 0;
+    if (Math.sin(a) > 0.3) dy = 12;
+    else if (Math.sin(a) < -0.3) dy = -6;
+    return `<text class="vss-radar-axis-label" x="${x}" y="${y + dy}" text-anchor="${anchor}">${esc(text)} ${esc(scoreText)}</text>`;
+  }).join('');
+
+  return `
+    <svg class="vss-radar" viewBox="0 0 ${SIZE} ${SIZE}" role="img" aria-label="Sentiment Score radar — ${ordered.map((d) => `${SHORT[d.key]} ${d.score ?? 'pending'}`).join(', ')}">
+      ${gridPolys}
+      ${axisLines}
+      <polygon class="vss-radar-poly-fill" points="${dataPoints}" />
+      <polygon class="vss-radar-poly-stroke" points="${dataPoints}" />
+      ${dots}
+      ${labels}
+    </svg>
+  `;
+}
+
+// ── Single-point sparkline (placeholder for v1) ─────────────────────────────
+function renderSparkline(values) {
+  if (!values || values.length === 0) return '';
+  const W = 160, H = 40, PAD = 4;
+  if (values.length === 1) {
+    // Single point — draw a small dot only
+    return `
+      <svg viewBox="0 0 ${W} ${H}">
+        <circle cx="${W - PAD - 2}" cy="${H / 2}" r="3" fill="var(--primary)" />
+      </svg>`;
+  }
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = Math.max(1, max - min);
+  const xs = (i) => PAD + (i * (W - 2 * PAD)) / (values.length - 1);
+  const ys = (v) => H - PAD - ((v - min) * (H - 2 * PAD)) / range;
+  const path = values.map((v, i) => `${i === 0 ? 'M' : 'L'} ${xs(i)} ${ys(v)}`).join(' ');
+  const last = `${xs(values.length - 1)},${ys(values[values.length - 1])}`;
+  return `
+    <svg viewBox="0 0 ${W} ${H}">
+      <path d="${path}" fill="none" stroke="var(--primary)" stroke-width="1.5" />
+      <circle cx="${last.split(',')[0]}" cy="${last.split(',')[1]}" r="3" fill="var(--primary)" />
+    </svg>`;
+}
+
+// ── Interaction wiring (after render) ──────────────────────────────────────
+function wireInvestabilityInteractions() {
+  // Diligence chip → expand/collapse breakdown
+  const chip = document.getElementById('vss-diligence-chip');
+  const bd = document.getElementById('vss-diligence-breakdown');
+  if (chip && bd) {
+    chip.addEventListener('click', () => {
+      bd.classList.toggle('open');
+      const expander = chip.querySelector('.vss-diligence-expander');
+      if (expander) expander.textContent = bd.classList.contains('open') ? '▴' : '▾';
+    });
+  }
+  // Radar toggle
+  const radarBtn = document.getElementById('vss-toggle-radar');
+  const radarWrap = document.getElementById('vss-radar-wrap');
+  if (radarBtn && radarWrap) {
+    radarBtn.addEventListener('click', () => {
+      radarWrap.classList.toggle('open');
+      radarBtn.classList.toggle('active');
+      radarBtn.textContent = radarWrap.classList.contains('open') ? 'Hide radar ▴' : 'View radar ▾';
+    });
+  }
+  // Rationale toggle — show/hide all dimension rationale blocks at once
+  const ratBtn = document.getElementById('vss-toggle-rationale');
+  if (ratBtn) {
+    ratBtn.addEventListener('click', () => {
+      const rows = document.querySelectorAll('.vss-dim-row');
+      const anyExpanded = Array.from(rows).some((r) => r.classList.contains('expanded'));
+      rows.forEach((r) => r.classList.toggle('expanded', !anyExpanded));
+      ratBtn.classList.toggle('active', !anyExpanded);
+      ratBtn.textContent = anyExpanded ? 'View rationale ▾' : 'Hide rationale ▴';
+    });
+  }
+}
+
+// Strip YAML frontmatter from markdown (used for recommendations.md which
+// may include frontmatter metadata for the Coach run).
+function stripFrontmatter(md) {
+  if (!md || !md.startsWith('---')) return md;
+  const end = md.indexOf('\n---', 3);
+  if (end === -1) return md;
+  return md.slice(end + 4).replace(/^\s*\n/, '');
+}
+
+function formatDate(iso) {
+  try {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
+    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  } catch (_e) { return iso; }
+}
+
+// =============================================================================
+// End Investability Tab renderer
+// =============================================================================
+
 function navigateToStatus() {
   state.viewHub = null;
+  state.viewInvestability = false;
   closeMobileSidebar();
   navigate('hub-list');
   // Re-run the render. loadList re-fetches the list (small + cached) and
@@ -3998,6 +4783,7 @@ function navigateToStatus() {
 
 function navigateToHub(hubSlug) {
   state.viewHub = hubSlug;
+  state.viewInvestability = false;
   closeMobileSidebar();
   navigate('hub-list');
   loadList();
@@ -4006,8 +4792,26 @@ function navigateToHub(hubSlug) {
   if (main) main.scrollTo ? main.scrollTo({ top: 0 }) : window.scrollTo(0, 0);
 }
 
+function navigateToInvestability() {
+  state.viewHub = null;
+  state.viewInvestability = true;
+  closeMobileSidebar();
+  navigate('hub-list');
+  // Hide all the standard zones immediately so the user doesn't see flicker
+  // while the score fetches. The renderInvestability call below populates
+  // #investability-body and toggles its visibility.
+  loadList();
+  if (els.investabilityBody) {
+    els.investabilityBody.innerHTML = '<div class="investability-empty"><div class="spinner"></div><p>Loading score…</p></div>';
+  }
+  fetchAndRenderInvestability();
+  const main = document.getElementById('main');
+  if (main) main.scrollTo ? main.scrollTo({ top: 0 }) : window.scrollTo(0, 0);
+}
+
 window.navigateToHub = navigateToHub;
 window.navigateToStatus = navigateToStatus;
+window.navigateToInvestability = navigateToInvestability;
 
 // Mobile sidebar toggle
 function openMobileSidebar() {

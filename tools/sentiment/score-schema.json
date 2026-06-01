@@ -1,0 +1,78 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "VentureSentimentScore",
+  "description": "Operator-authored rating against the published Venture Sentiment Score rubric. Lives at /sentiment/score.md (YAML frontmatter) in each engagement repo. Validated server-side by tools/sentiment/validate.js + the api/sentiment-rate.js endpoint. Authoritative source for the headline VSS number rendered on the portal Investability tab.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "profile", "ratedBy", "ratedAt", "dimensions", "weights"],
+  "properties": {
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Schema version. Increments on breaking shape changes; the validator branches on this. v1 = initial 6-dimension rubric."
+    },
+    "profile": {
+      "type": "string",
+      "enum": ["preSeed", "seed", "seriesA"],
+      "description": "Funding-stage profile. Drives the default weighting blend if weights are omitted; surfaces in the portal hero as a contextual tag."
+    },
+    "ratedBy": {
+      "type": "string",
+      "minLength": 2,
+      "description": "Operator who authored this rating. Stamped on the portal hero. Provides the editorial-authority signal to investors (who rated this; against what rubric)."
+    },
+    "ratedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of the rating. Drives the sparkline ordering when multiple ratings exist in git history."
+    },
+    "dimensions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["marketStrength", "problemSolution", "financialDefensibility", "strategicResolution", "executionTangibility", "evidenceIntegrity"],
+      "properties": {
+        "marketStrength": { "$ref": "#/definitions/dimension" },
+        "problemSolution": { "$ref": "#/definitions/dimension" },
+        "financialDefensibility": { "$ref": "#/definitions/dimension" },
+        "strategicResolution": { "$ref": "#/definitions/dimension" },
+        "executionTangibility": { "$ref": "#/definitions/dimension" },
+        "evidenceIntegrity": { "$ref": "#/definitions/dimension" }
+      },
+      "description": "The 6 dimension scores. Each may be null when not-yet-ratable (e.g. Financial Defensibility before Phase 2.5). A null score is rendered as 'pending' on the portal and excluded from the composite. The validator rejects empty/missing keys but accepts null scores."
+    },
+    "weights": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["marketStrength", "problemSolution", "financialDefensibility", "strategicResolution", "executionTangibility", "evidenceIntegrity"],
+      "properties": {
+        "marketStrength": { "type": "number", "minimum": 0, "maximum": 1 },
+        "problemSolution": { "type": "number", "minimum": 0, "maximum": 1 },
+        "financialDefensibility": { "type": "number", "minimum": 0, "maximum": 1 },
+        "strategicResolution": { "type": "number", "minimum": 0, "maximum": 1 },
+        "executionTangibility": { "type": "number", "minimum": 0, "maximum": 1 },
+        "evidenceIntegrity": { "type": "number", "minimum": 0, "maximum": 1 }
+      },
+      "description": "Dimension weights for the composite calculation. Must sum to 1.0 ± 0.01. The operator may override profile defaults by editing these directly."
+    }
+  },
+  "definitions": {
+    "dimension": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["score"],
+      "properties": {
+        "score": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "maximum": 100,
+          "description": "0-100 rating against the published rubric. Null indicates the dimension is not yet ratable (e.g. before the engagement phase that produces the required artefacts)."
+        },
+        "rationale": {
+          "type": ["string", "null"],
+          "minLength": 0,
+          "description": "One-paragraph operator rationale citing rubric clauses + evidence files. MANDATORY when score < 50 (validator enforces). Strongly recommended otherwise."
+        }
+      }
+    }
+  }
+}
