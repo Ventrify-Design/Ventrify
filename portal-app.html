@@ -1169,10 +1169,10 @@
       max-width: 100%;
       border: 0;
       background: transparent;
-      box-shadow:
-        0 8px 16px rgba(0,0,0,0.25),
-        0 32px 64px rgba(0,0,0,0.30);
-      border-radius: 8px;
+      /* No box-shadow — the iframe boundary is rectangular but the iPhone
+         device renders as a pill silhouette, so a shadow on the iframe
+         creates a visible rectangle outline around the device. The gradient
+         backdrop already provides enough contrast on its own. */
     }
     @media (max-width: 640px) {
       .appetize-iframe-shell { padding: 28px 12px; }
