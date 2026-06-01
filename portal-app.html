@@ -3667,8 +3667,12 @@ function renderAppetizeEmbedHub(hub) {
   //   • autoplay=false — session paused until the visitor taps the screen.
   //     Conserves the Starter-tier monthly minute pool.
   //   • deviceColor=black — bezel colour.
+  //   • appearance=dark — forces iOS system appearance to Dark Mode at
+  //     session start. The MoneyGym app respects iOS appearance settings,
+  //     so the dark theme renders consistently. Investors never see the
+  //     light-mode default which clashes with the navy portal backdrop.
   const embedUrl = `https://appetize.io/embed/${encodeURIComponent(key)}`
-    + `?device=iphone15pro&osVersion=17.0&scale=100&autoplay=false&deviceColor=black`;
+    + `?device=iphone15pro&osVersion=17.0&scale=100&autoplay=false&deviceColor=black&appearance=dark`;
   return `
     <div class="appetize-embed-wrap">
       ${hub.description ? `<p class="appetize-embed-desc">${esc(hub.description)}</p>` : ''}
