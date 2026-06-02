@@ -491,6 +491,7 @@ const HUBS = [
     pdfBaseName: 'sow',
     description: 'The signed Statement of Work — formal scope agreement covering deliverables, tier, payment milestones, and acceptance.',
     placeholderText: 'SOW not yet generated. Run npm run pdf:sow in the engagement repo after Gate 2.5 sign-off, then push — the PDF appears here.',
+    sections: [],
     gate: null,
   },
   // 3. Welcome Pack — the Ventrify-branded onboarding document (generated
@@ -504,6 +505,7 @@ const HUBS = [
     pdfBaseName: 'welcome-pack',
     description: 'The Ventrify-branded onboarding pack — what we heard from you, three market observations, three hypotheses we will test, and the deliverables and payment schedule for the engagement.',
     placeholderText: 'Welcome Pack not yet generated. Run npm run pdf:welcome in the engagement repo, then push — the PDF appears here.',
+    sections: [],
     gate: null,
   },
   // 4. Tier Scope — server reads brief.md, extracts the tier, returns
@@ -517,6 +519,7 @@ const HUBS = [
     surfaceType: 'tier-scope',
     description: 'What is and isn\'t included at your engagement tier. Tier-to-deliverable matrix sourced from brief.md.',
     placeholderText: 'Tier not yet set. Update the **Tier:** field in brief.md (one of Launchpad / Venture / Venture Pro) and push — the matrix appears here.',
+    sections: [],
     gate: null,
   },
   // 5. Engagement Timeline — v1 renders STATUS.md as a markdown hub.

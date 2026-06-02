@@ -144,7 +144,11 @@ module.exports = async function handler(req, res) {
       console.error(`[portal-list] readProvocations(${hub.dir}) failed:`, e.message);
     }
 
-    const sections = await Promise.all(hub.sections.map(async (s) => {
+    // Defensive: surface-only hubs (preview-link / appetize-embed /
+    // deck-deliverable / pdf-binary / tier-scope) have no markdown sections.
+    // A missing sections array used to throw and tank the whole response;
+    // default to [] so one mis-declared hub can't break the portal payload.
+    const sections = await Promise.all((hub.sections || []).map(async (s) => {
       const path = s.file.startsWith('../')
         ? s.file.replace('../', '')
         : `${hub.dir}/${s.file}`;
