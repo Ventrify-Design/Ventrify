@@ -1561,6 +1561,93 @@
     }
     .deck-history-actions a:hover { text-decoration: underline; }
 
+    /* ── Tier Scope surface (Foundations) ────────────────────────────── */
+    .tier-scope { display: flex; flex-direction: column; gap: 24px; }
+    .tier-hero {
+      padding: 28px 30px; border-radius: var(--radius-card);
+      background: linear-gradient(135deg, var(--surface-card) 0%, rgba(0,0,0,0.02) 100%);
+      border: 1px solid var(--surface-border, rgba(0,0,0,0.04));
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .tier-hero-eyebrow {
+      font-family: var(--font-mono); font-size: 11px; font-weight: 600;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .tier-hero-name {
+      font-family: var(--font-display); font-size: 38px; font-weight: 700;
+      letter-spacing: -0.02em; line-height: 1.05;
+      color: var(--primary);
+    }
+    .tier-hero-meta {
+      font-family: var(--font-mono); font-size: 13px;
+      color: var(--text-strong); letter-spacing: 0.04em;
+    }
+    .tier-hero-desc {
+      margin-top: 8px; font-size: 14px; line-height: 1.5;
+      color: var(--text-muted); max-width: 60ch;
+    }
+    .tier-matrix-wrap {
+      background: var(--surface-card); border-radius: var(--radius-card);
+      border: 1px solid var(--surface-border, rgba(0,0,0,0.04));
+      overflow: hidden;
+    }
+    .tier-matrix {
+      width: 100%; border-collapse: collapse;
+      font-size: 13.5px;
+    }
+    .tier-matrix th, .tier-matrix td {
+      padding: 12px 16px; text-align: left;
+      border-bottom: 1px solid var(--surface-border, rgba(0,0,0,0.04));
+    }
+    .tier-matrix tr:last-child td { border-bottom: none; }
+    .tier-matrix thead th {
+      background: rgba(0,0,0,0.02);
+      font-family: var(--font-mono); font-size: 11px;
+      font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .tier-matrix th.tier-col, .tier-matrix td.tier-col {
+      text-align: center; width: 120px;
+    }
+    .tier-matrix th.tier-col-active, .tier-matrix td.tier-col-active {
+      background: rgba(0,0,0,0.025);
+    }
+    .tier-matrix th.tier-col-active { color: var(--text-dark); }
+    .tier-col-tag {
+      display: inline-block; margin-left: 4px;
+      padding: 1px 6px; border-radius: var(--radius-pill);
+      background: var(--primary); color: white;
+      font-size: 9px; font-weight: 700; letter-spacing: 0.08em;
+      vertical-align: middle;
+    }
+    .tier-row-label { color: var(--text-strong); font-weight: 500; }
+    .tier-cell-yes {
+      color: var(--status-approved-fg);
+      font-weight: 700; font-size: 15px;
+    }
+    .tier-cell-yes small {
+      display: block; margin-top: 2px;
+      font-family: var(--font-mono); font-size: 9.5px;
+      font-weight: 400; color: var(--text-muted);
+      letter-spacing: 0.03em; text-transform: lowercase;
+    }
+    .tier-cell-no { color: var(--text-muted); font-weight: 400; }
+    .tier-footer {
+      padding: 14px 18px; border-radius: 8px;
+      background: rgba(0,0,0,0.025); color: var(--text-strong);
+      font-size: 13.5px; line-height: 1.5;
+    }
+    .tier-footer strong {
+      color: var(--primary); font-weight: 700;
+      font-family: var(--font-display); font-size: 16px;
+    }
+    @media (max-width: 768px) {
+      .tier-matrix th, .tier-matrix td { padding: 10px 8px; font-size: 12.5px; }
+      .tier-matrix th.tier-col, .tier-matrix td.tier-col { width: auto; }
+      .tier-hero-name { font-size: 30px; }
+    }
+
     /* ── Status badge (per-section, per-hub) ─────────────────────────── */
     .status-badge {
       display: inline-flex; align-items: center; gap: 6px;
@@ -3524,6 +3611,8 @@ async function loadList() {
   // that one hub in the main pane + hide the status widgets above. When
   // null, render NO hubs (Status-only landing) and show the status zone.
   // Category filter is still computed so the empty/empty case still works.
+  // Foundations (added 2026-06-02) sit above data-room and deliverables.
+  const foundationsHubs = state.hubs.filter(h => h.category === 'foundations');
   const dataRoomHubs = state.hubs.filter(h => (h.category || (h.alwaysVisible ? 'deliverable' : 'data-room')) === 'data-room');
   const deliverableHubs = state.hubs.filter(h => (h.category || (h.alwaysVisible ? 'deliverable' : 'data-room')) === 'deliverable');
 
@@ -3613,6 +3702,10 @@ async function loadList() {
       body = renderAppetizeEmbedHub(hub);
     } else if (hub.surfaceType === 'deck-deliverable') {
       body = renderDeckDeliverableHub(hub);
+    } else if (hub.surfaceType === 'pdf-binary') {
+      body = renderPdfBinaryHub(hub);
+    } else if (hub.surfaceType === 'tier-scope') {
+      body = renderTierScopeHub(hub);
     } else if (hub.cardDriven) {
       body = renderHubProvocations(hub);
     } else {
@@ -3947,6 +4040,121 @@ function renderDeckDeliverableHub(hub) {
       ${historyBlock}
     </div>
   `;
+}
+
+// ── PDF-binary surface (Foundations: SOW, Welcome Pack) ───────────────────
+// Single PDF, no version, no upload. Iframe preview + download link.
+function renderPdfBinaryHub(hub) {
+  const pdf = hub.pdfBinary;
+  if (!pdf) {
+    return `
+      <div class="preview-link-placeholder">
+        <div class="preview-link-placeholder-icon">📄</div>
+        <div class="preview-link-placeholder-body">
+          <div class="preview-link-placeholder-title">${esc(hub.name)} — not generated yet</div>
+          <div class="preview-link-placeholder-sub">${esc(hub.placeholderText || 'The PDF will appear here once the operator generates and pushes it.')}</div>
+        </div>
+      </div>
+    `;
+  }
+  const previewUrl = `/api/portal-pdf-binary?hub=${encodeURIComponent(hub.slug)}`;
+  const downloadUrl = `${previewUrl}&download=1`;
+  return `
+    <div class="deck-deliverable">
+      <div class="deck-header">
+        ${hub.description ? `<div class="deck-description">${esc(hub.description)}</div>` : ''}
+        <div class="deck-version-strip">
+          <span class="deck-version-badge">PDF</span>
+          <span class="deck-version-meta">${esc(pdf.name)} · ${fmtFileSize(pdf.size)}</span>
+        </div>
+      </div>
+      <div class="deck-preview-frame">
+        <iframe src="${esc(previewUrl)}#toolbar=1&navpanes=0" title="${esc(hub.name)} preview"></iframe>
+      </div>
+      <div class="deck-actions">
+        <a class="deck-action deck-action-primary" href="${esc(downloadUrl)}">
+          <span>Download PDF</span>
+          <span class="deck-action-sub">Save a local copy</span>
+        </a>
+        <a class="deck-action" href="${esc(previewUrl)}" target="_blank" rel="noopener">
+          <span>Open full-screen</span>
+          <span class="deck-action-sub">Best for reading</span>
+        </a>
+      </div>
+    </div>
+  `;
+}
+
+// ── Tier-scope surface (Foundations: Tier Scope) ──────────────────────────
+// Renders the client's tier badge + the full deliverable matrix with
+// "Included" / "—" indicators per tier. The active tier's column is
+// visually highlighted so the client can see at-a-glance what they get.
+function renderTierScopeHub(hub) {
+  const data = hub.tierScope;
+  if (!data || !data.tier) {
+    return `
+      <div class="preview-link-placeholder">
+        <div class="preview-link-placeholder-icon">◇</div>
+        <div class="preview-link-placeholder-body">
+          <div class="preview-link-placeholder-title">Tier not yet set</div>
+          <div class="preview-link-placeholder-sub">${esc(hub.placeholderText || 'Update **Tier:** in brief.md to Launchpad, Venture, or Venture Pro.')}</div>
+        </div>
+      </div>
+    `;
+  }
+  const { tier, matrix } = data;
+  const TIERS = ['Launchpad', 'Venture', 'Venture Pro'];
+  const TIER_PRICE = {
+    'Launchpad': 'AED 150,000',
+    'Venture': 'AED 240,000',
+    'Venture Pro': 'AED 330,000',
+  };
+
+  // Tier summary card (the active tier rendered as a hero)
+  const summary = `
+    <div class="tier-hero">
+      <div class="tier-hero-eyebrow">Your engagement tier</div>
+      <div class="tier-hero-name">${esc(tier)}</div>
+      <div class="tier-hero-meta">${esc(TIER_PRICE[tier] || '')}</div>
+      ${hub.description ? `<div class="tier-hero-desc">${esc(hub.description)}</div>` : ''}
+    </div>
+  `;
+
+  // Matrix table
+  const includedCount = matrix.filter((row) => row[tier]).length;
+  const headerCells = TIERS.map((t) => {
+    const active = t === tier ? ' tier-col-active' : '';
+    return `<th class="tier-col${active}">${esc(t)}${t === tier ? ' <span class="tier-col-tag">YOU</span>' : ''}</th>`;
+  }).join('');
+  const rows = matrix.map((row) => {
+    const cells = TIERS.map((t) => {
+      const active = t === tier ? ' tier-col-active' : '';
+      const value = row[t]
+        ? `<span class="tier-cell-yes" title="Included">✓${row.note && t === tier ? ` <small>${esc(row.note)}</small>` : ''}</span>`
+        : `<span class="tier-cell-no">—</span>`;
+      return `<td class="tier-col${active}">${value}</td>`;
+    }).join('');
+    return `<tr><td class="tier-row-label">${esc(row.label)}</td>${cells}</tr>`;
+  }).join('');
+
+  const table = `
+    <div class="tier-matrix-wrap">
+      <table class="tier-matrix">
+        <thead>
+          <tr><th>Deliverable</th>${headerCells}</tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  `;
+
+  const footer = `
+    <div class="tier-footer">
+      <strong>${includedCount}</strong> deliverables included at the ${esc(tier)} tier. Anything outside this scope is available as an add-on — talk to your studio lead.
+    </div>
+  `;
+
+  return `<div class="tier-scope">${summary}${table}${footer}</div>`;
 }
 
 // Format a byte count as a human-readable string. Used by the deck hub.
@@ -4496,6 +4704,8 @@ function isHubLocked(hub) {
   if (hub.surfaceType === 'preview-link') return !hub.previewUrl;
   if (hub.surfaceType === 'appetize-embed') return !hub.appetizePublicKey;
   if (hub.surfaceType === 'deck-deliverable') return !hub.deckLatest;
+  if (hub.surfaceType === 'pdf-binary') return !hub.pdfBinary;
+  if (hub.surfaceType === 'tier-scope') return !(hub.tierScope && hub.tierScope.tier);
   const hasAny = (hub.sections || []).some((s) => s.exists);
   return !hasAny;
 }
@@ -4505,6 +4715,11 @@ function hubLockReason(hub) {
   // gate model — the operator's Phase 0-5 workflow. Reads humanly even when
   // the visitor hasn't internalised the methodology.
   const map = {
+    'brief': 'The project brief lands in this hub the moment intake completes.',
+    'sow': 'Unlocks once your Statement of Work is generated — typically at the end of Phase 2.5 after the financial plan is signed off.',
+    'welcome-pack': 'Unlocks once the Welcome Pack PDF is generated — typically at the end of Phase 0.',
+    'tier-scope': 'Unlocks once your tier is set in the brief — Launchpad, Venture, or Venture Pro.',
+    'engagement-timeline': 'STATUS.md is updated live as we close phases and gates — refresh after each milestone to see the latest.',
     'vision': 'Unlocks once research is complete and you\'re ready to sign off the Gate 1 direction.',
     'strategy': 'Unlocks once the product vision is signed off — the strategy builds on top of it.',
     'financials': 'Unlocks once the vision is signed off — the financial plan grounds the locked scope.',
@@ -4526,9 +4741,11 @@ function renderSidebar() {
   if (brandName) brandName.textContent = state.client && state.client.name ? state.client.name : '—';
 
   // Status zone is always rendered (it's the home page). Lock-aware hub
-  // groups below: Data Room (strategic, gate-bearing), then Deliverables
-  // (operational artefacts). Investor scope sees Financials only — handled
-  // by the API's hubsForScope upstream, so state.hubs is already filtered.
+  // groups below: Foundations (engagement-defining artefacts), then Data
+  // Room (strategic, gate-bearing), then Deliverables (operational
+  // artefacts). Investor scope sees Financials only — handled by the API's
+  // hubsForScope upstream, so state.hubs is already filtered.
+  const foundationsHubs = state.hubs.filter(h => h.category === 'foundations');
   const dataRoomHubs = state.hubs.filter(h => (h.category || (h.alwaysVisible ? 'deliverable' : 'data-room')) === 'data-room');
   const deliverableHubs = state.hubs.filter(h => (h.category || (h.alwaysVisible ? 'deliverable' : 'data-room')) === 'deliverable');
 
@@ -4590,6 +4807,11 @@ function renderSidebar() {
       ${statusItem}
       ${investabilityItem}
     </div>
+    ${foundationsHubs.length > 0 ? `
+      <div class="sidebar-group">
+        <div class="sidebar-group-label">Foundations</div>
+        ${foundationsHubs.map(itemHtml).join('')}
+      </div>` : ''}
     ${dataRoomHubs.length > 0 ? `
       <div class="sidebar-group">
         <div class="sidebar-group-label">Data Room</div>

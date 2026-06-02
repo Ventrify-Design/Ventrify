@@ -274,6 +274,51 @@ async function listDeckVersions(repo, branch, deckDir, deckBaseName) {
   };
 }
 
+// ── pdf-binary surface helper ────────────────────────────────────────────
+// Used by the Foundations hubs (SOW, Welcome Pack). The engagement repo
+// names these as `<client-slug>-<baseName>.pdf` (e.g. `moneygym-sow.pdf`,
+// `moneygym-welcome-pack.pdf`). Returns the latest single PDF if multiple
+// candidates exist, otherwise the only one. Unversioned and read-only.
+async function listSinglePdf(repo, branch, dir, baseName) {
+  let entries;
+  try {
+    entries = await ghListDir(repo, branch, dir);
+  } catch (_e) {
+    return null;
+  }
+  if (!entries || entries.length === 0) return null;
+  const re = new RegExp(`-?${baseName}\\.pdf$`, 'i');
+  const matches = entries
+    .filter((e) => e.type === 'file' && re.test(e.name))
+    .map((e) => ({
+      name: e.name,
+      path: `${dir}/${e.name}`,
+      size: e.size,
+      downloadUrl: e.download_url || null,
+    }));
+  if (matches.length === 0) return null;
+  // If multiple match, prefer the lexically-last (newest by convention).
+  matches.sort((a, b) => a.name.localeCompare(b.name));
+  return matches[matches.length - 1];
+}
+
+// ── Tier extraction (Foundations: Tier Scope hub) ────────────────────────
+// Parses brief.md for the `**Tier:**` line. Returns one of
+// 'Launchpad' / 'Venture' / 'Venture Pro' / null. Tolerates bracketed forms
+// like `[Launchpad / Venture / Venture Pro]` by picking the first listed
+// match. Falls back to null when the brief is absent or the tier is unset
+// — the portal then shows the placeholder state.
+function extractTierFromBrief(briefText) {
+  if (!briefText) return null;
+  const tierLine = briefText.match(/\*\*Tier:\*\*\s*\[?([^\n\]]+)/i);
+  if (!tierLine) return null;
+  const raw = tierLine[1].trim();
+  if (/venture\s*pro/i.test(raw)) return 'Venture Pro';
+  if (/venture/i.test(raw)) return 'Venture';
+  if (/launchpad/i.test(raw)) return 'Launchpad';
+  return null;
+}
+
 // Minimal YAML frontmatter parser — handles the curator's schema only:
 // scalars, arrays of objects with file + anchor.
 function parseFrontmatter(text) {
@@ -414,6 +459,81 @@ function buildEmailPayload({ subject, body, replyTo }) {
 // Mirrors the engagement repo's portal structure. When a new hub is added
 // (e.g. wireframes after Phase 4), add it here.
 const HUBS = [
+  // ─────────────────────────────────────────────────────────────────────
+  // Foundations (added 2026-06-02 by operator request).
+  // The five engagement-defining artefacts that frame the whole project:
+  // what we agreed to build, on what terms, at what tier, on what schedule.
+  // Sit ABOVE the Data Room because they're the most-frequently-revisited
+  // documents over an engagement's life — the brief gets re-read every
+  // gate review; the SOW gets re-read every scope-change conversation.
+  // ─────────────────────────────────────────────────────────────────────
+
+  // 1. Brief — the founder-authored intake form. The single most-cited
+  // document in every engagement. Renders as a regular markdown hub.
+  {
+    slug: 'brief', name: 'Brief', dir: '.',
+    category: 'foundations',
+    alwaysVisible: true,
+    description: 'The project brief — captured at intake. The single source of truth for project goals, target user, and tier. Re-read at every gate review.',
+    sections: [
+      { slug: 'brief', file: 'brief.md', name: 'Project Brief' },
+    ],
+    gate: null,
+  },
+  // 2. SOW — the signed Statement of Work PDF (generated at the end of
+  // Phase 2.5). Unversioned, read-only single PDF preview + download.
+  {
+    slug: 'sow', name: 'Statement of Work',
+    category: 'foundations',
+    alwaysVisible: true,
+    surfaceType: 'pdf-binary',
+    pdfDir: 'gate-reviews',
+    pdfBaseName: 'sow',
+    description: 'The signed Statement of Work — formal scope agreement covering deliverables, tier, payment milestones, and acceptance.',
+    placeholderText: 'SOW not yet generated. Run npm run pdf:sow in the engagement repo after Gate 2.5 sign-off, then push — the PDF appears here.',
+    gate: null,
+  },
+  // 3. Welcome Pack — the Ventrify-branded onboarding document (generated
+  // at the end of Phase 0). The first deliverable the client receives.
+  {
+    slug: 'welcome-pack', name: 'Welcome Pack',
+    category: 'foundations',
+    alwaysVisible: true,
+    surfaceType: 'pdf-binary',
+    pdfDir: 'gate-reviews',
+    pdfBaseName: 'welcome-pack',
+    description: 'The Ventrify-branded onboarding pack — what we heard from you, three market observations, three hypotheses we will test, and the deliverables and payment schedule for the engagement.',
+    placeholderText: 'Welcome Pack not yet generated. Run npm run pdf:welcome in the engagement repo, then push — the PDF appears here.',
+    gate: null,
+  },
+  // 4. Tier Scope — server reads brief.md, extracts the tier, returns
+  // structured payload showing what the client gets at THEIR tier. The
+  // portal renders it as a tier badge + deliverable matrix.
+  // Implementation is in portal-list.js (surfaceType: 'tier-scope').
+  {
+    slug: 'tier-scope', name: 'Tier Scope',
+    category: 'foundations',
+    alwaysVisible: true,
+    surfaceType: 'tier-scope',
+    description: 'What is and isn\'t included at your engagement tier. Tier-to-deliverable matrix sourced from brief.md.',
+    placeholderText: 'Tier not yet set. Update the **Tier:** field in brief.md (one of Launchpad / Venture / Venture Pro) and push — the matrix appears here.',
+    gate: null,
+  },
+  // 5. Engagement Timeline — v1 renders STATUS.md as a markdown hub.
+  // STATUS.md is the operator-maintained phase/gate/workstream/milestone
+  // tracker — same source the timeline strip across the top of the
+  // Overview reads from. Renders here as the full read-through.
+  {
+    slug: 'engagement-timeline', name: 'Engagement Timeline', dir: '.',
+    category: 'foundations',
+    alwaysVisible: true,
+    description: 'Phase-by-phase project timeline — every phase, gate, workstream, and payment milestone with sign-off dates. Updated live as the engagement progresses.',
+    sections: [
+      { slug: 'status', file: 'STATUS.md', name: 'Status & Timeline' },
+    ],
+    gate: null,
+  },
+
   {
     slug: 'research', name: 'Research', dir: 'research',
     category: 'data-room',
@@ -801,6 +921,8 @@ module.exports = {
   ghCommitFile,
   ghListDir,
   listDeckVersions,
+  listSinglePdf,
+  extractTierFromBrief,
   parseFrontmatter,
   readProvocations,
   readHubL3Status,

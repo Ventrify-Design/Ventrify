@@ -10,7 +10,38 @@
  * like scope-change-recommendations.md are filtered out).
  */
 
-const { loadClients, requireAuth, ghFetch, ghReadFile, hubsForScope, readProvocations, readHubL3Status, listDeckVersions } = require('./_lib');
+const { loadClients, requireAuth, ghFetch, ghReadFile, hubsForScope, readProvocations, readHubL3Status, listDeckVersions, listSinglePdf, extractTierFromBrief } = require('./_lib');
+
+// ── Tier-to-deliverable matrix (mirrors CLAUDE.md tier mapping) ───────────
+// The Tier Scope hub renders this as a structured grid. Keyed by deliverable
+// label, the inner object indicates which tiers include the deliverable.
+// Update here when CLAUDE.md's tier mapping changes.
+const TIER_DELIVERABLES = [
+  { label: 'Phase 1-5 core workflow',                Launchpad: true,  Venture: true,  'Venture Pro': true },
+  { label: 'MVP App (iOS + Android)',                Launchpad: true,  Venture: true,  'Venture Pro': true },
+  { label: 'Design System (Figma + DS site)',        Launchpad: true,  Venture: true,  'Venture Pro': true },
+  { label: 'Research Hub on the portal',             Launchpad: true,  Venture: true,  'Venture Pro': true },
+  { label: 'Vision Hub on the portal',               Launchpad: false, Venture: true,  'Venture Pro': true },
+  { label: 'Strategy Hub on the portal',             Launchpad: false, Venture: true,  'Venture Pro': true },
+  { label: 'Investor Pitch Deck (PDF)',              Launchpad: false, Venture: true,  'Venture Pro': true },
+  { label: 'Financial Plan (Phase 2.5)',             Launchpad: true,  Venture: true,  'Venture Pro': true },
+  { label: 'Financials Hub on portal',               Launchpad: true,  Venture: true,  'Venture Pro': true },
+  { label: 'Investor-share portal view',             Launchpad: false, Venture: true,  'Venture Pro': true },
+  { label: 'Quarterly financial refresh',            Launchpad: false, Venture: false, 'Venture Pro': true, note: '3 quarters' },
+  { label: 'SOW + Welcome Pack PDFs',                Launchpad: true,  Venture: true,  'Venture Pro': true },
+  { label: 'Wireframes page (DS site)',              Launchpad: true,  Venture: true,  'Venture Pro': true },
+  { label: 'Marketing Website',                      Launchpad: false, Venture: true,  'Venture Pro': true },
+  { label: 'Marketing & Social Strategy',            Launchpad: false, Venture: true,  'Venture Pro': true },
+  { label: 'Marketing Launch Pack (PDF)',            Launchpad: false, Venture: true,  'Venture Pro': true },
+  { label: 'Blog Content (5 posts)',                 Launchpad: false, Venture: true,  'Venture Pro': true },
+  { label: 'Blog Content Pack (PDF)',                Launchpad: false, Venture: true,  'Venture Pro': true },
+  { label: 'Promotional Video Script',               Launchpad: false, Venture: false, 'Venture Pro': true },
+  { label: 'Video Brief (PDF)',                      Launchpad: false, Venture: false, 'Venture Pro': true },
+  { label: 'Launch Day Playbook',                    Launchpad: false, Venture: true,  'Venture Pro': true },
+  { label: 'Retainer (3 months included)',           Launchpad: false, Venture: false, 'Venture Pro': true },
+  { label: 'Monthly Analytics Report',               Launchpad: false, Venture: false, 'Venture Pro': true, note: '3 months' },
+  { label: 'Client Portal',                          Launchpad: true,  Venture: true,  'Venture Pro': true },
+];
 
 // Per-card status derivation for the data-room L1 layer. A card is:
 //   'commented'    — founder has left a free-text comment
@@ -221,6 +252,36 @@ module.exports = async function handler(req, res) {
       }
     }
 
+    // ── PDF-binary surface (Foundations: SOW, Welcome Pack) ────────────────
+    // Unversioned single-PDF deliverable. Server-side scans the configured
+    // dir for `<anything>-<pdfBaseName>.pdf` and returns the single match
+    // so the portal can render a preview iframe + download button.
+    let pdfBinary = null;
+    if (hub.surfaceType === 'pdf-binary' && hub.pdfDir && hub.pdfBaseName) {
+      try {
+        pdfBinary = await listSinglePdf(repo, branch, hub.pdfDir, hub.pdfBaseName);
+      } catch (e) {
+        console.error(`[portal-list] pdf-binary listing failed for ${hub.slug}:`, e.message);
+        pdfBinary = null;
+      }
+    }
+
+    // ── Tier-scope surface (Foundations: Tier Scope) ───────────────────────
+    // Parses brief.md for the **Tier:** line, returns { tier, matrix } so
+    // the portal renders a tier badge + the deliverable inclusion grid for
+    // THIS tier. The matrix is the full CLAUDE.md tier-to-deliverable map.
+    let tierScope = null;
+    if (hub.surfaceType === 'tier-scope') {
+      try {
+        const briefRaw = await ghReadFile(repo, branch, 'brief.md');
+        const tier = extractTierFromBrief(briefRaw);
+        tierScope = { tier, matrix: TIER_DELIVERABLES };
+      } catch (e) {
+        console.error(`[portal-list] tier-scope read failed for ${hub.slug}:`, e.message);
+        tierScope = { tier: null, matrix: TIER_DELIVERABLES };
+      }
+    }
+
     // Hub-level feedback (Phase 2 — 2026-05-27): for link-out deliverables
     // and any future hub-level comments. Status drives the landing badge;
     // openCount drives the "3 open" pill on the deliverable card.
@@ -245,6 +306,8 @@ module.exports = async function handler(req, res) {
       appetizePublicKey,
       deckVersions,
       deckLatest,
+      pdfBinary,
+      tierScope,
       description: hub.description || null,
       placeholderText: hub.placeholderText || null,
       quickLinks: hub.quickLinks || null,
