@@ -10,38 +10,275 @@
  * like scope-change-recommendations.md are filtered out).
  */
 
-const { loadClients, requireAuth, ghFetch, ghReadFile, hubsForScope, readProvocations, readHubL3Status, listDeckVersions, listSinglePdf, extractTierFromBrief } = require('./_lib');
+const { loadClients, requireAuth, ghFetch, ghReadFile, hubsForScope, readProvocations, readHubL3Status, listDeckVersions, listSinglePdf } = require('./_lib');
 
-// ── Tier-to-deliverable matrix (mirrors CLAUDE.md tier mapping) ───────────
-// The Tier Scope hub renders this as a structured grid. Keyed by deliverable
-// label, the inner object indicates which tiers include the deliverable.
-// Update here when CLAUDE.md's tier mapping changes.
-const TIER_DELIVERABLES = [
-  { label: 'Phase 1-5 core workflow',                Launchpad: true,  Venture: true,  'Venture Pro': true },
-  { label: 'MVP App (iOS + Android)',                Launchpad: true,  Venture: true,  'Venture Pro': true },
-  { label: 'Design System (Figma + DS site)',        Launchpad: true,  Venture: true,  'Venture Pro': true },
-  { label: 'Research Hub on the portal',             Launchpad: true,  Venture: true,  'Venture Pro': true },
-  { label: 'Vision Hub on the portal',               Launchpad: false, Venture: true,  'Venture Pro': true },
-  { label: 'Strategy Hub on the portal',             Launchpad: false, Venture: true,  'Venture Pro': true },
-  { label: 'Investor Pitch Deck (PDF)',              Launchpad: false, Venture: true,  'Venture Pro': true },
-  { label: 'Financial Plan (Phase 2.5)',             Launchpad: true,  Venture: true,  'Venture Pro': true },
-  { label: 'Financials Hub on portal',               Launchpad: true,  Venture: true,  'Venture Pro': true },
-  { label: 'Investor-share portal view',             Launchpad: false, Venture: true,  'Venture Pro': true },
-  { label: 'Quarterly financial refresh',            Launchpad: false, Venture: false, 'Venture Pro': true, note: '3 quarters' },
-  { label: 'SOW + Welcome Pack PDFs',                Launchpad: true,  Venture: true,  'Venture Pro': true },
-  { label: 'Wireframes page (DS site)',              Launchpad: true,  Venture: true,  'Venture Pro': true },
-  { label: 'Marketing Website',                      Launchpad: false, Venture: true,  'Venture Pro': true },
-  { label: 'Marketing & Social Strategy',            Launchpad: false, Venture: true,  'Venture Pro': true },
-  { label: 'Marketing Launch Pack (PDF)',            Launchpad: false, Venture: true,  'Venture Pro': true },
-  { label: 'Blog Content (5 posts)',                 Launchpad: false, Venture: true,  'Venture Pro': true },
-  { label: 'Blog Content Pack (PDF)',                Launchpad: false, Venture: true,  'Venture Pro': true },
-  { label: 'Promotional Video Script',               Launchpad: false, Venture: false, 'Venture Pro': true },
-  { label: 'Video Brief (PDF)',                      Launchpad: false, Venture: false, 'Venture Pro': true },
-  { label: 'Launch Day Playbook',                    Launchpad: false, Venture: true,  'Venture Pro': true },
-  { label: 'Retainer (3 months included)',           Launchpad: false, Venture: false, 'Venture Pro': true },
-  { label: 'Monthly Analytics Report',               Launchpad: false, Venture: false, 'Venture Pro': true, note: '3 months' },
-  { label: 'Client Portal',                          Launchpad: true,  Venture: true,  'Venture Pro': true },
+// ── Venture Scope catalogue (Ventrify OS deliverable matrix) ──────────────
+// Replaces the deprecated per-engagement tier matrix (Launchpad/Venture/
+// Venture Pro). Under Ventrify OS, every venture earns the same ~70+
+// deliverables across the same 5 phases + 3 gates. The licence tier
+// (Starter / Cohort / Enterprise) sits on the BUYER (accelerator / studio
+// / corporate innovation lab), not the venture — and never renders on
+// the founder's portal.
+//
+// Updated 2026-06-02 when MoneyGym (Maya/Jonathan Corner) was repositioned
+// as "a venture running on Ventrify OS". Source: os.ventrify.io.
+//
+// Each phase has: title, byline (operator-facing), weekRange (timeline
+// strip), gate (formal gate review at end of phase, or null), groups
+// (collapsible deliverable buckets within the phase).
+const VENTURE_SCOPE = [
+  {
+    key: 'phase-0',
+    title: 'Phase 0',
+    name: 'Foundation',
+    weekRange: 'Week 0',
+    gate: null,
+    summary: 'Intake. Capture the venture, lock the brand, set the table.',
+    groups: [
+      {
+        label: 'Intake',
+        items: [
+          'Venture brief (structured intake)',
+          'Brand kit (palette, typography, voice)',
+          'Brand photography library (37 sourced photos)',
+          'Welcome Pack (Powered by Ventrify OS)',
+          'Founder Portal access',
+        ],
+      },
+    ],
+  },
+  {
+    key: 'phase-1',
+    title: 'Phase 1',
+    name: 'Discover',
+    weekRange: 'Weeks 1–2',
+    gate: 'Gate 1 — Research direction signed off',
+    summary: 'Deeply understand market, competitors, opportunity. Gate 1.',
+    groups: [
+      {
+        label: 'Research deliverables (7)',
+        items: [
+          'Market analysis (TAM/SAM/SOM + Why Now)',
+          'Competitor analysis (feature matrix + ASO sentiment)',
+          'User insights (App Store + community sentiment)',
+          'SWOT analysis',
+          'Opportunities (top 3 validated)',
+          'Unit economics (CAC, LTV, projections)',
+          'Partnerships & distribution map',
+        ],
+      },
+      {
+        label: 'Portal hubs',
+        items: [
+          'Research Hub (live 3-layer data room)',
+          'Provocation Cards (founder-facing strategic forks)',
+        ],
+      },
+    ],
+  },
+  {
+    key: 'phase-2',
+    title: 'Phase 2',
+    name: 'Define',
+    weekRange: 'Weeks 2–4',
+    gate: 'Gate 2 — Product vision + MVP scope signed off',
+    summary: 'Shape product structure. Lock scope. Gate 2.',
+    groups: [
+      {
+        label: 'Define deliverables (10)',
+        items: [
+          'User personas (2–3 with depth)',
+          'Product vision',
+          'MVP features (MoSCoW)',
+          'Tech stack',
+          'User journeys (top 3 mapped)',
+          'Information architecture (45–65 screens)',
+          'Roadmap (v1, v1.1, v2)',
+          'Tone of voice',
+          'Social strategy',
+          '30-day content calendar',
+        ],
+      },
+      {
+        label: 'Portal hubs',
+        items: [
+          'Vision Hub (live 3-layer data room)',
+          'Strategy Hub (live 3-layer data room)',
+        ],
+      },
+    ],
+  },
+  {
+    key: 'phase-2-5',
+    title: 'Phase 2.5',
+    name: 'Financial Plan',
+    weekRange: 'Week 4',
+    gate: 'Gate 2.5 — Financial plan + funding ask signed off',
+    summary: 'Defensible financial plan + investor-ready ask. Gate 2.5.',
+    groups: [
+      {
+        label: 'Financial files (11)',
+        items: [
+          'Build costs',
+          'Operating costs (24-month)',
+          'Revenue model',
+          'Unit economics (detailed, per-channel)',
+          'Cash flow forecast (24-month)',
+          'Marketing budget',
+          'Hiring plan',
+          'Sensitivity analysis',
+          'Funding ask + valuation comparables',
+          'Financial summary (single page)',
+          'Scope-change recommendations',
+        ],
+      },
+      {
+        label: 'Portal hubs',
+        items: [
+          'Financials Hub (live 3-layer data room)',
+          'Investor-share portal view (separate access code)',
+        ],
+      },
+    ],
+  },
+  {
+    key: 'phase-3',
+    title: 'Phase 3',
+    name: 'Design',
+    weekRange: 'Weeks 3–8',
+    gate: null,
+    summary: 'Design system + screen designs from locked scope.',
+    groups: [
+      {
+        label: 'Design deliverables',
+        items: [
+          'User stories',
+          'Wireframe notes',
+          'Component specifications',
+          'Figma variables (5 collections — colour, type, spacing, radius, sizing)',
+          'Figma components (24 components, 8 lockups)',
+          'Figma screen compositor plugin',
+          'Wireframes page on DS site',
+        ],
+      },
+    ],
+  },
+  {
+    key: 'phase-4',
+    title: 'Phase 4',
+    name: 'Develop',
+    weekRange: 'Weeks 6–14',
+    gate: null,
+    summary: 'Build the MVP + every supporting surface. Multi-round design audits.',
+    groups: [
+      {
+        label: 'Product',
+        items: [
+          'MVP App (iOS + Android via Expo + React Native)',
+          'DEMO_MODE built in (showcase without backend)',
+          'Authentication (email + light/dark mode + push)',
+          'Account deletion + ATT + in-app legal links',
+          '70+ shipped screens',
+        ],
+      },
+      {
+        label: 'Marketing surface',
+        items: [
+          'Marketing website (Next.js, 9 pages)',
+          'Live device-mockup screenshots across 7 surface zones',
+          '20 launch social posts (graphics + copy)',
+          '5 SEO blog posts',
+          'Social Launch Preview (in-feed mockup)',
+          'Sanity CMS configured',
+        ],
+      },
+      {
+        label: 'Design system surface',
+        items: [
+          'Design System site (24 components, 8 lockups, full token reference)',
+          'Wireframes page (live screenshots from MVP)',
+          'Personas / User Stories / User Flows pages',
+          '3 Figma plugins (variables, components, screen compositor)',
+        ],
+      },
+      {
+        label: 'Decks + briefs',
+        items: [
+          'Investor Pitch Deck (PDF)',
+          'Marketing Launch Pack (PDF)',
+          'Video Production Brief (PDF)',
+          'Blog Content Pack (PDF)',
+          '60-second promotional video (automated pipeline)',
+        ],
+      },
+    ],
+  },
+  {
+    key: 'phase-4-5',
+    title: 'Phase 4-Design',
+    name: 'Design Refinement',
+    weekRange: 'Weeks 8–13',
+    gate: null,
+    summary: 'Multi-round design audits. Featured-app polish.',
+    groups: [
+      {
+        label: 'Audit rounds',
+        items: [
+          'Round 1 — Rule compliance audit (ux-designer agent)',
+          'Round 2 — Navigation UX + WCAG accessibility',
+          'Round 3 — Featured-app polish (brand fidelity)',
+          'Visual consistency propagation (one-command refresh)',
+        ],
+      },
+    ],
+  },
+  {
+    key: 'phase-4b',
+    title: 'Phase 4B',
+    name: 'Beta',
+    weekRange: 'Weeks 12–14',
+    gate: null,
+    summary: 'Distribute the build. Collect feedback. Fix critical issues.',
+    groups: [
+      {
+        label: 'Beta',
+        items: [
+          'TestFlight build (iOS)',
+          'Google Play Internal Testing build (Android)',
+          'Beta-test brief (tester recruitment)',
+          'Feedback triage + bug fixes',
+        ],
+      },
+    ],
+  },
+  {
+    key: 'phase-5',
+    title: 'Phase 5',
+    name: 'Deliver',
+    weekRange: 'Weeks 10–16',
+    gate: null,
+    summary: 'App Store launch. Handoff. Launch Day Playbook.',
+    groups: [
+      {
+        label: 'Launch',
+        items: [
+          'Apple App Store submission + review',
+          'Google Play Store submission + review',
+          'Production deployments (marketing site, DS site, portal)',
+          '3 GitHub repos handed off',
+          'Firebase / Sanity / Vercel / Figma ownership transferred',
+          'Launch Day Playbook',
+        ],
+      },
+    ],
+  },
 ];
+
+// Aggregate count — surfaced in the hub hero.
+const VENTURE_SCOPE_TOTAL = VENTURE_SCOPE.reduce(
+  (sum, p) => sum + p.groups.reduce((s, g) => s + g.items.length, 0),
+  0,
+);
 
 // Per-card status derivation for the data-room L1 layer. A card is:
 //   'commented'    — founder has left a free-text comment
@@ -270,20 +507,19 @@ module.exports = async function handler(req, res) {
       }
     }
 
-    // ── Tier-scope surface (Foundations: Tier Scope) ───────────────────────
-    // Parses brief.md for the **Tier:** line, returns { tier, matrix } so
-    // the portal renders a tier badge + the deliverable inclusion grid for
-    // THIS tier. The matrix is the full CLAUDE.md tier-to-deliverable map.
-    let tierScope = null;
-    if (hub.surfaceType === 'tier-scope') {
-      try {
-        const briefRaw = await ghReadFile(repo, branch, 'brief.md');
-        const tier = extractTierFromBrief(briefRaw);
-        tierScope = { tier, matrix: TIER_DELIVERABLES };
-      } catch (e) {
-        console.error(`[portal-list] tier-scope read failed for ${hub.slug}:`, e.message);
-        tierScope = { tier: null, matrix: TIER_DELIVERABLES };
-      }
+    // ── Venture-scope surface (Foundations: Venture Scope) ─────────────────
+    // Returns the canonical Ventrify OS deliverable scope as a phase-by-
+    // phase structured payload. Same payload for every venture — there is
+    // no per-venture tier under Ventrify OS. The licence tier (Starter /
+    // Cohort / Enterprise) sits on the buyer, not the venture, and never
+    // leaks to the founder portal.
+    let ventureScope = null;
+    if (hub.surfaceType === 'venture-scope') {
+      ventureScope = {
+        phases: VENTURE_SCOPE,
+        totalDeliverables: VENTURE_SCOPE_TOTAL,
+        programmeName: 'Ventrify OS',
+      };
     }
 
     // Hub-level feedback (Phase 2 — 2026-05-27): for link-out deliverables
@@ -311,7 +547,7 @@ module.exports = async function handler(req, res) {
       deckVersions,
       deckLatest,
       pdfBinary,
-      tierScope,
+      ventureScope,
       description: hub.description || null,
       placeholderText: hub.placeholderText || null,
       quickLinks: hub.quickLinks || null,

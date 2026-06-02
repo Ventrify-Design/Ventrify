@@ -1561,91 +1561,127 @@
     }
     .deck-history-actions a:hover { text-decoration: underline; }
 
-    /* ── Tier Scope surface (Foundations) ────────────────────────────── */
-    .tier-scope { display: flex; flex-direction: column; gap: 24px; }
-    .tier-hero {
+    /* ── Venture Scope surface (Foundations) ─────────────────────────── */
+    .vscope { display: flex; flex-direction: column; gap: 24px; }
+    .vscope-hero {
       padding: 28px 30px; border-radius: var(--radius-card);
       background: linear-gradient(135deg, var(--surface-card) 0%, rgba(0,0,0,0.02) 100%);
       border: 1px solid var(--surface-border, rgba(0,0,0,0.04));
-      display: flex; flex-direction: column; gap: 6px;
+      display: flex; flex-direction: column; gap: 8px;
     }
-    .tier-hero-eyebrow {
+    .vscope-hero-eyebrow {
       font-family: var(--font-mono); font-size: 11px; font-weight: 600;
       letter-spacing: 0.14em; text-transform: uppercase;
       color: var(--text-muted);
     }
-    .tier-hero-name {
+    .vscope-hero-name {
       font-family: var(--font-display); font-size: 38px; font-weight: 700;
       letter-spacing: -0.02em; line-height: 1.05;
       color: var(--primary);
     }
-    .tier-hero-meta {
+    .vscope-hero-stat {
       font-family: var(--font-mono); font-size: 13px;
-      color: var(--text-strong); letter-spacing: 0.04em;
+      color: var(--text-strong); letter-spacing: 0.02em;
     }
-    .tier-hero-desc {
-      margin-top: 8px; font-size: 14px; line-height: 1.5;
-      color: var(--text-muted); max-width: 60ch;
+    .vscope-hero-stat strong {
+      font-family: var(--font-display); font-size: 18px;
+      font-weight: 700; color: var(--primary); padding-right: 4px;
     }
-    .tier-matrix-wrap {
+    .vscope-hero-desc {
+      margin-top: 4px; font-size: 14px; line-height: 1.5;
+      color: var(--text-muted); max-width: 64ch;
+    }
+    .vscope-phases { display: flex; flex-direction: column; gap: 12px; }
+    .vscope-phase {
       background: var(--surface-card); border-radius: var(--radius-card);
       border: 1px solid var(--surface-border, rgba(0,0,0,0.04));
       overflow: hidden;
     }
-    .tier-matrix {
-      width: 100%; border-collapse: collapse;
-      font-size: 13.5px;
+    .vscope-phase[open] {
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.04);
     }
-    .tier-matrix th, .tier-matrix td {
-      padding: 12px 16px; text-align: left;
-      border-bottom: 1px solid var(--surface-border, rgba(0,0,0,0.04));
+    .vscope-phase-head {
+      padding: 18px 22px; cursor: pointer; user-select: none; list-style: none;
+      display: grid; gap: 6px;
     }
-    .tier-matrix tr:last-child td { border-bottom: none; }
-    .tier-matrix thead th {
-      background: rgba(0,0,0,0.02);
+    .vscope-phase-head::-webkit-details-marker { display: none; }
+    .vscope-phase-meta {
+      display: flex; gap: 10px; align-items: center;
+      font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--text-muted);
+    }
+    .vscope-phase-tag {
+      padding: 2px 8px; border-radius: var(--radius-pill);
+      background: rgba(0,0,0,0.05); color: var(--text-strong);
+      font-weight: 700;
+    }
+    .vscope-phase-week { font-weight: 500; }
+    .vscope-phase-name {
+      font-family: var(--font-display); font-size: 20px; font-weight: 700;
+      letter-spacing: -0.01em; color: var(--text-dark);
+    }
+    .vscope-phase-summary {
+      font-size: 13.5px; color: var(--text-muted); line-height: 1.5;
+      max-width: 70ch;
+    }
+    .vscope-phase-foot {
+      display: flex; align-items: center; gap: 12px; margin-top: 4px;
       font-family: var(--font-mono); font-size: 11px;
-      font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+      letter-spacing: 0.06em; color: var(--text-muted);
+    }
+    .vscope-phase-count {
+      padding: 3px 9px; border-radius: var(--radius-pill);
+      background: rgba(0,0,0,0.04); color: var(--text-strong);
+      font-weight: 600;
+    }
+    .vscope-phase-gate {
+      padding: 3px 9px; border-radius: var(--radius-pill);
+      background: var(--status-approved-bg); color: var(--status-approved-fg);
+      font-weight: 700; letter-spacing: 0.08em;
+    }
+    .vscope-phase-chev {
+      margin-left: auto; font-size: 10px; color: var(--text-muted);
+      transition: transform 200ms ease;
+    }
+    .vscope-phase[open] .vscope-phase-chev { transform: rotate(180deg); }
+    .vscope-phase-body {
+      padding: 0 22px 18px; display: flex; flex-direction: column; gap: 16px;
+      border-top: 1px solid var(--surface-border, rgba(0,0,0,0.04));
+      margin-top: 4px; padding-top: 16px;
+    }
+    .vscope-group { display: flex; flex-direction: column; gap: 8px; }
+    .vscope-group-label {
+      font-family: var(--font-mono); font-size: 10.5px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
       color: var(--text-muted);
     }
-    .tier-matrix th.tier-col, .tier-matrix td.tier-col {
-      text-align: center; width: 120px;
+    .vscope-list {
+      margin: 0; padding: 0; list-style: none;
+      display: flex; flex-direction: column; gap: 6px;
     }
-    .tier-matrix th.tier-col-active, .tier-matrix td.tier-col-active {
-      background: rgba(0,0,0,0.025);
+    .vscope-item {
+      padding: 7px 12px 7px 28px; border-radius: 6px;
+      background: rgba(0,0,0,0.02);
+      color: var(--text-strong); font-size: 13.5px; line-height: 1.5;
+      position: relative;
     }
-    .tier-matrix th.tier-col-active { color: var(--text-dark); }
-    .tier-col-tag {
-      display: inline-block; margin-left: 4px;
-      padding: 1px 6px; border-radius: var(--radius-pill);
-      background: var(--primary); color: white;
-      font-size: 9px; font-weight: 700; letter-spacing: 0.08em;
-      vertical-align: middle;
+    .vscope-item::before {
+      content: '✓'; position: absolute; left: 10px; top: 7px;
+      color: var(--status-approved-fg); font-weight: 700; font-size: 12px;
     }
-    .tier-row-label { color: var(--text-strong); font-weight: 500; }
-    .tier-cell-yes {
-      color: var(--status-approved-fg);
-      font-weight: 700; font-size: 15px;
-    }
-    .tier-cell-yes small {
-      display: block; margin-top: 2px;
-      font-family: var(--font-mono); font-size: 9.5px;
-      font-weight: 400; color: var(--text-muted);
-      letter-spacing: 0.03em; text-transform: lowercase;
-    }
-    .tier-cell-no { color: var(--text-muted); font-weight: 400; }
-    .tier-footer {
+    .vscope-footer {
       padding: 14px 18px; border-radius: 8px;
       background: rgba(0,0,0,0.025); color: var(--text-strong);
       font-size: 13.5px; line-height: 1.5;
     }
-    .tier-footer strong {
+    .vscope-footer strong {
       color: var(--primary); font-weight: 700;
-      font-family: var(--font-display); font-size: 16px;
     }
     @media (max-width: 768px) {
-      .tier-matrix th, .tier-matrix td { padding: 10px 8px; font-size: 12.5px; }
-      .tier-matrix th.tier-col, .tier-matrix td.tier-col { width: auto; }
-      .tier-hero-name { font-size: 30px; }
+      .vscope-hero-name { font-size: 30px; }
+      .vscope-phase-name { font-size: 17px; }
+      .vscope-phase-head { padding: 16px 18px; }
+      .vscope-phase-body { padding: 12px 18px 16px; }
     }
 
     /* ── Status badge (per-section, per-hub) ─────────────────────────── */
@@ -3704,8 +3740,8 @@ async function loadList() {
       body = renderDeckDeliverableHub(hub);
     } else if (hub.surfaceType === 'pdf-binary') {
       body = renderPdfBinaryHub(hub);
-    } else if (hub.surfaceType === 'tier-scope') {
-      body = renderTierScopeHub(hub);
+    } else if (hub.surfaceType === 'venture-scope') {
+      body = renderVentureScopeHub(hub);
     } else if (hub.cardDriven) {
       body = renderHubProvocations(hub);
     } else {
@@ -4085,76 +4121,81 @@ function renderPdfBinaryHub(hub) {
   `;
 }
 
-// ── Tier-scope surface (Foundations: Tier Scope) ──────────────────────────
-// Renders the client's tier badge + the full deliverable matrix with
-// "Included" / "—" indicators per tier. The active tier's column is
-// visually highlighted so the client can see at-a-glance what they get.
-function renderTierScopeHub(hub) {
-  const data = hub.tierScope;
-  if (!data || !data.tier) {
+// ── Venture-scope surface (Foundations: Venture Scope) ────────────────────
+// Renders the canonical Ventrify OS deliverable scope: the same ~70+
+// deliverables across 9 phases (Phase 0 → Phase 5) for every venture.
+// No tier, no price — the licence tier sits on the buyer, not the venture.
+function renderVentureScopeHub(hub) {
+  const data = hub.ventureScope;
+  if (!data || !data.phases) {
     return `
       <div class="preview-link-placeholder">
         <div class="preview-link-placeholder-icon">◇</div>
         <div class="preview-link-placeholder-body">
-          <div class="preview-link-placeholder-title">Tier not yet set</div>
-          <div class="preview-link-placeholder-sub">${esc(hub.placeholderText || 'Update **Tier:** in brief.md to Launchpad, Venture, or Venture Pro.')}</div>
+          <div class="preview-link-placeholder-title">Venture Scope unavailable</div>
+          <div class="preview-link-placeholder-sub">The scope catalogue failed to load. Refresh — if it persists, ping the studio.</div>
         </div>
       </div>
     `;
   }
-  const { tier, matrix } = data;
-  const TIERS = ['Launchpad', 'Venture', 'Venture Pro'];
-  const TIER_PRICE = {
-    'Launchpad': 'AED 150,000',
-    'Venture': 'AED 240,000',
-    'Venture Pro': 'AED 330,000',
-  };
+  const { phases, totalDeliverables, programmeName } = data;
 
-  // Tier summary card (the active tier rendered as a hero)
-  const summary = `
-    <div class="tier-hero">
-      <div class="tier-hero-eyebrow">Your engagement tier</div>
-      <div class="tier-hero-name">${esc(tier)}</div>
-      <div class="tier-hero-meta">${esc(TIER_PRICE[tier] || '')}</div>
-      ${hub.description ? `<div class="tier-hero-desc">${esc(hub.description)}</div>` : ''}
+  // Hero card
+  const hero = `
+    <div class="vscope-hero">
+      <div class="vscope-hero-eyebrow">Your venture runs on</div>
+      <div class="vscope-hero-name">${esc(programmeName || 'Ventrify OS')}</div>
+      <div class="vscope-hero-stat"><strong>${totalDeliverables}</strong> deliverables · 5 phases · 3 formal gates · 6–16 weeks</div>
+      ${hub.description ? `<div class="vscope-hero-desc">${esc(hub.description)}</div>` : ''}
     </div>
   `;
 
-  // Matrix table
-  const includedCount = matrix.filter((row) => row[tier]).length;
-  const headerCells = TIERS.map((t) => {
-    const active = t === tier ? ' tier-col-active' : '';
-    return `<th class="tier-col${active}">${esc(t)}${t === tier ? ' <span class="tier-col-tag">YOU</span>' : ''}</th>`;
-  }).join('');
-  const rows = matrix.map((row) => {
-    const cells = TIERS.map((t) => {
-      const active = t === tier ? ' tier-col-active' : '';
-      const value = row[t]
-        ? `<span class="tier-cell-yes" title="Included">✓${row.note && t === tier ? ` <small>${esc(row.note)}</small>` : ''}</span>`
-        : `<span class="tier-cell-no">—</span>`;
-      return `<td class="tier-col${active}">${value}</td>`;
+  // Phase blocks
+  const blocks = phases.map((phase) => {
+    const phaseCount = phase.groups.reduce((s, g) => s + g.items.length, 0);
+    const groupsHtml = phase.groups.map((group) => {
+      const items = group.items.map((item) => `<li class="vscope-item">${esc(item)}</li>`).join('');
+      return `
+        <div class="vscope-group">
+          <div class="vscope-group-label">${esc(group.label)}</div>
+          <ul class="vscope-list">${items}</ul>
+        </div>
+      `;
     }).join('');
-    return `<tr><td class="tier-row-label">${esc(row.label)}</td>${cells}</tr>`;
+    const gateChip = phase.gate
+      ? `<span class="vscope-phase-gate" title="${esc(phase.gate)}">${esc(phase.gate.split(' — ')[0])}</span>`
+      : '';
+    return `
+      <details class="vscope-phase" ${phase.key === 'phase-0' || phase.key === 'phase-1' ? 'open' : ''}>
+        <summary class="vscope-phase-head">
+          <div class="vscope-phase-meta">
+            <span class="vscope-phase-tag">${esc(phase.title)}</span>
+            <span class="vscope-phase-week">${esc(phase.weekRange)}</span>
+          </div>
+          <div class="vscope-phase-name">${esc(phase.name)}</div>
+          <div class="vscope-phase-summary">${esc(phase.summary)}</div>
+          <div class="vscope-phase-foot">
+            <span class="vscope-phase-count">${phaseCount} deliverables</span>
+            ${gateChip}
+            <span class="vscope-phase-chev" aria-hidden>▾</span>
+          </div>
+        </summary>
+        <div class="vscope-phase-body">${groupsHtml}</div>
+      </details>
+    `;
   }).join('');
 
-  const table = `
-    <div class="tier-matrix-wrap">
-      <table class="tier-matrix">
-        <thead>
-          <tr><th>Deliverable</th>${headerCells}</tr>
-        </thead>
-        <tbody>${rows}</tbody>
-      </table>
+  return `
+    <div class="vscope">
+      ${hero}
+      <div class="vscope-phases">${blocks}</div>
+      <div class="vscope-footer">
+        <strong>Same scope, every venture.</strong> Ventrify OS doesn't price per-engagement —
+        the studio or accelerator running this programme has an annual licence. You get every
+        deliverable above, full stop.
+      </div>
     </div>
   `;
-
-  const footer = `
-    <div class="tier-footer">
-      <strong>${includedCount}</strong> deliverables included at the ${esc(tier)} tier. Anything outside this scope is available as an add-on — talk to your studio lead.
-    </div>
-  `;
-
-  return `<div class="tier-scope">${summary}${table}${footer}</div>`;
 }
 
 // Format a byte count as a human-readable string. Used by the deck hub.
@@ -4705,7 +4746,7 @@ function isHubLocked(hub) {
   if (hub.surfaceType === 'appetize-embed') return !hub.appetizePublicKey;
   if (hub.surfaceType === 'deck-deliverable') return !hub.deckLatest;
   if (hub.surfaceType === 'pdf-binary') return !hub.pdfBinary;
-  if (hub.surfaceType === 'tier-scope') return !(hub.tierScope && hub.tierScope.tier);
+  if (hub.surfaceType === 'venture-scope') return false; // always populated — static catalogue
   const hasAny = (hub.sections || []).some((s) => s.exists);
   return !hasAny;
 }
@@ -4715,11 +4756,10 @@ function hubLockReason(hub) {
   // gate model — the operator's Phase 0-5 workflow. Reads humanly even when
   // the visitor hasn't internalised the methodology.
   const map = {
-    'brief': 'The project brief lands in this hub the moment intake completes.',
-    'sow': 'Unlocks once your Statement of Work is generated — typically at the end of Phase 2.5 after the financial plan is signed off.',
+    'brief': 'The venture brief lands in this hub the moment intake completes.',
     'welcome-pack': 'Unlocks once the Welcome Pack PDF is generated — typically at the end of Phase 0.',
-    'tier-scope': 'Unlocks once your tier is set in the brief — Launchpad, Venture, or Venture Pro.',
-    'engagement-timeline': 'STATUS.md is updated live as we close phases and gates — refresh after each milestone to see the latest.',
+    'venture-scope': 'Always available — the Ventrify OS deliverable scope is the same for every venture.',
+    'engagement-timeline': 'STATUS.md is updated live as we close phases and gates — refresh after each gate to see the latest.',
     'vision': 'Unlocks once research is complete and you\'re ready to sign off the Gate 1 direction.',
     'strategy': 'Unlocks once the product vision is signed off — the strategy builds on top of it.',
     'financials': 'Unlocks once the vision is signed off — the financial plan grounds the locked scope.',

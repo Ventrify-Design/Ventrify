@@ -302,23 +302,6 @@ async function listSinglePdf(repo, branch, dir, baseName) {
   return matches[matches.length - 1];
 }
 
-// ── Tier extraction (Foundations: Tier Scope hub) ────────────────────────
-// Parses brief.md for the `**Tier:**` line. Returns one of
-// 'Launchpad' / 'Venture' / 'Venture Pro' / null. Tolerates bracketed forms
-// like `[Launchpad / Venture / Venture Pro]` by picking the first listed
-// match. Falls back to null when the brief is absent or the tier is unset
-// — the portal then shows the placeholder state.
-function extractTierFromBrief(briefText) {
-  if (!briefText) return null;
-  const tierLine = briefText.match(/\*\*Tier:\*\*\s*\[?([^\n\]]+)/i);
-  if (!tierLine) return null;
-  const raw = tierLine[1].trim();
-  if (/venture\s*pro/i.test(raw)) return 'Venture Pro';
-  if (/venture/i.test(raw)) return 'Venture';
-  if (/launchpad/i.test(raw)) return 'Launchpad';
-  return null;
-}
-
 // Minimal YAML frontmatter parser — handles the curator's schema only:
 // scalars, arrays of objects with file + anchor.
 function parseFrontmatter(text) {
@@ -474,28 +457,18 @@ const HUBS = [
     slug: 'brief', name: 'Brief', dir: '.',
     category: 'foundations',
     alwaysVisible: true,
-    description: 'The project brief — captured at intake. The single source of truth for project goals, target user, and tier. Re-read at every gate review.',
+    description: 'The venture brief — captured at intake. The single source of truth for project goals, target user, and positioning. Re-read at every gate review.',
     sections: [
-      { slug: 'brief', file: 'brief.md', name: 'Project Brief' },
+      { slug: 'brief', file: 'brief.md', name: 'Venture Brief' },
     ],
     gate: null,
   },
-  // 2. SOW — the signed Statement of Work PDF (generated at the end of
-  // Phase 2.5). Unversioned, read-only single PDF preview + download.
-  {
-    slug: 'sow', name: 'Statement of Work',
-    category: 'foundations',
-    alwaysVisible: true,
-    surfaceType: 'pdf-binary',
-    pdfDir: 'gate-reviews',
-    pdfBaseName: 'sow',
-    description: 'The signed Statement of Work — formal scope agreement covering deliverables, tier, payment milestones, and acceptance.',
-    placeholderText: 'SOW not yet generated. Run npm run pdf:sow in the engagement repo after Gate 2.5 sign-off, then push — the PDF appears here.',
-    sections: [],
-    gate: null,
-  },
-  // 3. Welcome Pack — the Ventrify-branded onboarding document (generated
-  // at the end of Phase 0). The first deliverable the client receives.
+  // 2. Welcome Pack — the Ventrify OS onboarding document.
+  // Reframed 2026-06-02 from per-engagement agency fee + milestones to
+  // "Powered by Ventrify OS" framing. PDF generator (in the engagement
+  // repo) will be rewritten in a follow-up — this hub renders whatever
+  // is currently in gate-reviews/, so the moment the new PDF is pushed
+  // the portal picks it up.
   {
     slug: 'welcome-pack', name: 'Welcome Pack',
     category: 'foundations',
@@ -503,34 +476,35 @@ const HUBS = [
     surfaceType: 'pdf-binary',
     pdfDir: 'gate-reviews',
     pdfBaseName: 'welcome-pack',
-    description: 'The Ventrify-branded onboarding pack — what we heard from you, three market observations, three hypotheses we will test, and the deliverables and payment schedule for the engagement.',
+    description: 'How your venture works — what we heard, the three things we see in your market, the three hypotheses we will test, and the 70+ deliverables this venture earns from Ventrify OS.',
     placeholderText: 'Welcome Pack not yet generated. Run npm run pdf:welcome in the engagement repo, then push — the PDF appears here.',
     sections: [],
     gate: null,
   },
-  // 4. Tier Scope — server reads brief.md, extracts the tier, returns
-  // structured payload showing what the client gets at THEIR tier. The
-  // portal renders it as a tier badge + deliverable matrix.
-  // Implementation is in portal-list.js (surfaceType: 'tier-scope').
+  // 3. Venture Scope (replaces the old per-engagement Tier Scope).
+  // Renders the canonical Ventrify OS deliverable list as a phase-by-phase
+  // checklist (~70+ items across Phase 1-5). Same for every venture —
+  // there is no per-venture tier under Ventrify OS.
+  // Implementation is in portal-list.js (surfaceType: 'venture-scope').
   {
-    slug: 'tier-scope', name: 'Tier Scope',
+    slug: 'venture-scope', name: 'Venture Scope',
     category: 'foundations',
     alwaysVisible: true,
-    surfaceType: 'tier-scope',
-    description: 'What is and isn\'t included at your engagement tier. Tier-to-deliverable matrix sourced from brief.md.',
-    placeholderText: 'Tier not yet set. Update the **Tier:** field in brief.md (one of Launchpad / Venture / Venture Pro) and push — the matrix appears here.',
+    surfaceType: 'venture-scope',
+    description: 'The 70+ deliverables every venture earns from Ventrify OS — phase by phase, gate by gate, from intake to launch.',
     sections: [],
     gate: null,
   },
-  // 5. Engagement Timeline — v1 renders STATUS.md as a markdown hub.
-  // STATUS.md is the operator-maintained phase/gate/workstream/milestone
-  // tracker — same source the timeline strip across the top of the
-  // Overview reads from. Renders here as the full read-through.
+  // 4. Engagement Timeline — v1 renders STATUS.md as a markdown hub.
+  // STATUS.md is the operator-maintained phase/gate/workstream tracker —
+  // same source the timeline strip across the top of the Overview reads
+  // from. (Note: STATUS.md still contains a payment-milestone block from
+  // the old agency model — to be removed in the Phase 2 cleanup.)
   {
     slug: 'engagement-timeline', name: 'Engagement Timeline', dir: '.',
     category: 'foundations',
     alwaysVisible: true,
-    description: 'Phase-by-phase project timeline — every phase, gate, workstream, and payment milestone with sign-off dates. Updated live as the engagement progresses.',
+    description: 'Phase-by-phase venture timeline — every phase, gate, and workstream with sign-off dates. Updated live as your venture progresses through Ventrify OS.',
     sections: [
       { slug: 'status', file: 'STATUS.md', name: 'Status & Timeline' },
     ],
@@ -925,7 +899,6 @@ module.exports = {
   ghListDir,
   listDeckVersions,
   listSinglePdf,
-  extractTierFromBrief,
   parseFrontmatter,
   readProvocations,
   readHubL3Status,
