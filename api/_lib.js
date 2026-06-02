@@ -302,6 +302,42 @@ async function listSinglePdf(repo, branch, dir, baseName) {
   return matches[matches.length - 1];
 }
 
+// ── Figma deliverable helper ─────────────────────────────────────────────
+// Looks for a single source file at `<dir>/<baseName>.<ext>` where ext is
+// any of the conventional Figma-export formats. Returns the first match
+// (or null if absent). Lets operators ship the design source as either:
+//   - <baseName>.fig                 (Figma desktop save-local)
+//   - <baseName>.zip                 (Figma + extracted exports bundle)
+//   - <baseName>.sketch              (Sketch fallback)
+//   - <baseName>.xd                  (Adobe XD fallback)
+// Used by the Figma deliverable hub (surfaceType: 'figma-deliverable').
+async function listFigmaFile(repo, branch, dir, baseName) {
+  let entries;
+  try {
+    entries = await ghListDir(repo, branch, dir);
+  } catch (_e) {
+    return null;
+  }
+  if (!entries || entries.length === 0) return null;
+  const exts = ['fig', 'zip', 'sketch', 'xd'];
+  const lower = baseName.toLowerCase();
+  for (const ext of exts) {
+    const match = entries.find(
+      (e) => e.type === 'file' && e.name.toLowerCase() === `${lower}.${ext}`,
+    );
+    if (match) {
+      return {
+        name: match.name,
+        path: `${dir}/${match.name}`,
+        size: match.size,
+        downloadUrl: match.download_url || null,
+        ext,
+      };
+    }
+  }
+  return null;
+}
+
 // Minimal YAML frontmatter parser — handles the curator's schema only:
 // scalars, arrays of objects with file + anchor.
 function parseFrontmatter(text) {
@@ -731,7 +767,33 @@ const HUBS = [
     ],
     gate: null,
   },
-  // 8. Investor Pitch Deck (binary deliverable surface)
+  // 8. Figma (visual design source-of-truth)
+  // Two surfaces in one hub:
+  //   (a) URL-based: PORTAL_CLIENTS[slug].figmaUrl drives the embedded
+  //       Figma preview iframe + "Open in Figma" CTA.
+  //   (b) Optional file binary: any single file at design/figma-source.*
+  //       (e.g. .fig, .zip with .fig + exports) renders as a download
+  //       button. Operators upload via git commit; the portal picks it
+  //       up automatically on the next render.
+  //
+  // Figma embed requires the file's Share setting to be "Anyone with the
+  // link can view" or higher. Private files render the Figma auth prompt
+  // inside the iframe instead of the preview — the placeholder messaging
+  // calls this out.
+  {
+    slug: 'figma', name: 'Figma',
+    category: 'deliverable',
+    alwaysVisible: true,
+    surfaceType: 'figma-deliverable',
+    urlField: 'figmaUrl',
+    figmaFileDir: 'design',
+    figmaFileBaseName: 'figma-source',
+    description: 'The Figma source for the entire visual design system — colours, typography, components, screens. Preview live in-portal, open in Figma to inspect specs, or download the source file.',
+    placeholderText: 'Figma file not yet registered. Set PORTAL_CLIENTS.<slug>.figmaUrl to the file URL (Share settings: "Anyone with the link can view"), then redeploy.',
+    sections: [],
+    gate: null,
+  },
+  // 9. Investor Pitch Deck (binary deliverable surface)
   // The Investor Pitch Deck is the only deck that ships as a file (rather
   // than a portal hub or a DS-site page) because investors expect a
   // shareable artifact they can download, annotate, send to partners.
@@ -899,6 +961,7 @@ module.exports = {
   ghListDir,
   listDeckVersions,
   listSinglePdf,
+  listFigmaFile,
   parseFrontmatter,
   readProvocations,
   readHubL3Status,

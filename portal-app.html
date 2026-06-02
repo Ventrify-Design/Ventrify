@@ -1440,6 +1440,44 @@
       border: 0; display: block;
       background: #fff;
     }
+    .figma-preview-frame {
+      width: 100%;
+      aspect-ratio: 16 / 10;
+      background: var(--bg-light);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-card);
+      overflow: hidden;
+      box-shadow: 0 4px 16px rgba(8,11,26,0.06);
+    }
+    .figma-preview-frame iframe {
+      width: 100%; height: 100%;
+      border: 0; display: block;
+      background: #1e1e1e; /* Figma's own backdrop colour, avoids a white flash */
+    }
+    .figma-preview-hint {
+      font-size: 12.5px; color: var(--text-muted); line-height: 1.5;
+      padding: 8px 12px; margin-top: -4px;
+      background: rgba(0,0,0,0.025); border-radius: 6px;
+    }
+    .figma-preview-hint strong { color: var(--text-strong); font-weight: 600; }
+    .figma-preview-missing {
+      display: flex; align-items: flex-start; gap: 14px;
+      padding: 18px 22px;
+      background: rgba(0, 0, 0, 0.025);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-card);
+      color: var(--text-strong);
+    }
+    .figma-preview-missing-icon {
+      font-size: 20px; flex-shrink: 0; color: var(--primary);
+    }
+    .figma-preview-missing-body { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+    .figma-preview-missing-body strong { font-size: 14px; }
+    .figma-preview-missing-body span { font-size: 13px; line-height: 1.5; color: var(--text-muted); }
+    .figma-preview-missing-body code {
+      font-family: var(--font-mono); font-size: 12px;
+      background: rgba(0,0,0,0.05); padding: 2px 6px; border-radius: 4px;
+    }
     .deck-preview-missing {
       display: flex; align-items: flex-start; gap: 14px;
       padding: 18px 22px;
@@ -3742,6 +3780,8 @@ async function loadList() {
       body = renderPdfBinaryHub(hub);
     } else if (hub.surfaceType === 'venture-scope') {
       body = renderVentureScopeHub(hub);
+    } else if (hub.surfaceType === 'figma-deliverable') {
+      body = renderFigmaDeliverableHub(hub);
     } else if (hub.cardDriven) {
       body = renderHubProvocations(hub);
     } else {
@@ -4193,6 +4233,86 @@ function renderVentureScopeHub(hub) {
         <strong>Same scope, every venture.</strong> Ventrify OS doesn't price per-engagement —
         the studio or accelerator running this programme has an annual licence. You get every
         deliverable above, full stop.
+      </div>
+    </div>
+  `;
+}
+
+// ── Figma deliverable surface (Deliverables: Figma) ───────────────────────
+// Embedded Figma preview (when figmaUrl is set + the Figma file's Share
+// setting is "Anyone with the link can view") + Open in Figma CTA +
+// optional Download button (when a source file is committed to design/).
+//
+// Figma's official embed URL:
+//   https://www.figma.com/embed?embed_host=ventrify&url=<encoded-url>
+// Private files render Figma's "Sign in to view" panel inside the iframe
+// rather than the preview — the placeholder messaging covers that path.
+function renderFigmaDeliverableHub(hub) {
+  const url = hub.figmaUrl;
+  const file = hub.figmaFile;
+
+  if (!url && !file) {
+    return `
+      <div class="preview-link-placeholder">
+        <div class="preview-link-placeholder-icon">◆</div>
+        <div class="preview-link-placeholder-body">
+          <div class="preview-link-placeholder-title">${esc(hub.name)} — not yet registered</div>
+          <div class="preview-link-placeholder-sub">${esc(hub.placeholderText || 'Register the Figma URL or upload a source file to design/figma-source.* to populate this hub.')}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  const embedUrl = url
+    ? `https://www.figma.com/embed?embed_host=ventrify&url=${encodeURIComponent(url)}`
+    : null;
+
+  const preview = embedUrl ? `
+    <div class="figma-preview-frame">
+      <iframe src="${esc(embedUrl)}" title="${esc(hub.name)} — Figma preview" allowfullscreen></iframe>
+    </div>
+    <div class="figma-preview-hint">
+      Preview shows nothing? The Figma file's Share setting must be
+      <strong>"Anyone with the link can view"</strong> or higher for the
+      embed to render. Private files prompt for Figma login here.
+    </div>
+  ` : `
+    <div class="figma-preview-missing">
+      <div class="figma-preview-missing-icon">◆</div>
+      <div class="figma-preview-missing-body">
+        <strong>No Figma URL registered.</strong>
+        <span>Set <code>PORTAL_CLIENTS.&lt;slug&gt;.figmaUrl</code> to a public Figma file URL to enable the embedded preview. The source file below is still available to download.</span>
+      </div>
+    </div>
+  `;
+
+  const openInFigma = url ? `
+    <a class="deck-action deck-action-primary" href="${esc(url)}" target="_blank" rel="noopener">
+      <span>Open in Figma</span>
+      <span class="deck-action-sub">Inspect specs, copy styles, or use <em>File → Duplicate</em> to copy to your team</span>
+    </a>
+  ` : '';
+
+  const downloadFile = file ? `
+    <a class="deck-action" href="/api/portal-figma-binary?hub=${encodeURIComponent(hub.slug)}">
+      <span>Download source (${esc(file.ext)})</span>
+      <span class="deck-action-sub">${esc(file.name)} · ${fmtFileSize(file.size)}</span>
+    </a>
+  ` : '';
+
+  return `
+    <div class="deck-deliverable">
+      <div class="deck-header">
+        ${hub.description ? `<div class="deck-description">${esc(hub.description)}</div>` : ''}
+        <div class="deck-version-strip">
+          <span class="deck-version-badge">FIGMA</span>
+          <span class="deck-version-meta">${url ? 'Live source — embedded preview' : 'Source file available for download'}</span>
+        </div>
+      </div>
+      ${preview}
+      <div class="deck-actions">
+        ${openInFigma}
+        ${downloadFile}
       </div>
     </div>
   `;
@@ -4747,6 +4867,7 @@ function isHubLocked(hub) {
   if (hub.surfaceType === 'deck-deliverable') return !hub.deckLatest;
   if (hub.surfaceType === 'pdf-binary') return !hub.pdfBinary;
   if (hub.surfaceType === 'venture-scope') return false; // always populated — static catalogue
+  if (hub.surfaceType === 'figma-deliverable') return !hub.figmaUrl && !hub.figmaFile;
   const hasAny = (hub.sections || []).some((s) => s.exists);
   return !hasAny;
 }
@@ -4760,6 +4881,7 @@ function hubLockReason(hub) {
     'welcome-pack': 'Unlocks once the Welcome Pack PDF is generated — typically at the end of Phase 0.',
     'venture-scope': 'Always available — the Ventrify OS deliverable scope is the same for every venture.',
     'engagement-timeline': 'STATUS.md is updated live as we close phases and gates — refresh after each gate to see the latest.',
+    'figma': 'Unlocks once the Figma file URL is registered or a source file is committed to design/.',
     'vision': 'Unlocks once research is complete and you\'re ready to sign off the Gate 1 direction.',
     'strategy': 'Unlocks once the product vision is signed off — the strategy builds on top of it.',
     'financials': 'Unlocks once the vision is signed off — the financial plan grounds the locked scope.',

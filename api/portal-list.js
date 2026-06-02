@@ -10,7 +10,7 @@
  * like scope-change-recommendations.md are filtered out).
  */
 
-const { loadClients, requireAuth, ghFetch, ghReadFile, hubsForScope, readProvocations, readHubL3Status, listDeckVersions, listSinglePdf } = require('./_lib');
+const { loadClients, requireAuth, ghFetch, ghReadFile, hubsForScope, readProvocations, readHubL3Status, listDeckVersions, listSinglePdf, listFigmaFile } = require('./_lib');
 
 // ── Venture Scope catalogue (Ventrify OS deliverable matrix) ──────────────
 // Replaces the deprecated per-engagement tier matrix (Launchpad/Venture/
@@ -507,6 +507,25 @@ module.exports = async function handler(req, res) {
       }
     }
 
+    // ── Figma deliverable surface (Deliverables: Figma) ────────────────────
+    // Combines a URL (drives the embed iframe + Open in Figma) with an
+    // optional binary file (drives the download button). Either or both
+    // can be present — the renderer adapts.
+    let figmaUrl = null;
+    let figmaFile = null;
+    if (hub.surfaceType === 'figma-deliverable') {
+      if (hub.urlField) {
+        figmaUrl = client[hub.urlField] || null;
+      }
+      if (hub.figmaFileDir && hub.figmaFileBaseName) {
+        try {
+          figmaFile = await listFigmaFile(repo, branch, hub.figmaFileDir, hub.figmaFileBaseName);
+        } catch (e) {
+          console.error(`[portal-list] figma file scan failed for ${hub.slug}:`, e.message);
+        }
+      }
+    }
+
     // ── Venture-scope surface (Foundations: Venture Scope) ─────────────────
     // Returns the canonical Ventrify OS deliverable scope as a phase-by-
     // phase structured payload. Same payload for every venture — there is
@@ -547,6 +566,8 @@ module.exports = async function handler(req, res) {
       deckVersions,
       deckLatest,
       pdfBinary,
+      figmaUrl,
+      figmaFile,
       ventureScope,
       description: hub.description || null,
       placeholderText: hub.placeholderText || null,
