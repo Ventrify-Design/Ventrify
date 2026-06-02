@@ -306,6 +306,176 @@ async function listSinglePdf(repo, branch, dir, baseName) {
   return matches[matches.length - 1];
 }
 
+// ── Brief snapshot parser (Foundations: Brief) ────────────────────────────
+// Parses brief.md (the canonical Ventrify intake form) into a structured
+// payload the portal renders as a snapshot view: hero + overview cards +
+// goals + features + inspiration + platform + team + notes. Resilient to
+// the founder skipping fields — anything missing falls out as null and
+// the renderer hides the empty slot.
+function parseBriefSnapshot(text) {
+  if (!text || typeof text !== 'string') return null;
+
+  const result = {
+    title: null,
+    meta: { date: null, lead: null, programme: null, engagementType: null },
+    overview: {
+      projectName: null,
+      oneLiner: null,
+      problem: null,
+      targetUser: null,
+      vision: null,
+    },
+    goals: { motivations: [], primaryGoal: null, successCriteria: null },
+    features: [],
+    inspiration: { competitors: [], designStyle: null },
+    platform: { selected: [], preferred: null },
+    team: { clientRole: null, stakeholders: null, technicalCapability: null },
+    notes: null,
+  };
+
+  // H1 → title (first line beginning with single #)
+  const h1 = text.match(/^#\s+(.+?)$/m);
+  if (h1) result.title = h1[1].trim();
+
+  // Top-level metadata: **Key:** value lines BEFORE the first ## heading
+  const firstH2 = text.search(/^##\s/m);
+  const head = firstH2 > -1 ? text.slice(0, firstH2) : text;
+  const grabMeta = (label) => {
+    const re = new RegExp(`\\*\\*${label}:\\*\\*\\s*([^\\n]+)`, 'i');
+    const m = head.match(re);
+    return m ? m[1].trim() : null;
+  };
+  result.meta.date = grabMeta('Date');
+  result.meta.lead = grabMeta('Ventrify Lead');
+  result.meta.programme = grabMeta('Programme') || grabMeta('Tier'); // back-compat
+  result.meta.engagementType = grabMeta('Engagement Type');
+
+  // Split by H2 sections — emoji prefixes are tolerated. Section key is the
+  // trailing word group of the heading (`## 🧾 Project Overview` → 'Project Overview').
+  const sectionMatches = [...text.matchAll(/^##\s+(?:\S+\s+)?(.+?)$/gm)];
+  const sectionBodies = sectionMatches.map((m, i) => {
+    const start = m.index + m[0].length;
+    const end = i + 1 < sectionMatches.length ? sectionMatches[i + 1].index : text.length;
+    return { title: m[1].trim(), body: text.slice(start, end).trim() };
+  });
+
+  // Field-bullet extractor: `- **Label:** value` (value may continue across
+  // wrapped lines until the next `- **` or `## ` boundary). Strips trailing
+  // `---` separators that bleed in from the section terminator.
+  const extractField = (body, label) => {
+    const re = new RegExp(`-\\s+\\*\\*${label}:?\\*\\*\\s*([\\s\\S]*?)(?=\\n-\\s+\\*\\*|\\n##\\s|\\n---\\s|$)`, 'i');
+    const m = body.match(re);
+    if (!m) return null;
+    return m[1].trim()
+      .replace(/\s+\n/g, '\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .replace(/\n*---\s*$/g, '')
+      .trim() || null;
+  };
+
+  for (const s of sectionBodies) {
+    const t = s.title;
+    if (/Project Overview/i.test(t)) {
+      result.overview.projectName = extractField(s.body, 'Project Name');
+      result.overview.oneLiner = extractField(s.body, 'One-liner Description')
+        || extractField(s.body, 'One-liner');
+      result.overview.problem = extractField(s.body, 'Problem being solved')
+        || extractField(s.body, 'Problem');
+      result.overview.targetUser = extractField(s.body, 'Target user / customer')
+        || extractField(s.body, 'Target user');
+      result.overview.vision = extractField(s.body, '1-year product vision')
+        || extractField(s.body, 'Product vision');
+    } else if (/Project Goals/i.test(t)) {
+      // Motivation checkboxes. `gm` so `$` means end-of-line per match.
+      const motMatches = [...s.body.matchAll(/^-\s+\[([ x])\]\s+(.+?)$/gim)];
+      result.goals.motivations = motMatches.map((m) => ({
+        label: m[2].trim().replace(/_+$/, '').trim(),
+        checked: m[1].toLowerCase() === 'x',
+      })).filter((m) => m.label && !/other/i.test(m.label));
+      result.goals.primaryGoal = extractField(s.body, 'Primary goal for MVP')
+        || extractField(s.body, 'Primary goal');
+      result.goals.successCriteria = extractField(s.body, 'Success looks like');
+    } else if (/Key Features/i.test(t)) {
+      // Features: each top-level `- ...` bullet IS a feature. Title format
+      // is the brief's intake convention: "Feature N — Short Title BodyText".
+      // Split heuristic: after the em-dash, accept up to ~7 Title-Case words
+      // before the first sentence-cap word, then everything else is body.
+      const featureLines = [...s.body.matchAll(/^-\s+(.+?)(?=\n-\s|\n##\s|\n---\s|$)/gms)];
+      result.features = featureLines.map((m, i) => {
+        const raw = m[1].trim();
+        const headed = raw.match(/^(Feature\s+\d+)\s*[—-]\s*(.*)$/is);
+        if (headed) {
+          const num = headed[1].trim();
+          const rest = headed[2].trim();
+          // Title boundary: where the brief's "Feature N — Title Body..." pattern
+          // transitions into the body. Heuristic: stop at the first sentence-
+          // starter word (This/The/It/Each/Build/etc.) preceded by whitespace.
+          // Falls back to char-count + word-boundary if no marker is found.
+          let split = -1;
+          // Conservative determiner/pronoun list — words that virtually
+          // never appear within a brief feature title but always start a
+          // new clause. Greedy word lists (e.g. "Build", "Core") backfire
+          // because they appear in actual titles ("and Build Objective").
+          const SENT_STARTERS = /\s+(This|These|The|It)\s+\w/;
+          const sentMatch = rest.match(SENT_STARTERS);
+          if (sentMatch && sentMatch.index > 8 && sentMatch.index < 110) {
+            split = sentMatch.index;
+          } else {
+            const period = rest.search(/\.\s+[A-Z]/);
+            if (period > 0 && period < 80) split = period + 1;
+            else {
+              split = Math.min(60, rest.length);
+              const ws = rest.lastIndexOf(' ', split);
+              if (ws > 10) split = ws;
+            }
+          }
+          const title = `${num} — ${rest.slice(0, split).trim()}`;
+          const body = rest.slice(split).trim();
+          return { id: `f${i + 1}`, title, body };
+        }
+        // Plain bullet — title is first sentence, body the rest
+        const period = raw.search(/\.\s+[A-Z]/);
+        if (period > 10 && period < 200) {
+          return { id: `f${i + 1}`, title: raw.slice(0, period + 1).trim(), body: raw.slice(period + 2).trim() };
+        }
+        return { id: `f${i + 1}`, title: raw.slice(0, 80).trim() + (raw.length > 80 ? '…' : ''), body: raw };
+      });
+    } else if (/Inspiration/i.test(t)) {
+      // Competitors: nested `  - Name — URL` or `  - [Name](URL)` under a parent label
+      const compRe = /-\s+(?:\[([^\]]+)\]\(([^)]+)\)|([^—\n[]+?)\s+[—-]\s+(https?:\/\/[^\s]+))/g;
+      const comps = [...s.body.matchAll(compRe)];
+      result.inspiration.competitors = comps.map((c) => ({
+        name: (c[1] || c[3] || '').trim(),
+        url: (c[2] || c[4] || '').trim(),
+      })).filter((c) => c.name);
+      result.inspiration.designStyle = extractField(s.body, 'Design style');
+    } else if (/Platform/i.test(t)) {
+      const platMatches = [...s.body.matchAll(/^-\s+\[([ x])\]\s+(.+?)$/gim)];
+      result.platform.selected = platMatches.map((m) => ({
+        label: m[2].trim().replace(/_+$/, '').trim(),
+        checked: m[1].toLowerCase() === 'x',
+      })).filter((m) => m.label && !/other/i.test(m.label) && !/no preference/i.test(m.label));
+      result.platform.preferred = extractField(s.body, 'Preferred tools/platforms')
+        || extractField(s.body, 'Preferred tools');
+    } else if (/Team/i.test(t)) {
+      result.team.clientRole = extractField(s.body, 'Client name & role')
+        || extractField(s.body, 'Client name');
+      result.team.stakeholders = extractField(s.body, 'Other stakeholders');
+      result.team.technicalCapability = extractField(s.body, 'Technical capability on client team')
+        || extractField(s.body, 'Technical capability');
+    } else if (/Additional Notes/i.test(t) || /Notes/i.test(t)) {
+      // Strip the standard intake-footer block (no /m so `$` is end-of-string).
+      result.notes = s.body
+        .replace(/^>\s+This brief is generated by[\s\S]*$/, '')
+        .replace(/^>\s+Claude reads this file[\s\S]*$/, '')
+        .replace(/\n*---\s*$/g, '')
+        .trim() || null;
+    }
+  }
+
+  return result;
+}
+
 // ── Figma deliverable helper ─────────────────────────────────────────────
 // Looks for a single source file at `<dir>/<baseName>.<ext>` where ext is
 // any of the conventional Figma-export formats. Returns the first match
@@ -492,15 +662,18 @@ const HUBS = [
   // ─────────────────────────────────────────────────────────────────────
 
   // 1. Brief — the founder-authored intake form. The single most-cited
-  // document in every engagement. Renders as a regular markdown hub.
+  // document in every engagement. Renders as a structured "snapshot" that
+  // parses brief.md and presents the captured fields as hero + cards rather
+  // than dumping raw markdown.
   {
-    slug: 'brief', name: 'Brief', dir: '.',
+    slug: 'brief', name: 'Brief',
     category: 'foundations',
     alwaysVisible: true,
-    description: 'The venture brief — captured at intake. The single source of truth for project goals, target user, and positioning. Re-read at every gate review.',
-    sections: [
-      { slug: 'brief', file: 'brief.md', name: 'Venture Brief' },
-    ],
+    surfaceType: 'brief-snapshot',
+    briefPath: 'brief.md',
+    description: 'Playback of the venture brief — what we captured at intake. Project goals, target user, positioning, key features, inspiration, platform, team.',
+    placeholderText: 'brief.md not yet generated. Run npm run intake in the engagement repo to capture the brief, then push — the playback appears here.',
+    sections: [],
     gate: null,
   },
   // 2. Welcome Pack — the Ventrify OS onboarding document.
@@ -966,6 +1139,7 @@ module.exports = {
   listDeckVersions,
   listSinglePdf,
   listFigmaFile,
+  parseBriefSnapshot,
   parseFrontmatter,
   readProvocations,
   readHubL3Status,

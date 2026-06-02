@@ -1599,6 +1599,200 @@
     }
     .deck-history-actions a:hover { text-decoration: underline; }
 
+    /* ── Brief Snapshot surface (Foundations) ────────────────────────── */
+    .brief-snapshot { display: flex; flex-direction: column; gap: 22px; }
+    .brief-hero {
+      padding: 30px 32px;
+      border-radius: var(--radius-card);
+      background: linear-gradient(135deg, var(--surface-card) 0%, rgba(0,0,0,0.02) 100%);
+      border: 1px solid var(--surface-border, rgba(0,0,0,0.04));
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .brief-hero-eyebrow {
+      font-family: var(--font-mono); font-size: 11px; font-weight: 600;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .brief-hero-title {
+      font-family: var(--font-display); font-size: 42px; font-weight: 700;
+      letter-spacing: -0.02em; line-height: 1.05;
+      color: var(--primary);
+    }
+    .brief-hero-oneliner {
+      font-size: 16px; line-height: 1.55; color: var(--text-strong);
+      max-width: 72ch;
+    }
+    .brief-meta-strip {
+      display: flex; flex-wrap: wrap; gap: 16px; margin-top: 10px;
+      padding-top: 14px; border-top: 1px solid var(--surface-border, rgba(0,0,0,0.06));
+    }
+    .brief-meta-item {
+      font-family: var(--font-mono); font-size: 12px;
+      color: var(--text-strong); letter-spacing: 0.02em;
+    }
+    .brief-meta-item em {
+      color: var(--text-muted); font-style: normal; font-weight: 600;
+      font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.1em;
+      margin-right: 5px;
+    }
+
+    /* Card grids */
+    .brief-card-grid { display: grid; gap: 14px; }
+    .brief-card-grid-2 { grid-template-columns: repeat(2, 1fr); }
+    .brief-card-grid-3 { grid-template-columns: repeat(3, 1fr); }
+    @media (max-width: 900px) {
+      .brief-card-grid-3 { grid-template-columns: 1fr; }
+      .brief-card-grid-2 { grid-template-columns: 1fr; }
+    }
+
+    /* Individual card */
+    .brief-card {
+      background: var(--surface-card); border-radius: var(--radius-card);
+      border: 1px solid var(--surface-border, rgba(0,0,0,0.04));
+      overflow: hidden;
+    }
+    .brief-card[open] { box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.04); }
+    .brief-card > summary {
+      padding: 16px 18px; cursor: pointer; user-select: none;
+      list-style: none; display: flex; flex-direction: column; gap: 6px;
+      position: relative;
+    }
+    .brief-card > summary::-webkit-details-marker { display: none; }
+    .brief-card > summary::after {
+      content: '▾'; position: absolute; right: 16px; top: 18px;
+      font-size: 10px; color: var(--text-muted);
+      transition: transform 200ms ease;
+    }
+    .brief-card[open] > summary::after { transform: rotate(180deg); }
+    .brief-card-label {
+      font-family: var(--font-mono); font-size: 10.5px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .brief-card[data-accent="vision"] .brief-card-label { color: var(--primary); }
+    .brief-card[data-accent="problem"] .brief-card-label { color: var(--status-rework-fg); }
+    .brief-card[data-accent="target"] .brief-card-label { color: var(--status-feedback-fg); }
+    .brief-card-label-static {
+      padding: 16px 18px 4px; margin-bottom: -8px;
+    }
+    .brief-card-headline {
+      font-size: 14px; color: var(--text-strong); line-height: 1.5;
+      padding-right: 20px;
+    }
+    .brief-card-body {
+      padding: 4px 18px 18px;
+      border-top: 1px solid var(--surface-border, rgba(0,0,0,0.04));
+      margin-top: 8px; padding-top: 14px;
+    }
+    .brief-card-body p {
+      margin: 0 0 10px; font-size: 13.5px; line-height: 1.6;
+      color: var(--text-strong);
+    }
+    .brief-card-body p:last-child { margin-bottom: 0; }
+    .brief-card-line {
+      padding: 6px 18px; font-size: 13px; line-height: 1.5; color: var(--text-strong);
+    }
+    .brief-card-line:last-child { padding-bottom: 16px; }
+    .brief-card-line em {
+      color: var(--text-muted); font-style: normal; font-weight: 600;
+      font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em;
+      margin-right: 6px;
+    }
+    .brief-card-wide { width: 100%; }
+
+    /* Section wrapper (Goals / Features / Inspiration) */
+    .brief-section {
+      background: var(--surface-card); border-radius: var(--radius-card);
+      border: 1px solid var(--surface-border, rgba(0,0,0,0.04));
+      padding: 20px 24px;
+      display: flex; flex-direction: column; gap: 14px;
+    }
+    .brief-section-head {
+      font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    /* Chip row (motivations, platform options) */
+    .brief-chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
+    .brief-chip-row-tight { padding: 8px 18px; }
+    .brief-chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 4px 11px; border-radius: var(--radius-pill);
+      background: rgba(0,0,0,0.05);
+      color: var(--text-muted);
+      font-family: var(--font-mono); font-size: 11.5px; font-weight: 500;
+      letter-spacing: 0.02em;
+    }
+    .brief-chip[data-checked="true"] {
+      background: var(--status-approved-bg); color: var(--status-approved-fg);
+      font-weight: 700;
+    }
+
+    /* Features — collapsible list */
+    .brief-features-list { display: flex; flex-direction: column; gap: 6px; }
+    .brief-feature {
+      background: rgba(0,0,0,0.02); border-radius: 8px;
+      border: 1px solid var(--surface-border, rgba(0,0,0,0.03));
+      overflow: hidden;
+    }
+    .brief-feature > summary {
+      padding: 11px 14px; cursor: pointer; user-select: none;
+      list-style: none; display: flex; align-items: center; gap: 10px;
+    }
+    .brief-feature > summary::-webkit-details-marker { display: none; }
+    .brief-feature-title {
+      flex: 1; font-size: 13.5px; font-weight: 500; line-height: 1.4;
+      color: var(--text-strong);
+    }
+    .brief-feature-chev {
+      font-size: 10px; color: var(--text-muted);
+      transition: transform 200ms ease;
+    }
+    .brief-feature[open] .brief-feature-chev { transform: rotate(180deg); }
+    .brief-feature-body {
+      padding: 4px 14px 14px;
+      border-top: 1px solid var(--surface-border, rgba(0,0,0,0.04));
+      margin-top: 4px; padding-top: 12px;
+    }
+    .brief-feature-body p {
+      margin: 0 0 8px; font-size: 13px; line-height: 1.6;
+      color: var(--text-strong);
+    }
+    .brief-feature-body p:last-child { margin-bottom: 0; }
+
+    /* Inspiration */
+    .brief-inspiration-row { display: flex; flex-wrap: wrap; gap: 10px; }
+    .brief-competitor {
+      flex: 1 1 240px;
+      padding: 12px 16px; border-radius: 10px;
+      background: rgba(0,0,0,0.025);
+      border: 1px solid var(--surface-border, rgba(0,0,0,0.03));
+      text-decoration: none; display: flex; flex-direction: column; gap: 4px;
+      transition: border-color 200ms ease;
+    }
+    .brief-competitor:hover { border-color: var(--primary); }
+    .brief-competitor-name {
+      font-size: 14px; font-weight: 600; color: var(--text-dark);
+    }
+    .brief-competitor-url {
+      font-family: var(--font-mono); font-size: 11.5px;
+      color: var(--text-muted); letter-spacing: 0.02em;
+    }
+    .brief-style-line {
+      font-family: var(--font-mono); font-size: 12px;
+      color: var(--text-strong); padding-top: 4px;
+    }
+    .brief-style-line em {
+      color: var(--text-muted); font-style: normal; font-weight: 600;
+      font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.1em;
+      margin-right: 6px;
+    }
+    .brief-style-line strong { font-weight: 700; color: var(--primary); }
+
+    /* Notes body — give the long-form architecture write-up some breathing room */
+    .brief-notes-body p { line-height: 1.7; max-width: 78ch; }
+
     /* ── Venture Scope surface (Foundations) ─────────────────────────── */
     .vscope { display: flex; flex-direction: column; gap: 24px; }
     .vscope-hero {
@@ -3780,6 +3974,8 @@ async function loadList() {
       body = renderPdfBinaryHub(hub);
     } else if (hub.surfaceType === 'venture-scope') {
       body = renderVentureScopeHub(hub);
+    } else if (hub.surfaceType === 'brief-snapshot') {
+      body = renderBriefSnapshotHub(hub);
     } else if (hub.surfaceType === 'figma-deliverable') {
       body = renderFigmaDeliverableHub(hub);
     } else if (hub.cardDriven) {
@@ -4269,6 +4465,218 @@ function renderVentureScopeHub(hub) {
       </div>
     </div>
   `;
+}
+
+// ── Brief snapshot surface (Foundations: Brief) ───────────────────────────
+// Renders the parsed brief.md as a structured "playback" — hero with project
+// name + one-liner + metadata strip, then expandable cards for Vision /
+// Problem / Target user, Goals (motivations + primary goal + success
+// criteria), Features (collapsed by default), Inspiration, Platform, Team,
+// and the long-form Additional Notes. Each card uses native <details> for
+// expand/collapse — zero extra JS wiring required.
+function renderBriefSnapshotHub(hub) {
+  const b = hub.briefSnapshot;
+  if (!b) {
+    return `
+      <div class="preview-link-placeholder">
+        <div class="preview-link-placeholder-icon">◯</div>
+        <div class="preview-link-placeholder-body">
+          <div class="preview-link-placeholder-title">${esc(hub.name)} — not yet captured</div>
+          <div class="preview-link-placeholder-sub">${esc(hub.placeholderText || 'brief.md not yet generated.')}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  // Helper — turn a long-form value into a paragraph block.
+  const para = (text) => text
+    ? text.split(/\n{2,}|(?<=\.)\s+(?=[A-Z])/).map((p) => `<p>${esc(p.trim())}</p>`).join('')
+    : '';
+
+  // Meta strip across the top
+  const metaItems = [];
+  if (b.meta.date) metaItems.push(`<span class="brief-meta-item"><em>Date</em> ${esc(b.meta.date)}</span>`);
+  if (b.meta.lead) metaItems.push(`<span class="brief-meta-item"><em>Lead</em> ${esc(b.meta.lead)}</span>`);
+  if (b.meta.programme) metaItems.push(`<span class="brief-meta-item"><em>Programme</em> ${esc(b.meta.programme)}</span>`);
+
+  // Hero
+  const hero = `
+    <div class="brief-hero">
+      <div class="brief-hero-eyebrow">What we captured at intake</div>
+      <div class="brief-hero-title">${esc(b.overview.projectName || b.title || 'Venture Brief')}</div>
+      ${b.overview.oneLiner ? `<div class="brief-hero-oneliner">${esc(b.overview.oneLiner)}</div>` : ''}
+      ${metaItems.length ? `<div class="brief-meta-strip">${metaItems.join('')}</div>` : ''}
+    </div>
+  `;
+
+  // Engagement type — a separate full-width note since it's typically long
+  const engagementTypeBlock = b.meta.engagementType ? `
+    <details class="brief-card brief-card-wide">
+      <summary>
+        <div class="brief-card-label">Engagement Type</div>
+        <div class="brief-card-headline">${esc(truncate(b.meta.engagementType, 100))}</div>
+      </summary>
+      <div class="brief-card-body">${para(b.meta.engagementType)}</div>
+    </details>
+  ` : '';
+
+  // Three-card row: Vision · Problem · Target User
+  const overviewCards = [
+    { label: 'Product Vision · 12 months', value: b.overview.vision, accent: 'vision' },
+    { label: 'Problem We\'re Solving', value: b.overview.problem, accent: 'problem' },
+    { label: 'Target User', value: b.overview.targetUser, accent: 'target' },
+  ].filter((c) => c.value);
+
+  const overviewGrid = overviewCards.length ? `
+    <div class="brief-card-grid brief-card-grid-3">
+      ${overviewCards.map((c) => `
+        <details class="brief-card" data-accent="${c.accent}">
+          <summary>
+            <div class="brief-card-label">${esc(c.label)}</div>
+            <div class="brief-card-headline">${esc(truncate(c.value, 120))}</div>
+          </summary>
+          <div class="brief-card-body">${para(c.value)}</div>
+        </details>
+      `).join('')}
+    </div>
+  ` : '';
+
+  // Goals
+  const goalsBlock = (b.goals.motivations.length || b.goals.primaryGoal || b.goals.successCriteria) ? `
+    <div class="brief-section">
+      <div class="brief-section-head">Goals</div>
+      ${b.goals.motivations.length ? `
+        <div class="brief-chip-row">
+          ${b.goals.motivations.map((m) => `
+            <span class="brief-chip" data-checked="${m.checked}">
+              ${m.checked ? '✓' : '○'} ${esc(m.label)}
+            </span>
+          `).join('')}
+        </div>
+      ` : ''}
+      <div class="brief-card-grid brief-card-grid-2">
+        ${b.goals.primaryGoal ? `
+          <details class="brief-card">
+            <summary>
+              <div class="brief-card-label">Primary goal for MVP</div>
+              <div class="brief-card-headline">${esc(truncate(b.goals.primaryGoal, 110))}</div>
+            </summary>
+            <div class="brief-card-body">${para(b.goals.primaryGoal)}</div>
+          </details>` : ''}
+        ${b.goals.successCriteria ? `
+          <details class="brief-card">
+            <summary>
+              <div class="brief-card-label">Success looks like</div>
+              <div class="brief-card-headline">${esc(truncate(b.goals.successCriteria, 110))}</div>
+            </summary>
+            <div class="brief-card-body">${para(b.goals.successCriteria)}</div>
+          </details>` : ''}
+      </div>
+    </div>
+  ` : '';
+
+  // Features
+  const featuresBlock = b.features.length ? `
+    <div class="brief-section">
+      <div class="brief-section-head">Key Features (${b.features.length})</div>
+      <div class="brief-features-list">
+        ${b.features.map((f) => `
+          <details class="brief-feature">
+            <summary>
+              <span class="brief-feature-title">${esc(f.title)}</span>
+              <span class="brief-feature-chev">▾</span>
+            </summary>
+            <div class="brief-feature-body">${para(f.body)}</div>
+          </details>
+        `).join('')}
+      </div>
+    </div>
+  ` : '';
+
+  // Inspiration
+  const inspirationBlock = (b.inspiration.competitors.length || b.inspiration.designStyle) ? `
+    <div class="brief-section">
+      <div class="brief-section-head">Inspiration</div>
+      ${b.inspiration.competitors.length ? `
+        <div class="brief-inspiration-row">
+          ${b.inspiration.competitors.map((c) => `
+            <a class="brief-competitor" href="${esc(c.url)}" target="_blank" rel="noopener">
+              <span class="brief-competitor-name">${esc(c.name)}</span>
+              <span class="brief-competitor-url">${esc(c.url.replace(/^https?:\/\/(www\.)?/, ''))} ↗</span>
+            </a>
+          `).join('')}
+        </div>
+      ` : ''}
+      ${b.inspiration.designStyle ? `
+        <div class="brief-style-line"><em>Design style</em> <strong>${esc(b.inspiration.designStyle)}</strong></div>
+      ` : ''}
+    </div>
+  ` : '';
+
+  // Platform + Team — two-col row
+  const platformBlock = (b.platform.selected.length || b.platform.preferred) ? `
+    <div class="brief-card">
+      <div class="brief-card-label brief-card-label-static">Platform &amp; Tech</div>
+      ${b.platform.selected.length ? `
+        <div class="brief-chip-row brief-chip-row-tight">
+          ${b.platform.selected.map((p) => `
+            <span class="brief-chip" data-checked="${p.checked}">
+              ${p.checked ? '✓' : '○'} ${esc(p.label)}
+            </span>
+          `).join('')}
+        </div>
+      ` : ''}
+      ${b.platform.preferred ? `<div class="brief-card-line"><em>Preferred</em> ${esc(b.platform.preferred)}</div>` : ''}
+    </div>
+  ` : '';
+
+  const teamBlock = (b.team.clientRole || b.team.stakeholders || b.team.technicalCapability) ? `
+    <div class="brief-card">
+      <div class="brief-card-label brief-card-label-static">Team</div>
+      ${b.team.clientRole ? `<div class="brief-card-line"><em>Client</em> ${esc(b.team.clientRole)}</div>` : ''}
+      ${b.team.stakeholders ? `<div class="brief-card-line"><em>Stakeholders</em> ${esc(b.team.stakeholders)}</div>` : ''}
+      ${b.team.technicalCapability ? `<div class="brief-card-line"><em>Tech capability</em> ${esc(b.team.technicalCapability)}</div>` : ''}
+    </div>
+  ` : '';
+
+  const platTeamRow = (platformBlock || teamBlock) ? `
+    <div class="brief-card-grid brief-card-grid-2">
+      ${platformBlock}
+      ${teamBlock}
+    </div>
+  ` : '';
+
+  // Notes — long-form expandable
+  const notesBlock = b.notes ? `
+    <details class="brief-card brief-card-wide">
+      <summary>
+        <div class="brief-card-label">Additional Notes &amp; Architecture</div>
+        <div class="brief-card-headline">${esc(truncate(b.notes.replace(/\n+/g, ' '), 140))}</div>
+      </summary>
+      <div class="brief-card-body brief-notes-body">${para(b.notes)}</div>
+    </details>
+  ` : '';
+
+  return `
+    <div class="brief-snapshot">
+      ${hero}
+      ${engagementTypeBlock}
+      ${overviewGrid}
+      ${goalsBlock}
+      ${featuresBlock}
+      ${inspirationBlock}
+      ${platTeamRow}
+      ${notesBlock}
+    </div>
+  `;
+}
+
+// Truncate to ~N chars on a word boundary, append ellipsis if cut.
+function truncate(text, n) {
+  if (!text || text.length <= n) return text || '';
+  const cut = text.slice(0, n);
+  const ws = cut.lastIndexOf(' ');
+  return (ws > n * 0.6 ? cut.slice(0, ws) : cut) + '…';
 }
 
 // ── Figma deliverable surface (Deliverables: Figma) ───────────────────────
@@ -4900,6 +5308,7 @@ function isHubLocked(hub) {
   if (hub.surfaceType === 'deck-deliverable') return !hub.deckLatest;
   if (hub.surfaceType === 'pdf-binary') return !hub.pdfBinary;
   if (hub.surfaceType === 'venture-scope') return false; // always populated — static catalogue
+  if (hub.surfaceType === 'brief-snapshot') return !hub.briefSnapshot;
   if (hub.surfaceType === 'figma-deliverable') return !hub.figmaUrl && !hub.figmaFile;
   const hasAny = (hub.sections || []).some((s) => s.exists);
   return !hasAny;
@@ -4910,7 +5319,7 @@ function hubLockReason(hub) {
   // gate model — the operator's Phase 0-5 workflow. Reads humanly even when
   // the visitor hasn't internalised the methodology.
   const map = {
-    'brief': 'The venture brief lands in this hub the moment intake completes.',
+    'brief': 'The brief playback unlocks once brief.md is committed to the engagement repo.',
     'welcome-pack': 'Unlocks once the Welcome Pack PDF is generated — typically at the end of Phase 0.',
     'venture-scope': 'Always available — the Ventrify OS deliverable scope is the same for every venture.',
     'engagement-timeline': 'STATUS.md is updated live as we close phases and gates — refresh after each gate to see the latest.',

@@ -10,7 +10,7 @@
  * like scope-change-recommendations.md are filtered out).
  */
 
-const { loadClients, requireAuth, ghFetch, ghReadFile, hubsForScope, readProvocations, readHubL3Status, listDeckVersions, listSinglePdf, listFigmaFile } = require('./_lib');
+const { loadClients, requireAuth, ghFetch, ghReadFile, hubsForScope, readProvocations, readHubL3Status, listDeckVersions, listSinglePdf, listFigmaFile, parseBriefSnapshot } = require('./_lib');
 
 // ── Venture Scope catalogue (Ventrify OS deliverable matrix) ──────────────
 // Replaces the deprecated per-engagement tier matrix (Launchpad/Venture/
@@ -386,9 +386,18 @@ module.exports = async function handler(req, res) {
     // A missing sections array used to throw and tank the whole response;
     // default to [] so one mis-declared hub can't break the portal payload.
     const sections = await Promise.all((hub.sections || []).map(async (s) => {
-      const path = s.file.startsWith('../')
-        ? s.file.replace('../', '')
-        : `${hub.dir}/${s.file}`;
+      // Path resolution: `../` escapes the hub dir (cross-hub references like
+      // vision pointing at design/ia.md); a root-anchored hub (dir: '.') uses
+      // just the section file (`./brief.md` is rejected by GitHub Contents
+      // API). Otherwise standard `<dir>/<file>` join.
+      let path;
+      if (s.file.startsWith('../')) {
+        path = s.file.replace('../', '');
+      } else if (!hub.dir || hub.dir === '.' || hub.dir === '') {
+        path = s.file;
+      } else {
+        path = `${hub.dir}/${s.file}`;
+      }
       // Existence check via GitHub API. We could include size to estimate
       // wordcount, but the API returns size in bytes — close enough for the
       // hero metric strip on the hub landing.
@@ -526,6 +535,21 @@ module.exports = async function handler(req, res) {
       }
     }
 
+    // ── Brief-snapshot surface (Foundations: Brief) ────────────────────────
+    // Fetches brief.md and parses it into a structured snapshot the portal
+    // renders as a hero + cards. Returns null on failure (hub renders the
+    // placeholder) — never let one bad brief tank the whole portal payload.
+    let briefSnapshot = null;
+    if (hub.surfaceType === 'brief-snapshot') {
+      const path = hub.briefPath || 'brief.md';
+      try {
+        const raw = await ghReadFile(repo, branch, path);
+        if (raw) briefSnapshot = parseBriefSnapshot(raw);
+      } catch (e) {
+        console.error(`[portal-list] brief-snapshot read failed for ${hub.slug}:`, e.message);
+      }
+    }
+
     // ── Venture-scope surface (Foundations: Venture Scope) ─────────────────
     // Returns the canonical Ventrify OS deliverable scope as a phase-by-
     // phase structured payload. Same payload for every venture — there is
@@ -569,6 +593,7 @@ module.exports = async function handler(req, res) {
       figmaUrl,
       figmaFile,
       ventureScope,
+      briefSnapshot,
       description: hub.description || null,
       placeholderText: hub.placeholderText || null,
       quickLinks: hub.quickLinks || null,
