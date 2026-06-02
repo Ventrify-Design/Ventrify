@@ -1636,8 +1636,9 @@
       margin-right: 5px;
     }
 
-    /* Card grids */
-    .brief-card-grid { display: grid; gap: 14px; }
+    /* Card grids — align-items: start so an expanded card doesn't stretch
+       its collapsed sibling. */
+    .brief-card-grid { display: grid; gap: 14px; align-items: start; }
     .brief-card-grid-2 { grid-template-columns: repeat(2, 1fr); }
     .brief-card-grid-3 { grid-template-columns: repeat(3, 1fr); }
     @media (max-width: 900px) {
@@ -1656,6 +1657,11 @@
       padding: 16px 18px; cursor: pointer; user-select: none;
       list-style: none; display: flex; flex-direction: column; gap: 6px;
       position: relative;
+      outline: none; /* removes browser default focus underline */
+    }
+    .brief-card > summary:focus-visible {
+      outline: 2px solid var(--primary); outline-offset: -2px;
+      border-radius: var(--radius-card);
     }
     .brief-card > summary::-webkit-details-marker { display: none; }
     .brief-card > summary::after {
@@ -1663,7 +1669,14 @@
       font-size: 10px; color: var(--text-muted);
       transition: transform 200ms ease;
     }
-    .brief-card[open] > summary::after { transform: rotate(180deg); }
+    .brief-card[open] > summary::after {
+      transform: rotate(180deg); color: var(--primary);
+    }
+    /* When the card is open, hide the truncated headline — the body below
+       contains the same text in full. No more "first sentence visible twice"
+       awkwardness. The label stays so the section is still identifiable. */
+    .brief-card[open] .brief-card-headline { display: none; }
+    .brief-card[open] > summary { padding-bottom: 8px; }
     .brief-card-label {
       font-family: var(--font-mono); font-size: 10.5px; font-weight: 700;
       letter-spacing: 0.1em; text-transform: uppercase;
@@ -1676,19 +1689,18 @@
       padding: 16px 18px 4px; margin-bottom: -8px;
     }
     .brief-card-headline {
-      font-size: 14px; color: var(--text-strong); line-height: 1.5;
-      padding-right: 20px;
+      font-size: 14px; color: var(--text-strong); line-height: 1.55;
+      padding-right: 22px;
     }
     .brief-card-body {
-      padding: 4px 18px 18px;
-      border-top: 1px solid var(--surface-border, rgba(0,0,0,0.04));
-      margin-top: 8px; padding-top: 14px;
+      padding: 0 18px 18px;
     }
     .brief-card-body p {
-      margin: 0 0 10px; font-size: 13.5px; line-height: 1.6;
-      color: var(--text-strong);
+      margin: 0 0 10px; font-size: 14px; line-height: 1.65;
+      color: var(--text-strong); max-width: 78ch;
     }
     .brief-card-body p:last-child { margin-bottom: 0; }
+    .brief-card-wide .brief-card-body p { max-width: 100ch; }
     .brief-card-line {
       padding: 6px 18px; font-size: 13px; line-height: 1.5; color: var(--text-strong);
     }
@@ -4489,8 +4501,12 @@ function renderBriefSnapshotHub(hub) {
   }
 
   // Helper — turn a long-form value into a paragraph block.
+  // The brief intake uses single \n as a soft paragraph break (the markdown
+  // author writes each thought on its own line). Splitting on any newline
+  // run is correct here; splitting on sentence boundaries (the v1 approach)
+  // fragments naturally-flowing paragraphs into one-sentence stubs.
   const para = (text) => text
-    ? text.split(/\n{2,}|(?<=\.)\s+(?=[A-Z])/).map((p) => `<p>${esc(p.trim())}</p>`).join('')
+    ? text.split(/\n+/).map((p) => p.trim()).filter(Boolean).map((p) => `<p>${esc(p)}</p>`).join('')
     : '';
 
   // Meta strip across the top
@@ -4520,26 +4536,39 @@ function renderBriefSnapshotHub(hub) {
     </details>
   ` : '';
 
-  // Three-card row: Vision · Problem · Target User
-  const overviewCards = [
+  // Overview row — Vision + Problem in 2-col (the two punchy propositions),
+  // Target User full-width below (it's the longest with the persona breakdown
+  // and reads better at full width).
+  const visionProblem = [
     { label: 'Product Vision · 12 months', value: b.overview.vision, accent: 'vision' },
     { label: 'Problem We\'re Solving', value: b.overview.problem, accent: 'problem' },
-    { label: 'Target User', value: b.overview.targetUser, accent: 'target' },
   ].filter((c) => c.value);
 
-  const overviewGrid = overviewCards.length ? `
-    <div class="brief-card-grid brief-card-grid-3">
-      ${overviewCards.map((c) => `
+  const visionProblemGrid = visionProblem.length ? `
+    <div class="brief-card-grid brief-card-grid-2">
+      ${visionProblem.map((c) => `
         <details class="brief-card" data-accent="${c.accent}">
           <summary>
             <div class="brief-card-label">${esc(c.label)}</div>
-            <div class="brief-card-headline">${esc(truncate(c.value, 120))}</div>
+            <div class="brief-card-headline">${esc(truncate(c.value, 180))}</div>
           </summary>
           <div class="brief-card-body">${para(c.value)}</div>
         </details>
       `).join('')}
     </div>
   ` : '';
+
+  const targetUserCard = b.overview.targetUser ? `
+    <details class="brief-card brief-card-wide" data-accent="target">
+      <summary>
+        <div class="brief-card-label">Target User</div>
+        <div class="brief-card-headline">${esc(truncate(b.overview.targetUser, 220))}</div>
+      </summary>
+      <div class="brief-card-body">${para(b.overview.targetUser)}</div>
+    </details>
+  ` : '';
+
+  const overviewGrid = `${visionProblemGrid}${targetUserCard}`;
 
   // Goals
   const goalsBlock = (b.goals.motivations.length || b.goals.primaryGoal || b.goals.successCriteria) ? `
