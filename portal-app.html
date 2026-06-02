@@ -4041,7 +4041,9 @@ function renderDeckDeliverableHub(hub) {
   const pdfUrl = latest.pdf
     ? `/api/portal-deck-binary?hub=${encodeURIComponent(hub.slug)}&version=${latest.version}&format=pdf`
     : null;
-  const pptxDownloadUrl = `/api/portal-deck-binary?hub=${encodeURIComponent(hub.slug)}&version=${latest.version}&format=pptx`;
+  const pptxDownloadUrl = latest.pptx
+    ? `/api/portal-deck-binary?hub=${encodeURIComponent(hub.slug)}&version=${latest.version}&format=pptx`
+    : null;
 
   const preview = pdfUrl ? `
     <div class="deck-preview-frame">
@@ -4057,8 +4059,11 @@ function renderDeckDeliverableHub(hub) {
     </div>
   `;
 
-  // Upload widget — client+operator only (investor scope blocked server-side)
-  const canUpload = state.client.scope !== 'investor';
+  // Upload widget — client+operator only (investor scope blocked server-side).
+  // Disabled when the latest is a PDF-only release; .pptx upload is the path
+  // for editable versioning. Operators can still commit a new PDF-only
+  // version directly via git push.
+  const canUpload = state.client.scope !== 'investor' && !!latest.pptx;
   const uploadBlock = canUpload ? `
     <div class="deck-upload">
       <label class="deck-upload-button">
@@ -4076,21 +4081,55 @@ function renderDeckDeliverableHub(hub) {
     <details class="deck-history">
       <summary>Version history (${olderVersions.length} earlier version${olderVersions.length === 1 ? '' : 's'})</summary>
       <div class="deck-history-list">
-        ${olderVersions.map(v => `
-          <div class="deck-history-row">
-            <div class="deck-history-meta">
-              <strong>v${v.version}</strong>
-              <span>${fmtFileSize(v.pptx.size)} · ${v.pdf ? 'with PDF' : '.pptx only'}</span>
+        ${olderVersions.map(v => {
+          const assetParts = [];
+          if (v.pptx) assetParts.push(`.pptx ${fmtFileSize(v.pptx.size)}`);
+          if (v.pdf)  assetParts.push(`PDF ${fmtFileSize(v.pdf.size)}`);
+          const meta = assetParts.join(' · ');
+          return `
+            <div class="deck-history-row">
+              <div class="deck-history-meta">
+                <strong>v${v.version}</strong>
+                <span>${meta}</span>
+              </div>
+              <div class="deck-history-actions">
+                ${v.pdf ? `<a href="/api/portal-deck-binary?hub=${encodeURIComponent(hub.slug)}&version=${v.version}&format=pdf" target="_blank" rel="noopener">Preview</a>` : ''}
+                ${v.pptx ? `<a href="/api/portal-deck-binary?hub=${encodeURIComponent(hub.slug)}&version=${v.version}&format=pptx">Download .pptx</a>` : ''}
+                ${v.pdf && !v.pptx ? `<a href="/api/portal-deck-binary?hub=${encodeURIComponent(hub.slug)}&version=${v.version}&format=pdf&download=1">Download PDF</a>` : ''}
+              </div>
             </div>
-            <div class="deck-history-actions">
-              ${v.pdf ? `<a href="/api/portal-deck-binary?hub=${encodeURIComponent(hub.slug)}&version=${v.version}&format=pdf" target="_blank" rel="noopener">Preview</a>` : ''}
-              <a href="/api/portal-deck-binary?hub=${encodeURIComponent(hub.slug)}&version=${v.version}&format=pptx">Download .pptx</a>
-            </div>
-          </div>
-        `).join('')}
+          `;
+        }).join('')}
       </div>
     </details>
   ` : '';
+
+  // Version-strip metadata — adapts to whichever asset is present.
+  const stripParts = [];
+  if (latest.pptx) stripParts.push(`.pptx ${fmtFileSize(latest.pptx.size)}`);
+  if (latest.pdf)  stripParts.push(`PDF ${fmtFileSize(latest.pdf.size)}`);
+  const stripMeta = stripParts.join(' · ') || 'No assets';
+
+  // Primary action: the editable .pptx if present, otherwise the PDF (the
+  // only thing investors actually consume).
+  const primaryAction = latest.pptx
+    ? `<a class="deck-action deck-action-primary" href="${esc(pptxDownloadUrl)}">
+         <span>Download .pptx (editable)</span>
+         <span class="deck-action-sub">Open in Keynote, PowerPoint, or Google Slides</span>
+       </a>`
+    : (pdfUrl
+      ? `<a class="deck-action deck-action-primary" href="${esc(pdfUrl + '&download=1')}">
+           <span>Download PDF</span>
+           <span class="deck-action-sub">PDF-only release · no editable .pptx for this version</span>
+         </a>`
+      : '');
+
+  const secondaryAction = pdfUrl
+    ? `<a class="deck-action" href="${esc(pdfUrl)}" target="_blank" rel="noopener">
+         <span>Open PDF full-screen</span>
+         <span class="deck-action-sub">Best for sharing read-only</span>
+       </a>`
+    : '';
 
   return `
     <div class="deck-deliverable">
@@ -4098,19 +4137,13 @@ function renderDeckDeliverableHub(hub) {
         ${hub.description ? `<div class="deck-description">${esc(hub.description)}</div>` : ''}
         <div class="deck-version-strip">
           <span class="deck-version-badge">v${latest.version}</span>
-          <span class="deck-version-meta">${fmtFileSize(latest.pptx.size)}${latest.pdf ? ` · PDF ${fmtFileSize(latest.pdf.size)}` : ''}</span>
+          <span class="deck-version-meta">${stripMeta}</span>
         </div>
       </div>
       ${preview}
       <div class="deck-actions">
-        <a class="deck-action deck-action-primary" href="${esc(pptxDownloadUrl)}">
-          <span>Download .pptx (editable)</span>
-          <span class="deck-action-sub">Open in Keynote, PowerPoint, or Google Slides</span>
-        </a>
-        ${pdfUrl ? `<a class="deck-action" href="${esc(pdfUrl)}" target="_blank" rel="noopener">
-          <span>Open PDF full-screen</span>
-          <span class="deck-action-sub">Best for sharing read-only</span>
-        </a>` : ''}
+        ${primaryAction}
+        ${secondaryAction}
       </div>
       ${uploadBlock}
       ${historyBlock}

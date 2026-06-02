@@ -219,55 +219,59 @@ async function ghReadBinaryFile(repo, branch, path) {
 }
 
 // ── Deck version listing (Investor Pitch Deck hub) ────────────────────────
-// Walks the engagement repo's decks/ directory and returns versioned .pptx
-// files (paired with their .pdf preview if present). Used by portal-list to
+// Walks the engagement repo's decks/ directory and returns versioned deck
+// files (.pptx + .pdf pairs OR PDF-only releases). Used by portal-list to
 // surface version history and the latest version's preview/download links.
 //
-// Filename pattern: <baseName>-v<N>.pptx  (e.g. moneygym-investor-deck-v3.pptx)
+// Filename pattern: <anyPrefix>-<baseName>-v<N>.{pptx,pdf}
+//   (e.g. moneygym-investor-deck-v3.pptx + moneygym-investor-deck-v3.pdf)
+//
+// A version is registered if EITHER a .pptx or a .pdf exists for it. This
+// matters when an operator ships a PDF-only release (rendered straight from
+// a non-pptx source — e.g. Figma export, designer Keynote). Such versions
+// preview fine and download as PDF; the renderer hides the "Download .pptx"
+// action when no .pptx companion is present.
 async function listDeckVersions(repo, branch, deckDir, deckBaseName) {
   const entries = await ghListDir(repo, branch, deckDir);
   if (!entries || entries.length === 0) return { versions: [], latest: null };
 
-  // Regex like:  /^(?:[^\/]+-)?investor-deck-v(\d+)\.pptx$/
-  // We don't know the client slug at this layer — accept any prefix that
-  // ends with -<deckBaseName>-v<N>.pptx OR just <deckBaseName>-v<N>.pptx.
   const pptxRegex = new RegExp(`^(.+?)-${deckBaseName}-v(\\d+)\\.pptx$`, 'i');
   const pdfRegex = new RegExp(`^(.+?)-${deckBaseName}-v(\\d+)\\.pdf$`, 'i');
 
-  // Index PDFs by version number so we can pair them with the .pptx
+  const fileAsset = (entry) => ({
+    name: entry.name,
+    path: `${deckDir}/${entry.name}`,
+    size: entry.size,
+    downloadUrl: entry.download_url || null,
+  });
+
+  const pptxByVersion = {};
   const pdfByVersion = {};
   for (const entry of entries) {
     if (entry.type !== 'file') continue;
-    const m = pdfRegex.exec(entry.name);
-    if (m) {
-      const version = parseInt(m[2], 10);
-      pdfByVersion[version] = {
-        name: entry.name,
-        path: `${deckDir}/${entry.name}`,
-        size: entry.size,
-        downloadUrl: entry.download_url || null,
-      };
+    const pptxMatch = pptxRegex.exec(entry.name);
+    if (pptxMatch) {
+      pptxByVersion[parseInt(pptxMatch[2], 10)] = fileAsset(entry);
+      continue;
+    }
+    const pdfMatch = pdfRegex.exec(entry.name);
+    if (pdfMatch) {
+      pdfByVersion[parseInt(pdfMatch[2], 10)] = fileAsset(entry);
     }
   }
 
-  const versions = [];
-  for (const entry of entries) {
-    if (entry.type !== 'file') continue;
-    const m = pptxRegex.exec(entry.name);
-    if (!m) continue;
-    const version = parseInt(m[2], 10);
-    versions.push({
-      version,
-      pptx: {
-        name: entry.name,
-        path: `${deckDir}/${entry.name}`,
-        size: entry.size,
-        downloadUrl: entry.download_url || null,
-      },
-      pdf: pdfByVersion[version] || null,
-    });
-  }
-  versions.sort((a, b) => b.version - a.version);
+  const allVersionNums = new Set([
+    ...Object.keys(pptxByVersion).map(Number),
+    ...Object.keys(pdfByVersion).map(Number),
+  ]);
+  const versions = Array.from(allVersionNums)
+    .map((v) => ({
+      version: v,
+      pptx: pptxByVersion[v] || null,
+      pdf: pdfByVersion[v] || null,
+    }))
+    .sort((a, b) => b.version - a.version);
+
   return {
     versions,
     latest: versions.length > 0 ? versions[0] : null,

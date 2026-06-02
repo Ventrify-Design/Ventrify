@@ -28,6 +28,11 @@ module.exports = async function handler(req, res) {
   const hubSlug = url.searchParams.get('hub');
   const versionStr = url.searchParams.get('version');
   const format = (url.searchParams.get('format') || 'pdf').toLowerCase();
+  // PDF responses default to inline (renders in iframe preview); pass
+  // ?download=1 to force attachment disposition so the browser saves it.
+  // Used by PDF-only deck releases where the primary action is "Download
+  // PDF" rather than "Download .pptx".
+  const forceDownload = url.searchParams.get('download') === '1';
 
   if (!hubSlug || !versionStr) {
     res.statusCode = 400;
@@ -84,8 +89,11 @@ module.exports = async function handler(req, res) {
       ? 'application/pdf'
       : 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
 
-    // For .pptx (download), suggest a filename. For .pdf, render inline.
-    const disposition = format === 'pptx'
+    // For .pptx (always download), force attachment. For .pdf, inline by
+    // default so it renders in the iframe preview — but switchable to
+    // attachment via ?download=1 for explicit download flows.
+    const isAttachment = format === 'pptx' || forceDownload;
+    const disposition = isAttachment
       ? `attachment; filename="${filename}"`
       : `inline; filename="${filename}"`;
 
