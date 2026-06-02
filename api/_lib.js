@@ -442,6 +442,10 @@ const HUBS = [
     ],
     gate: 'Gate 2',
   },
+  // ── Strategy (Workstream B planning + execution layer) ──────────────
+  // Owns BOTH the strategy artefacts (tone/social/calendar) AND the
+  // launch-posts execution layer. The Marketing Launch hub was retired
+  // 2026-06-02 — Strategy is the single home for the marketing track.
   {
     slug: 'strategy', name: 'Strategy', dir: 'marketing',
     category: 'data-room',
@@ -449,51 +453,7 @@ const HUBS = [
       { slug: 'tone-of-voice', file: 'tone-of-voice.md', name: 'Tone of Voice' },
       { slug: 'social-strategy', file: 'social-strategy.md', name: 'Social Strategy' },
       { slug: 'content-calendar', file: 'content-calendar.md', name: '30-Day Content Calendar' },
-    ],
-    gate: null,
-  },
-  // ── Marketing Launch (Workstream B execution layer) ──────────────────
-  // Replaces the legacy Marketing Launch Pack PDF. Surfaces the 20 launch
-  // posts ready for Buffer scheduling, paired (in v2) with branded graphic
-  // previews fetched via raw.githubusercontent.com.
-  // alwaysVisible: bypasses the data-room mode filter — operational
-  // deliverable, not legacy uncurated content.
-  {
-    slug: 'marketing-launch', name: 'Marketing Launch', dir: 'marketing',
-    category: 'deliverable',
-    alwaysVisible: true,
-    sections: [
       { slug: 'launch-posts', file: 'post-copy/launch-posts.md', name: '20 Launch Social Posts' },
-    ],
-    gate: null,
-  },
-  // ── Video (Workstream C production brief) ────────────────────────────
-  // Replaces the legacy Video Production Brief PDF. The video pipeline at
-  // tools/video/generate.js consumes this hub's source markdown.
-  {
-    slug: 'video', name: 'Video', dir: 'video',
-    category: 'deliverable',
-    alwaysVisible: true,
-    sections: [
-      { slug: 'script', file: 'script.md', name: '60-second Promo Script' },
-      { slug: 'audio-brief', file: 'audio-brief.md', name: 'Audio + Voiceover Brief' },
-    ],
-    gate: null,
-  },
-  // ── Blog (Workstream D editorial review) ─────────────────────────────
-  // Replaces the legacy Blog Content Pack PDF. Operator review surface for
-  // blog drafts before Sanity CMS publish. Public blog renders through the
-  // marketing site at /blog (Sanity source).
-  {
-    slug: 'blog', name: 'Blog Drafts', dir: 'marketing/blog-posts',
-    category: 'deliverable',
-    alwaysVisible: true,
-    sections: [
-      { slug: 'theory-vs-execution', file: 'theory-vs-execution-personal-finance.md', name: 'Theory vs Execution in Personal Finance' },
-      { slug: 'subscription-audit', file: 'subscription-audit-saved-97-interest.md', name: 'How a Subscription Audit Saved $97 in Interest' },
-      { slug: 'category-creation', file: 'behavioural-finance-category-creation.md', name: 'Behavioural Finance — Category Creation' },
-      { slug: 'four-pain-points', file: 'four-pain-points-one-system-failure.md', name: 'Four Pain Points, One System Failure' },
-      { slug: 'workout-fuel', file: 'workout-fuel-explained-personal-finance.md', name: 'Workout Fuel — Explained' },
     ],
     gate: null,
   },
@@ -515,29 +475,23 @@ const HUBS = [
     ],
     gate: 'Gate 2.5',
   },
-  // ── Marketing Site (Workstream A deliverable surface) ────────────────
-  // Per .claude/memory/feedback_deliverable_surfaces_hub.md (PROTECTED in
-  // every engagement repo). Link-out hub — no markdown sections. Renders
-  // a preview-link card pointing at the live deployment. URL stored in
-  // PORTAL_CLIENTS[slug].marketingSiteUrl. Empty-frame placeholder shown
-  // until the URL is registered.
-  {
-    slug: 'marketing-site', name: 'Marketing Site',
-    category: 'deliverable',
-    alwaysVisible: true,
-    surfaceType: 'preview-link',
-    urlField: 'marketingSiteUrl',
-    description: 'The public marketing site that lives at the production URL. Share with anyone — no auth required.',
-    placeholderText: 'URL not yet registered. Deploy the site to Vercel, then register the URL via npm run publish-portal.',
-    sections: [],
-    gate: null,
-  },
-  // ── Design System Site (Workstream E deliverable surface) ────────────
+  // ─────────────────────────────────────────────────────────────────────
+  // Deliverables (rendered in array order — this order IS the UI order).
+  // Locked 2026-06-02 by operator preference:
+  //   1. Design System
+  //   2. Marketing Website
+  //   3. App Preview
+  //   4. Intelligence Engine
+  //   5. Social Launch Preview
+  //   6. Blog Drafts
+  //   7. Video
+  //   8. Investor Pitch Deck
+  // ─────────────────────────────────────────────────────────────────────
+
+  // 1. Design System Site (Workstream E deliverable surface)
   // Per .claude/memory/feedback_deliverable_surfaces_hub.md (PROTECTED).
-  // Same pattern as marketing-site. URL stored in
-  // PORTAL_CLIENTS[slug].dsSiteUrl. The DS site is the complete design
-  // documentation: tokens, components, patterns, the Wireframes page,
-  // personas, user stories, user flows.
+  // The DS site is the complete design documentation: tokens, components,
+  // patterns, the Wireframes page, personas, user stories, user flows.
   {
     slug: 'design-system', name: 'Design System',
     category: 'deliverable',
@@ -555,25 +509,40 @@ const HUBS = [
     sections: [],
     gate: null,
   },
-  // ── App Preview (Phase 4 deliverable surface) ─────────────────────────
+  // 2. Marketing Website (Workstream A deliverable surface)
+  // Per .claude/memory/feedback_deliverable_surfaces_hub.md (PROTECTED).
+  // Link-out hub — no markdown sections. Renders a preview-link card
+  // pointing at the live deployment. URL stored in
+  // PORTAL_CLIENTS[slug].marketingSiteUrl. Slug stays as 'marketing-site'
+  // for backwards-compat with existing PORTAL_CLIENTS entries.
+  {
+    slug: 'marketing-site', name: 'Marketing Website',
+    category: 'deliverable',
+    alwaysVisible: true,
+    surfaceType: 'preview-link',
+    urlField: 'marketingSiteUrl',
+    description: 'The public marketing site that lives at the production URL. Share with anyone — no auth required.',
+    placeholderText: 'URL not yet registered. Deploy the site to Vercel, then register the URL via npm run publish-portal.',
+    sections: [],
+    gate: null,
+  },
+  // 3. App Preview (Phase 4 deliverable surface)
   // The real iOS app build, streamed in-portal via Appetize.io's embeddable
   // simulator. Investors interact with the actual signed .app — true touch
   // emulation, pixel-identical to iOS — without leaving the portal.
   //
   // surfaceType: 'appetize-embed' tells portal-list.js + portal-app.html to
-  // render an iframe pointing at https://appetize.io/embed/{publicKey}
-  // with the standard iPhone frame dimensions. publicKey lives on the
-  // client config: PORTAL_CLIENTS[slug].appetizePublicKey.
+  // render an iframe pointing at https://appetize.io/embed/{publicKey}.
+  // publicKey lives on the client config:
+  // PORTAL_CLIENTS[slug].appetizePublicKey.
   //
-  // FREE TIER: Appetize displays a "Powered by Appetize" overlay on the
-  // simulator + caps total monthly simulator-minutes to ~100. Upgrading
-  // to Starter removes most of the branding and increases the minute cap.
-  // The hub structure here is identical for both tiers — only the visible
-  // overlay differs.
+  // FREE TIER: Appetize displays a "Powered by Appetize" overlay + caps
+  // total monthly simulator-minutes to ~100. Starter removes most of the
+  // branding and increases the minute cap. Hub structure is identical for
+  // both tiers — only the visible overlay differs.
   //
   // FALLBACK: when appetizePublicKey is not configured for a client, the
-  // hub renders a placeholder card with instructions for uploading a build
-  // to Appetize and registering the key.
+  // hub renders a placeholder with upload-and-register instructions.
   {
     slug: 'app-preview', name: 'App Preview',
     category: 'deliverable',
@@ -585,42 +554,36 @@ const HUBS = [
     sections: [],
     gate: null,
   },
-  // ── Investor Pitch Deck (binary deliverable surface) ──────────────────
-  // The Investor Pitch Deck is the only deck that ships as a file (rather
-  // than a portal hub or a DS-site page) because investors expect a
-  // shareable artifact they can download, annotate, send to partners.
+  // 4. Intelligence Engine (MoneyGym backend coaching engine)
+  // Per .claude/memory/feedback_deliverable_surfaces_hub.md (PROTECTED in
+  // every engagement repo) — same preview-link pattern as the marketing,
+  // DS, app-preview and social-preview hubs.
   //
-  // Build pipeline (engagement repo):
-  //   .pptx generated from a Google Slides template via
-  //   tools/pdf/investor-deck-from-template.py — text + colour + font swap
-  //   with brand tokens. LibreOffice headless converts the .pptx to .pdf
-  //   for in-portal preview. Both files commit to /decks/ in the
-  //   engagement repo and are versioned (-v1.pptx, -v2.pptx, ...).
+  // Single-file HTML deliverable (Jonathan's self-contained coaching engine
+  // — persona simulation, intent classifier, session catalogue, traits +
+  // pentagon scoring, closed-loop ledger). Runs entirely in the visitor's
+  // browser; the visitor pastes a Claude API key at runtime and chats with
+  // the engine. The same engine, paired with a local Node bridge
+  // (/intelligence-engine/bridge.js in the engagement repo), powers
+  // Coach's Corner inside the MoneyGym RN app — proving the
+  // front-end ↔ backend round-trip.
   //
-  // Portal renders:
-  //   - PDF preview (iframe of the latest version)
-  //   - Download .pptx button (editable copy for the client)
-  //   - Upload-new-version widget — operator or client can drop an edited
-  //     .pptx; the binary commits as -v(N+1).pptx without overwriting.
-  //   - Version history table — every prior version with timestamp +
-  //     download link
-  //
-  // surfaceType: 'deck-deliverable' tells portal-list.js to populate a
-  // .versions[] array by scanning decks/ in the engagement repo. The
-  // portal renderer reads that to show the version history.
+  // URL stored in PORTAL_CLIENTS[slug].intelligenceEngineUrl. Deployed as
+  // a standalone Vercel project (ventrify-engine-moneygym) under the
+  // ventrify-designs-projects scope per the standard recipe in
+  // feedback_vercel_site_deploys.md (PROTECTED).
   {
-    slug: 'investor-deck', name: 'Investor Pitch Deck',
+    slug: 'intelligence-engine', name: 'Intelligence Engine',
     category: 'deliverable',
     alwaysVisible: true,
-    surfaceType: 'deck-deliverable',
-    deckDir: 'decks',
-    deckBaseName: 'investor-deck',
-    description: 'The investor pitch deck — generated from your locked vision + financial plan, restyled with the brand palette. Preview in-browser, download the editable .pptx, upload a new version after edits.',
-    placeholderText: 'No deck generated yet. Run npm run pdf:investor in the engagement repo, then push — the latest version appears here.',
+    surfaceType: 'preview-link',
+    urlField: 'intelligenceEngineUrl',
+    description: 'The backend coaching engine that powers Coach’s Corner in the MoneyGym app. Persona simulation, intent classification, a 25-template session catalogue, traits + pentagon scoring, closed-loop ledger — all running live in your browser. Paste a Claude API key in the engine’s top-right field to start chatting; the same engine (paired with a local bridge) is what drives Coach’s Corner inside the RN app.',
+    placeholderText: 'URL not yet registered. Deploy the engine HTML to Vercel as ventrify-engine-<slug>, then register the URL via npm run publish-portal.',
     sections: [],
     gate: null,
   },
-  // ── Social Launch Preview (Workstream B deliverable surface) ──────────
+  // 5. Social Launch Preview (Workstream B deliverable surface)
   // Static page that mocks every launch social post on its actual platform
   // UI (LinkedIn / X / Instagram). Lets the founder see exactly how each
   // post will read in-feed before any scheduling decisions are made.
@@ -641,32 +604,67 @@ const HUBS = [
     sections: [],
     gate: null,
   },
-  // ── Intelligence Engine (MoneyGym backend coaching engine) ────────────
-  // Per .claude/memory/feedback_deliverable_surfaces_hub.md (PROTECTED in
-  // every engagement repo) — same preview-link pattern as the marketing,
-  // DS, app-preview and social-preview hubs above.
-  //
-  // The Intelligence Engine is a single-file HTML deliverable — Jonathan's
-  // self-contained coaching engine (persona simulation, intent classifier,
-  // session catalogue, traits + pentagon scoring, closed-loop ledger). It
-  // runs entirely in the visitor's browser; the visitor pastes a Claude API
-  // key at runtime and chats with the engine. The same engine, paired with
-  // a local Node bridge (/intelligence-engine/bridge.js in the engagement
-  // repo), powers Coach's Corner inside the MoneyGym RN app — proving the
-  // front-end ↔ backend round-trip.
-  //
-  // URL stored in PORTAL_CLIENTS[slug].intelligenceEngineUrl. Deployed as
-  // a standalone Vercel project (ventrify-engine-moneygym) under the
-  // ventrify-designs-projects scope per the standard recipe in
-  // feedback_vercel_site_deploys.md (PROTECTED).
+  // 6. Blog (Workstream D editorial review)
+  // Replaces the legacy Blog Content Pack PDF. Operator review surface for
+  // blog drafts before Sanity CMS publish. Public blog renders through the
+  // marketing site at /blog (Sanity source).
   {
-    slug: 'intelligence-engine', name: 'Intelligence Engine',
+    slug: 'blog', name: 'Blog Drafts', dir: 'marketing/blog-posts',
     category: 'deliverable',
     alwaysVisible: true,
-    surfaceType: 'preview-link',
-    urlField: 'intelligenceEngineUrl',
-    description: 'The backend coaching engine that powers Coach’s Corner in the MoneyGym app. Persona simulation, intent classification, a 25-template session catalogue, traits + pentagon scoring, closed-loop ledger — all running live in your browser. Paste a Claude API key in the engine’s top-right field to start chatting; the same engine (paired with a local bridge) is what drives Coach’s Corner inside the RN app.',
-    placeholderText: 'URL not yet registered. Deploy the engine HTML to Vercel as ventrify-engine-<slug>, then register the URL via npm run publish-portal.',
+    sections: [
+      { slug: 'theory-vs-execution', file: 'theory-vs-execution-personal-finance.md', name: 'Theory vs Execution in Personal Finance' },
+      { slug: 'subscription-audit', file: 'subscription-audit-saved-97-interest.md', name: 'How a Subscription Audit Saved $97 in Interest' },
+      { slug: 'category-creation', file: 'behavioural-finance-category-creation.md', name: 'Behavioural Finance — Category Creation' },
+      { slug: 'four-pain-points', file: 'four-pain-points-one-system-failure.md', name: 'Four Pain Points, One System Failure' },
+      { slug: 'workout-fuel', file: 'workout-fuel-explained-personal-finance.md', name: 'Workout Fuel — Explained' },
+    ],
+    gate: null,
+  },
+  // 7. Video (Workstream C production brief)
+  // Replaces the legacy Video Production Brief PDF. The video pipeline at
+  // tools/video/generate.js consumes this hub's source markdown.
+  {
+    slug: 'video', name: 'Video', dir: 'video',
+    category: 'deliverable',
+    alwaysVisible: true,
+    sections: [
+      { slug: 'script', file: 'script.md', name: '60-second Promo Script' },
+      { slug: 'audio-brief', file: 'audio-brief.md', name: 'Audio + Voiceover Brief' },
+    ],
+    gate: null,
+  },
+  // 8. Investor Pitch Deck (binary deliverable surface)
+  // The Investor Pitch Deck is the only deck that ships as a file (rather
+  // than a portal hub or a DS-site page) because investors expect a
+  // shareable artifact they can download, annotate, send to partners.
+  //
+  // Build pipeline (engagement repo):
+  //   .pptx generated from a Google Slides template via
+  //   tools/pdf/investor-deck-from-template.py — text + colour + font swap
+  //   with brand tokens. LibreOffice headless converts the .pptx to .pdf
+  //   for in-portal preview. Both files commit to /decks/ in the
+  //   engagement repo and are versioned (-v1.pptx, -v2.pptx, ...).
+  //
+  // Portal renders:
+  //   - PDF preview (iframe of the latest version)
+  //   - Download .pptx button (editable copy for the client)
+  //   - Upload-new-version widget — operator or client can drop an edited
+  //     .pptx; the binary commits as -v(N+1).pptx without overwriting.
+  //   - Version history table — every prior version with timestamp +
+  //     download link
+  //
+  // surfaceType: 'deck-deliverable' tells portal-list.js to populate a
+  // .versions[] array by scanning decks/ in the engagement repo.
+  {
+    slug: 'investor-deck', name: 'Investor Pitch Deck',
+    category: 'deliverable',
+    alwaysVisible: true,
+    surfaceType: 'deck-deliverable',
+    deckDir: 'decks',
+    deckBaseName: 'investor-deck',
+    description: 'The investor pitch deck — generated from your locked vision + financial plan, restyled with the brand palette. Preview in-browser, download the editable .pptx, upload a new version after edits.',
+    placeholderText: 'No deck generated yet. Run npm run pdf:investor in the engagement repo, then push — the latest version appears here.',
     sections: [],
     gate: null,
   },
