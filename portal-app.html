@@ -2307,32 +2307,6 @@
       content: ''; width: 24px; height: 1px; background: var(--primary);
     }
 
-    /* ── View mode toggle (Highlights / Full Detail) ─────────────────── */
-    .view-toggle {
-      display: inline-flex; align-items: center;
-      background: var(--surface-card);
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius-pill);
-      padding: 4px; margin-bottom: 28px;
-      font-family: var(--font-mono);
-      font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
-    }
-    .view-toggle button {
-      padding: 8px 16px; border: none; background: transparent;
-      border-radius: var(--radius-pill);
-      cursor: pointer; font-family: inherit; font-size: 11px;
-      letter-spacing: 0.06em; text-transform: uppercase;
-      color: var(--text-muted); font-weight: 500;
-      transition: background 160ms, color 160ms;
-    }
-    .view-toggle button[aria-pressed="true"] {
-      background: var(--primary); color: var(--text-light);
-    }
-    .view-toggle-hint {
-      font-size: 12px; color: var(--text-muted);
-      margin-bottom: 28px; line-height: 1.5;
-    }
-
     /* ── Section content typography ──────────────────────────────────── */
     .section-content h1 {
       font-size: 40px; line-height: 1.1; letter-spacing: -0.04em;
@@ -2469,20 +2443,9 @@
     .section-content tbody tr:last-child td { border-bottom: none; }
     .section-content tbody tr:nth-child(even) { background: rgba(0,0,0,0.012); }
 
-    /* ── Highlights mode — hides detail prose, keeps headlines + KT ─── */
-    body[data-view="highlights"] .section-content > .detail-prose,
-    body[data-view="highlights"] .section-content > details.data-table,
-    body[data-view="highlights"] .section-content > .detail-list,
-    body[data-view="highlights"] .section-content > .detail-pre,
-    body[data-view="highlights"] .section-content > hr { display: none; }
-    body[data-view="highlights"] .section-content > .topic-sentence { display: block; }
-    /* Always-visible elements: H1, H2, H3, H4, .kt-callout, .topic-sentence */
-    /* In Highlights mode, also hide the Sources & References section entirely */
-    body[data-view="highlights"] .section-content > .sources-section { display: none; }
-
-    /* In full mode, topic-sentence renders as normal (no special styling needed) */
-
-    /* Keep first paragraph after H2 always visible (topic sentence) */
+    /* Lead paragraph after each H2 — slightly larger so the "topic sentence"
+       reads as a section opener. Used by the post-processor; carried over
+       from when this was the Highlights-mode anchor element. */
     .section-content .topic-sentence {
       font-size: 17px; line-height: 1.7;
       color: var(--text-dark);
@@ -2771,7 +2734,7 @@
 
   </style>
 </head>
-<body data-view="highlights">
+<body>
   <a href="#main" class="skip-link">Skip to content</a>
   <div class="reading-progress" aria-hidden="true"><div class="reading-progress-fill" id="reading-progress-fill"></div></div>
 
@@ -2953,12 +2916,6 @@
         <div class="content">
           <a class="section-back" id="section-back-link" href="#">← Back to hub</a>
           <div class="section-eyebrow" id="section-eyebrow"></div>
-
-          <div class="view-toggle" role="group" aria-label="View mode">
-            <button type="button" id="view-highlights" aria-pressed="true">Highlights</button>
-            <button type="button" id="view-full" aria-pressed="false">Full Detail</button>
-          </div>
-          <p class="view-toggle-hint" id="view-toggle-hint">Highlights mode shows headlines + Key Takeaways only. Switch to Full Detail for the deep analysis and source data.</p>
 
           <article id="section-content" class="section-content"></article>
 
@@ -3172,8 +3129,10 @@ function renderPersonaCards(personas) {
 
 // ── Post-processor — runs after rendering. Marks Key Takeaways callouts,
 //    wraps tables in <details>, identifies first-paragraph-after-H2 as
-//    topic sentence (always visible in Highlights mode), tags everything
-//    else as detail-prose (hidden in Highlights mode).
+//    .topic-sentence (gets a slightly larger lead-paragraph treatment).
+//    The .detail-prose / .detail-list / .detail-pre class additions are
+//    legacy from the now-removed Highlights view mode — they no longer
+//    affect rendering. Provocation Cards own the summary layer per Hub.
 function postProcess(rootEl) {
   // 1. Mark Key Takeaways callouts (blockquotes whose first <strong> says "Key Takeaways:")
   rootEl.querySelectorAll('blockquote').forEach(bq => {
@@ -3216,7 +3175,9 @@ function postProcess(rootEl) {
     }
     if (tag === 'H2') {
       inSection = true; firstPAfterH2 = true;
-      // Detect Sources & References section to hide entirely in Highlights mode
+      // Detect Sources & References section. The .sources-section class is
+      // legacy from the removed Highlights view; left in place for any
+      // future visual treatment of the citation block.
       const heading = (el.textContent || '').trim().toLowerCase();
       if (/^sources?\s*(&|and)\s*references/.test(heading) || heading === 'sources' || heading === 'references') {
         // Mark this and ALL following siblings as sources-section
@@ -3269,7 +3230,6 @@ const state = {
   feedbackCounts: { open: 0, addressed: 0, wontFix: 0 },
   currentHub: null,
   currentSection: null,
-  viewMode: 'highlights', // default; per-hub value loaded on openSection (audit batch 2)
   // Sidebar layout (2026-05-27): null = Overview / Status mode (default
   // landing). When set to a hub slug, the main pane renders only that hub.
   viewHub: null,
@@ -3326,9 +3286,6 @@ const els = {
   sidebarSections: document.getElementById('sidebar-sections'),
   sidebarTocWrap: document.getElementById('sidebar-toc-wrap'),
   sidebarToc: document.getElementById('sidebar-toc'),
-  viewHighlights: document.getElementById('view-highlights'),
-  viewFull: document.getElementById('view-full'),
-  viewHint: document.getElementById('view-toggle-hint'),
   signoffModal: document.getElementById('signoff-modal'),
   signoffTitle: document.getElementById('signoff-modal-title'),
   signoffDesc: document.getElementById('signoff-modal-desc'),
@@ -3347,25 +3304,11 @@ function api(path, opts) {
 }
 function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
 
-// ── View mode (Highlights vs Full Detail) ──────────────────────────────
-function setView(mode) {
-  state.viewMode = mode;
-  // portal audit batch 2 — persist per-hub, not globally. Avoids the
-  // "stuck in Highlights mode on Vision because Research was set there" issue.
-  const key = state.currentHub ? `portal_view_mode_${state.currentHub}` : 'portal_view_mode';
-  localStorage.setItem(key, mode);
-  document.body.setAttribute('data-view', mode);
-  els.viewHighlights.setAttribute('aria-pressed', mode === 'highlights' ? 'true' : 'false');
-  els.viewFull.setAttribute('aria-pressed', mode === 'full' ? 'true' : 'false');
-  if (els.viewHint) {
-    els.viewHint.textContent = mode === 'highlights'
-      ? 'Highlights mode shows headlines + Key Takeaways only. Switch to Full Detail for the deep analysis and source data.'
-      : 'Full Detail mode shows everything. Tables collapsed below — click any "Show data table" to expand. Switch to Highlights to scan faster.';
-  }
-}
-els.viewHighlights.addEventListener('click', () => setView('highlights'));
-els.viewFull.addEventListener('click', () => setView('full'));
-setView(state.viewMode); // apply on load
+// View mode toggle (Highlights / Full Detail) removed 2026-06-02 — Provocation
+// Cards now own the strategic-summary layer per Hub, so the section-level
+// Highlights view is redundant. All section content renders as Full Detail.
+// Legacy localStorage key `portal_view_mode_*` is left in place harmless;
+// any value present is ignored and never written to again.
 
 // ── Sidebar toggle (mobile only) ───────────────────────────────────────
 (function () {
@@ -5140,9 +5083,6 @@ async function openSection(hubSlug, sectionSlug) {
   // portal audit batch 4 — record per-hub last-visit timestamp so the
   // dashboard "Updated" badge clears on next render
   try { localStorage.setItem('portal_last_hub_visit_' + hubSlug, String(Date.now())); } catch (e) {}
-  // portal audit batch 2 — load per-hub view mode (defaults to 'highlights')
-  const savedMode = localStorage.getItem(`portal_view_mode_${hubSlug}`) || 'highlights';
-  if (savedMode !== state.viewMode) setView(savedMode);
   navigate('section-view');
   // portal audit batch 3 — skeleton loading shape matches target layout
   els.sectionContent.innerHTML = skeletonHtml();
