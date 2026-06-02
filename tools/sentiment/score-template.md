@@ -1,87 +1,205 @@
 ---
 # =============================================================================
-# Venture Sentiment Score — operator-authored rating
+# Venture Sentiment Score (v2) — operator-authored TDK-style scorecard
 # =============================================================================
-# This file is the authoritative source for the headline VSS number rendered
-# on the portal Investability tab. Edit the YAML frontmatter below, then commit
-# — every commit is a calibration point and contributes one dot to the
-# sparkline. Validated against tools/sentiment/score-schema.json by the
-# sentiment-rate.js API endpoint and (optionally) a local pre-commit hook.
+# 7 categories × 5 sub-criteria. Each sub-criterion is scored 0, 0.5, or 1
+# (or `null` if not yet assessable). Category totals sum to /5; the overall
+# composite sums to /35. Replaces the v1 6-dimension weighted-geometric model.
 #
 # RUBRIC: see .claude/memory/reference_venture_sentiment_score.md
-# (protected canonical doc — published rubric anchored to Sequoia / a16z /
-# YC / NfX frameworks. Reference clauses by name in the rationale fields
-# below so the rating is defensible if a partner probes.)
+# (PROTECTED) for the canonical question + 0/0.5/1 anchor per sub-criterion.
+# Notes are MANDATORY when score < 1 (IC-memo discipline). `ref` strongly
+# recommended — it deep-links the evidence on the portal.
 #
-# AUTHORITY MODEL: the operator rates. The AI Coach proposes recommendations.
-# The composite math is deterministic (tools/sentiment/compute.js). Investors
-# see the authored score, not an LLM output.
+# AUTHORITY MODEL: the operator rates. The AI Coach proposes recommendations
+# in /sentiment/recommendations.md. Composite math is deterministic
+# (tools/sentiment/compute.js). Investors see the authored score.
 # =============================================================================
 
-version: 1
+version: 2
 
-# Funding-stage profile drives default weights (overridable below) and the
-# tag rendered next to the score on the portal hero.
-# One of: preSeed | seed | seriesA
+# Funding-stage profile drives stage-appropriate anchors in the rubric and
+# the tag rendered on the portal hero. One of: preSeed | seed | seriesA.
 profile: seed
 
-# Operator who authored this rating. Appears on the portal hero as
-# attribution ("Rated by Antony Whenman").
+# Operator who authored this rating. Appears on the portal hero ("Rated by …").
 ratedBy: ""
 
 # ISO 8601 datetime of the rating. Drives sparkline ordering across commits.
 ratedAt: ""
 
-# The 6 dimensions. Each score is 0-100 or null (pending — not yet ratable
-# given the engagement's current phase, e.g. Financial Defensibility before
-# Phase 2.5 financial-modeler runs). Rationale is REQUIRED when score < 50
-# (IC-memo discipline) and strongly recommended otherwise.
-dimensions:
-  marketStrength:
-    score: null
-    rationale: null
-  problemSolution:
-    score: null
-    rationale: null
-  financialDefensibility:
-    score: null
-    rationale: null
-  strategicResolution:
-    score: null
-    rationale: null
-  executionTangibility:
-    score: null
-    rationale: null
-  evidenceIntegrity:
-    score: null
-    rationale: null
-
-# Composite weights. Must sum to 1.0 ± 0.01. The defaults below are the seed
-# profile; the validator warns (not errors) when these drift from the
-# selected profile's defaults by more than 0.05.
-weights:
-  marketStrength: 0.20
-  problemSolution: 0.15
-  financialDefensibility: 0.20
-  strategicResolution: 0.20
-  executionTangibility: 0.15
-  evidenceIntegrity: 0.10
+# ── The 7 × 5 scorecard ───────────────────────────────────────────────────
+# Score:  0   = not met / no evidence
+#         0.5 = partial evidence
+#         1   = clearly met
+#         null = not yet assessable at the current engagement phase
+# Note:   required when score < 1 — one sentence on the reason
+# Ref:    optional but strongly recommended — `path/to/file.md` or `:line`
+categories:
+  market:
+    market_size:
+      score: null
+      note: null
+      ref: null
+    market_growth:
+      score: null
+      note: null
+      ref: null
+    why_now:
+      score: null
+      note: null
+      ref: null
+    demand_validation:
+      score: null
+      note: null
+      ref: null
+    gross_margin:
+      score: null
+      note: null
+      ref: null
+  team:
+    ceo_vision:
+      score: null
+      note: null
+      ref: null
+    talent_attraction:
+      score: null
+      note: null
+      ref: null
+    founder_market_fit:
+      score: null
+      note: null
+      ref: null
+    execution_record:
+      score: null
+      note: null
+      ref: null
+    ethics_trust:
+      score: null
+      note: null
+      ref: null
+  product:
+    value_prop_clarity:
+      score: null
+      note: null
+      ref: null
+    improvement_10x:
+      score: null
+      note: null
+      ref: null
+    moscow_discipline:
+      score: null
+      note: null
+      ref: null
+    persona_depth:
+      score: null
+      note: null
+      ref: null
+    problem_validation:
+      score: null
+      note: null
+      ref: null
+  moat:
+    differentiation:
+      score: null
+      note: null
+      ref: null
+    ip_defensibility:
+      score: null
+      note: null
+      ref: null
+    switching_costs:
+      score: null
+      note: null
+      ref: null
+    scalability:
+      score: null
+      note: null
+      ref: null
+    ecosystem_moats:
+      score: null
+      note: null
+      ref: null
+  financial:
+    files_complete:
+      score: null
+      note: null
+      ref: null
+    ltv_cac_ratio:
+      score: null
+      note: null
+      ref: null
+    sensitivity_coverage:
+      score: null
+      note: null
+      ref: null
+    milestone_anchored_ask:
+      score: null
+      note: null
+      ref: null
+    risk_honesty:
+      score: null
+      note: null
+      ref: null
+  execution:
+    live_surfaces:
+      score: null
+      note: null
+      ref: null
+    ia_coverage:
+      score: null
+      note: null
+      ref: null
+    gate_velocity:
+      score: null
+      note: null
+      ref: null
+    payment_cadence:
+      score: null
+      note: null
+      ref: null
+    traction_signals:
+      score: null
+      note: null
+      ref: null
+  evidence:
+    citation_density:
+      score: null
+      note: null
+      ref: null
+    source_count:
+      score: null
+      note: null
+      ref: null
+    hallucination_check:
+      score: null
+      note: null
+      ref: null
+    methodology_disclosure:
+      score: null
+      note: null
+      ref: null
+    cross_file_consistency:
+      score: null
+      note: null
+      ref: null
 ---
 
 # Venture Sentiment Score — `{{client.name}}`
 
 This file is regenerated by the operator at each scheduled rating cadence —
-end of Phase 1, end of Phase 2.5, post-Phase 4 design audit, before each
+end of Phase 1, end of Phase 2.5, post-Phase 4 design audit, and before each
 investor-share. Every commit is a calibration point preserved in git history
 and surfaced on the portal's Investability tab as a sparkline.
 
-The published rubric lives at `.claude/memory/reference_venture_sentiment_score.md`
-— a PROTECTED memory file. Cite specific rubric clauses in the rationale
-fields above so each rating is defensible when a partner probes.
+The canonical rubric (PROTECTED) lives at
+`.claude/memory/reference_venture_sentiment_score.md`. Cite specific
+sub-criterion slugs in `note` fields so each rating is defensible when a
+partner probes.
 
 ## Last rating notes
 
-_Free-text operator notes about this rating cycle — what shifted, what's blocking
-the next dimension lift, what the next rating cycle should target. Read by the
-AI Coach (`venture-sentiment-coach` subagent) when generating
-`/sentiment/recommendations.md`._
+_Free-text operator notes about this rating cycle — what shifted, what's
+blocking the next sub-criterion lift, what the next rating cycle should
+target. Read by the AI Coach (`venture-sentiment-coach` subagent) when
+generating `/sentiment/recommendations.md`._

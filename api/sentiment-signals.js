@@ -1,20 +1,23 @@
 /**
  * GET /api/sentiment-signals
  *
- * Computes the "Diligence Readiness" sub-meter — a deterministic 0-100 score
- * measuring how complete the engagement is against the Ventrify CLAUDE.md
- * workflow. This is the SECOND, smaller meter that sits next to the headline
- * Venture Sentiment Score on the Investability tab. It explicitly measures
- * ENGAGEMENT COMPLETENESS (process), NOT venture quality (judgment).
+ * Computes the "Engagement Completeness" sub-meter — a deterministic 0-100
+ * score measuring how complete the engagement is against the Ventrify
+ * CLAUDE.md workflow. This is the smaller meter that sits next to the
+ * headline Venture Sentiment Score on the Investability tab. It explicitly
+ * measures ENGAGEMENT COMPLETENESS (process), NOT venture quality (judgment).
+ *
+ * Renamed from "Diligence Readiness" in v2 — investors thought the old name
+ * implied venture quality; the new name reads as the process meter it is.
  *
  * AUTHORITY MODEL
  *   • The headline VSS is operator-authored (the studio lead stands behind
- *     the number against a published rubric).
- *   • The Diligence Readiness chip is deterministic + live (reads the
+ *     the number against the v2 rubric: 7 categories × 5 sub-criteria).
+ *   • The Engagement Completeness chip is deterministic + live (reads the
  *     engagement repo at request time, computes signals, returns 0-100).
- *   • Goodhart firebreak: Diligence Readiness contributes ZERO weight to
- *     VSS. Operators can game it by closing gates faster — which is a
- *     desirable behaviour, not corruption.
+ *   • Goodhart firebreak: Engagement Completeness contributes ZERO weight
+ *     to the headline score. Operators can game it by closing gates
+ *     faster — which is a desirable behaviour, not corruption.
  *
  * SIGNALS
  *   1. gatesClosedPct       — % of phase gates with a sign-off in _signoff.json
@@ -249,8 +252,8 @@ module.exports = async function handler(req, res) {
   const auth = requireAuth(req, res);
   if (!auth) return;
 
-  // Investor scope NEVER sees Diligence Readiness. This is the design rule —
-  // Diligence Readiness is engagement-completeness, an internal studio meter.
+  // Investor scope NEVER sees Engagement Completeness. This is the design
+  // rule — it's an internal studio meter, not a quality judgment.
   if (auth.scope === 'investor') {
     res.statusCode = 403;
     res.setHeader('Content-Type', 'application/json');
@@ -276,7 +279,7 @@ module.exports = async function handler(req, res) {
     res.setHeader('Content-Type', 'application/json');
     res.end(JSON.stringify({
       ok: true,
-      readiness: 0,
+      completeness: 0,
       state: 'no-repo-configured',
       breakdown: { gatesClosedPct: 0, provocationsResolvedPct: 0, financialsCompletePct: 0, feedbackAddressedPct: 0, paymentsCurrentPct: 0 },
     }));
@@ -308,7 +311,7 @@ module.exports = async function handler(req, res) {
   ]);
 
   // Arithmetic mean of the 5 signals.
-  const readiness = Math.round(
+  const completeness = Math.round(
     (gates.score + provocations.score + financials.score + feedback.score + payments.score) / 5,
   );
 
@@ -317,7 +320,7 @@ module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'private, max-age=60');
   res.end(JSON.stringify({
     ok: true,
-    readiness,
+    completeness,
     breakdown: {
       gatesClosed: gates,
       provocationsResolved: provocations,

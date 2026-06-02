@@ -1,13 +1,14 @@
 /**
  * GET /api/sentiment-score
  *
- * Returns the headline Venture Sentiment Score + per-dimension breakdown +
- * Diligence Readiness sub-meter + recommendation list for the Investability
- * tab on the portal.
+ * Returns the headline Venture Sentiment Score (v2: TDK-style 7 categories ×
+ * 5 sub-criteria, total /35) + per-category breakdown + Engagement
+ * Completeness sub-meter + Coach recommendations for the Investability tab
+ * on the portal.
  *
  * INPUTS (read in parallel from the engagement GitHub repo)
- *   1. /sentiment/score.md         — operator-authored YAML frontmatter
- *   2. /api/sentiment-signals      — Diligence Readiness signals (inline call)
+ *   1. /sentiment/score.md           — operator-authored YAML frontmatter (v2)
+ *   2. /api/sentiment-signals        — Engagement Completeness signals (inline call)
  *   3. /sentiment/recommendations.md — Coach output (optional)
  *
  * AUTHORITY MODEL
@@ -18,37 +19,44 @@
  *     absent, the panel renders an empty state.
  *
  * SCOPE GATING
- *   • Operator / client scope → full payload (score + breakdown + diligence
- *     readiness + recommendations + rationale).
- *   • Investor scope → 403 for v1. Per the project decision: investors do
- *     not see the Sentiment Score yet — we'll roll out to investor scope
- *     in a later release with operator-controlled granularity.
+ *   • Operator / client scope → full payload.
+ *   • Investor scope → 403 for v1. Investor rollout is a follow-up.
  *
  * FAILURE MODES
- *   • score.md missing → returns { state: 'not-yet-rated' } with HTTP 200
- *     so the portal can render the "Sentiment Score pending — first rating
- *     at end of Phase 1" empty state.
- *   • Invalid score.md → returns { state: 'invalid', errors: [...] } so
- *     the operator can see exactly which field is malformed.
+ *   • score.md missing → returns { state: 'not-yet-rated' } with HTTP 200.
+ *   • Invalid score.md → returns { state: 'invalid', errors: [...] }.
  */
 
 'use strict';
 
-const path = require('path');
 const {
   requireAuth,
   loadClients,
   ghReadFile,
 } = require('./_lib');
-const { computeComposite, humanDimensionName } = require('../tools/sentiment/compute');
+const { computeComposite } = require('../tools/sentiment/compute');
 const { validate } = require('../tools/sentiment/validate');
 
-// ── score.md YAML parser ────────────────────────────────────────────────────
-// Dedicated parser for the well-known score.md shape — flat top-level
-// scalars + the `dimensions` 2-level nested object + the `weights` 1-level
-// nested object. ~50 lines, no dependencies. Tolerates `null`, integers,
-// floats, ISO datetimes, and double-quoted strings. Rejects anything more
-// exotic by throwing — the validator surfaces the error to the operator.
+// ── score.md YAML parser (v2) ──────────────────────────────────────────────
+// v2 shape:
+//   ---
+//   version: 2
+//   profile: seed
+//   ratedBy: "Antony Whenman"
+//   ratedAt: 2026-06-01T10:00:00Z
+//   categories:
+//     market:
+//       market_size:
+//         score: 1
+//         note: "TAM well above $1B with credible penetration."
+//         ref: research/market-analysis.md:18
+//       ...
+//   ---
+//
+// Indent levels (2-space): 0 = top key, 2 = category name, 4 = sub-criterion
+// slug, 6 = field (score/note/ref). Tolerates `null`, integers, floats,
+// 0.5, ISO datetimes, double-quoted strings. Inline scalars on a category
+// or sub-criterion line are an error (each must open a nested block).
 
 function parseScoreFrontmatter(text) {
   if (!text || !text.startsWith('---')) {
@@ -61,53 +69,54 @@ function parseScoreFrontmatter(text) {
   const fmRaw = text.slice(3, end).trim();
 
   const out = {};
-  let currentKey = null;        // top-level key with nested children, e.g. 'dimensions' or 'weights'
-  let currentDim = null;         // dimension name when inside `dimensions:`
+  let topKey = null;     // current top-level open block (`categories`)
+  let catKey = null;     // current category name
+  let subKey = null;     // current sub-criterion slug
 
   for (const rawLine of fmRaw.split('\n')) {
-    const line = rawLine.replace(/\s+#.*$/, ''); // strip end-of-line comments
+    const line = rawLine.replace(/\s+#.*$/, '');
     if (!line.trim() || line.trim().startsWith('#')) continue;
 
     const indent = line.length - line.trimStart().length;
     const trimmed = line.trim();
+    const colon = trimmed.indexOf(':');
+    if (colon === -1) continue;
+    const key = trimmed.slice(0, colon).trim();
+    const value = trimmed.slice(colon + 1).trim();
 
     if (indent === 0) {
-      // Top-level key
-      const colon = trimmed.indexOf(':');
-      if (colon === -1) continue;
-      const key = trimmed.slice(0, colon).trim();
-      const value = trimmed.slice(colon + 1).trim();
       if (value === '') {
         out[key] = {};
-        currentKey = key;
-        currentDim = null;
+        topKey = key;
+        catKey = null;
+        subKey = null;
       } else {
         out[key] = parseScalar(value);
-        currentKey = null;
-        currentDim = null;
+        topKey = null;
+        catKey = null;
+        subKey = null;
       }
-    } else if (indent === 2 && currentKey) {
-      // Second level — for `dimensions:`, this is a dimension name; for
-      // `weights:`, this is `name: value`.
-      const colon = trimmed.indexOf(':');
-      if (colon === -1) continue;
-      const key = trimmed.slice(0, colon).trim();
-      const value = trimmed.slice(colon + 1).trim();
-      if (value === '') {
-        out[currentKey][key] = {};
-        currentDim = key;
-      } else {
-        out[currentKey][key] = parseScalar(value);
-        currentDim = null;
+    } else if (indent === 2 && topKey === 'categories') {
+      // Category name
+      if (value !== '') {
+        throw new Error(`category "${key}" must open a nested block, not inline value`);
       }
-    } else if (indent === 4 && currentKey && currentDim) {
-      // Third level — fields inside a dimension entry: score, rationale.
-      const colon = trimmed.indexOf(':');
-      if (colon === -1) continue;
-      const key = trimmed.slice(0, colon).trim();
-      const value = trimmed.slice(colon + 1).trim();
-      out[currentKey][currentDim][key] = parseScalar(value);
+      out.categories[key] = {};
+      catKey = key;
+      subKey = null;
+    } else if (indent === 4 && topKey === 'categories' && catKey) {
+      // Sub-criterion slug
+      if (value !== '') {
+        throw new Error(`sub-criterion "${catKey}.${key}" must open a nested block`);
+      }
+      out.categories[catKey][key] = {};
+      subKey = key;
+    } else if (indent === 6 && topKey === 'categories' && catKey && subKey) {
+      // Field on a sub-criterion (score / note / ref)
+      out.categories[catKey][subKey][key] = parseScalar(value);
     }
+    // Unrecognised indent levels are silently ignored — the validator
+    // will catch missing fields downstream.
   }
   return out;
 }
@@ -116,17 +125,12 @@ function parseScalar(value) {
   if (value === '' || value === 'null' || value === '~') return null;
   if (value === 'true') return true;
   if (value === 'false') return false;
-  // Integer (no decimal point)
   if (/^-?\d+$/.test(value)) return parseInt(value, 10);
-  // Float
   if (/^-?\d+\.\d+$/.test(value)) return parseFloat(value);
-  // Double-quoted string
   const dq = value.match(/^"((?:[^"\\]|\\.)*)"$/);
   if (dq) return dq[1].replace(/\\"/g, '"').replace(/\\\\/g, '\\');
-  // Single-quoted string
   const sq = value.match(/^'((?:[^'\\]|\\.)*)'$/);
   if (sq) return sq[1].replace(/\\'/g, "'");
-  // Unquoted string
   return value;
 }
 
@@ -142,8 +146,7 @@ module.exports = async function handler(req, res) {
   const auth = requireAuth(req, res);
   if (!auth) return;
 
-  // INVESTOR SCOPE GATE — per the v1 decision, investors do not see the
-  // Sentiment Score at all. Rolling out to investor scope is a follow-up.
+  // Investors do not see the Sentiment Score in v1. Per-investor rollout TBD.
   if (auth.scope === 'investor') {
     res.statusCode = 403;
     res.setHeader('Content-Type', 'application/json');
@@ -163,8 +166,6 @@ module.exports = async function handler(req, res) {
   const repo = client.repo;
   const branch = client.branch || 'main';
 
-  // ── Fetch score.md, recommendations.md, and Diligence Readiness signals
-  //   in parallel ──────────────────────────────────────────────────────────
   const [scoreRaw, recsRaw, signals] = await Promise.all([
     ghReadFile(repo, branch, 'sentiment/score.md').catch(() => null),
     ghReadFile(repo, branch, 'sentiment/recommendations.md').catch(() => null),
@@ -183,13 +184,13 @@ module.exports = async function handler(req, res) {
       ok: true,
       state: 'not-yet-rated',
       message: 'Sentiment Score pending — first rating at end of Phase 1',
-      diligenceReadiness: signals?.readiness ?? null,
-      diligenceBreakdown: signals?.breakdown ?? null,
+      engagementCompleteness: signals?.completeness ?? null,
+      engagementBreakdown: signals?.breakdown ?? null,
     }));
     return;
   }
 
-  // ── Parse + validate score.md ──────────────────────────────────────────
+  // ── Parse + validate ──────────────────────────────────────────────────
   let parsed;
   try {
     parsed = parseScoreFrontmatter(scoreRaw);
@@ -220,26 +221,7 @@ module.exports = async function handler(req, res) {
   }
 
   // ── Compute composite ──────────────────────────────────────────────────
-  const composite = computeComposite(parsed);
-
-  // ── Decorate dimensions with human-readable names + rationales ─────────
-  const dimensions = Object.entries(parsed.dimensions).map(([key, value]) => ({
-    key,
-    name: humanDimensionName(key),
-    score: value.score,
-    rationale: value.rationale,
-    weight: parsed.weights[key],
-    pending: value.score === null || value.score === undefined,
-    contribution: composite.contributions[key] || null,
-    rationaleRequired: composite.rationaleRequired.includes(key),
-  }));
-
-  // ── Sort dimensions: rated descending by score, then pending at the end ─
-  dimensions.sort((a, b) => {
-    if (a.pending && !b.pending) return 1;
-    if (!a.pending && b.pending) return -1;
-    return (b.score ?? -1) - (a.score ?? -1);
-  });
+  const result = computeComposite(parsed);
 
   res.statusCode = 200;
   res.setHeader('Content-Type', 'application/json');
@@ -248,28 +230,30 @@ module.exports = async function handler(req, res) {
     ok: true,
     state: 'rated',
     score: {
-      composite: composite.composite,
-      band: composite.band,
-      bandLabel: composite.bandLabel,
-      hardCapTriggered: composite.hardCapTriggered,
-      hardCapReason: composite.hardCapReason,
+      composite: result.composite,
+      maxComposite: result.maxComposite,
+      band: result.band,
+      bandLabel: result.bandLabel,
       profile: parsed.profile,
       ratedBy: parsed.ratedBy,
       ratedAt: parsed.ratedAt,
-      pendingCount: composite.pendingCount,
-      ratedCount: composite.ratedCount,
-      rationaleRequired: composite.rationaleRequired,
+      rated: result.rated,
+      pending: result.pending,
     },
-    dimensions,
-    diligenceReadiness: signals?.readiness ?? null,
-    diligenceBreakdown: signals?.breakdown ?? null,
+    categories: result.categories,
+    deficiencies: result.deficiencies,
+    warnings: validation.warnings,
+    engagementCompleteness: signals?.completeness ?? null,
+    engagementBreakdown: signals?.breakdown ?? null,
     recommendations: recsRaw || null,
   }));
 };
 
-// ── Inline call to the sentiment-signals endpoint ──────────────────────────
-// Avoids HTTP round-trip by requiring the handler directly and faking a
-// req/res pair to capture the JSON output. Lower latency than fetch().
+// Exposed for the operator-side CLI tools (validate / rate / coach) so they
+// share one parser with the API layer.
+module.exports.parseScoreFrontmatter = parseScoreFrontmatter;
+
+// Inline call to the sentiment-signals endpoint (avoids HTTP round-trip).
 async function fetchSignals(originalReq, _slug) {
   return new Promise((resolve) => {
     let captured = '';

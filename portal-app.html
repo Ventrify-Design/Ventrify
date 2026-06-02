@@ -682,12 +682,12 @@
        hub-zone-header instead. Safe to remove once all renderers migrated. */
     .hub-group-divider { display: none; }
 
-    /* ── Investability Tab (Venture Sentiment Score) ──────────────────────
-       2026-06-01 — dedicated top-level surface, sibling to Overview. Hero
-       score card (96px Plus Jakarta number, band pill, sparkline, attribution),
-       6-row dimension breakdown grid, Diligence Readiness chip, radar
-       chart expander, Recommendations panel. All built from existing
-       portal tokens — no new design language.                              */
+    /* ── Investability Tab (Venture Sentiment Score · v2 TDK scorecard) ──
+       Top-level surface, sibling to Overview. Hero score card (composite /35,
+       band pill, sparkline, attribution), 7-category breakdown with
+       expandable sub-criteria (5 per cat = 35 total), Engagement Completeness
+       chip, Deficiency Heatmap (top-5 fix-fast cards w/ evidence links),
+       radar (7 axes), Recommendations panel.                               */
     .investability-body {
       max-width: 1100px; margin: 0 auto; padding: 0 24px;
       display: flex; flex-direction: column; gap: 28px;
@@ -955,6 +955,157 @@
       background: rgba(0,0,0,0.04); border-radius: 6px;
       font-family: var(--font-mono); font-size: 12px;
       max-height: 200px; overflow: auto; white-space: pre-wrap;
+    }
+
+    /* ── v2: Category row + expandable sub-criteria ──────────────────────
+       Each category is one row in the breakdown panel. Clicking the row
+       (or the chevron) expands a sub-panel showing all 5 sub-criteria with
+       their score chip (0 / 0.5 / 1), note, and evidence link.            */
+    .vss-cat-row {
+      border-bottom: 1px solid var(--surface-border, rgba(0,0,0,0.04));
+      padding: 14px 0;
+    }
+    .vss-cat-row:last-of-type { border-bottom: none; }
+    .vss-cat-row-head {
+      display: grid; grid-template-columns: 220px 1fr 70px 16px;
+      gap: 16px; align-items: center;
+      cursor: pointer; user-select: none;
+    }
+    @media (max-width: 640px) {
+      .vss-cat-row-head { grid-template-columns: 1fr 60px 16px; }
+      .vss-cat-row-head > .vss-cat-row-label { grid-column: 1 / -1; margin-bottom: 4px; }
+    }
+    .vss-cat-row-label {
+      font-size: 14px; font-weight: 600; color: var(--text-strong);
+      letter-spacing: -0.01em;
+    }
+    .vss-cat-row-bar {
+      height: 8px; background: rgba(0,0,0,0.06);
+      border-radius: var(--radius-pill); overflow: hidden;
+    }
+    .vss-cat-row-bar-fill {
+      height: 100%; background: var(--primary);
+      border-radius: var(--radius-pill);
+      transition: width 600ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .vss-cat-row-bar-fill[data-band="approved"] { background: var(--status-approved-fg); }
+    .vss-cat-row-bar-fill[data-band="feedback"] { background: var(--status-feedback-fg); }
+    .vss-cat-row-bar-fill[data-band="rework"]   { background: var(--status-rework-fg); }
+    .vss-cat-row-bar-fill[data-band="unrated"]  { background: rgba(0,0,0,0.15); }
+    .vss-cat-row-num {
+      font-family: var(--font-display); font-size: 20px; font-weight: 600;
+      color: var(--text-strong); text-align: right; letter-spacing: -0.02em;
+    }
+    .vss-cat-row-num .denom { color: var(--text-muted); font-size: 14px; font-weight: 500; }
+    .vss-cat-row-num.unrated { color: var(--text-muted); font-size: 13px; font-family: var(--font-mono); }
+    .vss-cat-row-chev {
+      font-size: 11px; color: var(--text-muted); text-align: center;
+      transition: transform 200ms ease;
+    }
+    .vss-cat-row.expanded .vss-cat-row-chev { transform: rotate(180deg); }
+    .vss-cat-row-desc {
+      grid-column: 1 / -1;
+      font-size: 12.5px; color: var(--text-muted); margin-top: 6px;
+      line-height: 1.5; max-width: 80ch;
+    }
+    .vss-cat-row-body {
+      display: none; margin-top: 14px;
+      padding: 6px 0 6px 12px;
+      border-left: 2px solid var(--surface-border, rgba(0,0,0,0.06));
+    }
+    .vss-cat-row.expanded .vss-cat-row-body { display: block; }
+    .vss-sub-row {
+      display: grid; grid-template-columns: 24px 1fr auto;
+      gap: 12px; padding: 10px 0; align-items: start;
+      border-bottom: 1px dashed var(--surface-border, rgba(0,0,0,0.04));
+    }
+    .vss-sub-row:last-child { border-bottom: none; }
+    .vss-sub-chip {
+      width: 24px; height: 24px; border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+      background: rgba(0,0,0,0.06); color: var(--text-muted);
+    }
+    .vss-sub-chip[data-score="1"]    { background: var(--status-approved-bg); color: var(--status-approved-fg); }
+    .vss-sub-chip[data-score="half"] { background: var(--status-feedback-bg); color: var(--status-feedback-fg); }
+    .vss-sub-chip[data-score="0"]    { background: var(--status-rework-bg);   color: var(--status-rework-fg); }
+    .vss-sub-body { font-size: 13px; color: var(--text-strong); line-height: 1.45; }
+    .vss-sub-q { font-weight: 500; }
+    .vss-sub-note {
+      display: block; margin-top: 4px; font-size: 12.5px;
+      color: var(--text-muted); font-style: italic;
+    }
+    .vss-sub-meta { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+    .vss-evidence-link {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 8px; border-radius: var(--radius-pill);
+      background: rgba(0,0,0,0.04); color: var(--text-muted);
+      font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.03em;
+      text-decoration: none; border: 1px solid transparent;
+    }
+    .vss-evidence-link:hover { background: var(--primary); color: white; }
+    .vss-evidence-link.missing {
+      background: var(--status-feedback-bg); color: var(--status-feedback-fg);
+      cursor: default; font-style: italic;
+    }
+
+    /* ── v2: Deficiency Heatmap (top-5 lowest-scored sub-criteria) ──────
+       The "fix this next" board. Cards are sorted by lift potential.    */
+    .vss-heatmap {
+      background: var(--surface-card); border-radius: var(--radius-card);
+      padding: 24px 28px;
+      border: 1px solid var(--surface-border, rgba(0,0,0,0.04));
+    }
+    .vss-heatmap-header {
+      display: flex; justify-content: space-between; align-items: baseline;
+      margin-bottom: 16px; gap: 16px; flex-wrap: wrap;
+    }
+    .vss-heatmap-title {
+      font-family: var(--font-mono); font-size: 11px; font-weight: 600;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .vss-heatmap-meta {
+      font-family: var(--font-mono); font-size: 11px;
+      color: var(--text-muted);
+    }
+    .vss-heatmap-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 14px;
+    }
+    .vss-def-card {
+      padding: 14px 16px; border-radius: 10px;
+      background: rgba(0,0,0,0.02);
+      border-left: 3px solid var(--status-rework-fg);
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .vss-def-card[data-lift="half"] { border-left-color: var(--status-feedback-fg); }
+    .vss-def-card-head {
+      display: flex; align-items: center; gap: 8px;
+      font-family: var(--font-mono); font-size: 10.5px;
+      color: var(--text-muted); letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .vss-def-card-cat { font-weight: 700; color: var(--text-strong); }
+    .vss-def-card-lift {
+      margin-left: auto; padding: 2px 8px;
+      border-radius: var(--radius-pill);
+      background: var(--status-rework-bg); color: var(--status-rework-fg);
+      font-weight: 600;
+    }
+    .vss-def-card[data-lift="half"] .vss-def-card-lift {
+      background: var(--status-feedback-bg); color: var(--status-feedback-fg);
+    }
+    .vss-def-card-q {
+      font-size: 13.5px; color: var(--text-strong); line-height: 1.4;
+    }
+    .vss-def-card-note {
+      font-size: 12.5px; color: var(--text-muted); font-style: italic;
+      line-height: 1.45;
+    }
+    .vss-heatmap-empty {
+      padding: 32px 0; text-align: center;
+      color: var(--text-muted); font-size: 14px;
     }
 
     /* ── Project overview card (hub list, below hero) ────────────────── */
@@ -4569,26 +4720,41 @@ function renderInvestabilityError(err) {
     </div>`;
 }
 
+// ── v2 (TDK-style) Investability renderer ────────────────────────────────
+// Payload shape (api/sentiment-score.js):
+//   { state: 'rated' | 'not-yet-rated' | 'invalid',
+//     score: { composite, maxComposite=35, band, bandLabel, profile, ratedBy, ratedAt, rated, pending },
+//     categories: { [catKey]: { name, description, score, rated, pending, band, subCriteria: { [subKey]: { score, pending, note, ref, question, lift } } } },
+//     deficiencies: [ { category, categoryName, sub, question, score, lift, note, ref } ],
+//     engagementCompleteness: 0..100, engagementBreakdown: {...}, recommendations: string }
+
+// Stable canonical category order. Drives the radar polygon AND the row order
+// in the breakdown panel so the visual layout doesn't reflow between rates.
+const VSS_CAT_ORDER = ['market', 'team', 'product', 'moat', 'financial', 'execution', 'evidence'];
+const VSS_CAT_SHORT = {
+  market: 'Market', team: 'Team', product: 'Product', moat: 'Moat',
+  financial: 'Financial', execution: 'Execution', evidence: 'Evidence',
+};
+
 function renderInvestability(payload) {
   if (!els.investabilityBody) return;
 
-  // ── 'not-yet-rated' state — no /sentiment/score.md committed yet ───────
+  // ── 'not-yet-rated' ────────────────────────────────────────────────────
   if (payload.state === 'not-yet-rated') {
-    const diligence = renderDiligenceChip(payload.diligenceReadiness, payload.diligenceBreakdown);
+    const chip = renderEngagementChip(payload.engagementCompleteness, payload.engagementBreakdown);
     els.investabilityBody.innerHTML = `
-      ${diligence}
+      ${chip}
       <div class="vss-state-empty">
         <div class="vss-state-empty-icon">◯</div>
         <h3 class="vss-state-empty-title">Sentiment Score pending</h3>
         <p class="vss-state-empty-body">
           ${esc(payload.message || 'First rating happens at the end of Phase 1, against the published rubric.')}
         </p>
-      </div>
-    `;
+      </div>`;
     return;
   }
 
-  // ── 'invalid' state — score.md fails schema validation ────────────────
+  // ── 'invalid' ──────────────────────────────────────────────────────────
   if (payload.state === 'invalid') {
     const errsHtml = (payload.errors || []).map((e) => `<li>${esc(e)}</li>`).join('');
     els.investabilityBody.innerHTML = `
@@ -4602,37 +4768,26 @@ function renderInvestability(payload) {
     return;
   }
 
-  // ── 'rated' state — render the full view ──────────────────────────────
+  // ── 'rated' ────────────────────────────────────────────────────────────
   const sc = payload.score;
-  const dims = payload.dimensions || [];
+  const cats = payload.categories || {};
+  const defs = payload.deficiencies || [];
   const recs = payload.recommendations || '';
 
-  // Sparkline placeholder — for v1 we render a single-point sparkline if
-  // there's no rating history yet. Future: the API can return a `history`
-  // array from git log; the sparkline renders all dots.
-  const sparklineSvg = renderSparkline(sc.composite ? [sc.composite] : []);
+  const sparklineSvg = renderSparkline(sc.composite != null ? [sc.composite] : []);
+  const engagementChipHtml = renderEngagementChip(payload.engagementCompleteness, payload.engagementBreakdown);
 
-  const diligenceChipHtml = renderDiligenceChip(payload.diligenceReadiness, payload.diligenceBreakdown);
-
-  const capBanner = sc.hardCapTriggered
-    ? `<div class="vss-cap-banner">
-         <span class="vss-cap-banner-title">Hard-cap applied:</span>
-         Foundational dimension below 40 — ${esc(sc.hardCapReason || 'see breakdown below')}.
-         The headline number cannot launder a foundational weakness behind aggregation.
-       </div>`
-    : '';
-
-  const pendingNote = sc.pendingCount > 0
+  const pendingNote = sc.pending > 0
     ? `<div class="vss-band-label" style="margin-top: 4px;">
-         <em>${sc.pendingCount} of 6 dimensions pending — score is computed across the ${sc.ratedCount} rated.</em>
+         <em>${sc.pending} of ${sc.maxComposite} sub-criteria pending — score is computed across the ${sc.rated} rated.</em>
        </div>`
     : '';
 
   // ── Hero ─────────────────────────────────────────────────────────────
   const composite = sc.composite;
   const compositeHtml = composite == null
-    ? `<div class="vss-hero-number unrated">— </div>`
-    : `<div class="vss-hero-number">${composite}<span class="vss-hero-number-suffix"> / 100</span></div>`;
+    ? `<div class="vss-hero-number unrated">—</div>`
+    : `<div class="vss-hero-number">${composite}<span class="vss-hero-number-suffix"> / ${sc.maxComposite}</span></div>`;
 
   const heroHtml = `
     <div class="vss-hero">
@@ -4643,25 +4798,27 @@ function renderInvestability(payload) {
         ${sc.ratedBy ? `<div class="vss-attribution">Rated by ${esc(sc.ratedBy)}${sc.ratedAt ? ' · ' + formatDate(sc.ratedAt) : ''}${sc.profile ? ' · ' + esc(sc.profile) + ' profile' : ''}</div>` : ''}
       </div>
       <div class="vss-sparkline">${sparklineSvg}</div>
-    </div>
-  `;
+    </div>`;
 
-  // ── Dimensions ───────────────────────────────────────────────────────
-  const dimsHtml = dims.length === 0 ? '' : `
+  // ── Category breakdown (7 expandable rows) ─────────────────────────────
+  const orderedCats = VSS_CAT_ORDER.map((k) => ({ key: k, ...(cats[k] || {}) })).filter((c) => c.name);
+  const catsHtml = orderedCats.length === 0 ? '' : `
     <div class="vss-dimensions">
       <div class="vss-dimensions-header">
-        <div class="vss-dimensions-title">Dimension breakdown</div>
+        <div class="vss-dimensions-title">Category breakdown — 7 × 5 scorecard</div>
         <div class="vss-dimensions-toggles">
+          <button type="button" class="vss-toggle-btn" id="vss-toggle-expand-all">Expand all ▾</button>
           <button type="button" class="vss-toggle-btn" id="vss-toggle-radar">View radar ▾</button>
-          <button type="button" class="vss-toggle-btn" id="vss-toggle-rationale">View rationale ▾</button>
         </div>
       </div>
-      ${dims.map((d) => renderDimensionRow(d)).join('')}
+      ${orderedCats.map((c) => renderCategoryRow(c)).join('')}
       <div class="vss-radar-wrap" id="vss-radar-wrap">
-        ${renderRadar(dims)}
+        ${renderRadar(orderedCats)}
       </div>
-    </div>
-  `;
+    </div>`;
+
+  // ── Deficiency Heatmap ────────────────────────────────────────────────
+  const heatmapHtml = renderDeficiencyHeatmap(defs, payload.repo);
 
   // ── Recommendations ──────────────────────────────────────────────────
   const recsHtml = `
@@ -4677,53 +4834,81 @@ function renderInvestability(payload) {
              from the engagement repo to generate ranked actions, then commit
              <code>/sentiment/recommendations.md</code>.
            </div>`}
-    </div>
-  `;
+    </div>`;
 
   els.investabilityBody.innerHTML = `
-    ${diligenceChipHtml}
-    ${capBanner}
+    ${engagementChipHtml}
     ${heroHtml}
-    ${dimsHtml}
-    ${recsHtml}
-  `;
+    ${catsHtml}
+    ${heatmapHtml}
+    ${recsHtml}`;
 
-  // Wire interactive toggles after rendering
   wireInvestabilityInteractions();
 }
 
-function renderDimensionRow(d) {
-  const score = d.score;
-  const isPending = d.pending;
-  const band = isPending
-    ? 'pending'
-    : score >= 80 ? 'approved' : score >= 65 ? 'feedback' : 'rework';
-  const fillPct = isPending ? 0 : score;
-  const numHtml = isPending
-    ? `<div class="vss-dim-row-num pending">pending</div>`
-    : `<div class="vss-dim-row-num">${score}</div>`;
-  const rationaleHtml = isPending
-    ? ''
-    : d.rationale
-      ? `<div class="vss-dim-row-rationale">${esc(d.rationale)}</div>`
-      : d.rationaleRequired
-        ? `<div class="vss-dim-row-rationale vss-dim-row-rationale-missing">Rationale required for scores below 50. Edit <code>/sentiment/score.md</code>.</div>`
-        : `<div class="vss-dim-row-rationale"><em>No rationale provided. Recommended at scores below 70.</em></div>`;
+// ── Category row + expandable sub-criteria ─────────────────────────────
+function renderCategoryRow(c) {
+  const isUnrated = c.band === 'unrated';
+  const fillPct = isUnrated ? 0 : (c.score / 5) * 100;
+  const numHtml = isUnrated
+    ? `<div class="vss-cat-row-num unrated">unrated</div>`
+    : `<div class="vss-cat-row-num">${c.score}<span class="denom"> / 5</span></div>`;
+  const pendingTag = (c.pending && c.pending > 0 && !isUnrated)
+    ? ` · ${c.pending} pending`
+    : '';
+
+  // Sub-criteria rows (always rendered; visibility controlled by .expanded)
+  const subs = c.subCriteria || {};
+  const subRowsHtml = Object.entries(subs).map(([key, s]) => renderSubRow(c.key, key, s)).join('');
+
   return `
-    <div class="vss-dim-row" data-dim="${esc(d.key)}">
-      <div class="vss-dim-row-label">${esc(d.name)}</div>
-      <div class="vss-dim-row-bar">
-        <div class="vss-dim-row-bar-fill" data-band="${band}" style="width: ${fillPct}%"></div>
+    <div class="vss-cat-row" data-cat="${esc(c.key)}">
+      <div class="vss-cat-row-head">
+        <div class="vss-cat-row-label">${esc(c.name)}</div>
+        <div class="vss-cat-row-bar">
+          <div class="vss-cat-row-bar-fill" data-band="${esc(c.band)}" style="width: ${fillPct}%"></div>
+        </div>
+        ${numHtml}
+        <div class="vss-cat-row-chev">▾</div>
+        <div class="vss-cat-row-desc">${esc(c.description || '')}${pendingTag ? `<em>${pendingTag}</em>` : ''}</div>
       </div>
-      ${numHtml}
-      ${rationaleHtml}
+      <div class="vss-cat-row-body">
+        ${subRowsHtml}
+      </div>
     </div>`;
 }
 
-function renderDiligenceChip(readiness, breakdown) {
-  if (readiness == null) return '';
-  const band = readiness >= 75 ? 'approved' : readiness >= 50 ? 'feedback' : 'rework';
-  // The breakdown is rendered inside a sibling expandable block.
+function renderSubRow(catKey, subKey, s) {
+  let chipAttr = 'unrated';
+  let chipText = '·';
+  if (s.score === 1) { chipAttr = '1'; chipText = '1'; }
+  else if (s.score === 0.5) { chipAttr = 'half'; chipText = '½'; }
+  else if (s.score === 0) { chipAttr = '0'; chipText = '0'; }
+  const ev = renderEvidenceLink(s.ref);
+  const note = s.note ? `<span class="vss-sub-note">${esc(s.note)}</span>` : '';
+  return `
+    <div class="vss-sub-row" data-sub="${esc(subKey)}">
+      <span class="vss-sub-chip" data-score="${chipAttr}" title="Score: ${s.score == null ? 'pending' : s.score}">${chipText}</span>
+      <div class="vss-sub-body">
+        <span class="vss-sub-q">${esc(s.question || subKey)}</span>
+        ${note}
+      </div>
+      <div class="vss-sub-meta">${ev}</div>
+    </div>`;
+}
+
+// Evidence link — currently renders the ref as a pill. When the portal-list
+// API surfaces the repo + branch metadata on this response, we can upgrade
+// this to a clickable GitHub deep-link. For now, ref shows as a code chip.
+function renderEvidenceLink(ref) {
+  if (!ref) return `<span class="vss-evidence-link missing" title="No evidence ref">no ref</span>`;
+  return `<span class="vss-evidence-link" title="${esc(ref)}">${esc(ref)}</span>`;
+}
+
+// ── Engagement Completeness chip (renamed from Diligence Readiness) ─────
+function renderEngagementChip(completeness, breakdown) {
+  if (completeness == null) return '';
+  const band = completeness >= 75 ? 'approved' : completeness >= 50 ? 'feedback' : 'rework';
   const breakdownRows = breakdown ? Object.entries(breakdown).map(([key, sig]) => {
     if (!sig || typeof sig.score !== 'number') return '';
     const sigBand = sig.score >= 75 ? 'approved' : sig.score >= 50 ? 'feedback' : 'rework';
@@ -4739,16 +4924,15 @@ function renderDiligenceChip(readiness, breakdown) {
 
   return `
     <div style="display: flex; justify-content: flex-end; margin-top: -12px;">
-      <div class="vss-diligence-chip" data-band="${band}" id="vss-diligence-chip">
-        <span class="vss-diligence-chip-label">Diligence Readiness</span>
-        <span class="vss-diligence-chip-num">${readiness}%</span>
+      <div class="vss-diligence-chip" data-band="${band}" id="vss-engagement-chip">
+        <span class="vss-diligence-chip-label">Engagement Completeness</span>
+        <span class="vss-diligence-chip-num">${completeness}%</span>
         <span class="vss-diligence-expander">▾</span>
       </div>
     </div>
-    <div class="vss-diligence-breakdown" id="vss-diligence-breakdown">
+    <div class="vss-diligence-breakdown" id="vss-engagement-breakdown">
       ${breakdownRows}
-    </div>
-  `;
+    </div>`;
 }
 
 function humanSignalName(key) {
@@ -4762,28 +4946,58 @@ function humanSignalName(key) {
   return map[key] || key;
 }
 
-// ── Inline SVG radar chart — 6-axis polygon, no library ────────────────────
-function renderRadar(dims) {
-  // Radar shows ALL 6 dimensions in their canonical order so the polygon
-  // shape is stable across renders. Pending dimensions render at 0 with a
-  // dashed-axis indicator.
-  const CANONICAL = ['marketStrength', 'problemSolution', 'financialDefensibility', 'strategicResolution', 'executionTangibility', 'evidenceIntegrity'];
-  const dimByKey = Object.fromEntries(dims.map((d) => [d.key, d]));
-  const ordered = CANONICAL.map((k) => dimByKey[k]).filter(Boolean);
+// ── Deficiency Heatmap (top-5 fix-fast cards) ──────────────────────────
+function renderDeficiencyHeatmap(defs /*, repo */) {
+  if (!defs || defs.length === 0) {
+    return `
+      <div class="vss-heatmap">
+        <div class="vss-heatmap-header">
+          <div class="vss-heatmap-title">Deficiency Heatmap</div>
+          <div class="vss-heatmap-meta">Top fix-fast targets</div>
+        </div>
+        <div class="vss-heatmap-empty">No deficiencies — every rated sub-criterion is at 1.</div>
+      </div>`;
+  }
+  const cards = defs.map((d) => {
+    const liftAttr = d.lift === 0.5 ? 'half' : 'full';
+    const liftLabel = d.lift === 0.5 ? '+0.5 lift' : '+1.0 lift';
+    return `
+      <div class="vss-def-card" data-lift="${liftAttr}">
+        <div class="vss-def-card-head">
+          <span class="vss-def-card-cat">${esc(d.categoryName || d.category)}</span>
+          <span>${esc(d.sub)}</span>
+          <span class="vss-def-card-lift">${liftLabel}</span>
+        </div>
+        <div class="vss-def-card-q">${esc(d.question || '')}</div>
+        ${d.note ? `<div class="vss-def-card-note">“${esc(d.note)}”</div>` : ''}
+        ${renderEvidenceLink(d.ref)}
+      </div>`;
+  }).join('');
+  return `
+    <div class="vss-heatmap">
+      <div class="vss-heatmap-header">
+        <div class="vss-heatmap-title">Deficiency Heatmap · top ${defs.length}</div>
+        <div class="vss-heatmap-meta">Ranked by lift potential</div>
+      </div>
+      <div class="vss-heatmap-grid">${cards}</div>
+    </div>`;
+}
+
+// ── 7-axis radar ───────────────────────────────────────────────────────
+function renderRadar(orderedCats) {
+  // Read category scores (out of /5) and normalise to 0..1 for the polygon.
+  const ordered = VSS_CAT_ORDER
+    .map((k) => orderedCats.find((c) => c.key === k))
+    .filter(Boolean);
   if (ordered.length < 3) return '';
 
-  const SIZE = 340;
-  const CX = SIZE / 2;
-  const CY = SIZE / 2;
-  const R = 130;          // radius for score=100
-  const LABEL_R = 158;    // label distance from centre
+  const SIZE = 360, CX = SIZE / 2, CY = SIZE / 2;
+  const R = 130, LABEL_R = 162;
   const N = ordered.length;
   const angleStep = (2 * Math.PI) / N;
-  // Start at top (12 o'clock) and go clockwise
   const angleAt = (i) => -Math.PI / 2 + i * angleStep;
 
-  // ── Background grid: concentric polygons at 25/50/75/100 ────────────
-  const gridLevels = [0.25, 0.5, 0.75, 1.0];
+  const gridLevels = [0.2, 0.4, 0.6, 0.8, 1.0];
   const gridPolys = gridLevels.map((lv) => {
     const pts = ordered.map((_, i) => {
       const a = angleAt(i);
@@ -4792,42 +5006,30 @@ function renderRadar(dims) {
     return `<polygon class="vss-radar-axis-line" points="${pts}" />`;
   }).join('');
 
-  // ── Axis lines from centre to outermost vertex ──────────────────────
   const axisLines = ordered.map((_, i) => {
     const a = angleAt(i);
     return `<line class="vss-radar-axis-line" x1="${CX}" y1="${CY}" x2="${CX + Math.cos(a) * R}" y2="${CY + Math.sin(a) * R}" />`;
   }).join('');
 
-  // ── Data polygon ───────────────────────────────────────────────────
-  const dataPoints = ordered.map((d, i) => {
-    const score = d.pending ? 0 : d.score;
+  const dataPoints = ordered.map((c, i) => {
+    const v = (c.score || 0) / 5;
     const a = angleAt(i);
-    return `${CX + Math.cos(a) * R * (score / 100)},${CY + Math.sin(a) * R * (score / 100)}`;
+    return `${CX + Math.cos(a) * R * v},${CY + Math.sin(a) * R * v}`;
   }).join(' ');
 
-  // ── Data points (dots) ──────────────────────────────────────────────
-  const dots = ordered.map((d, i) => {
-    if (d.pending) return '';
+  const dots = ordered.map((c, i) => {
+    if (c.band === 'unrated') return '';
     const a = angleAt(i);
-    const score = d.score;
-    return `<circle class="vss-radar-dot" cx="${CX + Math.cos(a) * R * (score / 100)}" cy="${CY + Math.sin(a) * R * (score / 100)}" r="3" />`;
+    const v = (c.score || 0) / 5;
+    return `<circle class="vss-radar-dot" cx="${CX + Math.cos(a) * R * v}" cy="${CY + Math.sin(a) * R * v}" r="3" />`;
   }).join('');
 
-  // ── Axis labels — short names + score ──────────────────────────────
-  const SHORT = {
-    marketStrength: 'Market',
-    problemSolution: 'Problem',
-    financialDefensibility: 'Financial',
-    strategicResolution: 'Strategic',
-    executionTangibility: 'Execution',
-    evidenceIntegrity: 'Evidence',
-  };
-  const labels = ordered.map((d, i) => {
+  const labels = ordered.map((c, i) => {
     const a = angleAt(i);
     const x = CX + Math.cos(a) * LABEL_R;
     const y = CY + Math.sin(a) * LABEL_R;
-    const text = SHORT[d.key] || d.key;
-    const scoreText = d.pending ? '—' : String(d.score);
+    const text = VSS_CAT_SHORT[c.key] || c.key;
+    const scoreText = c.band === 'unrated' ? '—' : `${c.score}/5`;
     let anchor = 'middle';
     if (Math.cos(a) > 0.3) anchor = 'start';
     else if (Math.cos(a) < -0.3) anchor = 'end';
@@ -4838,15 +5040,14 @@ function renderRadar(dims) {
   }).join('');
 
   return `
-    <svg class="vss-radar" viewBox="0 0 ${SIZE} ${SIZE}" role="img" aria-label="Sentiment Score radar — ${ordered.map((d) => `${SHORT[d.key]} ${d.score ?? 'pending'}`).join(', ')}">
+    <svg class="vss-radar" viewBox="0 0 ${SIZE} ${SIZE}" role="img" aria-label="Sentiment Score radar — ${ordered.map((c) => `${VSS_CAT_SHORT[c.key]} ${c.score}/5`).join(', ')}">
       ${gridPolys}
       ${axisLines}
       <polygon class="vss-radar-poly-fill" points="${dataPoints}" />
       <polygon class="vss-radar-poly-stroke" points="${dataPoints}" />
       ${dots}
       ${labels}
-    </svg>
-  `;
+    </svg>`;
 }
 
 // ── Single-point sparkline (placeholder for v1) ─────────────────────────────
@@ -4876,9 +5077,9 @@ function renderSparkline(values) {
 
 // ── Interaction wiring (after render) ──────────────────────────────────────
 function wireInvestabilityInteractions() {
-  // Diligence chip → expand/collapse breakdown
-  const chip = document.getElementById('vss-diligence-chip');
-  const bd = document.getElementById('vss-diligence-breakdown');
+  // Engagement Completeness chip → expand/collapse breakdown
+  const chip = document.getElementById('vss-engagement-chip');
+  const bd = document.getElementById('vss-engagement-breakdown');
   if (chip && bd) {
     chip.addEventListener('click', () => {
       bd.classList.toggle('open');
@@ -4896,15 +5097,21 @@ function wireInvestabilityInteractions() {
       radarBtn.textContent = radarWrap.classList.contains('open') ? 'Hide radar ▴' : 'View radar ▾';
     });
   }
-  // Rationale toggle — show/hide all dimension rationale blocks at once
-  const ratBtn = document.getElementById('vss-toggle-rationale');
-  if (ratBtn) {
-    ratBtn.addEventListener('click', () => {
-      const rows = document.querySelectorAll('.vss-dim-row');
+  // Per-row category expand — click the row head to toggle sub-criteria
+  document.querySelectorAll('.vss-cat-row .vss-cat-row-head').forEach((head) => {
+    head.addEventListener('click', () => {
+      head.closest('.vss-cat-row').classList.toggle('expanded');
+    });
+  });
+  // Expand-all toggle
+  const allBtn = document.getElementById('vss-toggle-expand-all');
+  if (allBtn) {
+    allBtn.addEventListener('click', () => {
+      const rows = document.querySelectorAll('.vss-cat-row');
       const anyExpanded = Array.from(rows).some((r) => r.classList.contains('expanded'));
       rows.forEach((r) => r.classList.toggle('expanded', !anyExpanded));
-      ratBtn.classList.toggle('active', !anyExpanded);
-      ratBtn.textContent = anyExpanded ? 'View rationale ▾' : 'Hide rationale ▴';
+      allBtn.classList.toggle('active', !anyExpanded);
+      allBtn.textContent = anyExpanded ? 'Expand all ▾' : 'Collapse all ▴';
     });
   }
 }

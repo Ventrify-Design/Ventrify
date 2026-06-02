@@ -1,271 +1,301 @@
 // =============================================================================
-// compute.test.js — Tests for the VSS composite math (zero-dep)
+// compute.test.js — v2 scorecard math tests (zero-dep)
 // =============================================================================
-// Run with: node tools/sentiment/compute.test.js
+// Run via: node tools/sentiment/compute.test.js
+// Exits non-zero on first failing assertion. No framework deps.
 // =============================================================================
 
 'use strict';
 
-const { computeComposite, DIMENSIONS } = require('./compute');
+const {
+  computeComposite,
+  catBand,
+  overallBand,
+  TOTAL_SUB_CRITERIA,
+} = require('./compute');
+const { CATEGORIES } = require('./validate');
 
-// Tiny test harness — no Jest, no dependency.
-let pass = 0;
-let fail = 0;
-const failures = [];
+let passed = 0;
+let failed = 0;
 
-function test(name, fn) {
-  try {
-    fn();
-    pass++;
-    console.log(`  ✓ ${name}`);
-  } catch (e) {
-    fail++;
-    failures.push({ name, message: e.message });
-    console.log(`  ✗ ${name}`);
-    console.log(`      ${e.message}`);
+function eq(actual, expected, label) {
+  const ok = JSON.stringify(actual) === JSON.stringify(expected);
+  if (ok) {
+    passed += 1;
+    console.log(`  ✓ ${label}`);
+  } else {
+    failed += 1;
+    console.log(`  ✗ ${label}`);
+    console.log(`      expected: ${JSON.stringify(expected)}`);
+    console.log(`      actual:   ${JSON.stringify(actual)}`);
   }
 }
 
-function assert(condition, message) {
-  if (!condition) throw new Error(message || 'assertion failed');
+function assert(cond, label) {
+  if (cond) {
+    passed += 1;
+    console.log(`  ✓ ${label}`);
+  } else {
+    failed += 1;
+    console.log(`  ✗ ${label}`);
+  }
 }
 
-// ── Score-builder helper ───────────────────────────────────────────────────
-const SEED_WEIGHTS = {
-  marketStrength: 0.20,
-  problemSolution: 0.15,
-  financialDefensibility: 0.20,
-  strategicResolution: 0.20,
-  executionTangibility: 0.15,
-  evidenceIntegrity: 0.10,
-};
-
-function score(dims, opts = {}) {
-  const dimensions = {};
-  for (const key of DIMENSIONS) {
-    const value = dims[key];
-    if (value === undefined) {
-      dimensions[key] = { score: 75, rationale: null }; // default mid-strong
-    } else if (value === null) {
-      dimensions[key] = { score: null, rationale: null };
-    } else if (typeof value === 'number') {
-      dimensions[key] = { score: value, rationale: opts.rationale?.[key] || null };
-    } else {
-      dimensions[key] = value;
+// ── Helper: build a balanced score where every sub-criterion = v ───────────
+function balanced(v) {
+  const categories = {};
+  for (const cat of Object.keys(CATEGORIES)) {
+    categories[cat] = {};
+    for (const sub of CATEGORIES[cat]) {
+      categories[cat][sub] = { score: v, note: v < 1 ? 'partial evidence' : null };
     }
   }
   return {
-    version: 1,
+    version: 2,
     profile: 'seed',
-    ratedBy: 'Test Operator',
-    ratedAt: '2026-06-01T15:00:00Z',
-    dimensions,
-    weights: opts.weights || SEED_WEIGHTS,
+    ratedBy: 'test',
+    ratedAt: '2026-06-01T00:00:00Z',
+    categories,
   };
 }
 
-// ── Tests ──────────────────────────────────────────────────────────────────
+// ============================================================================
+console.log('Test 1 — Total possible is 35 (7 × 5)');
+// ============================================================================
+eq(TOTAL_SUB_CRITERIA, 35, 'TOTAL_SUB_CRITERIA = 35');
 
-console.log('\nVSS composite math — test suite\n');
+// ============================================================================
+console.log('\nTest 2 — Empty score → composite 0, band unrated');
+// ============================================================================
+{
+  const r = computeComposite({ version: 2, profile: 'seed', categories: {} });
+  eq(r.composite, 0, 'composite is 0');
+  eq(r.band, 'unrated', 'band is unrated');
+  eq(r.rated, 0, 'rated count is 0');
+  eq(r.pending, 35, 'pending count is 35');
+  eq(r.deficiencies.length, 0, 'no deficiencies when empty');
+}
 
-test('balanced 75/75/75/75/75/75 → composite 75', () => {
-  const r = computeComposite(score({}));
-  assert(r.composite === 75, `expected 75, got ${r.composite}`);
-  assert(r.band === 'feedback', `expected band feedback, got ${r.band}`);
-  assert(!r.hardCapTriggered, 'hard cap should not trigger on uniform 75');
-});
+// ============================================================================
+console.log('\nTest 3 — All 1s → composite 35, band approved');
+// ============================================================================
+{
+  const r = computeComposite(balanced(1));
+  eq(r.composite, 35, 'composite = 35');
+  eq(r.band, 'approved', 'band = approved');
+  eq(r.bandLabel.includes('Strong'), true, 'label says Strong');
+  eq(r.rated, 35, 'all 35 rated');
+  eq(r.pending, 0, 'nothing pending');
+  eq(r.deficiencies.length, 0, 'no deficiencies (everything is 1)');
+  for (const cat of Object.keys(CATEGORIES)) {
+    eq(r.categories[cat].score, 5, `${cat} score = 5`);
+    eq(r.categories[cat].band, 'approved', `${cat} band = approved`);
+  }
+}
 
-test('balanced 85 across all → Strong band', () => {
-  const r = computeComposite(score({
-    marketStrength: 85, problemSolution: 85, financialDefensibility: 85,
-    strategicResolution: 85, executionTangibility: 85, evidenceIntegrity: 85,
-  }));
-  assert(r.composite === 85, `expected 85, got ${r.composite}`);
-  assert(r.band === 'approved', `expected approved, got ${r.band}`);
-});
+// ============================================================================
+console.log('\nTest 4 — All 0.5s → composite 17.5, band feedback');
+// ============================================================================
+{
+  const r = computeComposite(balanced(0.5));
+  eq(r.composite, 17.5, 'composite = 17.5');
+  eq(r.band, 'feedback', 'band = feedback (14-27)');
+  eq(r.rated, 35, 'all 35 rated');
+  eq(r.deficiencies.length, 5, '5 deficiencies in heatmap (top-5 cap)');
+}
 
-test('imbalanced 90/30 punishes via geometric mean', () => {
-  // Half high, half low — geometric mean drags well below 60.
-  const r = computeComposite(score({
-    marketStrength: 90, problemSolution: 90, financialDefensibility: 30,
-    strategicResolution: 90, executionTangibility: 90, evidenceIntegrity: 90,
-  }));
-  // Hard cap triggers because financialDefensibility < 40 → composite capped at 60.
-  assert(r.hardCapTriggered, 'hard cap should trigger on financial < 40');
-  assert(r.composite === 60, `expected 60 (capped), got ${r.composite}`);
-});
+// ============================================================================
+console.log('\nTest 5 — All 0s → composite 0, band rework');
+// ============================================================================
+{
+  const r = computeComposite(balanced(0));
+  eq(r.composite, 0, 'composite = 0');
+  eq(r.band, 'rework', 'band = rework');
+  eq(r.bandLabel.includes('Material gaps'), true, 'label says Material gaps');
+  eq(r.deficiencies.length, 5, 'top-5 deficiencies surfaced even when all 0');
+}
 
-test('imbalanced 90/45 (above hard-cap threshold) shows real geometric drag', () => {
-  // financialDefensibility=45 stays above the hard-cap threshold of 40, so
-  // we get to see what the geometric mean actually does to one outlier.
-  const r = computeComposite(score({
-    marketStrength: 90, problemSolution: 90, financialDefensibility: 45,
-    strategicResolution: 90, executionTangibility: 90, evidenceIntegrity: 90,
-  }));
-  assert(!r.hardCapTriggered, 'hard cap should not trigger at 45');
-  // Geometric mean of (90,90,45,90,90,90) with seed weights ≈ 76.
-  assert(r.composite >= 70 && r.composite <= 80, `expected ~76, got ${r.composite}`);
-});
+// ============================================================================
+console.log('\nTest 6 — Color band boundaries');
+// ============================================================================
+eq(overallBand(0),    'rework',   '0 → rework');
+eq(overallBand(13.5), 'rework',   '13.5 → rework');
+eq(overallBand(14),   'feedback', '14 → feedback (boundary)');
+eq(overallBand(27.5), 'feedback', '27.5 → feedback');
+eq(overallBand(28),   'approved', '28 → approved (boundary)');
+eq(overallBand(35),   'approved', '35 → approved');
 
-test('floor at 25 — single 0 does not nuke the composite', () => {
-  // Without the floor, score: 0 → log(0) = -Infinity → composite NaN.
-  const r = computeComposite(score({
-    marketStrength: 80, problemSolution: 80, financialDefensibility: 80,
-    strategicResolution: 80, executionTangibility: 80, evidenceIntegrity: 0,
-  }));
-  // evidenceIntegrity=0 triggers the hard cap (< 40), so composite caps at 60.
-  assert(r.hardCapTriggered, 'evidenceIntegrity=0 should trigger hard cap');
-  assert(r.composite === 60, `expected capped at 60, got ${r.composite}`);
-});
+console.log('  --- per-category bands');
+eq(catBand(0),   'rework',   'cat 0 → rework');
+eq(catBand(1.5), 'rework',   'cat 1.5 → rework');
+eq(catBand(2),   'rework',   'cat 2 → rework (boundary above)');
+eq(catBand(2.5), 'feedback', 'cat 2.5 → feedback');
+eq(catBand(3.5), 'feedback', 'cat 3.5 → feedback');
+eq(catBand(4),   'approved', 'cat 4 → approved (boundary)');
+eq(catBand(5),   'approved', 'cat 5 → approved');
 
-test('hard cap — evidence < 40 caps composite at 60', () => {
-  const r = computeComposite(score({
-    marketStrength: 95, problemSolution: 95, financialDefensibility: 95,
-    strategicResolution: 95, executionTangibility: 95, evidenceIntegrity: 35,
-  }));
-  assert(r.hardCapTriggered, 'hard cap should trigger');
-  assert(r.composite === 60, `expected 60, got ${r.composite}`);
-  assert(r.hardCapReason.includes('Evidence Integrity'), `expected hardCapReason mention, got "${r.hardCapReason}"`);
-});
+// ============================================================================
+console.log('\nTest 7 — Partial coverage (some null scores excluded from sum)');
+// ============================================================================
+{
+  const score = {
+    version: 2,
+    profile: 'preSeed',
+    categories: {
+      market: {
+        market_size: { score: 1 },
+        market_growth: { score: 1 },
+        why_now: { score: 1 },
+        demand_validation: { score: 1 },
+        gross_margin: { score: 1 },
+      },
+      team: {
+        ceo_vision: { score: 1 },
+        talent_attraction: { score: 1 },
+        founder_market_fit: { score: null },
+        execution_record: { score: null },
+        ethics_trust: { score: null },
+      },
+      product: {}, moat: {}, financial: {}, execution: {}, evidence: {},
+    },
+  };
+  const r = computeComposite(score);
+  eq(r.composite, 7, 'composite = 5 + 2 = 7');
+  eq(r.rated, 7, '7 sub-criteria rated');
+  eq(r.pending, 28, '28 pending');
+  eq(r.categories.market.score, 5, 'market = 5');
+  eq(r.categories.market.band, 'approved', 'market band = approved');
+  eq(r.categories.team.score, 2, 'team = 2');
+  eq(r.categories.team.band, 'rework', 'team partial-rated = rework (2 < 2.5)');
+  eq(r.categories.team.pending, 3, 'team has 3 pending');
+  eq(r.categories.product.band, 'unrated', 'product (no ratings) = unrated');
+}
 
-test('hard cap — financial < 40 caps composite at 60', () => {
-  const r = computeComposite(score({
-    marketStrength: 95, problemSolution: 95, financialDefensibility: 30,
-    strategicResolution: 95, executionTangibility: 95, evidenceIntegrity: 95,
-  }));
-  assert(r.hardCapTriggered, 'hard cap should trigger on financial');
-  assert(r.composite === 60, `expected 60, got ${r.composite}`);
-});
+// ============================================================================
+console.log('\nTest 8 — Deficiency heatmap ordering (lowest score + highest lift first)');
+// ============================================================================
+{
+  const score = {
+    version: 2,
+    profile: 'seed',
+    categories: {
+      market: {
+        market_size: { score: 0, note: 'no TAM yet', ref: 'research/market.md:12' },
+        market_growth: { score: 0.5, note: 'one source only' },
+        why_now: { score: 1 },
+        demand_validation: { score: 1 },
+        gross_margin: { score: 1 },
+      },
+      team: {
+        ceo_vision: { score: 1 }, talent_attraction: { score: 1 },
+        founder_market_fit: { score: 1 }, execution_record: { score: 1 },
+        ethics_trust: { score: 1 },
+      },
+      product: {
+        value_prop_clarity: { score: 1 }, improvement_10x: { score: 1 },
+        moscow_discipline: { score: 1 }, persona_depth: { score: 1 },
+        problem_validation: { score: 0, note: 'no qualitative validation', ref: 'research/users.md:4' },
+      },
+      moat: {
+        differentiation: { score: 1 }, ip_defensibility: { score: 1 },
+        switching_costs: { score: 1 }, scalability: { score: 1 },
+        ecosystem_moats: { score: 1 },
+      },
+      financial: {
+        files_complete: { score: 1 }, ltv_cac_ratio: { score: 1 },
+        sensitivity_coverage: { score: 1 }, milestone_anchored_ask: { score: 1 },
+        risk_honesty: { score: 1 },
+      },
+      execution: {
+        live_surfaces: { score: 1 }, ia_coverage: { score: 1 },
+        gate_velocity: { score: 1 }, payment_cadence: { score: 1 },
+        traction_signals: { score: 1 },
+      },
+      evidence: {
+        citation_density: { score: 1 }, source_count: { score: 1 },
+        hallucination_check: { score: 1 }, methodology_disclosure: { score: 1 },
+        cross_file_consistency: { score: 1 },
+      },
+    },
+  };
+  const r = computeComposite(score);
+  // market 3.5 + team 5 + product 4 + moat 5 + financial 5 + execution 5 + evidence 5 = 32.5
+  eq(r.composite, 32.5, 'composite = 32.5');
+  eq(r.band, 'approved', 'band = approved (>= 28)');
+  eq(r.deficiencies.length, 3, '3 deficiencies surfaced');
+  eq(r.deficiencies[0].lift, 1, 'first deficiency has lift 1 (was 0)');
+  eq(r.deficiencies[1].lift, 1, 'second deficiency has lift 1 (was 0)');
+  eq(r.deficiencies[2].lift, 0.5, 'third deficiency has lift 0.5 (was 0.5)');
+  eq(r.deficiencies[2].sub, 'market_growth', 'third deficiency is market_growth');
+  assert(r.deficiencies.some((d) => d.ref === 'research/market.md:12'), 'evidence ref preserved through heatmap');
+}
 
-test('hard cap — strategic < 40 caps composite at 60', () => {
-  const r = computeComposite(score({
-    marketStrength: 95, problemSolution: 95, financialDefensibility: 95,
-    strategicResolution: 25, executionTangibility: 95, evidenceIntegrity: 95,
-  }));
-  assert(r.hardCapTriggered, 'hard cap should trigger on strategic');
-  assert(r.composite === 60, `expected 60, got ${r.composite}`);
-});
+// ============================================================================
+console.log('\nTest 9 — Deficiency heatmap capped at 5');
+// ============================================================================
+{
+  const score = balanced(1);
+  for (const sub of CATEGORIES.market) {
+    score.categories.market[sub] = { score: 0, note: 'gap' };
+  }
+  score.categories.team.ceo_vision = { score: 0, note: 'gap' };
+  score.categories.team.talent_attraction = { score: 0, note: 'gap' };
+  const r = computeComposite(score);
+  eq(r.deficiencies.length, 5, 'heatmap capped at 5 even when 7 zeros');
+  for (const d of r.deficiencies) {
+    eq(d.lift, 1, 'all top-5 have lift = 1 (zeros surface first)');
+  }
+}
 
-test('non-foundational < 40 does NOT trigger hard cap', () => {
-  // marketStrength is NOT in the foundational dimensions list, so a low
-  // score here should not trigger the hard cap — only drag the composite.
-  const r = computeComposite(score({
-    marketStrength: 25, problemSolution: 95, financialDefensibility: 95,
-    strategicResolution: 95, executionTangibility: 95, evidenceIntegrity: 95,
-  }));
-  assert(!r.hardCapTriggered, 'non-foundational low score should not trigger cap');
-  // Composite should still drop significantly due to geometric mean.
-  assert(r.composite < 80, `composite should drop below 80, got ${r.composite}`);
-});
+// ============================================================================
+console.log('\nTest 10 — Round to nearest 0.5');
+// ============================================================================
+{
+  const score = {
+    version: 2,
+    profile: 'seed',
+    categories: {
+      market: {
+        market_size: { score: 1 }, market_growth: { score: 1 },
+        why_now: { score: 1 }, demand_validation: { score: 1 },
+        gross_margin: { score: 0.5, note: 'sector unclear' },
+      },
+      team: {
+        ceo_vision: { score: 1 }, talent_attraction: { score: 0.5, note: 'hire gap' },
+        founder_market_fit: { score: 1 }, execution_record: { score: 0.5, note: 'limited' },
+        ethics_trust: { score: 0.5, note: 'untested' },
+      },
+      product: {}, moat: {}, financial: {}, execution: {}, evidence: {},
+    },
+  };
+  const r = computeComposite(score);
+  eq(r.composite, 8, 'composite = 4.5 + 3.5 = 8');
+  eq(r.categories.market.score, 4.5, 'market = 4.5');
+  eq(r.categories.market.band, 'approved', 'market 4.5 → approved');
+  eq(r.categories.team.score, 3.5, 'team = 3.5');
+  eq(r.categories.team.band, 'feedback', 'team 3.5 → feedback');
+}
 
-test('pending dimensions (null scores) excluded from composite', () => {
-  // Financial + Execution pending — composite should reflect only the 4
-  // rated dimensions, renormalised across them.
-  const r = computeComposite(score({
-    marketStrength: 80, problemSolution: 80,
-    financialDefensibility: null,
-    strategicResolution: 80,
-    executionTangibility: null,
-    evidenceIntegrity: 80,
-  }));
-  assert(r.composite === 80, `pending dims should not drag composite; got ${r.composite}`);
-  assert(r.pendingCount === 2, `expected pendingCount=2, got ${r.pendingCount}`);
-  assert(r.ratedCount === 4, `expected ratedCount=4, got ${r.ratedCount}`);
-});
+// ============================================================================
+console.log('\nTest 11 — Each category has exactly 5 sub-criteria slugs');
+// ============================================================================
+for (const cat of Object.keys(CATEGORIES)) {
+  eq(CATEGORIES[cat].length, 5, `${cat} has 5 sub-criteria`);
+}
 
-test('all pending → composite null + unrated band', () => {
-  const r = computeComposite(score({
-    marketStrength: null, problemSolution: null, financialDefensibility: null,
-    strategicResolution: null, executionTangibility: null, evidenceIntegrity: null,
-  }));
-  assert(r.composite === null, `expected null composite, got ${r.composite}`);
-  assert(r.band === 'unrated', `expected unrated band, got ${r.band}`);
-  assert(r.ratedCount === 0, `expected ratedCount=0, got ${r.ratedCount}`);
-});
+// ============================================================================
+console.log('\nTest 12 — Result is pure (same input → same output)');
+// ============================================================================
+{
+  const s = balanced(0.5);
+  const a = computeComposite(s);
+  const b = computeComposite(s);
+  eq(JSON.stringify(a), JSON.stringify(b), 'compute is deterministic');
+}
 
-test('rationale-required flag fires when score < 50 + rationale missing', () => {
-  const r = computeComposite(score({
-    marketStrength: 80, problemSolution: 80, financialDefensibility: 80,
-    strategicResolution: 80, executionTangibility: 45, evidenceIntegrity: 80,
-  }));
-  // executionTangibility is below 50 — rationale should be flagged.
-  assert(r.rationaleRequired.includes('executionTangibility'),
-    `expected executionTangibility in rationaleRequired, got ${r.rationaleRequired}`);
-});
-
-test('rationale-required NOT flagged when rationale is provided', () => {
-  const s = score(
-    { marketStrength: 80, problemSolution: 80, financialDefensibility: 80,
-      strategicResolution: 80, executionTangibility: 45, evidenceIntegrity: 80 },
-    { rationale: { executionTangibility: 'Only 60% of IA screens shipped; v1.1 closes the gap.' } },
-  );
-  const r = computeComposite(s);
-  assert(!r.rationaleRequired.includes('executionTangibility'),
-    `expected executionTangibility NOT flagged when rationale present, got ${r.rationaleRequired}`);
-});
-
-test('per-dimension contributions populated with lift values', () => {
-  const r = computeComposite(score({
-    marketStrength: 80, problemSolution: 80, financialDefensibility: 60,
-    strategicResolution: 80, executionTangibility: 80, evidenceIntegrity: 80,
-  }));
-  assert(r.contributions.marketStrength.score === 80);
-  assert(r.contributions.financialDefensibility.lift === 0.2 * (100 - 60), 'lift calc');
-  assert(!r.contributions.financialDefensibility.pending);
-});
-
-test('pending contributions tagged with pending: true', () => {
-  const r = computeComposite(score({
-    marketStrength: 80, problemSolution: 80,
-    financialDefensibility: null,
-    strategicResolution: 80, executionTangibility: 80, evidenceIntegrity: 80,
-  }));
-  assert(r.contributions.financialDefensibility.pending === true);
-  assert(r.contributions.financialDefensibility.score === null);
-});
-
-test('band thresholds — 49 across the board = Pre-readiness, no hard cap', () => {
-  const r = computeComposite(score({
-    marketStrength: 49, problemSolution: 49, financialDefensibility: 49,
-    strategicResolution: 49, executionTangibility: 49, evidenceIntegrity: 49,
-  }));
-  assert(!r.hardCapTriggered, '49 is above the 40 hard-cap threshold, no cap should fire');
-  assert(r.composite === 49, `expected composite 49, got ${r.composite}`);
-  assert(r.band === 'rework', `expected rework band at sub-50, got ${r.band}`);
-  assert(r.bandLabel.includes('Pre-readiness'), `expected Pre-readiness label, got "${r.bandLabel}"`);
-});
-
-test('band thresholds — 80 = Strong (lower bound)', () => {
-  const r = computeComposite(score({
-    marketStrength: 80, problemSolution: 80, financialDefensibility: 80,
-    strategicResolution: 80, executionTangibility: 80, evidenceIntegrity: 80,
-  }));
-  assert(r.composite === 80);
-  assert(r.band === 'approved', `expected Strong band at 80, got ${r.band}`);
-});
-
-test('band thresholds — 65 = Promising (lower bound)', () => {
-  const r = computeComposite(score({
-    marketStrength: 65, problemSolution: 65, financialDefensibility: 65,
-    strategicResolution: 65, executionTangibility: 65, evidenceIntegrity: 65,
-  }));
-  assert(r.composite === 65);
-  assert(r.band === 'feedback', `expected Promising band at 65, got ${r.band}`);
-});
-
-test('empty/null input → unrated state, no crash', () => {
-  const r1 = computeComposite(null);
-  assert(r1.composite === null && r1.band === 'unrated');
-  const r2 = computeComposite({});
-  assert(r2.composite === null && r2.band === 'unrated');
-});
-
-// ── Summary ─────────────────────────────────────────────────────────────────
-console.log(`\n${pass} passed · ${fail} failed\n`);
-if (fail > 0) {
-  console.log('Failures:');
-  for (const f of failures) console.log(`  - ${f.name}: ${f.message}`);
+// ============================================================================
+console.log(`\n${passed} passed · ${failed} failed`);
+// ============================================================================
+if (failed > 0) {
   process.exit(1);
-} else {
-  process.exit(0);
 }
