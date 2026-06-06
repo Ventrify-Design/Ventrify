@@ -6,7 +6,7 @@
   <title>What's Inside — Ventrify OS Platform Deep Dive</title>
   <meta name="description" content="A complete technical breakdown of every file, tool, and agent in Ventrify OS. For the platform teams and operators who run programs on it.">
   <meta property="og:title" content="What's Inside — Ventrify OS Platform Deep Dive">
-  <meta property="og:description" content="4,242 lines of instruction. 10 specialist agents. 15+ automated tools. The platform components every licensee runs.">
+  <meta property="og:description" content="4,242 lines of instruction. 47 specialist agents across 7 domains. 14 deterministic tools. The platform components every licensee runs.">
   <meta property="og:type" content="website">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -602,7 +602,7 @@
     }
 
     /* ============================================
-       AGENTS GRID — 10 specialist agents
+       AGENTS GRID — 47 specialist agents
        ============================================ */
     .agents-grid {
       display:grid;
@@ -1223,6 +1223,7 @@
       <a href="system.html" class="active">System</a>
       <a href="the-data-room.html">Data Room</a>
       <a href="the-workspace.html">Workspace</a>
+      <a href="agents.html">Agents</a>
       <a href="showcase.html">Showcase</a>
       <a href="pricing.html">Pricing</a>
     </div>
@@ -1241,6 +1242,7 @@
     <a href="system.html" class="m-nav-link active">System</a>
     <a href="the-data-room.html" class="m-nav-link">Data Room</a>
     <a href="the-workspace.html" class="m-nav-link">Workspace</a>
+    <a href="agents.html" class="m-nav-link">Agents</a>
     <a href="showcase.html" class="m-nav-link">Showcase</a>
     <a href="pricing.html" class="m-nav-link">Pricing</a>
     <div class="m-cta">
@@ -1269,7 +1271,7 @@
   <section class="page-intro-section">
     <div class="container" data-reveal>
       <div style="max-width:780px;margin:0 auto;text-align:center;">
-        <p style="font-size:clamp(1.15rem,2.5vw,1.4rem);line-height:1.75;color:var(--text-light-muted);font-weight:400;">4,242 lines of structured instruction. 10 specialist AI agents. 15+ automated tools. 3 Figma plugins. Five phases plus financials. A three-layer data room. <span style="color:#FFFFFF;font-weight:500;">Every file, every phase, every deliverable &mdash; codified.</span> This is what you license: the operating system every program your team runs sits on top of.</p>
+        <p style="font-size:clamp(1.15rem,2.5vw,1.4rem);line-height:1.75;color:var(--text-light-muted);font-weight:400;">4,242 lines of structured instruction. 47 specialist AI agents across 7 domains. 14 deterministic quality-substrate tools. 3 Figma plugins. Five phases plus financials. A three-layer data room. <span style="color:#FFFFFF;font-weight:500;">Every file, every phase, every deliverable &mdash; codified.</span> This is what you license: the operating system every program your team runs sits on top of.</p>
       </div>
     </div>
   </section>
@@ -1339,74 +1341,116 @@
   <section class="section-alt" id="agents">
     <div class="container" data-reveal>
       <div class="s-label">The Agents</div>
-      <h2 class="s-title s-title-shimmer">10 specialist AI agents.<br>One orchestra.</h2>
-      <p class="s-sub">Each agent has a specific phase, a specific input, and a specific output. The platform runs them in sequence so a single program manager can ship what used to take 10 people.</p>
+      <h2 class="s-title s-title-shimmer">47 specialist AI agents.<br>7 domains. 3 substrate keystones.</h2>
+      <p class="s-sub">Each agent is anchored to a specific failure mode it prevents. Three of them are load-bearing for the entire fleet &mdash; if you took just one away, the cracks would compound across every other agent&rsquo;s work.</p>
 
-      <div class="agents-grid">
-
-        <div class="agent-card" data-reveal data-delay="1">
-          <div class="agent-name"><code>research-curator</code></div>
-          <div class="agent-phase">Phases 1, 2, 2.5</div>
-          <p class="agent-output">Reads each L3 research document and drafts 5&ndash;7 Provocation Cards per hub. The card layer of the data room.</p>
+      <!-- THE SUBSTRATE — 3 keystones -->
+      <div style="margin-top:2.5rem;margin-bottom:2.5rem;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:1.25rem;">
+          <span style="font-family:var(--font-mono);font-size:0.72rem;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:var(--primary);">Substrate &middot; The 3 Keystones</span>
+          <span style="flex:1;height:1px;background:rgba(0,0,0,0.06);"></span>
         </div>
-
-        <div class="agent-card" data-reveal data-delay="2">
-          <div class="agent-name"><code>source-verifier</code></div>
-          <div class="agent-phase">End of Phase 1</div>
-          <p class="agent-output">Fact-checks every source in the Research Hub. Flags hallucinated citations and impossible numbers before the gate.</p>
+        <div class="agents-grid">
+          <div class="agent-card" data-reveal data-delay="1" style="border-color:rgba(var(--primary-rgb),0.25);box-shadow:0 4px 16px rgba(var(--primary-rgb),0.06);">
+            <div class="agent-name"><code>founder-lexicon-keeper</code></div>
+            <div class="agent-phase">Fires at &middot; Phase 0 + post-hook every writer</div>
+            <p class="agent-output">Canonical vocabulary &amp; voice principle enforcer. Every writing agent (copywriter, social, blog, email, pitch script) reads its output before opening their mouth. Without it, the content fleet ships voice-adjacent output with drift.</p>
+          </div>
+          <div class="agent-card" data-reveal data-delay="2" style="border-color:rgba(var(--primary-rgb),0.25);box-shadow:0 4px 16px rgba(var(--primary-rgb),0.06);">
+            <div class="agent-name"><code>workflow-orchestrator</code></div>
+            <div class="agent-phase">Fires at &middot; Session start + daily cron</div>
+            <p class="agent-output">The routing layer. Reads state, produces a daily briefing, surfaces what fires next for the program manager. The fleet&rsquo;s air-traffic control.</p>
+          </div>
+          <div class="agent-card" data-reveal data-delay="3" style="border-color:rgba(var(--primary-rgb),0.25);box-shadow:0 4px 16px rgba(var(--primary-rgb),0.06);">
+            <div class="agent-name"><code>agent-output-validator</code></div>
+            <div class="agent-phase">Fires at &middot; Mandatory post-hook on every agent run</div>
+            <p class="agent-output">Catches silent failures within 30 seconds. Outputs present, non-empty, quality-checked. The fleet&rsquo;s immune system.</p>
+          </div>
         </div>
-
-        <div class="agent-card" data-reveal data-delay="3">
-          <div class="agent-name"><code>information-architect</code></div>
-          <div class="agent-phase">Phase 2</div>
-          <p class="agent-output">Maps every feature to a screen. Produces the full IA &mdash; typically 40&ndash;65 screens mapped per MVP.</p>
-        </div>
-
-        <div class="agent-card" data-reveal data-delay="1">
-          <div class="agent-name"><code>backend-architect</code></div>
-          <div class="agent-phase">Phase 3</div>
-          <p class="agent-output">Firestore schema, security rules, indexes, and cost model &mdash; before a single line of app code is written.</p>
-        </div>
-
-        <div class="agent-card" data-reveal data-delay="2">
-          <div class="agent-name"><code>ux-designer</code></div>
-          <div class="agent-phase">Phase 4 (3 audit rounds)</div>
-          <p class="agent-output">Catches structural rule violations, nav UX failures, WCAG AA contrast issues, and Featured-app polish gaps. Beta cannot ship until critical issues are closed.</p>
-        </div>
-
-        <div class="agent-card" data-reveal data-delay="3">
-          <div class="agent-name"><code>copy-reviewer</code></div>
-          <div class="agent-phase">After marketing copy</div>
-          <p class="agent-output">Audits every line of marketing copy against the venture&rsquo;s tone-of-voice rules. No agency-speak slips through.</p>
-        </div>
-
-        <div class="agent-card" data-reveal data-delay="1">
-          <div class="agent-name"><code>financial-modeler</code></div>
-          <div class="agent-phase">Phase 2.5</div>
-          <p class="agent-output">Eight financial files: build costs, opex, revenue model, unit economics, cash flow, marketing budget, hiring plan, sensitivity analysis.</p>
-        </div>
-
-        <div class="agent-card" data-reveal data-delay="2">
-          <div class="agent-name"><code>investor-readiness-reviewer</code></div>
-          <div class="agent-phase">Phase 2.5</div>
-          <p class="agent-output">Recommended raise size, valuation range, dilution, red flags. Used to pressure-test the Financials Hub before Gate 2.5.</p>
-        </div>
-
-        <div class="agent-card" data-reveal data-delay="3">
-          <div class="agent-name"><code>scope-loop-reviewer</code></div>
-          <div class="agent-phase">Phase 2.5</div>
-          <p class="agent-output">Scope-change recommendations that loop back into Research and Define. Catches misaligned scope before the SOW is signed.</p>
-        </div>
-
-        <div class="agent-card" data-reveal data-delay="1">
-          <div class="agent-name"><code>video-producer</code></div>
-          <div class="agent-phase">Workstream C</div>
-          <p class="agent-output">Promotional video script, scene-by-scene breakdown, audio brief. Hand-off ready for production.</p>
-        </div>
-
       </div>
 
-      <p style="text-align:center;margin-top:2.5rem;font-size:0.95rem;color:var(--text-dark-muted);font-style:italic;max-width:680px;margin-left:auto;margin-right:auto;" data-reveal>Each agent runs in sequence with defined inputs and outputs. The platform orchestrates the orchestra. Your program manager orchestrates the platform.</p>
+      <!-- BUILD-FIRST 8 -->
+      <div style="margin-bottom:2.5rem;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:1.25rem;">
+          <span style="font-family:var(--font-mono);font-size:0.72rem;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:var(--primary);">Build-First 8 &middot; Compounding agents</span>
+          <span style="flex:1;height:1px;background:rgba(0,0,0,0.06);"></span>
+        </div>
+        <p style="font-size:0.92rem;color:var(--text-dark-muted);max-width:720px;margin-bottom:1.5rem;line-height:1.6;">These 8 were prioritised because every other agent compounds off them. The substrate three plus five more that gate downstream work.</p>
+        <div class="agents-grid">
+          <div class="agent-card" data-reveal data-delay="1">
+            <div class="agent-name"><code>consistency-checker</code></div>
+            <div class="agent-phase">Phase 2.5 + Phase 4 + Phase 5</div>
+            <p class="agent-output">Catches the &ldquo;$240k deck vs $260k model&rdquo; class of error. Cross-file diff on figures, persona names, competitor names.</p>
+          </div>
+          <div class="agent-card" data-reveal data-delay="2">
+            <div class="agent-name"><code>brand-designer</code></div>
+            <div class="agent-phase">Phase 0 Step 2</div>
+            <p class="agent-output">Head of the design chain. Authors <code>tokens.json</code> as the canonical source &mdash; consumed by app, marketing site, DS site, Figma plugins, App Store screenshots, promo video colour grade.</p>
+          </div>
+          <div class="agent-card" data-reveal data-delay="3">
+            <div class="agent-name"><code>copywriter</code></div>
+            <div class="agent-phase">Workstream A Step 2</div>
+            <p class="agent-output">Marketing-site long copy &mdash; the highest-stakes content surface. Reads the lexicon spine before writing a word.</p>
+          </div>
+          <div class="agent-card" data-reveal data-delay="1">
+            <div class="agent-name"><code>screenshot-cinematographer</code></div>
+            <div class="agent-phase">Pre <code>npm run refresh:visuals</code></div>
+            <p class="agent-output">Decides which app screens earn marketing real estate. One capture directory feeds marketing site, deck, App Store, video.</p>
+          </div>
+          <div class="agent-card" data-reveal data-delay="2">
+            <div class="agent-name"><code>tier-compliance-auditor</code></div>
+            <div class="agent-phase">Start of Phase 5 &middot; mandatory gate</div>
+            <p class="agent-output">Verifies every tier deliverable exists and passes quality. Phase 5 handoff cannot proceed without it.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 7 DOMAINS -->
+      <div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:1.25rem;">
+          <span style="font-family:var(--font-mono);font-size:0.72rem;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:var(--primary);">7 Domains &middot; Full Fleet</span>
+          <span style="flex:1;height:1px;background:rgba(0,0,0,0.06);"></span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;">
+          <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md);padding:1.25rem;">
+            <div style="font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.4rem;">Core / Substrate</div>
+            <div style="font-family:var(--font-heading);font-weight:600;font-size:1.6rem;letter-spacing:-0.02em;line-height:1;margin-bottom:0.4rem;">3</div>
+            <p style="font-size:0.82rem;color:var(--text-dark-muted);line-height:1.5;">Lexicon binding, workflow orchestration, output validation.</p>
+          </div>
+          <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md);padding:1.25rem;">
+            <div style="font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.4rem;">Design</div>
+            <div style="font-family:var(--font-heading);font-weight:600;font-size:1.6rem;letter-spacing:-0.02em;line-height:1;margin-bottom:0.4rem;">7</div>
+            <p style="font-size:0.82rem;color:var(--text-dark-muted);line-height:1.5;">Brand kit, UI, motion, iconography, accessibility, DS reuse.</p>
+          </div>
+          <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md);padding:1.25rem;">
+            <div style="font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.4rem;">Content</div>
+            <div style="font-family:var(--font-heading);font-weight:600;font-size:1.6rem;letter-spacing:-0.02em;line-height:1;margin-bottom:0.4rem;">7</div>
+            <p style="font-size:0.82rem;color:var(--text-dark-muted);line-height:1.5;">Copy across every surface &mdash; all lexicon-bound.</p>
+          </div>
+          <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md);padding:1.25rem;">
+            <div style="font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.4rem;">Visual Production</div>
+            <div style="font-family:var(--font-heading);font-weight:600;font-size:1.6rem;letter-spacing:-0.02em;line-height:1;margin-bottom:0.4rem;">7</div>
+            <p style="font-size:0.82rem;color:var(--text-dark-muted);line-height:1.5;">Graphics, illustration, photography, mockups, video.</p>
+          </div>
+          <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md);padding:1.25rem;">
+            <div style="font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.4rem;">Operations</div>
+            <div style="font-family:var(--font-heading);font-weight:600;font-size:1.6rem;letter-spacing:-0.02em;line-height:1;margin-bottom:0.4rem;">7</div>
+            <p style="font-size:0.82rem;color:var(--text-dark-muted);line-height:1.5;">Engagement health, IA, backend architecture, handoff, compliance.</p>
+          </div>
+          <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md);padding:1.25rem;">
+            <div style="font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.4rem;">QA</div>
+            <div style="font-family:var(--font-heading);font-weight:600;font-size:1.6rem;letter-spacing:-0.02em;line-height:1;margin-bottom:0.4rem;">7</div>
+            <p style="font-size:0.82rem;color:var(--text-dark-muted);line-height:1.5;">Cross-cutting quality gates &mdash; consistency, visual, voice, a11y, investor-readiness.</p>
+          </div>
+          <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md);padding:1.25rem;">
+            <div style="font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.4rem;">Business</div>
+            <div style="font-family:var(--font-heading);font-weight:600;font-size:1.6rem;letter-spacing:-0.02em;line-height:1;margin-bottom:0.4rem;">9</div>
+            <p style="font-size:0.82rem;color:var(--text-dark-muted);line-height:1.5;">Financial modelling, investor readiness, comparables, cohort analysis.</p>
+          </div>
+        </div>
+      </div>
+
+      <p style="text-align:center;margin-top:2.5rem;font-size:0.95rem;color:var(--text-dark-muted);max-width:680px;margin-left:auto;margin-right:auto;" data-reveal>Each agent runs in sequence with defined inputs and outputs. The platform orchestrates the orchestra. Your program manager orchestrates the platform.<br><a href="agents.html" style="color:var(--primary);font-weight:500;display:inline-block;margin-top:0.75rem;">See all 47 agents &rarr;</a></p>
     </div>
   </section>
 
@@ -1449,8 +1493,12 @@
   <section class="section-alt" id="tools">
     <div class="container" data-reveal>
       <div class="s-label">The Tooling</div>
-      <h2 class="s-title s-title-shimmer">15+ automated tools</h2>
-      <p class="s-sub">Every tool runs locally via npm scripts. No external services required except Stripe for invoicing.</p>
+      <h2 class="s-title s-title-shimmer">15 operator tools.<br>14 deterministic quality-substrate tools.</h2>
+      <p class="s-sub">Two layers of tooling. The operator surface &mdash; what your program manager and founder see &mdash; sits on top of a deterministic Node-script substrate that gates every agent output before it gets to a human.</p>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:2.5rem;margin-bottom:1.25rem;">
+        <span style="font-family:var(--font-mono);font-size:0.72rem;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:var(--primary);">Layer 1 &middot; Operator tools (15)</span>
+        <span style="flex:1;height:1px;background:rgba(0,0,0,0.06);"></span>
+      </div>
 
       <div class="tools-grid">
         <!-- 1. Brief Intake — browser form mockup -->
@@ -1794,6 +1842,89 @@
           </div>
         </div>
       </div>
+
+      <!-- LAYER 2 — Quality-substrate tools (14 deterministic Node scripts) -->
+      <div style="display:flex;align-items:center;gap:10px;margin-top:4rem;margin-bottom:1.25rem;">
+        <span style="font-family:var(--font-mono);font-size:0.72rem;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:var(--primary);">Layer 2 &middot; Quality-substrate tools (14)</span>
+        <span style="flex:1;height:1px;background:rgba(0,0,0,0.06);"></span>
+      </div>
+      <p style="font-size:0.95rem;color:var(--text-dark-muted);max-width:720px;margin-bottom:2rem;line-height:1.65;">Deterministic Node scripts that run before, during, and after every agent. They&rsquo;re what stop the platform behaving like an LLM &mdash; ground truth lives in code, not in a model&rsquo;s memory.</p>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:0.85rem;">
+
+        <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md);padding:1.1rem 1.25rem;">
+          <code style="font-family:var(--font-mono);font-size:0.78rem;color:var(--primary);font-weight:500;display:block;margin-bottom:0.35rem;">brand-token-validator</code>
+          <p style="font-size:0.82rem;color:var(--text-dark-muted);line-height:1.5;margin:0;">Diffs <code style="font-size:0.74rem;">tokens.json</code> against every consumer. Blocks ship if app, marketing site or video colour grade drift.</p>
+        </div>
+
+        <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md);padding:1.1rem 1.25rem;">
+          <code style="font-family:var(--font-mono);font-size:0.78rem;color:var(--primary);font-weight:500;display:block;margin-bottom:0.35rem;">financial-cross-ref</code>
+          <p style="font-size:0.82rem;color:var(--text-dark-muted);line-height:1.5;margin:0;">Cross-references cap table, financial model and deck numbers. Mismatches surface as red blocks.</p>
+        </div>
+
+        <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md);padding:1.1rem 1.25rem;">
+          <code style="font-family:var(--font-mono);font-size:0.78rem;color:var(--primary);font-weight:500;display:block;margin-bottom:0.35rem;">lexicon-diff</code>
+          <p style="font-size:0.82rem;color:var(--text-dark-muted);line-height:1.5;margin:0;">Checks every writer output against the canonical lexicon. Banned words, drift terms, persona-name leaks &mdash; all caught.</p>
+        </div>
+
+        <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md);padding:1.1rem 1.25rem;">
+          <code style="font-family:var(--font-mono);font-size:0.78rem;color:var(--primary);font-weight:500;display:block;margin-bottom:0.35rem;">citation-verifier</code>
+          <p style="font-size:0.82rem;color:var(--text-dark-muted);line-height:1.5;margin:0;">HTTP-checks every URL in research. Flags hallucinated sources before they reach the Research Hub.</p>
+        </div>
+
+        <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md);padding:1.1rem 1.25rem;">
+          <code style="font-family:var(--font-mono);font-size:0.78rem;color:var(--primary);font-weight:500;display:block;margin-bottom:0.35rem;">visual-diff</code>
+          <p style="font-size:0.82rem;color:var(--text-dark-muted);line-height:1.5;margin:0;">Pixel-diffs Figma artboards against shipped components at every gate.</p>
+        </div>
+
+        <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md);padding:1.1rem 1.25rem;">
+          <code style="font-family:var(--font-mono);font-size:0.78rem;color:var(--primary);font-weight:500;display:block;margin-bottom:0.35rem;">a11y-audit</code>
+          <p style="font-size:0.82rem;color:var(--text-dark-muted);line-height:1.5;margin:0;">WCAG AA contrast + nav structure + alt-text checks. Phase 4 cannot close without a pass.</p>
+        </div>
+
+        <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md);padding:1.1rem 1.25rem;">
+          <code style="font-family:var(--font-mono);font-size:0.78rem;color:var(--primary);font-weight:500;display:block;margin-bottom:0.35rem;">deliverable-manifest-check</code>
+          <p style="font-size:0.82rem;color:var(--text-dark-muted);line-height:1.5;margin:0;">Verifies every tier-required deliverable exists, is non-empty, and lives at the expected path.</p>
+        </div>
+
+        <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md);padding:1.1rem 1.25rem;">
+          <code style="font-family:var(--font-mono);font-size:0.78rem;color:var(--primary);font-weight:500;display:block;margin-bottom:0.35rem;">screenshot-orchestrator</code>
+          <p style="font-size:0.82rem;color:var(--text-dark-muted);line-height:1.5;margin:0;">Headless capture run with deterministic naming. Single capture dir feeds marketing, deck, App Store, video.</p>
+        </div>
+
+        <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md);padding:1.1rem 1.25rem;">
+          <code style="font-family:var(--font-mono);font-size:0.78rem;color:var(--primary);font-weight:500;display:block;margin-bottom:0.35rem;">pdf-quality-gate</code>
+          <p style="font-size:0.82rem;color:var(--text-dark-muted);line-height:1.5;margin:0;">Renders every PDF deliverable to pixels and runs structural + visual gates before release.</p>
+        </div>
+
+        <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md);padding:1.1rem 1.25rem;">
+          <code style="font-family:var(--font-mono);font-size:0.78rem;color:var(--primary);font-weight:500;display:block;margin-bottom:0.35rem;">repo-state-snapshot</code>
+          <p style="font-size:0.82rem;color:var(--text-dark-muted);line-height:1.5;margin:0;">Daily state capture &mdash; feeds <code style="font-size:0.74rem;">workflow-orchestrator</code> with deterministic ground truth.</p>
+        </div>
+
+        <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md);padding:1.1rem 1.25rem;">
+          <code style="font-family:var(--font-mono);font-size:0.78rem;color:var(--primary);font-weight:500;display:block;margin-bottom:0.35rem;">gate-precheck</code>
+          <p style="font-size:0.82rem;color:var(--text-dark-muted);line-height:1.5;margin:0;">Runs the gate criteria as code. Founder is only invited to sign once the precheck returns green.</p>
+        </div>
+
+        <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md);padding:1.1rem 1.25rem;">
+          <code style="font-family:var(--font-mono);font-size:0.78rem;color:var(--primary);font-weight:500;display:block;margin-bottom:0.35rem;">scope-diff</code>
+          <p style="font-size:0.82rem;color:var(--text-dark-muted);line-height:1.5;margin:0;">Compares SOW vs delivered. Flags scope creep and silent under-delivery before invoicing.</p>
+        </div>
+
+        <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md);padding:1.1rem 1.25rem;">
+          <code style="font-family:var(--font-mono);font-size:0.78rem;color:var(--primary);font-weight:500;display:block;margin-bottom:0.35rem;">handoff-bundle</code>
+          <p style="font-size:0.82rem;color:var(--text-dark-muted);line-height:1.5;margin:0;">Compiles the Phase 5 handoff: brand kit, code, deck, financials, portal credentials. One signed bundle.</p>
+        </div>
+
+        <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md);padding:1.1rem 1.25rem;">
+          <code style="font-family:var(--font-mono);font-size:0.78rem;color:var(--primary);font-weight:500;display:block;margin-bottom:0.35rem;">investability-scorer</code>
+          <p style="font-size:0.82rem;color:var(--text-dark-muted);line-height:1.5;margin:0;">TDK 7&times;5 Investability rubric, scored deterministically off the data room. Surfaces in the founder portal.</p>
+        </div>
+
+      </div>
+
+      <p style="margin-top:2rem;font-size:0.9rem;color:var(--text-dark-muted);max-width:720px;line-height:1.65;font-style:italic;">Substrate tools run on a cron, on file-save hooks, and as mandatory post-checks after every agent. The fleet only ships work the substrate has signed off.</p>
     </div>
   </section>
 
@@ -1827,7 +1958,7 @@
 <span class="dir">&boxv;   &boxvr;&boxh;&boxh; /portal/</span>              <span class="comment">&larr; Client portal (port 3015)</span>
 <span class="dir">&boxv;   &boxur;&boxh;&boxh; /pdf/</span>                 <span class="comment">&larr; Investor + SOW + welcome pack</span>
 <span class="dir">&boxvr;&boxh;&boxh; /.claude/</span>                  <span class="comment">&larr; Agent config</span>
-<span class="dir">&boxv;   &boxvr;&boxh;&boxh; /agents/</span>              <span class="comment">&larr; 10 specialist agents</span>
+<span class="dir">&boxv;   &boxvr;&boxh;&boxh; /agents/</span>              <span class="comment">&larr; 47 agents &middot; 7 domains</span>
 <span class="dir">&boxv;   &boxur;&boxh;&boxh; /memory/</span>              <span class="comment">&larr; Persistent memory files</span>
 <span class="dir">&boxvr;&boxh;&boxh; /brand/</span>                   <span class="comment">&larr; Brand kit + logos</span>
 <span class="dir">&boxv;   &boxur;&boxh;&boxh; /imagery/</span>             <span class="comment">&larr; 37 sourced brand photos</span>
@@ -1997,6 +2128,7 @@
           <a href="system.html">System</a>
           <a href="the-data-room.html">Data Room</a>
       <a href="the-workspace.html">Workspace</a>
+      <a href="agents.html">Agents</a>
       <a href="showcase.html">Showcase</a>
           <a href="pricing.html">Pricing</a>
           <a href="faqs.html">FAQs</a>

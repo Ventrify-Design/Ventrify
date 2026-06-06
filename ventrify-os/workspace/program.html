@@ -19,8 +19,13 @@
 
     // Read ?id= from URL, default to first program
     const params = new URLSearchParams(window.location.search);
-    const id = params.get('id') || W.programs[0].id;
-    const p = helpers.getProgram(id) || W.programs[0];
+    // Merge any locally-launched programs (via the New engagement wizard) into the lookup pool
+    let extraPrograms = [];
+    try { extraPrograms = JSON.parse(localStorage.getItem('workspace.programs') || '[]'); } catch(e) {}
+    const allPrograms = [...extraPrograms, ...W.programs];
+
+    const id = params.get('id') || allPrograms[0].id;
+    const p = allPrograms.find(x => x.id === id) || allPrograms[0];
     const operator = helpers.getOperator(p.assignedOperator);
 
     function hubCardHTML(key, data) {

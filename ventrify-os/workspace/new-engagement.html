@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New engagement — Ventrify OS Workspace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="root"></div>
+  <script src="sample-data.js"></script>
+  <script src="app.js"></script>
+  <script>
+    const W = window.WORKSPACE;
+    const { operators, helpers } = W;
+
+    const TIERS = [
+      { id: 'discovery', name: 'Discovery Sprint', price: '$9,500', timeline: '~2 wks', hubs: ['research'] },
+      { id: 'launchpad', name: 'Launchpad', price: '$32,000', timeline: '~6 wks', hubs: ['research','vision','strategy'] },
+      { id: 'venture', name: 'Venture', price: '$55,000', timeline: '~10 wks', hubs: ['research','vision','strategy','financials','marketing','blog'], recommended: true },
+      { id: 'venture-pro', name: 'Venture Pro', price: '$85,000', timeline: '~14 wks', hubs: ['research','vision','strategy','financials','marketing','video','blog'] }
+    ];
+    const ALL_HUBS = [
+      { id: 'research', name: 'Research Hub', detail: 'L1 cards + L2 evidence + L3 research', all: true },
+      { id: 'vision', name: 'Vision Hub', detail: 'Personas, MVP, IA · Gate 2 sign-off' },
+      { id: 'strategy', name: 'Strategy Hub', detail: 'Tone of voice, social, 30-day calendar' },
+      { id: 'financials', name: 'Financials Hub', detail: '11 files · Gate 2.5 sign-off' },
+      { id: 'marketing', name: 'Marketing Launch Hub', detail: 'Launch coordination + assets' },
+      { id: 'video', name: 'Video Hub', detail: 'Brief + production assets (Venture Pro)' },
+      { id: 'blog', name: 'Blog Hub', detail: 'Blog content + promo posts' }
+    ];
+    const AGENT_NAMES = [
+      // Core / Substrate (3)
+      'founder-lexicon-keeper','workflow-orchestrator','agent-output-validator',
+      // Design (7)
+      'brand-designer','ux-designer','ui-component-designer','motion-designer',
+      'iconography-designer','accessibility-reviewer','design-system-curator',
+      // Content (7)
+      'copywriter','social-writer','blog-writer','email-writer',
+      'pitch-scriptwriter','app-microcopy-writer','copy-reviewer',
+      // Visual Production (7)
+      'screenshot-cinematographer','graphics-designer','illustrator','photography-curator',
+      'app-mockup-composer','video-producer','app-store-marketer',
+      // Operations (7)
+      'information-architect','backend-architect','engagement-health-monitor','handoff-coordinator',
+      'tier-compliance-auditor','portal-publisher','compliance-checker',
+      // QA (7)
+      'consistency-checker','qa:lexicon','qa:visual','qa:investor-readiness',
+      'qa:accessibility','source-verifier','qa:scope-loop-reviewer',
+      // Business (9)
+      'research-curator','financial-modeler','investor-readiness-reviewer','comparables-researcher',
+      'cohort-analyst','tdk-investability-scorer','positioning-strategist','gtm-strategist','pricing-strategist'
+    ];
+    const INDUSTRIES = ['Climate / Energy','Healthtech','B2B SaaS','Consumer audio','Fintech','Edtech','Consumer','PropTech','LegalTech','Other'];
+
+    // Form state
+    const state = {
+      step: 1,
+      basics: { name: '', pitch: '', industry: 'Fintech', founderName: '', founderEmail: '' },
+      tier: 'venture',
+      start: new Date().toISOString().slice(0,10),
+      operator: helpers.currentOperator().id,
+      hubs: ['research','vision','strategy','financials','marketing','blog'],
+      brand: 'generate'
+    };
+
+    function slugify(s) {
+      return (s || '').toLowerCase().trim().replace(/[^a-z0-9\s-]/g,'').replace(/\s+/g,'-').slice(0,40) || 'new-venture';
+    }
+
+    function getTier() { return TIERS.find(t => t.id === state.tier); }
+    function paymentSplit() {
+      const price = parseInt(getTier().price.replace(/[^0-9]/g,''),10);
+      return [{ pct: 40, amt: Math.round(price*0.4) }, { pct: 30, amt: Math.round(price*0.3) }, { pct: 30, amt: price - Math.round(price*0.4) - Math.round(price*0.3) }];
+    }
+
+    function renderProgress() {
+      const steps = ['Basics','Tier','Workflow','Brand','Launch'];
+      let html = '<div class="wizard-progress">';
+      steps.forEach((label, i) => {
+        const idx = i+1;
+        const cls = idx < state.step ? 'done' : (idx === state.step ? 'active' : '');
+        if (i > 0) {
+          html += `<div class="wizard-step-connector ${idx <= state.step ? 'done' : ''}"></div>`;
+        }
+        html += `
+          <div class="wizard-step-dot ${cls}">
+            <div class="dot">${idx < state.step ? '&#10003;' : idx}</div>
+            <div class="label">${label}</div>
+          </div>`;
+      });
+      html += '</div>';
+      return html;
+    }
+
+    function step1HTML() {
+      return `
+        <div class="wizard-step active">
+          <div class="wizard-eyebrow">Step 01 · Basics</div>
+          <h1 class="wizard-step-title">Tell us about the venture.</h1>
+          <p class="wizard-step-sub">This becomes the program record across the data room hubs, the engagement repo, and the founder portal.</p>
+
+          <div class="wiz-grid">
+            <div class="wiz-field span-2">
+              <label class="wiz-label">Venture name</label>
+              <input class="wiz-input" id="f-name" placeholder="e.g. MoneyGym" value="${state.basics.name}">
+            </div>
+            <div class="wiz-field span-2">
+              <label class="wiz-label">One-line pitch</label>
+              <textarea class="wiz-textarea" id="f-pitch" placeholder="A behavioural finance app that treats debt repayment like fitness training.">${state.basics.pitch}</textarea>
+            </div>
+            <div class="wiz-field">
+              <label class="wiz-label">Industry</label>
+              <select class="wiz-select" id="f-industry">
+                ${INDUSTRIES.map(i => `<option ${i===state.basics.industry?'selected':''}>${i}</option>`).join('')}
+              </select>
+            </div>
+            <div class="wiz-field">
+              <label class="wiz-label">Founder name</label>
+              <input class="wiz-input" id="f-founder" placeholder="e.g. Inez Okonkwo" value="${state.basics.founderName}">
+            </div>
+            <div class="wiz-field span-2">
+              <label class="wiz-label">Founder email</label>
+              <input class="wiz-input" type="email" id="f-email" placeholder="inez@moneygym.io" value="${state.basics.founderEmail}">
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function step2HTML() {
+      return `
+        <div class="wizard-step active">
+          <div class="wizard-eyebrow">Step 02 · Tier &amp; timeline</div>
+          <h1 class="wizard-step-title">Pick the Studio tier.</h1>
+          <p class="wizard-step-sub">Each tier activates a different set of portal hubs, agents, and post-launch support. Programs can be upgraded mid-engagement.</p>
+
+          <div class="tier-grid-wiz" id="tier-grid">
+            ${TIERS.map(t => `
+              <div class="tier-radio ${state.tier === t.id ? 'selected' : ''}" data-tier="${t.id}">
+                <div class="tier-eyebrow-w">${t.recommended ? 'Most popular' : 'Studio tier'}</div>
+                <div class="tier-name-w">${t.name}</div>
+                <div class="tier-price-w">${t.price}</div>
+                <div class="tier-timeline-w">${t.timeline}</div>
+              </div>
+            `).join('')}
+          </div>
+
+          <div class="wiz-grid" style="margin-top:2rem;">
+            <div class="wiz-field">
+              <label class="wiz-label">Start date</label>
+              <input class="wiz-input" type="date" id="f-start" value="${state.start}">
+            </div>
+            <div class="wiz-field">
+              <label class="wiz-label">Assigned program manager</label>
+              <select class="wiz-select" id="f-operator">
+                ${operators.map(o => `<option value="${o.id}" ${o.id === state.operator ? 'selected' : ''}>${o.name} · ${o.role}</option>`).join('')}
+              </select>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function step3HTML() {
+      const tier = getTier();
+      return `
+        <div class="wizard-step active">
+          <div class="wizard-eyebrow">Step 03 · Workflow scope</div>
+          <h1 class="wizard-step-title">${tier.name} activates these hubs by default.</h1>
+          <p class="wizard-step-sub">Hubs become live data rooms in the founder portal. Each hub renders as L1 Provocation Cards · L2 Evidence · L3 Full Research.</p>
+
+          <div class="hub-checklist" id="hub-list">
+            ${ALL_HUBS.map(h => {
+              const checked = state.hubs.includes(h.id);
+              const tierHas = tier.hubs.includes(h.id);
+              return `
+                <div class="hub-check ${checked ? 'checked' : ''}" data-hub="${h.id}">
+                  <div class="hub-check-box"></div>
+                  <div class="hub-check-text">
+                    <div class="hub-check-name">${h.name}</div>
+                    <div class="hub-check-detail">${h.detail}${tierHas ? '' : ' · optional add-on'}</div>
+                  </div>
+                </div>`;
+            }).join('')}
+          </div>
+
+          <div style="margin-top:2.5rem;">
+            <div class="wiz-label" style="margin-bottom:0.75rem;">Specialist agents activated · 10 of 10</div>
+            <div class="agents-activated">
+              ${AGENT_NAMES.map(a => `<span class="agent-pill">${a}</span>`).join('')}
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function step4HTML() {
+      return `
+        <div class="wizard-step active">
+          <div class="wizard-eyebrow">Step 04 · Brand kit</div>
+          <h1 class="wizard-step-title">Where does the brand come from?</h1>
+          <p class="wizard-step-sub">If the founder has an existing brand, we&rsquo;ll use it. Otherwise the platform generates a brand kit on Day 1 of Phase 0 — colours, fonts, tone of voice — that the founder reviews and signs off.</p>
+
+          <div class="brand-decision">
+            <div class="brand-card ${state.brand === 'existing' ? 'selected' : ''}" data-brand="existing">
+              <div class="brand-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              </div>
+              <h4>Founder has an existing brand kit</h4>
+              <p>Upload logos, type, colours, voice. The agents reference them across every deliverable.</p>
+            </div>
+            <div class="brand-card ${state.brand === 'generate' ? 'selected' : ''}" data-brand="generate">
+              <div class="brand-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/><circle cx="12" cy="12" r="4"/></svg>
+              </div>
+              <h4>Generate a new brand kit</h4>
+              <p>Phase 0 produces a candidate brand from the brief. Founder approves before Phase 1 unlocks.</p>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function step5HTML() {
+      const tier = getTier();
+      const slug = slugify(state.basics.name);
+      const op = helpers.getOperator(state.operator);
+      const milestones = paymentSplit();
+      return `
+        <div class="wizard-step active">
+          <div class="wizard-eyebrow">Step 05 · Preview &amp; launch</div>
+          <h1 class="wizard-step-title">Here&rsquo;s what gets created.</h1>
+          <p class="wizard-step-sub">A new engagement repo, a founder portal at the venture slug, payment milestones in Stripe, the welcome pack queued, and all 47 agents armed. One click and the workflow begins.</p>
+
+          <div class="preview-card">
+            <h4>Engagement summary</h4>
+            <div class="preview-row"><span class="l">Venture</span><span class="v">${state.basics.name || 'Untitled'}</span></div>
+            <div class="preview-row"><span class="l">Founder</span><span class="v">${state.basics.founderName || '—'} · ${state.basics.founderEmail || '—'}</span></div>
+            <div class="preview-row"><span class="l">Industry</span><span class="v">${state.basics.industry}</span></div>
+            <div class="preview-row"><span class="l">Studio tier</span><span class="v">${tier.name} · ${tier.price}</span></div>
+            <div class="preview-row"><span class="l">Timeline</span><span class="v">${tier.timeline} · starts ${state.start}</span></div>
+            <div class="preview-row"><span class="l">Program manager</span><span class="v">${op.name}</span></div>
+            <div class="preview-row"><span class="l">Hubs activated</span><span class="v">${state.hubs.length} of 7</span></div>
+            <div class="preview-row"><span class="l">Agents engaged</span><span class="v">47 specialists &middot; 7 domains</span></div>
+            <div class="preview-row"><span class="l">Brand kit</span><span class="v">${state.brand === 'existing' ? 'Founder-supplied' : 'Generated in Phase 0'}</span></div>
+          </div>
+
+          <div class="preview-card">
+            <h4>Engagement repo</h4>
+            <div class="preview-tree"><span class="dir">/${slug}-venture/</span>
+├── <span class="dir">CLAUDE.md</span>          <span class="cmt">← 4,242 lines workflow brain</span>
+├── <span class="dir">brief.md</span>           <span class="cmt">← intake from founder</span>
+├── <span class="dir">brand-kit.md</span>       <span class="cmt">← Phase 0 output</span>
+├── <span class="dir">payments.md</span>        <span class="cmt">← Stripe milestones (40/30/30)</span>
+├── <span class="dir">portal.md</span>          <span class="cmt">← access codes</span>
+├── <span class="dir">/research/</span>         <span class="cmt">← L3 docs → Research Hub</span>
+├── <span class="dir">/define/</span>           <span class="cmt">← L3 docs → Vision Hub</span>
+├── <span class="dir">/strategy/</span>         <span class="cmt">← L3 docs → Strategy Hub</span>
+├── <span class="dir">/financials/</span>       <span class="cmt">← 11 files → Financials Hub</span>
+├── <span class="dir">/cards/</span>            <span class="cmt">← Provocation Cards per hub</span>
+├── <span class="dir">/portal/</span>           <span class="cmt">← founder portal (Next.js)</span>
+├── <span class="dir">/design-system/</span>    <span class="cmt">← live DS site</span>
+├── <span class="dir">/product/</span>          <span class="cmt">← MVP app · DEMO_MODE</span>
+├── <span class="dir">/website/</span>          <span class="cmt">← marketing site</span>
+├── <span class="dir">/figma-plugins/</span>    <span class="cmt">← 3 plugins</span>
+├── <span class="dir">/marketing/</span>        <span class="cmt">← tone, strategy, calendar</span>
+├── <span class="dir">/brand/imagery/</span>    <span class="cmt">← 37 auto-sourced photos</span>
+├── <span class="dir">/.claude/agents/</span>   <span class="cmt">← 47 agents · 7 domains</span>
+└── <span class="dir">/.claude/memory/</span>   <span class="cmt">← persistent memory</span></div>
+          </div>
+
+          <div class="preview-card">
+            <h4>Founder portal &amp; payments</h4>
+            <div class="preview-row"><span class="l">Portal URL</span><span class="v mono">ventrify.io/portal/${slug}</span></div>
+            <div class="preview-row"><span class="l">Access invite</span><span class="v mono">${state.basics.founderEmail || 'founder@example.com'}</span></div>
+            <div class="preview-row"><span class="l">Milestone 1 · brief signed</span><span class="v">$${milestones[0].amt.toLocaleString()} (${milestones[0].pct}%)</span></div>
+            <div class="preview-row"><span class="l">Milestone 2 · Gate 2 closed</span><span class="v">$${milestones[1].amt.toLocaleString()} (${milestones[1].pct}%)</span></div>
+            <div class="preview-row"><span class="l">Milestone 3 · launch</span><span class="v">$${milestones[2].amt.toLocaleString()} (${milestones[2].pct}%)</span></div>
+            <div class="preview-row"><span class="l">Welcome Pack PDF</span><span class="v">Queued · sends with portal invite</span></div>
+          </div>
+        </div>`;
+    }
+
+    function successHTML(programId, slug) {
+      return `
+        <div class="success-shell">
+          <div class="success-icon">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <h1 class="success-title">Engagement launched.</h1>
+          <p class="success-sub">${state.basics.name} is now in <strong>Phase 0 · Intake</strong>. Welcome Pack is sending to ${state.basics.founderEmail || 'the founder'}, Stripe milestones are armed, and the Research Hub agents are spinning up. The data room goes live within the hour.</p>
+          <div class="success-actions">
+            <a href="program.html?id=${programId}" class="btn btn-primary">Open program detail &rarr;</a>
+            <a href="#" class="btn btn-outline" onclick="alert('Founder portal opens in a new tab once Phase 0 completes.'); return false;">Open founder portal</a>
+            <a href="dashboard.html" class="btn btn-ghost">Back to Portfolio</a>
+          </div>
+        </div>`;
+    }
+
+    // Validation per step
+    function canAdvance() {
+      if (state.step === 1) {
+        const b = state.basics;
+        return !!(b.name.trim() && b.founderName.trim() && b.founderEmail.trim());
+      }
+      if (state.step === 3) {
+        return state.hubs.length > 0;
+      }
+      return true;
+    }
+
+    function navHTML() {
+      const onLast = state.step === 5;
+      const advanceLabel = onLast ? 'Launch engagement' : 'Continue';
+      return `
+        <div class="wizard-actions">
+          <div class="left">
+            ${state.step > 1 ? '<button class="btn btn-ghost" id="btn-back">&larr; Back</button>' : ''}
+            <a href="dashboard.html" class="btn btn-ghost">Cancel</a>
+          </div>
+          <button class="btn btn-primary" id="btn-next" ${canAdvance() ? '' : 'disabled style="opacity:0.5;cursor:not-allowed;"'}>${advanceLabel}</button>
+        </div>`;
+    }
+
+    function readBasics() {
+      const m = el => document.getElementById(el);
+      state.basics.name = m('f-name')?.value || '';
+      state.basics.pitch = m('f-pitch')?.value || '';
+      state.basics.industry = m('f-industry')?.value || 'Fintech';
+      state.basics.founderName = m('f-founder')?.value || '';
+      state.basics.founderEmail = m('f-email')?.value || '';
+    }
+    function readTier() {
+      state.start = document.getElementById('f-start')?.value || state.start;
+      state.operator = document.getElementById('f-operator')?.value || state.operator;
+    }
+
+    function persistAndLaunch() {
+      const slug = slugify(state.basics.name);
+      const programId = 'prg-' + slug;
+      const tier = getTier();
+      const op = helpers.getOperator(state.operator);
+      const newProgram = {
+        id: programId,
+        name: state.basics.name,
+        founderName: state.basics.founderName,
+        founderAvatar: state.basics.founderName.split(/\s+/).map(s => s[0] || '').slice(0,2).join('').toUpperCase() || 'FF',
+        founderAvatarColor: '#0036FF',
+        industry: state.basics.industry,
+        venturePitch: state.basics.pitch || 'Newly initialised on Ventrify OS.',
+        phase: 0,
+        gateStatus: 'Phase 0 · welcome pack queued',
+        startDate: state.start,
+        daysActive: 0,
+        lastActivity: 'just now',
+        lastActivityDetail: 'Engagement launched via Workspace wizard',
+        assignedOperator: state.operator,
+        health: 'on-track',
+        cards: { drafted: 0, awaitingFounder: 0, resolved: 0, awaitingL3Rebuild: 0 },
+        hubs: ALL_HUBS.reduce((acc, h) => { acc[h.id] = { status: 'pending' }; return acc; }, {}),
+        mvpDemoModeReady: false,
+        tier: tier.name,
+        brand: state.brand
+      };
+      try {
+        const stored = JSON.parse(localStorage.getItem('workspace.programs') || '[]');
+        stored.unshift(newProgram);
+        localStorage.setItem('workspace.programs', JSON.stringify(stored));
+      } catch(e) {}
+      return { programId, slug };
+    }
+
+    function render() {
+      const stepFns = { 1: step1HTML, 2: step2HTML, 3: step3HTML, 4: step4HTML, 5: step5HTML };
+      const main = `
+        <div class="wizard-shell">
+          <a href="dashboard.html" class="text-small dim" style="font-size:0.85rem;display:inline-block;margin-bottom:1rem;">&larr; Cancel and return to Portfolio</a>
+          ${renderProgress()}
+          ${stepFns[state.step]()}
+          ${navHTML()}
+        </div>`;
+      window.renderShell(main);
+      bind();
+    }
+
+    function bind() {
+      // Step 2 — tier card click
+      document.querySelectorAll('[data-tier]').forEach(card => {
+        card.addEventListener('click', () => {
+          state.tier = card.getAttribute('data-tier');
+          // also auto-set hubs to tier defaults
+          state.hubs = [...getTier().hubs];
+          render();
+        });
+      });
+      // Step 3 — hub toggles
+      document.querySelectorAll('[data-hub]').forEach(card => {
+        card.addEventListener('click', () => {
+          const id = card.getAttribute('data-hub');
+          // Research always required
+          if (id === 'research') return;
+          if (state.hubs.includes(id)) {
+            state.hubs = state.hubs.filter(h => h !== id);
+          } else {
+            state.hubs.push(id);
+          }
+          render();
+        });
+      });
+      // Step 4 — brand cards
+      document.querySelectorAll('[data-brand]').forEach(card => {
+        card.addEventListener('click', () => {
+          state.brand = card.getAttribute('data-brand');
+          render();
+        });
+      });
+      // Field inputs (step 1) — live update for the validate button
+      ['f-name','f-pitch','f-industry','f-founder','f-email'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.addEventListener('input', () => {
+            readBasics();
+            // re-render only the action bar to update disabled state
+            const action = document.querySelector('.wizard-actions');
+            if (action) action.outerHTML = navHTML();
+            bind();
+          });
+        }
+      });
+      // Step 2 — track start/operator
+      ['f-start','f-operator'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('change', () => readTier());
+      });
+      // Back
+      const back = document.getElementById('btn-back');
+      if (back) back.addEventListener('click', () => {
+        if (state.step === 1) readBasics();
+        else if (state.step === 2) readTier();
+        state.step = Math.max(1, state.step - 1);
+        render();
+      });
+      // Next / Launch
+      const next = document.getElementById('btn-next');
+      if (next) next.addEventListener('click', () => {
+        if (!canAdvance()) return;
+        if (state.step === 1) readBasics();
+        else if (state.step === 2) readTier();
+        if (state.step < 5) {
+          state.step += 1;
+          render();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+          // Launch
+          const { programId } = persistAndLaunch();
+          window.renderShell(successHTML(programId));
+        }
+      });
+    }
+
+    render();
+  </script>
+</body>
+</html>

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pricing — Ventrify OS</title>
-  <meta name="description" content="Annual platform licences from $4,800 to $150,000+. Plus Ventrify Studio direct programmes from $9,500 to $85,000. No per-engagement fees.">
+  <meta name="description" content="Annual platform licence — Starter $4,800/yr, Cohort (contact us), Enterprise $150,000+/yr. No per-engagement fees. Every venture earns the full 70+ deliverable scope.">
   <meta property="og:title" content="Pricing — Ventrify OS">
   <meta property="og:description" content="Four-tier annual licensing for accelerators, incubators, studios, and corporate innovation labs. USD pricing.">
   <meta property="og:type" content="website">
@@ -663,13 +663,15 @@
     .tier-body .btn { width:100%; }
 
     /* ============================================
-       TIER GRID — Platform & Studio pricing cards
+       TIER GRID — Platform pricing cards
        ============================================ */
     .tier-grid {
       display:grid;
-      grid-template-columns:repeat(4,1fr);
-      gap:1.25rem;
+      grid-template-columns:repeat(3,1fr);
+      gap:1.5rem;
       align-items:stretch;
+      max-width:1000px;
+      margin:0 auto;
     }
     .tier-card {
       background:#F5F5F7;
@@ -1018,6 +1020,7 @@
       <a href="system.html">System</a>
       <a href="the-data-room.html">Data Room</a>
       <a href="the-workspace.html">Workspace</a>
+      <a href="agents.html">Agents</a>
       <a href="showcase.html">Showcase</a>
       <a href="pricing.html" class="active">Pricing</a>
     </div>
@@ -1036,6 +1039,7 @@
     <a href="system.html" class="m-nav-link">System</a>
     <a href="the-data-room.html" class="m-nav-link">Data Room</a>
     <a href="the-workspace.html" class="m-nav-link">Workspace</a>
+    <a href="agents.html" class="m-nav-link">Agents</a>
     <a href="showcase.html" class="m-nav-link">Showcase</a>
     <a href="pricing.html" class="m-nav-link active">Pricing</a>
     <div class="m-cta">
@@ -1048,8 +1052,8 @@
        ═══════════════════════════════════════════ -->
   <section class="hero" id="main-content">
     <div class="hero-content">
-      <h1 class="shimmer-text">Annual platform licences.<br>Predictable economics.</h1>
-      <p class="hero-sub">Four tiers from $4,800 to $150,000+. No per-engagement fees. Plus our direct founder programme &mdash; Ventrify Studio &mdash; sold separately as the platform&rsquo;s reference implementation.</p>
+      <h1 class="shimmer-text">Annual platform licence.<br>Predictable economics.</h1>
+      <p class="hero-sub">Three tiers from $4,800/yr. No per-engagement fees. Every venture earns the same 70+ deliverable scope. Sold to the institutions that run startup programs &mdash; accelerators, incubators, venture studios, corporate innovation labs.</p>
     </div>
   </section>
 
@@ -1064,7 +1068,7 @@
   <section class="page-intro-section">
     <div class="container" data-reveal>
       <div style="max-width:820px;margin:0 auto;text-align:center;">
-        <p style="font-size:clamp(1.15rem,2.5vw,1.4rem);line-height:1.75;color:var(--text-light-muted);font-weight:400;">Two pricing structures. The platform licence is annual and tied to throughput &mdash; how many programs your team runs, how many operators you have. <span style="color:#FFFFFF;font-weight:500;">Ventrify Studio programmes are sold per-engagement to direct founders</span> and exist primarily as a reference implementation that proves the platform on real ventures. All prices in USD.</p>
+        <p style="font-size:clamp(1.15rem,2.5vw,1.4rem);line-height:1.75;color:var(--text-light-muted);font-weight:400;">One pricing structure. <span style="color:#FFFFFF;font-weight:500;">An annual licence on the buyer.</span> The licence is tied to throughput &mdash; how many ventures your program runs, how many operators you have. Predictable economics — model the cost per venture before a single program kicks off. All prices in USD.</p>
       </div>
     </div>
   </section>
@@ -1086,53 +1090,39 @@
         <div class="tier-card" data-reveal data-delay="1">
           <div class="tier-eyebrow">Starter</div>
           <div class="tier-price">$4,800<span class="tier-per">/yr</span></div>
-          <p class="tier-tag">For boutique studios and individual operators.</p>
+          <p class="tier-tag">For accelerators running a handful of ventures.</p>
           <ul class="tier-list">
             <li><span class="tier-dot"></span>1 Workspace operator seat</li>
-            <li><span class="tier-dot"></span>Up to 6 programs / year</li>
-            <li><span class="tier-dot"></span>Full platform &amp; Workspace access</li>
-            <li><span class="tier-dot"></span>Async support</li>
+            <li><span class="tier-dot"></span>Up to 6 ventures / year</li>
+            <li><span class="tier-dot"></span>Every venture earns the full 70+ scope</li>
+            <li><span class="tier-dot"></span>Self-serve &middot; community support</li>
           </ul>
           <a href="mailto:hello@ventrify.io?subject=Starter%20tier%20enquiry" class="btn btn-outline btn-sm tier-cta">Book a demo</a>
         </div>
 
-        <!-- Studio -->
-        <div class="tier-card" data-reveal data-delay="2">
-          <div class="tier-eyebrow">Studio</div>
-          <div class="tier-price">$18,000<span class="tier-per">/yr</span></div>
-          <p class="tier-tag">For venture studios and small accelerators.</p>
-          <ul class="tier-list">
-            <li><span class="tier-dot"></span>Up to 4 Workspace operator seats</li>
-            <li><span class="tier-dot"></span>Up to 24 programs / year</li>
-            <li><span class="tier-dot"></span>Full platform &amp; Workspace access</li>
-            <li><span class="tier-dot"></span>Office hours support</li>
-          </ul>
-          <a href="mailto:hello@ventrify.io?subject=Studio%20tier%20enquiry" class="btn btn-outline btn-sm tier-cta">Book a demo</a>
-        </div>
-
-        <!-- Cohort (highlighted) -->
-        <div class="tier-card tier-card-featured" data-reveal data-delay="3">
+        <!-- Cohort (featured) -->
+        <div class="tier-card tier-card-featured" data-reveal data-delay="2">
           <div class="tier-badge">Most popular</div>
           <div class="tier-eyebrow">Cohort</div>
-          <div class="tier-price">$48,000<span class="tier-per">/yr</span></div>
-          <p class="tier-tag">For accelerators and incubators running cohorts.</p>
+          <div class="tier-price">Contact us<span class="tier-per" style="display:block;margin-top:6px;">pricing in progress</span></div>
+          <p class="tier-tag">For incubators running batches.</p>
           <ul class="tier-list">
-            <li><span class="tier-dot"></span>Unlimited Workspace operator seats</li>
-            <li><span class="tier-dot"></span>Unlimited programs</li>
+            <li><span class="tier-dot"></span>Multiple Workspace operator seats</li>
+            <li><span class="tier-dot"></span>Cohort-sized program throughput</li>
+            <li><span class="tier-dot"></span>Embedded onboarding</li>
             <li><span class="tier-dot"></span>Dedicated success contact</li>
-            <li><span class="tier-dot"></span>Full platform &amp; Workspace access</li>
           </ul>
-          <a href="mailto:hello@ventrify.io?subject=Cohort%20tier%20enquiry" class="btn btn-primary btn-sm tier-cta">Book a demo</a>
+          <a href="mailto:hello@ventrify.io?subject=Cohort%20tier%20enquiry" class="btn btn-primary btn-sm tier-cta">Talk to us</a>
         </div>
 
         <!-- Enterprise -->
-        <div class="tier-card" data-reveal data-delay="4">
+        <div class="tier-card" data-reveal data-delay="3">
           <div class="tier-eyebrow">Enterprise</div>
           <div class="tier-price">$150,000<span class="tier-per">+/yr</span></div>
-          <p class="tier-tag">For corporate innovation labs and large institutions.</p>
+          <p class="tier-tag">For corporate innovation labs and venture studios.</p>
           <ul class="tier-list">
             <li><span class="tier-dot"></span>Unlimited Workspace seats</li>
-            <li><span class="tier-dot"></span>White-label Workspace &amp; portal</li>
+            <li><span class="tier-dot"></span>White-label Workspace + custom domain</li>
             <li><span class="tier-dot"></span>SLA &amp; embedded onboarding</li>
             <li><span class="tier-dot"></span>Procurement-ready &middot; custom config</li>
           </ul>
@@ -1140,82 +1130,8 @@
         </div>
 
       </div>
-    </div>
-  </section>
 
-  <!-- ═══════════════════════════════════════════
-       3. VENTRIFY STUDIO — Direct founder programme
-       ═══════════════════════════════════════════ -->
-  <section class="section-alt" id="studio">
-    <div class="container" data-reveal>
-      <div style="text-align:center;max-width:680px;margin:0 auto 3rem;">
-        <div class="s-label" style="justify-content:center;">Our Own Program &mdash; Ventrify Studio</div>
-        <h2 class="s-title s-title-shimmer">Direct founder programmes.<br>The reference implementation.</h2>
-        <p class="s-sub" style="margin:0 auto;">Sold per engagement to a small, capped number of founders each year. The same platform every licensee runs &mdash; with our own programme manager orchestrating. Pitched in explicit contrast to the $80&ndash;200K, six-to-nine-month US agency alternative.</p>
-      </div>
-
-      <div class="tier-grid">
-
-        <!-- Discovery Sprint -->
-        <div class="tier-card" data-reveal data-delay="1">
-          <div class="tier-eyebrow">Discovery Sprint</div>
-          <div class="tier-price">$9,500</div>
-          <p class="tier-tag">Validate direction before committing to a build. ~2 weeks.</p>
-          <ul class="tier-list">
-            <li><span class="tier-dot"></span>Research data room</li>
-            <li><span class="tier-dot"></span>Market framing</li>
-            <li><span class="tier-dot"></span>Product vision</li>
-            <li><span class="tier-dot"></span>Initial investor narrative</li>
-          </ul>
-          <a href="mailto:studio@ventrify.io?subject=Discovery%20Sprint%20application" class="btn btn-outline btn-sm tier-cta">Apply</a>
-        </div>
-
-        <!-- Launchpad -->
-        <div class="tier-card" data-reveal data-delay="2">
-          <div class="tier-eyebrow">Launchpad</div>
-          <div class="tier-price">$32,000</div>
-          <p class="tier-tag">A credible MVP and startup foundation, fast. ~6 weeks.</p>
-          <ul class="tier-list">
-            <li><span class="tier-dot"></span>Working MVP</li>
-            <li><span class="tier-dot"></span>Brand identity</li>
-            <li><span class="tier-dot"></span>Design system</li>
-            <li><span class="tier-dot"></span>Core investor story</li>
-          </ul>
-          <a href="mailto:studio@ventrify.io?subject=Launchpad%20application" class="btn btn-outline btn-sm tier-cta">Apply</a>
-        </div>
-
-        <!-- Venture (highlighted) -->
-        <div class="tier-card tier-card-featured" data-reveal data-delay="3">
-          <div class="tier-badge">Most popular</div>
-          <div class="tier-eyebrow">Venture</div>
-          <div class="tier-price">$55,000</div>
-          <p class="tier-tag">Launch and raise. ~10 weeks.</p>
-          <ul class="tier-list">
-            <li><span class="tier-dot"></span>MVP + marketing site</li>
-            <li><span class="tier-dot"></span>Financial model</li>
-            <li><span class="tier-dot"></span>Full data room</li>
-            <li><span class="tier-dot"></span>Launch assets</li>
-          </ul>
-          <a href="mailto:studio@ventrify.io?subject=Venture%20application" class="btn btn-primary btn-sm tier-cta">Apply</a>
-        </div>
-
-        <!-- Venture Pro -->
-        <div class="tier-card" data-reveal data-delay="4">
-          <div class="tier-eyebrow">Venture Pro</div>
-          <div class="tier-price">$85,000</div>
-          <p class="tier-tag">Launch plus structured post-launch support. ~14 weeks.</p>
-          <ul class="tier-list">
-            <li><span class="tier-dot"></span>Everything in Venture</li>
-            <li><span class="tier-dot"></span>3-month post-launch retainer</li>
-            <li><span class="tier-dot"></span>Monthly analytics</li>
-            <li><span class="tier-dot"></span>Quarterly financial refresh</li>
-          </ul>
-          <a href="mailto:studio@ventrify.io?subject=Venture%20Pro%20application" class="btn btn-outline btn-sm tier-cta">Apply</a>
-        </div>
-
-      </div>
-
-      <p style="font-size:0.88rem;color:var(--text-dark-muted);text-align:center;margin-top:2.5rem;font-style:italic;max-width:640px;margin-left:auto;margin-right:auto;">Add-ons &mdash; additional decks, social packs, extended retainer months and post-handoff support &mdash; available at $1,500&ndash;$3,500 per item.</p>
+      <p style="font-size:0.92rem;color:var(--text-dark-muted);text-align:center;margin-top:2.5rem;max-width:680px;margin-left:auto;margin-right:auto;line-height:1.65;">Common to all tiers: <strong>no per-engagement fees, no SOWs per venture, no consumption pricing.</strong> The annual licence is the agreement. Every venture earns the full 70+ deliverable scope.</p>
     </div>
   </section>
 
@@ -1226,7 +1142,7 @@
     <div class="container" data-reveal>
       <div class="s-label">What Ships</div>
       <h2 class="s-title s-title-shimmer">What every program produces</h2>
-      <p class="s-sub">70+ production-grade deliverables per venture. Mostly live &mdash; not PDFs. Same output whether your team runs it on a platform licence or it&rsquo;s delivered through a Studio programme.</p>
+      <p class="s-sub">70+ production-grade deliverables per venture across 12 categories. Mostly live &mdash; not PDFs. Every venture earns the same full scope, regardless of which licence tier the operator is on.</p>
 
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:3rem;">
 
@@ -1235,8 +1151,8 @@
           <div style="display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,#0036FF 0%,#3366FF 100%);box-shadow:0 6px 16px rgba(0,54,255,0.22),0 1px 3px rgba(0,0,0,0.08);margin-bottom:1.1rem;">
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 L21 8 L12 13 L3 8 Z"/><path d="M3 12 L12 17 L21 12"/><path d="M3 16 L12 21 L21 16" opacity="0.55"/></svg>
           </div>
-          <h3 style="font-size:1rem;font-weight:600;color:var(--text-dark);margin-bottom:0.5rem;letter-spacing:-0.01em;">Founder portal &mdash; 7 hubs</h3>
-          <p style="font-size:0.85rem;color:var(--text-dark-muted);line-height:1.6;">Research, Vision, Strategy, Financials, Marketing, Video, Blog &mdash; all as three-layer data rooms.</p>
+          <h3 style="font-size:1rem;font-weight:600;color:var(--text-dark);margin-bottom:0.5rem;letter-spacing:-0.01em;">Founder portal &mdash; 3 hub groups</h3>
+          <p style="font-size:0.85rem;color:var(--text-dark-muted);line-height:1.6;">Foundations, Data Room, Deliverables &mdash; plus the Investability tab (TDK 7&times;5 scorecard) post-Gate 2.5.</p>
         </div>
 
         <!-- 2. MVP App — Phone icon -->
@@ -1307,8 +1223,8 @@
           <div style="display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,#0036FF 0%,#3366FF 100%);box-shadow:0 6px 16px rgba(0,54,255,0.22),0 1px 3px rgba(0,0,0,0.08);margin-bottom:1.1rem;">
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="6"/><line x1="6" y1="6" x2="12" y2="18"/><line x1="18" y1="6" x2="12" y2="18"/><circle cx="6" cy="6" r="2.4" fill="#FFFFFF" stroke="none"/><circle cx="18" cy="6" r="2.4" fill="#FFFFFF" stroke="none"/><circle cx="12" cy="18" r="2.4" fill="#FFFFFF" stroke="none"/></svg>
           </div>
-          <h3 style="font-size:1rem;font-weight:600;color:var(--text-dark);margin-bottom:0.5rem;letter-spacing:-0.01em;">10 specialist agents</h3>
-          <p style="font-size:0.85rem;color:var(--text-dark-muted);line-height:1.6;">The workforce behind every venture &mdash; one program manager orchestrates.</p>
+          <h3 style="font-size:1rem;font-weight:600;color:var(--text-dark);margin-bottom:0.5rem;letter-spacing:-0.01em;">47 specialist agents</h3>
+          <p style="font-size:0.85rem;color:var(--text-dark-muted);line-height:1.6;">Across 7 domains &middot; 3 substrate keystones &middot; one program manager orchestrates.</p>
         </div>
 
       </div>
@@ -1390,15 +1306,15 @@
             What does onboarding look like?
             <svg class="faq-chevron" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 8 10 13 15 8"/></svg>
           </summary>
-          <div class="faq-answer">Starter and Studio tiers: self-serve setup with documentation and async support. Cohort: dedicated success contact and operator certification within the first two weeks. Enterprise: embedded onboarding, SLA, and a customised configuration cycle.</div>
+          <div class="faq-answer">Starter: self-serve setup with documentation and community support. Cohort: dedicated success contact and operator certification within the first two weeks, embedded onboarding. Enterprise: embedded onboarding, SLA, and a customised configuration cycle.</div>
         </details>
 
         <details class="faq-item">
           <summary>
-            How is Ventrify Studio different from the platform?
+            How do you stop the AI from hallucinating?
             <svg class="faq-chevron" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 8 10 13 15 8"/></svg>
           </summary>
-          <div class="faq-answer">The platform is what you license. Ventrify Studio is a small, capped direct programme we run on the same platform &mdash; for a tiny number of founders each year. It exists as the reference implementation that proves the platform delivers, and the case studies feed back into every licensee&rsquo;s deal.</div>
+          <div class="faq-answer">The quality substrate. Every agent output passes through deterministic tools first &mdash; <code>qa:lexicon</code> catches off-voice writing, <code>qa:consistency</code> catches mismatched figures across files, <code>qa:investor-readiness</code> adversarially scans the rendered pitch deck. Tools do the deterministic checks; agents apply judgement on what to do about the results. The fleet&rsquo;s immune system is <code>agent-output-validator</code>, a mandatory post-hook on every agent run.</div>
         </details>
 
         <details class="faq-item">
@@ -1441,6 +1357,7 @@
           <a href="system.html">System</a>
           <a href="the-data-room.html">Data Room</a>
       <a href="the-workspace.html">Workspace</a>
+      <a href="agents.html">Agents</a>
       <a href="showcase.html">Showcase</a>
           <a href="pricing.html">Pricing</a>
           <a href="faqs.html">FAQs</a>
