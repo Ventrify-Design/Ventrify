@@ -312,7 +312,7 @@ function hubStatusLabel(status) {
 }
 
 if (typeof window !== 'undefined') {
-  window.WORKSPACE = {
+  window.WORKSPACE_SAMPLE = {
     org: SAMPLE_ORG,
     operators: SAMPLE_OPERATORS,
     programs: SAMPLE_PROGRAMS,

@@ -167,6 +167,17 @@
       min-height:36px;
     }
     .nav-extras .btn:hover { opacity:0.9; transform:translateY(-1px); }
+    .nav-signin {
+      font-size:0.78rem; font-weight:500;
+      color:var(--text-dark-muted);
+      padding:6px 14px;
+      border-radius:8px;
+      margin-right:4px;
+      transition:background var(--transition), color var(--transition);
+      white-space:nowrap;
+    }
+    .nav-signin:hover { background:rgba(0,0,0,0.04); color:var(--text-dark); }
+
 
     /* Buttons */
     .btn {
@@ -757,6 +768,12 @@
     .currency-btn:hover { background:rgba(255,255,255,0.08); opacity:0.85; }
     .currency-btn.active { background:rgba(255,255,255,0.12); opacity:1; }
 
+  
+    .m-nav-signin {
+      border-top:1px solid rgba(255,255,255,0.08);
+      margin-top:0.5rem;
+      padding-top:1.5rem;
+    }
   </style>
 </head>
 <body>
@@ -775,6 +792,7 @@
         <a href="pricing.html">Pricing</a>
       </div>
       <div class="nav-extras">
+        <a href="workspace/index.html" class="nav-signin">Sign in</a>
         <a href="mailto:hello@ventrify.io?subject=Ventrify%20OS%20demo%20request" class="btn">Book a demo</a>
       </div>
       <button class="hamburger" aria-label="Menu">
@@ -794,7 +812,8 @@
     <a href="showcase.html" class="m-nav-link active">Showcase</a>
     <a href="pricing.html" class="m-nav-link">Pricing</a>
     <div class="m-cta">
-      <a href="mailto:hello@ventrify.io?subject=Ventrify%20OS%20demo%20request" class="btn btn-dark-primary btn-lg">Book a demo</a>
+      <a href="workspace/index.html" class="m-nav-link m-nav-signin">Sign in to Workspace</a>
+    <a href="mailto:hello@ventrify.io?subject=Ventrify%20OS%20demo%20request" class="btn btn-dark-primary btn-lg">Book a demo</a>
     </div>
   </div>
 

@@ -16,6 +16,9 @@
   <script>
     const W = window.WORKSPACE;
     const { operators, org, helpers } = W;
+    const orgName = (org && org.name) || 'your Workspace';
+    const orgTier = (org && org.tier) || '—';
+    const seatsLimit = (org && org.operatorSeatsLimit) || 'Unlimited';
 
     function operatorCardHTML(op) {
       const assignedPrograms = helpers.programsForOperator(op.id);
@@ -41,22 +44,23 @@
     const main = `
       <div class="page-header">
         <div class="page-eyebrow">Team</div>
-        <h1 class="page-title">Operators on ${org.name}</h1>
-        <p class="page-sub">Everyone with Workspace access for your organisation. ${org.tier} tier &mdash; ${org.operatorSeatsLimit.toLowerCase ? org.operatorSeatsLimit : 'unlimited'} operator seats. Assign programs, manage roles.</p>
+        <h1 class="page-title">Operators on ${orgName}</h1>
+        <p class="page-sub">Everyone with Workspace access for your organisation. ${orgTier} tier &mdash; ${typeof seatsLimit === 'string' ? seatsLimit.toLowerCase() : seatsLimit} operator seats. Assign programs, manage roles.</p>
       </div>
 
       <div class="section">
         <div class="section-head">
           <div>
             <div class="section-title">Active operators &middot; ${operators.length}</div>
-            <div class="section-sub">Seats used: ${operators.length} of ${org.operatorSeatsLimit}</div>
+            <div class="section-sub">Seats used: ${operators.length} of ${seatsLimit}</div>
           </div>
           <button class="btn btn-primary btn-sm">Invite operator</button>
         </div>
 
-        <div class="team-grid">
-          ${operators.map(operatorCardHTML).join('')}
-        </div>
+        ${operators.length === 0
+          ? `<div class="card" style="text-align:center;padding:2.5rem 2rem;color:var(--text-muted,#656565);font-size:0.9rem;">No operators yet. <a href="setup.html" style="color:var(--brand-primary,var(--primary,#0036FF));">Run setup</a> to add yourself as the first operator.</div>`
+          : `<div class="team-grid">${operators.map(operatorCardHTML).join('')}</div>`
+        }
       </div>
 
       <div class="section">

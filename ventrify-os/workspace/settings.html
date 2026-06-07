@@ -15,79 +15,240 @@
   <script src="app.js"></script>
   <script>
     const W = window.WORKSPACE;
-    const { org, operators, programs } = W;
+    const { org, operators, programs, storage } = W;
+
+    // Defensive: if no org yet (shouldn't happen post-setup, but) show prompt
+    if (!org) {
+      window.renderShell(`
+        <div style="text-align:center;padding:5rem 2rem;">
+          <h1 style="font-size:1.4rem;margin-bottom:0.5rem;color:var(--text,#141414);">No organisation configured</h1>
+          <p style="margin-bottom:1.5rem;color:var(--text-muted,#656565);">Run the first-time setup to create your organisation before opening settings.</p>
+          <a href="setup.html" class="btn btn-primary">Open setup</a>
+        </div>
+      `);
+      throw new Error('halt-render');
+    }
+
+    // -------- Helpers ---------------------------------------------------
+    function initialsOf(s) {
+      const parts = (s || '').trim().split(/\s+/);
+      const a = (parts[0] || '?')[0] || '?';
+      const b = parts.length > 1 ? (parts[parts.length - 1][0] || '') : '';
+      return (a + b).toUpperCase().slice(0, 2);
+    }
+
+    // Save org to localStorage and re-apply branding live
+    function saveOrgPatch(patch) {
+      const updated = { ...org, ...patch };
+      storage.writeJSON('workspace.organisation', updated);
+      Object.assign(org, patch);
+      flashSaved();
+      if (patch.primaryColor) {
+        // re-inject CSS var so changes are live without reload
+        const tag = document.getElementById('org-brand-vars') || (() => {
+          const t = document.createElement('style');
+          t.id = 'org-brand-vars';
+          document.head.appendChild(t);
+          return t;
+        })();
+        tag.textContent = `:root { --brand-primary: ${patch.primaryColor}; --primary: ${patch.primaryColor}; }`;
+      }
+      if (patch.name !== undefined || patch.logoDataUrl !== undefined || patch.primaryColor !== undefined) {
+        // Re-render topbar with new brand. Since topbar lives outside the main re-render, do a soft refresh.
+        updateTopbarBrand();
+      }
+    }
+
+    function updateTopbarBrand() {
+      const brandLogo = document.querySelector('.topbar-logo-branded .topbar-logo-mark');
+      const brandName = document.querySelector('.topbar-logo-branded .topbar-logo-name');
+      if (brandLogo) {
+        brandLogo.setAttribute('style', `background:${org.primaryColor || '#0036FF'};`);
+        if (org.logoDataUrl) {
+          brandLogo.innerHTML = `<img src="${org.logoDataUrl}" alt="${org.name}">`;
+        } else {
+          brandLogo.innerHTML = `<span class="topbar-logo-mark-text">${initialsOf(org.name)}</span>`;
+        }
+      }
+      if (brandName) brandName.textContent = org.name;
+      // Topbar tier pill / "Powered by" stays static (those are inline texts).
+    }
+
+    function flashSaved() {
+      let t = document.getElementById('settings-saved-toast');
+      if (!t) {
+        t = document.createElement('div');
+        t.id = 'settings-saved-toast';
+        t.className = 'settings-toast';
+        t.innerHTML = '<span style="font-size:0.65rem;">✓</span> Saved';
+        document.body.appendChild(t);
+      }
+      t.classList.remove('hide');
+      t.classList.add('show');
+      clearTimeout(t._hideTimer);
+      t._hideTimer = setTimeout(() => {
+        t.classList.remove('show');
+        t.classList.add('hide');
+      }, 1400);
+    }
+
+    // -------- Card markup ----------------------------------------------
+    const brandCard = `
+      <div class="settings-card span-2">
+        <h3>Brand kit</h3>
+        <p class="text-small dim" style="margin-bottom:1.25rem;">Your name, primary colour, and logo render across the Workspace topbar and every founder Studio belonging to your organisation. Changes apply live and save instantly.</p>
+
+        <div class="settings-field">
+          <label class="settings-label" for="brand-name">Organisation name</label>
+          <input class="settings-input" id="brand-name" type="text" value="${(org.name || '').replace(/"/g, '&quot;')}">
+        </div>
+
+        <div class="settings-field">
+          <label class="settings-label">Primary colour</label>
+          <div class="color-row">
+            ${['#0036FF','#7A3FFF','#00B8A0','#FF3F7A','#FF7A3F','#141414'].map(c => `
+              <span class="color-swatch ${(org.primaryColor || '').toUpperCase() === c.toUpperCase() ? 'selected' : ''}"
+                    data-color="${c}" style="background:${c};"></span>
+            `).join('')}
+            <div class="color-input-wrap">
+              <input type="color" id="brand-color-pick" value="${org.primaryColor || '#0036FF'}">
+              <input type="text" id="brand-color-hex" value="${(org.primaryColor || '#0036FF').toUpperCase()}" maxlength="7">
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-field">
+          <label class="settings-label">Logo</label>
+          <div class="logo-dropzone" id="brand-logo-dropzone" onclick="document.getElementById('brand-logo-input').click()">
+            <div class="logo-preview" id="brand-logo-preview" style="background:${org.primaryColor || 'rgba(0,0,0,0.05)'};color:#fff;">
+              ${org.logoDataUrl ? `<img src="${org.logoDataUrl}" alt="logo">` : `<span>${initialsOf(org.name)}</span>`}
+            </div>
+            <div class="logo-dropzone-body">
+              <div class="logo-dropzone-title">${org.logoDataUrl ? 'Click to replace' : 'Click to upload'}</div>
+              <div class="logo-dropzone-sub">PNG or SVG. Square works best.</div>
+            </div>
+            <div style="display:flex;gap:6px;">
+              <button type="button" class="logo-trigger" onclick="event.stopPropagation(); document.getElementById('brand-logo-input').click();">Upload</button>
+              ${org.logoDataUrl ? `<button type="button" class="logo-trigger" onclick="event.stopPropagation(); window.__removeLogo();" style="color:var(--danger,#c0392b);">Remove</button>` : ''}
+            </div>
+            <input type="file" id="brand-logo-input" class="logo-input" accept="image/png,image/svg+xml,image/jpeg">
+          </div>
+        </div>
+      </div>
+    `;
+
+    const orgCard = `
+      <div class="settings-card">
+        <h3>Organisation</h3>
+        <div class="settings-row"><span class="l">Slug</span><span class="v text-mono">${org.slug || '—'}</span></div>
+        <div class="settings-row"><span class="l">Workspace URL</span><span class="v text-mono">ventrify.io/${org.slug || 'workspace'}</span></div>
+        <div class="settings-row"><span class="l">Created</span><span class="v">${org.createdAt ? new Date(org.createdAt).toLocaleDateString() : '—'}</span></div>
+        <div class="settings-row"><span class="l">Custom domain</span><span class="v dim">Enterprise only</span></div>
+      </div>
+    `;
+
+    const tierCard = `
+      <div class="settings-card">
+        <h3>Licence &amp; capacity</h3>
+        <div class="settings-row"><span class="l">Tier</span><span class="v">${org.tier}</span></div>
+        <div class="settings-row"><span class="l">Operators</span><span class="v">${operators.length} of ${org.operatorSeatsLimit || 'Unlimited'}</span></div>
+        <div class="settings-row"><span class="l">Engagements running</span><span class="v">${programs.length} of ${org.programsLimit || 'Unlimited'}</span></div>
+        <div style="margin-top:1rem;display:flex;gap:0.5rem;">
+          <a href="../pricing.html" class="btn btn-outline btn-sm">View pricing</a>
+          <a href="mailto:hello@ventrify.io?subject=Upgrade%20tier" class="btn btn-ghost btn-sm">Talk to us</a>
+        </div>
+      </div>
+    `;
+
+    const integrationsCard = `
+      <div class="settings-card">
+        <h3>Integrations</h3>
+        <p class="text-small dim" style="margin-bottom:0.85rem;">Used to provision engagement repos and Studio access for founders. Wiring goes live in the next milestone.</p>
+        <div class="settings-row"><span class="l">GitHub (engagement repos)</span><span class="v pill">Not connected</span></div>
+        <div class="settings-row"><span class="l">Firebase (Studio + auth)</span><span class="v pill">Not connected</span></div>
+        <div class="settings-row"><span class="l">Stripe (billing)</span><span class="v pill">Not connected</span></div>
+        <div class="settings-row"><span class="l">Slack notifications</span><span class="v pill">Not connected</span></div>
+      </div>
+    `;
+
+    const dangerCard = `
+      <div class="settings-card settings-card-danger">
+        <h3>Danger zone</h3>
+        <p class="text-small dim" style="margin-bottom:0.85rem;">Wipes every locally-stored value &mdash; organisation, operators, engagements, action queue, demo flag &mdash; and returns to first-run setup.</p>
+        <button class="btn btn-outline btn-sm" onclick="window.__resetWorkspace()" style="color:var(--danger,#c0392b);border-color:rgba(192,57,43,0.3);">Clear all workspace data</button>
+      </div>
+    `;
 
     const main = `
       <div class="page-header">
         <div class="page-eyebrow">Settings</div>
         <h1 class="page-title">Workspace settings</h1>
-        <p class="page-sub">Organisation, licence, billing, and integration controls for ${org.name}.</p>
+        <p class="page-sub">Organisation, brand kit, licence and integrations for ${org.name}.</p>
       </div>
 
       <div class="settings-grid">
-        <div class="settings-card">
-          <h3>Organisation</h3>
-          <div class="settings-row"><span class="l">Name</span><span class="v">${org.name}</span></div>
-          <div class="settings-row"><span class="l">Workspace URL</span><span class="v text-mono text-small">ventrify.io/workspace/mercer</span></div>
-          <div class="settings-row"><span class="l">Time zone</span><span class="v">Europe/London</span></div>
-          <div class="settings-row"><span class="l">Default currency</span><span class="v">USD</span></div>
-        </div>
-
-        <div class="settings-card">
-          <h3>Licence &amp; capacity</h3>
-          <div class="settings-row"><span class="l">Tier</span><span class="v">${org.tier} <span class="pill pill-primary" style="margin-left:6px;">Most popular</span></span></div>
-          <div class="settings-row"><span class="l">Operators</span><span class="v">${operators.length} of ${org.operatorSeatsLimit}</span></div>
-          <div class="settings-row"><span class="l">Programs running</span><span class="v">${programs.length} of ${org.programsLimit}</span></div>
-          <div class="settings-row"><span class="l">Renewal date</span><span class="v">${org.renewalDate}</span></div>
-          <div style="margin-top:1rem;display:flex;gap:0.5rem;">
-            <a href="../pricing.html" class="btn btn-outline btn-sm">View pricing</a>
-            <a href="mailto:hello@ventrify.io?subject=Upgrade%20tier" class="btn btn-ghost btn-sm">Talk to us</a>
-          </div>
-        </div>
-
-        <div class="settings-card">
-          <h3>Success contact</h3>
-          <div style="display:flex;gap:12px;align-items:center;padding:0.5rem 0;">
-            <div class="avatar avatar-lg" style="background:#7A3FFF;">NP</div>
-            <div>
-              <div style="font-weight:600;">${org.successContact.name}</div>
-              <div class="text-small dim">${org.successContact.email}</div>
-            </div>
-          </div>
-          <p class="text-small dim" style="margin-top:0.75rem;">Cohort &amp; Enterprise tiers include a dedicated success contact for onboarding, escalations, and quarterly reviews.</p>
-          <button class="btn btn-outline btn-sm" style="margin-top:0.75rem;">Book a check-in</button>
-        </div>
-
-        <div class="settings-card">
-          <h3>Billing</h3>
-          <div class="settings-row"><span class="l">Plan</span><span class="v">${org.tier} &middot; $48,000/yr</span></div>
-          <div class="settings-row"><span class="l">Next invoice</span><span class="v">${org.renewalDate} &middot; $48,000</span></div>
-          <div class="settings-row"><span class="l">Payment method</span><span class="v text-mono">Bank transfer (PO)</span></div>
-          <div class="settings-row"><span class="l">VAT / tax ID</span><span class="v">GB123456789</span></div>
-          <div style="margin-top:1rem;">
-            <button class="btn btn-outline btn-sm">Download last invoice</button>
-          </div>
-        </div>
-
-        <div class="settings-card">
-          <h3>Integrations</h3>
-          <div class="settings-row"><span class="l">Founder portal</span><span class="v pill pill-success"><span class="dot"></span>Connected</span></div>
-          <div class="settings-row"><span class="l">Engagement repos (GitHub)</span><span class="v pill pill-success"><span class="dot"></span>Connected</span></div>
-          <div class="settings-row"><span class="l">Stripe (founder payments)</span><span class="v pill pill-success"><span class="dot"></span>Connected</span></div>
-          <div class="settings-row"><span class="l">Slack notifications</span><span class="v pill">Not connected</span></div>
-        </div>
-
-        <div class="settings-card">
-          <h3>Branding</h3>
-          <p class="text-small dim" style="margin-bottom:0.85rem;">White-label your Workspace and founder portals. Available on Enterprise tier.</p>
-          <div class="settings-row"><span class="l">Workspace branding</span><span class="v">Ventrify default</span></div>
-          <div class="settings-row"><span class="l">Custom domain</span><span class="v dim">Available on Enterprise</span></div>
-          <a href="mailto:hello@ventrify.io?subject=White-label%20enquiry" class="btn btn-ghost btn-sm" style="margin-top:0.85rem;">Talk about white-label &rarr;</a>
-        </div>
+        ${brandCard}
+        ${orgCard}
+        ${tierCard}
+        ${integrationsCard}
+        ${dangerCard}
       </div>
     `;
 
     window.renderShell(main);
+
+    // -------- Bindings --------------------------------------------------
+    // Brand name — save on blur (after typing)
+    const nameInput = document.getElementById('brand-name');
+    if (nameInput) {
+      nameInput.addEventListener('blur', () => {
+        const next = nameInput.value.trim();
+        if (next && next !== org.name) saveOrgPatch({ name: next });
+        // Update logo placeholder text if no logo
+        if (!org.logoDataUrl) {
+          const text = document.querySelector('#brand-logo-preview span');
+          if (text) text.textContent = initialsOf(org.name);
+        }
+      });
+    }
+
+    // Colour — swatch / picker / hex all stay in sync and save instantly
+    function applyColor(hex) {
+      if (!/^#[0-9a-fA-F]{6}$/.test(hex)) return;
+      const up = hex.toUpperCase();
+      saveOrgPatch({ primaryColor: up });
+      document.getElementById('brand-color-pick').value = up;
+      document.getElementById('brand-color-hex').value = up;
+      document.querySelectorAll('.color-swatch').forEach(s => {
+        s.classList.toggle('selected', s.dataset.color.toUpperCase() === up);
+      });
+      const preview = document.getElementById('brand-logo-preview');
+      if (preview) preview.style.background = up;
+    }
+    document.querySelectorAll('.color-swatch').forEach(s => {
+      s.addEventListener('click', () => applyColor(s.dataset.color));
+    });
+    document.getElementById('brand-color-pick')?.addEventListener('input', e => applyColor(e.target.value));
+    document.getElementById('brand-color-hex')?.addEventListener('change', e => applyColor(e.target.value));
+
+    // Logo upload
+    document.getElementById('brand-logo-input')?.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const dataUrl = ev.target.result;
+        saveOrgPatch({ logoDataUrl: dataUrl });
+        // Re-render the brand card to reflect "Remove" button + new preview
+        window.location.reload();
+      };
+      reader.readAsDataURL(file);
+    });
+    window.__removeLogo = function() {
+      if (!window.confirm('Remove the logo? The Workspace will fall back to your initials.')) return;
+      saveOrgPatch({ logoDataUrl: null });
+      window.location.reload();
+    };
   </script>
 </body>
 </html>

@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Set up your Workspace — Ventrify OS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Setup-specific layout (lives outside the dashboard shell) */
+    body { background: #F6F7F9; min-height: 100vh; }
+    .setup-shell {
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 4rem 1.5rem;
+    }
+    .setup-card {
+      width: 100%;
+      max-width: 640px;
+      background: #fff;
+      border-radius: 24px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 12px 36px rgba(0,0,0,0.06);
+      padding: 2.5rem 2.5rem 2rem;
+    }
+    .setup-brandbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 2.5rem;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .setup-brandbar .os { font-weight: 400; color: #888; }
+    .setup-brandbar .tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #0036FF;
+      background: rgba(0,54,255,0.08);
+      padding: 3px 8px;
+      border-radius: 6px;
+      margin-left: auto;
+    }
+    .setup-title {
+      font-size: 1.7rem;
+      letter-spacing: -0.02em;
+      font-weight: 600;
+      margin-bottom: 0.4rem;
+      color: #141414;
+    }
+    .setup-sub {
+      font-size: 0.92rem;
+      color: #6b6b6b;
+      line-height: 1.55;
+      margin-bottom: 2.5rem;
+    }
+    .setup-section {
+      margin-bottom: 2rem;
+    }
+    .setup-section-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 1rem;
+      padding-bottom: 0.6rem;
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+    }
+    .setup-field {
+      margin-bottom: 1.1rem;
+    }
+    .setup-field-label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: #141414;
+      margin-bottom: 0.4rem;
+    }
+    .setup-field-hint {
+      font-size: 0.72rem;
+      color: #888;
+      margin-top: 0.35rem;
+    }
+    .setup-input {
+      width: 100%;
+      padding: 0.65rem 0.85rem;
+      border: 1px solid rgba(0,0,0,0.12);
+      border-radius: 10px;
+      font-size: 0.92rem;
+      font-family: inherit;
+      background: #fff;
+      color: #141414;
+      transition: border-color 0.18s ease, box-shadow 0.18s ease;
+    }
+    .setup-input:focus {
+      outline: none;
+      border-color: var(--brand-primary, #0036FF);
+      box-shadow: 0 0 0 3px rgba(0,54,255,0.12);
+    }
+    .setup-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; }
+    .tier-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+    .tier-opt {
+      border: 1px solid rgba(0,0,0,0.12);
+      border-radius: 10px;
+      padding: 0.75rem 0.85rem;
+      cursor: pointer;
+      background: #fff;
+      text-align: left;
+      transition: border-color 0.18s ease, background 0.18s ease;
+    }
+    .tier-opt:hover { border-color: rgba(0,0,0,0.25); }
+    .tier-opt.selected {
+      border-color: var(--brand-primary, #0036FF);
+      background: rgba(0,54,255,0.04);
+    }
+    .tier-opt .n {
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: #141414;
+      display: block;
+      margin-bottom: 0.2rem;
+    }
+    .tier-opt .p {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      color: #888;
+    }
+
+    /* Colour picker */
+    .color-row {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+    .color-swatch {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: transform 0.18s ease, border-color 0.18s ease;
+    }
+    .color-swatch:hover { transform: scale(1.08); }
+    .color-swatch.selected {
+      border-color: #141414;
+      box-shadow: 0 0 0 3px #fff inset;
+    }
+    .color-input-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 6px 4px 4px;
+      border: 1px solid rgba(0,0,0,0.12);
+      border-radius: 10px;
+      background: #fff;
+    }
+    .color-input-wrap input[type="color"] {
+      width: 28px; height: 28px;
+      border: none;
+      padding: 0;
+      background: transparent;
+      cursor: pointer;
+    }
+    .color-input-wrap input[type="text"] {
+      border: none;
+      background: transparent;
+      width: 80px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      color: #141414;
+      text-transform: uppercase;
+    }
+    .color-input-wrap input[type="text"]:focus { outline: none; }
+
+    /* Logo dropzone */
+    .logo-dropzone {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      border: 1px dashed rgba(0,0,0,0.16);
+      border-radius: 12px;
+      background: #fafafa;
+      transition: border-color 0.18s ease, background 0.18s ease;
+    }
+    .logo-dropzone:hover { border-color: var(--brand-primary, #0036FF); background: #f5f7ff; }
+    .logo-preview {
+      width: 56px;
+      height: 56px;
+      border-radius: 12px;
+      background: rgba(0,0,0,0.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      flex-shrink: 0;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: #888;
+    }
+    .logo-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    .logo-dropzone-body {
+      flex: 1;
+      min-width: 0;
+    }
+    .logo-dropzone-title { font-weight: 500; font-size: 0.85rem; color: #141414; margin-bottom: 0.2rem; }
+    .logo-dropzone-sub { font-size: 0.75rem; color: #888; }
+    .logo-input { display: none; }
+    .logo-trigger {
+      background: rgba(0,0,0,0.06);
+      color: #141414;
+      border: 1px solid rgba(0,0,0,0.08);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 0.78rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .logo-trigger:hover { background: rgba(0,0,0,0.1); }
+
+    /* Live preview */
+    .setup-preview {
+      background: #141414;
+      color: #fff;
+      border-radius: 14px;
+      padding: 1rem 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 0.5rem;
+    }
+    .setup-preview-logo {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.08);
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+      flex-shrink: 0;
+      font-weight: 600;
+      font-size: 0.8rem;
+    }
+    .setup-preview-logo img { width: 100%; height: 100%; object-fit: contain; }
+    .setup-preview-name { font-weight: 600; font-size: 0.9rem; }
+    .setup-preview-os { font-size: 0.72rem; color: rgba(255,255,255,0.55); font-family: 'JetBrains Mono', monospace; }
+    .setup-preview-pill {
+      margin-left: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.62rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 980px;
+      background: var(--brand-primary, #0036FF);
+      color: #fff;
+    }
+
+    .setup-submit {
+      width: 100%;
+      padding: 0.95rem;
+      background: var(--brand-primary, #0036FF);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.18s ease, transform 0.18s ease;
+      margin-top: 1rem;
+    }
+    .setup-submit:hover { opacity: 0.92; }
+    .setup-submit:active { transform: scale(0.99); }
+    .setup-submit:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .setup-skip {
+      display: block;
+      text-align: center;
+      font-size: 0.78rem;
+      color: #888;
+      margin-top: 1rem;
+      text-decoration: underline;
+      cursor: pointer;
+      background: none;
+      border: none;
+      width: 100%;
+    }
+    .setup-skip:hover { color: #141414; }
+  </style>
+</head>
+<body>
+  <div class="setup-shell">
+    <form class="setup-card" id="setup-form" onsubmit="event.preventDefault(); submitSetup();">
+      <div class="setup-brandbar">
+        VENTRIFY <span class="os">OS</span>
+        <span class="tag">First-run setup</span>
+      </div>
+
+      <h1 class="setup-title">Welcome. Let&rsquo;s set up your Workspace.</h1>
+      <p class="setup-sub">A one-time setup — about 30 seconds. Your name, your brand, your first operator account. You can edit any of this in Settings later.</p>
+
+      <!-- ORG -->
+      <div class="setup-section">
+        <div class="setup-section-label">Your organisation</div>
+
+        <div class="setup-field">
+          <label class="setup-field-label" for="org-name">Organisation name</label>
+          <input class="setup-input" id="org-name" name="org-name" type="text" placeholder="e.g. TCA Venture Group" required autofocus>
+          <div class="setup-field-hint">Appears in your Workspace topbar and in every founder&rsquo;s Studio.</div>
+        </div>
+
+        <div class="setup-field">
+          <label class="setup-field-label">Licence tier</label>
+          <div class="tier-row">
+            <button type="button" class="tier-opt" data-tier="Starter">
+              <span class="n">Starter</span><span class="p">$4,800 / yr</span>
+            </button>
+            <button type="button" class="tier-opt selected" data-tier="Cohort">
+              <span class="n">Cohort</span><span class="p">Contact us</span>
+            </button>
+            <button type="button" class="tier-opt" data-tier="Enterprise">
+              <span class="n">Enterprise</span><span class="p">$150k+ / yr</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- BRAND -->
+      <div class="setup-section">
+        <div class="setup-section-label">Brand kit</div>
+
+        <div class="setup-field">
+          <label class="setup-field-label">Primary colour</label>
+          <div class="color-row">
+            <span class="color-swatch" data-color="#0036FF" style="background:#0036FF;"></span>
+            <span class="color-swatch" data-color="#7A3FFF" style="background:#7A3FFF;"></span>
+            <span class="color-swatch" data-color="#00B8A0" style="background:#00B8A0;"></span>
+            <span class="color-swatch" data-color="#FF3F7A" style="background:#FF3F7A;"></span>
+            <span class="color-swatch" data-color="#FF7A3F" style="background:#FF7A3F;"></span>
+            <span class="color-swatch" data-color="#141414" style="background:#141414;"></span>
+            <div class="color-input-wrap">
+              <input type="color" id="color-pick" value="#0036FF">
+              <input type="text" id="color-hex" value="#0036FF" maxlength="7">
+            </div>
+          </div>
+          <div class="setup-field-hint">Used for CTAs, focus rings, hub status accents across Workspace and Studio.</div>
+        </div>
+
+        <div class="setup-field">
+          <label class="setup-field-label">Logo (optional)</label>
+          <div class="logo-dropzone" id="logo-dropzone" onclick="document.getElementById('logo-input').click()">
+            <div class="logo-preview" id="logo-preview">
+              <span id="logo-preview-text">TCA</span>
+            </div>
+            <div class="logo-dropzone-body">
+              <div class="logo-dropzone-title">Click to upload</div>
+              <div class="logo-dropzone-sub">PNG or SVG. Square works best. Skip to use initials.</div>
+            </div>
+            <button type="button" class="logo-trigger" onclick="event.stopPropagation(); document.getElementById('logo-input').click();">Upload</button>
+            <input type="file" id="logo-input" class="logo-input" accept="image/png,image/svg+xml,image/jpeg">
+          </div>
+        </div>
+
+        <div class="setup-field">
+          <label class="setup-field-label">Live preview</label>
+          <div class="setup-preview">
+            <div class="setup-preview-logo" id="preview-logo">
+              <span id="preview-logo-text">TCA</span>
+            </div>
+            <div>
+              <div class="setup-preview-name" id="preview-name">TCA Venture Group</div>
+              <div class="setup-preview-os">Workspace · ventrify os</div>
+            </div>
+            <div class="setup-preview-pill">New engagement</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- OPERATOR -->
+      <div class="setup-section">
+        <div class="setup-section-label">Your account</div>
+        <div class="setup-row">
+          <div class="setup-field">
+            <label class="setup-field-label" for="op-name">Your name</label>
+            <input class="setup-input" id="op-name" type="text" placeholder="e.g. Alex Doré" required>
+          </div>
+          <div class="setup-field">
+            <label class="setup-field-label" for="op-email">Your email</label>
+            <input class="setup-input" id="op-email" type="email" placeholder="you@tca.vc" required>
+          </div>
+        </div>
+        <div class="setup-field-hint">You&rsquo;ll be set as Program Lead. Add more operators from Settings later.</div>
+      </div>
+
+      <button type="submit" class="setup-submit" id="submit-btn">Create Workspace &rarr;</button>
+
+      <button type="button" class="setup-skip" onclick="loadDemoInstead()">Skip — explore with sample data instead</button>
+    </form>
+  </div>
+
+  <script>
+    // --- State ---
+    const state = {
+      orgName: '',
+      tier: 'Cohort',
+      primaryColor: '#0036FF',
+      logoDataUrl: null,
+      opName: '',
+      opEmail: ''
+    };
+
+    function slugify(s) {
+      return (s || '').toLowerCase().trim().replace(/[^a-z0-9\s-]/g,'').replace(/\s+/g,'-').slice(0,40) || 'workspace';
+    }
+    function initialsOf(s) {
+      const parts = (s || '').trim().split(/\s+/);
+      const a = (parts[0] || '?')[0] || '?';
+      const b = parts.length > 1 ? (parts[parts.length-1][0] || '') : '';
+      return (a + b).toUpperCase().slice(0,2);
+    }
+
+    // --- Brand colour: apply as a CSS var on the document ---
+    function applyBrand(color) {
+      document.documentElement.style.setProperty('--brand-primary', color);
+    }
+    applyBrand(state.primaryColor);
+
+    // --- Tier ---
+    document.querySelectorAll('.tier-opt').forEach(el => {
+      el.addEventListener('click', () => {
+        document.querySelectorAll('.tier-opt').forEach(o => o.classList.remove('selected'));
+        el.classList.add('selected');
+        state.tier = el.dataset.tier;
+      });
+    });
+
+    // --- Colour: swatches + colour picker + hex input all stay in sync ---
+    const colorPick = document.getElementById('color-pick');
+    const colorHex = document.getElementById('color-hex');
+    function setColour(value, fromSwatch) {
+      if (!/^#[0-9a-fA-F]{6}$/.test(value)) return;
+      state.primaryColor = value.toUpperCase();
+      colorPick.value = value;
+      colorHex.value = value.toUpperCase();
+      applyBrand(value);
+      document.querySelectorAll('.color-swatch').forEach(s => {
+        s.classList.toggle('selected', s.dataset.color.toUpperCase() === value.toUpperCase());
+      });
+    }
+    setColour('#0036FF', true);
+    document.querySelectorAll('.color-swatch').forEach(s => {
+      s.addEventListener('click', () => setColour(s.dataset.color, true));
+    });
+    colorPick.addEventListener('input', e => setColour(e.target.value));
+    colorHex.addEventListener('change', e => setColour(e.target.value));
+
+    // --- Live preview reactions to name change ---
+    const orgNameInput = document.getElementById('org-name');
+    const previewName = document.getElementById('preview-name');
+    const previewLogoText = document.getElementById('preview-logo-text');
+    const dropzoneLogoText = document.getElementById('logo-preview-text');
+    orgNameInput.addEventListener('input', e => {
+      state.orgName = e.target.value;
+      const display = state.orgName.trim() || 'Your organisation';
+      previewName.textContent = display;
+      const init = state.orgName.trim() ? initialsOf(state.orgName) : 'TCA';
+      previewLogoText.textContent = init;
+      dropzoneLogoText.textContent = init;
+    });
+
+    // --- Logo upload ---
+    document.getElementById('logo-input').addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        state.logoDataUrl = ev.target.result;
+        const dataUrl = ev.target.result;
+        document.getElementById('logo-preview').innerHTML = `<img src="${dataUrl}" alt="logo">`;
+        document.getElementById('preview-logo').innerHTML = `<img src="${dataUrl}" alt="logo">`;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // --- Submit ---
+    function submitSetup() {
+      state.opName = document.getElementById('op-name').value.trim();
+      state.opEmail = document.getElementById('op-email').value.trim();
+      if (!state.orgName.trim() || !state.opName || !state.opEmail) return;
+
+      const operatorId = 'op-' + Math.random().toString(36).slice(2, 8);
+      const orgSlug = slugify(state.orgName);
+
+      const organisation = {
+        name: state.orgName.trim(),
+        slug: orgSlug,
+        tier: state.tier,
+        primaryColor: state.primaryColor,
+        logoDataUrl: state.logoDataUrl, // null if none uploaded
+        createdAt: new Date().toISOString(),
+        // Defaults — Settings can override later
+        programsLimit: state.tier === 'Starter' ? 6 : state.tier === 'Cohort' ? 24 : 'Unlimited',
+        operatorSeatsLimit: state.tier === 'Starter' ? 1 : state.tier === 'Cohort' ? 4 : 'Unlimited',
+        renewalDate: null,
+        successContact: null
+      };
+
+      const operator = {
+        id: operatorId,
+        name: state.opName,
+        email: state.opEmail,
+        role: 'Program Lead',
+        avatar: initialsOf(state.opName),
+        avatarColor: state.primaryColor,
+        programsAssigned: []
+      };
+
+      localStorage.setItem('workspace.organisation', JSON.stringify(organisation));
+      localStorage.setItem('workspace.operators', JSON.stringify([operator]));
+      localStorage.setItem('workspace.currentOperator', operatorId);
+      localStorage.setItem('workspace.demoMode', 'off');
+
+      // Off to the dashboard
+      window.location.href = 'dashboard.html';
+    }
+
+    function loadDemoInstead() {
+      localStorage.setItem('workspace.demoMode', 'on');
+      window.location.href = 'dashboard.html';
+    }
+  </script>
+</body>
+</html>

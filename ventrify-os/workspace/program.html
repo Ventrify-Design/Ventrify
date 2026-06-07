@@ -15,29 +15,49 @@
   <script src="app.js"></script>
   <script>
     const W = window.WORKSPACE;
-    const { helpers, labels } = W;
+    const { helpers, labels, programs: allPrograms } = W;
 
-    // Read ?id= from URL, default to first program
+    // Read ?id= from URL, default to first program if any exist
     const params = new URLSearchParams(window.location.search);
-    // Merge any locally-launched programs (via the New engagement wizard) into the lookup pool
-    let extraPrograms = [];
-    try { extraPrograms = JSON.parse(localStorage.getItem('workspace.programs') || '[]'); } catch(e) {}
-    const allPrograms = [...extraPrograms, ...W.programs];
+    const fallback = allPrograms[0] || null;
+    const id = params.get('id') || (fallback && fallback.id);
+    const p = allPrograms.find(x => x.id === id) || fallback;
+    const operator = p ? helpers.getOperator(p.assignedOperator) : null;
 
-    const id = params.get('id') || allPrograms[0].id;
-    const p = allPrograms.find(x => x.id === id) || allPrograms[0];
-    const operator = helpers.getOperator(p.assignedOperator);
+    // Guard: no engagements yet → render a minimal "not found" view
+    if (!p) {
+      window.renderShell(`
+        <div style="text-align:center;padding:5rem 2rem;color:var(--text-muted, #656565);">
+          <h1 style="font-size:1.4rem;margin-bottom:0.5rem;color:var(--text, #141414);">No engagement loaded</h1>
+          <p style="margin-bottom:1.5rem;">There&rsquo;s no engagement at this URL yet. Start a new one to populate this view.</p>
+          <a href="new-engagement.html" class="btn btn-primary">New engagement</a>
+        </div>
+      `);
+      throw new Error('halt-render'); // stop the rest of this script
+    }
 
     function hubCardHTML(key, data) {
       const status = data.status || 'pending';
+      if (status === 'disabled') {
+        // Hub was unticked at wizard time → render a muted placeholder
+        return `
+          <div class="hub-card disabled">
+            <div class="hub-card-head">
+              <div class="hub-card-name" style="color:var(--text-muted,#656565);text-decoration:line-through;">${labels.hub[key]}</div>
+              <span class="hub-card-status" style="opacity:0.4;">Not in scope</span>
+            </div>
+            <div class="hub-card-detail" style="color:var(--text-muted,#888);">Excluded from this engagement at launch.</div>
+          </div>
+        `;
+      }
       const meta = (data.cards ? `${data.cards} cards` : 'Awaiting activation');
-      const action = {
+      const action = ({
         'signed': 'View hub &rarr;',
         'ready-to-sign': 'Review &amp; close gate &rarr;',
         'awaiting-founder': 'Open in founder portal &rarr;',
         'in-progress': 'Open hub &rarr;',
         'pending': 'Locked until phase opens'
-      }[status];
+      })[status] || '';
       return `
         <div class="hub-card ${status}">
           <div class="hub-card-head">
@@ -53,33 +73,42 @@
     }
 
     const hubOrder = ['research','vision','strategy','financials','marketing','video','blog'];
-    const hubsHTML = hubOrder.map(k => hubCardHTML(k, p.hubs[k] || {})).join('');
+    const hubsHTML = hubOrder.map(k => hubCardHTML(k, p.hubs[k] || { status: 'disabled' })).join('');
 
-    // Sample timeline events for this program
-    const timelineHTML = `
-      <div class="timeline">
-        <div class="timeline-item">
-          <div class="timeline-time">${p.lastActivity}</div>
-          <div class="timeline-detail">${p.lastActivityDetail}</div>
-        </div>
-        <div class="timeline-item faded">
-          <div class="timeline-time">Yesterday</div>
-          <div class="timeline-detail">Founder resolved 3 Strategy Hub cards &middot; <span class="agent">research-curator</span> began L3 rebuild</div>
-        </div>
-        <div class="timeline-item faded">
-          <div class="timeline-time">3 days ago</div>
-          <div class="timeline-detail"><span class="agent">source-verifier</span> verified 14 citations in Research Hub L3 &middot; 1 flagged for review</div>
-        </div>
-        <div class="timeline-item faded">
-          <div class="timeline-time">5 days ago</div>
-          <div class="timeline-detail">Gate 1 signed off by founder &middot; Phase 2 unlocked</div>
-        </div>
-        <div class="timeline-item faded">
-          <div class="timeline-time">2 weeks ago</div>
-          <div class="timeline-detail"><span class="agent">research-curator</span> drafted 6 Provocation Cards for Research Hub</div>
-        </div>
-      </div>
-    `;
+    // ---------------- Timeline ------------------------------------------
+    // Pulls events from `p.activity[]` if present. Otherwise synthesises
+    // a sensible timeline from phase + lastActivity so newly-launched
+    // engagements aren't padded with fake history.
+    function timelineEventsFor(p) {
+      // If the engagement carries real activity events, use them as-is.
+      if (Array.isArray(p.activity) && p.activity.length) {
+        return p.activity.map(e => ({ when: e.when, detail: e.detail, pending: !!e.pending }));
+      }
+      // Phase 0 — just created → show launch + what's coming
+      if (p.phase === 0) {
+        return [
+          { when: p.lastActivity || 'just now', detail: p.lastActivityDetail || 'Engagement launched via Workspace wizard' },
+          { when: 'Pending', detail: `Studio invite sends to <span class="agent">${p.founderName}</span>`, pending: true },
+          { when: 'Pending', detail: 'Welcome Pack PDF generated by <span class="agent">handoff:assemble</span>', pending: true },
+          { when: 'Pending', detail: '<span class="agent">workflow-orchestrator</span> fires first daily briefing', pending: true },
+          { when: 'Pending', detail: '<span class="agent">research-curator</span> drafts the first 5–7 Research Hub Provocation Cards', pending: true }
+        ];
+      }
+      // Phases 1+ but no recorded activity → at least show lastActivity if it exists
+      if (p.lastActivity) {
+        return [{ when: p.lastActivity, detail: p.lastActivityDetail || 'Activity recorded' }];
+      }
+      return [];
+    }
+    const events = timelineEventsFor(p);
+    const timelineHTML = events.length
+      ? `<div class="timeline">${events.map(e => `
+            <div class="timeline-item ${e.pending ? 'faded' : ''}">
+              <div class="timeline-time">${e.when}</div>
+              <div class="timeline-detail">${e.detail}</div>
+            </div>
+          `).join('')}</div>`
+      : `<div style="text-align:center;padding:1.5rem;color:var(--text-muted,#656565);font-size:0.88rem;">No activity recorded yet.</div>`;
 
     const main = `
       <div style="margin-bottom:1rem;">

@@ -1620,3 +1620,528 @@ code { font-family: var(--font-mono); }
   .wizard-step-dot .label { display: none; }
   .page-header-row { flex-direction: column; }
 }
+
+/* ============================================================
+   SETTINGS — brand kit fields, danger card, saved toast
+   ============================================================ */
+.settings-card.span-2 { grid-column: span 2; }
+.settings-card-danger {
+  border: 1px solid rgba(192, 57, 43, 0.18);
+  background: rgba(192, 57, 43, 0.025);
+}
+.settings-field { margin-bottom: 1.25rem; }
+.settings-label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text, #141414);
+  margin-bottom: 0.45rem;
+}
+.settings-input {
+  width: 100%;
+  padding: 0.6rem 0.85rem;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  background: #fff;
+  color: var(--text, #141414);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+.settings-input:focus {
+  outline: none;
+  border-color: var(--brand-primary, #0036FF);
+  box-shadow: 0 0 0 3px rgba(0, 54, 255, 0.1);
+}
+
+/* Reuse the color picker + logo dropzone styles from setup.html (they live
+   inline there). Mirror them here in styles.css so the settings panel works
+   without duplicating CSS. */
+.color-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+.color-swatch {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: transform 0.18s ease, border-color 0.18s ease;
+}
+.color-swatch:hover { transform: scale(1.08); }
+.color-swatch.selected {
+  border-color: var(--text, #141414);
+  box-shadow: 0 0 0 3px #fff inset;
+}
+.color-input-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 6px 3px 4px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 9px;
+  background: #fff;
+}
+.color-input-wrap input[type="color"] {
+  width: 26px; height: 26px; border: none; padding: 0; background: transparent; cursor: pointer;
+}
+.color-input-wrap input[type="text"] {
+  border: none; background: transparent; width: 78px;
+  font-family: 'JetBrains Mono', monospace; font-size: 0.78rem;
+  color: var(--text, #141414); text-transform: uppercase;
+}
+.color-input-wrap input[type="text"]:focus { outline: none; }
+
+.logo-dropzone {
+  display: flex; align-items: center; gap: 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px dashed rgba(0, 0, 0, 0.16);
+  border-radius: 12px;
+  background: #fafafa;
+  transition: border-color 0.18s ease, background 0.18s ease;
+  cursor: pointer;
+}
+.logo-dropzone:hover { border-color: var(--brand-primary, #0036FF); background: #f5f7ff; }
+.logo-preview {
+  width: 48px; height: 48px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.05);
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #fff;
+}
+.logo-preview img { width: 100%; height: 100%; object-fit: contain; }
+.logo-dropzone-body { flex: 1; min-width: 0; }
+.logo-dropzone-title { font-weight: 500; font-size: 0.85rem; color: var(--text, #141414); margin-bottom: 0.15rem; }
+.logo-dropzone-sub { font-size: 0.72rem; color: var(--text-muted, #888); }
+.logo-input { display: none; }
+.logo-trigger {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--text, #141414);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  padding: 5px 11px;
+  font-size: 0.74rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+.logo-trigger:hover { background: rgba(0, 0, 0, 0.1); }
+
+/* Saved confirmation toast */
+.settings-toast {
+  position: fixed;
+  bottom: 70px;
+  right: 16px;
+  z-index: 10000;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: rgba(20, 20, 20, 0.92);
+  color: #fff;
+  border-radius: 980px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 500;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.22s ease, transform 0.22s ease;
+  pointer-events: none;
+}
+.settings-toast.show { opacity: 1; transform: translateY(0); }
+.settings-toast.hide { opacity: 0; transform: translateY(8px); }
+
+@media (max-width: 760px) {
+  .settings-card.span-2 { grid-column: span 1; }
+}
+
+/* ============================================================
+   LAUNCH SUCCESS — clone-command + next-steps blocks
+   ============================================================ */
+.launch-cmd-card {
+  background: #0F0F12;
+  color: #fff;
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem 1.5rem;
+  margin: 1.75rem 0;
+  text-align: left;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.18), 0 12px 32px rgba(0,0,0,0.15);
+}
+.launch-cmd-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.85rem;
+}
+.launch-cmd-eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.55);
+}
+.launch-cmd-copy {
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px;
+  padding: 5px 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+.launch-cmd-copy:hover {
+  background: rgba(255,255,255,0.16);
+  border-color: rgba(255,255,255,0.24);
+}
+.launch-cmd {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  line-height: 1.65;
+  color: #E6E6E6;
+  white-space: pre;
+  overflow-x: auto;
+  margin: 0;
+  padding: 0.25rem 0;
+  background: transparent;
+  border: none;
+}
+
+.launch-next {
+  text-align: left;
+  background: #FAFAFB;
+  border: 1px solid rgba(0,0,0,0.05);
+  border-radius: 16px;
+  padding: 1.5rem 1.75rem;
+  margin-bottom: 1.75rem;
+}
+.launch-next h4 {
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 0 0 0.85rem;
+  color: var(--text, #141414);
+}
+.launch-next ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.65rem;
+}
+.launch-next li {
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: var(--text-muted, #656565);
+  padding-left: 1.2rem;
+  position: relative;
+}
+.launch-next li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.6em;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--brand-primary, var(--primary, #0036FF));
+}
+.launch-next li strong { color: var(--text, #141414); font-weight: 600; }
+.launch-next li code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.74rem;
+  background: rgba(0,0,0,0.05);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+/* ============================================================
+   PORTFOLIO EMPTY STATE
+   Shown on the dashboard when no engagements exist yet.
+   ============================================================ */
+.empty-hero {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 2.5rem;
+  padding: 3rem;
+  background: #fff;
+  border-radius: 24px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.05);
+  margin-bottom: 2rem;
+}
+.empty-hero-body { display: flex; flex-direction: column; justify-content: center; }
+.empty-hero-eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--brand-primary, var(--primary, #0036FF));
+  margin-bottom: 0.85rem;
+}
+.empty-hero-title {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  font-weight: 600;
+  color: var(--text, #141414);
+  margin-bottom: 0.85rem;
+}
+.empty-hero-sub {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--text-muted, #656565);
+  margin-bottom: 1.75rem;
+}
+.empty-hero-cta {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+}
+.btn-lg {
+  padding: 0.85rem 1.5rem;
+  font-size: 0.95rem;
+  border-radius: 12px;
+}
+.empty-hero-steps {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.7rem;
+  align-content: center;
+}
+.empty-hero-step {
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  background: #f7f8fb;
+  border: 1px solid rgba(0,0,0,0.04);
+}
+.empty-hero-step-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--brand-primary, var(--primary, #0036FF));
+  display: inline-block;
+  margin-bottom: 0.25rem;
+}
+.empty-hero-step-title {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--text, #141414);
+  margin-bottom: 0.2rem;
+}
+.empty-hero-step p {
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--text-muted, #656565);
+  margin: 0;
+}
+.empty-hero-step code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  background: rgba(0,0,0,0.04);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.empty-explorers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+}
+.empty-explorer-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  background: #fff;
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 16px;
+  padding: 1.25rem 1.4rem;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+.empty-explorer-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+  border-color: rgba(0,0,0,0.12);
+}
+.empty-explorer-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 0.6rem;
+}
+.empty-explorer-card-icon {
+  width: 26px; height: 26px;
+  border-radius: 7px;
+  background: var(--brand-primary, var(--primary, #0036FF));
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+}
+.empty-explorer-card-title {
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: var(--text, #141414);
+  letter-spacing: -0.01em;
+}
+.empty-explorer-card p {
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: var(--text-muted, #656565);
+  margin: 0 0 0.85rem;
+}
+.empty-explorer-card-cta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--brand-primary, var(--primary, #0036FF));
+  font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  .empty-hero { grid-template-columns: 1fr; padding: 2rem; gap: 1.75rem; }
+}
+
+/* ============================================================
+   WHITE-LABEL TOPBAR LOGO
+   Replaces "VENTRIFY OS · Workspace" with an org logo/initials
+   plus the org name, when an organisation is configured.
+   ============================================================ */
+.topbar-logo-branded {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+}
+.topbar-logo-mark {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.topbar-logo-mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.topbar-logo-mark-text {
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 0.7rem;
+  letter-spacing: 0.01em;
+}
+.topbar-logo-name {
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: var(--text, #141414);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ============================================================
+   DEV TOGGLE — floating prototype control (bottom-right)
+   Lets us flip demo data on/off and reset workspace storage.
+   ============================================================ */
+.dev-toggle {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px 8px 14px;
+  background: rgba(20, 20, 20, 0.92);
+  color: #fff;
+  border-radius: 980px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25), 0 1px 2px rgba(0,0,0,0.18);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  user-select: none;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.dev-toggle-label {
+  color: rgba(255,255,255,0.55);
+  font-weight: 500;
+}
+.dev-toggle-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px 4px 6px;
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 980px;
+  font-family: inherit;
+  font-size: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, opacity 0.18s ease;
+}
+.dev-toggle-switch:hover:not(:disabled) { background: rgba(255,255,255,0.14); }
+.dev-toggle-switch:disabled { opacity: 0.4; cursor: not-allowed; }
+.dev-toggle-switch.on { background: rgba(0,184,160,0.18); border-color: rgba(0,184,160,0.45); }
+.dev-toggle-switch.on:hover:not(:disabled) { background: rgba(0,184,160,0.26); }
+.dev-toggle-knob {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #666;
+  transition: background 0.18s ease, box-shadow 0.18s ease;
+}
+.dev-toggle-switch.on .dev-toggle-knob {
+  background: #00E5C8;
+  box-shadow: 0 0 6px rgba(0,229,200,0.7);
+}
+.dev-toggle-state { font-size: 0.65rem; }
+.dev-toggle-reset {
+  background: transparent;
+  color: rgba(255,255,255,0.55);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-family: inherit;
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+.dev-toggle-reset:hover {
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+}
+@media (max-width: 640px) {
+  .dev-toggle { bottom: 12px; right: 12px; padding: 6px 8px 6px 10px; gap: 6px; }
+  .dev-toggle-label { display: none; }
+}

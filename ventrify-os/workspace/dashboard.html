@@ -15,20 +15,89 @@
   <script src="app.js"></script>
   <script>
     const W = window.WORKSPACE;
-    const { actions, operators, helpers } = W;
-
-    // Load any locally-added programs (from the New engagement wizard) and prepend
-    let extraPrograms = [];
-    try {
-      extraPrograms = JSON.parse(localStorage.getItem('workspace.programs') || '[]');
-    } catch(e) {}
-    const programs = [...extraPrograms, ...W.programs];
+    const { actions, operators, programs, helpers, org } = W;
 
     // Aggregate stats
     const totalPrograms = programs.length;
     const inFlight = programs.filter(p => p.phase < 5 && p.phase > 0).length;
-    const cardsAwaiting = programs.reduce((acc, p) => acc + p.cards.awaitingFounder, 0);
+    const cardsAwaiting = programs.reduce((acc, p) => acc + (p.cards && p.cards.awaitingFounder || 0), 0);
     const highUrgencyActions = actions.filter(a => a.urgency === 'high').length;
+
+    // ----- Empty-state view: shown when no engagements exist yet ---------
+    if (totalPrograms === 0) {
+      const orgName = (org && org.name) ? org.name : 'your Workspace';
+      const emptyMain = `
+        <div class="page-header">
+          <div class="page-eyebrow">Portfolio</div>
+          <h1 class="page-title">Welcome to ${orgName}.</h1>
+          <p class="page-sub">No engagements yet. Stand up your first one in under sixty seconds &mdash; the platform handles the rest.</p>
+        </div>
+
+        <div class="empty-hero">
+          <div class="empty-hero-body">
+            <div class="empty-hero-eyebrow">First engagement</div>
+            <h2 class="empty-hero-title">Stand up a new venture<br>in under sixty seconds.</h2>
+            <p class="empty-hero-sub">An operator clicks &ldquo;New engagement&rdquo;. A five-step wizard captures the brief. The platform scaffolds the engagement repo, seeds the agents, opens Phase 0, and slots the venture into this portfolio.</p>
+            <a href="new-engagement.html" class="btn btn-primary btn-lg empty-hero-cta">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Start your first engagement
+            </a>
+          </div>
+
+          <div class="empty-hero-steps">
+            <div class="empty-hero-step">
+              <span class="empty-hero-step-tag">00:00&ndash;00:15</span>
+              <div class="empty-hero-step-title">Brief intake</div>
+              <p>Venture name, founder, industry, tier. Eight-section brief stored against the engagement.</p>
+            </div>
+            <div class="empty-hero-step">
+              <span class="empty-hero-step-tag">00:15&ndash;00:30</span>
+              <div class="empty-hero-step-title">Hub seeding</div>
+              <p>Three-layer data room scaffolded. All seven hubs primed and bound to the engagement.</p>
+            </div>
+            <div class="empty-hero-step">
+              <span class="empty-hero-step-tag">00:30&ndash;00:50</span>
+              <div class="empty-hero-step-title">Agent &amp; tool wiring</div>
+              <p>47 agents bound. 14 substrate tools registered. <code>workflow-orchestrator</code> opens Phase 0.</p>
+            </div>
+            <div class="empty-hero-step">
+              <span class="empty-hero-step-tag">00:50&ndash;01:00</span>
+              <div class="empty-hero-step-title">Portal &amp; portfolio</div>
+              <p>Founder Studio goes live. Engagement appears in your portfolio. First briefing fires by tomorrow.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="empty-explorers">
+          <a href="setup.html" class="empty-explorer-card">
+            <div class="empty-explorer-card-head">
+              <span class="empty-explorer-card-icon">&#x25C7;</span>
+              <span class="empty-explorer-card-title">Refine your brand</span>
+            </div>
+            <p>Edit your organisation name, primary colour, or logo before your first engagement goes live.</p>
+            <span class="empty-explorer-card-cta">Open setup &rarr;</span>
+          </a>
+          <a href="../the-workspace.html" target="_blank" class="empty-explorer-card">
+            <div class="empty-explorer-card-head">
+              <span class="empty-explorer-card-icon">&#x25A4;</span>
+              <span class="empty-explorer-card-title">How the Workspace works</span>
+            </div>
+            <p>Three surfaces, three audiences. The marketing tour explains how operators, founders, and investors connect.</p>
+            <span class="empty-explorer-card-cta">Read the tour &rarr;</span>
+          </a>
+          <a href="../agents.html" target="_blank" class="empty-explorer-card">
+            <div class="empty-explorer-card-head">
+              <span class="empty-explorer-card-icon">&#x25C6;</span>
+              <span class="empty-explorer-card-title">Meet the 47 agents</span>
+            </div>
+            <p>The fleet behind every engagement. Substrate keystones, Build-First 8, and the full domain breakdown.</p>
+            <span class="empty-explorer-card-cta">Explore the fleet &rarr;</span>
+          </a>
+        </div>
+      `;
+      window.renderShell(emptyMain);
+      throw new Error('halt-render');
+    }
 
     function programCardHTML(p) {
       return `
