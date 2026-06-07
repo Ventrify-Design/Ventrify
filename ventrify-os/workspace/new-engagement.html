@@ -420,16 +420,27 @@ claude code .</pre>
           render();
         });
       });
-      // Step 1 inputs — keep state in sync and refresh button state
+      // Step 1 inputs — keep state in sync and toggle the Continue button's
+      // disabled state. IMPORTANT: do NOT call bind() from inside an input
+      // handler — that re-attaches listeners on top of existing ones and the
+      // count doubles every keystroke, freezing the browser within seconds.
       ['f-name','f-pitch','f-industry','f-founder','f-email','f-start','f-operator'].forEach(id => {
         const el = document.getElementById(id);
         if (!el) return;
         const evt = (el.tagName === 'SELECT' || el.type === 'date') ? 'change' : 'input';
         el.addEventListener(evt, () => {
           readBasics();
-          const actionBar = document.querySelector('.wizard-actions');
-          if (actionBar) actionBar.outerHTML = navHTML();
-          bind();
+          const btn = document.getElementById('btn-next');
+          if (!btn) return;
+          if (canAdvance()) {
+            btn.disabled = false;
+            btn.style.opacity = '';
+            btn.style.cursor = '';
+          } else {
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+            btn.style.cursor = 'not-allowed';
+          }
         });
       });
       // Back

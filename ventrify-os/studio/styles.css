@@ -1,0 +1,545 @@
+/* ============================================================
+   Ventrify OS — Studio (founder portal)
+   Brand chrome inherits from operating organisation's brand kit.
+   Inter + JetBrains Mono. Light, generous, founder-facing.
+   ============================================================ */
+
+:root {
+  --brand-primary: #0036FF;         /* overridden at runtime by org */
+  --primary: var(--brand-primary);
+
+  --bg: #FAFAFB;
+  --surface: #FFFFFF;
+  --surface-2: #F5F6F8;
+  --text: #141414;
+  --text-muted: #656565;
+  --text-subtle: #888888;
+  --border: rgba(0,0,0,0.06);
+  --border-strong: rgba(0,0,0,0.12);
+  --danger: #C0392B;
+  --success: #00B8A0;
+
+  --font-heading: 'Inter', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-pill: 980px;
+
+  --ease: cubic-bezier(0.6, 0.6, 0, 1);
+  --transition: 0.32s var(--ease);
+}
+
+* , *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+h1,h2,h3,h4,h5 { font-family: var(--font-heading); letter-spacing: -0.02em; font-weight: 600; color: var(--text); }
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; cursor: pointer; }
+img { max-width: 100%; display: block; }
+.text-mono { font-family: var(--font-mono); }
+.dim { color: var(--text-muted); }
+
+/* ============================================================
+   APP SHELL — topbar + tab nav + content
+   ============================================================ */
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- Topbar (org brand + venture identity + founder avatar) --- */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 14px 28px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  height: 64px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.topbar-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+  flex-shrink: 0;
+}
+.topbar-brand-mark {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--brand-primary);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 0.78rem;
+  letter-spacing: 0.01em;
+  flex-shrink: 0;
+}
+.topbar-brand-mark img { width: 100%; height: 100%; object-fit: contain; }
+.topbar-brand-name {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.topbar-divider {
+  width: 1px;
+  height: 22px;
+  background: var(--border-strong);
+  margin: 0 6px;
+}
+.topbar-venture {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.topbar-venture-name {
+  font-weight: 600;
+  font-size: 0.92rem;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 280px;
+}
+.topbar-venture-meta {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.topbar-spacer { flex: 1; }
+.topbar-utility {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.topbar-utility-link {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  transition: color var(--transition);
+}
+.topbar-utility-link:hover { color: var(--text); }
+.topbar-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 0.78rem;
+  color: #fff;
+}
+
+/* --- Tab nav (Foundations / Data Room / Deliverables / Investability) --- */
+.tabnav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 28px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  height: 54px;
+  position: sticky;
+  top: 64px;
+  z-index: 49;
+  overflow-x: auto;
+}
+.tabnav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px;
+  height: 100%;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  border-bottom: 2px solid transparent;
+  transition: color var(--transition), border-color var(--transition);
+  white-space: nowrap;
+}
+.tabnav-link:hover { color: var(--text); }
+.tabnav-link.active {
+  color: var(--text);
+  border-bottom-color: var(--brand-primary);
+}
+.tabnav-link .badge {
+  background: rgba(0,0,0,0.06);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.05em;
+  padding: 2px 7px;
+  border-radius: 980px;
+  font-weight: 500;
+}
+.tabnav-link.active .badge {
+  background: rgba(var(--brand-primary-rgb, 0,54,255), 0.12);
+  color: var(--brand-primary);
+}
+
+/* --- Main content --- */
+.main {
+  flex: 1;
+  padding: 2.5rem 2rem;
+  max-width: 1240px;
+  width: 100%;
+  margin: 0 auto;
+}
+.page-header {
+  margin-bottom: 2.5rem;
+}
+.page-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--brand-primary);
+  margin-bottom: 0.5rem;
+}
+.page-title {
+  font-size: clamp(1.6rem, 3vw, 2.1rem);
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+.page-sub {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  max-width: 680px;
+}
+
+/* --- Card primitives --- */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+}
+.section {
+  margin-bottom: 2.5rem;
+}
+.section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.section-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-bottom: 0.25rem;
+}
+.section-sub {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+/* --- Buttons --- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 0.88rem;
+  letter-spacing: -0.01em;
+  border-radius: var(--radius-pill);
+  padding: 0.7rem 1.4rem;
+  min-height: 42px;
+  cursor: pointer;
+  text-decoration: none;
+  border: none;
+  transition: transform 0.18s ease, opacity var(--transition), background var(--transition);
+}
+.btn-primary {
+  background: var(--brand-primary);
+  color: #fff;
+}
+.btn-primary:hover { opacity: 0.92; transform: translateY(-1px); }
+.btn-primary:active { opacity: 0.88; transform: translateY(0); }
+.btn-outline {
+  background: rgba(0,0,0,0.04);
+  color: var(--text);
+  border: 1px solid rgba(0,0,0,0.08);
+}
+.btn-outline:hover { background: rgba(0,0,0,0.06); }
+.btn-ghost { background: transparent; color: var(--text-muted); }
+.btn-ghost:hover { color: var(--text); }
+.btn-sm { padding: 0.45rem 0.95rem; min-height: 34px; font-size: 0.8rem; }
+.btn-lg { padding: 0.95rem 1.7rem; min-height: 48px; font-size: 0.95rem; border-radius: 12px; }
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 980px;
+  background: rgba(0,0,0,0.05);
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.pill-primary {
+  background: rgba(var(--brand-primary-rgb, 0,54,255), 0.1);
+  color: var(--brand-primary);
+}
+
+/* ============================================================
+   LOGIN PAGE (studio/index.html)
+   ============================================================ */
+.login-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1.5rem;
+  background: var(--bg);
+}
+.login-card {
+  width: 100%;
+  max-width: 440px;
+  background: var(--surface);
+  border-radius: 20px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 12px 36px rgba(0,0,0,0.06);
+  padding: 2.5rem 2.25rem 2rem;
+}
+.login-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-bottom: 0.4rem;
+  color: var(--text);
+}
+.login-eyebrow .os { font-weight: 400; color: var(--text-muted); }
+.login-eyebrow .tag {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--brand-primary);
+  background: rgba(var(--brand-primary-rgb, 0,54,255), 0.08);
+  padding: 3px 8px;
+  border-radius: 6px;
+  margin-left: auto;
+}
+.login-title {
+  font-size: 1.55rem;
+  letter-spacing: -0.02em;
+  font-weight: 600;
+  margin: 1.25rem 0 0.4rem;
+  color: var(--text);
+}
+.login-sub {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+  margin-bottom: 1.75rem;
+}
+.login-form { display: flex; flex-direction: column; gap: 0.75rem; }
+.login-input {
+  width: 100%;
+  padding: 0.7rem 0.95rem;
+  border: 1px solid rgba(0,0,0,0.12);
+  border-radius: 10px;
+  font-size: 0.92rem;
+  font-family: inherit;
+  background: #fff;
+  color: var(--text);
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+.login-input:focus {
+  outline: none;
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 3px rgba(var(--brand-primary-rgb, 0,54,255), 0.12);
+}
+.login-btn {
+  background: var(--brand-primary);
+  color: #fff;
+  border: none;
+  padding: 0.85rem;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity var(--transition);
+}
+.login-btn:hover { opacity: 0.92; }
+.login-meta {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 1rem;
+  text-align: center;
+}
+.login-meta a { color: var(--brand-primary); font-weight: 500; }
+
+/* --- Dev panel: "Or open an engagement directly" (prototype-only) --- */
+.login-dev {
+  margin-top: 1.75rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+.login-dev-label {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.85rem;
+}
+.login-dev-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.login-dev-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0.7rem 0.85rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  transition: background var(--transition), border-color var(--transition);
+}
+.login-dev-item:hover {
+  background: rgba(var(--brand-primary-rgb, 0,54,255), 0.04);
+  border-color: rgba(var(--brand-primary-rgb, 0,54,255), 0.25);
+}
+.login-dev-item-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.75rem;
+  color: #fff;
+  flex-shrink: 0;
+}
+.login-dev-item-body { flex: 1; min-width: 0; }
+.login-dev-item-name {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.login-dev-item-meta {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+.login-dev-empty {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 0.5rem;
+  font-style: italic;
+}
+
+.login-foot {
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 1.5rem;
+}
+.login-foot a { color: var(--brand-primary); font-weight: 500; }
+
+/* ============================================================
+   DEV TOGGLE (mirrors the Workspace prototype's bottom-right tools)
+   ============================================================ */
+.dev-toggle {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px 8px 14px;
+  background: rgba(20, 20, 20, 0.92);
+  color: #fff;
+  border-radius: 980px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25), 0 1px 2px rgba(0,0,0,0.18);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  user-select: none;
+  backdrop-filter: blur(8px);
+}
+.dev-toggle-label { color: rgba(255,255,255,0.55); font-weight: 500; }
+.dev-toggle-reset {
+  background: transparent;
+  color: rgba(255,255,255,0.55);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-family: inherit;
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition);
+}
+.dev-toggle-reset:hover { background: rgba(255,255,255,0.08); color: #fff; }
+
+@media (max-width: 640px) {
+  .main { padding: 1.75rem 1.25rem; }
+  .topbar { padding: 12px 16px; }
+  .tabnav { padding: 0 16px; }
+  .topbar-venture-name { max-width: 140px; }
+  .topbar-utility-link { display: none; }
+  .dev-toggle-label { display: none; }
+}

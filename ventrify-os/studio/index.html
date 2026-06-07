@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign in — The Studio</title>
+  <meta name="description" content="Sign in to your Studio — the founder-facing surface for ventures running on Ventrify OS. Magic-link sign-in.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/studio/styles.css">
+</head>
+<body>
+  <div class="login-shell">
+    <div class="login-card" id="login-card">
+      <!-- Filled in by JS so we can inject org branding when present -->
+    </div>
+  </div>
+
+  <script src="/studio/app.js"></script>
+  <script>
+    const { org, programs, helpers } = window.STUDIO;
+    const orgName = org ? org.name : 'Ventrify OS';
+    const orgBrandColor = (org && org.primaryColor) || '#0036FF';
+
+    function initials(s) { return helpers.initialsOf(s); }
+
+    function devListHTML() {
+      if (!programs || programs.length === 0) {
+        return `
+          <div class="login-dev">
+            <div class="login-dev-label">Prototype shortcut</div>
+            <div class="login-dev-empty">No engagements yet. <a href="/workspace/" style="color:var(--brand-primary);">Create one in the Workspace</a> first.</div>
+          </div>
+        `;
+      }
+      return `
+        <div class="login-dev">
+          <div class="login-dev-label">Prototype · Open an engagement directly</div>
+          <div class="login-dev-list">
+            ${programs.map(p => `
+              <a href="/studio/dashboard.html?id=${p.id}" class="login-dev-item">
+                <span class="login-dev-item-avatar" style="background:${p.founderAvatarColor || orgBrandColor};">${p.founderAvatar || initials(p.founderName)}</span>
+                <div class="login-dev-item-body">
+                  <div class="login-dev-item-name">${p.name}</div>
+                  <div class="login-dev-item-meta">${p.founderName || 'Founder'} · ${helpers.phaseLabel(p.phase || 0)}</div>
+                </div>
+              </a>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    document.getElementById('login-card').innerHTML = `
+      <div class="login-eyebrow">
+        <span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:6px;background:${orgBrandColor};color:#fff;font-size:0.65rem;font-weight:600;margin-right:2px;">${initials(orgName)}</span>
+        ${orgName}
+        <span class="os">Studio</span>
+        <span class="tag">Sign in</span>
+      </div>
+
+      <h1 class="login-title">Welcome back.</h1>
+      <p class="login-sub">Enter the email address on your engagement invite. We&rsquo;ll send a one-time link to sign in &mdash; no password to remember.</p>
+
+      <form class="login-form" onsubmit="event.preventDefault(); fakeMagicLink();">
+        <input type="email" class="login-input" id="login-email" placeholder="you@yourcompany.com" autocomplete="email" required>
+        <button type="submit" class="login-btn">Send me the sign-in link &rarr;</button>
+      </form>
+
+      <p class="login-meta">
+        Looking for the operator surface? <a href="/workspace/">Open the Workspace</a>
+      </p>
+
+      ${devListHTML()}
+
+      <p class="login-foot">
+        Powered by Ventrify OS &middot; <a href="/">visit the OS site</a>
+      </p>
+    `;
+
+    function fakeMagicLink() {
+      const email = document.getElementById('login-email').value.trim();
+      if (!email) return;
+      // For prototype: pop a friendly success state without sending anything.
+      // Real magic-link flow comes in the Firebase pass.
+      const successHTML = `
+        <div style="text-align:center;padding:1.5rem 0 0.5rem;">
+          <div style="display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:14px;background:rgba(0,184,160,0.12);color:var(--success);margin-bottom:1.25rem;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <h1 class="login-title" style="margin-top:0;">Check your inbox.</h1>
+          <p class="login-sub" style="margin-bottom:1.5rem;">A one-time sign-in link is on its way to <strong style="color:var(--text);">${email}</strong>. The link expires in 15 minutes. <em style="font-style:italic;">(Prototype note: nothing actually sent — use the shortcut below.)</em></p>
+          <a href="javascript:window.location.reload();" class="btn btn-outline btn-sm">&larr; Back to sign in</a>
+        </div>
+      `;
+      document.getElementById('login-card').innerHTML = successHTML + devListHTML();
+    }
+  </script>
+</body>
+</html>

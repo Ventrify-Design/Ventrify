@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your brief — The Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/studio/styles.css">
+  <style>
+    /* Brief-flow specific styles (kept here so styles.css stays the shell-only canonical file) */
+    .brief-shell { max-width: 760px; margin: 0 auto; }
+    .brief-section { margin-bottom: 3rem; }
+    .brief-section-head {
+      display: flex; align-items: baseline; gap: 0.85rem;
+      margin-bottom: 1.25rem; padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .brief-section-num {
+      font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--brand-primary); font-weight: 600;
+    }
+    .brief-section-title {
+      font-size: 1.15rem; font-weight: 600; letter-spacing: -0.01em; color: var(--text);
+      margin: 0;
+    }
+    .brief-section-sub {
+      font-size: 0.82rem; color: var(--text-muted); margin-left: auto;
+    }
+    .brief-field { margin-bottom: 1.25rem; }
+    .brief-label {
+      display: block; font-size: 0.82rem; font-weight: 500;
+      color: var(--text); margin-bottom: 0.4rem;
+    }
+    .brief-hint {
+      font-size: 0.72rem; color: var(--text-muted); margin-top: 0.3rem;
+    }
+    .brief-input, .brief-textarea, .brief-select {
+      width: 100%;
+      padding: 0.7rem 0.95rem;
+      border: 1px solid rgba(0,0,0,0.12);
+      border-radius: 10px;
+      font-size: 0.92rem;
+      font-family: inherit;
+      background: #fff;
+      color: var(--text);
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .brief-textarea { min-height: 88px; resize: vertical; line-height: 1.55; }
+    .brief-input:focus, .brief-textarea:focus, .brief-select:focus {
+      outline: none;
+      border-color: var(--brand-primary);
+      box-shadow: 0 0 0 3px rgba(var(--brand-primary-rgb), 0.12);
+    }
+
+    /* Multi-bullet field — a stack of single-line inputs the founder can grow */
+    .brief-bullets { display: flex; flex-direction: column; gap: 0.55rem; }
+    .brief-bullet-row { display: flex; gap: 0.5rem; align-items: center; }
+    .brief-bullet-row .brief-input { flex: 1; }
+    .brief-bullet-remove {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.06);
+      color: var(--text-muted); font-size: 1rem; line-height: 1;
+      display: inline-flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: background var(--transition), color var(--transition);
+    }
+    .brief-bullet-remove:hover { background: rgba(192,57,43,0.08); color: var(--danger); }
+    .brief-bullet-add {
+      align-self: flex-start;
+      background: transparent;
+      color: var(--brand-primary);
+      border: 1px dashed rgba(var(--brand-primary-rgb), 0.4);
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-size: 0.78rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background var(--transition), border-color var(--transition);
+    }
+    .brief-bullet-add:hover {
+      background: rgba(var(--brand-primary-rgb), 0.04);
+      border-color: var(--brand-primary);
+    }
+
+    /* Goal checkbox row */
+    .brief-goals { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.55rem; margin-bottom: 0.85rem; }
+    .brief-goal {
+      display: flex; align-items: center; gap: 10px;
+      padding: 0.75rem 0.95rem;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: background var(--transition), border-color var(--transition);
+    }
+    .brief-goal:hover { background: #fff; border-color: var(--border-strong); }
+    .brief-goal input[type="checkbox"] {
+      width: 16px; height: 16px;
+      accent-color: var(--brand-primary);
+      cursor: pointer;
+    }
+    .brief-goal.selected { background: rgba(var(--brand-primary-rgb), 0.05); border-color: rgba(var(--brand-primary-rgb), 0.3); }
+
+    /* PDF upload zone */
+    .pdf-card {
+      background: linear-gradient(135deg, rgba(var(--brand-primary-rgb), 0.04) 0%, rgba(var(--brand-primary-rgb), 0.01) 100%);
+      border: 1px dashed rgba(var(--brand-primary-rgb), 0.3);
+      border-radius: 16px;
+      padding: 1.75rem;
+      margin-bottom: 2.5rem;
+      transition: border-color var(--transition), background var(--transition);
+    }
+    .pdf-card:hover { border-color: var(--brand-primary); }
+    .pdf-card-head {
+      display: flex; align-items: flex-start; gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    .pdf-card-icon {
+      width: 44px; height: 44px;
+      border-radius: 10px;
+      background: var(--brand-primary);
+      color: #fff;
+      display: inline-flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .pdf-card-title { font-size: 1rem; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 0.25rem; }
+    .pdf-card-sub { font-size: 0.85rem; color: var(--text-muted); line-height: 1.55; }
+    .pdf-card-actions { display: flex; gap: 0.5rem; align-items: center; }
+    .pdf-input { display: none; }
+    .pdf-trigger {
+      background: var(--brand-primary);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .pdf-trigger:hover { opacity: 0.92; }
+    .pdf-skip {
+      background: transparent; border: none;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      cursor: pointer;
+      padding: 6px 8px;
+    }
+    .pdf-skip:hover { color: var(--text); text-decoration: underline; }
+
+    /* PDF analyzing state */
+    .pdf-analyzing {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      margin-top: 1rem;
+      font-size: 0.88rem;
+      color: var(--text);
+    }
+    .pdf-analyzing-spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(0,0,0,0.1);
+      border-top-color: var(--brand-primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Pre-fill confirmation banner */
+    .pdf-prefilled {
+      background: rgba(0,184,160,0.06);
+      border: 1px solid rgba(0,184,160,0.25);
+      border-radius: 12px;
+      padding: 0.95rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      margin-top: 1rem;
+      font-size: 0.88rem;
+      color: var(--text);
+    }
+    .pdf-prefilled-check {
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      background: var(--success);
+      color: #fff;
+      display: inline-flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .pdf-prefilled strong { font-weight: 600; }
+
+    /* Investability snapshot card (appears after PDF upload OR after enough form input) */
+    .invest-snapshot {
+      background: #0F0F12;
+      color: #fff;
+      border-radius: 18px;
+      padding: 1.75rem;
+      margin-bottom: 2.5rem;
+    }
+    .invest-snapshot-head {
+      display: flex; align-items: flex-start; gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+    .invest-snapshot-eyebrow {
+      font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--brand-primary); margin-bottom: 0.5rem;
+      display: block;
+    }
+    .invest-snapshot-title { font-size: 1.05rem; font-weight: 600; margin-bottom: 0.25rem; }
+    .invest-snapshot-sub { font-size: 0.85rem; color: rgba(255,255,255,0.55); line-height: 1.55; }
+    .invest-score-row { display: flex; align-items: baseline; gap: 0.85rem; margin-left: auto; }
+    .invest-score-num {
+      font-family: var(--font-heading); font-size: 2.2rem; font-weight: 600;
+      letter-spacing: -0.02em; color: #fff; line-height: 1;
+    }
+    .invest-score-of { font-size: 0.85rem; color: rgba(255,255,255,0.45); }
+
+    .invest-dimensions {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 0.6rem; margin-bottom: 1.25rem;
+    }
+    .invest-dim {
+      background: rgba(255,255,255,0.04);
+      border-radius: 8px;
+      padding: 0.7rem 0.85rem;
+    }
+    .invest-dim-name {
+      font-size: 0.72rem; color: rgba(255,255,255,0.6);
+      margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.06em;
+      font-family: var(--font-mono);
+    }
+    .invest-dim-score {
+      font-family: var(--font-heading); font-weight: 600;
+      font-size: 0.95rem; color: #fff;
+    }
+    .invest-bar {
+      height: 3px; background: rgba(255,255,255,0.08); border-radius: 2px;
+      margin-top: 0.35rem; overflow: hidden;
+    }
+    .invest-bar-fill { height: 100%; background: var(--brand-primary); transition: width 0.6s ease; }
+    .invest-suggestions {
+      border-top: 1px solid rgba(255,255,255,0.08);
+      padding-top: 1rem;
+    }
+    .invest-suggestions-label {
+      font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.1em;
+      text-transform: uppercase; color: rgba(255,255,255,0.5);
+      margin-bottom: 0.6rem;
+    }
+    .invest-suggestions ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.55rem; }
+    .invest-suggestions li {
+      font-size: 0.85rem; color: rgba(255,255,255,0.85); line-height: 1.5;
+      padding-left: 1.1rem; position: relative;
+    }
+    .invest-suggestions li::before {
+      content: ''; position: absolute; left: 0; top: 0.55em;
+      width: 5px; height: 5px; border-radius: 50%; background: var(--brand-primary);
+    }
+
+    /* Saved indicator + sticky footer with Submit CTA */
+    .brief-footer {
+      position: sticky; bottom: 0;
+      background: rgba(255,255,255,0.96);
+      backdrop-filter: blur(8px);
+      border-top: 1px solid var(--border);
+      padding: 1rem 0;
+      margin: 2rem -2rem -2.5rem;
+      padding-left: 2rem; padding-right: 2rem;
+      display: flex; align-items: center; gap: 1rem;
+      z-index: 30;
+    }
+    .brief-saved {
+      font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--text-muted);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .brief-saved::before {
+      content: '✓'; color: var(--success); font-weight: 700;
+    }
+    .brief-footer-spacer { flex: 1; }
+
+    @media (max-width: 640px) {
+      .brief-footer { margin: 1.5rem -1.25rem -1.75rem; padding: 0.85rem 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script src="/studio/app.js"></script>
+  <script>
+    const { engagement, helpers } = window.STUDIO;
+
+    if (!engagement) {
+      window.renderShell(`
+        <div class="page-header">
+          <div class="page-eyebrow">Brief</div>
+          <h1 class="page-title">No engagement selected.</h1>
+          <p class="page-sub">Pick one from the sign-in page first.</p>
+        </div>
+        <a href="/studio/" class="btn btn-primary">Back to sign in</a>
+      `, { skipTabnav: true });
+      throw new Error('halt-render');
+    }
+
+    // -------------------------------------------------------------------
+    // BRIEF STATE — loaded from engagement.brief if it already exists, else blank.
+    // Auto-saved to localStorage on every change.
+    // -------------------------------------------------------------------
+    const BRIEF_KEY = `studio.brief.${engagement.id}`;
+    const PRIMARY_GOAL_OPTIONS = [
+      'Validate a business idea',
+      'Launch a beta to early users',
+      'Pitch to investors',
+      'Replace an existing tool',
+      'Other'
+    ];
+
+    function blankBrief() {
+      return {
+        // Project overview
+        oneLine: '',
+        problem: '',
+        targetUser: '',
+        oneYearVision: '',
+        // Goals
+        motivations: [],
+        primaryGoal: '',
+        successLooksLike: '',
+        // Features
+        features: ['', '', ''],
+        // Inspiration
+        comparables: '',
+        designStyle: '',
+        // Platform
+        preferredTools: '',
+        // Team
+        otherStakeholders: '',
+        technicalCapability: 'No',
+        // Notes
+        notes: '',
+        // PDF upload + investability metadata
+        pdfFilename: null,
+        pdfUploadedAt: null,
+        investability: null
+      };
+    }
+
+    let brief = helpers.readJSON(BRIEF_KEY, null) ||
+                (engagement.brief ? { ...blankBrief(), ...engagement.brief } : blankBrief());
+
+    function save() {
+      helpers.writeJSON(BRIEF_KEY, brief);
+      flashSaved();
+    }
+    function flashSaved() {
+      const el = document.getElementById('brief-saved-indicator');
+      if (!el) return;
+      el.style.opacity = '1';
+      clearTimeout(el._t);
+      el._t = setTimeout(() => { el.style.opacity = '0.4'; }, 1400);
+    }
+
+    // -------------------------------------------------------------------
+    // PDF PRE-FILL MOCK
+    // For prototype: when a PDF is uploaded, derive believable brief content
+    // from the filename + the engagement's known venture name. In Firebase pass
+    // this becomes a real Claude API call (PDF text → mapped brief JSON).
+    // -------------------------------------------------------------------
+    function mockPdfAnalysis(filename, ventureName, industry) {
+      // Keep it deterministic so the same PDF always produces the same prefill
+      const seed = `${filename}-${ventureName}`.length;
+      const motivations = ['Validate a business idea','Pitch to investors'];
+
+      return {
+        oneLine: `${ventureName} turns ${industry.toLowerCase()} into a habit through behavioural design and weekly compounding wins.`,
+        problem: `Most ${industry.toLowerCase()} tools assume motivation is constant. Real users churn the moment friction outweighs short-term reward.`,
+        targetUser: `Early-career professionals (25-38) who have tried two or three competing tools and bounced. They want structure without judgment.`,
+        oneYearVision: `${ventureName} becomes the default ${industry.toLowerCase()} habit layer for the under-40 cohort — embedded in three partner workflows by month 12.`,
+        motivations,
+        primaryGoal: `Ship an investor-ready prototype with first-cohort retention data inside 16 weeks.`,
+        successLooksLike: `60% week-2 retention across the first 300 invited users. A signed term sheet conversation with at least one tier-1 seed fund.`,
+        features: [
+          `Daily habit nudges anchored to a single weekly outcome`,
+          `Cohort-based peer accountability with opt-in transparency`,
+          `Founder-led weekly review video, 90 seconds long`,
+          `Built-in "skip a week" mechanism that doesn't penalise streak`
+        ],
+        comparables: `Closest spiritually: Strava cohorts, Duolingo streak loop. Closest commercially: Monarch Money's coaching tier.`,
+        designStyle: `Warm, considered, unfussy. Inter type, generous space, restrained colour. Closer to Linear than to a typical ${industry.toLowerCase()} app.`,
+        preferredTools: `Mobile-first (Expo + React Native). Firebase for backend. PostHog for product analytics.`,
+        otherStakeholders: `Co-founder advising on growth (part-time). One advisor with prior exits in ${industry.toLowerCase()}.`,
+        technicalCapability: 'Yes',
+        notes: `Have a working clickable prototype (Figma) and 14 user interviews completed. Looking for production-grade execution + investor narrative.`,
+        // Investability seeded off the upload — pretend the PDF was a meaningful document
+        investability: mockInvestabilityScore(seed)
+      };
+    }
+
+    function mockInvestabilityScore(seed) {
+      // Deterministic-ish score in the 55-78 range
+      const base = 55 + (seed % 24);
+      const dims = [
+        { name: 'Team',          score: Math.min(5, Math.round((seed % 5) + 1.5)) },
+        { name: 'Problem',       score: Math.min(5, Math.round(((seed*3) % 5) + 1.5)) },
+        { name: 'Solution',      score: Math.min(5, Math.round(((seed*7) % 5) + 1.5)) },
+        { name: 'Market',        score: Math.min(5, Math.round(((seed*2) % 5) + 1.5)) },
+        { name: 'Traction',      score: Math.min(5, Math.round(((seed*5) % 5) + 1)) },
+        { name: 'Differentiation', score: Math.min(5, Math.round(((seed*11) % 5) + 1.5)) },
+        { name: 'Vision',        score: Math.min(5, Math.round(((seed*13) % 5) + 1.5)) }
+      ];
+      // Recalculate base from actual dims so the % matches the bars
+      const total = dims.reduce((a, d) => a + d.score, 0);
+      const pct = Math.round((total / (dims.length * 5)) * 100);
+      const suggestions = [
+        `Strengthen the Traction dimension — investors will read a brief without traction signals as "early." Add proof from your 14 interviews (themes, quotes, conversion intent).`,
+        `Sharpen Differentiation — your comparables note positioning but doesn't show why ${seed % 2 === 0 ? 'incumbents' : 'switchers'} would adopt you specifically. Make the wedge explicit in one sentence.`,
+        `Reframe the Market dimension as a wedge into a larger category, not the category itself. Investors round small markets up and large markets down — give them the right anchor.`,
+        `Add a quantified Vision endpoint — "embedded in three partner workflows by month 12" is good; add the unit economics that hit at that point.`
+      ];
+      return { pct, dims, suggestions, computedAt: 'just now', source: 'pdf-upload' };
+    }
+
+    // -------------------------------------------------------------------
+    // RENDER
+    // -------------------------------------------------------------------
+    function bullets(field, placeholders) {
+      const items = brief[field].length ? brief[field] : [''];
+      return `
+        <div class="brief-bullets" data-bullets="${field}">
+          ${items.map((val, i) => `
+            <div class="brief-bullet-row">
+              <input type="text" class="brief-input" data-bullet-index="${i}" value="${(val || '').replace(/"/g, '&quot;')}" placeholder="${placeholders[i % placeholders.length]}">
+              <button type="button" class="brief-bullet-remove" data-bullet-remove="${i}" title="Remove">×</button>
+            </div>
+          `).join('')}
+          <button type="button" class="brief-bullet-add" data-bullet-add="${field}">+ Add another</button>
+        </div>
+      `;
+    }
+
+    function goalCheck(label) {
+      const checked = brief.motivations.includes(label);
+      return `
+        <label class="brief-goal ${checked ? 'selected' : ''}">
+          <input type="checkbox" data-motivation="${label}" ${checked ? 'checked' : ''}>
+          <span>${label}</span>
+        </label>
+      `;
+    }
+
+    function investHTML(inv) {
+      if (!inv) return '';
+      const tierTagText = inv.pct >= 75 ? 'Strong out of the gate'
+                       : inv.pct >= 60 ? 'Promising — clear levers'
+                       : 'Early — work to do';
+      return `
+        <div class="invest-snapshot">
+          <div class="invest-snapshot-head">
+            <div>
+              <span class="invest-snapshot-eyebrow">Initial Investability snapshot</span>
+              <div class="invest-snapshot-title">${tierTagText}</div>
+              <div class="invest-snapshot-sub">Computed from your uploaded material against the TDK 7×5 rubric. Refines as you complete the brief.</div>
+            </div>
+            <div class="invest-score-row">
+              <span class="invest-score-num">${inv.pct}</span>
+              <span class="invest-score-of">/ 100</span>
+            </div>
+          </div>
+          <div class="invest-dimensions">
+            ${inv.dims.map(d => `
+              <div class="invest-dim">
+                <div class="invest-dim-name">${d.name}</div>
+                <div class="invest-dim-score">${d.score} / 5</div>
+                <div class="invest-bar"><div class="invest-bar-fill" style="width:${(d.score / 5) * 100}%;"></div></div>
+              </div>
+            `).join('')}
+          </div>
+          <div class="invest-suggestions">
+            <div class="invest-suggestions-label">Top suggestions</div>
+            <ul>
+              ${inv.suggestions.map(s => `<li>${s}</li>`).join('')}
+            </ul>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderMain() {
+      const venture = engagement.name;
+      const founder = engagement.founderName || 'there';
+      const ind = engagement.industry || 'this space';
+
+      const main = `
+        <div class="brief-shell">
+          <div class="page-header">
+            <div class="page-eyebrow">Phase 0 · The Brief</div>
+            <h1 class="page-title">Welcome to your Studio, ${founder}.</h1>
+            <p class="page-sub">Before the platform spins up the data room, give us the brief. About 10 minutes. If you already have a one-pager, deck, or business plan, drop the PDF in below and we&rsquo;ll pre-fill what we can — you just review and adjust.</p>
+          </div>
+
+          <!-- PDF UPLOAD -->
+          <div class="pdf-card" id="pdf-card" onclick="document.getElementById('pdf-input').click()" role="button" tabindex="0">
+            <div class="pdf-card-head">
+              <div class="pdf-card-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              </div>
+              <div style="flex:1;">
+                <div class="pdf-card-title">Upload an existing one-pager, deck, or plan (optional)</div>
+                <div class="pdf-card-sub">PDF only. We&rsquo;ll pre-fill the brief sections below and seed an initial Investability score &mdash; before you&rsquo;ve done anything else.</div>
+              </div>
+            </div>
+            <div class="pdf-card-actions" onclick="event.stopPropagation();">
+              <button type="button" class="pdf-trigger" onclick="document.getElementById('pdf-input').click();">Choose a PDF</button>
+              <button type="button" class="pdf-skip" onclick="document.getElementById('pdf-card').style.display='none';">Skip — fill in manually</button>
+              <input type="file" id="pdf-input" class="pdf-input" accept="application/pdf">
+            </div>
+            <div id="pdf-state"></div>
+          </div>
+
+          <!-- Investability snapshot (renders empty until PDF is parsed) -->
+          <div id="invest-mount">${investHTML(brief.investability)}</div>
+
+          <!-- BRIEF FORM -->
+          <form id="brief-form" onsubmit="event.preventDefault();">
+
+            <!-- 1. Project overview -->
+            <div class="brief-section">
+              <div class="brief-section-head">
+                <span class="brief-section-num">Section 01</span>
+                <h2 class="brief-section-title">Project overview</h2>
+                <span class="brief-section-sub">2 min · the big picture</span>
+              </div>
+              <div class="brief-field">
+                <label class="brief-label">One-line description</label>
+                <input type="text" class="brief-input" data-bind="oneLine" value="${(brief.oneLine || '').replace(/"/g, '&quot;')}" placeholder="${venture} is a __ that helps __ do __ by __">
+                <div class="brief-hint">If a stranger only reads this line, would they get it?</div>
+              </div>
+              <div class="brief-field">
+                <label class="brief-label">Problem you&rsquo;re solving</label>
+                <textarea class="brief-textarea" data-bind="problem" placeholder="What's broken about the way people deal with this today?">${brief.problem || ''}</textarea>
+              </div>
+              <div class="brief-field">
+                <label class="brief-label">Target user or customer</label>
+                <textarea class="brief-textarea" data-bind="targetUser" placeholder="Who exactly? Age, role, current behaviour, what they're using today.">${brief.targetUser || ''}</textarea>
+              </div>
+              <div class="brief-field">
+                <label class="brief-label">1-year product vision</label>
+                <textarea class="brief-textarea" data-bind="oneYearVision" placeholder="If we hit this perfectly — what does ${venture} look like 12 months from launch?">${brief.oneYearVision || ''}</textarea>
+              </div>
+            </div>
+
+            <!-- 2. Goals -->
+            <div class="brief-section">
+              <div class="brief-section-head">
+                <span class="brief-section-num">Section 02</span>
+                <h2 class="brief-section-title">Goals for this engagement</h2>
+                <span class="brief-section-sub">2 min · what success looks like</span>
+              </div>
+              <div class="brief-field">
+                <label class="brief-label">Primary motivation (tick all that apply)</label>
+                <div class="brief-goals">
+                  ${PRIMARY_GOAL_OPTIONS.map(goalCheck).join('')}
+                </div>
+              </div>
+              <div class="brief-field">
+                <label class="brief-label">Primary goal for the MVP</label>
+                <textarea class="brief-textarea" data-bind="primaryGoal" placeholder="The one outcome that, if achieved, makes this engagement worth it.">${brief.primaryGoal || ''}</textarea>
+              </div>
+              <div class="brief-field">
+                <label class="brief-label">What success looks like</label>
+                <textarea class="brief-textarea" data-bind="successLooksLike" placeholder="Quantify it. % retention, X users, signed contracts, term sheet conversations.">${brief.successLooksLike || ''}</textarea>
+              </div>
+            </div>
+
+            <!-- 3. Features -->
+            <div class="brief-section">
+              <div class="brief-section-head">
+                <span class="brief-section-num">Section 03</span>
+                <h2 class="brief-section-title">Key features &amp; functionality</h2>
+                <span class="brief-section-sub">2 min · the must-have list</span>
+              </div>
+              <div class="brief-field">
+                <label class="brief-label">List the core features (the things without which the MVP doesn&rsquo;t make sense)</label>
+                ${bullets('features', ['e.g. Daily habit nudge tied to one weekly outcome','e.g. Cohort feed with opt-in transparency','e.g. Weekly review video, 90s'])}
+              </div>
+            </div>
+
+            <!-- 4. Inspiration -->
+            <div class="brief-section">
+              <div class="brief-section-head">
+                <span class="brief-section-num">Section 04</span>
+                <h2 class="brief-section-title">Inspiration</h2>
+                <span class="brief-section-sub">1 min · what you&rsquo;re measuring yourself against</span>
+              </div>
+              <div class="brief-field">
+                <label class="brief-label">Comparable products / competitors</label>
+                <textarea class="brief-textarea" data-bind="comparables" placeholder="Direct comps, spiritual comps, "we want to feel like X" comps.">${brief.comparables || ''}</textarea>
+              </div>
+              <div class="brief-field">
+                <label class="brief-label">Design style</label>
+                <textarea class="brief-textarea" data-bind="designStyle" placeholder="Warm vs. clinical, dense vs. spacious, two or three apps that capture the vibe.">${brief.designStyle || ''}</textarea>
+              </div>
+            </div>
+
+            <!-- 5. Platform / tech -->
+            <div class="brief-section">
+              <div class="brief-section-head">
+                <span class="brief-section-num">Section 05</span>
+                <h2 class="brief-section-title">Platform &amp; tech</h2>
+                <span class="brief-section-sub">1 min · preferences</span>
+              </div>
+              <div class="brief-field">
+                <div style="display:flex;align-items:center;gap:10px;padding:0.55rem 0.85rem;background:var(--surface-2);border-radius:8px;font-size:0.85rem;">
+                  <span style="color:var(--success);font-weight:700;">✓</span>
+                  Mobile app (iOS + Android) — standard on every Ventrify engagement
+                </div>
+              </div>
+              <div class="brief-field">
+                <label class="brief-label">Preferred tools / platforms (optional)</label>
+                <textarea class="brief-textarea" data-bind="preferredTools" placeholder="Anything specific you want us to use or avoid — analytics, backend, CMS, payments.">${brief.preferredTools || ''}</textarea>
+              </div>
+            </div>
+
+            <!-- 6. Team -->
+            <div class="brief-section">
+              <div class="brief-section-head">
+                <span class="brief-section-num">Section 06</span>
+                <h2 class="brief-section-title">Team</h2>
+                <span class="brief-section-sub">1 min · who's involved</span>
+              </div>
+              <div class="brief-field">
+                <label class="brief-label">Other stakeholders (co-founders, advisors, key hires)</label>
+                <textarea class="brief-textarea" data-bind="otherStakeholders" placeholder="Names + roles + how involved they are.">${brief.otherStakeholders || ''}</textarea>
+              </div>
+              <div class="brief-field">
+                <label class="brief-label">Technical capability on your team?</label>
+                <select class="brief-select" data-bind="technicalCapability">
+                  <option ${brief.technicalCapability === 'Yes' ? 'selected' : ''}>Yes</option>
+                  <option ${brief.technicalCapability === 'No' ? 'selected' : ''}>No</option>
+                  <option ${brief.technicalCapability === 'Some' ? 'selected' : ''}>Some</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- 7. Notes -->
+            <div class="brief-section">
+              <div class="brief-section-head">
+                <span class="brief-section-num">Section 07</span>
+                <h2 class="brief-section-title">Anything else?</h2>
+                <span class="brief-section-sub">optional</span>
+              </div>
+              <div class="brief-field">
+                <textarea class="brief-textarea" data-bind="notes" placeholder="Constraints, deadlines, weird requirements, existing assets we should know about.">${brief.notes || ''}</textarea>
+              </div>
+            </div>
+
+            <div class="brief-footer">
+              <span class="brief-saved" id="brief-saved-indicator" style="opacity:0.4;transition:opacity 0.3s ease;">Saved</span>
+              <div class="brief-footer-spacer"></div>
+              <button type="button" class="btn btn-outline" onclick="window.location.href='/studio/'">Save and exit</button>
+              <button type="button" class="btn btn-primary" onclick="submitBrief()">Submit brief &rarr;</button>
+            </div>
+          </form>
+        </div>
+      `;
+      window.renderShell(main, { skipTabnav: true });
+      bind();
+    }
+
+    // -------------------------------------------------------------------
+    // BINDINGS
+    // -------------------------------------------------------------------
+    function bind() {
+      // Text fields with data-bind
+      document.querySelectorAll('[data-bind]').forEach(el => {
+        const key = el.getAttribute('data-bind');
+        const event = (el.tagName === 'SELECT') ? 'change' : 'input';
+        el.addEventListener(event, () => {
+          brief[key] = el.value;
+          save();
+        });
+        // also save on blur for safety
+        el.addEventListener('blur', () => { brief[key] = el.value; save(); });
+      });
+
+      // Bullets
+      document.querySelectorAll('[data-bullets]').forEach(grp => {
+        const field = grp.getAttribute('data-bullets');
+        grp.querySelectorAll('input[data-bullet-index]').forEach(input => {
+          input.addEventListener('input', () => {
+            brief[field] = Array.from(grp.querySelectorAll('input[data-bullet-index]')).map(i => i.value);
+            save();
+          });
+        });
+      });
+      document.querySelectorAll('[data-bullet-add]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const field = btn.getAttribute('data-bullet-add');
+          brief[field] = [...brief[field], ''];
+          save();
+          renderMain();
+        });
+      });
+      document.querySelectorAll('[data-bullet-remove]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const grp = btn.closest('[data-bullets]');
+          const field = grp.getAttribute('data-bullets');
+          const idx = parseInt(btn.getAttribute('data-bullet-remove'), 10);
+          brief[field] = brief[field].filter((_, i) => i !== idx);
+          if (brief[field].length === 0) brief[field] = [''];
+          save();
+          renderMain();
+        });
+      });
+
+      // Motivation checkboxes
+      document.querySelectorAll('[data-motivation]').forEach(cb => {
+        cb.addEventListener('change', () => {
+          const label = cb.getAttribute('data-motivation');
+          const set = new Set(brief.motivations || []);
+          if (cb.checked) set.add(label); else set.delete(label);
+          brief.motivations = Array.from(set);
+          save();
+          // Visual selected state
+          cb.closest('.brief-goal').classList.toggle('selected', cb.checked);
+        });
+      });
+
+      // PDF upload
+      const pdfInput = document.getElementById('pdf-input');
+      if (pdfInput) {
+        pdfInput.addEventListener('change', e => {
+          const file = e.target.files[0];
+          if (!file) return;
+          handlePdfUpload(file);
+        });
+      }
+    }
+
+    function handlePdfUpload(file) {
+      const stateEl = document.getElementById('pdf-state');
+      stateEl.innerHTML = `
+        <div class="pdf-analyzing">
+          <span class="pdf-analyzing-spinner"></span>
+          <span>Reading <strong>${file.name}</strong> and mapping it to your brief sections…</span>
+        </div>
+      `;
+      // Simulate analysis delay (real Claude API call later)
+      setTimeout(() => {
+        const result = mockPdfAnalysis(file.name, engagement.name, engagement.industry || 'fintech');
+        // Merge into brief (keep any fields the founder already manually edited)
+        Object.keys(result).forEach(k => {
+          if (k === 'investability') { brief.investability = result[k]; return; }
+          if (!brief[k] || (Array.isArray(brief[k]) && brief[k].every(v => !v))) {
+            brief[k] = result[k];
+          }
+        });
+        brief.pdfFilename = file.name;
+        brief.pdfUploadedAt = 'just now';
+        save();
+        // Replace card with confirmation banner + render the rest
+        stateEl.innerHTML = `
+          <div class="pdf-prefilled">
+            <span class="pdf-prefilled-check">✓</span>
+            <div>
+              We pre-filled the brief from <strong>${file.name}</strong>. Review each section below and adjust anything that doesn&rsquo;t match — your edits override the auto-fill.
+            </div>
+          </div>
+        `;
+        // Re-render to show the investability snapshot + pre-filled fields
+        setTimeout(() => renderMain(), 200);
+      }, 1800);
+    }
+
+    function submitBrief() {
+      // Write the brief back into the engagement record (so Workspace + Studio dashboard pick it up)
+      const programs = helpers.readJSON('workspace.programs', []);
+      const i = programs.findIndex(p => p.id === engagement.id);
+      if (i >= 0) {
+        programs[i].brief = brief;
+        programs[i].briefSubmittedAt = 'just now';
+        programs[i].gateStatus = 'Phase 0 · brief submitted, awaiting kickoff';
+        programs[i].lastActivity = 'just now';
+        programs[i].lastActivityDetail = 'Founder submitted brief in the Studio';
+        // If investability was seeded, bring it onto the engagement
+        if (brief.investability) programs[i].investability = brief.investability;
+        helpers.writeJSON('workspace.programs', programs);
+      }
+      // Land on the dashboard
+      window.location.href = `/studio/dashboard.html?id=${engagement.id}`;
+    }
+    window.submitBrief = submitBrief;
+
+    // Kick it off
+    renderMain();
+  </script>
+</body>
+</html>

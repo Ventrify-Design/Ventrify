@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/studio/styles.css">
+</head>
+<body>
+  <div id="root"></div>
+  <script src="/studio/app.js"></script>
+  <script>
+    const { engagement, org } = window.STUDIO;
+
+    if (!engagement) {
+      window.renderShell(`
+        <div class="page-header">
+          <div class="page-eyebrow">Studio</div>
+          <h1 class="page-title">No engagement selected.</h1>
+          <p class="page-sub">Pick an engagement from the sign-in page, or open the Workspace to create your first one.</p>
+        </div>
+        <a href="/studio/" class="btn btn-primary">Back to sign in</a>
+        <a href="/workspace/" class="btn btn-outline" style="margin-left:0.5rem;">Open Workspace</a>
+      `, { skipTabnav: true });
+    } else if (!engagement.brief) {
+      // First-time founder visit (or operator just created the engagement) — brief hasn't been filled
+      // Redirect to the brief flow before showing any dashboard.
+      window.location.replace(`/studio/brief.html?id=${engagement.id}`);
+    } else {
+      // STEP 1 placeholder — real hub-group dashboard lands in Step 3
+      window.renderShell(`
+        <div class="page-header">
+          <div class="page-eyebrow">Welcome</div>
+          <h1 class="page-title">Hi ${engagement.founderName || 'there'} — your ${engagement.name} Studio is up.</h1>
+          <p class="page-sub">This is the dashboard shell. The three hub groups (Foundations · Data Room · Deliverables) and the Investability tab arrive in Step 3. The brief flow lands in Step 2.</p>
+        </div>
+
+        <div class="card">
+          <div class="section-head">
+            <div>
+              <div class="section-title">What you&rsquo;re looking at</div>
+              <div class="section-sub">Step 1 of 6 — Studio shell, login, and tab nav. The rest of the build is queued.</div>
+            </div>
+          </div>
+          <ul style="margin:0;padding-left:1.25rem;color:var(--text-muted);font-size:0.9rem;line-height:1.7;">
+            <li><strong style="color:var(--text);">Topbar (above)</strong> — your operating org&rsquo;s brand (logo + colour) on the left, your venture and phase in the middle, your avatar on the right.</li>
+            <li><strong style="color:var(--text);">Tab nav (above)</strong> — Foundations · Data Room · Deliverables · Investability. Click around — pages return here until later steps fill them in.</li>
+            <li><strong style="color:var(--text);">Step 2:</strong> the brief flow, with PDF upload that pre-fills the brief and seeds an initial Investability score.</li>
+            <li><strong style="color:var(--text);">Step 3:</strong> the real dashboard — three hub-group views with empty states and the Provocation Cards layer.</li>
+          </ul>
+        </div>
+      `);
+    }
+  </script>
+</body>
+</html>
