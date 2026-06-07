@@ -8,12 +8,364 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/studio/styles.css">
+  <style>
+    /* Hub view shell */
+    .hub-shell { max-width: 880px; margin: 0 auto; }
+    .hub-meta {
+      display: flex; align-items: center; gap: 0.6rem;
+      margin-bottom: 0.85rem;
+    }
+    .hub-meta-pill {
+      font-family: var(--font-mono); font-size: 0.62rem;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      padding: 4px 10px; border-radius: 980px;
+      background: rgba(0,0,0,0.04); color: var(--text-muted);
+      font-weight: 500;
+    }
+    .hub-meta-pill.active { background: rgba(var(--brand-primary-rgb), 0.1); color: var(--brand-primary); }
+    .hub-meta-pill.signed { background: rgba(0,184,160,0.1); color: var(--success); }
+
+    .hub-progress {
+      display: flex; align-items: center; gap: 0.85rem;
+      padding: 1rem 1.25rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      margin-bottom: 2rem;
+    }
+    .hub-progress-num {
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 1.4rem;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+    .hub-progress-bar {
+      flex: 1;
+      height: 6px;
+      background: rgba(0,0,0,0.06);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .hub-progress-fill {
+      height: 100%;
+      background: var(--brand-primary);
+      transition: width 0.4s ease;
+    }
+    .hub-progress-label {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    /* --- L1 PROVOCATION CARD --- */
+    .pcard {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem 1.75rem;
+      margin-bottom: 1rem;
+      transition: border-color var(--transition);
+    }
+    .pcard.responded {
+      background: var(--surface-2);
+    }
+    .pcard.awaiting {
+      border-color: rgba(var(--brand-primary-rgb), 0.35);
+      box-shadow: 0 0 0 3px rgba(var(--brand-primary-rgb), 0.05);
+    }
+    .pcard-head {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; margin-bottom: 0.85rem;
+    }
+    .pcard-tag {
+      font-family: var(--font-mono); font-size: 0.66rem;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--brand-primary); font-weight: 600;
+    }
+    .pcard-status {
+      font-family: var(--font-mono); font-size: 0.62rem;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 4px 10px; border-radius: 980px; font-weight: 500;
+    }
+    .pcard-status.awaiting { background: rgba(var(--brand-primary-rgb), 0.1); color: var(--brand-primary); }
+    .pcard-status.responded { background: rgba(0,184,160,0.1); color: var(--success); }
+
+    .pcard-question {
+      font-size: 1.05rem; line-height: 1.55;
+      color: var(--text); margin-bottom: 1.1rem;
+      font-weight: 500; letter-spacing: -0.01em;
+    }
+    .pcard-question em {
+      font-style: italic;
+      color: var(--brand-primary);
+      font-weight: 600;
+    }
+    .pcard-why {
+      font-size: 0.85rem; line-height: 1.6;
+      color: var(--text-muted);
+      padding: 0.85rem 1rem; margin-bottom: 1.25rem;
+      background: var(--surface-2);
+      border-radius: 10px;
+      border-left: 3px solid rgba(0,0,0,0.08);
+    }
+    .pcard.responded .pcard-why { background: #fff; }
+    .pcard-why-label {
+      font-family: var(--font-mono); font-size: 0.62rem;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--text-subtle); margin-bottom: 0.35rem; font-weight: 600;
+    }
+
+    /* Response area */
+    .pcard-response { margin-bottom: 1rem; }
+    .pcard-response-label {
+      font-family: var(--font-mono); font-size: 0.62rem;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--text-subtle); margin-bottom: 0.6rem; font-weight: 600;
+    }
+    .pcard-options { display: flex; flex-direction: column; gap: 0.45rem; margin-bottom: 0.85rem; }
+    .pcard-option {
+      display: flex; align-items: center; gap: 10px;
+      padding: 0.7rem 0.95rem;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 0.88rem;
+      transition: background var(--transition), border-color var(--transition);
+    }
+    .pcard-option:hover {
+      background: #fff;
+      border-color: var(--border-strong);
+    }
+    .pcard-option input[type="radio"] {
+      accent-color: var(--brand-primary);
+      width: 16px; height: 16px;
+      cursor: pointer;
+    }
+    .pcard-option.selected {
+      background: rgba(var(--brand-primary-rgb), 0.05);
+      border-color: rgba(var(--brand-primary-rgb), 0.35);
+    }
+    .pcard-textarea {
+      width: 100%;
+      padding: 0.7rem 0.95rem;
+      border: 1px solid rgba(0,0,0,0.12);
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      line-height: 1.55;
+      min-height: 72px;
+      resize: vertical;
+      background: #fff;
+      margin-top: 0.5rem;
+    }
+    .pcard-textarea:focus {
+      outline: none;
+      border-color: var(--brand-primary);
+      box-shadow: 0 0 0 3px rgba(var(--brand-primary-rgb), 0.12);
+    }
+    .pcard-actions { display: flex; gap: 0.5rem; align-items: center; }
+    .pcard-saved {
+      font-family: var(--font-mono); font-size: 0.7rem;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--success); font-weight: 600;
+    }
+
+    /* Responded view */
+    .pcard-answer {
+      padding: 1rem 1.1rem;
+      background: rgba(0,184,160,0.06);
+      border: 1px solid rgba(0,184,160,0.25);
+      border-radius: 10px;
+      margin-bottom: 1rem;
+    }
+    .pcard-answer-label {
+      font-family: var(--font-mono); font-size: 0.62rem;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--success); margin-bottom: 0.4rem; font-weight: 600;
+    }
+    .pcard-answer-text {
+      font-size: 0.92rem; line-height: 1.55; color: var(--text);
+      font-weight: 500;
+    }
+
+    /* L2 / L3 expander */
+    .pcard-layer-toggle {
+      background: transparent;
+      border: none;
+      color: var(--brand-primary);
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 0.6rem 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .pcard-layer-toggle:hover { text-decoration: underline; }
+    .pcard-layer-toggle .chev {
+      display: inline-block;
+      transition: transform 0.18s ease;
+    }
+    .pcard-layer-toggle.open .chev { transform: rotate(90deg); }
+
+    .pcard-evidence {
+      margin-top: 0.85rem;
+      padding: 1rem 1.25rem;
+      background: #FAFAFB;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      display: none;
+    }
+    .pcard-evidence.open { display: block; }
+    .pcard-evidence-item {
+      padding: 0.6rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.85rem;
+      line-height: 1.55;
+      color: var(--text-muted);
+    }
+    .pcard-evidence-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .pcard-evidence-item:first-child { padding-top: 0; }
+    .pcard-evidence-src {
+      display: block;
+      font-family: var(--font-mono); font-size: 0.66rem;
+      letter-spacing: 0.06em; color: var(--brand-primary);
+      margin-bottom: 0.25rem;
+    }
+
+    /* Foundations content view (Lexicon / Brand) */
+    .foundation-block {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem 1.75rem;
+      margin-bottom: 1rem;
+    }
+    .foundation-block-head {
+      display: flex; align-items: baseline; justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+    .foundation-block-title {
+      font-size: 1.05rem; font-weight: 600; letter-spacing: -0.01em;
+    }
+    .foundation-block-sub {
+      font-size: 0.78rem; color: var(--text-muted);
+    }
+    .lex-row {
+      display: grid; grid-template-columns: 200px 1fr; gap: 1rem;
+      padding: 0.7rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.88rem;
+    }
+    .lex-row:last-child { border-bottom: none; }
+    .lex-term {
+      font-family: var(--font-mono);
+      color: var(--brand-primary);
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .lex-def {
+      color: var(--text);
+      line-height: 1.55;
+    }
+
+    /* Brand kit swatches + type */
+    .brand-swatches { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+    .brand-swatch {
+      display: flex; flex-direction: column;
+      width: 96px;
+    }
+    .brand-swatch-chip {
+      height: 64px; border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+    .brand-swatch-label {
+      font-family: var(--font-mono); font-size: 0.7rem;
+      color: var(--text); margin-top: 0.4rem; font-weight: 500;
+    }
+    .brand-swatch-hex {
+      font-family: var(--font-mono); font-size: 0.66rem;
+      color: var(--text-muted);
+    }
+    .brand-type-sample {
+      padding: 1.25rem; background: var(--surface-2); border-radius: 10px;
+      margin-top: 0.5rem;
+    }
+    .brand-type-sample h3 {
+      font-family: 'Inter', sans-serif; font-weight: 600;
+      font-size: 1.4rem; letter-spacing: -0.02em;
+      margin-bottom: 0.4rem;
+    }
+    .brand-type-sample p {
+      font-size: 0.92rem; line-height: 1.6; color: var(--text-muted);
+    }
+
+    /* Sign-off + request changes buttons */
+    .foundation-actions {
+      display: flex; gap: 0.5rem; align-items: center;
+      margin-top: 1.5rem; padding-top: 1.25rem;
+      border-top: 1px solid var(--border);
+    }
+    .foundation-actions-spacer { flex: 1; }
+
+    /* Gate sign-off card (appears when all L1 resolved) */
+    .gate-card {
+      background: linear-gradient(135deg, rgba(0,184,160,0.08) 0%, rgba(0,184,160,0.02) 100%);
+      border: 1px solid rgba(0,184,160,0.3);
+      border-radius: 16px;
+      padding: 1.5rem 1.75rem;
+      margin-top: 1.5rem;
+      display: flex; align-items: center; gap: 1.25rem;
+    }
+    .gate-card-icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      background: var(--success); color: #fff;
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    .gate-card-body { flex: 1; }
+    .gate-card-title { font-weight: 600; font-size: 1rem; margin-bottom: 0.2rem; }
+    .gate-card-sub { font-size: 0.84rem; color: var(--text-muted); }
+
+    /* Empty state */
+    .hub-empty {
+      background: var(--surface-2);
+      border: 1px dashed var(--border-strong);
+      border-radius: 16px;
+      padding: 3rem 2rem;
+      text-align: center;
+      color: var(--text-muted);
+    }
+    .hub-empty-icon {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 48px; height: 48px;
+      border-radius: 12px;
+      background: rgba(var(--brand-primary-rgb), 0.08);
+      color: var(--brand-primary);
+      margin-bottom: 1rem;
+    }
+    .hub-empty-title {
+      font-size: 1.05rem; font-weight: 600; color: var(--text);
+      letter-spacing: -0.01em; margin-bottom: 0.5rem;
+    }
+    .hub-empty-sub {
+      font-size: 0.9rem; max-width: 480px; margin: 0 auto;
+      line-height: 1.55;
+    }
+  </style>
 </head>
 <body>
   <div id="root"></div>
   <script src="/studio/app.js"></script>
   <script>
-    const { engagement, labels } = window.STUDIO;
+    const { engagement, labels, helpers } = window.STUDIO;
     const params = new URLSearchParams(window.location.search);
     const hubKey = params.get('hub');
 
@@ -22,33 +374,483 @@
         <div class="page-header">
           <div class="page-eyebrow">Hub</div>
           <h1 class="page-title">No engagement selected.</h1>
-          <p class="page-sub">Pick one from the sign-in page.</p>
         </div>
         <a href="/studio/" class="btn btn-primary">Back to sign in</a>
       `, { skipTabnav: true });
       throw new Error('halt');
     }
 
-    const hubLabel = (labels.hub[hubKey]) || hubKey || 'Hub';
+    // -------------------------------------------------------------------
+    // RESPONSE STORAGE (per-engagement, per-hub, per-card)
+    // -------------------------------------------------------------------
+    const RESP_KEY = `studio.responses.${engagement.id}.${hubKey}`;
+    let responses = helpers.readJSON(RESP_KEY, {});
 
-    window.renderShell(`
-      <div class="page-header">
-        <div class="page-eyebrow">Step 4 placeholder</div>
-        <h1 class="page-title">${hubLabel}</h1>
-        <p class="page-sub">This view (the L1 Provocation Cards / L2 Evidence / L3 Full Research rendering, with inline founder responses) lands in Studio Step 4. The dashboard already routes here so the navigation is real.</p>
-      </div>
-      <div class="card">
-        <div class="section-head">
-          <div>
-            <div class="section-title">What you&rsquo;ll see in Step 4</div>
-            <div class="section-sub">Per-hub L1 Provocation Cards with inline founder responses, L2 Evidence expander, L3 Full Research expander, and a sign-off button when the hub is ready.</div>
+    function saveResponse(cardId, value) {
+      responses[cardId] = { value, at: 'just now' };
+      helpers.writeJSON(RESP_KEY, responses);
+    }
+    function clearResponse(cardId) {
+      delete responses[cardId];
+      helpers.writeJSON(RESP_KEY, responses);
+    }
+
+    // -------------------------------------------------------------------
+    // HUB METADATA — name, group, phase status, description
+    // (Mirrors hubStatusFor() logic in dashboard.html so this view agrees.)
+    // -------------------------------------------------------------------
+    const HUB_INFO = {
+      research:   { name: 'Research Hub',   group: 'data-room',   phaseUnlock: 1,   gateLabel: 'Gate 1' },
+      vision:     { name: 'Vision Hub',     group: 'data-room',   phaseUnlock: 2,   gateLabel: 'Gate 2' },
+      strategy:   { name: 'Strategy Hub',   group: 'data-room',   phaseUnlock: 2,   gateLabel: null },
+      financials: { name: 'Financials Hub', group: 'data-room',   phaseUnlock: 2.5, gateLabel: 'Gate 2.5' },
+      lexicon:    { name: 'Lexicon',        group: 'foundations', phaseUnlock: 0,   gateLabel: null },
+      brand:      { name: 'Brand kit',      group: 'foundations', phaseUnlock: 0,   gateLabel: null },
+      marketing:  { name: 'Marketing site', group: 'deliverables',phaseUnlock: 4,   gateLabel: null },
+      video:      { name: 'Promo video',    group: 'deliverables',phaseUnlock: 4,   gateLabel: null },
+      blog:       { name: 'Blog content',   group: 'deliverables',phaseUnlock: 4,   gateLabel: null },
+      app:        { name: 'MVP app',        group: 'deliverables',phaseUnlock: 4,   gateLabel: null }
+    };
+    const hubInfo = HUB_INFO[hubKey] || { name: hubKey, group: 'data-room', phaseUnlock: 99 };
+    const phase = engagement.phase || 0;
+    const isUnlocked = phase >= hubInfo.phaseUnlock;
+
+    // -------------------------------------------------------------------
+    // MOCK CONTENT for prototype — replaced with real agent output later.
+    // -------------------------------------------------------------------
+    const RESEARCH_CARDS = [
+      {
+        id: 'r-01', section: 'Market',
+        question: 'The data shows your real category isn&rsquo;t personal finance &mdash; it&rsquo;s <em>behaviour change</em>. Do we position there, or stay inside fintech?',
+        why: 'Behaviour-change apps (Duolingo, Strava, Headspace) trade at 8&ndash;12&times; ARR multiples. Pure fintech tooling trades at 3&ndash;5&times;. Your category choice is your valuation choice.',
+        options: [
+          { value: 'behaviour', label: 'Position as behaviour-change first' },
+          { value: 'fintech', label: 'Stay inside fintech, lean on differentiation' },
+          { value: 'hybrid', label: 'Build for fintech buyers, talk to behaviour-change investors' }
+        ],
+        evidence: [
+          { src: 'CB Insights · fintech-app valuation report, Q1 2026', text: 'Pure-fintech app multiples have compressed 38% over 24 months. Behaviour-change apps with retention proof held flat.' },
+          { src: 'Founder interview no. 9 (recorded 2026-05-12)', text: '"I downloaded three budgeting apps last year. The only one I still open is the one that texts me when I&rsquo;ve been consistent for a week."' },
+          { src: 'Strava S-1 (2024)', text: 'Cohort retention metrics + community structure cited 11 times in S-1 narrative. Drove the IPO multiple.' }
+        ]
+      },
+      {
+        id: 'r-02', section: 'Competitive',
+        question: 'Your real competitor isn&rsquo;t Monarch or YNAB &mdash; it&rsquo;s <em>Reddit&rsquo;s r/personalfinance</em>. Build <em>for</em> that community or <em>against</em> it?',
+        why: 'Reddit subs eat SEO traffic, trust, and habit. Building for them = partnership and content moat. Building against them = head-on category war you can&rsquo;t win in year one.',
+        options: [
+          { value: 'for', label: 'Build for it &mdash; community-led growth, integrations, content' },
+          { value: 'against', label: 'Build against it &mdash; replace it with a better experience' },
+          { value: 'more', label: 'Need more research before deciding' }
+        ],
+        evidence: [
+          { src: 'Reddit Q4 2025 ad-revenue letter', text: 'r/personalfinance ranked top 8 community by ad engagement, with 2.4M monthly logged-in posters.' },
+          { src: 'SEMrush keyword analysis · fintech category, 2026', text: '67% of long-tail intent keywords surface a Reddit thread in the top-3 SERP positions.' }
+        ]
+      },
+      {
+        id: 'r-03', section: 'User',
+        question: 'Your interviewed users split 60/40 on <em>privacy</em> vs <em>peer accountability</em>. The product can&rsquo;t feel like both. Which way?',
+        why: 'Peer accountability is your retention moat. Privacy is your trust on-ramp. The first three onboarding screens have to lean one way; the other becomes a setting.',
+        options: [
+          { value: 'peer', label: 'Lead with peer accountability; privacy as opt-in toggle' },
+          { value: 'privacy', label: 'Lead with privacy; cohort features as a deeper unlock' }
+        ],
+        evidence: [
+          { src: '14 user interviews · 2026-04 to 2026-05', text: '60% mentioned "I&rsquo;d want my friends to see I&rsquo;m doing this." 40% mentioned "this is personal &mdash; I wouldn&rsquo;t share."' },
+          { src: 'Strava onboarding teardown · 2025', text: 'Strava&rsquo;s first three screens default to public activity; privacy is a 4-tap setting. Cohort participation is 4.2&times; higher than default-private peers.' }
+        ]
+      },
+      {
+        id: 'r-04', section: 'Wedge',
+        question: 'You can ship 5 wedge-features in 16 weeks. The platform recommends: <em>daily nudge · cohort feed · 90-second weekly review · skip-week mechanism · one-tap "remind me later"</em>. Cut one.',
+        why: 'Each feature is a maintenance + design cost forever. Investors will read 5 features as "table stakes." 4 sharp features reads as "deliberate."',
+        options: [
+          { value: 'cut-skip', label: 'Cut skip-week (replicable, not unique)' },
+          { value: 'cut-remind', label: 'Cut remind-me-later (one-tap nudge already does this)' },
+          { value: 'cut-cohort', label: 'Cut cohort feed (controversial &mdash; this is the moat)' },
+          { value: 'keep-all', label: 'Keep all five &mdash; I&rsquo;ll defend it in the deck' }
+        ],
+        evidence: [
+          { src: 'tdk-investability-scorer dry run · 2026-06-01', text: 'Differentiation dimension scores 1 point higher with 4-feature scope than 5-feature scope. Vision dimension scores 0.5 higher.' }
+        ]
+      },
+      {
+        id: 'r-05', section: 'Economics',
+        question: 'Your model breaks at 6,000 users unless price goes up 20% <em>or</em> CAC drops by half. Which lever?',
+        why: 'Both are defensible to investors. Pricing demands stronger willingness-to-pay evidence. CAC demands a credible channel plan beyond paid social.',
+        options: [
+          { value: 'price', label: 'Increase price 20% &mdash; defend with willingness-to-pay research' },
+          { value: 'cac', label: 'Cut CAC 50% &mdash; defend with community-led / content channel plan' },
+          { value: 'both', label: 'Both, smaller magnitudes &mdash; defend portfolio thinking' }
+        ],
+        evidence: [
+          { src: 'Financials Hub · sensitivity-analysis.md', text: '10% price increase + 25% CAC reduction yields 18-month runway; either lever alone falls short by month 14.' }
+        ]
+      }
+    ];
+
+    const LEXICON_MOCK = [
+      { term: 'engagement',     def: 'A single venture running on the platform &mdash; never "project", "client", or "build". Used in operator-facing surfaces only.' },
+      { term: 'founder',        def: 'The principal on the client side. Never "client" or "user" in user-facing copy.' },
+      { term: 'cohort',         def: 'A group of users who joined ${ventureName} in the same week. Not "users", not "members".' },
+      { term: 'weekly outcome', def: 'The single defining win for the week. Never "goal", "task", or "habit".' },
+      { term: 'skip-a-week',    def: 'The opt-out mechanism for honest weeks off. Never "pause" or "snooze".' },
+      { term: 'streak',         def: 'Avoid entirely &mdash; loaded with shame mechanics. Use "consistency" instead.' },
+      { term: 'investor-readiness', def: 'The TDK 7&times;5 Investability score. Never "deck-ready" or "fundable".' }
+    ];
+
+    const BRAND_TOKENS = {
+      primary: '#1D3FFF',
+      accent:  '#FF7A3F',
+      ink:     '#0F1024',
+      paper:   '#FAFAFB',
+      success: '#00B86C'
+    };
+
+    // -------------------------------------------------------------------
+    // RENDER PATHS by hub group
+    // -------------------------------------------------------------------
+    function renderEmpty() {
+      const note = !isUnlocked
+        ? `This hub unlocks in Phase ${hubInfo.phaseUnlock === 2.5 ? '2.5' : hubInfo.phaseUnlock}. You&rsquo;ll see Provocation Cards here when <code style="font-family:var(--font-mono);font-size:0.78rem;background:rgba(0,0,0,0.05);padding:1px 5px;border-radius:4px;">research-curator</code> drafts them. Until then, your work is in the active hubs only.`
+        : `This hub is active but no cards have been drafted yet. <code style="font-family:var(--font-mono);font-size:0.78rem;background:rgba(0,0,0,0.05);padding:1px 5px;border-radius:4px;">research-curator</code> typically runs within 24 hours of the previous gate closing.`;
+      return `
+        <div class="hub-empty">
+          <span class="hub-empty-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </span>
+          <div class="hub-empty-title">${hubInfo.name} isn&rsquo;t ready yet.</div>
+          <div class="hub-empty-sub">${note}</div>
+        </div>
+      `;
+    }
+
+    function renderCards() {
+      // For Step 4 prototype, only Research Hub has mock cards. Other Data Room
+      // hubs render the empty state. In real workflow, each hub gets its own
+      // research-curator output once the previous gate closes.
+      if (hubKey !== 'research') return renderEmpty();
+      const cards = RESEARCH_CARDS;
+      const resolved = cards.filter(c => responses[c.id]).length;
+      const total = cards.length;
+      const pct = Math.round((resolved / total) * 100);
+
+      const progressHTML = `
+        <div class="hub-progress">
+          <span class="hub-progress-num">${resolved}/${total}</span>
+          <div class="hub-progress-bar"><div class="hub-progress-fill" style="width:${pct}%;"></div></div>
+          <span class="hub-progress-label">${resolved === total ? 'Ready for gate sign-off' : 'cards resolved'}</span>
+        </div>
+      `;
+
+      const cardsHTML = cards.map(card => {
+        const resp = responses[card.id];
+        const responded = !!resp;
+        return `
+          <div class="pcard ${responded ? 'responded' : 'awaiting'}" data-card="${card.id}">
+            <div class="pcard-head">
+              <span class="pcard-tag">Card ${card.id.split('-')[1]} &middot; ${card.section}</span>
+              <span class="pcard-status ${responded ? 'responded' : 'awaiting'}">${responded ? '✓ Responded' : 'Awaiting you'}</span>
+            </div>
+            <div class="pcard-question">${card.question}</div>
+            <div class="pcard-why">
+              <div class="pcard-why-label">Why this matters</div>
+              ${card.why}
+            </div>
+            ${responded
+              ? `<div class="pcard-answer">
+                   <div class="pcard-answer-label">Your response &middot; ${resp.at}</div>
+                   <div class="pcard-answer-text">${(card.options.find(o => o.value === resp.value) || {}).label || resp.value}</div>
+                 </div>
+                 <div class="pcard-actions">
+                   <button class="btn btn-outline btn-sm" data-action="edit" data-card="${card.id}">Edit response</button>
+                 </div>`
+              : `<div class="pcard-response">
+                   <div class="pcard-response-label">Your response</div>
+                   <div class="pcard-options">
+                     ${card.options.map(opt => `
+                       <label class="pcard-option" data-option="${opt.value}">
+                         <input type="radio" name="resp-${card.id}" value="${opt.value}">
+                         <span>${opt.label}</span>
+                       </label>
+                     `).join('')}
+                   </div>
+                   <div class="pcard-actions">
+                     <button class="btn btn-primary btn-sm" data-action="save" data-card="${card.id}">Save response</button>
+                   </div>
+                 </div>`
+            }
+            <button class="pcard-layer-toggle" data-toggle-evidence="${card.id}">
+              <span class="chev">▸</span> View evidence (${card.evidence.length} ${card.evidence.length === 1 ? 'source' : 'sources'})
+            </button>
+            <div class="pcard-evidence" id="ev-${card.id}">
+              ${card.evidence.map(e => `
+                <div class="pcard-evidence-item">
+                  <span class="pcard-evidence-src">${e.src}</span>
+                  ${e.text}
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      const gateHTML = (resolved === total && hubInfo.gateLabel)
+        ? `<div class="gate-card">
+             <span class="gate-card-icon">
+               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+             </span>
+             <div class="gate-card-body">
+               <div class="gate-card-title">${hubInfo.gateLabel} ready to close.</div>
+               <div class="gate-card-sub">All ${total} cards responded. Sign off here to unlock the next phase &mdash; your operator will be notified.</div>
+             </div>
+             <button class="btn btn-primary">Sign off ${hubInfo.gateLabel} &rarr;</button>
+           </div>`
+        : '';
+
+      // L3 expander (whole-hub level)
+      const l3HTML = `
+        <div style="margin-top:1.5rem;">
+          <button class="pcard-layer-toggle" id="toggle-l3">
+            <span class="chev">▸</span> View source documents (L3 · 4 research files)
+          </button>
+          <div class="pcard-evidence" id="ev-l3">
+            <div class="pcard-evidence-item">
+              <span class="pcard-evidence-src">market-analysis.md · 4,200 words</span>
+              Full market sizing, segment definition, growth projections. Source: 8 industry reports + 4 founder interviews.
+            </div>
+            <div class="pcard-evidence-item">
+              <span class="pcard-evidence-src">competitor-analysis.md · 3,800 words</span>
+              Direct + adjacent + spiritual competitors. Strengths, weaknesses, gaps you can wedge into.
+            </div>
+            <div class="pcard-evidence-item">
+              <span class="pcard-evidence-src">user-insights.md · 5,100 words</span>
+              Synthesised themes from 14 user interviews. Quotes, behaviour patterns, jobs-to-be-done.
+            </div>
+            <div class="pcard-evidence-item">
+              <span class="pcard-evidence-src">unit-economics.md · 2,900 words</span>
+              CAC + LTV models, sensitivity tables, breakeven analysis.
+            </div>
           </div>
         </div>
+      `;
+
+      return progressHTML + cardsHTML + gateHTML + l3HTML;
+    }
+
+    function renderLexicon() {
+      const venture = engagement.name || 'this venture';
+      return `
+        <div class="foundation-block">
+          <div class="foundation-block-head">
+            <div>
+              <div class="foundation-block-title">Canonical vocabulary</div>
+              <div class="foundation-block-sub">7 terms drafted by <code style="font-family:var(--font-mono);font-size:0.78rem;background:rgba(0,0,0,0.05);padding:1px 5px;border-radius:4px;">founder-lexicon-keeper</code> from your brief.</div>
+            </div>
+          </div>
+          ${LEXICON_MOCK.map(l => `
+            <div class="lex-row">
+              <div class="lex-term">${l.term}</div>
+              <div class="lex-def">${l.def.replace('${ventureName}', venture)}</div>
+            </div>
+          `).join('')}
+        </div>
+
+        <div class="foundation-block">
+          <div class="foundation-block-head">
+            <div>
+              <div class="foundation-block-title">Voice principles</div>
+              <div class="foundation-block-sub">How ${venture} sounds when it&rsquo;s being itself.</div>
+            </div>
+          </div>
+          <ul style="margin:0;padding-left:1.25rem;font-size:0.9rem;line-height:1.7;color:var(--text);">
+            <li>Speak like a coach who&rsquo;s been there &mdash; never like a finance app.</li>
+            <li>Specific over general. "$340 this week" beats "great progress."</li>
+            <li>Honest about hard weeks. Skip-a-week is not a failure.</li>
+            <li>No streaks language &mdash; loaded with shame.</li>
+            <li>Short sentences. Short paragraphs. Read on a tube journey.</li>
+          </ul>
+        </div>
+
+        <div class="foundation-actions">
+          <span style="font-size:0.82rem;color:var(--text-muted);">Sign off to lock the lexicon for every writer.</span>
+          <div class="foundation-actions-spacer"></div>
+          <button class="btn btn-outline btn-sm">Request changes</button>
+          <button class="btn btn-primary btn-sm" onclick="alert('Lexicon signed off. founder-lexicon-keeper is now bound to every writer agent.')">Sign off Lexicon &rarr;</button>
+        </div>
+      `;
+    }
+
+    function renderBrand() {
+      return `
+        <div class="foundation-block">
+          <div class="foundation-block-head">
+            <div>
+              <div class="foundation-block-title">Colour tokens</div>
+              <div class="foundation-block-sub">Authored by <code style="font-family:var(--font-mono);font-size:0.78rem;background:rgba(0,0,0,0.05);padding:1px 5px;border-radius:4px;">brand-designer</code>. Consumed by the app, marketing site, deck, App Store screenshots.</div>
+            </div>
+          </div>
+          <div class="brand-swatches">
+            ${Object.entries(BRAND_TOKENS).map(([name, hex]) => `
+              <div class="brand-swatch">
+                <div class="brand-swatch-chip" style="background:${hex};"></div>
+                <div class="brand-swatch-label">${name}</div>
+                <div class="brand-swatch-hex">${hex.toUpperCase()}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <div class="foundation-block">
+          <div class="foundation-block-head">
+            <div>
+              <div class="foundation-block-title">Type system</div>
+              <div class="foundation-block-sub">Inter for everything. Tight tracking on display, generous line-height on body.</div>
+            </div>
+          </div>
+          <div class="brand-type-sample">
+            <h3>Spend less. Save more. Show up.</h3>
+            <p>This is body copy at the recommended size. Inter, 16px, line-height 1.6, weight 400. Read it on a tube. Read it after a hard week. Read it tired. If it&rsquo;s legible there, it works everywhere.</p>
+          </div>
+        </div>
+
+        <div class="foundation-actions">
+          <span style="font-size:0.82rem;color:var(--text-muted);">Sign off to lock tokens.json for the app, site, and every downstream surface.</span>
+          <div class="foundation-actions-spacer"></div>
+          <button class="btn btn-outline btn-sm">Request changes</button>
+          <button class="btn btn-primary btn-sm" onclick="alert('Brand kit signed off. tokens.json now binds the app, site, deck, App Store, and video colour grade.')">Sign off Brand kit &rarr;</button>
+        </div>
+      `;
+    }
+
+    function renderDeliverableEmpty() {
+      return `
+        <div class="hub-empty">
+          <span class="hub-empty-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/></svg>
+          </span>
+          <div class="hub-empty-title">${hubInfo.name} comes online in Phase 4.</div>
+          <div class="hub-empty-sub">Once the Data Room hubs are signed off, the platform begins building. You&rsquo;ll preview ${hubInfo.name.toLowerCase()} here before launch &mdash; with sign-off the same way you signed off your Data Room.</div>
+        </div>
+      `;
+    }
+
+    // -------------------------------------------------------------------
+    // ASSEMBLE PAGE
+    // -------------------------------------------------------------------
+    let body;
+    if (hubInfo.group === 'foundations') {
+      // Lexicon + Brand kit get content-review views (in-progress in Phase 0)
+      body = hubKey === 'lexicon' ? renderLexicon() : renderBrand();
+    } else if (hubInfo.group === 'data-room') {
+      body = isUnlocked ? renderCards() : renderEmpty();
+    } else if (hubInfo.group === 'deliverables') {
+      body = renderDeliverableEmpty();
+    } else {
+      body = renderEmpty();
+    }
+
+    const groupBack = hubInfo.group === 'foundations' ? 'foundations'
+                   : hubInfo.group === 'data-room' ? 'data-room'
+                   : 'deliverables';
+
+    const main = `
+      <div class="hub-shell">
+        <div style="margin-bottom:1rem;">
+          <a href="/studio/dashboard.html?id=${engagement.id}&group=${groupBack}" class="text-mono dim" style="font-size:0.78rem;letter-spacing:0.06em;text-transform:uppercase;text-decoration:none;color:var(--text-muted);">&larr; Back to ${groupBack === 'data-room' ? 'Data Room' : groupBack === 'foundations' ? 'Foundations' : 'Deliverables'}</a>
+        </div>
+        <div class="page-header" style="margin-bottom:1.5rem;">
+          <div class="hub-meta">
+            <span class="hub-meta-pill ${hubInfo.group === 'foundations' || isUnlocked ? 'active' : ''}">${hubInfo.group === 'data-room' ? 'Data Room' : hubInfo.group === 'foundations' ? 'Foundations' : 'Deliverables'}</span>
+            ${hubInfo.gateLabel ? `<span class="hub-meta-pill">${hubInfo.gateLabel}</span>` : ''}
+          </div>
+          <h1 class="page-title">${hubInfo.name}</h1>
+        </div>
+
+        ${body}
       </div>
-      <div style="margin-top:1.5rem;">
-        <a href="/studio/dashboard.html?id=${engagement.id}&group=data-room" class="btn btn-outline">&larr; Back to Data Room</a>
-      </div>
-    `);
+    `;
+
+    window.renderShell(main);
+
+    // -------------------------------------------------------------------
+    // BINDINGS for Provocation Cards
+    // -------------------------------------------------------------------
+    function bindCards() {
+      // Option selection visual + radio sync
+      document.querySelectorAll('.pcard-option').forEach(opt => {
+        opt.addEventListener('click', () => {
+          const card = opt.closest('.pcard');
+          card.querySelectorAll('.pcard-option').forEach(o => o.classList.remove('selected'));
+          opt.classList.add('selected');
+          opt.querySelector('input[type="radio"]').checked = true;
+        });
+      });
+      // Save response
+      document.querySelectorAll('[data-action="save"]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const cardId = btn.getAttribute('data-card');
+          const radio = document.querySelector(`input[name="resp-${cardId}"]:checked`);
+          if (!radio) {
+            alert('Pick an option first.');
+            return;
+          }
+          saveResponse(cardId, radio.value);
+          // Persist count to engagement.cards.resolved so dashboard reflects it
+          updateEngagementCardCount();
+          // Re-render to flip the card into responded state
+          window.location.reload();
+        });
+      });
+      // Edit response
+      document.querySelectorAll('[data-action="edit"]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const cardId = btn.getAttribute('data-card');
+          clearResponse(cardId);
+          updateEngagementCardCount();
+          window.location.reload();
+        });
+      });
+      // Evidence toggle
+      document.querySelectorAll('[data-toggle-evidence]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const cardId = btn.getAttribute('data-toggle-evidence');
+          const ev = document.getElementById(`ev-${cardId}`);
+          ev.classList.toggle('open');
+          btn.classList.toggle('open');
+        });
+      });
+      // L3 toggle
+      const l3btn = document.getElementById('toggle-l3');
+      if (l3btn) {
+        l3btn.addEventListener('click', () => {
+          document.getElementById('ev-l3').classList.toggle('open');
+          l3btn.classList.toggle('open');
+        });
+      }
+    }
+
+    function updateEngagementCardCount() {
+      // Tally responses across this hub and push back onto engagement.cards
+      // so the Workspace + Studio dashboard reflect what the founder has done.
+      const programs = helpers.readJSON('workspace.programs', []);
+      const i = programs.findIndex(p => p.id === engagement.id);
+      if (i < 0) return;
+      const all = Object.keys(localStorage)
+        .filter(k => k.startsWith(`studio.responses.${engagement.id}.`))
+        .reduce((acc, k) => acc + Object.keys(helpers.readJSON(k, {})).length, 0);
+      programs[i].cards = programs[i].cards || { drafted: 0, awaitingFounder: 0, resolved: 0 };
+      programs[i].cards.resolved = all;
+      // For Research Hub specifically, drafted = 5 (mock)
+      programs[i].cards.drafted = Math.max(programs[i].cards.drafted, hubKey === 'research' ? 5 : programs[i].cards.drafted);
+      programs[i].cards.awaitingFounder = Math.max(0, programs[i].cards.drafted - programs[i].cards.resolved);
+      programs[i].lastActivity = 'just now';
+      programs[i].lastActivityDetail = 'Founder responded to a Provocation Card in the Studio';
+      helpers.writeJSON('workspace.programs', programs);
+    }
+
+    bindCards();
   </script>
 </body>
 </html>
