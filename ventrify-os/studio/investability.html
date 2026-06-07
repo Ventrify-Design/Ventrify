@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Investability — The Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/studio/styles.css">
+</head>
+<body>
+  <div id="root"></div>
+  <script src="/studio/app.js"></script>
+  <script>
+    const { engagement } = window.STUDIO;
+    if (!engagement) {
+      window.renderShell(`
+        <div class="page-header">
+          <div class="page-eyebrow">Investability</div>
+          <h1 class="page-title">No engagement selected.</h1>
+        </div>
+        <a href="/studio/" class="btn btn-primary">Back to sign in</a>
+      `, { skipTabnav: true });
+      throw new Error('halt');
+    }
+
+    const inv = engagement.investability;
+    const summary = inv
+      ? `<p class="page-sub">Initial score: <strong style="color:var(--text);">${inv.pct} / 100</strong>. Full TDK 7×5 scorecard with explanations, prioritised suggestions, and dimension drill-downs lands in Step 5.</p>`
+      : `<p class="page-sub">No score yet. Step 5 will let you score from form data manually, or seed by uploading material in your <a href="/studio/brief.html?id=${engagement.id}" style="color:var(--brand-primary);">brief</a>.</p>`;
+
+    window.renderShell(`
+      <div class="page-header">
+        <div class="page-eyebrow">Step 5 placeholder</div>
+        <h1 class="page-title">Investability</h1>
+        ${summary}
+      </div>
+      <div class="card">
+        <div class="section-head">
+          <div>
+            <div class="section-title">What lands in Step 5</div>
+            <div class="section-sub">TDK 7×5 scorecard (Team · Problem · Solution · Market · Traction · Differentiation · Vision, 5 sub-criteria each), explanations per dimension, prioritised suggestions tied to specific brief sections, and an at-a-glance trajectory chart as the engagement progresses.</div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:1.5rem;">
+        <a href="/studio/dashboard.html?id=${engagement.id}" class="btn btn-outline">&larr; Back to dashboard</a>
+      </div>
+    `);
+  </script>
+</body>
+</html>

@@ -3,18 +3,194 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>The Studio</title>
+  <title>The Studio — Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/studio/styles.css">
+  <style>
+    /* Dashboard-specific styles */
+    .group-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+    .hub-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.4rem;
+      display: flex;
+      flex-direction: column;
+      transition: border-color var(--transition), transform 0.18s ease, box-shadow var(--transition);
+      min-height: 200px;
+      text-decoration: none;
+      color: inherit;
+    }
+    .hub-card:hover {
+      border-color: var(--border-strong);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+    }
+    .hub-card.locked {
+      opacity: 0.62;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+    .hub-card.awaiting-founder {
+      border-color: rgba(var(--brand-primary-rgb), 0.35);
+      box-shadow: 0 0 0 3px rgba(var(--brand-primary-rgb), 0.06);
+    }
+    .hub-card.ready-to-sign {
+      border-color: rgba(0,184,160,0.45);
+      box-shadow: 0 0 0 3px rgba(0,184,160,0.06);
+    }
+    .hub-card.signed { background: var(--surface-2); }
+
+    .hub-card-head {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 0.85rem; margin-bottom: 0.85rem;
+    }
+    .hub-card-iconrow { display: flex; align-items: center; gap: 10px; }
+    .hub-card-icon {
+      width: 30px; height: 30px;
+      border-radius: 8px;
+      background: rgba(var(--brand-primary-rgb), 0.1);
+      color: var(--brand-primary);
+      display: inline-flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .hub-card-name {
+      font-weight: 600;
+      font-size: 0.98rem;
+      letter-spacing: -0.01em;
+      color: var(--text);
+    }
+    .hub-card-status {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 4px 9px;
+      border-radius: 980px;
+      font-weight: 500;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .hub-card-status.pending { background: rgba(0,0,0,0.05); color: var(--text-muted); }
+    .hub-card-status.in-progress { background: rgba(var(--brand-primary-rgb), 0.1); color: var(--brand-primary); }
+    .hub-card-status.awaiting-founder { background: rgba(var(--brand-primary-rgb), 0.12); color: var(--brand-primary); }
+    .hub-card-status.ready-to-sign { background: rgba(0,184,160,0.1); color: var(--success); }
+    .hub-card-status.signed { background: rgba(0,184,160,0.08); color: var(--success); }
+
+    .hub-card-desc {
+      font-size: 0.85rem;
+      line-height: 1.55;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+      flex: 1;
+    }
+    .hub-card-stats {
+      display: flex; gap: 0.6rem; flex-wrap: wrap;
+      margin-bottom: 0.85rem;
+    }
+    .hub-card-stat {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      background: var(--surface-2);
+      padding: 4px 9px;
+      border-radius: 6px;
+    }
+    .hub-card-stat strong { color: var(--text); font-weight: 600; margin-right: 4px; }
+
+    .hub-card-cta {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--brand-primary);
+      font-weight: 600;
+      margin-top: auto;
+      padding-top: 0.5rem;
+      border-top: 1px solid var(--border);
+    }
+    .hub-card.locked .hub-card-cta { color: var(--text-muted); font-weight: 500; }
+    .hub-card.signed .hub-card-cta { color: var(--success); }
+    .hub-card.ready-to-sign .hub-card-cta { color: var(--success); }
+
+    /* Investability mini-card (footer on dashboard) */
+    .invest-mini {
+      background: linear-gradient(135deg, #0F0F12 0%, #1a1a1f 100%);
+      color: #fff;
+      border-radius: 18px;
+      padding: 1.4rem 1.75rem;
+      display: flex; align-items: center; gap: 1.5rem;
+      margin-top: 2rem;
+    }
+    .invest-mini-body { flex: 1; min-width: 0; }
+    .invest-mini-eyebrow {
+      font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--brand-primary); margin-bottom: 0.25rem;
+    }
+    .invest-mini-title { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.25rem; }
+    .invest-mini-sub { font-size: 0.78rem; color: rgba(255,255,255,0.55); line-height: 1.5; }
+    .invest-mini-score {
+      display: flex; align-items: baseline; gap: 0.45rem;
+    }
+    .invest-mini-score-num {
+      font-family: var(--font-heading); font-size: 2.1rem; font-weight: 600;
+      letter-spacing: -0.02em; color: #fff; line-height: 1;
+    }
+    .invest-mini-score-of { font-size: 0.78rem; color: rgba(255,255,255,0.45); }
+    .invest-mini-cta {
+      font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--brand-primary); font-weight: 600;
+      text-decoration: none; white-space: nowrap;
+      padding-left: 1rem; border-left: 1px solid rgba(255,255,255,0.08);
+    }
+
+    /* Empty Investability prompt (for engagements without a PDF / score yet) */
+    .invest-empty {
+      background: var(--surface-2);
+      border: 1px dashed var(--border-strong);
+      border-radius: 16px;
+      padding: 1.5rem 1.75rem;
+      margin-top: 2rem;
+      display: flex; align-items: center; gap: 1.25rem;
+    }
+    .invest-empty-icon {
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      background: rgba(var(--brand-primary-rgb), 0.1);
+      color: var(--brand-primary);
+      display: inline-flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .invest-empty-body { flex: 1; }
+    .invest-empty-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.2rem; }
+    .invest-empty-sub { font-size: 0.82rem; color: var(--text-muted); line-height: 1.5; }
+
+    @media (max-width: 760px) {
+      .group-grid { grid-template-columns: 1fr; }
+      .invest-mini { flex-direction: column; align-items: flex-start; gap: 1rem; }
+      .invest-mini-cta { padding-left: 0; border-left: none; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 0.85rem; }
+    }
+  </style>
 </head>
 <body>
   <div id="root"></div>
   <script src="/studio/app.js"></script>
   <script>
-    const { engagement, org } = window.STUDIO;
+    const { engagement, org, groups, labels, helpers } = window.STUDIO;
+    const params = new URLSearchParams(window.location.search);
+    const groupKey = params.get('group') || 'foundations';
 
+    // -------------------------------------------------------------------
+    // Guards: no engagement → back to login; no brief → into brief flow
+    // -------------------------------------------------------------------
     if (!engagement) {
       window.renderShell(`
         <div class="page-header">
@@ -25,35 +201,254 @@
         <a href="/studio/" class="btn btn-primary">Back to sign in</a>
         <a href="/workspace/" class="btn btn-outline" style="margin-left:0.5rem;">Open Workspace</a>
       `, { skipTabnav: true });
-    } else if (!engagement.brief) {
-      // First-time founder visit (or operator just created the engagement) — brief hasn't been filled
-      // Redirect to the brief flow before showing any dashboard.
-      window.location.replace(`/studio/brief.html?id=${engagement.id}`);
-    } else {
-      // STEP 1 placeholder — real hub-group dashboard lands in Step 3
-      window.renderShell(`
-        <div class="page-header">
-          <div class="page-eyebrow">Welcome</div>
-          <h1 class="page-title">Hi ${engagement.founderName || 'there'} — your ${engagement.name} Studio is up.</h1>
-          <p class="page-sub">This is the dashboard shell. The three hub groups (Foundations · Data Room · Deliverables) and the Investability tab arrive in Step 3. The brief flow lands in Step 2.</p>
-        </div>
-
-        <div class="card">
-          <div class="section-head">
-            <div>
-              <div class="section-title">What you&rsquo;re looking at</div>
-              <div class="section-sub">Step 1 of 6 — Studio shell, login, and tab nav. The rest of the build is queued.</div>
-            </div>
-          </div>
-          <ul style="margin:0;padding-left:1.25rem;color:var(--text-muted);font-size:0.9rem;line-height:1.7;">
-            <li><strong style="color:var(--text);">Topbar (above)</strong> — your operating org&rsquo;s brand (logo + colour) on the left, your venture and phase in the middle, your avatar on the right.</li>
-            <li><strong style="color:var(--text);">Tab nav (above)</strong> — Foundations · Data Room · Deliverables · Investability. Click around — pages return here until later steps fill them in.</li>
-            <li><strong style="color:var(--text);">Step 2:</strong> the brief flow, with PDF upload that pre-fills the brief and seeds an initial Investability score.</li>
-            <li><strong style="color:var(--text);">Step 3:</strong> the real dashboard — three hub-group views with empty states and the Provocation Cards layer.</li>
-          </ul>
-        </div>
-      `);
+      throw new Error('halt');
     }
+    if (!engagement.brief) {
+      window.location.replace(`/studio/brief.html?id=${engagement.id}`);
+      throw new Error('halt');
+    }
+
+    // -------------------------------------------------------------------
+    // HUB MODEL — what each hub is + status per engagement phase.
+    // For Step 3 (prototype): status keyed off the engagement.phase value.
+    // Later we'll persist actual hub state in workspace.programs[].hubs.
+    // -------------------------------------------------------------------
+    const HUB_DEFS = {
+      // FOUNDATIONS
+      brief: {
+        name: 'Brief snapshot', group: 'foundations',
+        icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/></svg>',
+        desc: 'Your intake — what you came in with. Drives every downstream agent.',
+        cta: { signed: 'Review your brief →', 'in-progress': 'Continue brief →' }
+      },
+      lexicon: {
+        name: 'Lexicon', group: 'foundations',
+        icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>',
+        desc: 'Canonical vocabulary + voice principles. Drafted by `founder-lexicon-keeper` from your brief, signed off by you.',
+        cta: { signed: 'View lexicon →', 'in-progress': 'Review draft →', pending: 'Generated after brief sign-off' }
+      },
+      brand: {
+        name: 'Brand kit', group: 'foundations',
+        icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>',
+        desc: 'Tokens, type, voice, logo guidance. Drafted by `brand-designer` from your brief, signed off by you.',
+        cta: { signed: 'View brand kit →', 'in-progress': 'Review draft →', pending: 'Generated after brief sign-off' }
+      },
+
+      // DATA ROOM
+      research: {
+        name: 'Research Hub', group: 'data-room',
+        icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
+        desc: 'Market, competitors, users, unit economics. L1 cards surface the strategic forks; L2 evidence + L3 docs sit underneath.',
+        cta: { 'awaiting-founder': 'Review {n} cards →', 'ready-to-sign': 'Close Gate 1 →', 'in-progress': 'Open hub →', pending: 'Unlocks in Phase 1' }
+      },
+      vision: {
+        name: 'Vision Hub', group: 'data-room',
+        icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>',
+        desc: 'Personas, MVP definition, IA, journeys. Gate 2 closes here. The shape of the venture gets fixed.',
+        cta: { 'awaiting-founder': 'Review {n} cards →', 'ready-to-sign': 'Close Gate 2 →', 'in-progress': 'Open hub →', pending: 'Unlocks after Gate 1' }
+      },
+      strategy: {
+        name: 'Strategy Hub', group: 'data-room',
+        icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>',
+        desc: 'Tone of voice, positioning, 30-day launch calendar, channel plan. How the world will hear about this.',
+        cta: { 'awaiting-founder': 'Review {n} cards →', 'in-progress': 'Open hub →', pending: 'Unlocks alongside Vision' }
+      },
+      financials: {
+        name: 'Financials Hub', group: 'data-room',
+        icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
+        desc: '11 financial files. Cap table, model, opex, unit economics, sensitivity. Gate 2.5 closes here.',
+        cta: { 'awaiting-founder': 'Review {n} cards →', 'ready-to-sign': 'Close Gate 2.5 →', 'in-progress': 'Open hub →', pending: 'Unlocks after Gate 2' }
+      },
+
+      // DELIVERABLES
+      marketing: {
+        name: 'Marketing site', group: 'deliverables',
+        icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>',
+        desc: 'Next.js marketing site, branded against your kit. Lives at your venture slug.',
+        cta: { signed: 'Preview site →', 'in-progress': 'View latest draft →', pending: 'Built in Phase 4' }
+      },
+      video: {
+        name: 'Promo video', group: 'deliverables',
+        icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>',
+        desc: 'Script, scene breakdown, VO, final cut. Lives on your marketing site and as a standalone asset.',
+        cta: { signed: 'View latest cut →', 'in-progress': 'Review script →', pending: 'Produced in Phase 4' }
+      },
+      blog: {
+        name: 'Blog content', group: 'deliverables',
+        icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>',
+        desc: '5 launch posts + 20 social variants. Tone-bound to your lexicon, written by `blog-writer` + `social-writer`.',
+        cta: { signed: 'Read drafts →', 'in-progress': 'Review outlines →', pending: 'Produced in Phase 4' }
+      },
+      app: {
+        name: 'MVP app', group: 'deliverables',
+        icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>',
+        desc: 'Expo / React Native build. Goes through DEMO_MODE for investor previews, then live beta.',
+        cta: { signed: 'Open DEMO_MODE →', 'in-progress': 'View build →', pending: 'Built in Phase 4' }
+      }
+    };
+
+    // Status derivation — Phase 0 (just briefed) renders the brief as signed
+    // and the Phase-0 substrate hubs (lexicon, brand) as in-progress.
+    function hubStatusFor(hubKey, phase) {
+      // engagement.hubs is filled by the wizard with {status: 'pending'|'disabled'}.
+      // If the wizard explicitly disabled a hub (org didn't want it), respect that.
+      const wizardHub = engagement.hubs && engagement.hubs[hubKey];
+      if (wizardHub && wizardHub.status === 'disabled') return 'disabled';
+      if (hubKey === 'brief') return 'signed';
+      if (phase === 0) {
+        if (hubKey === 'lexicon' || hubKey === 'brand') return 'in-progress';
+        return 'pending';
+      }
+      if (phase >= 1 && hubKey === 'research') return 'in-progress';
+      if (phase >= 2 && (hubKey === 'vision' || hubKey === 'strategy')) return 'in-progress';
+      if (phase >= 2.5 && hubKey === 'financials') return 'in-progress';
+      if (phase >= 4 && (hubKey === 'marketing' || hubKey === 'video' || hubKey === 'blog' || hubKey === 'app')) return 'in-progress';
+      return 'pending';
+    }
+
+    function statusLabel(status) {
+      return ({
+        'pending': 'Locked',
+        'in-progress': 'In progress',
+        'awaiting-founder': 'Needs you',
+        'ready-to-sign': 'Sign-off ready',
+        'signed': 'Signed off',
+        'disabled': 'Not in scope'
+      })[status] || status;
+    }
+
+    function ctaFor(hub, status, cardsAwaiting) {
+      if (status === 'disabled') return '';
+      const defaultPending = `Unlocks later`;
+      const defaultByStatus = ({
+        signed: 'Open hub →',
+        'ready-to-sign': 'Review →',
+        'awaiting-founder': 'Review →',
+        'in-progress': 'Open hub →',
+        pending: defaultPending
+      })[status];
+      const customCTA = (hub.cta && hub.cta[status]) || defaultByStatus;
+      return (cardsAwaiting ? customCTA.replace('{n}', cardsAwaiting) : customCTA.replace('{n}', '0'));
+    }
+
+    function hubCardHTML(hubKey) {
+      const hub = HUB_DEFS[hubKey];
+      const status = hubStatusFor(hubKey, engagement.phase || 0);
+      if (status === 'disabled') return ''; // Hide hubs the operator removed at launch
+      const isLocked = status === 'pending';
+      const cardsAwaiting = (hubKey === 'brief' || hub.group !== 'data-room')
+        ? 0
+        : (engagement.cards && engagement.cards.awaitingFounder) || 0;
+
+      const stats = hubKey === 'brief'
+        ? `<div class="hub-card-stats">
+             <span class="hub-card-stat"><strong>Submitted</strong>${engagement.briefSubmittedAt || 'just now'}</span>
+           </div>`
+        : (hub.group === 'data-room'
+            ? `<div class="hub-card-stats">
+                 <span class="hub-card-stat"><strong>${(engagement.cards && engagement.cards.drafted) || 0}</strong>cards drafted</span>
+                 <span class="hub-card-stat"><strong>${cardsAwaiting}</strong>awaiting you</span>
+               </div>`
+            : '');
+
+      const href = hubKey === 'brief'
+        ? `/studio/brief.html?id=${engagement.id}`
+        : `/studio/hub.html?id=${engagement.id}&hub=${hubKey}`;
+
+      const ctaLabel = ctaFor(hub, status, cardsAwaiting);
+
+      // Locked cards aren't clickable; everything else routes to the hub view
+      const tag = isLocked ? 'div' : 'a';
+      const hrefAttr = isLocked ? '' : ` href="${href}"`;
+
+      return `
+        <${tag}${hrefAttr} class="hub-card ${status} ${isLocked ? 'locked' : ''}">
+          <div class="hub-card-head">
+            <div class="hub-card-iconrow">
+              <span class="hub-card-icon">${hub.icon}</span>
+              <span class="hub-card-name">${hub.name}</span>
+            </div>
+            <span class="hub-card-status ${status}">${statusLabel(status)}</span>
+          </div>
+          <div class="hub-card-desc">${hub.desc.replace(/`([^`]+)`/g, '<code style="font-family:var(--font-mono);font-size:0.78rem;background:rgba(0,0,0,0.05);padding:1px 5px;border-radius:4px;">$1</code>')}</div>
+          ${stats}
+          <div class="hub-card-cta">${ctaLabel}</div>
+        </${tag}>
+      `;
+    }
+
+    // -------------------------------------------------------------------
+    // GROUP COPY — page header per tab
+    // -------------------------------------------------------------------
+    const GROUP_COPY = {
+      foundations: {
+        eyebrow: 'Foundations',
+        title: 'Your ground truth.',
+        sub: `Brief, Lexicon, Brand kit. These three lock in who ${engagement.name} is and how it speaks before anything else gets built. Every other agent reads from them.`
+      },
+      'data-room': {
+        eyebrow: 'Data Room',
+        title: 'Provocation Cards. Evidence. Full Research.',
+        sub: 'Four hubs — Research · Vision · Strategy · Financials. Each renders as three layers: the questions you must resolve first (L1), the evidence behind each (L2), and the underlying research docs (L3). You move things forward by resolving cards.'
+      },
+      deliverables: {
+        eyebrow: 'Deliverables',
+        title: 'What ships.',
+        sub: 'The surfaces and assets the platform builds for you — marketing site, promo video, blog content, MVP app. They come online once the data room is signed off.'
+      }
+    };
+
+    // -------------------------------------------------------------------
+    // RENDER
+    // -------------------------------------------------------------------
+    const copy = GROUP_COPY[groupKey] || GROUP_COPY.foundations;
+    const hubKeys = groups[groupKey] || groups.foundations;
+    const cardsHTML = hubKeys.map(hubCardHTML).filter(Boolean).join('');
+
+    const inv = engagement.investability;
+    const investFooterHTML = inv
+      ? `
+        <a href="/studio/investability.html?id=${engagement.id}" style="text-decoration:none;color:inherit;">
+          <div class="invest-mini">
+            <div class="invest-mini-body">
+              <div class="invest-mini-eyebrow">Investability snapshot</div>
+              <div class="invest-mini-title">${inv.pct >= 75 ? 'Strong starting position' : inv.pct >= 60 ? 'Promising — clear levers to pull' : 'Early — work to do'}</div>
+              <div class="invest-mini-sub">TDK 7×5 rubric · ${inv.suggestions.length} prioritised suggestions waiting</div>
+            </div>
+            <div class="invest-mini-score">
+              <span class="invest-mini-score-num">${inv.pct}</span>
+              <span class="invest-mini-score-of">/ 100</span>
+            </div>
+            <span class="invest-mini-cta">Open Investability →</span>
+          </div>
+        </a>`
+      : `
+        <div class="invest-empty">
+          <span class="invest-empty-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </span>
+          <div class="invest-empty-body">
+            <div class="invest-empty-title">No Investability score yet</div>
+            <div class="invest-empty-sub">Drop a one-pager, deck, or plan into your <a href="/studio/brief.html?id=${engagement.id}" style="color:var(--brand-primary);font-weight:500;">brief</a> to seed an initial TDK 7×5 readout, or score from form data manually in the Investability tab.</div>
+          </div>
+          <a href="/studio/investability.html?id=${engagement.id}" class="btn btn-outline btn-sm">Open tab →</a>
+        </div>`;
+
+    const main = `
+      <div class="page-header">
+        <div class="page-eyebrow">${copy.eyebrow}</div>
+        <h1 class="page-title">${copy.title}</h1>
+        <p class="page-sub">${copy.sub}</p>
+      </div>
+
+      <div class="group-grid">
+        ${cardsHTML}
+      </div>
+
+      ${investFooterHTML}
+    `;
+
+    window.renderShell(main);
   </script>
 </body>
 </html>

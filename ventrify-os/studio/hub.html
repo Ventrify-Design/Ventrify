@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hub — The Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/studio/styles.css">
+</head>
+<body>
+  <div id="root"></div>
+  <script src="/studio/app.js"></script>
+  <script>
+    const { engagement, labels } = window.STUDIO;
+    const params = new URLSearchParams(window.location.search);
+    const hubKey = params.get('hub');
+
+    if (!engagement) {
+      window.renderShell(`
+        <div class="page-header">
+          <div class="page-eyebrow">Hub</div>
+          <h1 class="page-title">No engagement selected.</h1>
+          <p class="page-sub">Pick one from the sign-in page.</p>
+        </div>
+        <a href="/studio/" class="btn btn-primary">Back to sign in</a>
+      `, { skipTabnav: true });
+      throw new Error('halt');
+    }
+
+    const hubLabel = (labels.hub[hubKey]) || hubKey || 'Hub';
+
+    window.renderShell(`
+      <div class="page-header">
+        <div class="page-eyebrow">Step 4 placeholder</div>
+        <h1 class="page-title">${hubLabel}</h1>
+        <p class="page-sub">This view (the L1 Provocation Cards / L2 Evidence / L3 Full Research rendering, with inline founder responses) lands in Studio Step 4. The dashboard already routes here so the navigation is real.</p>
+      </div>
+      <div class="card">
+        <div class="section-head">
+          <div>
+            <div class="section-title">What you&rsquo;ll see in Step 4</div>
+            <div class="section-sub">Per-hub L1 Provocation Cards with inline founder responses, L2 Evidence expander, L3 Full Research expander, and a sign-off button when the hub is ready.</div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:1.5rem;">
+        <a href="/studio/dashboard.html?id=${engagement.id}&group=data-room" class="btn btn-outline">&larr; Back to Data Room</a>
+      </div>
+    `);
+  </script>
+</body>
+</html>
