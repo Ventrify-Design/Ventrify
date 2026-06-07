@@ -153,47 +153,57 @@
 
   function renderTopbar() {
     const orgName = org ? org.name : 'Unconfigured workspace';
-    const orgTier = org && org.tier ? org.tier : '—';
     const orgLogo = org && org.logoDataUrl ? org.logoDataUrl : null;
     const orgInitials = org ? initialsOf(org.name) : '?';
+    const orgColor = (org && org.primaryColor) || '#0036FF';
     const opAvatar = currentOperator();
     const avatarBg = opAvatar ? opAvatar.avatarColor : '#999';
     const avatarTxt = opAvatar ? opAvatar.avatar : '?';
 
-    const brandHTML = org
+    // Partnership lockup: Ventrify OS mark + wordmark | Org mark + name
+    // Represents the licensing partnership between Ventrify and the operating org.
+    const partnerHTML = org
       ? `
-        <a href="dashboard.html" class="topbar-logo topbar-logo-branded">
-          <span class="topbar-logo-mark" style="background:${org.primaryColor || '#0036FF'};">
-            ${orgLogo ? `<img src="${orgLogo}" alt="${orgName}">` : `<span class="topbar-logo-mark-text">${orgInitials}</span>`}
+        <a href="dashboard.html" class="topbar-lockup-item topbar-lockup-partner" title="${orgName}">
+          <span class="topbar-lockup-mark" style="background:${orgColor};">
+            ${orgLogo ? `<img src="${orgLogo}" alt="${orgName}">` : `<span class="topbar-lockup-mark-text">${orgInitials}</span>`}
           </span>
-          <span class="topbar-logo-name">${orgName}</span>
-          <span class="tag">Workspace</span>
+          <span class="topbar-lockup-name">${orgName}</span>
         </a>`
       : `
-        <a href="dashboard.html" class="topbar-logo">
-          VENTRIFY <span class="os">OS</span>
-          <span class="tag">Workspace</span>
-        </a>`;
+        <span class="topbar-lockup-item topbar-lockup-partner topbar-lockup-empty">
+          <span class="topbar-lockup-mark topbar-lockup-mark-empty">?</span>
+          <span class="topbar-lockup-name">Unconfigured</span>
+        </span>`;
 
     return `
       <div class="topbar">
-        ${brandHTML}
-        <div class="topbar-org">
-          <span class="topbar-org-name">${org ? `Tier ${orgTier}` : orgName}</span>
-          <span class="topbar-org-tier">${org ? 'Powered by Ventrify OS' : '—'}</span>
+        <div class="topbar-lockup">
+          <a href="dashboard.html" class="topbar-lockup-item topbar-lockup-os" title="Ventrify OS">
+            <span class="topbar-lockup-mark topbar-lockup-mark-ventrify">V</span>
+            <span class="topbar-lockup-name"><span class="lockup-name-strong">VENTRIFY</span> <span class="lockup-name-weak">OS</span></span>
+          </a>
+          <span class="topbar-lockup-divider" aria-hidden="true"></span>
+          ${partnerHTML}
         </div>
         <div class="topbar-spacer"></div>
         <div class="topbar-utility">
-          <a href="../index.html" class="topbar-utility-link">OS site</a>
-          <a href="../pricing.html" class="topbar-utility-link">Pricing</a>
           <a href="#" class="topbar-utility-link">Docs</a>
           <a href="#" class="topbar-utility-link">Help</a>
-          <div class="topbar-divider"></div>
-          <div class="avatar topbar-avatar" style="background:${avatarBg};">${avatarTxt}</div>
+          <a href="#" class="topbar-utility-link" onclick="event.preventDefault(); window.__signOut();">Sign out</a>
+          <div class="avatar topbar-avatar" style="background:${avatarBg};" title="${opAvatar ? opAvatar.name : 'No operator'}">${avatarTxt}</div>
         </div>
       </div>
     `;
   }
+
+  // Sign-out: drops the per-session operator identity but keeps org + engagements.
+  // (Real Firebase auth will sign the user out of the magic-link session.)
+  window.__signOut = function() {
+    if (!window.confirm('Sign out of the Workspace? Your organisation and engagements stay saved — only this session ends.')) return;
+    localStorage.removeItem('workspace.currentOperator');
+    window.location.href = 'index.html';
+  };
 
   function renderSidebar() {
     return `
