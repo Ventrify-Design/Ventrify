@@ -324,6 +324,7 @@
       return {
         // Project overview
         oneLine: '',
+        industry: '',            // founder confirms what sector this sits in
         problem: '',
         targetUser: '',
         oneYearVision: '',
@@ -349,6 +350,8 @@
         investability: null
       };
     }
+
+    const INDUSTRY_OPTIONS = ['Climate / Energy','Healthtech','B2B SaaS','Consumer audio','Fintech','Edtech','Consumer','PropTech','LegalTech','Other'];
 
     let brief = helpers.readJSON(BRIEF_KEY, null) ||
                 (engagement.brief ? { ...blankBrief(), ...engagement.brief } : blankBrief());
@@ -539,6 +542,14 @@
                 <label class="brief-label">One-line description</label>
                 <input type="text" class="brief-input" data-bind="oneLine" value="${(brief.oneLine || '').replace(/"/g, '&quot;')}" placeholder="${venture} is a __ that helps __ do __ by __">
                 <div class="brief-hint">If a stranger only reads this line, would they get it?</div>
+              </div>
+              <div class="brief-field">
+                <label class="brief-label">Industry / sector</label>
+                <select class="brief-select" data-bind="industry">
+                  <option value="" ${!brief.industry ? 'selected' : ''}>Choose one…</option>
+                  ${INDUSTRY_OPTIONS.map(opt => `<option value="${opt}" ${brief.industry === opt ? 'selected' : ''}>${opt}</option>`).join('')}
+                </select>
+                <div class="brief-hint">Where does ${venture} sit? Investors round market size up or down based on this.</div>
               </div>
               <div class="brief-field">
                 <label class="brief-label">Problem you&rsquo;re solving</label>
@@ -783,11 +794,17 @@
       const i = programs.findIndex(p => p.id === engagement.id);
       if (i >= 0) {
         programs[i].brief = brief;
+        programs[i].briefSubmitted = true;
         programs[i].briefSubmittedAt = 'just now';
         programs[i].gateStatus = 'Phase 0 · brief submitted, awaiting kickoff';
         programs[i].lastActivity = 'just now';
         programs[i].lastActivityDetail = 'Founder submitted brief in the Studio';
-        // If investability was seeded, bring it onto the engagement
+        // Back-fill the venture-level fields the operator's Workspace renders.
+        // These were left null at engagement-creation time because the operator
+        // doesn't know them yet; the brief is where they originate.
+        if (brief.industry) programs[i].industry = brief.industry;
+        if (brief.oneLine) programs[i].venturePitch = brief.oneLine;
+        // If investability was seeded by the PDF upload, bring it onto the engagement
         if (brief.investability) programs[i].investability = brief.investability;
         helpers.writeJSON('workspace.programs', programs);
       }

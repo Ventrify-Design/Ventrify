@@ -100,6 +100,12 @@
     }
 
     function programCardHTML(p) {
+      // Defensive defaults for the pre-brief state — null industry/pitch
+      // appear when the operator has launched the engagement but the founder
+      // hasn't submitted the brief yet.
+      const industry = p.industry || 'Awaiting brief';
+      const cards = p.cards || { drafted: 0, awaitingFounder: 0, resolved: 0 };
+      const briefSubmitted = p.briefSubmitted !== false; // older sample programs lack the flag → treat as submitted
       return `
         <a href="program.html?id=${p.id}" class="program-card">
           <div class="program-card-head">
@@ -107,7 +113,7 @@
               <div class="avatar avatar-lg" style="background:${p.founderAvatarColor};">${p.founderAvatar}</div>
               <div>
                 <div class="program-card-name">${p.name}</div>
-                <div class="program-card-founder">${p.founderName} &middot; ${p.industry}</div>
+                <div class="program-card-founder">${p.founderName} &middot; ${industry}</div>
               </div>
             </div>
             <span class="pill ${window.healthClass(p.health)}">
@@ -125,25 +131,32 @@
           <div class="program-card-meta">
             <span>Started ${p.startDate}</span>
             <span class="sep"></span>
-            <span>${p.daysActive} days active</span>
+            <span>${p.daysActive || 0} days active</span>
             <span class="sep"></span>
-            <span>Last activity: ${p.lastActivity}</span>
+            <span>Last activity: ${p.lastActivity || 'just now'}</span>
           </div>
 
-          <div class="program-card-stats">
-            <div class="program-card-stat">
-              <div class="v">${p.cards.resolved}</div>
-              <div class="l">Cards resolved</div>
-            </div>
-            <div class="program-card-stat">
-              <div class="v">${p.cards.awaitingFounder}</div>
-              <div class="l">Awaiting founder</div>
-            </div>
-            <div class="program-card-stat">
-              <div class="v">${p.cards.drafted}</div>
-              <div class="l">Total drafted</div>
-            </div>
-          </div>
+          ${briefSubmitted
+            ? `<div class="program-card-stats">
+                 <div class="program-card-stat">
+                   <div class="v">${cards.resolved || 0}</div>
+                   <div class="l">Cards resolved</div>
+                 </div>
+                 <div class="program-card-stat">
+                   <div class="v">${cards.awaitingFounder || 0}</div>
+                   <div class="l">Awaiting founder</div>
+                 </div>
+                 <div class="program-card-stat">
+                   <div class="v">${cards.drafted || 0}</div>
+                   <div class="l">Total drafted</div>
+                 </div>
+               </div>`
+            : `<div class="program-card-stats" style="background:rgba(var(--primary-rgb,0,54,255),0.04);border:1px dashed rgba(var(--primary-rgb,0,54,255),0.25);border-radius:10px;padding:0.75rem;">
+                 <div style="font-size:0.82rem;color:var(--text-muted);text-align:center;width:100%;">
+                   <strong style="color:var(--text);font-weight:600;">Awaiting brief from founder.</strong> Studio invite sent to ${p.founderName}. No cards drafted until brief is signed.
+                 </div>
+               </div>`
+          }
         </a>
       `;
     }

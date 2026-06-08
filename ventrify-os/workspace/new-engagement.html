@@ -56,11 +56,13 @@
 
     const INDUSTRIES = ['Climate / Energy','Healthtech','B2B SaaS','Consumer audio','Fintech','Edtech','Consumer','PropTech','LegalTech','Other'];
 
-    // Initial form state
+    // Initial form state — venture-specific fields (pitch, industry, target user,
+    // vision, etc.) intentionally NOT here. Those come from the founder's brief
+    // in the Studio after the engagement is launched.
     const opDefault = (helpers.currentOperator() || operators[0] || {}).id || '';
     const state = {
       step: 1,
-      basics: { name: '', pitch: '', industry: 'Fintech', founderName: '', founderEmail: '' },
+      basics: { name: '', founderName: '', founderEmail: '' },
       start: new Date().toISOString().slice(0,10),
       operator: opDefault,
       hubs: ALL_HUBS.map(h => h.id), // default: every hub on
@@ -97,32 +99,24 @@
     function step1HTML() {
       return `
         <div class="wizard-step active">
-          <div class="wizard-eyebrow">Step 01 · Basics</div>
-          <h1 class="wizard-step-title">Tell us about the venture.</h1>
-          <p class="wizard-step-sub">This becomes the engagement record across the data room hubs, the Studio, and the local engagement repo.</p>
+          <div class="wizard-eyebrow">Step 01 · Operator basics</div>
+          <h1 class="wizard-step-title">Spin up the engagement shell.</h1>
+          <p class="wizard-step-sub">Only what <em>you</em> need to provide from your deal pipeline &mdash; venture name, who the founder is, when work starts, and who&rsquo;s running it. The venture&rsquo;s pitch, industry, target user, vision and the rest come from the founder when they fill in their brief inside the Studio.</p>
 
           <div class="wiz-grid">
             <div class="wiz-field span-2">
               <label class="wiz-label">Venture name</label>
               <input class="wiz-input" id="f-name" placeholder="e.g. MoneyGym" value="${state.basics.name}">
-            </div>
-            <div class="wiz-field span-2">
-              <label class="wiz-label">One-line pitch</label>
-              <textarea class="wiz-textarea" id="f-pitch" placeholder="A behavioural finance app that treats debt repayment like fitness training.">${state.basics.pitch}</textarea>
-            </div>
-            <div class="wiz-field">
-              <label class="wiz-label">Industry</label>
-              <select class="wiz-select" id="f-industry">
-                ${INDUSTRIES.map(i => `<option ${i===state.basics.industry?'selected':''}>${i}</option>`).join('')}
-              </select>
+              <div class="text-mono dim" style="font-size:0.66rem;letter-spacing:0.06em;text-transform:uppercase;margin-top:0.35rem;">Used as the repo slug + Studio URL. Founder will refine this in their brief if needed.</div>
             </div>
             <div class="wiz-field">
               <label class="wiz-label">Founder name</label>
               <input class="wiz-input" id="f-founder" placeholder="e.g. Inez Okonkwo" value="${state.basics.founderName}">
             </div>
-            <div class="wiz-field span-2">
+            <div class="wiz-field">
               <label class="wiz-label">Founder email</label>
               <input class="wiz-input" type="email" id="f-email" placeholder="inez@moneygym.io" value="${state.basics.founderEmail}">
+              <div class="text-mono dim" style="font-size:0.66rem;letter-spacing:0.06em;text-transform:uppercase;margin-top:0.35rem;">Studio invite goes here</div>
             </div>
             <div class="wiz-field">
               <label class="wiz-label">Start date</label>
@@ -133,6 +127,14 @@
               <select class="wiz-select" id="f-operator">
                 ${operators.length ? operators.map(o => `<option value="${o.id}" ${o.id === state.operator ? 'selected' : ''}>${o.name} · ${o.role}</option>`).join('') : '<option>No operators yet</option>'}
               </select>
+            </div>
+          </div>
+
+          <div style="background:rgba(var(--primary-rgb,0,54,255),0.04);border:1px solid rgba(var(--primary-rgb,0,54,255),0.15);border-radius:12px;padding:1rem 1.25rem;margin-top:1.5rem;display:flex;align-items:flex-start;gap:0.85rem;">
+            <span style="flex-shrink:0;width:24px;height:24px;border-radius:6px;background:var(--primary);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:0.78rem;font-weight:700;">i</span>
+            <div style="font-size:0.85rem;color:var(--text-muted);line-height:1.55;">
+              <strong style="color:var(--text);font-weight:600;">What the founder fills in next:</strong>
+              one-line pitch, problem statement, target user, 1-year vision, key features, comparable products, design style, tech preferences, team detail, plus an optional PDF upload that seeds an initial Investability score. You don&rsquo;t need any of that to launch — Studio handles intake.
             </div>
           </div>
         </div>`;
@@ -211,7 +213,7 @@
             <h4>Engagement summary</h4>
             <div class="preview-row"><span class="l">Venture</span><span class="v">${state.basics.name || 'Untitled'}</span></div>
             <div class="preview-row"><span class="l">Founder</span><span class="v">${state.basics.founderName || '—'} · ${state.basics.founderEmail || '—'}</span></div>
-            <div class="preview-row"><span class="l">Industry</span><span class="v">${state.basics.industry}</span></div>
+            <div class="preview-row"><span class="l">Founder brief</span><span class="v">Awaiting — founder fills in via Studio</span></div>
             <div class="preview-row"><span class="l">Operating org</span><span class="v">${orgName}</span></div>
             <div class="preview-row"><span class="l">Start date</span><span class="v">${state.start}</span></div>
             <div class="preview-row"><span class="l">Program manager</span><span class="v">${opName}</span></div>
@@ -262,8 +264,8 @@
           <div class="success-icon">
             <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
           </div>
-          <h1 class="success-title">Engagement launched.</h1>
-          <p class="success-sub"><strong>${state.basics.name}</strong> is now in <strong>Phase 0 · Intake</strong>. The Studio will go live for ${state.basics.founderEmail || 'the founder'} within sixty seconds. Below is the one-time local setup &mdash; copy and run this on the operator&rsquo;s machine to scaffold the engagement repo.</p>
+          <h1 class="success-title">Engagement launched. Studio invite is on its way.</h1>
+          <p class="success-sub"><strong>${state.basics.name}</strong> is now in <strong>Phase 0 · Awaiting brief</strong>. The Studio invite has been sent to ${state.basics.founderEmail || 'the founder'}; once they fill in the brief, Phase 0 kicks off automatically. Below is the one-time local setup &mdash; copy and run this on the operator&rsquo;s machine to scaffold the engagement repo.</p>
 
           <div class="launch-cmd-card">
             <div class="launch-cmd-head">
@@ -274,12 +276,13 @@
 cp -R ~/Desktop/ventrify-engagement-template ~/Desktop/${slug}-engagement
 cd ~/Desktop/${slug}-engagement
 
-# 2. Fill in placeholders from this engagement
+# 2. Fill in operator-known placeholders. Brief data (pitch, industry,
+#    vision, etc.) syncs back automatically once the founder submits.
 node tools/init.js \\
   --org "${orgName}" --org-slug "${orgSlug}" \\
   --venture "${state.basics.name}" --venture-slug "${slug}" \\
   --founder "${state.basics.founderName}" --founder-email "${state.basics.founderEmail}" \\
-  --industry "${state.basics.industry}" --tier "${(org && org.tier) || 'Cohort'}"
+  --tier "${(org && org.tier) || 'Cohort'}" --awaiting-brief
 
 # 3. Install deps + push to your GitHub org
 npm install
@@ -294,9 +297,10 @@ claude code .</pre>
             <h4>What happens next</h4>
             <ul>
               <li><strong>Founder receives Studio invite</strong> — magic link emailed to ${state.basics.founderEmail || 'the founder'} within sixty seconds.</li>
-              <li><strong>Welcome Pack PDF queued</strong> — generated by <code>handoff:assemble</code>, sent with the Studio invite.</li>
-              <li><strong>workflow-orchestrator runs first briefing</strong> — by tomorrow morning, you&rsquo;ll see ${state.basics.name || 'this venture'} in your Today queue with the next action.</li>
-              <li><strong>research-curator drafts L1 cards</strong> — once the brief intake is signed in the Studio, the first 5&ndash;7 Research Hub Provocation Cards drop.</li>
+              <li><strong>Founder fills in the brief in the Studio</strong> — pitch, problem, target user, features, vision. Optional PDF upload pre-fills and seeds an initial Investability score.</li>
+              <li><strong>Brief content syncs back to the engagement repo</strong> — once submitted, <code>tools/brief-sync.js</code> fills in <code>brief.md</code> and <code>engagement.json</code> on the operator&rsquo;s local repo.</li>
+              <li><strong>workflow-orchestrator opens Phase 0</strong> — <code>founder-lexicon-keeper</code> + <code>brand-designer</code> kick off; first Research Hub Provocation Cards drop ahead of Phase 1.</li>
+              <li><strong>You&rsquo;ll see ${state.basics.name || 'this venture'} in your Today queue</strong> — by tomorrow morning, with the next action surfaced for you.</li>
             </ul>
           </div>
 
@@ -342,8 +346,6 @@ claude code .</pre>
     function readBasics() {
       const m = el => document.getElementById(el);
       state.basics.name = m('f-name')?.value || '';
-      state.basics.pitch = m('f-pitch')?.value || '';
-      state.basics.industry = m('f-industry')?.value || 'Fintech';
       state.basics.founderName = m('f-founder')?.value || '';
       state.basics.founderEmail = m('f-email')?.value || '';
       state.start = m('f-start')?.value || state.start;
@@ -361,10 +363,14 @@ claude code .</pre>
         founderName: state.basics.founderName,
         founderAvatar: initialsOf(state.basics.founderName) || 'FF',
         founderAvatarColor: (org && org.primaryColor) || '#0036FF',
-        industry: state.basics.industry,
-        venturePitch: state.basics.pitch || 'Newly initialised on Ventrify OS.',
+        // Venture-specific fields (industry, pitch) live on the engagement
+        // record but stay null until the founder submits the brief in the
+        // Studio — at which point brief.industry, brief.oneLine etc. sync in.
+        industry: null,
+        venturePitch: null,
+        briefSubmitted: false,
         phase: 0,
-        gateStatus: 'Phase 0 · welcome pack queued',
+        gateStatus: 'Phase 0 · awaiting brief from founder',
         startDate: state.start,
         daysActive: 0,
         lastActivity: 'just now',
@@ -424,7 +430,7 @@ claude code .</pre>
       // disabled state. IMPORTANT: do NOT call bind() from inside an input
       // handler — that re-attaches listeners on top of existing ones and the
       // count doubles every keystroke, freezing the browser within seconds.
-      ['f-name','f-pitch','f-industry','f-founder','f-email','f-start','f-operator'].forEach(id => {
+      ['f-name','f-founder','f-email','f-start','f-operator'].forEach(id => {
         const el = document.getElementById(id);
         if (!el) return;
         const evt = (el.tagName === 'SELECT' || el.type === 'date') ? 'change' : 'input';

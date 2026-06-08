@@ -120,17 +120,18 @@
           <div class="avatar avatar-lg" style="background:${p.founderAvatarColor};width:56px;height:56px;font-size:1.05rem;">${p.founderAvatar}</div>
           <div>
             <h1 class="program-detail-title">${p.name}</h1>
-            <p class="program-detail-pitch">${p.venturePitch}</p>
+            <p class="program-detail-pitch">${p.venturePitch || (p.briefSubmitted === false ? 'Awaiting brief from ' + (p.founderName || 'founder') + '.' : 'No one-liner yet.')}</p>
             <div class="program-detail-meta">
-              <span class="pill">${p.industry}</span>
+              <span class="pill">${p.industry || 'Industry TBD'}</span>
               <span class="pill pill-primary">${helpers.phaseLabel(p.phase)}</span>
               <span class="pill ${window.healthClass(p.health)}"><span class="dot"></span> ${window.healthLabel(p.health)}</span>
+              ${p.briefSubmitted === false ? '<span class="pill" style="background:rgba(var(--primary-rgb,0,54,255),0.1);color:var(--primary);"><span class="dot"></span> Awaiting brief</span>' : ''}
               ${p.mvpDemoModeReady ? '<span class="pill pill-success"><span class="dot"></span> DEMO_MODE ready</span>' : ''}
             </div>
           </div>
         </div>
         <div style="display:flex;flex-direction:column;gap:0.5rem;align-items:flex-end;">
-          <button class="btn btn-primary">Open in the Studio &rarr;</button>
+          <a href="/studio/dashboard.html?id=${p.id}" target="_blank" class="btn btn-primary">Open in the Studio &rarr;</a>
           <button class="btn btn-outline btn-sm">Reassign operator</button>
         </div>
       </div>
@@ -138,13 +139,13 @@
       <div class="program-detail-stats">
         <div class="card">
           <div class="stat-block">
-            <div class="stat-val">${p.cards.resolved}/${p.cards.drafted}</div>
+            <div class="stat-val">${(p.cards && p.cards.resolved) || 0}/${(p.cards && p.cards.drafted) || 0}</div>
             <div class="stat-lbl">Cards resolved by founder</div>
           </div>
         </div>
         <div class="card">
           <div class="stat-block">
-            <div class="stat-val">${p.daysActive}</div>
+            <div class="stat-val">${p.daysActive || 0}</div>
             <div class="stat-lbl">Days active</div>
           </div>
         </div>
