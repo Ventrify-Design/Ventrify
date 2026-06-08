@@ -8,12 +8,279 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/studio/styles.css">
+  <style>
+    .inv-shell { max-width: 1040px; margin: 0 auto; }
+
+    /* Header score panel */
+    .inv-header {
+      background: linear-gradient(135deg, #0F0F12 0%, #1a1a1f 100%);
+      color: #fff;
+      border-radius: 22px;
+      padding: 2.25rem 2.5rem;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 2rem;
+      align-items: center;
+      margin-bottom: 2.5rem;
+    }
+    .inv-header-eyebrow {
+      font-family: var(--font-mono); font-size: 0.65rem;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--brand-primary); margin-bottom: 0.6rem;
+    }
+    .inv-header-title {
+      font-size: clamp(1.5rem, 2.6vw, 1.8rem);
+      letter-spacing: -0.02em; font-weight: 600;
+      color: #fff; line-height: 1.2;
+      margin-bottom: 0.5rem;
+    }
+    .inv-header-sub {
+      font-size: 0.92rem; color: rgba(255,255,255,0.6);
+      line-height: 1.55; max-width: 560px;
+    }
+    .inv-header-score {
+      display: flex; flex-direction: column;
+      align-items: flex-end;
+      gap: 0.4rem;
+    }
+    .inv-header-score-num {
+      font-family: var(--font-heading);
+      font-size: clamp(3.5rem, 7vw, 4.8rem);
+      font-weight: 600; letter-spacing: -0.03em;
+      line-height: 0.95; color: #fff;
+    }
+    .inv-header-score-of {
+      font-family: var(--font-mono); font-size: 0.72rem;
+      letter-spacing: 0.1em; color: rgba(255,255,255,0.45);
+    }
+    .inv-header-meta {
+      display: flex; gap: 0.85rem; align-items: center;
+      margin-top: 0.6rem;
+    }
+    .inv-header-pill {
+      font-family: var(--font-mono); font-size: 0.62rem;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 4px 10px; border-radius: 980px;
+      background: rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.7); font-weight: 500;
+    }
+    .inv-rescore {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.16);
+      color: #fff;
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-family: var(--font-mono); font-size: 0.7rem;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .inv-rescore:hover { background: rgba(255,255,255,0.16); }
+
+    /* Trajectory micro-chart */
+    .inv-trajectory {
+      display: flex; align-items: flex-end;
+      gap: 4px; height: 30px;
+      margin-top: 0.5rem;
+    }
+    .inv-trajectory-bar {
+      width: 4px;
+      background: rgba(var(--brand-primary-rgb), 0.7);
+      border-radius: 2px;
+    }
+    .inv-trajectory-bar.faint { background: rgba(255,255,255,0.15); }
+
+    /* Dimension cards grid */
+    .inv-dim-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2.5rem;
+    }
+    .inv-dim {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem 1.6rem;
+    }
+    .inv-dim-head {
+      display: flex; align-items: baseline; justify-content: space-between;
+      gap: 1rem; margin-bottom: 0.5rem;
+    }
+    .inv-dim-name {
+      font-size: 1rem; font-weight: 600;
+      letter-spacing: -0.01em; color: var(--text);
+    }
+    .inv-dim-score-row {
+      display: flex; align-items: baseline; gap: 4px;
+    }
+    .inv-dim-score {
+      font-family: var(--font-heading); font-size: 1.4rem;
+      font-weight: 600; letter-spacing: -0.02em; color: var(--text);
+      line-height: 1;
+    }
+    .inv-dim-of {
+      font-family: var(--font-mono); font-size: 0.7rem;
+      color: var(--text-muted); letter-spacing: 0.06em;
+    }
+    .inv-dim-bar {
+      height: 4px; background: rgba(0,0,0,0.06);
+      border-radius: 2px; overflow: hidden;
+      margin-bottom: 1rem;
+    }
+    .inv-dim-fill {
+      height: 100%; background: var(--brand-primary);
+      transition: width 0.4s ease;
+    }
+    .inv-subs {
+      display: grid; gap: 0.5rem;
+    }
+    .inv-sub {
+      display: grid; grid-template-columns: 1fr auto;
+      gap: 8px; align-items: center;
+      font-size: 0.82rem; color: var(--text-muted);
+    }
+    .inv-sub-bar {
+      width: 60px; height: 3px;
+      background: rgba(0,0,0,0.05);
+      border-radius: 2px; overflow: hidden;
+    }
+    .inv-sub-fill {
+      height: 100%;
+      background: var(--brand-primary);
+      opacity: 0.6;
+    }
+
+    .inv-dim-note {
+      margin-top: 1rem;
+      padding-top: 0.85rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.8rem;
+      line-height: 1.55;
+      color: var(--text-muted);
+    }
+    .inv-dim-note strong { color: var(--text); font-weight: 600; }
+
+    /* Suggestions panel */
+    .inv-sugg-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.75rem 2rem;
+      margin-bottom: 2rem;
+    }
+    .inv-sugg-head {
+      display: flex; align-items: baseline; justify-content: space-between;
+      gap: 1rem; margin-bottom: 1.25rem;
+      padding-bottom: 0.85rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .inv-sugg-title {
+      font-size: 1.05rem; font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .inv-sugg-meta {
+      font-family: var(--font-mono); font-size: 0.65rem;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .inv-sugg-item {
+      display: grid; grid-template-columns: auto 1fr auto;
+      gap: 1rem; padding: 0.95rem 0;
+      border-bottom: 1px solid var(--border);
+      align-items: start;
+    }
+    .inv-sugg-item:last-child { border-bottom: none; }
+    .inv-sugg-priority {
+      font-family: var(--font-mono); font-size: 0.65rem;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 4px 10px; border-radius: 980px;
+      font-weight: 600; white-space: nowrap;
+      align-self: flex-start;
+      margin-top: 2px;
+    }
+    .inv-sugg-priority.p1 { background: rgba(192,57,43,0.1); color: var(--danger); }
+    .inv-sugg-priority.p2 { background: rgba(var(--brand-primary-rgb), 0.1); color: var(--brand-primary); }
+    .inv-sugg-priority.p3 { background: rgba(0,184,160,0.1); color: var(--success); }
+    .inv-sugg-text {
+      font-size: 0.92rem; line-height: 1.6; color: var(--text);
+    }
+    .inv-sugg-text strong { font-weight: 600; }
+    .inv-sugg-anchor {
+      font-family: var(--font-mono); font-size: 0.66rem;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--text-muted); margin-top: 0.4rem;
+      display: block;
+    }
+    .inv-sugg-anchor a { color: var(--brand-primary); font-weight: 500; }
+    .inv-sugg-impact {
+      font-family: var(--font-mono); font-size: 0.7rem;
+      color: var(--brand-primary); font-weight: 600;
+      white-space: nowrap;
+      align-self: flex-start;
+      margin-top: 2px;
+    }
+
+    /* Empty state when no score exists yet */
+    .inv-empty {
+      background: var(--surface-2);
+      border: 1px dashed var(--border-strong);
+      border-radius: 20px;
+      padding: 3.5rem 2.5rem;
+      text-align: center;
+    }
+    .inv-empty-icon {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 56px; height: 56px;
+      border-radius: 14px;
+      background: rgba(var(--brand-primary-rgb), 0.08);
+      color: var(--brand-primary);
+      margin-bottom: 1.25rem;
+    }
+    .inv-empty-title {
+      font-size: 1.4rem; font-weight: 600; color: var(--text);
+      letter-spacing: -0.02em; margin-bottom: 0.6rem;
+    }
+    .inv-empty-sub {
+      font-size: 0.95rem; max-width: 560px; margin: 0 auto 1.75rem;
+      line-height: 1.6; color: var(--text-muted);
+    }
+    .inv-empty-paths {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+    .inv-empty-path {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.25rem;
+      text-align: left;
+      text-decoration: none;
+      color: inherit;
+      transition: border-color var(--transition), transform 0.18s ease;
+    }
+    .inv-empty-path:hover {
+      border-color: rgba(var(--brand-primary-rgb), 0.4);
+      transform: translateY(-1px);
+    }
+    .inv-empty-path-title { font-weight: 600; font-size: 0.92rem; margin-bottom: 0.35rem; }
+    .inv-empty-path-sub { font-size: 0.8rem; color: var(--text-muted); line-height: 1.5; }
+
+    @media (max-width: 720px) {
+      .inv-header { grid-template-columns: 1fr; }
+      .inv-header-score { align-items: flex-start; }
+      .inv-empty-paths { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body>
   <div id="root"></div>
   <script src="/studio/app.js"></script>
   <script>
-    const { engagement } = window.STUDIO;
+    const { engagement, helpers } = window.STUDIO;
     if (!engagement) {
       window.renderShell(`
         <div class="page-header">
@@ -25,29 +292,270 @@
       throw new Error('halt');
     }
 
-    const inv = engagement.investability;
-    const summary = inv
-      ? `<p class="page-sub">Initial score: <strong style="color:var(--text);">${inv.pct} / 100</strong>. Full TDK 7×5 scorecard with explanations, prioritised suggestions, and dimension drill-downs lands in Step 5.</p>`
-      : `<p class="page-sub">No score yet. Step 5 will let you score from form data manually, or seed by uploading material in your <a href="/studio/brief.html?id=${engagement.id}" style="color:var(--brand-primary);">brief</a>.</p>`;
+    // -------------------------------------------------------------------
+    // TDK 7×5 RUBRIC — 7 dimensions × 5 sub-criteria
+    // For prototype the scores are derived from the brief's seeded score
+    // plus deterministic per-sub-criterion deltas. Real wiring later swaps
+    // this for an actual Claude API call against the brief + research hub.
+    // -------------------------------------------------------------------
+    const TDK_RUBRIC = [
+      {
+        key: 'team', name: 'Team',
+        subs: ['Founder-market fit', 'Domain depth', 'Execution track record', 'Hiring leverage', 'Decision velocity'],
+        note: 'Investors back the bet on the founder before the bet on the venture. Anything you can do to compress this dimension upward compounds across every later raise.'
+      },
+      {
+        key: 'problem', name: 'Problem',
+        subs: ['Severity', 'Frequency', 'Urgency', 'Persistence', 'Willingness to pay to solve'],
+        note: 'Severity + frequency together determine the gravitational pull. A severe-but-rare problem is a vitamin. A frequent-but-mild problem is a fad. You want both.'
+      },
+      {
+        key: 'solution', name: 'Solution',
+        subs: ['Differentiated approach', 'Defensibility', 'Build feasibility', 'Time to value', 'Product clarity'],
+        note: 'Time-to-value is the often-missed dimension. The fastest your user can feel the win compounds your retention and your conversion to paid.'
+      },
+      {
+        key: 'market', name: 'Market',
+        subs: ['Size today', 'Growth rate', 'Wedge accessibility', 'Competitive density', 'Regulatory clarity'],
+        note: 'Investors round small markets up if the wedge is sharp. Round large markets down if it isn\'t. Wedge accessibility is the single highest-leverage Market dimension.'
+      },
+      {
+        key: 'traction', name: 'Traction',
+        subs: ['Quantitative evidence', 'Customer interviews', 'Pre-orders / LOIs', 'Channel signals', 'Cohort retention proof'],
+        note: 'Cohort retention beats raw user counts. Quote the numbers; quote the interviews. Don\'t round.'
+      },
+      {
+        key: 'differentiation', name: 'Differentiation',
+        subs: ['Moat type', 'Switching cost', 'Network effects', 'Brand wedge', 'Speed advantage'],
+        note: 'Most early-stage ventures don\'t have a moat yet — they have a direction toward one. Name the direction. Saying "we\'ll be faster" without saying how reads as denial.'
+      },
+      {
+        key: 'vision', name: 'Vision',
+        subs: ['Endgame articulation', 'Optionality', 'Macro alignment', 'Unit-economics endpoint', 'Founder ambition fit'],
+        note: 'Vision is the dimension investors use to round-up everything else. A clear endgame with credible unit-economics 5 years out makes the present-day scores forgivable.'
+      }
+    ];
 
-    window.renderShell(`
-      <div class="page-header">
-        <div class="page-eyebrow">Step 5 placeholder</div>
-        <h1 class="page-title">Investability</h1>
-        ${summary}
-      </div>
-      <div class="card">
-        <div class="section-head">
-          <div>
-            <div class="section-title">What lands in Step 5</div>
-            <div class="section-sub">TDK 7×5 scorecard (Team · Problem · Solution · Market · Traction · Differentiation · Vision, 5 sub-criteria each), explanations per dimension, prioritised suggestions tied to specific brief sections, and an at-a-glance trajectory chart as the engagement progresses.</div>
+    // -------------------------------------------------------------------
+    // Score derivation — mock logic that will be swapped for real
+    // agent output. Reads engagement.investability (set by brief PDF
+    // upload), or computes a fresh score on demand.
+    // -------------------------------------------------------------------
+    function scoreFromSeed(seedNum, dimIdx, subIdx) {
+      // Deterministic small variance around the dimension's base score
+      const dimBase = (engagement.investability && engagement.investability.dims[dimIdx])
+        ? engagement.investability.dims[dimIdx].score
+        : Math.min(5, Math.round(seedNum / 20));
+      const variance = (((seedNum + dimIdx * 7 + subIdx * 13) % 5) - 2) * 0.6;
+      return Math.max(1, Math.min(5, Math.round(dimBase + variance)));
+    }
+
+    function buildFullScorecard(seed) {
+      // Build a 7×5 from existing dim scores (if any) plus deterministic sub-scores
+      const dims = TDK_RUBRIC.map((rub, i) => {
+        const subs = rub.subs.map((subLabel, j) => ({
+          label: subLabel,
+          score: scoreFromSeed(seed, i, j)
+        }));
+        const total = subs.reduce((a, s) => a + s.score, 0);
+        return {
+          key: rub.key, name: rub.name,
+          subs,
+          score: Math.round(total / subs.length * 10) / 10, // avg, one decimal
+          rawTotal: total,
+          note: rub.note
+        };
+      });
+      const grandTotal = dims.reduce((a, d) => a + d.rawTotal, 0);
+      const pct = Math.round((grandTotal / (7 * 5 * 5)) * 100);
+      return { dims, pct, computedAt: 'just now' };
+    }
+
+    function mockSuggestions(scorecard) {
+      // Order dimensions by score asc, generate suggestions for the 4-5 weakest
+      const sorted = [...scorecard.dims].sort((a, b) => a.score - b.score);
+      const baseSuggestions = {
+        team: { text: '<strong>Recruit a co-founder with hiring history.</strong> Solo founders score 2 lower on Hiring leverage by default. Even a part-time advisor with three offers under their belt closes the gap.', anchor: 'Brief · Team', priority: 'p2', impact: '+0.8' },
+        problem: { text: '<strong>Quantify Persistence.</strong> Show that the problem hasn\'t been solved despite 5+ years of attempts, with specific competitor names and what failed. That alone moves Persistence up a point.', anchor: 'Research Hub · Card 02', priority: 'p2', impact: '+0.6' },
+        solution: { text: '<strong>Tighten Time-to-value.</strong> If a user gets their first meaningful win in &gt;60s of first-app-open, you\'re leaving retention on the table. Re-think the onboarding cold open.', anchor: 'Vision Hub · MVP scope', priority: 'p1', impact: '+1.2' },
+        market: { text: '<strong>Reframe Market as a wedge into a larger category.</strong> Investors round small markets up and large markets down. Pick the right anchor — "behaviour change" not "fintech tooling".', anchor: 'Research Hub · Card 01', priority: 'p1', impact: '+1.0' },
+        traction: { text: '<strong>Surface cohort retention from the 14 interviews.</strong> Convert your qualitative data into a defensible metric ("9 of 14 said they\'d switch tomorrow"). This is your biggest lever.', anchor: 'Research Hub · L3 user-insights', priority: 'p1', impact: '+1.4' },
+        differentiation: { text: '<strong>Name your moat direction.</strong> Even if you don\'t have one yet, "we\'re building toward a community-led moat" beats silence. Make it explicit in the Strategy Hub.', anchor: 'Strategy Hub', priority: 'p2', impact: '+0.7' },
+        vision: { text: '<strong>Add a quantified endpoint.</strong> "Embedded in three partner workflows by month 12, with 60% week-2 cohort retention" reads as a credible vision. Vague visions get rounded down.', anchor: 'Brief · 1-year vision', priority: 'p3', impact: '+0.5' }
+      };
+      return sorted.slice(0, 5).map(d => ({ dim: d.name, ...baseSuggestions[d.key] }));
+    }
+
+    function trajectoryHTML() {
+      // 8 mock historical bars + current. In a real engagement these would be
+      // weekly snapshots — for prototype, fake but believable upward trend.
+      const seed = (engagement.investability && engagement.investability.pct) || 60;
+      const bars = [];
+      for (let i = 0; i < 8; i++) {
+        const v = Math.max(20, Math.min(95, seed - 12 + (i * 1.5) + (((i * 7) % 5) - 2)));
+        bars.push(`<div class="inv-trajectory-bar faint" style="height:${v * 0.3}px;" title="Week ${-7 + i}"></div>`);
+      }
+      // Current week (real score)
+      bars.push(`<div class="inv-trajectory-bar" style="height:${seed * 0.3}px;" title="Now: ${seed}"></div>`);
+      return `<div class="inv-trajectory">${bars.join('')}</div>`;
+    }
+
+    function rescoreNow() {
+      // Compute a fresh seed off engagement name + brief length
+      const seedStr = `${engagement.name}-${(engagement.brief && Object.values(engagement.brief).join('').length) || 0}`;
+      const seed = 55 + (seedStr.length % 24);
+      // Generate a dim-level summary that buildFullScorecard expects to consume
+      const dims = [
+        { name: 'Team',  score: Math.min(5, Math.round((seed * 1.0) % 5) + 1) },
+        { name: 'Problem', score: Math.min(5, Math.round((seed * 0.8) % 5) + 1) },
+        { name: 'Solution', score: Math.min(5, Math.round((seed * 1.2) % 5) + 1) },
+        { name: 'Market', score: Math.min(5, Math.round((seed * 0.6) % 5) + 1) },
+        { name: 'Traction', score: Math.min(5, Math.round((seed * 0.5) % 5)) },
+        { name: 'Differentiation', score: Math.min(5, Math.round((seed * 0.9) % 5) + 1) },
+        { name: 'Vision', score: Math.min(5, Math.round((seed * 1.1) % 5) + 1) }
+      ];
+      const pct = Math.round((dims.reduce((a, d) => a + d.score, 0) / (dims.length * 5)) * 100);
+      const inv = { pct, dims, suggestions: [], computedAt: 'just now', source: 'manual' };
+      // Persist
+      const programs = helpers.readJSON('workspace.programs', []);
+      const i = programs.findIndex(p => p.id === engagement.id);
+      if (i >= 0) {
+        programs[i].investability = inv;
+        helpers.writeJSON('workspace.programs', programs);
+      }
+      window.location.reload();
+    }
+    window.rescoreNow = rescoreNow;
+
+    // -------------------------------------------------------------------
+    // RENDER
+    // -------------------------------------------------------------------
+    const hasScore = !!engagement.investability;
+
+    function renderEmpty() {
+      const briefURL = `/studio/brief.html?id=${engagement.id}`;
+      const dashboardURL = `/studio/dashboard.html?id=${engagement.id}`;
+      return `
+        <div class="inv-empty">
+          <span class="inv-empty-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          </span>
+          <div class="inv-empty-title">No Investability score yet for ${engagement.name}.</div>
+          <div class="inv-empty-sub">The TDK 7×5 rubric needs material to score against. You can seed it from an uploaded one-pager (richest scoring), or score from your brief form data manually.</div>
+          <div class="inv-empty-paths">
+            <a href="${briefURL}" class="inv-empty-path">
+              <div class="inv-empty-path-title">Upload a one-pager or deck in your brief</div>
+              <div class="inv-empty-path-sub">Richest scoring. The platform reads the PDF, maps to TDK dimensions, returns scores + suggestions.</div>
+            </a>
+            <a href="javascript:rescoreNow();" class="inv-empty-path">
+              <div class="inv-empty-path-title">Score from form data now</div>
+              <div class="inv-empty-path-sub">Lighter signal but immediate. Uses what&rsquo;s in your brief form to seed the dimensions.</div>
+            </a>
+          </div>
+          <div style="margin-top:1.5rem;">
+            <a href="${dashboardURL}" class="btn btn-outline btn-sm">&larr; Back to dashboard</a>
           </div>
         </div>
+      `;
+    }
+
+    function renderScorecard() {
+      const seed = engagement.investability.pct || 60;
+      const scorecard = buildFullScorecard(seed);
+      const suggestions = mockSuggestions(scorecard);
+      const headline = scorecard.pct >= 75 ? 'Strong starting position.'
+                     : scorecard.pct >= 60 ? 'Promising — clear levers to pull.'
+                     : 'Early — work to do, but the structure is fixable.';
+
+      const headerHTML = `
+        <div class="inv-header">
+          <div class="inv-header-body">
+            <div class="inv-header-eyebrow">Investability · TDK 7×5</div>
+            <h1 class="inv-header-title">${headline}</h1>
+            <p class="inv-header-sub">Computed across seven investor-facing dimensions, each with five sub-criteria. Refines as the engagement progresses and as research-curator surfaces new evidence in the Data Room.</p>
+            <div class="inv-header-meta">
+              <span class="inv-header-pill">Computed ${scorecard.computedAt}</span>
+              <span class="inv-header-pill">${engagement.investability.source === 'manual' ? 'Source: form data' : 'Source: PDF upload'}</span>
+              <button class="inv-rescore" onclick="rescoreNow();">Re-score now</button>
+            </div>
+          </div>
+          <div class="inv-header-score">
+            <div style="display:flex;align-items:baseline;gap:6px;">
+              <span class="inv-header-score-num">${scorecard.pct}</span>
+              <span class="inv-header-score-of">/ 100</span>
+            </div>
+            ${trajectoryHTML()}
+            <span class="inv-header-pill" style="margin-top:0.25rem;">8-week trajectory</span>
+          </div>
+        </div>
+      `;
+
+      const dimsHTML = `
+        <div class="inv-dim-grid">
+          ${scorecard.dims.map(d => `
+            <div class="inv-dim">
+              <div class="inv-dim-head">
+                <span class="inv-dim-name">${d.name}</span>
+                <div class="inv-dim-score-row">
+                  <span class="inv-dim-score">${d.score}</span>
+                  <span class="inv-dim-of">/ 5</span>
+                </div>
+              </div>
+              <div class="inv-dim-bar">
+                <div class="inv-dim-fill" style="width:${(d.score / 5) * 100}%;"></div>
+              </div>
+              <div class="inv-subs">
+                ${d.subs.map(s => `
+                  <div class="inv-sub">
+                    <span>${s.label}</span>
+                    <div style="display:flex;align-items:center;gap:6px;">
+                      <span class="inv-sub-bar"><span class="inv-sub-fill" style="width:${(s.score / 5) * 100}%;"></span></span>
+                      <span class="text-mono dim" style="font-size:0.7rem;width:18px;text-align:right;">${s.score}</span>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+              <div class="inv-dim-note">${d.note}</div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+
+      const sugHTML = `
+        <div class="inv-sugg-card">
+          <div class="inv-sugg-head">
+            <div class="inv-sugg-title">Prioritised suggestions</div>
+            <span class="inv-sugg-meta">Ranked by dimension weakness × likely impact</span>
+          </div>
+          ${suggestions.map((s, i) => `
+            <div class="inv-sugg-item">
+              <span class="inv-sugg-priority ${s.priority}">${s.priority.toUpperCase()}</span>
+              <div>
+                <div class="inv-sugg-text">${s.text}</div>
+                <span class="inv-sugg-anchor">Anchor: <a href="#">${s.anchor}</a> &middot; Dimension: ${s.dim}</span>
+              </div>
+              <span class="inv-sugg-impact">${s.impact}</span>
+            </div>
+          `).join('')}
+        </div>
+      `;
+
+      const dashboardURL = `/studio/dashboard.html?id=${engagement.id}`;
+      const backHTML = `
+        <div style="margin-top:0.5rem;">
+          <a href="${dashboardURL}" class="btn btn-outline btn-sm">&larr; Back to dashboard</a>
+        </div>
+      `;
+
+      return headerHTML + dimsHTML + sugHTML + backHTML;
+    }
+
+    const main = `
+      <div class="inv-shell">
+        ${hasScore ? renderScorecard() : renderEmpty()}
       </div>
-      <div style="margin-top:1.5rem;">
-        <a href="/studio/dashboard.html?id=${engagement.id}" class="btn btn-outline">&larr; Back to dashboard</a>
-      </div>
-    `);
+    `;
+    window.renderShell(main);
   </script>
 </body>
 </html>
