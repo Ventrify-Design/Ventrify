@@ -688,6 +688,41 @@ a.topbar-lockup-item:hover { background: var(--surface-alt); }
   background: var(--text-subtle);
   opacity: 0.5;
 }
+.program-card-reason {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 0.7rem 0.85rem;
+  margin-top: 0.85rem;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+.program-card-reason.attention {
+  background: rgba(255, 165, 0, 0.06);
+  border: 1px solid rgba(255, 165, 0, 0.22);
+  color: var(--text);
+}
+.program-card-reason.stuck {
+  background: rgba(192, 57, 43, 0.06);
+  border: 1px solid rgba(192, 57, 43, 0.22);
+  color: var(--text);
+}
+.program-card-reason-icon {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  line-height: 1.4;
+}
+.program-card-reason.attention .program-card-reason-icon { color: rgb(207, 130, 0); }
+.program-card-reason.stuck .program-card-reason-icon { color: var(--danger, #C0392B); }
+
+.stat-sub {
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
+
 .program-card-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

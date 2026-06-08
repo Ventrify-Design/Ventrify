@@ -12,16 +12,26 @@
 <body>
   <div id="root"></div>
   <script src="sample-data.js"></script>
+  <script src="agents.js"></script>
   <script src="app.js"></script>
   <script>
     const W = window.WORKSPACE;
+    const A = window.WORKSPACE_AGENTS;
     const { actions, operators, programs, helpers, org } = W;
 
-    // Aggregate stats
+    // Aggregate stats. Action queue is now computed by workflow-orchestrator
+    // (agents.js) across the operator's own engagements — same shape as the
+    // sample actions, but derived from real engagement state.
     const totalPrograms = programs.length;
     const inFlight = programs.filter(p => p.phase < 5 && p.phase > 0).length;
     const cardsAwaiting = programs.reduce((acc, p) => acc + (p.cards && p.cards.awaitingFounder || 0), 0);
-    const highUrgencyActions = actions.filter(a => a.urgency === 'high').length;
+    const liveQueue = A ? A.computeActionQueue(programs, W.currentOperatorId) : [];
+    const computedHighUrgency = liveQueue.filter(a => a.urgency === 'high').length;
+    // In demo mode (sample programs without computed signals), fall back to
+    // the hand-curated actions list so the populated dashboard still reads well.
+    const useLiveQueue = (W.demoMode || 'off') === 'off';
+    const highUrgencyActions = useLiveQueue ? computedHighUrgency : actions.filter(a => a.urgency === 'high').length;
+    const portfolioCompleteness = A ? A.computePortfolioCompleteness(programs) : { pct: 0 };
 
     // ----- Empty-state view: shown when no engagements exist yet ---------
     if (totalPrograms === 0) {
@@ -105,7 +115,18 @@
       // hasn't submitted the brief yet.
       const industry = p.industry || 'Awaiting brief';
       const cards = p.cards || { drafted: 0, awaitingFounder: 0, resolved: 0 };
-      const briefSubmitted = p.briefSubmitted !== false; // older sample programs lack the flag → treat as submitted
+      const briefSubmitted = p.briefSubmitted !== false;
+
+      // Health: in live mode, agent computes verdict + reasons from state.
+      // In demo mode, fall back to the sample data's hand-set health value.
+      const computed = (useLiveQueue && A) ? A.computeEngagementHealth(p) : null;
+      const healthLevel = computed ? computed.level : (p.health || 'on-track');
+      const healthReasons = computed ? computed.reasons : null;
+      const reasonsTitle = healthReasons
+        ? healthReasons.slice(0, 3).map(r => '• ' + r.text).join('\n')
+        : '';
+      const completeness = A ? A.computeCompleteness(p) : { pct: 0 };
+
       return `
         <a href="program.html?id=${p.id}" class="program-card">
           <div class="program-card-head">
@@ -116,9 +137,9 @@
                 <div class="program-card-founder">${p.founderName} &middot; ${industry}</div>
               </div>
             </div>
-            <span class="pill ${window.healthClass(p.health)}">
+            <span class="pill ${window.healthClass(healthLevel)}" title="${reasonsTitle.replace(/"/g, '&quot;')}">
               <span class="dot"></span>
-              ${window.healthLabel(p.health)}
+              ${window.healthLabel(healthLevel)}
             </span>
           </div>
 
@@ -135,6 +156,13 @@
             <span class="sep"></span>
             <span>Last activity: ${p.lastActivity || 'just now'}</span>
           </div>
+
+          ${(healthReasons && healthReasons[0] && healthLevel !== 'on-track') ? `
+            <div class="program-card-reason ${healthLevel}">
+              <span class="program-card-reason-icon">${healthLevel === 'stuck' ? '⚠' : healthLevel === 'attention' ? '!' : '↗'}</span>
+              <span>${healthReasons[0].text}</span>
+            </div>
+          ` : ''}
 
           ${briefSubmitted
             ? `<div class="program-card-stats">
@@ -195,10 +223,11 @@
             <div class="stat-lbl">Cards awaiting founder</div>
           </div>
         </div>
-        <div class="card">
+        <div class="card" title="Computed by tier-compliance-auditor across active engagements">
           <div class="stat-block">
-            <div class="stat-val" style="color:${highUrgencyActions ? 'var(--danger)' : 'var(--text)'};">${highUrgencyActions}</div>
-            <div class="stat-lbl">High-urgency actions</div>
+            <div class="stat-val">${portfolioCompleteness.pct}%</div>
+            <div class="stat-lbl">Portfolio completeness</div>
+            <div class="stat-sub text-mono dim" style="font-size:0.66rem;letter-spacing:0.06em;text-transform:uppercase;margin-top:0.35rem;">${portfolioCompleteness.items}/${portfolioCompleteness.of} expected outputs</div>
           </div>
         </div>
       </div>
