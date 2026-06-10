@@ -98,7 +98,19 @@ async function loadLive(user) {
     org = await data.getOrganisation();
   }
 
-  const programs = await data.listEngagements();
+  // A signed-in but non-operator (got a magic link, but not on the operator
+  // allowlist) is denied engagements by the security rules. Catch that and show
+  // a clean "no access" screen instead of crashing to a blank page.
+  let programs;
+  try {
+    programs = await data.listEngagements();
+  } catch (e) {
+    if (e && (e.code === 'permission-denied' || /permission|insufficient/i.test(String((e && e.message) || e)))) {
+      renderNoAccess(user);
+      return new Promise(() => {}); // halt — the no-access screen is shown
+    }
+    throw e;
+  }
 
   // Operator identity = the signed-in user (single-operator for now).
   const operator = {
@@ -293,6 +305,18 @@ window.__resetWorkspace = function() {
   ].forEach(k => localStorage.removeItem(k));
   window.location.reload();
 };
+
+function renderNoAccess(user) {
+  document.body.innerHTML = `
+    <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem;font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;background:#eef1ff;">
+      <div style="max-width:440px;width:100%;text-align:center;background:#fff;border:1px solid rgba(0,0,0,0.06);border-radius:16px;padding:2.5rem 2rem;box-shadow:0 10px 40px rgba(0,54,255,0.06);">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;color:#0036FF;margin-bottom:0.85rem;">Ventrify OS &middot; Workspace</div>
+        <h1 style="font-size:1.45rem;letter-spacing:-0.02em;margin:0 0 0.75rem;color:#141414;">No Workspace access yet</h1>
+        <p style="font-size:0.95rem;line-height:1.65;color:#656565;margin:0 0 1.6rem;">You're signed in as <strong style="color:#141414;">${(user && user.email) || 'this account'}</strong>, but it isn't set up as an operator on this Workspace. Ask your Ventrify admin to add you, then sign in again.</p>
+        <a href="#" onclick="event.preventDefault(); window.__signOut && window.__signOut();" style="display:inline-block;background:#0036FF;color:#fff;text-decoration:none;font-weight:600;font-size:0.92rem;padding:0.72rem 1.5rem;border-radius:10px;">Sign out</a>
+      </div>
+    </div>`;
+}
 
 window.renderShell = function(mainContentHTML) {
   document.body.innerHTML = renderTopbar() + `
