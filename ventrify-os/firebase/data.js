@@ -20,7 +20,11 @@ import {
   query, where, orderBy, onSnapshot, serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js';
 
-export const ORG_ID = 'default';
+// The active org for this session. Defaults to 'default' until the signed-in
+// operator's org is resolved (multi-tenant) via setOrgContext.
+let ORG_ID = 'default';
+export function setOrgContext(id) { ORG_ID = id || 'default'; }
+export function getOrgContext() { return ORG_ID; }
 
 const orgRef = () => doc(db, 'organisations', ORG_ID);
 const engCol  = () => collection(db, 'engagements');
@@ -34,6 +38,31 @@ export async function getOrganisation() {
 
 export async function saveOrganisation(org) {
   await setDoc(orgRef(), { ...org, updatedAt: serverTimestamp() }, { merge: true });
+}
+
+// ---- Multi-tenant: org resolution -----------------------------------------
+// An operator's org = the org whose operatorEmails contains their email.
+export async function findOperatorOrg(email) {
+  const norm = (email || '').trim().toLowerCase();
+  if (!norm) return null;
+  const snap = await getDocs(query(collection(db, 'organisations'), where('operatorEmails', 'array-contains', norm)));
+  return snap.empty ? null : { id: snap.docs[0].id, ...snap.docs[0].data() };
+}
+export async function isSuperAdmin(email) {
+  const norm = (email || '').trim().toLowerCase();
+  try {
+    const snap = await getDoc(doc(db, 'app', 'config'));
+    const list = (snap.exists() && snap.data().superAdminEmails) || [];
+    return list.map(e => String(e).toLowerCase()).includes(norm);
+  } catch (e) { return false; }
+}
+export async function getOrg(orgId) {
+  const snap = await getDoc(doc(db, 'organisations', orgId));
+  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+}
+export async function listOrgs() {
+  const snap = await getDocs(collection(db, 'organisations'));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
 // ---- Engagements ----------------------------------------------------------

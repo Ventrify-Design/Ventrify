@@ -62,14 +62,14 @@ function applyBranding(org) {
 }
 
 // ----- Assemble window.WORKSPACE ------------------------------------------
-function buildWorkspace({ org, operators, programs, actions, currentOperatorId, demoMode, mode }) {
+function buildWorkspace({ org, operators, programs, actions, currentOperatorId, demoMode, mode, isSuperAdmin }) {
   function getProgram(id) { return programs.find(p => p.id === id) || null; }
   function getOperator(id) { return operators.find(o => o.id === id) || null; }
   function currentOperator() { return getOperator(currentOperatorId); }
   function programsForOperator(opId) { return programs.filter(p => p.assignedOperator === opId); }
 
   window.WORKSPACE = {
-    org, operators, programs, actions, currentOperatorId, demoMode, mode,
+    org, operators, programs, actions, currentOperatorId, demoMode, mode, isSuperAdmin: !!isSuperAdmin,
     helpers: { getProgram, getOperator, currentOperator, programsForOperator, phaseLabel, phaseProgressPct, hubStatusLabel },
     labels: { phase: PHASE_LABELS, hub: HUB_LABELS },
     storage: { readJSON, writeJSON, setDemoMode }
@@ -88,15 +88,20 @@ async function awaitCurrentUser() {
 
 async function loadLive(user) {
   const data = await import('../firebase/data.js');
+  const email = (user.email || '').toLowerCase();
 
-  // Org: load, or seed once (migrating the localStorage org if present).
-  let org = await data.getOrganisation();
-  if (!org) {
-    const stored = readJSON('workspace.organisation', null);
-    const seed = stored || { name: 'My Workspace', slug: 'default', primaryColor: '#0036FF' };
-    await data.saveOrganisation(seed);
-    org = await data.getOrganisation();
+  // Multi-tenant: resolve the operator's org (the org whose operatorEmails lists
+  // their email). Each operator works only in their own org.
+  const myOrg = await data.findOperatorOrg(email);
+  const superAdmin = await data.isSuperAdmin(email);
+  if (!myOrg) {
+    // Signed in but not an operator of any org. (Super-admins with no org of
+    // their own get the platform console — added in the next stage.)
+    renderNoAccess(user);
+    return new Promise(() => {});
   }
+  data.setOrgContext(myOrg.id);
+  const org = myOrg;
 
   // A signed-in but non-operator (got a magic link, but not on the operator
   // allowlist) is denied engagements by the security rules. Catch that and show
@@ -125,7 +130,7 @@ async function loadLive(user) {
   applyBranding(org);
   return buildWorkspace({
     org, operators: [operator], programs, actions: [],
-    currentOperatorId: user.uid, demoMode: 'off', mode: 'live'
+    currentOperatorId: user.uid, demoMode: 'off', mode: 'live', isSuperAdmin: superAdmin
   });
 }
 
@@ -180,7 +185,7 @@ window.WORKSPACE_READY = bootstrap();
 // ============================================================
 const activeMap = {
   'dashboard.html': 'dashboard', 'queue.html': 'queue', 'program.html': 'programs',
-  'team.html': 'team', 'settings.html': 'settings', '': 'dashboard'
+  'team.html': 'team', 'settings.html': 'settings', 'admin.html': 'admin', '': 'dashboard'
 };
 const active = activeMap[currentPath] || 'dashboard';
 
@@ -265,6 +270,10 @@ function renderSidebar() {
       <a href="settings.html" class="sidebar-link ${active === 'settings' ? 'active' : ''}">
         <span class="sidebar-link-icon">&#x25C7;</span><span>Settings</span>
       </a>
+      ${(W.isSuperAdmin || (W.org && W.helpers.currentOperator() && String(W.org.ownerEmail || '').toLowerCase() === String((W.helpers.currentOperator() || {}).email || '').toLowerCase())) ? `
+        <a href="admin.html" class="sidebar-link ${active === 'admin' ? 'active' : ''}">
+          <span class="sidebar-link-icon">&#x2699;</span><span>${W.isSuperAdmin ? 'Platform admin' : 'Operators'}</span>
+        </a>` : ''}
     </aside>`;
 }
 

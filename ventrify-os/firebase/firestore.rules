@@ -40,6 +40,13 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Platform config (super-admin allowlist). Readable by any signed-in user
+    // (to resolve super-admin status client-side); written only by Admin SDK.
+    match /app/{document} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
     // Engagements — a founder sees only their own; operators see their org's.
     match /engagements/{engId} {
       allow read, update: if signedIn()
