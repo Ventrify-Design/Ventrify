@@ -397,13 +397,22 @@ claude code .</pre>
         // Source of truth is Firestore — the founder (any browser) reads it back.
         const data = await import('../firebase/data.js');
         await data.createEngagement(newProgram);
-        // Phase 2.5: auto-send the founder their magic-link Studio invite.
+        // Phase 2.5: auto-send the founder their Studio invite. Prefer the
+        // branded sender (/api/send-invite → Resend from hello@ventrify.io);
+        // fall back to Firebase's default email if it isn't configured yet.
         // Non-blocking — the engagement is created regardless of email success.
         if (newProgram.founderEmail) {
+          const fe = newProgram.founderEmail.trim();
           try {
-            const { sendInviteLink } = await import('../firebase/auth.js');
-            await sendInviteLink(newProgram.founderEmail.trim(), window.location.origin + '/studio/');
-          } catch (e) { console.warn('Studio invite email failed (engagement still created):', e); }
+            const resp = await fetch('/api/send-invite', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email: fe, ventureName: newProgram.name, orgName: (org && org.name) || 'Ventrify' })
+            });
+            if (!resp.ok) throw new Error('send-invite ' + resp.status);
+          } catch (e) {
+            try { const { sendInviteLink } = await import('../firebase/auth.js'); await sendInviteLink(fe, window.location.origin + '/studio/'); }
+            catch (e2) { console.warn('Invite email failed (engagement still created):', e2); }
+          }
         }
       } else {
         try {

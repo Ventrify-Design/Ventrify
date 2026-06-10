@@ -78,13 +78,23 @@
       if (!FIREBASE_ENABLED) { showSent(email, true); return; }
       btn.disabled = true; btn.textContent = 'Sending…';
       try {
-        await sendMagicLink(email, window.location.origin + '/studio/');
+        // Branded sender first; fall back to Firebase's default email.
+        const resp = await fetch('/api/send-invite', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, orgName })
+        });
+        if (!resp.ok) throw new Error('send-invite ' + resp.status);
         showSent(email, false);
       } catch (err) {
-        const meta = document.getElementById('studio-login-meta');
-        meta.innerHTML = 'Couldn&rsquo;t send the link: <strong>' + ((err && (err.code || err.message)) || err) + '</strong>';
-        meta.style.color = 'var(--danger, crimson)';
-        btn.disabled = false; btn.textContent = 'Send me the sign-in link →';
+        try {
+          await sendMagicLink(email, window.location.origin + '/studio/');
+          showSent(email, false);
+        } catch (err2) {
+          const meta = document.getElementById('studio-login-meta');
+          meta.innerHTML = 'Couldn&rsquo;t send the link: <strong>' + ((err2 && (err2.code || err2.message)) || err2) + '</strong>';
+          meta.style.color = 'var(--danger, crimson)';
+          btn.disabled = false; btn.textContent = 'Send me the sign-in link →';
+        }
       }
     }
 
