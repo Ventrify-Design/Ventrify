@@ -30,10 +30,13 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/engagements/$(engId)).data;
     }
 
-    // Organisations — branding + the operator allowlist. Read by any signed-in
-    // user; operatorEmails is written only by the Admin SDK / console.
+    // Organisations — branding + the operator allowlist. Public read: the org
+    // name/logo/colour are rendered on the PUBLIC login pages (before sign-in),
+    // so the doc must be readable unauthenticated. operatorEmails is low-
+    // sensitivity (knowing an email grants nothing — access needs the magic
+    // link); it's written only by the Admin SDK / console (never by clients).
     match /organisations/{orgId} {
-      allow read: if signedIn();
+      allow read: if true;
       allow write: if false;
     }
 

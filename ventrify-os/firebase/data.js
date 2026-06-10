@@ -78,6 +78,18 @@ export async function deleteEngagement(id) {
   await deleteDoc(engRef(id));
 }
 
+// Full delete: remove the engagement AND its provocation cards. Cards are
+// deleted first (their delete rule reads the still-existing engagement doc),
+// then the engagement. Investability snapshots, if any, are left as harmless
+// orphans (clients can't delete them under the rules; nothing renders them
+// once the engagement is gone). Removing the engagement makes it disappear
+// from BOTH surfaces (Workspace + Studio share this Firestore).
+export async function deleteEngagementDeep(id) {
+  const cardsSnap = await getDocs(query(cardCol(), where('engagementId', '==', id)));
+  await Promise.all(cardsSnap.docs.map(d => deleteDoc(d.ref)));
+  await deleteDoc(engRef(id));
+}
+
 // Founder submits their brief → stored on the engagement, flips briefSubmitted.
 export async function saveBrief(id, brief) {
   await updateDoc(engRef(id), {

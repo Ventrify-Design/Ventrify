@@ -71,6 +71,16 @@
       for (const s of samples) { await data.createCard({ engagementId, ...s }); }
       window.location.reload();
     };
+    window.__deleteEngagement = async function() {
+      if (!window.confirm(`Delete "${p.name}" permanently?\n\nThis removes it from the Workspace AND ${p.founderName || 'the founder'}'s Studio, including all its provocation cards. This cannot be undone.`)) return;
+      try {
+        const data = await import('../firebase/data.js');
+        await data.deleteEngagementDeep(p.id);
+        window.location.href = 'dashboard.html';
+      } catch (e) {
+        alert('Could not delete the engagement: ' + ((e && (e.code || e.message)) || e));
+      }
+    };
 
     const reasonIcon = { critical: '⚠', warn: '!', opportunity: '↗', positive: '✓' };
     const healthReasonsHTML = (health && health.reasons && health.reasons.length) ? `
@@ -265,6 +275,17 @@
         </div></div>`;
     }
 
+    function dangerZoneHTML(p) {
+      return `
+        <div class="section">
+          <div class="section-head"><div><div class="section-title">Danger zone</div><div class="section-sub">Permanently delete this engagement &mdash; removes it from the Workspace and ${escBrief(p.founderName || 'the founder')}&rsquo;s Studio, with all its cards.</div></div></div>
+          <div class="card" style="display:flex;align-items:center;justify-content:space-between;gap:1rem;border:1px solid rgba(192,57,43,0.25);">
+            <div style="font-size:0.88rem;color:var(--text-muted);">This can&rsquo;t be undone.</div>
+            <button class="btn btn-sm" style="background:rgba(192,57,43,0.1);color:var(--danger,#C0392B);border:1px solid rgba(192,57,43,0.3);font-weight:600;" onclick="window.__deleteEngagement()">Delete engagement</button>
+          </div>
+        </div>`;
+    }
+
     const main = `
       <div style="margin-bottom:1rem;">
         <a href="dashboard.html" class="text-small dim" style="font-size:0.85rem;">&larr; All programs</a>
@@ -376,6 +397,8 @@
           <button class="btn btn-outline btn-sm">Reassign</button>
         </div>
       </div>
+
+      ${W.mode === 'live' ? dangerZoneHTML(p) : ''}
     `;
 
     window.renderShell(main);
