@@ -17,84 +17,137 @@
     </div>
   </div>
 
-  <script src="/studio/app.js"></script>
-  <script>
-    const { org, programs, helpers } = window.STUDIO;
+  <script type="module" src="/studio/app.js"></script>
+  <script type="module">
+    import { FIREBASE_ENABLED } from '/firebase/config.js';
+    import { sendMagicLink, completeMagicLinkIfPresent } from '/firebase/auth.js';
+
+    await window.STUDIO_READY;
+    const { org, programs, helpers, mode } = window.STUDIO;
     const orgName = org ? org.name : 'Ventrify OS';
     const orgBrandColor = (org && org.primaryColor) || '#0036FF';
+    const initials = (s) => helpers.initialsOf(s);
+    const card = () => document.getElementById('login-card');
 
-    function initials(s) { return helpers.initialsOf(s); }
-
-    function devListHTML() {
-      if (!programs || programs.length === 0) {
-        return `
-          <div class="login-dev">
-            <div class="login-dev-label">Prototype shortcut</div>
-            <div class="login-dev-empty">No engagements yet. <a href="/workspace/" style="color:var(--brand-primary);">Create one in the Workspace</a> first.</div>
-          </div>
-        `;
-      }
-      return `
-        <div class="login-dev">
-          <div class="login-dev-label">Prototype · Open an engagement directly</div>
-          <div class="login-dev-list">
-            ${programs.map(p => `
-              <a href="/studio/dashboard.html?id=${p.id}" class="login-dev-item">
-                <span class="login-dev-item-avatar" style="background:${p.founderAvatarColor || orgBrandColor};">${p.founderAvatar || initials(p.founderName)}</span>
-                <div class="login-dev-item-body">
-                  <div class="login-dev-item-name">${p.name}</div>
-                  <div class="login-dev-item-meta">${p.founderName || 'Founder'} · ${helpers.phaseLabel(p.phase || 0)}</div>
-                </div>
-              </a>
-            `).join('')}
-          </div>
-        </div>
-      `;
+    function eyebrowHTML() {
+      return `<div class="login-eyebrow">
+        <span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:6px;background:${orgBrandColor};color:#fff;font-size:0.65rem;font-weight:600;margin-right:2px;">${initials(orgName)}</span>
+        ${orgName}<span class="os">Studio</span><span class="tag">Sign in</span></div>`;
     }
 
-    document.getElementById('login-card').innerHTML = `
-      <div class="login-eyebrow">
-        <span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:6px;background:${orgBrandColor};color:#fff;font-size:0.65rem;font-weight:600;margin-right:2px;">${initials(orgName)}</span>
-        ${orgName}
-        <span class="os">Studio</span>
-        <span class="tag">Sign in</span>
-      </div>
+    function engagementItemHTML(p) {
+      return `<a href="/studio/dashboard.html?id=${p.id}" class="login-dev-item">
+        <span class="login-dev-item-avatar" style="background:${p.founderAvatarColor || orgBrandColor};">${p.founderAvatar || initials(p.founderName)}</span>
+        <div class="login-dev-item-body">
+          <div class="login-dev-item-name">${p.name}</div>
+          <div class="login-dev-item-meta">${p.founderName || 'Founder'} · ${helpers.phaseLabel(p.phase || 0)}</div>
+        </div></a>`;
+    }
 
-      <h1 class="login-title">Welcome back.</h1>
-      <p class="login-sub">Enter the email address on your engagement invite. We&rsquo;ll send a one-time link to sign in &mdash; no password to remember.</p>
+    // Prototype shortcut — only meaningful with the localStorage backend.
+    function devListHTML() {
+      if (mode !== 'local') return '';
+      if (!programs || programs.length === 0) {
+        return `<div class="login-dev"><div class="login-dev-label">Prototype shortcut</div>
+          <div class="login-dev-empty">No engagements yet. <a href="/workspace/" style="color:var(--brand-primary);">Create one in the Workspace</a> first.</div></div>`;
+      }
+      return `<div class="login-dev"><div class="login-dev-label">Prototype · Open an engagement directly</div>
+        <div class="login-dev-list">${programs.map(engagementItemHTML).join('')}</div></div>`;
+    }
 
-      <form class="login-form" onsubmit="event.preventDefault(); fakeMagicLink();">
-        <input type="email" class="login-input" id="login-email" placeholder="you@yourcompany.com" autocomplete="email" required>
-        <button type="submit" class="login-btn">Send me the sign-in link &rarr;</button>
-      </form>
+    function renderLogin() {
+      card().innerHTML = `
+        ${eyebrowHTML()}
+        <h1 class="login-title">Welcome back.</h1>
+        <p class="login-sub">Enter the email address on your engagement invite. We&rsquo;ll send a one-time link to sign in &mdash; no password to remember.</p>
+        <form class="login-form" id="studio-login-form">
+          <input type="email" class="login-input" id="login-email" placeholder="you@yourcompany.com" autocomplete="email" required>
+          <button type="submit" class="login-btn" id="studio-login-btn">Send me the sign-in link &rarr;</button>
+        </form>
+        <p class="login-meta" id="studio-login-meta">Looking for the operator surface? <a href="/workspace/">Open the Workspace</a></p>
+        ${devListHTML()}
+        <p class="login-foot">Powered by Ventrify OS &middot; <a href="/">visit the OS site</a></p>`;
+      document.getElementById('studio-login-form').addEventListener('submit', onSubmit);
+    }
 
-      <p class="login-meta">
-        Looking for the operator surface? <a href="/workspace/">Open the Workspace</a>
-      </p>
-
-      ${devListHTML()}
-
-      <p class="login-foot">
-        Powered by Ventrify OS &middot; <a href="/">visit the OS site</a>
-      </p>
-    `;
-
-    function fakeMagicLink() {
+    async function onSubmit(e) {
+      e.preventDefault();
       const email = document.getElementById('login-email').value.trim();
       if (!email) return;
-      // For prototype: pop a friendly success state without sending anything.
-      // Real magic-link flow comes in the Firebase pass.
-      const successHTML = `
+      const btn = document.getElementById('studio-login-btn');
+      if (!FIREBASE_ENABLED) { showSent(email, true); return; }
+      btn.disabled = true; btn.textContent = 'Sending…';
+      try {
+        await sendMagicLink(email, window.location.origin + '/studio/');
+        showSent(email, false);
+      } catch (err) {
+        const meta = document.getElementById('studio-login-meta');
+        meta.innerHTML = 'Couldn&rsquo;t send the link: <strong>' + ((err && (err.code || err.message)) || err) + '</strong>';
+        meta.style.color = 'var(--danger, crimson)';
+        btn.disabled = false; btn.textContent = 'Send me the sign-in link →';
+      }
+    }
+
+    function showSent(email, isMock) {
+      const note = isMock
+        ? '<em style="font-style:italic;">(Prototype note: backend off — nothing actually sent. Use the shortcut below.)</em>'
+        : 'It can take a minute &mdash; check your spam folder. Open it in <em>this</em> browser to finish.';
+      card().innerHTML = `
         <div style="text-align:center;padding:1.5rem 0 0.5rem;">
           <div style="display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:14px;background:rgba(0,184,160,0.12);color:var(--success);margin-bottom:1.25rem;">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
           </div>
           <h1 class="login-title" style="margin-top:0;">Check your inbox.</h1>
-          <p class="login-sub" style="margin-bottom:1.5rem;">A one-time sign-in link is on its way to <strong style="color:var(--text);">${email}</strong>. The link expires in 15 minutes. <em style="font-style:italic;">(Prototype note: nothing actually sent — use the shortcut below.)</em></p>
-          <a href="javascript:window.location.reload();" class="btn btn-outline btn-sm">&larr; Back to sign in</a>
+          <p class="login-sub" style="margin-bottom:1.5rem;">A one-time sign-in link is on its way to <strong style="color:var(--text);">${email}</strong>. ${note}</p>
+          <a href="/studio/" class="btn btn-outline btn-sm">&larr; Back to sign in</a>
         </div>
-      `;
-      document.getElementById('login-card').innerHTML = successHTML + devListHTML();
+        ${devListHTML()}`;
+    }
+
+    function renderChooser(list) {
+      card().innerHTML = `
+        ${eyebrowHTML()}
+        <h1 class="login-title">Pick an engagement.</h1>
+        <p class="login-sub">You&rsquo;re signed in. Choose which venture to open.</p>
+        <div class="login-dev"><div class="login-dev-list">${list.map(engagementItemHTML).join('')}</div></div>
+        <p class="login-foot">Wrong account? <a href="#" id="studio-signout">Sign out</a></p>`;
+      const so = document.getElementById('studio-signout');
+      if (so) so.addEventListener('click', (e) => { e.preventDefault(); window.__studioReset && window.__studioReset(); });
+    }
+
+    function renderNoMatch(email) {
+      card().innerHTML = `
+        ${eyebrowHTML()}
+        <h1 class="login-title">No engagement yet.</h1>
+        <p class="login-sub">You&rsquo;re signed in as <strong>${email}</strong>, but no engagement is linked to this address. Ask your operator to send your Studio invite to this exact email.</p>
+        <a href="#" class="btn btn-outline btn-sm" id="studio-signout">Sign out</a>`;
+      const so = document.getElementById('studio-signout');
+      if (so) so.addEventListener('click', (e) => { e.preventDefault(); window.__studioReset && window.__studioReset(); });
+    }
+
+    function route(list, email) {
+      if (list.length === 1) window.location.href = `/studio/dashboard.html?id=${list[0].id}`;
+      else if (list.length > 1) renderChooser(list);
+      else renderNoMatch(email);
+    }
+
+    if (FIREBASE_ENABLED) {
+      completeMagicLinkIfPresent().then(async (user) => {
+        if (user) {
+          // Fresh sign-in via the email link → match this founder by email.
+          const data = await import('/firebase/data.js');
+          let mine = [];
+          try { mine = await data.listEngagementsForFounder(user.email); } catch (e) {}
+          route(mine, user.email);
+          return;
+        }
+        // Not a link click — already signed in? STUDIO already matched them.
+        const S = window.STUDIO;
+        if (S.user) route(S.programs || [], S.user.email);
+        else renderLogin();
+      }).catch(() => renderLogin());
+    } else {
+      renderLogin();
     }
   </script>
 </body>

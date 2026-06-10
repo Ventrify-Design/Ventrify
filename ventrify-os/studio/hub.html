@@ -363,8 +363,9 @@
 </head>
 <body>
   <div id="root"></div>
-  <script src="/studio/app.js"></script>
-  <script>
+  <script type="module" src="/studio/app.js"></script>
+  <script type="module">
+    await window.STUDIO_READY;
     const { engagement, labels, helpers } = window.STUDIO;
     const params = new URLSearchParams(window.location.search);
     const hubKey = params.get('hub');

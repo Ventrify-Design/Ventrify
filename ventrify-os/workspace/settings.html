@@ -13,8 +13,9 @@
   <div id="root"></div>
   <script src="sample-data.js"></script>
   <script src="agents.js"></script>
-  <script src="app.js"></script>
-  <script>
+  <script type="module" src="app.js"></script>
+  <script type="module">
+    await window.WORKSPACE_READY;
     const W = window.WORKSPACE;
     const { org, operators, programs, storage } = W;
 

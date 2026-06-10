@@ -13,10 +13,23 @@
   <div id="root"></div>
   <script src="sample-data.js"></script>
   <script src="agents.js"></script>
-  <script src="app.js"></script>
-  <script>
+  <script type="module" src="app.js"></script>
+  <script type="module">
+    await window.WORKSPACE_READY;
     const W = window.WORKSPACE;
-    const { actions, helpers } = W;
+    const A = window.WORKSPACE_AGENTS;
+    const { actions, helpers, programs } = W;
+
+    // workflow-orchestrator: rank-order the operator's next actions across
+    // every engagement they own, computed deterministically from live state.
+    // In demo mode the sample programs don't carry the orchestrator's signal
+    // fields (briefSubmitted:false, draftedAwaitingOperator, gate phrasing),
+    // so fall back to the curated sample queue, which reads as a full
+    // multi-operator org view. When Firebase lands this swaps for a
+    // Firestore subscription to the agent's published action set.
+    const useLiveQueue = (W.demoMode || 'off') === 'off';
+    const liveQueue = A ? A.computeActionQueue(programs, W.currentOperatorId) : [];
+    const displayActions = useLiveQueue ? liveQueue : actions;
 
     const typeIcon = {
       'gate-ready': '&#x2713;',
@@ -58,7 +71,7 @@
     }
 
     const byUrgency = { high: [], medium: [], low: [] };
-    actions.forEach(a => { byUrgency[a.urgency].push(a); });
+    displayActions.forEach(a => { byUrgency[a.urgency].push(a); });
 
     function sectionHTML(label, items, sub) {
       if (!items.length) return '';
@@ -77,7 +90,7 @@
       `;
     }
 
-    const isEmpty = actions.length === 0;
+    const isEmpty = displayActions.length === 0;
     const emptyBlock = isEmpty
       ? `
         <div class="card" style="text-align:center;padding:3rem 2rem;">
@@ -98,6 +111,7 @@
         <div class="page-eyebrow">Action queue</div>
         <h1 class="page-title">Your work this week</h1>
         <p class="page-sub">Everything the platform needs from you, across every program. Prioritised by urgency. Gate sign-offs and stuck founders surface to the top.</p>
+        <p class="text-mono dim" style="font-size:0.72rem;letter-spacing:0.06em;text-transform:uppercase;margin-top:0.5rem;">Ranked by workflow-orchestrator${useLiveQueue ? '' : ' · sample queue (demo data)'}</p>
       </div>
 
       ${emptyBlock}

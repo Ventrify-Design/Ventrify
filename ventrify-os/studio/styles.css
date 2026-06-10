@@ -543,3 +543,73 @@ img { max-width: 100%; display: block; }
   .topbar-utility-link { display: none; }
   .dev-toggle-label { display: none; }
 }
+
+/* ============================================
+   PROVOCATION CARDS — founder response inbox
+   ============================================ */
+.prov-inbox { margin-bottom: 2.75rem; }
+.prov-inbox-head { margin-bottom: 1.35rem; }
+.prov-inbox-title {
+  font-size: 1.4rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--text);
+  margin: 0.45rem 0 0.5rem;
+  line-height: 1.2;
+}
+.prov-inbox-sub { font-size: 0.92rem; color: var(--text-muted); line-height: 1.6; max-width: 660px; }
+.prov-fcard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.4rem 1.6rem;
+  margin-bottom: 1rem;
+}
+.prov-fcard.answered { background: var(--surface-2); }
+.prov-fcard-meta {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-subtle);
+  margin-bottom: 0.5rem;
+}
+.prov-fcard-title { font-weight: 600; font-size: 1.05rem; color: var(--text); line-height: 1.45; margin-bottom: 0.4rem; }
+.prov-fcard-body { font-size: 0.9rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 1rem; }
+.prov-fcard-input {
+  width: 100%;
+  min-height: 64px;
+  resize: vertical;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  padding: 0.7rem 0.85rem;
+  font: inherit;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--bg);
+  margin-bottom: 0.9rem;
+}
+.prov-fcard-input:focus {
+  outline: none;
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 3px rgba(var(--brand-primary-rgb), 0.1);
+}
+.prov-fcard-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+.prov-fcard-actions .btn { cursor: pointer; font-weight: 600; }
+.prov-btn-accept { background: rgba(0,184,160,0.12); color: #00897b; border: 1px solid rgba(0,184,160,0.3); }
+.prov-btn-reshape { background: rgba(255,165,0,0.13); color: #c77700; border: 1px solid rgba(255,165,0,0.32); }
+.prov-btn-reject { background: rgba(192,57,43,0.1); color: var(--danger); border: 1px solid rgba(192,57,43,0.26); }
+.prov-fcard-yourcomment { font-size: 0.92rem; font-style: italic; color: var(--text); line-height: 1.55; margin-top: 0.35rem; }
+.prov-fcard-decision { font-weight: 600; }
+.prov-fcard-decision.accept { color: #00897b; }
+.prov-fcard-decision.reshape { color: #c77700; }
+.prov-fcard-decision.reject { color: var(--danger); }
+.prov-inbox-answered-label {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-subtle);
+  margin: 1.6rem 0 0.9rem;
+}

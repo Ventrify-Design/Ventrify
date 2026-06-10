@@ -1,0 +1,66 @@
+rules_version = '2';
+
+// Ventrify OS — Firestore security rules.
+// Replaces test-mode (world-open). The engagement repo's Admin SDK bypasses
+// these entirely (service account), so the bridge keeps working; these rules
+// govern the CLIENT apps (Workspace operators + Studio founders).
+//
+// Model:
+//   • Operators are listed in organisations/{orgId}.operatorEmails (managed by
+//     the Admin SDK / console — clients cannot self-escalate).
+//   • Founders are matched by the email on their engagement (founderEmail).
+//   • Investability snapshots are written ONLY by the Admin SDK bridge.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function userEmail() { return request.auth.token.email; }
+
+    function orgData(orgId) {
+      return get(/databases/$(database)/documents/organisations/$(orgId)).data;
+    }
+    function isOperatorOf(orgId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/organisations/$(orgId))
+        && 'operatorEmails' in orgData(orgId)
+        && userEmail() in orgData(orgId).operatorEmails;
+    }
+    function engData(engId) {
+      return get(/databases/$(database)/documents/engagements/$(engId)).data;
+    }
+
+    // Organisations — branding + the operator allowlist. Read by any signed-in
+    // user; operatorEmails is written only by the Admin SDK / console.
+    match /organisations/{orgId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    // Engagements — a founder sees only their own; operators see their org's.
+    match /engagements/{engId} {
+      allow read, update: if signedIn()
+        && (userEmail() == resource.data.founderEmail || isOperatorOf(resource.data.orgId));
+      allow create: if isOperatorOf(request.resource.data.orgId);
+      allow delete: if isOperatorOf(resource.data.orgId);
+
+      // Investability trajectory — readable by founder/operator; written only
+      // by the engagement repo's Admin SDK bridge.
+      match /investabilitySnapshots/{snapId} {
+        allow read: if signedIn()
+          && (userEmail() == engData(engId).founderEmail || isOperatorOf(engData(engId).orgId));
+        allow write: if false;
+      }
+    }
+
+    // Provocation cards — founder of the engagement reads + responds (update);
+    // operators read/create/update/delete.
+    match /cards/{cardId} {
+      allow read, update: if signedIn()
+        && (userEmail() == engData(resource.data.engagementId).founderEmail
+            || isOperatorOf(engData(resource.data.engagementId).orgId));
+      allow create: if isOperatorOf(request.resource.data.orgId);
+      allow delete: if isOperatorOf(engData(resource.data.engagementId).orgId);
+    }
+  }
+}

@@ -278,8 +278,9 @@
 </head>
 <body>
   <div id="root"></div>
-  <script src="/studio/app.js"></script>
-  <script>
+  <script type="module" src="/studio/app.js"></script>
+  <script type="module">
+    await window.STUDIO_READY;
     const { engagement, helpers } = window.STUDIO;
     if (!engagement) {
       window.renderShell(`
@@ -550,9 +551,115 @@
       return headerHTML + dimsHTML + sugHTML + backHTML;
     }
 
+    // -------------------------------------------------------------------
+    // LIVE VSS v2 — read engagements/{id}/investabilitySnapshots from Firestore
+    // (published by the engagement repo's tools/cloud/publish.js). Supersedes
+    // the mock TDK scorecard above.
+    // -------------------------------------------------------------------
+    let snapshots = [];
+    if (window.STUDIO.mode === 'live') {
+      try { const data = await import('/firebase/data.js'); snapshots = await data.listInvestabilitySnapshots(engagement.id); }
+      catch (e) { console.warn('investability load failed', e); }
+    }
+    const latest = snapshots.length ? snapshots[snapshots.length - 1] : null;
+
+    const prettySlug = (s) => String(s || '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    const bandColor = (b) => b === 'green' ? '#00897b' : b === 'yellow' ? '#C77700' : '#C0392B';
+    const compColor = (b) => b === 'approved' ? '#00897b' : b === 'feedback' ? '#C77700' : '#C0392B';
+
+    function vssTrajectory(snaps) {
+      if (!snaps.length) return '';
+      const bars = snaps.map((s, i) => {
+        const last = i === snaps.length - 1;
+        const h = Math.max(6, (s.pct || 0) * 0.34);
+        const when = s.computedAt ? new Date(s.computedAt).toLocaleDateString() : '';
+        return `<div class="inv-trajectory-bar ${last ? '' : 'faint'}" style="height:${h}px;" title="${when}: ${s.pct || 0}%"></div>`;
+      }).join('');
+      return `<div class="inv-trajectory">${bars}</div>`;
+    }
+
+    function renderEmptyVSS() {
+      return `
+        <div class="inv-empty">
+          <span class="inv-empty-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          </span>
+          <div class="inv-empty-title">No Investability score yet for ${engagement.name}.</div>
+          <div class="inv-empty-sub">Your operator scores the VSS 7×5 rubric against the research as the engagement progresses. The first reading lands once the initial research + Gate 1 review are done, and it updates at every gate after that.</div>
+          <div style="margin-top:1.5rem;">
+            <a href="/studio/dashboard.html?id=${engagement.id}" class="btn btn-outline btn-sm">&larr; Back to dashboard</a>
+          </div>
+        </div>`;
+    }
+
+    function renderScorecardVSS() {
+      const cc = compColor(latest.band);
+      const headline = latest.band === 'approved' ? 'Strong — investor-ready.'
+                     : latest.band === 'feedback' ? 'Promising — named gaps to close.'
+                     : 'Early — material gaps to work through.';
+      const when = latest.computedAt ? new Date(latest.computedAt).toLocaleDateString() : 'recently';
+      const rated = latest.ratedCount != null ? latest.ratedCount : (latest.categories || []).reduce((a, c) => a + (c.rated || 0), 0);
+
+      const headerHTML = `
+        <div class="inv-header">
+          <div class="inv-header-body">
+            <div class="inv-header-eyebrow">Investability · VSS v2 (TDK 7×5)</div>
+            <h1 class="inv-header-title">${headline}</h1>
+            <p class="inv-header-sub">Seven investor-facing categories, 35 sub-criteria scored 0 / 0.5 / 1 against your research. Updates at every gate as evidence accrues.</p>
+            <div class="inv-header-meta">
+              <span class="inv-header-pill">Updated ${when}</span>
+              <span class="inv-header-pill">${rated}/35 rated</span>
+              <span class="inv-header-pill" style="color:${cc};font-weight:600;">${latest.bandLabel || latest.band}</span>
+            </div>
+          </div>
+          <div class="inv-header-score">
+            <div style="display:flex;align-items:baseline;gap:6px;">
+              <span class="inv-header-score-num" style="color:${cc};">${latest.composite}</span>
+              <span class="inv-header-score-of">/ ${latest.maxPossible || 35}</span>
+            </div>
+            ${vssTrajectory(snapshots)}
+            <span class="inv-header-pill" style="margin-top:0.25rem;">${snapshots.length}-point trajectory</span>
+          </div>
+        </div>`;
+
+      const dimsHTML = `
+        <div class="inv-dim-grid">
+          ${(latest.categories || []).map(c => {
+            const col = bandColor(c.band);
+            const max = c.max || 5;
+            return `
+              <div class="inv-dim">
+                <div class="inv-dim-head">
+                  <span class="inv-dim-name">${c.label}</span>
+                  <div class="inv-dim-score-row"><span class="inv-dim-score" style="color:${col};">${c.sum}</span><span class="inv-dim-of">/ ${max}</span></div>
+                </div>
+                <div class="inv-dim-bar"><div class="inv-dim-fill" style="width:${(c.sum / max) * 100}%;background:${col};"></div></div>
+                <div class="inv-subs">
+                  ${(c.subs || []).map(s => {
+                    const has = s.score !== null && s.score !== undefined;
+                    const v = has ? s.score : '—';
+                    const w = s.score ? s.score * 100 : 0;
+                    return `
+                      <div class="inv-sub">
+                        <span title="${s.note ? String(s.note).replace(/"/g, '&quot;') : ''}">${prettySlug(s.slug)}${s.note ? ' <span class="dim" style="font-size:0.62rem;">&#9432;</span>' : ''}</span>
+                        <div style="display:flex;align-items:center;gap:6px;">
+                          <span class="inv-sub-bar"><span class="inv-sub-fill" style="width:${w}%;background:${col};"></span></span>
+                          <span class="text-mono dim" style="font-size:0.7rem;width:22px;text-align:right;">${v}</span>
+                        </div>
+                      </div>`;
+                  }).join('')}
+                </div>
+                <div class="inv-dim-note">${c.rated || 0}/${max} rated${c.pending ? ` · ${c.pending} pending` : ''}</div>
+              </div>`;
+          }).join('')}
+        </div>`;
+
+      return headerHTML + dimsHTML + `<div style="margin-top:0.5rem;"><a href="/studio/dashboard.html?id=${engagement.id}" class="btn btn-outline btn-sm">&larr; Back to dashboard</a></div>`;
+    }
+
     const main = `
       <div class="inv-shell">
-        ${hasScore ? renderScorecard() : renderEmpty()}
+        ${latest ? renderScorecardVSS() : renderEmptyVSS()}
       </div>
     `;
     window.renderShell(main);

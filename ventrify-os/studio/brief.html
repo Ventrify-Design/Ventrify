@@ -291,8 +291,9 @@
 </head>
 <body>
   <div id="root"></div>
-  <script src="/studio/app.js"></script>
-  <script>
+  <script type="module" src="/studio/app.js"></script>
+  <script type="module">
+    await window.STUDIO_READY;
     const { engagement, helpers } = window.STUDIO;
 
     if (!engagement) {
@@ -674,7 +675,7 @@
               <span class="brief-saved" id="brief-saved-indicator" style="opacity:0.4;transition:opacity 0.3s ease;">Saved</span>
               <div class="brief-footer-spacer"></div>
               <button type="button" class="btn btn-outline" onclick="window.location.href='/studio/'">Save and exit</button>
-              <button type="button" class="btn btn-primary" onclick="submitBrief()">Submit brief &rarr;</button>
+              <button type="button" id="brief-submit-btn" class="btn btn-primary" onclick="submitBrief()">Submit brief &rarr;</button>
             </div>
           </form>
         </div>
@@ -788,28 +789,38 @@
       }, 1800);
     }
 
-    function submitBrief() {
-      // Write the brief back into the engagement record (so Workspace + Studio dashboard pick it up)
-      const programs = helpers.readJSON('workspace.programs', []);
-      const i = programs.findIndex(p => p.id === engagement.id);
-      if (i >= 0) {
-        programs[i].brief = brief;
-        programs[i].briefSubmitted = true;
-        programs[i].briefSubmittedAt = 'just now';
-        programs[i].gateStatus = 'Phase 0 · brief submitted, awaiting kickoff';
-        programs[i].lastActivity = 'just now';
-        programs[i].lastActivityDetail = 'Founder submitted brief in the Studio';
-        // Back-fill the venture-level fields the operator's Workspace renders.
-        // These were left null at engagement-creation time because the operator
-        // doesn't know them yet; the brief is where they originate.
-        if (brief.industry) programs[i].industry = brief.industry;
-        if (brief.oneLine) programs[i].venturePitch = brief.oneLine;
-        // If investability was seeded by the PDF upload, bring it onto the engagement
-        if (brief.investability) programs[i].investability = brief.investability;
-        helpers.writeJSON('workspace.programs', programs);
+    async function submitBrief() {
+      // Write the brief back into the engagement record (so Workspace + Studio
+      // dashboard pick it up). Back-fill the venture-level fields the operator's
+      // Workspace renders — these originate in the brief, not at creation time.
+      const patch = {
+        brief,
+        briefSubmitted: true,
+        briefSubmittedAt: 'just now',
+        gateStatus: 'Phase 0 · brief submitted, awaiting kickoff',
+        lastActivity: 'just now',
+        lastActivityDetail: 'Founder submitted brief in the Studio'
+      };
+      if (brief.industry) patch.industry = brief.industry;
+      if (brief.oneLine) patch.venturePitch = brief.oneLine;
+      if (brief.investability) patch.investability = brief.investability;
+
+      const btn = document.getElementById('brief-submit-btn');
+      if (btn) { btn.disabled = true; btn.textContent = 'Submitting…'; }
+      try {
+        if (window.STUDIO.mode === 'live') {
+          const data = await import('../firebase/data.js');
+          await data.updateEngagement(engagement.id, patch);
+        } else {
+          const programs = helpers.readJSON('workspace.programs', []);
+          const i = programs.findIndex(p => p.id === engagement.id);
+          if (i >= 0) { Object.assign(programs[i], patch); helpers.writeJSON('workspace.programs', programs); }
+        }
+        window.location.href = `/studio/dashboard.html?id=${engagement.id}`;
+      } catch (e) {
+        if (btn) { btn.disabled = false; btn.textContent = 'Submit brief →'; }
+        alert('Could not submit the brief: ' + ((e && (e.code || e.message)) || e));
       }
-      // Land on the dashboard
-      window.location.href = `/studio/dashboard.html?id=${engagement.id}`;
     }
     window.submitBrief = submitBrief;
 

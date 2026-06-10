@@ -21,14 +21,13 @@
       <h1 class="login-title">Sign in to your Workspace</h1>
       <p class="login-sub">The operator command center for every program your team is running on Ventrify OS.</p>
 
-      <form class="login-form" onsubmit="event.preventDefault(); window.location.href='/workspace/dashboard.html';">
-        <input type="email" class="login-input" placeholder="you@yourstudio.com" value="alex@mercer.vc" autocomplete="email">
-        <input type="password" class="login-input" placeholder="Password" value="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" autocomplete="current-password">
-        <button type="submit" class="login-btn">Sign in to Workspace</button>
+      <form class="login-form" id="login-form">
+        <input type="email" class="login-input" id="login-email" placeholder="you@yourstudio.com" autocomplete="email" required>
+        <button type="submit" class="login-btn" id="login-btn">Send me a sign-in link &rarr;</button>
       </form>
 
-      <p class="login-meta">
-        Forgot your password? <a href="#">Recover it</a>
+      <p class="login-meta" id="login-meta">
+        No password &mdash; we email you a one-time link to sign in.
       </p>
     </div>
 
@@ -38,5 +37,57 @@
       <a href="mailto:hello@ventrify.io?subject=Ventrify%20OS%20demo%20request">Book a demo</a>
     </p>
   </div>
+
+  <script type="module">
+    import { FIREBASE_ENABLED } from '/firebase/config.js';
+    import { sendMagicLink, completeMagicLinkIfPresent } from '/firebase/auth.js';
+
+    const DASH  = '/workspace/dashboard.html';
+    const form  = document.getElementById('login-form');
+    const email = document.getElementById('login-email');
+    const btn   = document.getElementById('login-btn');
+    const meta  = document.getElementById('login-meta');
+    const card  = document.querySelector('.login-card');
+
+    function showError(err) {
+      const code = (err && (err.code || err.message)) || String(err);
+      meta.innerHTML = 'Couldn&rsquo;t send the link: <strong>' + code + '</strong>';
+      meta.style.color = 'var(--danger, crimson)';
+    }
+
+    function showSent(addr) {
+      card.innerHTML = `
+        <div class="login-logo">VENTRIFY <span class="os">OS</span><span class="tag">Workspace</span></div>
+        <h1 class="login-title">Check your inbox.</h1>
+        <p class="login-sub">A one-time sign-in link is on its way to <strong>${addr}</strong>.
+        Open it in <em>this</em> browser to finish signing in. The link expires in about an hour.</p>
+        <p class="login-meta">Wrong address? <a href="/workspace/">Start over</a></p>`;
+    }
+
+    if (!FIREBASE_ENABLED) {
+      // Backend off → keep the old mock behaviour (straight to the dashboard).
+      form.addEventListener('submit', (e) => { e.preventDefault(); window.location.href = DASH; });
+    } else {
+      // Returning from a clicked email link? Finish the sign-in, then go in.
+      completeMagicLinkIfPresent()
+        .then((user) => { if (user) window.location.href = DASH; })
+        .catch(showError);
+
+      // Otherwise: send a magic link to the entered address.
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const addr = email.value.trim();
+        if (!addr) return;
+        btn.disabled = true; btn.textContent = 'Sending…';
+        try {
+          await sendMagicLink(addr, window.location.origin + '/workspace/');
+          showSent(addr);
+        } catch (err) {
+          showError(err);
+          btn.disabled = false; btn.textContent = 'Send me a sign-in link →';
+        }
+      });
+    }
+  </script>
 </body>
 </html>

@@ -182,8 +182,9 @@
 </head>
 <body>
   <div id="root"></div>
-  <script src="/studio/app.js"></script>
-  <script>
+  <script type="module" src="/studio/app.js"></script>
+  <script type="module">
+    await window.STUDIO_READY;
     const { engagement, org, groups, labels, helpers } = window.STUDIO;
     const params = new URLSearchParams(window.location.search);
     const groupKey = params.get('group') || 'foundations';
@@ -206,6 +207,61 @@
     if (!engagement.brief) {
       window.location.replace(`/studio/brief.html?id=${engagement.id}`);
       throw new Error('halt');
+    }
+
+    // ---- Provocation cards: founder response inbox ----------------------
+    function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+    let provCards = [];
+    if (window.STUDIO.mode === 'live') {
+      try { const data = await import('../firebase/data.js'); provCards = await data.listCardsForEngagement(engagement.id); }
+      catch (e) { console.warn('cards load failed', e); }
+    }
+    window.__respondCard = async function(cardId, decision) {
+      const ta = document.getElementById('pfc-' + cardId);
+      const comment = ta ? ta.value.trim() : '';
+      const el = document.getElementById('pf-' + cardId);
+      if (el) { el.style.opacity = '0.5'; el.style.pointerEvents = 'none'; }
+      try {
+        const data = await import('../firebase/data.js');
+        await data.respondToCard(cardId, { decision, comment });
+        window.location.reload();
+      } catch (e) {
+        alert('Could not save your response: ' + ((e && (e.code || e.message)) || e));
+        if (el) { el.style.opacity = '1'; el.style.pointerEvents = 'auto'; }
+      }
+    };
+    function provInboxHTML(cards) {
+      if (!cards || !cards.length) return '';
+      const awaiting = cards.filter(c => !c.founderResponse);
+      const answered = cards.filter(c => c.founderResponse);
+      const awaitingHTML = awaiting.map(c => `
+        <div class="prov-fcard" id="pf-${c.id}">
+          <div class="prov-fcard-meta">${esc((c.hub || '').toUpperCase())} &middot; ${esc(c.level || 'L1')} #${c.number || ''}</div>
+          <div class="prov-fcard-title">${esc(c.title || '')}</div>
+          ${c.body ? `<div class="prov-fcard-body">${esc(c.body)}</div>` : ''}
+          <textarea class="prov-fcard-input" id="pfc-${c.id}" placeholder="Add a comment (optional) — tell your operator why."></textarea>
+          <div class="prov-fcard-actions">
+            <button class="btn btn-sm prov-btn-accept" onclick="window.__respondCard('${c.id}','accept')">Accept</button>
+            <button class="btn btn-sm prov-btn-reshape" onclick="window.__respondCard('${c.id}','reshape')">Reshape</button>
+            <button class="btn btn-sm prov-btn-reject" onclick="window.__respondCard('${c.id}','reject')">Reject</button>
+          </div>
+        </div>`).join('');
+      const answeredHTML = answered.map(c => `
+        <div class="prov-fcard answered">
+          <div class="prov-fcard-meta">${esc((c.hub || '').toUpperCase())} &middot; #${c.number || ''} &middot; <span class="prov-fcard-decision ${esc(c.founderResponse.decision)}">${esc(c.founderResponse.decision)}</span></div>
+          <div class="prov-fcard-title">${esc(c.title || '')}</div>
+          ${c.founderResponse.comment ? `<div class="prov-fcard-yourcomment">&ldquo;${esc(c.founderResponse.comment)}&rdquo;</div>` : ''}
+        </div>`).join('');
+      return `
+        <div class="prov-inbox">
+          <div class="prov-inbox-head">
+            <div class="page-eyebrow">Your input needed</div>
+            <h2 class="prov-inbox-title">${awaiting.length ? awaiting.length + ' provocation card' + (awaiting.length > 1 ? 's' : '') + ' awaiting your response' : 'All caught up — nothing awaiting you'}</h2>
+            <p class="prov-inbox-sub">Your answers reshape the research &amp; strategy your operator builds. Accept what fits, reshape what needs a different angle, reject what misses.</p>
+          </div>
+          ${awaitingHTML}
+          ${answered.length ? `<div class="prov-inbox-answered-label">Answered (${answered.length})</div>${answeredHTML}` : ''}
+        </div>`;
     }
 
     // -------------------------------------------------------------------
@@ -440,6 +496,8 @@
         <h1 class="page-title">${copy.title}</h1>
         <p class="page-sub">${copy.sub}</p>
       </div>
+
+      ${provInboxHTML(provCards)}
 
       <div class="group-grid">
         ${cardsHTML}

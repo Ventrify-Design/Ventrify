@@ -13,8 +13,9 @@
   <div id="root"></div>
   <script src="sample-data.js"></script>
   <script src="agents.js"></script>
-  <script src="app.js"></script>
-  <script>
+  <script type="module" src="app.js"></script>
+  <script type="module">
+    await window.WORKSPACE_READY;
     const W = window.WORKSPACE;
     const { operators, helpers, org } = W;
 
@@ -277,20 +278,23 @@
 cp -R ~/Desktop/ventrify-engagement-template ~/Desktop/${slug}-engagement
 cd ~/Desktop/${slug}-engagement
 
-# 2. Fill in operator-known placeholders. Brief data (pitch, industry,
-#    vision, etc.) syncs back automatically once the founder submits.
+# 2. Bind this clone to its engagement + pull live state from the Studio.
+#    --engagement-id writes engagement.json so EVERY cloud sync is scoped to
+#    this engagement only. Brief, industry + vision sync down automatically.
 node tools/init.js \\
+  --engagement-id "${programId}" \\
   --org "${orgName}" --org-slug "${orgSlug}" \\
   --venture "${state.basics.name}" --venture-slug "${slug}" \\
   --founder "${state.basics.founderName}" --founder-email "${state.basics.founderEmail}" \\
   --tier "${(org && org.tier) || 'Cohort'}" --awaiting-brief
-
-# 3. Install deps + push to your GitHub org
 npm install
+npm run cloud:pull          # live identity now; re-run when the founder submits the brief
+
+# 3. Push to your GitHub org (the service-account key stays local, never pushed)
 git init && git add -A && git commit -m "${slug} engagement scaffolded from Ventrify template"
 gh repo create ${orgSlug}/${slug}-engagement --private --source=. --remote=origin --push
 
-# 4. Open in Claude Code → workflow-orchestrator opens Phase 0 automatically
+# 4. Open in Claude Code → research agents fire off the pulled brief
 claude code .</pre>
           </div>
 
@@ -353,7 +357,7 @@ claude code .</pre>
       state.operator = m('f-operator')?.value || state.operator;
     }
 
-    function persistAndLaunch() {
+    async function persistAndLaunch() {
       const slug = slugify(state.basics.name);
       const programId = 'prg-' + slug + '-' + Math.random().toString(36).slice(2, 6);
       const op = helpers.getOperator(state.operator);
@@ -362,6 +366,7 @@ claude code .</pre>
         slug,
         name: state.basics.name,
         founderName: state.basics.founderName,
+        founderEmail: state.basics.founderEmail,
         founderAvatar: initialsOf(state.basics.founderName) || 'FF',
         founderAvatarColor: (org && org.primaryColor) || '#0036FF',
         // Venture-specific fields (industry, pitch) live on the engagement
@@ -388,11 +393,25 @@ claude code .</pre>
         brand: state.brand,
         createdAt: new Date().toISOString()
       };
-      try {
-        const stored = JSON.parse(localStorage.getItem('workspace.programs') || '[]');
-        stored.unshift(newProgram);
-        localStorage.setItem('workspace.programs', JSON.stringify(stored));
-      } catch(e) {}
+      if (W.mode === 'live') {
+        // Source of truth is Firestore — the founder (any browser) reads it back.
+        const data = await import('../firebase/data.js');
+        await data.createEngagement(newProgram);
+        // Phase 2.5: auto-send the founder their magic-link Studio invite.
+        // Non-blocking — the engagement is created regardless of email success.
+        if (newProgram.founderEmail) {
+          try {
+            const { sendInviteLink } = await import('../firebase/auth.js');
+            await sendInviteLink(newProgram.founderEmail.trim(), window.location.origin + '/studio/');
+          } catch (e) { console.warn('Studio invite email failed (engagement still created):', e); }
+        }
+      } else {
+        try {
+          const stored = JSON.parse(localStorage.getItem('workspace.programs') || '[]');
+          stored.unshift(newProgram);
+          localStorage.setItem('workspace.programs', JSON.stringify(stored));
+        } catch(e) {}
+      }
       return { programId, slug };
     }
 
@@ -459,7 +478,7 @@ claude code .</pre>
       });
       // Next / Launch
       const next = document.getElementById('btn-next');
-      if (next) next.addEventListener('click', () => {
+      if (next) next.addEventListener('click', async () => {
         if (!canAdvance()) return;
         if (state.step === 1) readBasics();
         if (state.step < 4) {
@@ -467,9 +486,15 @@ claude code .</pre>
           render();
           window.scrollTo({ top: 0, behavior: 'smooth' });
         } else {
-          const { programId, slug } = persistAndLaunch();
-          window.renderShell(successHTML(programId, slug));
-          window.scrollTo({ top: 0 });
+          next.disabled = true; next.textContent = 'Launching…';
+          try {
+            const { programId, slug } = await persistAndLaunch();
+            window.renderShell(successHTML(programId, slug));
+            window.scrollTo({ top: 0 });
+          } catch (e) {
+            next.disabled = false; next.textContent = 'Launch engagement';
+            alert('Could not launch engagement: ' + ((e && (e.code || e.message)) || e));
+          }
         }
       });
     }

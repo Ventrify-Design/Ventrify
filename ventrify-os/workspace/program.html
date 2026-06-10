@@ -13,9 +13,11 @@
   <div id="root"></div>
   <script src="sample-data.js"></script>
   <script src="agents.js"></script>
-  <script src="app.js"></script>
-  <script>
+  <script type="module" src="app.js"></script>
+  <script type="module">
+    await window.WORKSPACE_READY;
     const W = window.WORKSPACE;
+    const A = window.WORKSPACE_AGENTS;
     const { helpers, labels, programs: allPrograms } = W;
 
     // Read ?id= from URL, default to first program if any exist
@@ -36,6 +38,51 @@
       `);
       throw new Error('halt-render'); // stop the rest of this script
     }
+
+    // ---- Agent-derived signals -----------------------------------------
+    // engagement-health-monitor verdict + reasoning, and tier-compliance-
+    // auditor completeness. Health follows the dashboard's demo/live split
+    // (demo keeps the curated narrative; live computes from state).
+    // Completeness is deterministic from hub state, so it's always computed.
+    const useLive = (W.demoMode || 'off') === 'off';
+    const health = (useLive && A) ? A.computeEngagementHealth(p) : null;
+    const healthLevel = health ? health.level : p.health;
+    const completeness = A ? A.computeCompleteness(p) : { pct: 0, completedItems: 0, expectedItems: 0 };
+
+    // Provocation cards for this engagement (live mode reads from Firestore).
+    let provCards = [];
+    if (W.mode === 'live') {
+      try { const data = await import('../firebase/data.js'); provCards = await data.listCardsForEngagement(p.id); }
+      catch (e) { console.warn('cards load failed', e); }
+    }
+    // Latest investability snapshot (VSS v2) for the operator summary.
+    let invSnapshot = null;
+    if (W.mode === 'live') {
+      try { const data = await import('../firebase/data.js'); const snaps = await data.listInvestabilitySnapshots(p.id); invSnapshot = snaps.length ? snaps[snaps.length - 1] : null; }
+      catch (e) { console.warn('investability load failed', e); }
+    }
+    window.__seedCards = async function(engagementId) {
+      const samples = [
+        { hub: 'research', number: 1, order: 1, title: 'Is the core problem retention or acquisition?', body: 'Early signals point both ways — which does this venture actually solve first?' },
+        { hub: 'research', number: 2, order: 2, title: 'Who feels this pain most acutely today?', body: 'Name the sharpest-edge user segment to anchor the research.' },
+        { hub: 'research', number: 3, order: 3, title: 'What would make this 10× better than the status quo?', body: 'The provocation that separates a feature from a company.' }
+      ];
+      const data = await import('../firebase/data.js');
+      for (const s of samples) { await data.createCard({ engagementId, ...s }); }
+      window.location.reload();
+    };
+
+    const reasonIcon = { critical: '⚠', warn: '!', opportunity: '↗', positive: '✓' };
+    const healthReasonsHTML = (health && health.reasons && health.reasons.length) ? `
+      <div class="program-detail-reasons">
+        ${health.reasons.slice(0, 3).map(r => `
+          <div class="program-card-reason ${health.level}">
+            <span class="program-card-reason-icon">${reasonIcon[r.severity] || '•'}</span>
+            <span>${r.text}</span>
+          </div>
+        `).join('')}
+      </div>
+    ` : '';
 
     function hubCardHTML(key, data) {
       const status = data.status || 'pending';
@@ -111,6 +158,113 @@
           `).join('')}</div>`
       : `<div style="text-align:center;padding:1.5rem;color:var(--text-muted,#656565);font-size:0.88rem;">No activity recorded yet.</div>`;
 
+    // ---------------- Founder brief (operator read view) ---------------
+    // Renders engagement.brief — what the founder submitted in the Studio —
+    // so the operator can actually read it, not just see "submitted".
+    function escBrief(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+    function briefFieldHTML(label, key, b) {
+      const value = b[key];
+      if (key === 'features') {
+        const items = (Array.isArray(value) ? value : []).filter(Boolean);
+        if (!items.length) return '';
+        return `<div class="brief-field"><div class="brief-field-label">${label}</div><ol class="brief-features">${items.map(f => `<li>${escBrief(f)}</li>`).join('')}</ol></div>`;
+      }
+      let display;
+      if (Array.isArray(value)) display = value.filter(Boolean).map(escBrief).join(' · ');
+      else display = (value == null) ? '' : escBrief(value);
+      if (!display) return '';
+      return `<div class="brief-field"><div class="brief-field-label">${label}</div><div class="brief-field-value">${display}</div></div>`;
+    }
+    const BRIEF_GROUPS = [
+      { title: 'Overview', fields: [['One-liner','oneLine'],['Industry','industry'],['Problem','problem'],['Target user','targetUser'],['1-year vision','oneYearVision']] },
+      { title: 'Goals', fields: [['Primary goal','primaryGoal'],['Motivations','motivations'],['Success looks like','successLooksLike']] },
+      { title: 'Features', fields: [['Key features','features']] },
+      { title: 'Inspiration & platform', fields: [['Comparables','comparables'],['Design style','designStyle'],['Preferred tools','preferredTools']] },
+      { title: 'Team & notes', fields: [['Other stakeholders','otherStakeholders'],['Technical capability','technicalCapability'],['Notes','notes']] }
+    ];
+    function briefSectionHTML(p) {
+      const b = p.brief;
+      const submitted = (b && p.briefSubmittedAt) ? `<span class="text-mono dim" style="font-size:0.72rem;">Submitted ${escBrief(p.briefSubmittedAt)}</span>` : '';
+      const head = `<div class="section-head"><div><div class="section-title">Founder brief</div><div class="section-sub">What the founder submitted in the Studio &mdash; the source for every downstream agent.</div></div>${submitted}</div>`;
+      if (!b) {
+        const msg = (p.briefSubmitted === false)
+          ? `<strong style="color:var(--text);font-weight:600;">Awaiting brief from ${escBrief(p.founderName || 'the founder')}.</strong> Studio invite sent to ${escBrief(p.founderEmail || 'the founder')}. The brief appears here the moment it&rsquo;s submitted.`
+          : `Brief on file. Full content isn&rsquo;t available in this view.`;
+        return `<div class="section">${head}<div class="card" style="text-align:center;padding:2rem;color:var(--text-muted);">${msg}</div></div>`;
+      }
+      const groups = BRIEF_GROUPS.map(g => {
+        const fields = g.fields.map(([label, key]) => briefFieldHTML(label, key, b)).join('');
+        return fields ? `<div class="brief-group"><div class="brief-group-title">${g.title}</div>${fields}</div>` : '';
+      }).join('');
+      const pdf = b.pdfFilename ? `<div class="brief-group"><div class="brief-group-title">Uploaded document</div><div class="brief-field"><div class="brief-field-value">&#128196; ${escBrief(b.pdfFilename)}</div></div></div>` : '';
+      const body = (groups || pdf) ? `<div class="card brief-view">${groups}${pdf}</div>` : `<div class="card" style="padding:1.5rem;color:var(--text-muted);">Brief submitted, but all fields were left blank.</div>`;
+      return `<div class="section">${head}${body}</div>`;
+    }
+
+    // ---------------- Provocation cards (operator playback) -------------
+    function provCardHTML(c) {
+      const r = c.founderResponse;
+      const statusPill = r
+        ? `<span class="pill ${r.decision === 'accept' ? 'health-on-track' : r.decision === 'reject' ? 'health-stuck' : 'health-attention'}"><span class="dot"></span> Founder: ${escBrief(r.decision)}</span>`
+        : `<span class="pill"><span class="dot"></span> Awaiting founder</span>`;
+      const response = r
+        ? `<div class="prov-card-response">
+             <div class="prov-card-response-label">Founder responded &middot; ${escBrief(r.decision)}${r.respondedAt ? ' &middot; ' + escBrief(r.respondedAt) : ''}</div>
+             ${r.comment ? `<div class="prov-card-response-comment">&ldquo;${escBrief(r.comment)}&rdquo;</div>` : '<div class="prov-card-response-comment dim">No comment left.</div>'}
+           </div>`
+        : '';
+      return `
+        <div class="prov-card">
+          <div class="prov-card-head">
+            <span class="prov-card-meta text-mono">${escBrief((c.hub || '').toUpperCase())} &middot; ${escBrief(c.level || 'L1')} #${c.number || ''}</span>
+            ${statusPill}
+          </div>
+          <div class="prov-card-title">${escBrief(c.title || '')}</div>
+          ${c.body ? `<div class="prov-card-body">${escBrief(c.body)}</div>` : ''}
+          ${response}
+        </div>`;
+    }
+    function cardsSectionHTML(cards, p) {
+      const responded = cards.filter(c => c.founderResponse).length;
+      const counter = cards.length ? `<span class="text-mono dim" style="font-size:0.72rem;">${responded}/${cards.length} answered</span>` : '';
+      const seedBtn = (W.mode === 'live' && p.briefSubmitted !== false)
+        ? `<button class="btn btn-outline btn-sm" onclick="window.__seedCards('${p.id}')">+ Generate demo cards</button>` : '';
+      const head = `<div class="section-head"><div><div class="section-title">Provocation cards</div><div class="section-sub">L1 cards published to the founder&rsquo;s Studio &mdash; their responses reshape research &amp; strategy.</div></div><div style="display:flex;gap:0.75rem;align-items:center;">${counter}${seedBtn}</div></div>`;
+      if (!cards.length) {
+        const hint = (W.mode === 'live')
+          ? `In production these are generated by <span class="text-mono">portal-publisher</span> in the engagement repo. ${p.briefSubmitted !== false ? 'Use &ldquo;Generate demo cards&rdquo; to simulate the loop.' : 'Awaiting the founder&rsquo;s brief first.'}`
+          : `Provocation cards appear here once the engagement is live on the backend.`;
+        return `<div class="section">${head}<div class="card" style="text-align:center;padding:2rem;color:var(--text-muted);">No provocation cards published yet. ${hint}</div></div>`;
+      }
+      return `<div class="section">${head}<div class="prov-cards-list">${cards.map(provCardHTML).join('')}</div></div>`;
+    }
+
+    // ---------------- Investability (operator summary, VSS v2) ----------
+    function investabilitySectionHTML(snap, p) {
+      const head = `<div class="section-head"><div><div class="section-title">Investability</div><div class="section-sub">VSS v2 (TDK 7×5) &mdash; the founder sees this in their Studio. Updates each gate.</div></div></div>`;
+      if (!snap) {
+        return `<div class="section">${head}<div class="card" style="text-align:center;padding:1.75rem;color:var(--text-muted);">No score yet. Author <span class="text-mono">/sentiment/score.md</span> in the engagement repo, then <span class="text-mono">npm run cloud:publish</span>.</div></div>`;
+      }
+      const cc = snap.band === 'approved' ? '#00897b' : snap.band === 'feedback' ? '#C77700' : '#C0392B';
+      const cats = (snap.categories || []).map(c => {
+        const col = c.band === 'green' ? '#00897b' : c.band === 'yellow' ? '#C77700' : '#C0392B';
+        const max = c.max || 5;
+        return `<div class="inv-op-cat">
+            <div class="inv-op-cat-head"><span>${escBrief(c.label)}</span><span class="text-mono dim">${c.sum}/${max}</span></div>
+            <div class="inv-op-bar"><div style="width:${(c.sum / max) * 100}%;background:${col};height:100%;border-radius:3px;"></div></div>
+          </div>`;
+      }).join('');
+      return `<div class="section">${head}
+        <div class="card">
+          <div class="inv-op-headline">
+            <div><span class="inv-op-score" style="color:${cc};">${snap.composite}</span><span class="text-mono dim"> / ${snap.maxPossible || 35}</span></div>
+            <div class="text-mono" style="color:${cc};text-transform:uppercase;font-size:0.72rem;letter-spacing:0.06em;font-weight:600;">${snap.pct}% &middot; ${escBrief(snap.bandLabel || snap.band)}</div>
+          </div>
+          <div class="inv-op-grid">${cats}</div>
+          <div class="text-mono dim" style="font-size:0.66rem;letter-spacing:0.06em;text-transform:uppercase;margin-top:0.95rem;">Computed by tdk-investability-scorer &middot; ${snap.ratedCount || 0}/35 rated</div>
+        </div></div>`;
+    }
+
     const main = `
       <div style="margin-bottom:1rem;">
         <a href="dashboard.html" class="text-small dim" style="font-size:0.85rem;">&larr; All programs</a>
@@ -125,7 +279,7 @@
             <div class="program-detail-meta">
               <span class="pill">${p.industry || 'Industry TBD'}</span>
               <span class="pill pill-primary">${helpers.phaseLabel(p.phase)}</span>
-              <span class="pill ${window.healthClass(p.health)}"><span class="dot"></span> ${window.healthLabel(p.health)}</span>
+              <span class="pill ${window.healthClass(healthLevel)}"><span class="dot"></span> ${window.healthLabel(healthLevel)}</span>
               ${p.briefSubmitted === false ? '<span class="pill" style="background:rgba(var(--primary-rgb,0,54,255),0.1);color:var(--primary);"><span class="dot"></span> Awaiting brief</span>' : ''}
               ${p.mvpDemoModeReady ? '<span class="pill pill-success"><span class="dot"></span> DEMO_MODE ready</span>' : ''}
             </div>
@@ -136,6 +290,8 @@
           <button class="btn btn-outline btn-sm">Reassign operator</button>
         </div>
       </div>
+
+      ${healthReasonsHTML}
 
       <div class="program-detail-stats">
         <div class="card">
@@ -157,6 +313,26 @@
           </div>
         </div>
       </div>
+
+      <div class="section">
+        <div class="card compliance-widget">
+          <div class="compliance-widget-text">
+            <div class="page-eyebrow" style="margin-bottom:0.5rem;">Tier compliance</div>
+            <div class="compliance-widget-headline">
+              <span class="compliance-widget-pct">${completeness.pct}%</span>
+              <span class="text-mono dim" style="font-size:0.82rem;">${completeness.completedItems}/${completeness.expectedItems} expected outputs produced at ${helpers.phaseLabel(p.phase)}</span>
+            </div>
+            <div class="progress" style="margin-top:0.85rem;"><div class="progress-bar" style="width:${completeness.pct}%"></div></div>
+            <div class="text-mono dim" style="font-size:0.66rem;letter-spacing:0.06em;text-transform:uppercase;margin-top:0.7rem;">Computed by tier-compliance-auditor · expected-output coverage for the engagement's current phase</div>
+          </div>
+        </div>
+      </div>
+
+      ${investabilitySectionHTML(invSnapshot, p)}
+
+      ${briefSectionHTML(p)}
+
+      ${cardsSectionHTML(provCards, p)}
 
       <div class="section">
         <div class="section-head">
