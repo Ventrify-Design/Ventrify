@@ -185,8 +185,10 @@
   <script type="module" src="/studio/app.js"></script>
   <script type="module">
     import { renderCardBody, ensureCardStyles } from '../shared/card-format.js';
+    import { renderDataRoom, hydrateDataRoom, ensureHubStyles } from '../shared/hub-view.js';
     await window.STUDIO_READY;
     ensureCardStyles();
+    ensureHubStyles();
     const { engagement, org, groups, labels, helpers } = window.STUDIO;
     const params = new URLSearchParams(window.location.search);
     const groupKey = params.get('group') || 'foundations';
@@ -219,6 +221,12 @@
       // visible here only once the operator releases it from the Workspace.
       try { const data = await import('../firebase/data.js'); provCards = await data.listSentCardsForEngagement(engagement.id); }
       catch (e) { console.warn('cards load failed', e); }
+    }
+    // Data-room L3 hub content (deep research / strategy / financials).
+    let hubDocs = [];
+    if (window.STUDIO.mode === 'live') {
+      try { const data = await import('../firebase/data.js'); hubDocs = await data.listHubDocs(engagement.id); }
+      catch (e) { console.warn('hub docs load failed', e); }
     }
     window.__respondCard = async function(cardId, decision) {
       const ta = document.getElementById('pfc-' + cardId);
@@ -537,6 +545,8 @@
 
       ${provInboxHTML(provCards)}
 
+      ${renderDataRoom(hubDocs, { title: 'Your data room', sub: 'The deep research, strategy and financials behind your venture — the L3 detail under the cards.' })}
+
       <div class="group-grid">
         ${cardsHTML}
       </div>
@@ -545,6 +555,7 @@
     `;
 
     window.renderShell(main);
+    hydrateDataRoom(document);
   </script>
 </body>
 </html>

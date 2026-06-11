@@ -28,8 +28,10 @@
   <script type="module" src="app.js"></script>
   <script type="module">
     import { renderCardBody, ensureCardStyles } from '../shared/card-format.js';
+    import { renderDataRoom, hydrateDataRoom, ensureHubStyles } from '../shared/hub-view.js';
     await window.WORKSPACE_READY;
     ensureCardStyles();
+    ensureHubStyles();
     const W = window.WORKSPACE;
     const A = window.WORKSPACE_AGENTS;
     const { helpers, labels, programs: allPrograms } = W;
@@ -75,6 +77,12 @@
     if (W.mode === 'live') {
       try { const data = await import('../firebase/data.js'); const snaps = await data.listInvestabilitySnapshots(p.id); invSnapshot = snaps.length ? snaps[snaps.length - 1] : null; }
       catch (e) { console.warn('investability load failed', e); }
+    }
+    // Data-room L3 hub content (deep research / strategy / financials).
+    let hubDocs = [];
+    if (W.mode === 'live') {
+      try { const data = await import('../firebase/data.js'); hubDocs = await data.listHubDocs(p.id); }
+      catch (e) { console.warn('hub docs load failed', e); }
     }
     // Operator clicks "Run research agents" → queue a headless run. The banner
     // updates live (via the watchEngagement subscription below) as the runner
@@ -509,6 +517,7 @@
         <div id="run-region">${assessRunBannerHTML(p.runState, p)}</div>
         ${investabilitySectionHTML(invSnapshot, p)}
         <div id="cards-region">${findingsSectionHTML(provCards)}</div>
+        ${renderDataRoom(hubDocs)}
         ${W.mode === 'live' ? dangerZoneHTML(p) : ''}
       `;
     }
@@ -584,6 +593,8 @@
 
       <div id="cards-region">${cardsRegionHTML(provCards, p)}</div>
 
+      ${renderDataRoom(hubDocs)}
+
       <div class="section">
         <div class="section-head">
           <div>
@@ -631,6 +642,7 @@
     `;
 
     window.renderShell(main);
+    hydrateDataRoom(document);
 
     // ---- Live run + cards subscriptions (realtime, live mode only) -------
     // The run banner reflects runState as the headless runner drives it; the

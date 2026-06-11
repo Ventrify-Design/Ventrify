@@ -264,3 +264,13 @@ export async function listInvestabilitySnapshots(engagementId) {
   const snap = await getDocs(query(col, orderBy('computedAt', 'asc')));
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
+
+// ---- Data-room L3 hub content (deep research / strategy / financials) ------
+// Published by the engagement repo (tools/cloud/publish-hubs.js). Sorted by hub
+// then order so both surfaces render a stable data room.
+export async function listHubDocs(engagementId) {
+  const col = collection(db, 'engagements', engagementId, 'hubDocs');
+  const snap = await getDocs(col);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }))
+    .sort((a, b) => (a.hub || '').localeCompare(b.hub || '') || (a.order || 0) - (b.order || 0));
+}

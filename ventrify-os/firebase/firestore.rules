@@ -61,6 +61,14 @@ service cloud.firestore {
           && (userEmail() == engData(engId).founderEmail || isOperatorOf(engData(engId).orgId));
         allow write: if false;
       }
+
+      // Data-room L3 hub content — readable by founder/operator; written only by
+      // the engagement repo's Admin SDK bridge.
+      match /hubDocs/{docId} {
+        allow read: if signedIn()
+          && (userEmail() == engData(engId).founderEmail || isOperatorOf(engData(engId).orgId));
+        allow write: if false;
+      }
     }
 
     // Provocation cards — operators have full access to their org's cards.
