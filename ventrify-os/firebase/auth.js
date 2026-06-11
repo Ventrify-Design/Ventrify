@@ -26,12 +26,26 @@ const EMAIL_KEY = 'ventrify.pendingEmail';
 // continueUrl must be in Auth → Settings → Authorized domains (localhost is
 // authorized by default).
 export async function sendMagicLink(email, continueUrl) {
-  const actionCodeSettings = {
-    url: continueUrl || window.location.href,
-    handleCodeInApp: true
-  };
-  await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+  const url = continueUrl || window.location.href;
+  // Stash first so same-device return completes without re-prompting.
   window.localStorage.setItem(EMAIL_KEY, email);
+
+  // Primary path: send the branded link via Resend (/api/send-login-link). This
+  // avoids Firebase's built-in email-send DAILY QUOTA (auth/quota-exceeded) that
+  // repeated testing exhausts. On localhost/dev the function isn't served, so we
+  // fall back to Firebase's built-in sender (which is fine there).
+  try {
+    const surface = /\/studio\//.test(url) ? 'Studio' : 'Workspace';
+    const resp = await fetch('/api/send-login-link', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, continueUrl: url, surface })
+    });
+    if (resp.ok) return;                       // sent via Resend — done
+    // Function reachable but errored (e.g. not configured) → fall through.
+  } catch (e) { /* function not available (dev) → fall through */ }
+
+  await sendSignInLinkToEmail(auth, email, { url, handleCodeInApp: true });
 }
 
 // Send a sign-in ("invite") link to SOMEONE ELSE's address — e.g. an operator
