@@ -64,6 +64,31 @@ module.exports = async (req, res) => {
       return;
     }
 
+    if (action === 'delete-org') {
+      if (!isSuper) { res.status(403).json({ error: 'forbidden' }); return; }
+      const orgId = String(body.orgId || '').trim();
+      if (!orgId) { res.status(400).json({ error: 'org_required' }); return; }
+      if (orgId === 'default') { res.status(400).json({ error: 'cannot_delete_default' }); return; }
+      const orgRef = db.doc('organisations/' + orgId);
+      if (!(await orgRef.get()).exists) { res.status(404).json({ error: 'org_not_found' }); return; }
+
+      // Cascade: every engagement in this org → its cards + investability
+      // snapshots → the engagement doc, then the org itself.
+      const engs = await db.collection('engagements').where('orgId', '==', orgId).get();
+      let engCount = 0, cardCount = 0;
+      for (const engDoc of engs.docs) {
+        const cards = await db.collection('cards').where('engagementId', '==', engDoc.id).get();
+        for (const c of cards.docs) { await c.ref.delete(); cardCount++; }
+        const snaps = await engDoc.ref.collection('investabilitySnapshots').get();
+        for (const s of snaps.docs) { await s.ref.delete(); }
+        await engDoc.ref.delete();
+        engCount++;
+      }
+      await orgRef.delete();
+      res.status(200).json({ ok: true, deleted: { engagements: engCount, cards: cardCount } });
+      return;
+    }
+
     if (action === 'add-operator' || action === 'remove-operator') {
       const orgId = String(body.orgId || '').trim();
       const email = String(body.email || '').trim().toLowerCase();
