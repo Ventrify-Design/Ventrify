@@ -8,6 +8,18 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Research-run banner + draft-card accents (page-local) */
+    .run-banner { display:flex; align-items:center; justify-content:space-between; gap:1.25rem; background:var(--surface-2,#fff); border-radius:16px; padding:1.4rem 1.6rem; box-shadow:6px 6px 14px rgba(0,0,0,0.06),-6px -6px 14px rgba(255,255,255,0.7); margin-bottom:1.5rem; }
+    .run-banner-main { flex:1; min-width:0; }
+    .run-banner-title { font-weight:600; font-size:1rem; color:var(--text,#141414); display:flex; align-items:center; gap:0.5rem; }
+    .run-banner-sub { font-size:0.85rem; color:var(--text-muted,#656565); margin-top:0.3rem; line-height:1.5; }
+    .run-banner.run-running { background:linear-gradient(180deg, rgba(110,58,250,0.06), rgba(110,58,250,0.01)); }
+    .run-spinner { width:14px; height:14px; border:2px solid rgba(110,58,250,0.25); border-top-color:var(--brand,#6E3AFA); border-radius:50%; display:inline-block; animation:run-spin 0.7s linear infinite; flex:none; }
+    @keyframes run-spin { to { transform:rotate(360deg); } }
+    .prov-card-draft { border-left:3px solid var(--brand,#6E3AFA); }
+    @media (max-width:640px){ .run-banner{ flex-direction:column; align-items:stretch; } }
+  </style>
 </head>
 <body>
   <div id="root"></div>
@@ -61,15 +73,43 @@
       try { const data = await import('../firebase/data.js'); const snaps = await data.listInvestabilitySnapshots(p.id); invSnapshot = snaps.length ? snaps[snaps.length - 1] : null; }
       catch (e) { console.warn('investability load failed', e); }
     }
+    // Operator clicks "Run research agents" → queue a headless run. The banner
+    // updates live (via the watchEngagement subscription below) as the runner
+    // picks it up, progresses, and publishes draft cards.
+    window.__runResearch = async function(engagementId) {
+      const btn = document.getElementById('run-trigger-btn');
+      if (btn) { btn.disabled = true; btn.textContent = 'Queuing…'; }
+      try {
+        const data = await import('../firebase/data.js');
+        const me = (W.helpers.currentOperator && W.helpers.currentOperator()) || null;
+        await data.requestRun(engagementId, 'research', (me && me.email) || null);
+      } catch (e) {
+        alert('Could not start the run: ' + ((e && (e.code || e.message)) || e));
+        if (btn) { btn.disabled = false; btn.textContent = '▶  Run research agents'; }
+      }
+    };
+    window.__sendCard = async function(cardId) {
+      const data = await import('../firebase/data.js');
+      try { await data.sendCardToFounder(cardId); } // cards re-render via the live subscription
+      catch (e) { alert('Could not send the card: ' + ((e && (e.code || e.message)) || e)); }
+    };
+    window.__sendAllDrafts = async function(engagementId) {
+      const data = await import('../firebase/data.js');
+      try {
+        const n = await data.sendDraftsToFounder(engagementId);
+        if (!n) alert('No draft cards to send.');
+      } catch (e) { alert('Could not send the cards: ' + ((e && (e.code || e.message)) || e)); }
+    };
+    // Demo seed — now lands cards as DRAFTS so the review→send gate is exercised
+    // exactly like a real agent run (the runner publishes drafts too).
     window.__seedCards = async function(engagementId) {
       const samples = [
-        { hub: 'research', number: 1, order: 1, title: 'Is the core problem retention or acquisition?', body: 'Early signals point both ways — which does this venture actually solve first?' },
-        { hub: 'research', number: 2, order: 2, title: 'Who feels this pain most acutely today?', body: 'Name the sharpest-edge user segment to anchor the research.' },
-        { hub: 'research', number: 3, order: 3, title: 'What would make this 10× better than the status quo?', body: 'The provocation that separates a feature from a company.' }
+        { hub: 'research', number: 1, order: 1, type: 'strategic-fork', title: 'Is the core problem retention or acquisition?', body: 'Early signals point both ways — which does this venture actually solve first?' },
+        { hub: 'research', number: 2, order: 2, type: 'open-question', title: 'Who feels this pain most acutely today?', body: 'Name the sharpest-edge user segment to anchor the research.' },
+        { hub: 'research', number: 3, order: 3, type: 'surprising-finding', title: 'What would make this 10× better than the status quo?', body: 'The provocation that separates a feature from a company.' }
       ];
       const data = await import('../firebase/data.js');
-      for (const s of samples) { await data.createCard({ engagementId, ...s }); }
-      window.location.reload();
+      for (const s of samples) { await data.createCard({ engagementId, status: 'draft', ...s }); }
     };
     window.__deleteEngagement = async function() {
       if (!window.confirm(`Delete "${p.name}" permanently?\n\nThis removes it from the Workspace AND ${p.founderName || 'the founder'}'s Studio, including all its provocation cards. This cannot be undone.`)) return;
@@ -211,42 +251,117 @@
       return `<div class="section">${head}${body}</div>`;
     }
 
+    // ---------------- Run banner (live agent-run status) ----------------
+    // The single control for the research run. Locked until the brief is in;
+    // then trigger → queued → running (live step/totalSteps) → done/error.
+    function runBannerHTML(rs, p) {
+      const briefIn = p.briefSubmitted !== false && !!p.brief;
+      const status = (rs && rs.status) || 'idle';
+      const active = ['queued', 'running', 'partial'].includes(status);
+
+      if (!briefIn && !active) {
+        return `<div class="run-banner run-idle">
+          <div class="run-banner-main">
+            <div class="run-banner-title">Research agents</div>
+            <div class="run-banner-sub">Unlocks the moment ${escBrief(p.founderName || 'the founder')} submits the brief. Then one click runs the deep research and drafts the provocation cards &mdash; no VS Code needed.</div>
+          </div>
+          <button class="btn btn-primary" disabled style="opacity:0.5;cursor:not-allowed;">&#9654;&nbsp; Run research agents</button>
+        </div>`;
+      }
+
+      if (active) {
+        const total = rs.totalSteps || 0;
+        const step = rs.step || 0;
+        const pct = total ? Math.round((step / total) * 100) : (status === 'queued' ? 6 : 14);
+        const label = rs.label || (status === 'queued' ? 'Queued &mdash; waiting for the engagement runner&hellip;' : 'Running research agents&hellip;');
+        const counter = total ? `<span class="text-mono dim" style="font-size:0.8rem;">&middot; ${step}/${total} sections</span>` : '';
+        return `<div class="run-banner run-running">
+          <div class="run-banner-main">
+            <div class="run-banner-title"><span class="run-spinner"></span> ${status === 'queued' ? 'Queued' : 'Research running'} ${counter}</div>
+            <div class="run-banner-sub">${escBrief(label)}</div>
+            <div class="progress" style="margin-top:0.75rem;"><div class="progress-bar" style="width:${pct}%;transition:width .5s ease;"></div></div>
+          </div>
+        </div>`;
+      }
+
+      // Terminal states — result + run-again.
+      const meta = (rs && rs.finishedAt) ? `<span class="text-mono dim" style="font-size:0.72rem;">Last run ${escBrief(rs.finishedAt)}</span>` : '';
+      let note;
+      if (status === 'done') note = `<div class="run-banner-sub">&#10003; Research complete &mdash; review the draft cards below, then send them to the founder.</div>`;
+      else if (status === 'error') note = `<div class="run-banner-sub" style="color:var(--danger,#C0392B);">Last run errored: ${escBrief((rs && rs.error) || 'unknown error')}. Safe to retry.</div>`;
+      else if (status === 'limit-paused') note = `<div class="run-banner-sub" style="color:#C77700;">Paused &mdash; Claude usage limit reached. Resume when your window resets; it picks up where it left off.</div>`;
+      else note = `<div class="run-banner-sub">Run the deep research and draft the provocation cards from the brief. Runs on your Claude subscription &mdash; no VS Code.</div>`;
+      const btnLabel = status === 'limit-paused' ? '&#9654;&nbsp; Resume run' : (status === 'done' ? '&#8635;&nbsp; Re-run research' : '&#9654;&nbsp; Run research agents');
+      return `<div class="run-banner run-idle">
+        <div class="run-banner-main">
+          <div class="run-banner-title">Research agents</div>
+          ${note}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:0.4rem;align-items:flex-end;">
+          <button id="run-trigger-btn" class="btn btn-primary" onclick="window.__runResearch('${p.id}')">${btnLabel}</button>
+          ${meta}
+        </div>
+      </div>`;
+    }
+
     // ---------------- Provocation cards (operator playback) -------------
-    function provCardHTML(c) {
+    function provCardHTML(c, opts) {
+      opts = opts || {};
       const r = c.founderResponse;
-      const statusPill = r
-        ? `<span class="pill ${r.decision === 'accept' ? 'health-on-track' : r.decision === 'reject' ? 'health-stuck' : 'health-attention'}"><span class="dot"></span> Founder: ${escBrief(r.decision)}</span>`
-        : `<span class="pill"><span class="dot"></span> Awaiting founder</span>`;
+      const statusPill = c.status === 'draft'
+        ? `<span class="pill" style="background:rgba(110,58,250,0.1);color:var(--brand,#6E3AFA);"><span class="dot"></span> Draft</span>`
+        : (r
+          ? `<span class="pill ${r.decision === 'accept' ? 'health-on-track' : r.decision === 'reject' ? 'health-stuck' : 'health-attention'}"><span class="dot"></span> Founder: ${escBrief(r.decision)}</span>`
+          : `<span class="pill"><span class="dot"></span> Awaiting founder</span>`);
+      const typePill = c.type ? `<span class="text-mono dim" style="font-size:0.62rem;letter-spacing:0.06em;text-transform:uppercase;">&middot; ${escBrief(String(c.type).replace(/-/g, ' '))}</span>` : '';
       const response = r
         ? `<div class="prov-card-response">
              <div class="prov-card-response-label">Founder responded &middot; ${escBrief(r.decision)}${r.respondedAt ? ' &middot; ' + escBrief(r.respondedAt) : ''}</div>
              ${r.comment ? `<div class="prov-card-response-comment">&ldquo;${escBrief(r.comment)}&rdquo;</div>` : '<div class="prov-card-response-comment dim">No comment left.</div>'}
            </div>`
         : '';
+      const sendBtn = opts.draft
+        ? `<div style="margin-top:0.85rem;display:flex;justify-content:flex-end;"><button class="btn btn-outline btn-sm" onclick="window.__sendCard('${c.id}')">Send to founder &rarr;</button></div>`
+        : '';
       return `
-        <div class="prov-card">
+        <div class="prov-card${c.status === 'draft' ? ' prov-card-draft' : ''}">
           <div class="prov-card-head">
-            <span class="prov-card-meta text-mono">${escBrief((c.hub || '').toUpperCase())} &middot; ${escBrief(c.level || 'L1')} #${c.number || ''}</span>
+            <span class="prov-card-meta text-mono">${escBrief((c.hub || '').toUpperCase())} &middot; ${escBrief(c.level || 'L1')} #${c.number || ''} ${typePill}</span>
             ${statusPill}
           </div>
           <div class="prov-card-title">${escBrief(c.title || '')}</div>
           ${c.body ? `<div class="prov-card-body">${escBrief(c.body)}</div>` : ''}
           ${response}
+          ${sendBtn}
         </div>`;
     }
-    function cardsSectionHTML(cards, p) {
+
+    function draftCardsSectionHTML(drafts, p) {
+      if (!drafts.length) return '';
+      const head = `<div class="section-head"><div><div class="section-title">Draft cards &middot; your review</div><div class="section-sub">The agents drafted these from the brief. Review, then release them to ${escBrief(p.founderName || 'the founder')}&rsquo;s Studio &mdash; nothing reaches the founder until you send it.</div></div><button class="btn btn-primary btn-sm" onclick="window.__sendAllDrafts('${p.id}')">Send all ${drafts.length} to founder &rarr;</button></div>`;
+      return `<div class="section">${head}<div class="prov-cards-list">${drafts.map(c => provCardHTML(c, { draft: true })).join('')}</div></div>`;
+    }
+
+    function sentCardsSectionHTML(cards, p) {
       const responded = cards.filter(c => c.founderResponse).length;
       const counter = cards.length ? `<span class="text-mono dim" style="font-size:0.72rem;">${responded}/${cards.length} answered</span>` : '';
       const seedBtn = (W.mode === 'live' && p.briefSubmitted !== false)
-        ? `<button class="btn btn-outline btn-sm" onclick="window.__seedCards('${p.id}')">+ Generate demo cards</button>` : '';
-      const head = `<div class="section-head"><div><div class="section-title">Provocation cards</div><div class="section-sub">L1 cards published to the founder&rsquo;s Studio &mdash; their responses reshape research &amp; strategy.</div></div><div style="display:flex;gap:0.75rem;align-items:center;">${counter}${seedBtn}</div></div>`;
+        ? `<button class="btn btn-ghost btn-sm" onclick="window.__seedCards('${p.id}')" title="Seed 3 draft cards to test the loop">+ demo drafts</button>` : '';
+      const head = `<div class="section-head"><div><div class="section-title">Provocation cards &middot; sent</div><div class="section-sub">L1 cards released to the founder&rsquo;s Studio &mdash; their responses reshape research &amp; strategy.</div></div><div style="display:flex;gap:0.75rem;align-items:center;">${counter}${seedBtn}</div></div>`;
       if (!cards.length) {
         const hint = (W.mode === 'live')
-          ? `In production these are generated by <span class="text-mono">portal-publisher</span> in the engagement repo. ${p.briefSubmitted !== false ? 'Use &ldquo;Generate demo cards&rdquo; to simulate the loop.' : 'Awaiting the founder&rsquo;s brief first.'}`
+          ? `Run the research agents above to draft cards from the brief, then send them here.`
           : `Provocation cards appear here once the engagement is live on the backend.`;
-        return `<div class="section">${head}<div class="card" style="text-align:center;padding:2rem;color:var(--text-muted);">No provocation cards published yet. ${hint}</div></div>`;
+        return `<div class="section">${head}<div class="card" style="text-align:center;padding:2rem;color:var(--text-muted);">No cards sent to the founder yet. ${hint}</div></div>`;
       }
-      return `<div class="section">${head}<div class="prov-cards-list">${cards.map(provCardHTML).join('')}</div></div>`;
+      return `<div class="section">${head}<div class="prov-cards-list">${cards.map(c => provCardHTML(c, { draft: false })).join('')}</div></div>`;
+    }
+
+    // Combined cards region: drafts (operator review) above sent (playback).
+    function cardsRegionHTML(cards, p) {
+      const drafts = cards.filter(c => c.status === 'draft');
+      const sent = cards.filter(c => c.status !== 'draft');
+      return draftCardsSectionHTML(drafts, p) + sentCardsSectionHTML(sent, p);
     }
 
     // ---------------- Investability (operator summary, VSS v2) ----------
@@ -353,7 +468,9 @@
 
       ${briefSectionHTML(p)}
 
-      ${cardsSectionHTML(provCards, p)}
+      <div id="run-region">${runBannerHTML(p.runState, p)}</div>
+
+      <div id="cards-region">${cardsRegionHTML(provCards, p)}</div>
 
       <div class="section">
         <div class="section-head">
@@ -402,6 +519,25 @@
     `;
 
     window.renderShell(main);
+
+    // ---- Live run + cards subscriptions (realtime, live mode only) -------
+    // The run banner reflects runState as the headless runner drives it; the
+    // cards region repaints the moment the runner publishes drafts or the
+    // founder responds — no manual refresh.
+    if (W.mode === 'live') {
+      try {
+        const data = await import('../firebase/data.js');
+        data.watchEngagement(p.id, (eng) => {
+          if (!eng) return;
+          const region = document.getElementById('run-region');
+          if (region) region.innerHTML = runBannerHTML(eng.runState, { ...p, ...eng });
+        });
+        data.watchCardsForEngagement(p.id, (cards) => {
+          const region = document.getElementById('cards-region');
+          if (region) region.innerHTML = cardsRegionHTML(cards, p);
+        });
+      } catch (e) { console.warn('live run/cards subscriptions failed', e); }
+    }
   </script>
 </body>
 </html>

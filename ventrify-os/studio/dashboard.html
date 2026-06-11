@@ -213,7 +213,9 @@
     function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
     let provCards = [];
     if (window.STUDIO.mode === 'live') {
-      try { const data = await import('../firebase/data.js'); provCards = await data.listCardsForEngagement(engagement.id); }
+      // SENT cards only — the founder never sees operator drafts. A card becomes
+      // visible here only once the operator releases it from the Workspace.
+      try { const data = await import('../firebase/data.js'); provCards = await data.listSentCardsForEngagement(engagement.id); }
       catch (e) { console.warn('cards load failed', e); }
     }
     window.__respondCard = async function(cardId, decision) {

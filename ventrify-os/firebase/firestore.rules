@@ -63,12 +63,15 @@ service cloud.firestore {
       }
     }
 
-    // Provocation cards — founder of the engagement reads + responds (update);
-    // operators read/create/update/delete.
+    // Provocation cards — operators have full access to their org's cards.
+    // Founders may read + respond ONLY to RELEASED cards on their own engagement
+    // (status != 'draft'): operator drafts are invisible to the founder even via
+    // a direct query, not just hidden in the UI.
     match /cards/{cardId} {
       allow read, update: if signedIn()
-        && (userEmail() == engData(resource.data.engagementId).founderEmail
-            || isOperatorOf(engData(resource.data.engagementId).orgId));
+        && (isOperatorOf(engData(resource.data.engagementId).orgId)
+            || (userEmail() == engData(resource.data.engagementId).founderEmail
+                && resource.data.status != 'draft'));
       allow create: if isOperatorOf(request.resource.data.orgId);
       allow delete: if isOperatorOf(engData(resource.data.engagementId).orgId);
     }

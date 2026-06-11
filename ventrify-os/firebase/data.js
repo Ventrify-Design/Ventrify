@@ -129,6 +129,40 @@ export async function saveBrief(id, brief) {
   });
 }
 
+// ---- Run orchestration (web → headless runner trigger) --------------------
+// The operator clicks "Run research" → we stamp runState.status='queued' on the
+// engagement. The headless runner in the engagement repo (Admin SDK) watches for
+// this, flips it to 'running', drives the real Phase-1 agents, and writes
+// progress (step/totalSteps/label) + final status back here. The web only ever
+// REQUESTS a run — it never executes one — so the surface is runner-agnostic
+// (local machine today, GitHub Actions later, same shape).
+//
+// runState = { status, phase, step, totalSteps, label, requestedAt, startedAt,
+//              finishedAt, error, usage }
+//   status: queued | running | partial | done | error | limit-paused | idle
+const RUN_LOCKED = ['queued', 'running', 'partial'];
+export function isRunActive(runState) {
+  return !!(runState && RUN_LOCKED.includes(runState.status));
+}
+export function canRequestRun(runState) {
+  return !isRunActive(runState);
+}
+export async function requestRun(engagementId, phase = 'research', requestedBy = null) {
+  await updateDoc(engRef(engagementId), {
+    runState: {
+      status: 'queued',
+      phase,
+      step: 0,
+      totalSteps: 0,
+      progress: 0,
+      label: 'Queued — waiting for the engagement runner to pick this up',
+      requestedBy: requestedBy || null,
+      requestedAt: new Date().toISOString()
+    },
+    updatedAt: serverTimestamp()
+  });
+}
+
 // ---- Live subscriptions (real-time cross-surface updates) -----------------
 // cb receives the full engagement array on every change. Returns unsubscribe.
 export function watchEngagements(cb) {
@@ -190,6 +224,31 @@ export async function updateCard(id, patch) {
 }
 
 export async function deleteCard(id) { await deleteDoc(cardRef(id)); }
+
+// ---- Draft → sent gate ----------------------------------------------------
+// Agent-generated cards land as status:'draft' (operator-only). The operator
+// reviews them in the Workspace, then RELEASES them to the founder — only then
+// do they become 'awaiting-founder' and appear in the Studio. This is the
+// human gate between "the agents ran" and "the founder sees it".
+export async function listSentCardsForEngagement(engagementId) {
+  const cards = await listCardsForEngagement(engagementId);
+  return cards.filter(c => c.status && c.status !== 'draft');
+}
+
+export async function sendCardToFounder(cardId) {
+  await updateDoc(cardRef(cardId), {
+    status: 'awaiting-founder', sentAt: serverTimestamp(), updatedAt: serverTimestamp()
+  });
+}
+
+// Release every still-draft card for an engagement in one click. Returns count.
+export async function sendDraftsToFounder(engagementId) {
+  const drafts = (await listCardsForEngagement(engagementId)).filter(c => c.status === 'draft');
+  await Promise.all(drafts.map(c => updateDoc(cardRef(c.id), {
+    status: 'awaiting-founder', sentAt: serverTimestamp(), updatedAt: serverTimestamp()
+  })));
+  return drafts.length;
+}
 
 export function watchCardsForEngagement(engagementId, cb) {
   return onSnapshot(query(cardCol(), where('engagementId', '==', engagementId)), (snap) => {
