@@ -505,12 +505,35 @@
           <a href="/studio/investability.html?id=${engagement.id}" class="btn btn-outline btn-sm">Open tab →</a>
         </div>`;
 
+    // Welcome pack — shows the moment the brief lands, until the first cards arrive.
+    function welcomeHTML() {
+      if (!engagement.briefSubmitted || (provCards && provCards.length)) return '';
+      const founderFirst = esc((engagement.founderName || 'there').split(' ')[0]);
+      const steps = [
+        ['Deep research', 'Our agents research your venture, market, and competitors — from your brief and any documents you attached.'],
+        ['Provocation cards', 'They surface 5–7 sharp strategic questions — the forks and risks that matter most — for you to shape.'],
+        ['Your direction', 'You respond to each card, and the research + your investability score refine around what you decide.'],
+        ['It compounds', 'Strategy, financials, and (when you’re ready) the build all follow from the direction you set here.']
+      ];
+      return `
+        <div style="background:var(--surface-2,#fff);border-radius:18px;padding:1.75rem 1.9rem;margin-bottom:1.75rem;border:1px solid rgba(0,0,0,0.06);box-shadow:6px 6px 18px rgba(0,0,0,0.05);">
+          <div style="text-transform:uppercase;letter-spacing:0.08em;font-size:0.66rem;font-weight:700;color:var(--accent,#00B8A0);margin-bottom:0.5rem;">Welcome aboard</div>
+          <h2 style="margin:0 0 0.5rem;font-size:1.4rem;letter-spacing:-0.02em;">You’re all set, ${founderFirst} — your brief for ${esc(engagement.name)} is in.</h2>
+          <p style="margin:0 0 1.3rem;color:var(--text-muted,#656565);line-height:1.6;max-width:62ch;">Here’s what happens next. You don’t need to do anything right now — we’ll email you the moment there’s something to review.</p>
+          <div style="display:grid;gap:0.9rem;">
+            ${steps.map((s, i) => `<div style="display:flex;gap:0.85rem;align-items:flex-start;"><div style="flex:none;width:26px;height:26px;border-radius:50%;background:var(--brand-primary,#0036FF);color:#fff;font-weight:700;font-size:0.8rem;display:flex;align-items:center;justify-content:center;">${i + 1}</div><div><div style="font-weight:600;">${s[0]}</div><div style="color:var(--text-muted,#656565);font-size:0.9rem;line-height:1.5;">${s[1]}</div></div></div>`).join('')}
+          </div>
+        </div>`;
+    }
+
     const main = `
       <div class="page-header">
         <div class="page-eyebrow">${copy.eyebrow}</div>
         <h1 class="page-title">${copy.title}</h1>
         <p class="page-sub">${copy.sub}</p>
       </div>
+
+      ${welcomeHTML()}
 
       ${provInboxHTML(provCards)}
 
