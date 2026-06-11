@@ -416,9 +416,15 @@
 
     // ---------------- Investability (operator summary, VSS v2) ----------
     function investabilitySectionHTML(snap, p) {
-      const head = `<div class="section-head"><div><div class="section-title">Investability</div><div class="section-sub">VSS v2 (TDK 7×5) &mdash; the founder sees this in their Studio. Updates each gate.</div></div></div>`;
+      const subCopy = isAssess
+        ? 'VSS v2 (TDK 7×5) &mdash; investor-lens score from the deck + diligence. Operator-only.'
+        : 'VSS v2 (TDK 7×5) &mdash; the founder sees this in their Studio. Updates each gate.';
+      const head = `<div class="section-head"><div><div class="section-title">Investability</div><div class="section-sub">${subCopy}</div></div></div>`;
       if (!snap) {
-        return `<div class="section">${head}<div class="card" style="text-align:center;padding:1.75rem;color:var(--text-muted);">No score yet. Author <span class="text-mono">/sentiment/score.md</span> in the engagement repo, then <span class="text-mono">npm run cloud:publish</span>.</div></div>`;
+        const emptyCopy = isAssess
+          ? 'No score yet. Run the assessment to score this venture against the TDK 7×5 rubric.'
+          : 'No score yet. It computes automatically when the research run completes.';
+        return `<div class="section">${head}<div class="card" style="text-align:center;padding:1.75rem;color:var(--text-muted);">${emptyCopy}</div></div>`;
       }
       const cc = snap.band === 'approved' ? '#00897b' : snap.band === 'feedback' ? '#C77700' : '#C0392B';
       const cats = (snap.categories || []).map(c => {
