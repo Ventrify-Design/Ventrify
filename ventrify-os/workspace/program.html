@@ -503,6 +503,94 @@
       if (!cards.length) return `<div class="section">${head}<div class="card" style="text-align:center;padding:2rem;color:var(--text-muted);">No findings yet. Upload a document and run the assessment.</div></div>`;
       return `<div class="section">${head}<div class="prov-cards-list">${cards.map(c => provCardHTML(c, { draft: false, hidePill: true })).join('')}</div></div>`;
     }
+
+    // ---- Decision-grade panels (render from engagement.assessment; empty if absent) ----
+    function recColor(rec) {
+      const r = String(rec || '').toLowerCase();
+      if (r.startsWith('invest') || r.includes('back')) return '#00897b';
+      if (r.startsWith('pass') || r.includes('decline')) return '#C0392B';
+      return '#C77700'; // diligence further / conditional
+    }
+    function valColor(v) {
+      const s = String(v || '').toLowerCase();
+      if (s.startsWith('cheap') || s.includes('under')) return '#00897b';
+      if (s.startsWith('rich') || s.startsWith('expensive') || s.includes('over')) return '#C0392B';
+      return '#6E3AFA'; // fair
+    }
+    function prioColor(pr) { const s = String(pr || '').toLowerCase(); return s === 'high' ? '#C0392B' : s === 'low' ? '#6B7594' : '#C77700'; }
+
+    function verdictHeaderHTML(p) {
+      const a = p.assessment; if (!a || !a.recommendation) return '';
+      const rc = recColor(a.recommendation);
+      const must = a.mustBeTrue || a.must_be_true || [];
+      const ask = a.theAsk || a.the_ask;
+      const risk = a.biggestRisk || a.biggest_risk;
+      const mustHTML = must.length ? `
+        <div style="margin-top:1.1rem;border-top:1px solid rgba(0,0,0,0.07);padding-top:0.9rem;">
+          <div class="text-mono" style="font-size:0.62rem;letter-spacing:0.07em;text-transform:uppercase;font-weight:700;color:var(--accent,#00B8A0);margin-bottom:0.6rem;">For the thesis to hold, these must be true</div>
+          <div style="display:flex;flex-direction:column;gap:0.5rem;">
+            ${must.map((m, i) => `<div style="display:flex;gap:0.6rem;align-items:flex-start;"><span class="text-mono" style="color:${rc};font-weight:700;flex:none;">${i + 1}</span><div style="font-size:0.9rem;line-height:1.5;">${escBrief(m)}</div></div>`).join('')}
+          </div>
+        </div>` : '';
+      return `<div class="section">
+        <div class="section-head"><div><div class="section-title">The call</div><div class="section-sub">The decision-grade verdict &mdash; recommendation, thesis, and the deal-breaker.</div></div></div>
+        <div class="card" style="border-top:3px solid ${rc};">
+          <div style="display:flex;align-items:center;gap:0.9rem;flex-wrap:wrap;margin-bottom:0.9rem;">
+            <span style="background:${rc};color:#fff;font-weight:700;font-size:0.95rem;padding:0.4rem 0.95rem;border-radius:8px;">${escBrief(a.recommendation)}</span>
+            ${a.conviction ? `<span class="text-mono dim" style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;">${escBrief(a.conviction)} conviction</span>` : ''}
+            ${ask ? `<span class="text-mono dim" style="font-size:0.72rem;margin-left:auto;">Ask: <strong style="color:var(--text);">${escBrief(ask)}</strong></span>` : ''}
+          </div>
+          ${a.thesis ? `<div style="font-size:1.02rem;line-height:1.55;font-weight:500;color:var(--text);margin-bottom:0.9rem;">${escBrief(a.thesis)}</div>` : ''}
+          ${risk ? `<div style="border-left:3px solid var(--danger,#C0392B);background:rgba(192,57,43,0.06);border-radius:0 8px 8px 0;padding:0.7rem 0.85rem;font-size:0.9rem;line-height:1.5;"><strong style="color:var(--danger,#C0392B);">Biggest kill-risk &mdash;</strong> ${escBrief(risk)}</div>` : ''}
+          ${mustHTML}
+        </div></div>`;
+    }
+
+    function dealValuationHTML(p) {
+      const v = p.assessment && p.assessment.valuation; if (!v || (!v.verdict && !v.note && !(v.comps || []).length)) return '';
+      const vc = valColor(v.verdict);
+      const comps = v.comps || [];
+      const compHTML = comps.length ? `
+        <div style="margin-top:0.9rem;display:flex;flex-direction:column;gap:0.45rem;">
+          ${comps.map(c => `<div style="display:flex;justify-content:space-between;gap:0.8rem;font-size:0.86rem;border-bottom:1px solid rgba(0,0,0,0.05);padding-bottom:0.45rem;"><div><strong>${escBrief(c.name || '')}</strong>${c.stage ? ` <span class="dim">&middot; ${escBrief(c.stage)}</span>` : ''}</div><div class="text-mono dim" style="text-align:right;">${escBrief(c.detail || c.valuation || '')}</div></div>`).join('')}
+        </div>` : '';
+      return `<div class="section">
+        <div class="section-head"><div><div class="section-title">Deal &amp; valuation</div><div class="section-sub">Is the ask fair against comparable rounds at this stage and sector?</div></div></div>
+        <div class="card">
+          <div style="display:flex;align-items:center;gap:0.8rem;flex-wrap:wrap;">
+            ${v.verdict ? `<span style="background:${vc};color:#fff;font-weight:700;font-size:0.82rem;padding:0.3rem 0.8rem;border-radius:7px;text-transform:uppercase;letter-spacing:0.03em;">${escBrief(v.verdict)}</span>` : ''}
+            ${v.note ? `<div style="font-size:0.92rem;line-height:1.5;flex:1;min-width:240px;">${escBrief(v.note)}</div>` : ''}
+          </div>
+          ${compHTML}
+        </div></div>`;
+    }
+
+    function exitReturnsHTML(p) {
+      const e = p.assessment && p.assessment.exit; if (!e || (!e.path && !(e.acquirers || []).length && !e.returns)) return '';
+      const acq = e.acquirers || [];
+      const acqHTML = acq.length ? `<div style="display:flex;flex-wrap:wrap;gap:0.45rem;margin:0.2rem 0 0.9rem;">${acq.map(a => `<span class="pill" style="background:rgba(110,58,250,0.08);color:var(--brand,#6E3AFA);font-size:0.78rem;">${escBrief(a)}</span>`).join('')}</div>` : '';
+      return `<div class="section">
+        <div class="section-head"><div><div class="section-title">Exit &amp; returns</div><div class="section-sub">How this returns capital &mdash; realistic acquirers, the value-creation path, and the outcome.</div></div></div>
+        <div class="card">
+          ${acq.length ? `<div class="text-mono" style="font-size:0.62rem;letter-spacing:0.07em;text-transform:uppercase;font-weight:700;color:var(--accent,#00B8A0);margin-bottom:0.4rem;">Likely acquirers</div>${acqHTML}` : ''}
+          ${e.path ? `<div style="font-size:0.93rem;line-height:1.55;margin-bottom:${e.returns ? '0.8rem' : '0'};"><strong>Path:</strong> ${escBrief(e.path)}</div>` : ''}
+          ${e.returns ? `<div style="font-size:0.93rem;line-height:1.55;"><strong>Returns:</strong> ${escBrief(e.returns)}</div>` : ''}
+        </div></div>`;
+    }
+
+    function diligenceChecklistHTML(p) {
+      const items = (p.assessment && p.assessment.diligence) || []; if (!items.length) return '';
+      return `<div class="section">
+        <div class="section-head"><div><div class="section-title">Diligence checklist</div><div class="section-sub">What to verify before committing &mdash; the gaps to close first.</div></div></div>
+        <div class="card"><div style="display:flex;flex-direction:column;gap:0.65rem;">
+          ${items.map(it => { const pr = prioColor(it.priority); return `<div style="display:flex;gap:0.65rem;align-items:flex-start;">
+            <span style="flex:none;width:14px;height:14px;border:2px solid ${pr};border-radius:4px;margin-top:0.15rem;"></span>
+            <div style="font-size:0.9rem;line-height:1.5;flex:1;">${escBrief(it.item || it)}</div>
+            ${it.priority ? `<span class="text-mono" style="flex:none;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.05em;color:${pr};font-weight:700;">${escBrief(it.priority)}</span>` : ''}
+          </div>`; }).join('')}
+        </div></div></div>`;
+    }
+
     function assessMainHTML() {
       return `
         <div style="margin-bottom:1rem;"><a href="dashboard.html" class="text-small dim" style="font-size:0.85rem;">&larr; All engagements</a></div>
@@ -521,8 +609,12 @@
         </div>
         ${deckUploadHTML(p)}
         <div id="run-region">${assessRunBannerHTML(p.runState, p)}</div>
+        <div id="verdict-region">${verdictHeaderHTML(p)}</div>
         ${investabilitySectionHTML(invSnapshot, p)}
+        <div id="dealval-region">${dealValuationHTML(p)}</div>
+        <div id="exit-region">${exitReturnsHTML(p)}</div>
         <div id="cards-region">${findingsSectionHTML(provCards)}</div>
+        <div id="diligence-region">${diligenceChecklistHTML(p)}</div>
         ${renderDataRoom(hubDocs)}
         ${W.mode === 'live' ? dangerZoneHTML(p) : ''}
       `;
@@ -661,6 +753,15 @@
           if (!eng) return;
           const region = document.getElementById('run-region');
           if (region) region.innerHTML = isAssess ? assessRunBannerHTML(eng.runState, { ...p, ...eng }) : runBannerHTML(eng.runState, { ...p, ...eng });
+          // Decision panels appear the moment a run publishes engagement.assessment — no reload.
+          if (isAssess && eng.assessment) {
+            p.assessment = eng.assessment;
+            const set = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+            set('verdict-region', verdictHeaderHTML(p));
+            set('dealval-region', dealValuationHTML(p));
+            set('exit-region', exitReturnsHTML(p));
+            set('diligence-region', diligenceChecklistHTML(p));
+          }
         });
         data.watchCardsForEngagement(p.id, (cards) => {
           const region = document.getElementById('cards-region');
