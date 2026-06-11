@@ -65,7 +65,7 @@
     const state = {
       step: 1,
       engagementType: 'build', // 'build' (MVP) | 'assessment' (investor, deck-first)
-      basics: { name: '', founderName: '', founderEmail: '' },
+      basics: { name: '', founderName: '', founderEmail: '', website: '', stage: '' },
       start: new Date().toISOString().slice(0,10),
       operator: opDefault,
       hubs: ALL_HUBS.map(h => h.id), // default: every hub on
@@ -82,17 +82,21 @@
       return (a + b).toUpperCase().slice(0,2);
     }
 
+    const STEP_LABELS = { 1: 'Basics', 2: 'Workflow', 3: 'Brand', 4: 'Launch' };
+    // Assessment skips Workflow (hubs) + Brand — they're build-only concepts.
+    function stepSeq() { return state.engagementType === 'assessment' ? [1, 4] : [1, 2, 3, 4]; }
+
     function renderProgress() {
-      const steps = ['Basics','Workflow','Brand','Launch'];
+      const seq = stepSeq();
+      const pos = seq.indexOf(state.step);
       let html = '<div class="wizard-progress">';
-      steps.forEach((label, i) => {
-        const idx = i+1;
-        const cls = idx < state.step ? 'done' : (idx === state.step ? 'active' : '');
-        if (i > 0) html += `<div class="wizard-step-connector ${idx <= state.step ? 'done' : ''}"></div>`;
+      seq.forEach((s, i) => {
+        const cls = i < pos ? 'done' : (s === state.step ? 'active' : '');
+        if (i > 0) html += `<div class="wizard-step-connector ${i <= pos ? 'done' : ''}"></div>`;
         html += `
           <div class="wizard-step-dot ${cls}">
-            <div class="dot">${idx < state.step ? '&#10003;' : idx}</div>
-            <div class="label">${label}</div>
+            <div class="dot">${i < pos ? '&#10003;' : (i + 1)}</div>
+            <div class="label">${STEP_LABELS[s]}</div>
           </div>`;
       });
       html += '</div>';
@@ -124,6 +128,18 @@
               <label class="wiz-label">Venture name</label>
               <input class="wiz-input" id="f-name" placeholder="e.g. MoneyGym" value="${state.basics.name}">
             </div>
+            ${isAssess ? `
+            <div class="wiz-field span-2">
+              <label class="wiz-label">Company website <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+              <input class="wiz-input" id="f-website" placeholder="https://example.com" value="${state.basics.website || ''}">
+              <div class="text-mono dim" style="font-size:0.66rem;letter-spacing:0.06em;text-transform:uppercase;margin-top:0.35rem;">The assessment researches the live product &amp; positioning</div>
+            </div>
+            <div class="wiz-field">
+              <label class="wiz-label">Stage <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+              <select class="wiz-select" id="f-stage">
+                ${['', 'Pre-seed', 'Seed', 'Series A', 'Series B+', 'Growth'].map(s => `<option value="${s}" ${s === (state.basics.stage || '') ? 'selected' : ''}>${s || 'Select stage…'}</option>`).join('')}
+              </select>
+            </div>` : ''}
             <div class="wiz-field">
               <label class="wiz-label">Founder name${isAssess ? ' <span style="color:var(--text-muted);font-weight:400;">(optional)</span>' : ''}</label>
               <input class="wiz-input" id="f-founder" placeholder="e.g. Inez Okonkwo" value="${state.basics.founderName}">
@@ -219,6 +235,23 @@
       const orgName = (org && org.name) || 'your organisation';
       const orgSlug = (org && org.slug) || 'your-org';
       const opName = op ? op.name : '—';
+      if (state.engagementType === 'assessment') {
+        return `
+        <div class="wizard-step active">
+          <div class="wizard-eyebrow">Review · Assessment</div>
+          <h1 class="wizard-step-title">Create the assessment.</h1>
+          <p class="wizard-step-sub">An assessment workspace for ${state.basics.name || 'this venture'}. Next you&rsquo;ll upload the deck (and any financial model) and run it &mdash; no founder, no build.</p>
+          <div class="preview-card">
+            <h4>Summary</h4>
+            <div class="preview-row"><span class="l">Venture</span><span class="v">${state.basics.name || 'Untitled'}</span></div>
+            ${state.basics.website ? `<div class="preview-row"><span class="l">Website</span><span class="v mono">${state.basics.website}</span></div>` : ''}
+            ${state.basics.stage ? `<div class="preview-row"><span class="l">Stage</span><span class="v">${state.basics.stage}</span></div>` : ''}
+            ${state.basics.founderName ? `<div class="preview-row"><span class="l">Founder</span><span class="v">${state.basics.founderName}</span></div>` : ''}
+            <div class="preview-row"><span class="l">Assessor</span><span class="v">${opName}</span></div>
+            <div class="preview-row"><span class="l">Type</span><span class="v">Investor assessment — no build, no Studio</span></div>
+          </div>
+        </div>`;
+      }
       return `
         <div class="wizard-step active">
           <div class="wizard-eyebrow">Step 04 · Launch</div>
@@ -365,12 +398,14 @@ claude code .</pre>
     }
 
     function navHTML() {
-      const onLast = state.step === 4;
-      const advanceLabel = onLast ? 'Launch engagement' : 'Continue';
+      const seq = stepSeq();
+      const pos = seq.indexOf(state.step);
+      const onLast = pos === seq.length - 1;
+      const advanceLabel = onLast ? (state.engagementType === 'assessment' ? 'Create assessment' : 'Launch engagement') : 'Continue';
       return `
         <div class="wizard-actions">
           <div class="left">
-            ${state.step > 1 ? '<button class="btn btn-ghost" id="btn-back">&larr; Back</button>' : ''}
+            ${pos > 0 ? '<button class="btn btn-ghost" id="btn-back">&larr; Back</button>' : ''}
             <a href="dashboard.html" class="btn btn-ghost">Cancel</a>
           </div>
           <button class="btn btn-primary" id="btn-next" ${canAdvance() ? '' : 'disabled style="opacity:0.5;cursor:not-allowed;"'}>${advanceLabel}</button>
@@ -382,6 +417,8 @@ claude code .</pre>
       state.basics.name = m('f-name')?.value || '';
       state.basics.founderName = m('f-founder')?.value || '';
       state.basics.founderEmail = m('f-email')?.value || '';
+      if (m('f-website')) state.basics.website = m('f-website').value || '';
+      if (m('f-stage')) state.basics.stage = m('f-stage').value || '';
       state.start = m('f-start')?.value || state.start;
       state.operator = m('f-operator')?.value || state.operator;
     }
@@ -394,6 +431,8 @@ claude code .</pre>
         id: programId,
         slug,
         engagementType: state.engagementType,
+        website: state.basics.website || null,
+        stage: state.basics.stage || null,
         name: state.basics.name,
         founderName: state.basics.founderName,
         founderEmail: state.basics.founderEmail,
@@ -520,7 +559,9 @@ claude code .</pre>
       const back = document.getElementById('btn-back');
       if (back) back.addEventListener('click', () => {
         if (state.step === 1) readBasics();
-        state.step = Math.max(1, state.step - 1);
+        const seq = stepSeq();
+        const pos = seq.indexOf(state.step);
+        state.step = seq[Math.max(0, pos - 1)];
         render();
       });
       // Next / Launch
@@ -528,8 +569,10 @@ claude code .</pre>
       if (next) next.addEventListener('click', async () => {
         if (!canAdvance()) return;
         if (state.step === 1) readBasics();
-        if (state.step < 4) {
-          state.step += 1;
+        const seq = stepSeq();
+        const pos = seq.indexOf(state.step);
+        if (pos < seq.length - 1) {
+          state.step = seq[pos + 1];
           render();
           window.scrollTo({ top: 0, behavior: 'smooth' });
         } else {
