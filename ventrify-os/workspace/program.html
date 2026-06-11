@@ -84,6 +84,20 @@
       try {
         const data = await import('../firebase/data.js');
         const me = (W.helpers.currentOperator && W.helpers.currentOperator()) || null;
+        // Prefer the cloud dispatcher (GitHub Actions — no machine needed). If it
+        // isn't configured (503) or errors, fall back to local-daemon mode (just
+        // queue it for `npm run cloud:agent`).
+        try {
+          const { auth } = await import('../firebase/firebase.js');
+          const idToken = auth.currentUser ? await auth.currentUser.getIdToken() : null;
+          if (idToken) {
+            const resp = await fetch('/api/dispatch-run', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ idToken, engagementId, phase: 'research' })
+            });
+            if (resp.ok) return;                 // cloud Action fired
+          }
+        } catch (e) { /* fall through to local-daemon queue */ }
         await data.requestRun(engagementId, 'research', (me && me.email) || null);
       } catch (e) {
         alert('Could not start the run: ' + ((e && (e.code || e.message)) || e));
