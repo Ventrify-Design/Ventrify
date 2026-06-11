@@ -546,6 +546,28 @@
         </div></div>`;
     }
 
+    function bullBearHTML(p) {
+      const a = p.assessment || {};
+      const bull = a.bull || [], bear = a.bear || [];
+      if (!bull.length && !bear.length) return '';
+      const col = (title, items, color, arrow) => `
+        <div style="flex:1;min-width:240px;">
+          <div style="display:flex;align-items:center;gap:0.45rem;margin-bottom:0.75rem;">
+            <span style="color:${color};font-weight:700;font-size:0.8rem;">${arrow}</span>
+            <span class="text-mono" style="font-size:0.64rem;letter-spacing:0.07em;text-transform:uppercase;font-weight:700;color:${color};">${title}</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:0.55rem;">
+            ${items.length ? items.map(it => `<div style="display:flex;gap:0.5rem;align-items:flex-start;font-size:0.9rem;line-height:1.5;"><span style="color:${color};flex:none;">&bull;</span><div>${escBrief(it)}</div></div>`).join('') : '<div class="dim" style="font-size:0.85rem;">&mdash;</div>'}
+          </div>
+        </div>`;
+      return `<div class="section">
+        <div class="section-head"><div><div class="section-title">The case, both ways</div><div class="section-sub">What it&rsquo;s like to invest &mdash; the bull case against the bear case, at a glance.</div></div></div>
+        <div class="card" style="display:flex;gap:1.75rem;flex-wrap:wrap;">
+          ${col('The case to invest', bull, '#00897b', '&#9650;')}
+          ${col('The case to pass', bear, '#C0392B', '&#9660;')}
+        </div></div>`;
+    }
+
     function dealValuationHTML(p) {
       const v = p.assessment && p.assessment.valuation; if (!v || (!v.verdict && !v.note && !(v.comps || []).length)) return '';
       const vc = valColor(v.verdict);
@@ -610,6 +632,7 @@
         ${deckUploadHTML(p)}
         <div id="run-region">${assessRunBannerHTML(p.runState, p)}</div>
         <div id="verdict-region">${verdictHeaderHTML(p)}</div>
+        <div id="bullbear-region">${bullBearHTML(p)}</div>
         ${investabilitySectionHTML(invSnapshot, p)}
         <div id="dealval-region">${dealValuationHTML(p)}</div>
         <div id="exit-region">${exitReturnsHTML(p)}</div>
@@ -758,6 +781,7 @@
             p.assessment = eng.assessment;
             const set = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
             set('verdict-region', verdictHeaderHTML(p));
+            set('bullbear-region', bullBearHTML(p));
             set('dealval-region', dealValuationHTML(p));
             set('exit-region', exitReturnsHTML(p));
             set('diligence-region', diligenceChecklistHTML(p));
