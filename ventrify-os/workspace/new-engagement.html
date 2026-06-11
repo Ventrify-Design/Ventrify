@@ -64,6 +64,7 @@
     const opDefault = (helpers.currentOperator() || operators[0] || {}).id || '';
     const state = {
       step: 1,
+      engagementType: 'build', // 'build' (MVP) | 'assessment' (investor, deck-first)
       basics: { name: '', founderName: '', founderEmail: '' },
       start: new Date().toISOString().slice(0,10),
       operator: opDefault,
@@ -99,33 +100,45 @@
     }
 
     function step1HTML() {
+      const isAssess = state.engagementType === 'assessment';
+      const typeCard = (id, title, desc) => `
+        <div data-engtype="${id}" style="flex:1;cursor:pointer;border:1.5px solid ${state.engagementType === id ? 'var(--primary,#0036FF)' : 'rgba(0,0,0,0.1)'};border-radius:12px;padding:1rem 1.2rem;background:${state.engagementType === id ? 'rgba(0,54,255,0.05)' : '#fff'};transition:border-color .15s;">
+          <div style="font-weight:600;margin-bottom:0.25rem;display:flex;align-items:center;gap:0.5rem;">${state.engagementType === id ? '<span style="color:var(--primary,#0036FF);">&#10003;</span>' : ''}${title}</div>
+          <div style="font-size:0.82rem;color:var(--text-muted);line-height:1.45;">${desc}</div>
+        </div>`;
       return `
         <div class="wizard-step active">
-          <div class="wizard-eyebrow">Step 01 · Operator basics</div>
-          <h1 class="wizard-step-title">Spin up the engagement shell.</h1>
-          <p class="wizard-step-sub">Only what <em>you</em> need to provide from your deal pipeline &mdash; venture name, who the founder is, when work starts, and who&rsquo;s running it. The venture&rsquo;s pitch, industry, target user, vision and the rest come from the founder when they fill in their brief inside the Studio.</p>
+          <div class="wizard-eyebrow">Step 01 · ${isAssess ? 'Assessment basics' : 'Operator basics'}</div>
+          <h1 class="wizard-step-title">${isAssess ? 'Assess a venture from its deck.' : 'Spin up the engagement shell.'}</h1>
+          <p class="wizard-step-sub">${isAssess
+            ? 'No build &mdash; upload a pitch deck and get a venture score, key findings, and how to strengthen it. Everything happens here in the Workspace; there&rsquo;s no founder Studio.'
+            : 'Only what <em>you</em> need from your deal pipeline &mdash; venture name, who the founder is, when work starts, and who&rsquo;s running it. The venture&rsquo;s pitch and the rest come from the founder&rsquo;s brief inside the Studio.'}</p>
+
+          <div style="display:flex;gap:0.85rem;margin-bottom:1.5rem;">
+            ${typeCard('build', 'Build an MVP', 'Full engagement: research &rarr; cards &rarr; strategy &rarr; financials &rarr; build. Founder fills the brief in their Studio.')}
+            ${typeCard('assessment', 'Assess a venture', 'Investor assessment from a pitch deck: score, findings, how to strengthen. No build, no founder Studio.')}
+          </div>
 
           <div class="wiz-grid">
             <div class="wiz-field span-2">
               <label class="wiz-label">Venture name</label>
               <input class="wiz-input" id="f-name" placeholder="e.g. MoneyGym" value="${state.basics.name}">
-              <div class="text-mono dim" style="font-size:0.66rem;letter-spacing:0.06em;text-transform:uppercase;margin-top:0.35rem;">Used as the repo slug + Studio URL. Founder will refine this in their brief if needed.</div>
             </div>
             <div class="wiz-field">
-              <label class="wiz-label">Founder name</label>
+              <label class="wiz-label">Founder name${isAssess ? ' <span style="color:var(--text-muted);font-weight:400;">(optional)</span>' : ''}</label>
               <input class="wiz-input" id="f-founder" placeholder="e.g. Inez Okonkwo" value="${state.basics.founderName}">
             </div>
             <div class="wiz-field">
-              <label class="wiz-label">Founder email</label>
+              <label class="wiz-label">Founder email${isAssess ? ' <span style="color:var(--text-muted);font-weight:400;">(optional)</span>' : ''}</label>
               <input class="wiz-input" type="email" id="f-email" placeholder="inez@moneygym.io" value="${state.basics.founderEmail}">
-              <div class="text-mono dim" style="font-size:0.66rem;letter-spacing:0.06em;text-transform:uppercase;margin-top:0.35rem;">Studio invite goes here</div>
+              <div class="text-mono dim" style="font-size:0.66rem;letter-spacing:0.06em;text-transform:uppercase;margin-top:0.35rem;">${isAssess ? 'No Studio invite for assessments' : 'Studio invite goes here'}</div>
             </div>
             <div class="wiz-field">
               <label class="wiz-label">Start date</label>
               <input class="wiz-input" type="date" id="f-start" value="${state.start}">
             </div>
             <div class="wiz-field">
-              <label class="wiz-label">Assigned program manager</label>
+              <label class="wiz-label">Assigned ${isAssess ? 'assessor' : 'program manager'}</label>
               <select class="wiz-select" id="f-operator">
                 ${operators.length ? operators.map(o => `<option value="${o.id}" ${o.id === state.operator ? 'selected' : ''}>${o.name} · ${o.role}</option>`).join('') : '<option>No operators yet</option>'}
               </select>
@@ -135,8 +148,9 @@
           <div style="background:rgba(var(--primary-rgb,0,54,255),0.04);border:1px solid rgba(var(--primary-rgb,0,54,255),0.15);border-radius:12px;padding:1rem 1.25rem;margin-top:1.5rem;display:flex;align-items:flex-start;gap:0.85rem;">
             <span style="flex-shrink:0;width:24px;height:24px;border-radius:6px;background:var(--primary);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:0.78rem;font-weight:700;">i</span>
             <div style="font-size:0.85rem;color:var(--text-muted);line-height:1.55;">
-              <strong style="color:var(--text);font-weight:600;">What the founder fills in next:</strong>
-              one-line pitch, problem statement, target user, 1-year vision, key features, comparable products, design style, tech preferences, team detail, plus an optional PDF upload that seeds an initial Investability score. You don&rsquo;t need any of that to launch — Studio handles intake.
+              ${isAssess
+                ? '<strong style="color:var(--text);font-weight:600;">Next:</strong> open the engagement and upload the pitch deck (or any docs). The assessment runs from it &mdash; a venture score, key findings, and how-to-strengthen suggestions, right here in the Workspace.'
+                : '<strong style="color:var(--text);font-weight:600;">What the founder fills in next:</strong> one-line pitch, problem, target user, vision, features, comparables, design, tech, team detail, plus optional document upload that steers the research. You don&rsquo;t need any of that to launch &mdash; Studio handles intake.'}
             </div>
           </div>
         </div>`;
@@ -261,6 +275,20 @@
     function successHTML(programId, slug) {
       const orgSlug = (org && org.slug) || 'your-org';
       const orgName = (org && org.name) || 'your organisation';
+      if (state.engagementType === 'assessment') {
+        return `
+        <div class="success-shell">
+          <div class="success-icon">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <h1 class="success-title">Assessment created.</h1>
+          <p class="success-sub"><strong>${state.basics.name}</strong> is ready to assess. Open it, upload the pitch deck (or any documents), and run the assessment &mdash; you&rsquo;ll get a venture score, key findings, and how-to-strengthen suggestions, right here in the Workspace.</p>
+          <div class="success-actions">
+            <a href="program.html?id=${programId}" class="btn btn-primary">Open &amp; upload the deck &rarr;</a>
+            <a href="dashboard.html" class="btn btn-outline">Back to Portfolio</a>
+          </div>
+        </div>`;
+      }
       return `
         <div class="success-shell">
           <div class="success-icon">
@@ -329,6 +357,7 @@ claude code .</pre>
     function canAdvance() {
       if (state.step === 1) {
         const b = state.basics;
+        if (state.engagementType === 'assessment') return !!(b.name.trim() && state.operator);
         return !!(b.name.trim() && b.founderName.trim() && b.founderEmail.trim() && state.operator);
       }
       if (state.step === 2) return state.hubs.length > 0;
@@ -364,6 +393,7 @@ claude code .</pre>
       const newProgram = {
         id: programId,
         slug,
+        engagementType: state.engagementType,
         name: state.basics.name,
         founderName: state.basics.founderName,
         founderEmail: state.basics.founderEmail,
@@ -376,11 +406,11 @@ claude code .</pre>
         venturePitch: null,
         briefSubmitted: false,
         phase: 0,
-        gateStatus: 'Phase 0 · awaiting brief from founder',
+        gateStatus: state.engagementType === 'assessment' ? 'Awaiting deck upload' : 'Phase 0 · awaiting brief from founder',
         startDate: state.start,
         daysActive: 0,
         lastActivity: 'just now',
-        lastActivityDetail: 'Engagement launched via Workspace wizard',
+        lastActivityDetail: state.engagementType === 'assessment' ? 'Assessment created — awaiting deck' : 'Engagement launched via Workspace wizard',
         assignedOperator: state.operator,
         organisationSlug: (org && org.slug) || null,
         health: 'on-track',
@@ -401,7 +431,7 @@ claude code .</pre>
         // branded sender (/api/send-invite → Resend from hello@ventrify.io);
         // fall back to Firebase's default email if it isn't configured yet.
         // Non-blocking — the engagement is created regardless of email success.
-        if (newProgram.founderEmail) {
+        if (newProgram.founderEmail && state.engagementType !== 'assessment') {
           const fe = newProgram.founderEmail.trim();
           try {
             const resp = await fetch('/api/send-invite', {
@@ -438,6 +468,14 @@ claude code .</pre>
     }
 
     function bind() {
+      // Step 1 — engagement type toggle
+      document.querySelectorAll('[data-engtype]').forEach(card => {
+        card.addEventListener('click', () => {
+          readBasics();
+          state.engagementType = card.getAttribute('data-engtype');
+          render();
+        });
+      });
       // Step 2 — hub toggles
       document.querySelectorAll('[data-hub]').forEach(card => {
         card.addEventListener('click', () => {

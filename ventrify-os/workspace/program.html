@@ -40,6 +40,7 @@
     const id = params.get('id') || (fallback && fallback.id);
     const p = allPrograms.find(x => x.id === id) || fallback;
     const operator = p ? helpers.getOperator(p.assignedOperator) : null;
+    const isAssess = !!(p && p.engagementType === 'assessment');
 
     // Guard: no engagements yet → render a minimal "not found" view
     if (!p) {
@@ -78,31 +79,57 @@
     // Operator clicks "Run research agents" → queue a headless run. The banner
     // updates live (via the watchEngagement subscription below) as the runner
     // picks it up, progresses, and publishes draft cards.
-    window.__runResearch = async function(engagementId) {
+    window.__triggerRun = async function(engagementId, phase) {
+      phase = phase || 'research';
       const btn = document.getElementById('run-trigger-btn');
       if (btn) { btn.disabled = true; btn.textContent = 'Queuing…'; }
       try {
         const data = await import('../firebase/data.js');
         const me = (W.helpers.currentOperator && W.helpers.currentOperator()) || null;
-        // Prefer the cloud dispatcher (GitHub Actions — no machine needed). If it
-        // isn't configured (503) or errors, fall back to local-daemon mode (just
-        // queue it for `npm run cloud:agent`).
+        // Prefer the cloud dispatcher (GitHub Actions — no machine needed). Falls
+        // back to local-daemon queue if dispatch isn't configured.
         try {
           const { auth } = await import('../firebase/firebase.js');
           const idToken = auth.currentUser ? await auth.currentUser.getIdToken() : null;
           if (idToken) {
             const resp = await fetch('/api/dispatch-run', {
               method: 'POST', headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ idToken, engagementId, phase: 'research' })
+              body: JSON.stringify({ idToken, engagementId, phase })
             });
             if (resp.ok) return;                 // cloud Action fired
           }
         } catch (e) { /* fall through to local-daemon queue */ }
-        await data.requestRun(engagementId, 'research', (me && me.email) || null);
+        await data.requestRun(engagementId, phase, (me && me.email) || null);
       } catch (e) {
         alert('Could not start the run: ' + ((e && (e.code || e.message)) || e));
-        if (btn) { btn.disabled = false; btn.textContent = '▶  Run research agents'; }
+        if (btn) { btn.disabled = false; btn.textContent = 'Run'; }
       }
+    };
+    window.__runResearch = (id) => window.__triggerRun(id, 'research');
+
+    // Deck/document upload on the Workspace (assessment mode). Reuses /api/ingest-docs.
+    function __readFileB64(file) {
+      return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result)); r.onerror = () => rej(new Error('read failed')); r.readAsDataURL(file); });
+    }
+    window.__uploadDeck = async function(engagementId) {
+      const input = document.getElementById('deck-input');
+      const files = Array.from((input && input.files) || []);
+      if (input) input.value = '';
+      if (!files.length) return;
+      const stateEl = document.getElementById('deck-state');
+      const { auth } = await import('../firebase/firebase.js');
+      const idToken = auth.currentUser ? await auth.currentUser.getIdToken() : null;
+      for (const file of files) {
+        if (file.size > 4 * 1024 * 1024) { if (stateEl) stateEl.innerHTML = `<span style="color:var(--danger,#C0392B);">${escBrief(file.name)} is over 4MB.</span>`; continue; }
+        if (stateEl) stateEl.innerHTML = `<span class="run-spinner"></span> Reading ${escBrief(file.name)}…`;
+        try {
+          const dataBase64 = await __readFileB64(file);
+          const resp = await fetch('/api/ingest-docs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken, engagementId, file: { name: file.name, dataBase64 } }) });
+          const d = await resp.json().catch(() => ({}));
+          if (!resp.ok) throw new Error(d.detail || d.error || ('HTTP ' + resp.status));
+        } catch (e) { if (stateEl) stateEl.innerHTML = `<span style="color:var(--danger,#C0392B);">Couldn&rsquo;t read ${escBrief(file.name)}: ${escBrief((e && e.message) || e)}</span>`; }
+      }
+      window.location.reload();   // refresh the deck count + list
     };
     // Best-effort email nudge to the other side — never blocks the action.
     async function notifyRecipient(direction) {
@@ -325,11 +352,11 @@
     function provCardHTML(c, opts) {
       opts = opts || {};
       const r = c.founderResponse;
-      const statusPill = c.status === 'draft'
+      const statusPill = opts.hidePill ? '' : (c.status === 'draft'
         ? `<span class="pill" style="background:rgba(110,58,250,0.1);color:var(--brand,#6E3AFA);"><span class="dot"></span> Draft</span>`
         : (r
           ? `<span class="pill ${r.decision === 'accept' ? 'health-on-track' : r.decision === 'reject' ? 'health-stuck' : 'health-attention'}"><span class="dot"></span> Founder: ${escBrief(r.decision)}</span>`
-          : `<span class="pill"><span class="dot"></span> Awaiting founder</span>`);
+          : `<span class="pill"><span class="dot"></span> Awaiting founder</span>`));
       const typePill = c.type ? `<span class="text-mono dim" style="font-size:0.62rem;letter-spacing:0.06em;text-transform:uppercase;">&middot; ${escBrief(String(c.type).replace(/-/g, ' '))}</span>` : '';
       const response = r
         ? `<div class="prov-card-response">
@@ -425,7 +452,68 @@
         </div>`;
     }
 
-    const main = `
+    // ---------------- Assessment view (investor mode, Workspace-only) ----------
+    function deckUploadHTML(p) {
+      const n = p.founderDocCount || 0;
+      return `<div class="run-banner" style="display:block;">
+        <div class="run-banner-title" style="margin-bottom:0.4rem;">Pitch deck &amp; documents</div>
+        <div class="run-banner-sub" style="margin-bottom:0.9rem;">${n ? `${n} document${n === 1 ? '' : 's'} attached.` : 'Upload the pitch deck (or any documents).'} The assessment reads these &mdash; producing a score, key findings, and how to strengthen the venture.</div>
+        <input type="file" id="deck-input" accept=".pdf,.docx,.txt,.md,.csv" multiple style="display:none;" onchange="window.__uploadDeck('${p.id}')">
+        <button class="btn btn-outline btn-sm" onclick="document.getElementById('deck-input').click()">${n ? '+ Add more documents' : 'Upload documents'}</button>
+        <span id="deck-state" style="margin-left:0.75rem;font-size:0.85rem;color:var(--text-muted);"></span>
+      </div>`;
+    }
+    function assessRunBannerHTML(rs, p) {
+      const deckIn = (p.founderDocCount || 0) > 0;
+      const status = (rs && rs.status) || 'idle';
+      const active = ['queued', 'running', 'partial'].includes(status);
+      if (!deckIn && !active) {
+        return `<div class="run-banner run-idle"><div class="run-banner-main"><div class="run-banner-title">Assessment</div><div class="run-banner-sub">Upload a document above, then run the assessment.</div></div><button class="btn btn-primary" disabled style="opacity:0.5;cursor:not-allowed;">&#9654;&nbsp; Run assessment</button></div>`;
+      }
+      if (active) {
+        const total = rs.totalSteps || 0, step = rs.step || 0;
+        const pct = total ? Math.round((step / total) * 100) : (status === 'queued' ? 6 : 14);
+        const counter = total ? `<span class="text-mono dim" style="font-size:0.8rem;">&middot; ${step}/${total}</span>` : '';
+        return `<div class="run-banner run-running"><div class="run-banner-main"><div class="run-banner-title"><span class="run-spinner"></span> ${status === 'queued' ? 'Queued' : 'Assessing'} ${counter}</div><div class="run-banner-sub">${escBrief(rs.label || 'Running the assessment…')}</div><div class="progress" style="margin-top:0.75rem;"><div class="progress-bar" style="width:${pct}%;transition:width .5s ease;"></div></div></div></div>`;
+      }
+      let note;
+      if (status === 'done') note = `<div class="run-banner-sub">&#10003; Assessment complete &mdash; score &amp; findings below.</div>`;
+      else if (status === 'error') note = `<div class="run-banner-sub" style="color:var(--danger,#C0392B);">Last run errored: ${escBrief((rs && rs.error) || 'unknown error')}. Safe to retry.</div>`;
+      else if (status === 'limit-paused') note = `<div class="run-banner-sub" style="color:#C77700;">Paused &mdash; Claude usage limit reached.</div>`;
+      else note = `<div class="run-banner-sub">Assess this venture from the uploaded documents &mdash; a score, key findings, and how to strengthen it.</div>`;
+      const btnLabel = status === 'done' ? '&#8635;&nbsp; Re-run assessment' : '&#9654;&nbsp; Run assessment';
+      return `<div class="run-banner run-idle"><div class="run-banner-main"><div class="run-banner-title">Assessment</div>${note}</div><button id="run-trigger-btn" class="btn btn-primary" onclick="window.__triggerRun('${p.id}','assess')">${btnLabel}</button></div>`;
+    }
+    function findingsSectionHTML(cards) {
+      const head = `<div class="section-head"><div><div class="section-title">Key findings</div><div class="section-sub">The strategic forks, risks, and load-bearing assumptions the agents surfaced from the deck.</div></div></div>`;
+      if (!cards.length) return `<div class="section">${head}<div class="card" style="text-align:center;padding:2rem;color:var(--text-muted);">No findings yet. Upload a document and run the assessment.</div></div>`;
+      return `<div class="section">${head}<div class="prov-cards-list">${cards.map(c => provCardHTML(c, { draft: false, hidePill: true })).join('')}</div></div>`;
+    }
+    function assessMainHTML() {
+      return `
+        <div style="margin-bottom:1rem;"><a href="dashboard.html" class="text-small dim" style="font-size:0.85rem;">&larr; All engagements</a></div>
+        <div class="program-detail-head">
+          <div class="program-detail-identity">
+            <div class="avatar avatar-lg" style="background:${p.founderAvatarColor || '#0036FF'};width:56px;height:56px;font-size:1.05rem;">${escBrief((p.name || 'V').slice(0, 2).toUpperCase())}</div>
+            <div>
+              <h1 class="program-detail-title">${escBrief(p.name)}</h1>
+              <p class="program-detail-pitch">${escBrief(p.venturePitch || 'Investor assessment — upload a deck to begin.')}</p>
+              <div class="program-detail-meta">
+                <span class="pill" style="background:rgba(110,58,250,0.1);color:var(--brand,#6E3AFA);"><span class="dot"></span> Assessment</span>
+                ${invSnapshot ? `<span class="pill"><span class="dot"></span> ${invSnapshot.pct}% investability</span>` : ''}
+              </div>
+            </div>
+          </div>
+        </div>
+        ${deckUploadHTML(p)}
+        <div id="run-region">${assessRunBannerHTML(p.runState, p)}</div>
+        ${investabilitySectionHTML(invSnapshot, p)}
+        <div id="cards-region">${findingsSectionHTML(provCards)}</div>
+        ${W.mode === 'live' ? dangerZoneHTML(p) : ''}
+      `;
+    }
+
+    const main = isAssess ? assessMainHTML() : `
       <div style="margin-bottom:1rem;">
         <a href="dashboard.html" class="text-small dim" style="font-size:0.85rem;">&larr; All programs</a>
       </div>
@@ -554,11 +642,11 @@
         data.watchEngagement(p.id, (eng) => {
           if (!eng) return;
           const region = document.getElementById('run-region');
-          if (region) region.innerHTML = runBannerHTML(eng.runState, { ...p, ...eng });
+          if (region) region.innerHTML = isAssess ? assessRunBannerHTML(eng.runState, { ...p, ...eng }) : runBannerHTML(eng.runState, { ...p, ...eng });
         });
         data.watchCardsForEngagement(p.id, (cards) => {
           const region = document.getElementById('cards-region');
-          if (region) region.innerHTML = cardsRegionHTML(cards, p);
+          if (region) region.innerHTML = isAssess ? findingsSectionHTML(cards) : cardsRegionHTML(cards, p);
         });
       } catch (e) { console.warn('live run/cards subscriptions failed', e); }
     }
