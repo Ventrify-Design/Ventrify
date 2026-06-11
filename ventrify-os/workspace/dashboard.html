@@ -128,6 +128,11 @@
         : '';
       const completeness = A ? A.computeCompleteness(p) : { pct: 0 };
 
+      // Investability at a glance — from the latest published snapshot summary.
+      const inv = p.investability;
+      const invColor = inv ? (inv.band === 'approved' ? '#00897b' : inv.band === 'feedback' ? '#C77700' : '#C0392B') : null;
+      const invBadge = inv ? `<span class="pill" title="Investability ${inv.composite}/${inv.maxPossible || 35}" style="color:${invColor};font-weight:600;"><span class="dot" style="background:${invColor};"></span> ${inv.pct}% inv</span>` : '';
+
       return `
         <a href="program.html?id=${p.id}" class="program-card">
           <div class="program-card-head">
@@ -138,10 +143,13 @@
                 <div class="program-card-founder">${p.founderName} &middot; ${industry}</div>
               </div>
             </div>
-            <span class="pill ${window.healthClass(healthLevel)}" title="${reasonsTitle.replace(/"/g, '&quot;')}">
-              <span class="dot"></span>
-              ${window.healthLabel(healthLevel)}
-            </span>
+            <div style="display:flex;flex-direction:column;gap:0.35rem;align-items:flex-end;">
+              <span class="pill ${window.healthClass(healthLevel)}" title="${reasonsTitle.replace(/"/g, '&quot;')}">
+                <span class="dot"></span>
+                ${window.healthLabel(healthLevel)}
+              </span>
+              ${invBadge}
+            </div>
           </div>
 
           <div>
