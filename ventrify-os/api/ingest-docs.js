@@ -32,6 +32,16 @@ async function extractText(name, buf) {
     const r = await mammoth.extractRawText({ buffer: buf });
     return (r && r.value) || '';
   }
+  if (ext === 'xlsx' || ext === 'xls' || ext === 'xlsm') {
+    const XLSX = require('xlsx');
+    const wb = XLSX.read(buf, { type: 'buffer' });
+    const parts = [];
+    (wb.SheetNames || []).forEach(sheetName => {
+      const csv = XLSX.utils.sheet_to_csv(wb.Sheets[sheetName]);
+      if (csv && csv.trim()) parts.push(`# Sheet: ${sheetName}\n${csv.trim()}`);
+    });
+    return parts.join('\n\n');
+  }
   // txt / md / csv / anything else → treat as utf-8 text
   return buf.toString('utf8');
 }

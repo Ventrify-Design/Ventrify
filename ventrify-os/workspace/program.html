@@ -465,8 +465,8 @@
       const n = p.founderDocCount || 0;
       return `<div class="run-banner" style="display:block;">
         <div class="run-banner-title" style="margin-bottom:0.4rem;">Pitch deck &amp; documents</div>
-        <div class="run-banner-sub" style="margin-bottom:0.9rem;">${n ? `${n} document${n === 1 ? '' : 's'} attached.` : 'Upload the pitch deck (or any documents).'} The assessment reads these &mdash; producing a score, key findings, and how to strengthen the venture.</div>
-        <input type="file" id="deck-input" accept=".pdf,.docx,.txt,.md,.csv" multiple style="display:none;" onchange="window.__uploadDeck('${p.id}')">
+        <div class="run-banner-sub" style="margin-bottom:0.9rem;">${n ? `${n} document${n === 1 ? '' : 's'} attached.` : 'Upload the pitch deck, financial model, or any documents (PDF, Word, Excel, text).'} The assessment reads these &mdash; producing a score, key findings, and how to strengthen the venture.</div>
+        <input type="file" id="deck-input" accept=".pdf,.docx,.xlsx,.xls,.xlsm,.txt,.md,.csv" multiple style="display:none;" onchange="window.__uploadDeck('${p.id}')">
         <button class="btn btn-outline btn-sm" onclick="document.getElementById('deck-input').click()">${n ? '+ Add more documents' : 'Upload documents'}</button>
         <span id="deck-state" style="margin-left:0.75rem;font-size:0.85rem;color:var(--text-muted);"></span>
       </div>`;
