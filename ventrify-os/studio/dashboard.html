@@ -184,7 +184,9 @@
   <div id="root"></div>
   <script type="module" src="/studio/app.js"></script>
   <script type="module">
+    import { renderCardBody, ensureCardStyles } from '../shared/card-format.js';
     await window.STUDIO_READY;
+    ensureCardStyles();
     const { engagement, org, groups, labels, helpers } = window.STUDIO;
     const params = new URLSearchParams(window.location.search);
     const groupKey = params.get('group') || 'foundations';
@@ -240,7 +242,7 @@
         <div class="prov-fcard" id="pf-${c.id}">
           <div class="prov-fcard-meta">${esc((c.hub || '').toUpperCase())} &middot; ${esc(c.level || 'L1')} #${c.number || ''}</div>
           <div class="prov-fcard-title">${esc(c.title || '')}</div>
-          ${c.body ? `<div class="prov-fcard-body">${esc(c.body)}</div>` : ''}
+          ${c.body ? `<div class="prov-fcard-body">${renderCardBody(c.body)}</div>` : ''}
           <textarea class="prov-fcard-input" id="pfc-${c.id}" placeholder="Add a comment (optional) — tell your operator why."></textarea>
           <div class="prov-fcard-actions">
             <button class="btn btn-sm prov-btn-accept" onclick="window.__respondCard('${c.id}','accept')">Accept</button>

@@ -27,7 +27,9 @@
   <script src="agents.js"></script>
   <script type="module" src="app.js"></script>
   <script type="module">
+    import { renderCardBody, ensureCardStyles } from '../shared/card-format.js';
     await window.WORKSPACE_READY;
+    ensureCardStyles();
     const W = window.WORKSPACE;
     const A = window.WORKSPACE_AGENTS;
     const { helpers, labels, programs: allPrograms } = W;
@@ -330,7 +332,7 @@
             ${statusPill}
           </div>
           <div class="prov-card-title">${escBrief(c.title || '')}</div>
-          ${c.body ? `<div class="prov-card-body">${escBrief(c.body)}</div>` : ''}
+          ${c.body ? `<div class="prov-card-body">${renderCardBody(c.body)}</div>` : ''}
           ${response}
           ${sendBtn}
         </div>`;
