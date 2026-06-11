@@ -128,17 +128,6 @@
         if (n) notifyRecipient('founder'); else alert('No draft cards to send.');
       } catch (e) { alert('Could not send the cards: ' + ((e && (e.code || e.message)) || e)); }
     };
-    // Demo seed — now lands cards as DRAFTS so the review→send gate is exercised
-    // exactly like a real agent run (the runner publishes drafts too).
-    window.__seedCards = async function(engagementId) {
-      const samples = [
-        { hub: 'research', number: 1, order: 1, type: 'strategic-fork', title: 'Is the core problem retention or acquisition?', body: 'Early signals point both ways — which does this venture actually solve first?' },
-        { hub: 'research', number: 2, order: 2, type: 'open-question', title: 'Who feels this pain most acutely today?', body: 'Name the sharpest-edge user segment to anchor the research.' },
-        { hub: 'research', number: 3, order: 3, type: 'surprising-finding', title: 'What would make this 10× better than the status quo?', body: 'The provocation that separates a feature from a company.' }
-      ];
-      const data = await import('../firebase/data.js');
-      for (const s of samples) { await data.createCard({ engagementId, status: 'draft', ...s }); }
-    };
     window.__deleteEngagement = async function() {
       if (!window.confirm(`Delete "${p.name}" permanently?\n\nThis removes it from the Workspace AND ${p.founderName || 'the founder'}'s Studio, including all its provocation cards. This cannot be undone.`)) return;
       try {
@@ -373,9 +362,7 @@
     function sentCardsSectionHTML(cards, p) {
       const responded = cards.filter(c => c.founderResponse).length;
       const counter = cards.length ? `<span class="text-mono dim" style="font-size:0.72rem;">${responded}/${cards.length} answered</span>` : '';
-      const seedBtn = (W.mode === 'live' && p.briefSubmitted !== false)
-        ? `<button class="btn btn-ghost btn-sm" onclick="window.__seedCards('${p.id}')" title="Seed 3 draft cards to test the loop">+ demo drafts</button>` : '';
-      const head = `<div class="section-head"><div><div class="section-title">Provocation cards &middot; sent</div><div class="section-sub">L1 cards released to the founder&rsquo;s Studio &mdash; their responses reshape research &amp; strategy.</div></div><div style="display:flex;gap:0.75rem;align-items:center;">${counter}${seedBtn}</div></div>`;
+      const head = `<div class="section-head"><div><div class="section-title">Provocation cards &middot; sent</div><div class="section-sub">L1 cards released to the founder&rsquo;s Studio &mdash; their responses reshape research &amp; strategy.</div></div><div style="display:flex;gap:0.75rem;align-items:center;">${counter}</div></div>`;
       if (!cards.length) {
         const hint = (W.mode === 'live')
           ? `Run the research agents above to draft cards from the brief, then send them here.`
