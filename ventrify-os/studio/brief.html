@@ -345,7 +345,8 @@
         technicalCapability: 'No',
         // Notes
         notes: '',
-        // PDF upload + investability metadata
+        // Attached source documents (read by the agents to steer research)
+        founderDocs: [],
         pdfFilename: null,
         pdfUploadedAt: null,
         investability: null
@@ -504,30 +505,30 @@
           <div class="page-header">
             <div class="page-eyebrow">Phase 0 · The Brief</div>
             <h1 class="page-title">Welcome to your Studio, ${founder}.</h1>
-            <p class="page-sub">Before the platform spins up the data room, give us the brief. About 10 minutes. If you already have a one-pager, deck, or business plan, drop the PDF in below and we&rsquo;ll pre-fill what we can — you just review and adjust.</p>
+            <p class="page-sub">Before the platform spins up the data room, give us the brief. About 10 minutes. Already done some thinking? Attach your notes, deck, or plan below &mdash; our agents read them to steer your research and fill in what they can. You complete the rest.</p>
           </div>
 
-          <!-- PDF UPLOAD -->
-          <div class="pdf-card" id="pdf-card" onclick="document.getElementById('pdf-input').click()" role="button" tabindex="0">
+          <!-- DOCUMENT UPLOAD (optional source material) -->
+          <div class="pdf-card" id="pdf-card">
             <div class="pdf-card-head">
               <div class="pdf-card-icon">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
               </div>
               <div style="flex:1;">
-                <div class="pdf-card-title">Upload an existing one-pager, deck, or plan (optional)</div>
-                <div class="pdf-card-sub">PDF only. We&rsquo;ll pre-fill the brief sections below and seed an initial Investability score &mdash; before you&rsquo;ve done anything else.</div>
+                <div class="pdf-card-title">Attach your existing thinking (optional)</div>
+                <div class="pdf-card-sub">PDF, Word, or text &mdash; a one-pager, deck, notes, a business plan. Our research agents read these to steer your provocation cards and fill in any brief fields you leave blank. Add as many as you like.</div>
               </div>
             </div>
-            <div class="pdf-card-actions" onclick="event.stopPropagation();">
-              <button type="button" class="pdf-trigger" onclick="document.getElementById('pdf-input').click();">Choose a PDF</button>
-              <button type="button" class="pdf-skip" onclick="document.getElementById('pdf-card').style.display='none';">Skip — fill in manually</button>
-              <input type="file" id="pdf-input" class="pdf-input" accept="application/pdf">
+            <div class="pdf-card-actions">
+              <button type="button" class="pdf-trigger" onclick="document.getElementById('docs-input').click();">Choose documents</button>
+              <span class="pdf-skip" style="cursor:default;">or just fill in the brief below</span>
+              <input type="file" id="docs-input" class="pdf-input" accept=".pdf,.docx,.txt,.md,.csv" multiple>
             </div>
-            <div id="pdf-state"></div>
+            <div id="docs-list"></div>
+            <div id="docs-state"></div>
           </div>
 
-          <!-- Investability snapshot (renders empty until PDF is parsed) -->
-          <div id="invest-mount">${investHTML(brief.investability)}</div>
+          <div id="invest-mount"></div>
 
           <!-- BRIEF FORM -->
           <form id="brief-form" onsubmit="event.preventDefault();">
@@ -743,50 +744,72 @@
         });
       });
 
-      // PDF upload
-      const pdfInput = document.getElementById('pdf-input');
-      if (pdfInput) {
-        pdfInput.addEventListener('change', e => {
-          const file = e.target.files[0];
-          if (!file) return;
-          handlePdfUpload(file);
+      // Document upload (multi-file → /api/ingest-docs)
+      const docsInput = document.getElementById('docs-input');
+      if (docsInput) {
+        docsInput.addEventListener('change', e => {
+          const files = Array.from(e.target.files || []);
+          e.target.value = '';                  // allow re-selecting the same file
+          if (files.length) handleDocsUpload(files);
         });
       }
+      renderDocsList();
     }
 
-    function handlePdfUpload(file) {
-      const stateEl = document.getElementById('pdf-state');
-      stateEl.innerHTML = `
-        <div class="pdf-analyzing">
-          <span class="pdf-analyzing-spinner"></span>
-          <span>Reading <strong>${file.name}</strong> and mapping it to your brief sections…</span>
-        </div>
-      `;
-      // Simulate analysis delay (real Claude API call later)
-      setTimeout(() => {
-        const result = mockPdfAnalysis(file.name, engagement.name, engagement.industry || 'fintech');
-        // Merge into brief (keep any fields the founder already manually edited)
-        Object.keys(result).forEach(k => {
-          if (k === 'investability') { brief.investability = result[k]; return; }
-          if (!brief[k] || (Array.isArray(brief[k]) && brief[k].every(v => !v))) {
-            brief[k] = result[k];
-          }
-        });
-        brief.pdfFilename = file.name;
-        brief.pdfUploadedAt = 'just now';
-        save();
-        // Replace card with confirmation banner + render the rest
-        stateEl.innerHTML = `
-          <div class="pdf-prefilled">
-            <span class="pdf-prefilled-check">✓</span>
-            <div>
-              We pre-filled the brief from <strong>${file.name}</strong>. Review each section below and adjust anything that doesn&rsquo;t match — your edits override the auto-fill.
-            </div>
+    if (!Array.isArray(brief.founderDocs)) brief.founderDocs = [];
+
+    function renderDocsList() {
+      const el = document.getElementById('docs-list');
+      if (!el) return;
+      const docs = brief.founderDocs || [];
+      if (!docs.length) { el.innerHTML = ''; return; }
+      el.innerHTML = `
+        <div class="pdf-prefilled" style="display:block;">
+          <strong>${docs.length} document${docs.length === 1 ? '' : 's'} attached.</strong>
+          Our agents will read ${docs.length === 1 ? 'it' : 'them'} to steer your research and fill in any brief fields you leave blank.
+          <div style="margin-top:0.55rem;display:flex;flex-direction:column;gap:0.3rem;">
+            ${docs.map(d => `<div style="font-size:0.85rem;color:var(--text-muted);">&#128206; ${String(d.name || '').replace(/</g, '&lt;')}${d.chars ? ` &middot; ${Math.round(d.chars / 1000) || 1}k chars` : ''}</div>`).join('')}
           </div>
-        `;
-        // Re-render to show the investability snapshot + pre-filled fields
-        setTimeout(() => renderMain(), 200);
-      }, 1800);
+        </div>`;
+    }
+
+    function readFileBase64(file) {
+      return new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(String(r.result));
+        r.onerror = () => reject(new Error('Could not read the file.'));
+        r.readAsDataURL(file);
+      });
+    }
+
+    async function handleDocsUpload(files) {
+      const stateEl = document.getElementById('docs-state');
+      const live = window.STUDIO.mode === 'live';
+      for (const file of files) {
+        if (file.size > 4 * 1024 * 1024) {
+          stateEl.innerHTML = `<div class="pdf-analyzing" style="color:var(--danger,#C0392B);">&ldquo;${file.name}&rdquo; is over 4MB &mdash; please split it or export a smaller file.</div>`;
+          continue;
+        }
+        stateEl.innerHTML = `<div class="pdf-analyzing"><span class="pdf-analyzing-spinner"></span><span>Reading <strong>${file.name}</strong>&hellip;</span></div>`;
+        if (!live) { brief.founderDocs.push({ name: file.name }); save(); renderDocsList(); stateEl.innerHTML = ''; continue; }
+        try {
+          const dataBase64 = await readFileBase64(file);
+          const { auth } = await import('../firebase/firebase.js');
+          const idToken = auth.currentUser ? await auth.currentUser.getIdToken() : null;
+          const resp = await fetch('/api/ingest-docs', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idToken, engagementId: engagement.id, file: { name: file.name, dataBase64 } })
+          });
+          const data = await resp.json().catch(() => ({}));
+          if (!resp.ok) throw new Error(data.detail || data.error || ('HTTP ' + resp.status));
+          brief.founderDocs.push({ id: data.id, name: data.name, chars: data.chars });
+          save(); renderDocsList();
+        } catch (e) {
+          stateEl.innerHTML = `<div class="pdf-analyzing" style="color:var(--danger,#C0392B);">Couldn&rsquo;t read &ldquo;${file.name}&rdquo;: ${(e && (e.message || e))}</div>`;
+        }
+      }
+      stateEl.innerHTML = '';
+      renderDocsList();
     }
 
     async function submitBrief() {

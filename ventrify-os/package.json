@@ -3,6 +3,8 @@
   "private": true,
   "description": "Ventrify OS — Workspace + Studio (static) with the /api/send-invite serverless function.",
   "dependencies": {
-    "firebase-admin": "^13.10.0"
+    "firebase-admin": "^13.10.0",
+    "pdf-parse": "^1.1.1",
+    "mammoth": "^1.8.0"
   }
 }
