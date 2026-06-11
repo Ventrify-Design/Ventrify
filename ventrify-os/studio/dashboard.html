@@ -228,6 +228,17 @@
       try {
         const data = await import('../firebase/data.js');
         await data.respondToCard(cardId, { decision, comment });
+        // Nudge the operator by email (await so it fires before the reload cancels it).
+        try {
+          const { auth } = await import('../firebase/firebase.js');
+          const idToken = auth.currentUser ? await auth.currentUser.getIdToken() : null;
+          if (idToken) {
+            await fetch('/api/notify', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ idToken, engagementId: engagement.id, direction: 'operator' })
+            });
+          }
+        } catch (e) { /* notification is best-effort */ }
         window.location.reload();
       } catch (e) {
         alert('Could not save your response: ' + ((e && (e.code || e.message)) || e));

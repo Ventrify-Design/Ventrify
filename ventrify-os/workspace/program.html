@@ -104,16 +104,28 @@
         if (btn) { btn.disabled = false; btn.textContent = '▶  Run research agents'; }
       }
     };
+    // Best-effort email nudge to the other side — never blocks the action.
+    async function notifyRecipient(direction) {
+      try {
+        const { auth } = await import('../firebase/firebase.js');
+        const idToken = auth.currentUser ? await auth.currentUser.getIdToken() : null;
+        if (!idToken) return;
+        await fetch('/api/notify', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idToken, engagementId: p.id, direction })
+        });
+      } catch (e) { /* notification is best-effort */ }
+    }
     window.__sendCard = async function(cardId) {
       const data = await import('../firebase/data.js');
-      try { await data.sendCardToFounder(cardId); } // cards re-render via the live subscription
+      try { await data.sendCardToFounder(cardId); notifyRecipient('founder'); } // cards re-render live
       catch (e) { alert('Could not send the card: ' + ((e && (e.code || e.message)) || e)); }
     };
     window.__sendAllDrafts = async function(engagementId) {
       const data = await import('../firebase/data.js');
       try {
         const n = await data.sendDraftsToFounder(engagementId);
-        if (!n) alert('No draft cards to send.');
+        if (n) notifyRecipient('founder'); else alert('No draft cards to send.');
       } catch (e) { alert('Could not send the cards: ' + ((e && (e.code || e.message)) || e)); }
     };
     // Demo seed — now lands cards as DRAFTS so the review→send gate is exercised
