@@ -7,8 +7,8 @@
 // large L3 docs don't all parse up front.
 // ============================================================
 
-const HUB_LABELS = { research: 'Research', vision: 'Vision', strategy: 'Strategy', financials: 'Financials', marketing: 'Marketing' };
-const HUB_ORDER = ['research', 'vision', 'strategy', 'financials', 'marketing'];
+const HUB_LABELS = { assessment: 'Assessment', research: 'Research', vision: 'Vision', strategy: 'Strategy', financials: 'Financials', marketing: 'Marketing' };
+const HUB_ORDER = ['assessment', 'research', 'vision', 'strategy', 'financials', 'marketing'];
 
 const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
