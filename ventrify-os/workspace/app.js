@@ -214,6 +214,9 @@ function renderTopbar() {
 
   return `
     <div class="topbar">
+      <button class="topbar-menu-btn" aria-label="Toggle navigation" aria-expanded="false" aria-controls="app-sidebar">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
       <div class="topbar-lockup">
         <a href="dashboard.html" class="topbar-lockup-item topbar-lockup-os" title="Ventrify OS">
           <span class="topbar-lockup-mark topbar-lockup-mark-ventrify">V</span>
@@ -252,7 +255,7 @@ function queueBadgeCount() {
 function renderSidebar() {
   const W = window.WORKSPACE;
   return `
-    <aside class="sidebar">
+    <aside class="sidebar" id="app-sidebar">
       <div class="sidebar-section">Operate</div>
       <a href="dashboard.html" class="sidebar-link ${active === 'dashboard' ? 'active' : ''}">
         <span class="sidebar-link-icon">&#x25A4;</span><span>Portfolio</span>
@@ -335,8 +338,21 @@ window.renderShell = function(mainContentHTML) {
         <div class="main-inner">${mainContentHTML}</div>
       </main>
     </div>
+    <div class="nav-scrim" aria-hidden="true"></div>
     ${renderDevToggle()}`;
 };
+
+// Mobile nav drawer — delegated listeners survive renderShell()'s innerHTML reset.
+(function setupMobileNav() {
+  if (window.__navWired) return; window.__navWired = true;
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.topbar-menu-btn');
+    if (btn) { const open = document.body.classList.toggle('nav-open'); btn.setAttribute('aria-expanded', String(open)); return; }
+    if (e.target.closest('.nav-scrim') || e.target.closest('.sidebar-link')) document.body.classList.remove('nav-open');
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') document.body.classList.remove('nav-open'); });
+  window.addEventListener('resize', () => { if (window.innerWidth > 900) document.body.classList.remove('nav-open'); });
+})();
 
 // ----- Tiny shared display helpers ----------------------------------------
 window.hubStatusClass = function(status) { return status || 'pending'; };

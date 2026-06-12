@@ -67,9 +67,14 @@ code { font-family: var(--font-mono); }
   z-index: 50;
   box-shadow: var(--chrome-elevation);
 }
-/* Shell entrance — the frame steadies once on first load (not on route change). */
+/* Shell entrance — the frame steadies once on first load (not on route change).
+   The sidebar settle is DESKTOP-ONLY: on mobile the sidebar is the off-canvas
+   drawer, whose transform: translateX must not be overridden by a translateY
+   entrance animation. */
 @media (prefers-reduced-motion: no-preference) {
-  .topbar  { animation: ds-shell-settle var(--dur-base) var(--ease-out) both; }
+  .topbar { animation: ds-shell-settle var(--dur-base) var(--ease-out) both; }
+}
+@media (prefers-reduced-motion: no-preference) and (min-width: 901px) {
   .sidebar { animation: ds-shell-settle var(--dur-base) var(--ease-out) both; }
 }
 /* Partnership lockup — Ventrify OS + operating organisation, side by side.
@@ -289,22 +294,46 @@ a.topbar-lockup-item:hover { background: var(--surface-alt); }
 /* Shell — mobile: the sidebar becomes a horizontal nav strip under the topbar.
    (The full off-canvas drawer + hamburger arrives with the shell.js extraction
    in slice 2; this keeps nav reachable, CSS-only, with no markup change.) */
+/* Hamburger lives in the topbar; hidden on desktop, the off-canvas drawer trigger
+   below 900px. The .nav-scrim sits in the shell markup, shown only on mobile. */
+.topbar-menu-btn { display: none; }
+.nav-scrim { display: none; }
+
 @media (max-width: 900px) {
-  .app-shell {
-    grid-template-columns: 1fr;
-    grid-template-areas: "sidebar" "main";
+  .topbar-menu-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 40px; height: 40px; margin-left: calc(-1 * var(--space-1)); flex: none;
+    border: none; background: transparent; color: var(--text);
+    border-radius: var(--radius-sm); cursor: pointer;
+    transition: background var(--dur-base) var(--ease-out);
   }
+  .topbar-menu-btn:hover { background: var(--surface-alt); }
+
+  /* Shell drops to a single column; the sidebar leaves the grid and becomes a
+     fixed off-canvas drawer that keeps the same chrome surface + border. */
+  .app-shell { grid-template-columns: 1fr; grid-template-areas: "main"; }
+
   .sidebar {
-    position: static; height: auto; overflow-x: auto; overflow-y: hidden;
-    flex-direction: row; align-items: center; gap: var(--space-1);
-    border-right: none; border-bottom: 1px solid var(--chrome-border);
-    padding: var(--space-2) var(--space-3);
+    position: fixed; top: var(--topbar-h); left: 0; z-index: 60;
+    width: min(84vw, var(--sidebar-w)); height: calc(100vh - var(--topbar-h));
+    flex-direction: column; gap: 2px; overflow-y: auto;
+    border-right: 1px solid var(--chrome-border);
+    transform: translateX(-100%);
+    transition: transform var(--dur-base) var(--ease-out);
+    box-shadow: var(--shadow-lg);
   }
-  .sidebar-section { display: none; }
-  .sidebar-link { white-space: nowrap; min-height: 40px; }
-  .sidebar-link::before { display: none; }
-  .sidebar-link .badge { margin-left: var(--space-2); }
-  .main { box-shadow: none; padding: var(--space-5) var(--space-4) var(--space-7); }
+  body.nav-open .sidebar { transform: translateX(0); }
+
+  .nav-scrim {
+    display: block; position: fixed; inset: var(--topbar-h) 0 0 0; z-index: 55;
+    background: rgba(15,15,18,0.40);
+    opacity: 0; pointer-events: none;
+    transition: opacity var(--dur-base) var(--ease-out);
+  }
+  body.nav-open .nav-scrim { opacity: 1; pointer-events: auto; }
+  body.nav-open { overflow: hidden; }   /* scroll-lock while the drawer is open */
+
+  .main { box-shadow: none; padding: var(--space-6) var(--space-5) var(--space-8); }
 }
 @media (max-width: 640px) {
   .topbar { padding: 0 var(--space-4); gap: var(--space-2); }
@@ -1340,17 +1369,14 @@ a.topbar-lockup-item:hover { background: var(--surface-alt); }
    RESPONSIVE
    ============================================ */
 @media (max-width: 960px) {
-  .app-shell { grid-template-columns: 1fr; grid-template-areas: "topbar" "main"; }
-  .sidebar { display: none; }
-  .main { padding: 1.5rem 1.25rem; }
+  /* Shell responsiveness (topbar / sidebar / off-canvas drawer) is owned by the
+     shell block above (<=900px). This block keeps only content-grid collapses. */
   .dashboard-stats { grid-template-columns: repeat(2, 1fr); }
   .programs-grid { grid-template-columns: 1fr; }
   .hub-grid { grid-template-columns: 1fr; }
   .team-grid { grid-template-columns: 1fr; }
   .settings-grid { grid-template-columns: 1fr; }
   .program-detail-stats { grid-template-columns: 1fr; }
-  .topbar-org { display: none; }
-  .topbar-logo { margin-right: 1rem; }
 }
 
 @media (max-width: 640px) {
