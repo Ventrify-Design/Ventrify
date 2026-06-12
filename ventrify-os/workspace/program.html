@@ -31,6 +31,7 @@
     import { renderCardBody, ensureCardStyles } from '../shared/card-format.js';
     import { renderDataRoom, hydrateDataRoom, ensureHubStyles } from '../shared/hub-view.js';
     import { renderVSSScorecard, renderStrengthenSuggestions, ensureInvestabilityStyles } from '../shared/investability-view.js';
+    import { esc as escBrief } from '../shared/util.js';
     await window.WORKSPACE_READY;
     ensureCardStyles();
     ensureHubStyles();
@@ -268,7 +269,7 @@
     // ---------------- Founder brief (operator read view) ---------------
     // Renders engagement.brief — what the founder submitted in the Studio —
     // so the operator can actually read it, not just see "submitted".
-    function escBrief(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+    // escBrief is imported from ../shared/util.js (esc) — one definition for all surfaces.
     function briefFieldHTML(label, key, b) {
       const value = b[key];
       if (key === 'features') {

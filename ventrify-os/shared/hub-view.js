@@ -10,7 +10,7 @@
 const HUB_LABELS = { assessment: 'Assessment', research: 'Research', vision: 'Vision', strategy: 'Strategy', financials: 'Financials', marketing: 'Marketing' };
 const HUB_ORDER = ['assessment', 'research', 'vision', 'strategy', 'financials', 'marketing'];
 
-const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+import { esc } from './util.js';
 
 let _marked = null;
 async function toHtml(mdStr) {

@@ -11,7 +11,7 @@
 //     categories: [{ label, sum, max, band }] }
 // ============================================================
 
-const _esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+import { esc as _esc } from './util.js';
 
 // band ('green'|'yellow'|'red') OR composite band ('approved'|'feedback'|'pass')
 // → a DS band token. Kills the duplicated bandColor/compColor + the 42 literals.
