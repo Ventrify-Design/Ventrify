@@ -25,7 +25,7 @@
 
     function operatorCardHTML(op) {
       const assignedPrograms = helpers.programsForOperator(op.id);
-      const programNames = assignedPrograms.map(p => p.name).join(' &middot; ') || '<span class="dim">No programs assigned</span>';
+      const programNames = assignedPrograms.map(p => p.name).join(' &middot; ') || '<span class="dim">No engagements assigned</span>';
       return `
         <div class="team-card">
           <div class="team-card-head">
