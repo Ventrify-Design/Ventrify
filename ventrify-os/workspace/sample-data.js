@@ -259,7 +259,38 @@ const SAMPLE_PROGRAMS = [
       bear: ['Greenhouse-to-field efficacy gap', 'Long, seasonal sales cycles', 'Commodity price sensitivity'],
       valuation: { verdict: 'Fair', note: '$12M pre for pre-field-data biologicals is in range — fair if efficacy holds, rich if it does not.', comps: [{ name: 'Pivot Bio', stage: 'Category reference', detail: 'sets the efficacy + distribution bar' }] },
       exit: { acquirers: ['Corteva', 'Bayer', 'Nutrien'], path: 'Strategic acquisition by an ag-input major once field efficacy + a channel are proven.', returns: 'Credible strategic multiple if the science holds; binary on field data.' },
-      diligence: [{ item: 'Commission independent multi-site field trials', priority: 'high' }, { item: 'Quantify the advantage vs Pivot Bio with data', priority: 'high' }, { item: 'Secure a distribution LOI with an ag-input retailer', priority: 'medium' }]
+      diligence: [{ item: 'Commission independent multi-site field trials', priority: 'high' }, { item: 'Quantify the advantage vs Pivot Bio with data', priority: 'high' }, { item: 'Secure a distribution LOI with an ag-input retailer', priority: 'medium' }],
+      provenance: { competitors: 5, rounds: 6, marketReports: 4, foundersResearched: true, sources: 19 },
+      benchmark: {
+        dimensions: ['Stage', 'Funding', 'Mechanism', 'Field data', 'Distribution'],
+        note: 'Verdana is earlier and cheaper than the category leaders, but unproven in the field.',
+        competitors: [
+          { name: 'Verdana Bio', isTarget: true, cells: { Stage: 'Seed', Funding: '$0.4M', Mechanism: 'Engineered soil microbes', 'Field data': 'Greenhouse only', Distribution: 'None yet' } },
+          { name: 'Pivot Bio', cells: { Stage: 'Series D', Funding: '$600M+', Mechanism: 'N-fixing microbes', 'Field data': 'Millions of acres', Distribution: 'Direct + retail' } },
+          { name: 'Sound Agriculture', cells: { Stage: 'Series D', Funding: '$400M+', Mechanism: 'Nutrient efficiency', 'Field data': 'Commercial', Distribution: 'Retail partners' } },
+          { name: 'Corteva Biologicals', cells: { Stage: 'Incumbent', Funding: 'n/a', Mechanism: 'Broad portfolio', 'Field data': 'Extensive', Distribution: 'Global channel' } }
+        ]
+      },
+      market: {
+        tam: { value: '$190B', label: 'Global fertiliser' },
+        sam: { value: '$30B', label: 'Biological inputs' },
+        som: { value: '$1.2B', label: 'Microbial N-reduction (5yr)' },
+        note: 'Top-down from the fertiliser market; the credible near-term SOM is the regenerative/row-crop subset that will trial biologicals.'
+      },
+      rounds: [
+        { company: 'Pivot Bio', stage: 'Series D', amount: '$430M', valuation: '~$2B', investors: 'DCVC, Temasek, G2VP' },
+        { company: 'Sound Agriculture', stage: 'Series D', amount: '$75M', valuation: 'n/d', investors: 'BMO, Chan Zuckerberg' },
+        { company: 'Andes', stage: 'Series B', amount: '$30M', valuation: 'n/d', investors: 'Leaps by Bayer' },
+        { company: 'Kula Bio', stage: 'Series A', amount: '$50M', valuation: 'n/d', investors: 'Lowercarbon Capital' }
+      ],
+      team: {
+        summary: 'Strong scientific founder; commercial and ag-distribution experience is the gap.',
+        members: [
+          { name: 'Dr Lena Park', role: 'CEO / Founder', signal: 'positive', background: 'PhD soil microbiology (UC Davis), 12 patents; 2 years at a Series-C ag-biotech before founding.' },
+          { name: 'Raj Mehta', role: 'CTO', signal: 'neutral', background: 'Synthetic-biology lead; first commercial role — strong science, unproven at scale.' }
+        ],
+        gaps: ['No commercial / ag-distribution lead', 'No regulatory or field-trial veteran on the team']
+      }
     },
     investabilitySnapshot: {
       composite: 23, maxPossible: 35, pct: 66, band: 'feedback', bandLabel: 'Promising — gaps to close', ratedCount: 35,

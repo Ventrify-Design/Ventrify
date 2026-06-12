@@ -617,6 +617,65 @@
       </div>`;
     }
 
+    // Research provenance — a strip that surfaces the external rigor behind the score.
+    function provenanceStripHTML(p) {
+      const pr = (p.assessment && p.assessment.provenance) || null;
+      if (!pr) return '';
+      const items = [
+        pr.competitors ? `${pr.competitors} competitors benchmarked` : null,
+        pr.rounds ? `${pr.rounds} comparable rounds` : null,
+        pr.marketReports ? `${pr.marketReports} market reports` : null,
+        pr.foundersResearched ? 'founders researched' : null,
+        pr.sources ? `${pr.sources} sources cited` : null
+      ].filter(Boolean);
+      if (!items.length) return '';
+      return `<div class="assess-provenance"><span class="assess-provenance-label">Researched</span>${items.map(it => `<span class="assess-provenance-item">${escBrief(it)}</span>`).join('')}</div>`;
+    }
+
+    // Competitive benchmark — a side-by-side matrix vs named competitors.
+    function benchmarkMatrixHTML(p) {
+      const b = p.assessment && p.assessment.benchmark;
+      if (!b || !(b.competitors || []).length) return '';
+      const dims = b.dimensions || [];
+      const rows = b.competitors.map(c => `<tr class="${c.isTarget ? 'bm-target' : ''}">
+          <td class="bm-name">${escBrief(c.name)}${c.isTarget ? ' <span class="bm-you">THIS</span>' : ''}</td>
+          ${dims.map(d => `<td>${escBrief((c.cells || {})[d] || '—')}</td>`).join('')}
+        </tr>`).join('');
+      return `<div class="section">
+        <div class="section-head"><div><div class="section-title">Competitive benchmark</div><div class="section-sub">${escBrief(b.note || 'Where the venture sits against named competitors.')}</div></div></div>
+        <div class="card" style="overflow-x:auto;">
+          <table class="bm-table"><thead><tr><th>Company</th>${dims.map(d => `<th>${escBrief(d)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>
+        </div></div>`;
+    }
+
+    // Market sizing (TAM/SAM/SOM) + comparable funding rounds.
+    function marketSizingHTML(p) {
+      const m = p.assessment && p.assessment.market;
+      const rounds = (p.assessment && p.assessment.rounds) || [];
+      if (!m && !rounds.length) return '';
+      const tier = (t, cls) => t ? `<div class="ms-tier ${cls}"><div class="ms-tier-val">${escBrief(t.value)}</div><div class="ms-tier-lbl">${escBrief(t.label)}</div></div>` : '';
+      const sizing = m ? `<div class="ms-tiers">${tier(m.tam, 'ms-tam')}${tier(m.sam, 'ms-sam')}${tier(m.som, 'ms-som')}</div>${m.note ? `<div class="ms-note">${escBrief(m.note)}</div>` : ''}` : '';
+      const roundsTable = rounds.length ? `<div class="ms-rounds-title">Comparable funding rounds</div><div style="overflow-x:auto;"><table class="bm-table"><thead><tr><th>Company</th><th>Stage</th><th>Raised</th><th>Valuation</th><th>Lead / investors</th></tr></thead><tbody>${rounds.map(r => `<tr><td class="bm-name">${escBrief(r.company)}</td><td>${escBrief(r.stage || '—')}</td><td>${escBrief(r.amount || '—')}</td><td>${escBrief(r.valuation || '—')}</td><td>${escBrief(r.investors || '—')}</td></tr>`).join('')}</tbody></table></div>` : '';
+      return `<div class="section">
+        <div class="section-head"><div><div class="section-title">Market &amp; funding landscape</div><div class="section-sub">The sized market and the recent rounds that frame the ask.</div></div></div>
+        <div class="card">${sizing}${roundsTable}</div></div>`;
+    }
+
+    // Founder & team due diligence — external research on the people.
+    function teamDDHTML(p) {
+      const t = p.assessment && p.assessment.team;
+      if (!t || (!(t.members || []).length && !t.summary)) return '';
+      const sig = s => s === 'positive' ? 'var(--success,#00A368)' : s === 'flag' ? 'var(--danger,#C42233)' : 'var(--text-muted,#656565)';
+      const members = (t.members || []).map(m => `<div class="tdd-member">
+          <span class="tdd-dot" style="background:${sig(m.signal)};"></span>
+          <div><div class="tdd-name">${escBrief(m.name)}${m.role ? ` <span class="tdd-role">${escBrief(m.role)}</span>` : ''}</div><div class="tdd-bg">${escBrief(m.background || '')}</div></div>
+        </div>`).join('');
+      const gaps = (t.gaps || []).length ? `<div class="tdd-gaps"><strong>Gaps:</strong> ${t.gaps.map(escBrief).join(' &middot; ')}</div>` : '';
+      return `<div class="section">
+        <div class="section-head"><div><div class="section-title">Team &amp; founder diligence</div><div class="section-sub">${escBrief(t.summary || 'External research on the people behind the venture.')}</div></div></div>
+        <div class="card"><div class="tdd-list">${members}</div>${gaps}</div></div>`;
+    }
+
     function assessMainHTML() {
       return `
         <div style="margin-bottom:1rem;"><a href="dashboard.html" class="text-small dim" style="font-size:0.85rem;">&larr; All engagements</a></div>
@@ -635,11 +694,15 @@
         </div>
         ${deckUploadHTML(p)}
         <div id="run-region">${assessRunBannerHTML(p.runState, p)}</div>
+        <div id="provenance-region">${provenanceStripHTML(p)}</div>
         <div id="verdict-region">${verdictHeaderHTML(p)}</div>
         <div id="bullbear-region">${bullBearHTML(p)}</div>
         ${investabilitySectionHTML(invSnapshot, p)}
         <div id="dealval-region">${dealValuationHTML(p)}</div>
+        <div id="market-region">${marketSizingHTML(p)}</div>
+        <div id="benchmark-region">${benchmarkMatrixHTML(p)}</div>
         <div id="exit-region">${exitReturnsHTML(p)}</div>
+        <div id="team-region">${teamDDHTML(p)}</div>
         ${deepResearchCTAHTML(hubDocs)}
         <div id="cards-region">${findingsSectionHTML(provCards)}</div>
         <div id="diligence-region">${diligenceChecklistHTML(p)}</div>
@@ -785,10 +848,14 @@
           if (isAssess && eng.assessment) {
             p.assessment = eng.assessment;
             const set = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+            set('provenance-region', provenanceStripHTML(p));
             set('verdict-region', verdictHeaderHTML(p));
             set('bullbear-region', bullBearHTML(p));
             set('dealval-region', dealValuationHTML(p));
+            set('market-region', marketSizingHTML(p));
+            set('benchmark-region', benchmarkMatrixHTML(p));
             set('exit-region', exitReturnsHTML(p));
+            set('team-region', teamDDHTML(p));
             set('diligence-region', diligenceChecklistHTML(p));
           }
         });
