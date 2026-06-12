@@ -89,6 +89,8 @@
     if (W.mode === 'live') {
       try { const data = await import('../firebase/data.js'); hubDocs = await data.listHubDocs(p.id); }
       catch (e) { console.warn('hub docs load failed', e); }
+    } else if (p.hubDocs) {
+      hubDocs = p.hubDocs;   // demo/sample fixture
     }
     // Operator clicks "Run research agents" → queue a headless run. The banner
     // updates live (via the watchEngagement subscription below) as the runner
@@ -229,7 +231,7 @@
     }
 
     const hubOrder = ['research','vision','strategy','financials','marketing','video','blog'];
-    const hubsHTML = hubOrder.map(k => hubCardHTML(k, p.hubs[k] || { status: 'disabled' })).join('');
+    const hubsHTML = hubOrder.map(k => hubCardHTML(k, (p.hubs || {})[k] || { status: 'disabled' })).join('');
 
     // ---------------- Timeline ------------------------------------------
     // Pulls events from `p.activity[]` if present. Otherwise synthesises
@@ -598,6 +600,23 @@
         </div></div></div>`;
     }
 
+    // Prominent entry point into the deep research (the Data Room below). Drills
+    // into the web-researched, cited evidence base behind the top-level calls.
+    function deepResearchCTAHTML(hubDocs) {
+      const docs = (hubDocs || []).filter(d => d.hub === 'research' || d.hub === 'assessment');
+      if (!docs.length) return '';
+      return `<div class="section">
+        <a href="#deep-research" class="card deep-research-cta" style="display:flex;align-items:center;justify-content:space-between;gap:1.25rem;flex-wrap:wrap;border-left:3px solid var(--accent,#00B8A0);text-decoration:none;color:inherit;">
+          <div style="min-width:240px;flex:1;">
+            <div class="text-mono" style="font-size:0.62rem;letter-spacing:0.07em;text-transform:uppercase;font-weight:700;color:var(--accent,#00B8A0);margin-bottom:0.4rem;">Deep research</div>
+            <div style="font-size:1.02rem;font-weight:600;color:var(--text);margin-bottom:0.25rem;">Every call above traces to the evidence base.</div>
+            <div style="font-size:0.9rem;color:var(--text-muted);line-height:1.5;">${docs.length} cited research document${docs.length === 1 ? '' : 's'} &mdash; market, competitors, demand and unit economics, web-researched. Drill into the findings behind the score, the cards and the verdict.</div>
+          </div>
+          <span class="btn btn-primary" style="flex:none;">View deep research &darr;</span>
+        </a>
+      </div>`;
+    }
+
     function assessMainHTML() {
       return `
         <div style="margin-bottom:1rem;"><a href="dashboard.html" class="text-small dim" style="font-size:0.85rem;">&larr; All engagements</a></div>
@@ -621,9 +640,10 @@
         ${investabilitySectionHTML(invSnapshot, p)}
         <div id="dealval-region">${dealValuationHTML(p)}</div>
         <div id="exit-region">${exitReturnsHTML(p)}</div>
+        ${deepResearchCTAHTML(hubDocs)}
         <div id="cards-region">${findingsSectionHTML(provCards)}</div>
         <div id="diligence-region">${diligenceChecklistHTML(p)}</div>
-        ${renderDataRoom(hubDocs)}
+        <div id="deep-research">${renderDataRoom(hubDocs, { title: 'Deep research', sub: 'The web-researched, cited evidence base behind this assessment — drill into any document.' })}</div>
         ${W.mode === 'live' ? dangerZoneHTML(p) : ''}
       `;
     }

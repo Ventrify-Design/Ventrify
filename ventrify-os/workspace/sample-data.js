@@ -228,6 +228,92 @@ const SAMPLE_PROGRAMS = [
       blog: { status: 'pending' }
     },
     mvpDemoModeReady: false
+  },
+  {
+    id: 'prg-07',
+    name: 'Verdana Bio',
+    engagementType: 'assessment',
+    founderName: 'Verdana Bio (external)',
+    founderAvatar: 'VB',
+    founderAvatarColor: '#00B8A0',
+    industry: 'Climate biotech',
+    venturePitch: 'Engineered soil microbes that cut synthetic-fertiliser use by 40%',
+    website: 'https://verdana.bio',
+    stage: 'Seed',
+    phase: 0,
+    gateStatus: 'Assessment complete',
+    daysActive: 3,
+    lastActivity: '1 hour ago',
+    lastActivityDetail: 'Assessment run complete · deep research published',
+    assignedOperator: 'op-01',
+    health: 'on-track',
+    cards: { drafted: 5, awaitingFounder: 0, resolved: 5, awaitingL3Rebuild: 0 },
+    assessment: {
+      recommendation: 'Diligence further',
+      conviction: 'Medium',
+      thesis: 'A biological input that meaningfully cuts fertiliser cost and emissions, riding the regenerative-ag tailwind — if field efficacy holds outside the greenhouse.',
+      biggestRisk: 'Greenhouse results rarely survive contact with real fields — variable soils, weather and application could collapse the 40% claim to single digits.',
+      theAsk: '$3M on $12M pre (Seed)',
+      mustBeTrue: ['Field trials replicate the 40% reduction across 3+ soil types', 'A repeatable distribution channel into row-crop farmers exists', 'Unit economics survive real agricultural CAC'],
+      bull: ['Real cost + emissions saving on a non-discretionary input', 'Regulatory + buyer tailwind (regenerative ag, carbon)', 'Defensible strain IP'],
+      bear: ['Greenhouse-to-field efficacy gap', 'Long, seasonal sales cycles', 'Commodity price sensitivity'],
+      valuation: { verdict: 'Fair', note: '$12M pre for pre-field-data biologicals is in range — fair if efficacy holds, rich if it does not.', comps: [{ name: 'Pivot Bio', stage: 'Category reference', detail: 'sets the efficacy + distribution bar' }] },
+      exit: { acquirers: ['Corteva', 'Bayer', 'Nutrien'], path: 'Strategic acquisition by an ag-input major once field efficacy + a channel are proven.', returns: 'Credible strategic multiple if the science holds; binary on field data.' },
+      diligence: [{ item: 'Commission independent multi-site field trials', priority: 'high' }, { item: 'Quantify the advantage vs Pivot Bio with data', priority: 'high' }, { item: 'Secure a distribution LOI with an ag-input retailer', priority: 'medium' }]
+    },
+    investabilitySnapshot: {
+      composite: 23, maxPossible: 35, pct: 66, band: 'feedback', bandLabel: 'Promising — gaps to close', ratedCount: 35,
+      categories: [
+        { label: 'Market', sum: 4.5, max: 5, band: 'green' },
+        { label: 'Team', sum: 3, max: 5, band: 'yellow' },
+        { label: 'Product', sum: 3.5, max: 5, band: 'yellow' },
+        { label: 'Technical', sum: 3.5, max: 5, band: 'yellow' },
+        { label: 'Financial', sum: 3, max: 5, band: 'yellow' },
+        { label: 'Execution', sum: 2.5, max: 5, band: 'yellow' },
+        { label: 'Evidence', sum: 3, max: 5, band: 'yellow' }
+      ]
+    },
+    investabilitySuggestions: { items: [
+      { category: 'Evidence', suggestion: 'Run independent multi-site field trials — greenhouse data alone will not clear diligence.' },
+      { category: 'Execution', suggestion: 'Sign a distribution LOI with an ag-input retailer to evidence the channel.' }
+    ] },
+    hubDocs: [
+      { hub: 'research', name: 'market-analysis', title: 'Market analysis', order: 0, level: 'L3', body: `## Market analysis
+
+Global fertiliser is a ~$190B market; nitrogen alone is ~$70B and is both a major farm cost and ~2% of global emissions. Biological inputs are the fastest-growing segment (~20% CAGR), pulled by input-cost inflation and regenerative-ag buyer programs.
+
+**Strong:** the saving attaches to a non-discretionary input, so adoption is a cost decision, not a values decision. **Weak:** biologicals carry a credibility problem after a decade of underperforming products — the bar for field evidence is high.
+
+## Sources & References
+- IFA fertiliser market outlook 2025
+- AgFunder AgriFoodTech investment report 2025
+- FAO nitrogen-use efficiency briefs` },
+      { hub: 'research', name: 'competitor-analysis', title: 'Competitor landscape', order: 1, level: 'L3', body: `## Competitor landscape
+
+The lane includes Pivot Bio (nitrogen-fixing microbes, well funded), Sound Agriculture, and incumbents (Bayer/Ginkgo, Corteva biologicals). Pivot is the reference comp — it validates the category and sets the efficacy + distribution bar.
+
+Defensibility rests on strain IP and field-trial data moats, not on being first. Verdana must **quantify** its advantage versus Pivot, not assert a different mechanism.
+
+## Sources & References
+- Pivot Bio funding + product disclosures
+- Corteva / Bayer biologicals announcements
+- USDA biological-inputs trial data` },
+      { hub: 'research', name: 'unit-economics', title: 'Unit economics', order: 2, level: 'L3', body: `## Unit economics
+
+At a ~$12/acre price against a claimed ~$30/acre fertiliser saving, the value share is attractive and gross margin on a biological is high (>70% at scale). The risk is **CAC**: agricultural sales cycles are long and seasonal, and the channel (retailer vs direct) is unproven — the model assumes a channel that does not yet exist.
+
+## Sources & References
+- Founder financial model
+- Comparable biological-input pricing benchmarks` },
+      { hub: 'assessment', name: 'deal-memo', title: 'Deal memo', order: -1, level: 'L3', body: `## Deal memo — Verdana Bio
+
+**Recommendation: Diligence further.** A genuine cost-and-emissions saving on a huge input market, with a credible category comp (Pivot Bio). The thesis gates on one thing: field efficacy. Greenhouse-to-field is where biologicals die.
+
+**Three things that must be true:** (1) the 40% reduction replicates across multiple soils and seasons in independent trials; (2) a repeatable distribution channel exists; (3) unit economics survive real CAC.
+
+**Anti-thesis:** if field efficacy halves and the sales cycle runs two seasons, this is a capital-intensive science project, not a venture-scale return.` }
+    ],
+    mvpDemoModeReady: false
   }
 ];
 
