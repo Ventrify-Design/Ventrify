@@ -111,7 +111,52 @@
       throw new Error('halt-render');
     }
 
+    // Investor-assessment engagements are a DECISION, not a build-in-progress —
+    // so the card surfaces the recommendation, the score, and the thesis, not
+    // gates/phases/founder-card-resolution (none of which apply).
+    function assessmentCardHTML(p) {
+      const a = p.assessment || {};
+      const inv = p.investability;
+      const rec = a.recommendation || (inv ? 'Assessment complete' : 'Assessing…');
+      const r = String(rec).toLowerCase();
+      const recColor = r.startsWith('invest') ? 'var(--success,#00A368)'
+                     : (r.startsWith('pass') || r.includes('decline')) ? 'var(--danger,#C42233)'
+                     : 'var(--warning,#C77700)';
+      const invColor = inv ? (inv.band === 'approved' ? 'var(--success,#00A368)' : inv.band === 'feedback' ? 'var(--warning,#C77700)' : 'var(--danger,#C42233)') : null;
+      const bandWord = inv ? (inv.band === 'approved' ? 'Strong' : inv.band === 'feedback' ? 'Promising' : 'Early') : '';
+      const sub = [p.industry || 'Venture', p.stage].filter(Boolean).join(' · ');
+      const meta = [];
+      if (a.theAsk) meta.push(`Ask ${a.theAsk}`);
+      meta.push(`Assessed ${p.lastActivity || 'recently'}`);
+      return `
+        <a href="program.html?id=${p.id}" class="program-card assessment-card">
+          <div class="program-card-head">
+            <div class="program-card-identity">
+              <div class="avatar avatar-lg" style="background:${p.founderAvatarColor || 'var(--accent,#00B8A0)'};">${p.founderAvatar || (p.name || 'V').slice(0, 2).toUpperCase()}</div>
+              <div>
+                <div class="program-card-name">${p.name}</div>
+                <div class="program-card-founder">${sub}</div>
+              </div>
+            </div>
+            <span class="pill" style="background:rgba(var(--accent-rgb,0,184,160),0.12);color:var(--accent,#00B8A0);font-weight:600;"><span class="dot" style="background:var(--accent,#00B8A0);"></span> Assessment</span>
+          </div>
+
+          <div class="assess-verdict-row">
+            <span class="assess-rec" style="background:${recColor};">${rec}</span>
+            ${inv ? `<span class="assess-score" style="color:${invColor};">${inv.pct}%<span class="assess-score-band"> · ${a.conviction ? a.conviction + ' conviction' : bandWord}</span></span>` : ''}
+          </div>
+
+          ${a.thesis ? `<div class="assess-thesis">${a.thesis}</div>` : ''}
+
+          <div class="program-card-meta">
+            ${meta.map(m => `<span>${m}</span>`).join('<span class="sep"></span>')}
+          </div>
+        </a>
+      `;
+    }
+
     function programCardHTML(p) {
+      if (p.engagementType === 'assessment') return assessmentCardHTML(p);
       // Defensive defaults for the pre-brief state — null industry/pitch
       // appear when the operator has launched the engagement but the founder
       // hasn't submitted the brief yet.
