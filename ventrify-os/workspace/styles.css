@@ -4,44 +4,17 @@
    ============================================ */
 
 :root {
-  --primary: #0036FF;
-  --primary-light: #3366FF;
-  --primary-rgb: 0,54,255;
-
-  --bg: #FAFAFB;
-  --surface: #FFFFFF;
-  --surface-alt: #F5F5F7;
-  --surface-muted: #F0F2F7;
-
-  --text: #141414;
-  --text-muted: #656565;
-  --text-subtle: #9AA0AE;
-
-  --border: rgba(0,0,0,0.06);
-  --border-strong: rgba(0,0,0,0.1);
-
-  --success: #00B872;
-  --warning: #E6A91A;
-  --danger: #E0394A;
-
-  --font-heading: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
-
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-card: 20px;
-  --radius-pill: 980px;
-
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
-  --shadow-md: 0 4px 16px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
-  --shadow-lg: 0 10px 32px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
-
-  --transition: 0.25s cubic-bezier(0.6, 0.6, 0, 1);
-
-  --sidebar-w: 248px;
-  --topbar-h: 160px;
+  /* Foundation tokens (colour, type, spacing, radii, motion, --sidebar-w,
+     --topbar-h: 64px) now live in shared/ds.css, imported BEFORE this file.
+     This block keeps only shell-composition tokens — they reference DS tokens,
+     they invent no new colour. */
+  --chrome-surface: var(--surface);              /* topbar + sidebar share this */
+  --chrome-border:  var(--border-strong);        /* the ONE continuous chrome edge */
+  --chrome-elevation: 0 1px 0 rgba(0,0,0,0.02);  /* topbar hairline lift, no heavy drop */
+  --content-inset-shadow:                        /* the soft recess the chrome casts onto the page */
+    inset 1px 0 0 rgba(0,0,0,0.04),
+    inset 0 1px 0 rgba(0,0,0,0.03),
+    inset 6px 6px 14px -10px rgba(0,0,0,0.10);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -74,20 +47,29 @@ code { font-family: var(--font-mono); }
     "topbar topbar"
     "sidebar main";
   min-height: 100vh;
+  background: var(--chrome-surface);   /* chrome plane is the base; content paints gray on top */
 }
 
-/* Top bar */
+/* Top bar — exactly --topbar-h tall (kills the dead band), shares the chrome
+   surface + one continuous border with the sidebar (the connected L). */
 .topbar {
   grid-area: topbar;
+  height: var(--topbar-h);
   display: flex;
   align-items: center;
-  padding: 0 1.75rem;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
+  gap: var(--space-3);
+  padding: 0 var(--space-5);
+  background: var(--chrome-surface);
+  border-bottom: 1px solid var(--chrome-border);
   position: sticky;
   top: 0;
   z-index: 50;
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02), 0 4px 16px rgba(0, 0, 0, 0.02);
+  box-shadow: var(--chrome-elevation);
+}
+/* Shell entrance — the frame steadies once on first load (not on route change). */
+@media (prefers-reduced-motion: no-preference) {
+  .topbar  { animation: ds-shell-settle var(--dur-base) var(--ease-out) both; }
+  .sidebar { animation: ds-shell-settle var(--dur-base) var(--ease-out) both; }
 }
 /* Partnership lockup — Ventrify OS + operating organisation, side by side.
    Reads as "Ventrify OS · in partnership with · {Org}". Each half has equal
@@ -202,12 +184,16 @@ a.topbar-lockup-item:hover { background: var(--surface-alt); }
    No padding-top, no margin-top on the first section, no gap. */
 .sidebar {
   grid-area: sidebar;
-  background: var(--surface);
-  border-right: 1px solid var(--border);
-  padding: 0 1rem 1.5rem;
+  background: var(--chrome-surface);
+  border-right: 1px solid var(--chrome-border);
+  padding: var(--space-3) var(--space-3) var(--space-5);
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 2px;
+  position: sticky;                       /* pinned below the topbar; bound to one token */
+  top: var(--topbar-h);
+  height: calc(100vh - var(--topbar-h));
+  overflow-y: auto;
 }
 .sidebar-section {
   font-family: var(--font-mono);
@@ -219,7 +205,7 @@ a.topbar-lockup-item:hover { background: var(--surface-alt); }
   padding: 0.55rem 1rem 0.4rem;
   margin-top: 0.75rem;
 }
-.sidebar-section:first-of-type { margin-top: 0; padding-top: 1.25rem; }
+.sidebar-section:first-of-type { margin-top: 0; padding-top: var(--space-1); }
 .sidebar-link {
   display: flex;
   align-items: center;
@@ -241,18 +227,24 @@ a.topbar-lockup-item:hover { background: var(--surface-alt); }
   color: var(--primary);
   font-weight: 600;
 }
-.sidebar-link.active::before {
+/* Active rail — every link owns its ::before so the indicator springs in on
+   activation (scaleY 0 -> 1) and collapses on the one you leave. */
+.sidebar-link::before {
   content: '';
   position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
+  left: calc(-1 * var(--space-3));
+  top: 8px;
+  bottom: 8px;
   width: 3px;
-  height: 18px;
-  background: var(--primary);
   border-radius: 0 2px 2px 0;
-  margin-left: -1rem;
+  background: var(--primary);
+  transform: scaleY(0);
+  transform-origin: center;
+  opacity: 0;
+  transition: transform var(--dur-base) var(--ease),
+              opacity var(--dur-fast) var(--ease-out);
 }
+.sidebar-link.active::before { transform: scaleY(1); opacity: 1; }
 .sidebar-link-icon {
   width: 20px;
   height: 20px;
@@ -281,13 +273,49 @@ a.topbar-lockup-item:hover { background: var(--surface-alt); }
   color: #fff;
 }
 
-/* Main content area */
+/* Main content area — sits on --bg gray, inset inside the chrome. The inset
+   shadow makes the chrome's right + bottom edges read as a recess holding the
+   page (the single most important "framed console" cue). */
 .main {
   grid-area: main;
-  padding: 2.5rem 3rem 4rem;
+  background: var(--bg);
+  box-shadow: var(--content-inset-shadow);
+  padding: var(--space-7) var(--space-8) var(--space-9);
   overflow-y: auto;
 }
-.main-inner { max-width: 1320px; margin: 0 auto; }
+.main-inner { max-width: var(--content-max); margin: 0 auto; }
+
+/* Shell — mobile: the sidebar becomes a horizontal nav strip under the topbar.
+   (The full off-canvas drawer + hamburger arrives with the shell.js extraction
+   in slice 2; this keeps nav reachable, CSS-only, with no markup change.) */
+@media (max-width: 900px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+    grid-template-rows: var(--topbar-h) auto 1fr;
+    grid-template-areas: "topbar" "sidebar" "main";
+  }
+  .sidebar {
+    position: static; height: auto; overflow-x: auto; overflow-y: hidden;
+    flex-direction: row; align-items: center; gap: var(--space-1);
+    border-right: none; border-bottom: 1px solid var(--chrome-border);
+    padding: var(--space-2) var(--space-3);
+  }
+  .sidebar-section { display: none; }
+  .sidebar-link { white-space: nowrap; min-height: 40px; }
+  .sidebar-link::before { display: none; }
+  .sidebar-link .badge { margin-left: var(--space-2); }
+  .main { box-shadow: none; padding: var(--space-5) var(--space-4) var(--space-7); }
+}
+@media (max-width: 640px) {
+  .topbar { padding: 0 var(--space-4); gap: var(--space-2); }
+  .topbar-lockup-name { display: none; }       /* keep the org avatar, drop the name to fit */
+  .topbar-lockup-divider { display: none; }
+  .main { padding: var(--space-5) var(--space-4) var(--space-6); }
+}
+
+/* Nav icon nudges 1px on hover — signals interactivity without moving the row. */
+.sidebar-link-icon { transition: transform var(--dur-base) var(--ease-out); }
+.sidebar-link:hover .sidebar-link-icon { transform: translateX(1px); }
 
 /* Page header */
 .page-header {

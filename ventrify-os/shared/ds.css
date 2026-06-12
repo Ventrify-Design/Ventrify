@@ -1,0 +1,206 @@
+/* ============================================================
+   VENTRIFY DESIGN SYSTEM v1 — shared/ds.css
+   Single source of truth for the Ventrify OS ecosystem
+   (Operator Workspace + founder Studio). Import FIRST, before
+   each surface's own stylesheet.
+
+   This file owns: the token :root, the global motion guard +
+   keyframes, the global focus-visible ring, and the shared
+   primitives. Surfaces keep only shell-/layout-specific CSS.
+   ============================================================ */
+
+:root {
+  /* --- Brand (OS blue — distinct from the agency purple) ----- */
+  --primary: #0036FF;
+  --primary-light: #3366FF;
+  --primary-deep: #002BD6;        /* pressed / text-on-light where blue must clear AA */
+  --primary-rgb: 0,54,255;        /* ALWAYS define alongside --primary (rgba tints) */
+
+  --accent: #00B8A0;              /* teal — eyebrows, highlights, on-track */
+  --accent-rgb: 0,184,160;
+
+  /* --- Neutrals --------------------------------------------- */
+  --bg: #FAFAFB;
+  --surface: #FFFFFF;
+  --surface-alt: #F5F5F7;
+  --surface-muted: #F0F2F7;
+
+  --text: #141414;               /* ~14:1 on surface */
+  --text-muted: #656565;         /* ~5.7:1 — passes AA */
+  --text-subtle: #6B7280;        /* ~4.9:1 — AA-safe (was #9AA0AE ~2.5:1, FAILED) */
+
+  --border: rgba(0,0,0,0.06);
+  --border-strong: rgba(0,0,0,0.10);
+
+  /* --- Semantic (AA-tuned for small text on white) ---------- */
+  --success: #00A368;  --success-rgb: 0,163,104;   /* was #00B872 */
+  --warning: #C77700;  --warning-rgb: 199,119,0;   /* was #E6A91A */
+  --danger:  #C42233;  --danger-rgb: 196,34,51;    /* was #E0394A — one danger, clears 4.5:1 */
+
+  /* Investability bands (was ~42 raw literals) */
+  --band-strong: var(--success);
+  --band-mid:    var(--warning);
+  --band-weak:   var(--danger);
+
+  /* --- Typography ------------------------------------------- */
+  --font-heading: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body:    'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, monospace;
+
+  --t-display: 600 2.4rem/1.1 var(--font-heading);
+  --t-h1:      600 2rem/1.15 var(--font-heading);
+  --t-h2:      600 1.5rem/1.2 var(--font-heading);
+  --t-h3:      600 1.2rem/1.25 var(--font-heading);
+  --t-h4:      600 1rem/1.35 var(--font-heading);
+  --t-body:    400 0.95rem/1.6 var(--font-body);
+  --t-body-sm: 400 0.86rem/1.55 var(--font-body);
+  --t-caption: 500 0.78rem/1.5 var(--font-body);
+  --t-eyebrow: 500 0.72rem/1.4 var(--font-mono);
+  --tracking-tight: -0.02em;
+  --tracking-eyebrow: 0.08em;
+
+  /* --- Spacing — 8px grid ----------------------------------- */
+  --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
+  --space-5: 24px; --space-6: 32px; --space-7: 40px; --space-8: 48px; --space-9: 64px;
+
+  /* --- Radii ------------------------------------------------ */
+  --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px;
+  --radius-card: 20px; --radius-pill: 980px;
+
+  /* --- Elevation -------------------------------------------- */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+  --shadow-lg: 0 10px 32px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
+  --shadow-pop: 0 16px 56px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+  --shadow-brand: 0 6px 20px rgba(var(--primary-rgb),0.18);
+
+  /* --- Motion ----------------------------------------------- */
+  --ease: cubic-bezier(0.34, 1.56, 0.64, 1);   /* SPRING — arrivals, selection */
+  --ease-out: cubic-bezier(0.6, 0.6, 0, 1);    /* STANDARD — hover, fades, fills, exits */
+  --dur-fast: 0.15s; --dur-base: 0.25s; --dur-slow: 0.6s;
+  --transition: var(--dur-base) var(--ease-out);   /* legacy alias */
+
+  /* --- Layout ----------------------------------------------- */
+  --sidebar-w: 248px;
+  --topbar-h: 64px;              /* was 160px — the dead-band bug */
+  --content-max: 1320px;
+}
+
+/* ============================================================
+   GLOBAL MOTION GUARD
+   Entrance start-states live INSIDE no-preference so reduced-
+   motion users (or any JS/CSS failure) never see hidden content.
+   ============================================================ */
+@media (prefers-reduced-motion: no-preference) {
+  [data-anim] { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  [data-anim] { opacity: 1 !important; transform: none !important; }
+}
+
+/* Entrance — staggered fade-up (cap the stagger at 6 items / 300ms). */
+@media (prefers-reduced-motion: no-preference) {
+  [data-anim] {
+    animation: ds-entry-fade-up var(--dur-base) var(--ease) both;
+    animation-delay: calc(min(var(--i, 0), 5) * 60ms);
+  }
+}
+@keyframes ds-entry-fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes ds-shell-settle {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes ds-shimmer { 100% { transform: translateX(100%); } }
+@keyframes ds-run-pulse {
+  0%   { box-shadow: 0 0 0 0   rgba(var(--primary-rgb), 0.35); }
+  70%  { box-shadow: 0 0 0 8px rgba(var(--primary-rgb), 0); }
+  100% { box-shadow: 0 0 0 0   rgba(var(--primary-rgb), 0); }
+}
+@keyframes ds-run-breathe { 0%,100% { opacity: 0.65; } 50% { opacity: 1; } }
+
+/* ============================================================
+   GLOBAL FOCUS RING — closes WCAG 2.4.7 on every surface at once
+   ============================================================ */
+:where(a, button, [role="button"], [role="radio"], [role="checkbox"],
+       .card-interactive, .list-row-interactive, input, select, textarea):focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: inherit;
+}
+
+/* ============================================================
+   SHARED PRIMITIVES (new / additive — existing .card/.btn/.pill
+   stay in each surface's CSS until the slice-2 unification)
+   ============================================================ */
+
+/* Destructive button — the single danger token */
+.btn-danger {
+  background: transparent; color: var(--danger);
+  border: 1px solid rgba(var(--danger-rgb), 0.30);
+}
+.btn-danger:hover {
+  background: rgba(var(--danger-rgb), 0.08);
+  border-color: rgba(var(--danger-rgb), 0.50);
+}
+
+/* Accent pill (teal) */
+.pill-accent {
+  background: rgba(var(--accent-rgb), 0.08); color: var(--accent);
+  border: 1px solid rgba(var(--accent-rgb), 0.15);
+}
+
+/* Interactive card — hover lift settles on the spring */
+.card-interactive {
+  cursor: pointer;
+  transition: transform var(--dur-base) var(--ease),
+              box-shadow var(--dur-base) var(--ease-out),
+              border-color var(--dur-base) var(--ease-out);
+}
+.card-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: rgba(var(--primary-rgb), 0.20);
+}
+.card-interactive:active { transform: translateY(0); transition-duration: var(--dur-fast); }
+
+/* Loading skeleton — shimmer matches a known layout (never a spinner) */
+.skeleton { position: relative; overflow: hidden;
+  background: var(--surface-alt); border-radius: var(--radius-sm); }
+.skeleton::after { content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+  transform: translateX(-100%); animation: ds-shimmer 1.4s infinite; }
+.skeleton-line { height: 12px; margin-bottom: var(--space-2); }
+.skeleton-card { height: 160px; border-radius: var(--radius-card); }
+@media (prefers-reduced-motion: reduce) { .skeleton::after { animation: none; } }
+
+/* Error state — visually distinct from empty; carries a Retry */
+.error-state { text-align: center; border: 1px solid rgba(var(--danger-rgb), 0.20);
+  background: rgba(var(--danger-rgb), 0.03); border-radius: var(--radius-card);
+  padding: var(--space-7) var(--space-5); display: flex; flex-direction: column;
+  align-items: center; gap: var(--space-3); }
+
+/* Modal / dialog — replaces native alert/confirm/prompt */
+.modal-scrim { position: fixed; inset: 0; z-index: 1000;
+  background: rgba(15,15,18,0.45); display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity var(--dur-base) var(--ease-out); }
+.modal-scrim.open { opacity: 1; }
+.modal-card { background: var(--surface); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-pop); padding: var(--space-6); max-width: 480px; width: 100%;
+  opacity: 0; transform: translateY(8px) scale(0.98);
+  transition: opacity var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease); }
+.modal-scrim.open .modal-card { opacity: 1; transform: translateY(0) scale(1); }
+
+/* Toast */
+.toast { opacity: 0; transform: translateY(12px);
+  transition: opacity var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease); }
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.hide { opacity: 0; transform: translateY(4px); transition-timing-function: var(--ease-out); }
