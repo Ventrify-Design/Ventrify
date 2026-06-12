@@ -71,9 +71,10 @@
     };
 
     let orgs = [];
+    let loadError = false;
     if (isSuper) {
       try { orgs = (await adminCall({ action: 'list-orgs' })).orgs || []; }
-      catch (e) { orgs = []; }
+      catch (e) { loadError = true; }   // a failed fetch must NOT read as "no orgs"
     } else {
       orgs = [W.org];
     }
@@ -131,7 +132,9 @@
       ${createOrgHTML}
       <div class="section">
         <div class="section-head"><div><div class="section-title">${isSuper ? 'All organisations' : esc(W.org.name)}</div></div></div>
-        ${orgs.length ? orgs.map(orgCardHTML).join('') : '<div class="card" style="text-align:center;padding:2rem;color:var(--text-muted);">No organisations yet.</div>'}
+        ${loadError
+          ? `<div class="error-state"><div style="font-weight:600;color:var(--text);">Couldn&rsquo;t load organisations</div><div style="font-size:0.9rem;color:var(--text-muted);max-width:42ch;">The request failed &mdash; this isn&rsquo;t an empty list. Check your connection and retry.</div><button class="btn btn-outline btn-sm" onclick="window.location.reload()">Retry</button></div>`
+          : orgs.length ? orgs.map(orgCardHTML).join('') : '<div class="card" style="text-align:center;padding:2rem;color:var(--text-muted);">No organisations yet.</div>'}
       </div>
     `;
     window.renderShell(main);
