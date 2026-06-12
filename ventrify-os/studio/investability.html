@@ -280,8 +280,10 @@
   <div id="root"></div>
   <script type="module" src="/studio/app.js"></script>
   <script type="module">
+    import { bandColor, renderStrengthenSuggestions, ensureInvestabilityStyles } from '/shared/investability-view.js';
     await window.STUDIO_READY;
     const { engagement, helpers } = window.STUDIO;
+    ensureInvestabilityStyles();
     if (!engagement) {
       window.renderShell(`
         <div class="page-header">
@@ -564,8 +566,8 @@
     const latest = snapshots.length ? snapshots[snapshots.length - 1] : null;
 
     const prettySlug = (s) => String(s || '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-    const bandColor = (b) => b === 'green' ? '#00897b' : b === 'yellow' ? '#C77700' : '#C0392B';
-    const compColor = (b) => b === 'approved' ? '#00897b' : b === 'feedback' ? '#C77700' : '#C0392B';
+    // bandColor now comes from shared/investability-view.js (one band->token map,
+    // handling both the category bands and the composite bands).
 
     function vssTrajectory(snaps) {
       if (!snaps.length) return '';
@@ -593,7 +595,7 @@
     }
 
     function renderScorecardVSS() {
-      const cc = compColor(latest.band);
+      const cc = bandColor(latest.band);
       const headline = latest.band === 'approved' ? 'Strong — investor-ready.'
                      : latest.band === 'feedback' ? 'Promising — named gaps to close.'
                      : 'Early — material gaps to work through.';
@@ -654,15 +656,8 @@
           }).join('')}
         </div>`;
 
-      const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
       const sg = (engagement.investabilitySuggestions && engagement.investabilitySuggestions.items) || [];
-      const suggestionsHTML = sg.length ? `
-        <div style="margin-top:1.5rem;background:var(--surface,#fff);border-radius:16px;padding:1.4rem 1.6rem;border:1px solid rgba(0,0,0,0.06);">
-          <div class="inv-header-eyebrow" style="color:var(--accent,#00B8A0);">How to strengthen this venture</div>
-          <div style="display:flex;flex-direction:column;gap:0.7rem;margin-top:0.8rem;">
-            ${sg.map(it => `<div style="display:flex;gap:0.6rem;align-items:flex-start;"><span style="color:var(--accent,#00B8A0);font-weight:700;flex:none;">&rarr;</span><div style="font-size:0.92rem;line-height:1.55;">${it.category ? `<strong>${esc(it.category)}:</strong> ` : ''}${esc(it.suggestion)}</div></div>`).join('')}
-          </div>
-        </div>` : '';
+      const suggestionsHTML = sg.length ? `<div style="margin-top:1.5rem;background:var(--surface,#fff);border-radius:16px;padding:1.4rem 1.6rem;border:1px solid rgba(0,0,0,0.06);">${renderStrengthenSuggestions(sg)}</div>` : '';
       return headerHTML + dimsHTML + suggestionsHTML + `<div style="margin-top:0.5rem;"><a href="/studio/dashboard.html?id=${engagement.id}" class="btn btn-outline btn-sm">&larr; Back to dashboard</a></div>`;
     }
 
