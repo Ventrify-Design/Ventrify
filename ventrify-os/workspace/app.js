@@ -282,15 +282,8 @@ function renderSidebar() {
 
 function renderDevToggle() {
   const W = window.WORKSPACE;
-  if (W.mode === 'live') {
-    // Live: no demo data; offer a quick session reset instead.
-    const who = (W.helpers.currentOperator() || {}).email || 'signed in';
-    return `
-      <div class="dev-toggle" role="region" aria-label="Session">
-        <span class="dev-toggle-label">Live · ${who}</span>
-        <button class="dev-toggle-reset" onclick="window.__signOut()" title="Sign out of this session">Sign out</button>
-      </div>`;
-  }
+  // Production (live): no floating dev chrome — identity + sign-out live in the topbar.
+  if (W.mode === 'live') return '';
   const isOn = W.demoMode === 'on';
   const sampleAvailable = !!window.WORKSPACE_SAMPLE;
   return `

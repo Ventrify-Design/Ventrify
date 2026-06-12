@@ -329,45 +329,15 @@
             <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
           </div>
           <h1 class="success-title">Engagement launched. Studio invite is on its way.</h1>
-          <p class="success-sub"><strong>${state.basics.name}</strong> is now in <strong>Phase 0 · Awaiting brief</strong>. The Studio invite has been sent to ${state.basics.founderEmail || 'the founder'}; once they fill in the brief, Phase 0 kicks off automatically. Below is the one-time local setup &mdash; copy and run this on the operator&rsquo;s machine to scaffold the engagement repo.</p>
-
-          <div class="launch-cmd-card">
-            <div class="launch-cmd-head">
-              <span class="launch-cmd-eyebrow">Local setup &middot; one command</span>
-              <button class="launch-cmd-copy" onclick="window.__copyLaunchCmd(this)">Copy</button>
-            </div>
-            <pre class="launch-cmd" id="launch-cmd"># 1. Clone the template
-cp -R ~/Desktop/ventrify-engagement-template ~/Desktop/${slug}-engagement
-cd ~/Desktop/${slug}-engagement
-
-# 2. Bind this clone to its engagement + pull live state from the Studio.
-#    --engagement-id writes engagement.json so EVERY cloud sync is scoped to
-#    this engagement only. Brief, industry + vision sync down automatically.
-node tools/init.js \\
-  --engagement-id "${programId}" \\
-  --org "${orgName}" --org-slug "${orgSlug}" \\
-  --venture "${state.basics.name}" --venture-slug "${slug}" \\
-  --founder "${state.basics.founderName}" --founder-email "${state.basics.founderEmail}" \\
-  --tier "${(org && org.tier) || 'Cohort'}" --awaiting-brief
-npm install
-npm run cloud:pull          # live identity now; re-run when the founder submits the brief
-
-# 3. Push to your GitHub org (the service-account key stays local, never pushed)
-git init && git add -A && git commit -m "${slug} engagement scaffolded from Ventrify template"
-gh repo create ${orgSlug}/${slug}-engagement --private --source=. --remote=origin --push
-
-# 4. Open in Claude Code → research agents fire off the pulled brief
-claude code .</pre>
-          </div>
+          <p class="success-sub"><strong>${state.basics.name}</strong> is now in <strong>Phase 0 · Awaiting brief</strong>. The Studio invite has been sent to ${state.basics.founderEmail || 'the founder'} &mdash; once they fill in the brief, Phase 0 kicks off automatically.</p>
 
           <div class="launch-next">
             <h4>What happens next</h4>
             <ul>
-              <li><strong>Founder receives Studio invite</strong> — magic link emailed to ${state.basics.founderEmail || 'the founder'} within sixty seconds.</li>
-              <li><strong>Founder fills in the brief in the Studio</strong> — pitch, problem, target user, features, vision. Optional PDF upload pre-fills and seeds an initial Investability score.</li>
-              <li><strong>Brief content syncs back to the engagement repo</strong> — once submitted, <code>tools/brief-sync.js</code> fills in <code>brief.md</code> and <code>engagement.json</code> on the operator&rsquo;s local repo.</li>
-              <li><strong>workflow-orchestrator opens Phase 0</strong> — <code>founder-lexicon-keeper</code> + <code>brand-designer</code> kick off; first Research Hub Provocation Cards drop ahead of Phase 1.</li>
-              <li><strong>You&rsquo;ll see ${state.basics.name || 'this venture'} in your Today queue</strong> — by tomorrow morning, with the next action surfaced for you.</li>
+              <li><strong>Founder receives a Studio invite</strong> &mdash; a magic link is emailed to ${state.basics.founderEmail || 'the founder'} within a minute.</li>
+              <li><strong>Founder fills in the brief in the Studio</strong> &mdash; pitch, problem, target user, features, vision. An optional document upload pre-fills the brief and seeds an initial Investability score.</li>
+              <li><strong>Research begins automatically</strong> &mdash; once the brief lands, the research agents run in the cloud and the first Research Hub cards drop ahead of Phase 1.</li>
+              <li><strong>You&rsquo;ll see ${state.basics.name || 'this venture'} in your action queue</strong> &mdash; with the next action surfaced for you.</li>
             </ul>
           </div>
 
