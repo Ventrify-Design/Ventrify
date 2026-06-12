@@ -30,9 +30,11 @@
   <script type="module">
     import { renderCardBody, ensureCardStyles } from '../shared/card-format.js';
     import { renderDataRoom, hydrateDataRoom, ensureHubStyles } from '../shared/hub-view.js';
+    import { renderVSSScorecard, renderStrengthenSuggestions, ensureInvestabilityStyles } from '../shared/investability-view.js';
     await window.WORKSPACE_READY;
     ensureCardStyles();
     ensureHubStyles();
+    ensureInvestabilityStyles();
     const W = window.WORKSPACE;
     const A = window.WORKSPACE_AGENTS;
     const { helpers, labels, programs: allPrograms } = W;
@@ -78,6 +80,8 @@
     if (W.mode === 'live') {
       try { const data = await import('../firebase/data.js'); const snaps = await data.listInvestabilitySnapshots(p.id); invSnapshot = snaps.length ? snaps[snaps.length - 1] : null; }
       catch (e) { console.warn('investability load failed', e); }
+    } else if (p.investabilitySnapshot) {
+      invSnapshot = p.investabilitySnapshot;   // demo/sample fixture
     }
     // Data-room L3 hub content (deep research / strategy / financials).
     let hubDocs = [];
@@ -427,32 +431,11 @@
           : 'No score yet. It computes automatically when the research run completes.';
         return `<div class="section">${head}<div class="card" style="text-align:center;padding:1.75rem;color:var(--text-muted);">${emptyCopy}</div></div>`;
       }
-      const cc = snap.band === 'approved' ? '#00897b' : snap.band === 'feedback' ? '#C77700' : '#C0392B';
-      const cats = (snap.categories || []).map(c => {
-        const col = c.band === 'green' ? '#00897b' : c.band === 'yellow' ? '#C77700' : '#C0392B';
-        const max = c.max || 5;
-        return `<div class="inv-op-cat">
-            <div class="inv-op-cat-head"><span>${escBrief(c.label)}</span><span class="text-mono dim">${c.sum}/${max}</span></div>
-            <div class="inv-op-bar"><div style="width:${(c.sum / max) * 100}%;background:${col};height:100%;border-radius:3px;"></div></div>
-          </div>`;
-      }).join('');
       const sg = (p.investabilitySuggestions && p.investabilitySuggestions.items) || [];
-      const suggList = sg.length ? `
-          <div style="margin-top:1rem;border-top:1px solid rgba(0,0,0,0.07);padding-top:0.9rem;">
-            <div class="text-mono" style="font-size:0.62rem;letter-spacing:0.07em;text-transform:uppercase;font-weight:700;color:var(--accent,#00B8A0);margin-bottom:0.6rem;">How to strengthen this venture</div>
-            <div style="display:flex;flex-direction:column;gap:0.55rem;">
-              ${sg.map(it => `<div style="display:flex;gap:0.55rem;align-items:flex-start;"><span style="color:var(--accent,#00B8A0);font-weight:700;flex:none;">&rarr;</span><div style="font-size:0.88rem;line-height:1.5;">${it.category ? `<strong>${escBrief(it.category)}:</strong> ` : ''}${escBrief(it.suggestion)}</div></div>`).join('')}
-            </div>
-          </div>` : '';
       return `<div class="section">${head}
         <div class="card">
-          <div class="inv-op-headline">
-            <div><span class="inv-op-score" style="color:${cc};">${snap.composite}</span><span class="text-mono dim"> / ${snap.maxPossible || 35}</span></div>
-            <div class="text-mono" style="color:${cc};text-transform:uppercase;font-size:0.72rem;letter-spacing:0.06em;font-weight:600;">${snap.pct}% &middot; ${escBrief(snap.bandLabel || snap.band)}</div>
-          </div>
-          <div class="inv-op-grid">${cats}</div>
-          <div class="text-mono dim" style="font-size:0.66rem;letter-spacing:0.06em;text-transform:uppercase;margin-top:0.95rem;">Computed by tdk-investability-scorer &middot; ${snap.ratedCount || 0}/35 rated</div>
-          ${suggList}
+          ${renderVSSScorecard(snap, { variant: 'operator', esc: escBrief, metaText: `Auto-scored · ${snap.ratedCount || 0} of 35 signals rated` })}
+          ${renderStrengthenSuggestions(sg, { esc: escBrief })}
         </div></div>`;
     }
 

@@ -70,6 +70,23 @@ const SAMPLE_PROGRAMS = [
       video: { status: 'pending' },
       blog: { status: 'in-progress' }
     },
+    investabilitySnapshot: {
+      composite: 25, maxPossible: 35, pct: 71, band: 'feedback', bandLabel: 'Promising — clear levers to pull', ratedCount: 35,
+      categories: [
+        { label: 'Market', sum: 4, max: 5, band: 'green' },
+        { label: 'Team', sum: 3.5, max: 5, band: 'yellow' },
+        { label: 'Product', sum: 4, max: 5, band: 'green' },
+        { label: 'Technical', sum: 3, max: 5, band: 'yellow' },
+        { label: 'Financial', sum: 3.5, max: 5, band: 'yellow' },
+        { label: 'Execution', sum: 3, max: 5, band: 'yellow' },
+        { label: 'Evidence', sum: 4, max: 5, band: 'green' }
+      ]
+    },
+    investabilitySuggestions: { items: [
+      { category: 'Team', suggestion: 'Add a named commercial/GTM lead — investors flag founder-market fit on the sales side.' },
+      { category: 'Financial', suggestion: 'Tighten the unit-economics model: show CAC payback under 12 months at the current ACV.' },
+      { category: 'Execution', suggestion: 'Convert two pilots into paid contracts before the next raise to evidence pull.' }
+    ] },
     mvpDemoModeReady: true
   },
   {
