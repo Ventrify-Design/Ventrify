@@ -135,17 +135,43 @@
       const stateEl = document.getElementById('deck-state');
       const { auth } = await import('../firebase/firebase.js');
       const idToken = auth.currentUser ? await auth.currentUser.getIdToken() : null;
-      for (const file of files) {
-        if (file.size > 4 * 1024 * 1024) { if (stateEl) stateEl.innerHTML = `<span style="color:var(--danger,#C0392B);">${escBrief(file.name)} is over 4MB.</span>`; continue; }
-        if (stateEl) stateEl.innerHTML = `<span class="run-spinner"></span> Reading ${escBrief(file.name)}…`;
-        try {
-          const dataBase64 = await __readFileB64(file);
-          const resp = await fetch('/api/ingest-docs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken, engagementId, file: { name: file.name, dataBase64 } }) });
-          const d = await resp.json().catch(() => ({}));
-          if (!resp.ok) throw new Error(d.detail || d.error || ('HTTP ' + resp.status));
-        } catch (e) { if (stateEl) stateEl.innerHTML = `<span style="color:var(--danger,#C0392B);">Couldn&rsquo;t read ${escBrief(file.name)}: ${escBrief((e && e.message) || e)}</span>`; }
+      const SUPPORTED = /\.(pdf|docx?|xlsx?|xlsm|txt|md|csv)$/i;
+      let ingested = 0, skipped = 0;
+
+      // Send one document's bytes to the ingest pipeline (extracts + stores it).
+      async function ingestOne(name, blob) {
+        if (blob.size > 4 * 1024 * 1024) { skipped++; return; }
+        if (stateEl) stateEl.innerHTML = `<span class="run-spinner"></span> Reading ${escBrief(name)}…`;
+        const dataBase64 = await __readFileB64(blob);
+        const resp = await fetch('/api/ingest-docs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken, engagementId, file: { name, dataBase64 } }) });
+        const d = await resp.json().catch(() => ({}));
+        if (!resp.ok) throw new Error(d.detail || d.error || ('HTTP ' + resp.status));
+        ingested++;
       }
-      window.location.reload();   // refresh the deck count + list
+
+      for (const file of files) {
+        try {
+          if (/\.zip$/i.test(file.name)) {
+            // Crack open the zip in the browser, walk every folder, ingest each readable file.
+            if (stateEl) stateEl.innerHTML = `<span class="run-spinner"></span> Opening ${escBrief(file.name)}…`;
+            const JSZip = (await import('https://cdn.jsdelivr.net/npm/jszip@3.10.1/+esm')).default;
+            const zip = await JSZip.loadAsync(file);
+            const entries = Object.values(zip.files).filter(e =>
+              !e.dir && SUPPORTED.test(e.name) && !/(^|\/)(__MACOSX\/|\.)/.test(e.name));
+            if (!entries.length) { if (stateEl) stateEl.innerHTML = `<span style="color:var(--danger,#C0392B);">No readable documents found inside ${escBrief(file.name)}.</span>`; continue; }
+            for (const entry of entries) {
+              try { await ingestOne(entry.name, await entry.async('blob')); }
+              catch (e) { skipped++; }
+            }
+          } else {
+            await ingestOne(file.name, file);
+          }
+        } catch (e) {
+          if (stateEl) stateEl.innerHTML = `<span style="color:var(--danger,#C0392B);">Couldn&rsquo;t read ${escBrief(file.name)}: ${escBrief((e && e.message) || e)}</span>`;
+        }
+      }
+      if (stateEl && ingested) stateEl.innerHTML = `<span style="color:var(--accent,#00B8A0);">Ingested ${ingested} document${ingested === 1 ? '' : 's'}${skipped ? ` &middot; ${skipped} skipped (unsupported or over 4MB)` : ''}.</span>`;
+      setTimeout(() => window.location.reload(), ingested ? 900 : 1600);   // refresh the deck count + list
     };
     // Best-effort email nudge to the other side — never blocks the action.
     async function notifyRecipient(direction) {
@@ -458,8 +484,8 @@
       const n = p.founderDocCount || 0;
       return `<div class="run-banner" style="display:block;">
         <div class="run-banner-title" style="margin-bottom:0.4rem;">Pitch deck &amp; documents</div>
-        <div class="run-banner-sub" style="margin-bottom:0.9rem;">${n ? `${n} document${n === 1 ? '' : 's'} attached.` : 'Upload the pitch deck, financial model, or any documents (PDF, Word, Excel, text).'} The assessment reads these &mdash; producing a score, key findings, and how to strengthen the venture.</div>
-        <input type="file" id="deck-input" accept=".pdf,.docx,.xlsx,.xls,.xlsm,.txt,.md,.csv" multiple style="display:none;" onchange="window.__uploadDeck('${p.id}')">
+        <div class="run-banner-sub" style="margin-bottom:0.9rem;">${n ? `${n} document${n === 1 ? '' : 's'} attached.` : 'Upload the pitch deck, financial model, or any documents (PDF, Word, Excel, text) &mdash; or a <strong>.zip of the whole data room</strong> and we&rsquo;ll open it, walk every folder, and read each file.'} The assessment reads these &mdash; producing a score, key findings, and how to strengthen the venture.</div>
+        <input type="file" id="deck-input" accept=".pdf,.docx,.xlsx,.xls,.xlsm,.txt,.md,.csv,.zip" multiple style="display:none;" onchange="window.__uploadDeck('${p.id}')">
         <button class="btn btn-outline btn-sm" onclick="document.getElementById('deck-input').click()">${n ? '+ Add more documents' : 'Upload documents'}</button>
         <span id="deck-state" style="margin-left:0.75rem;font-size:0.85rem;color:var(--text-muted);"></span>
       </div>`;
