@@ -803,7 +803,7 @@
         ${deepResearchCTAHTML(hubDocs)}
         <div id="cards-region">${findingsSectionHTML(provCards)}</div>
         <div id="diligence-region">${diligenceChecklistHTML(p)}</div>
-        <div id="deep-research">${renderDataRoom(hubDocs, { title: 'Deep research', sub: 'The web-researched, cited evidence base behind this assessment — drill into any document.' })}</div>
+        <div id="deep-research">${renderDataRoom(hubDocs, { sub: 'The web-researched, cited evidence base behind this assessment — drill into any document.' })}</div>
         ${W.mode === 'live' ? dangerZoneHTML(p) : ''}
       `;
     }
