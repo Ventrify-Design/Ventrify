@@ -28,22 +28,34 @@ function inline(s) {
 const isOrdered  = l => /^\s*\d+\.\s+/.test(l);
 const isBullet   = l => /^\s*[-]\s+/.test(l);
 const isEvidence = l => /^\[?\s*See the evidence\b/i.test(l.trim());
+const isHeading  = l => /^#{1,6}\s/.test(l.trim());
+const norm       = s => String(s == null ? '' : s).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 
-// Render a card body Markdown string to HTML. Drops the leading H1 (it's the
-// card title, shown in the header already).
-export function renderCardBody(md) {
+// Render a card body Markdown string to HTML. Drops the leading heading (it's the
+// card title, shown in the header already); INNER headings (## Why It Matters,
+// ## Suggested Response Direction) become styled subheads — not literal "##".
+// Pass `title` to drop a lead paragraph that just repeats it (derived titles).
+export function renderCardBody(md, title) {
   if (!md) return '';
   const lines = String(md).replace(/\r/g, '').split('\n');
 
-  // Drop leading blanks + the first heading line (the duplicate title).
+  // Drop leading blanks + the first heading line (the duplicate / generic label).
   while (lines.length && !lines[0].trim()) lines.shift();
-  if (lines.length && /^#{1,6}\s/.test(lines[0].trim())) lines.shift();
+  if (lines.length && isHeading(lines[0])) lines.shift();
 
+  const nt = norm(title);
   const blocks = [];
-  let i = 0;
+  let i = 0, leadDone = false;
   while (i < lines.length) {
     const line = lines[i];
     if (!line.trim()) { i++; continue; }
+
+    // Inner heading → styled section subhead (the fix for the literal "##" symbols).
+    const head = line.trim().match(/^#{1,6}\s+(.*)$/);
+    if (head) {
+      blocks.push(`<h4 class="cardf-subhead">${inline(head[1].replace(/[:#\s]+$/, '').trim())}</h4>`);
+      i++; continue;
+    }
 
     // Evidence footer
     if (isEvidence(line)) {
@@ -72,13 +84,19 @@ export function renderCardBody(md) {
       continue;
     }
 
-    // Paragraph: gather consecutive plain lines.
+    // Paragraph: gather consecutive plain lines (a heading ends the paragraph).
     const para = [];
-    while (i < lines.length && lines[i].trim() && !isOrdered(lines[i]) && !isBullet(lines[i]) && !isEvidence(lines[i])) {
+    while (i < lines.length && lines[i].trim() && !isOrdered(lines[i]) && !isBullet(lines[i]) && !isEvidence(lines[i]) && !isHeading(lines[i])) {
       para.push(lines[i].trim()); i++;
     }
     const text = para.join(' ');
     const stripped = text.replace(/\*\*/g, '');
+    // Drop the lead paragraph when it merely repeats the card title (derived titles).
+    if (!leadDone) {
+      leadDone = true;
+      const np = norm(stripped);
+      if (nt && np && (np === nt || np.startsWith(nt) || nt.startsWith(np))) continue;
+    }
     // The founder's decision prompt → accent callout.
     if (/^we recommend\b/i.test(stripped) || /\b(you decide|your call)\b/i.test(stripped)) {
       blocks.push(`<div class="cardf-rec">${inline(text)}</div>`);
@@ -97,6 +115,9 @@ export function ensureCardStyles() {
   s.textContent = `
     .prov-card-body p, .prov-fcard-body p { margin:0.6rem 0; line-height:1.62; }
     .prov-card-body p:first-child, .prov-fcard-body p:first-child { margin-top:0.15rem; }
+    .prov-card-body .cardf-subhead, .prov-fcard-body .cardf-subhead { margin:1.2rem 0 0.45rem; font-family:'Space Grotesk','Inter',sans-serif;
+      font-weight:700; font-size:0.66rem; letter-spacing:0.07em; text-transform:uppercase; color:var(--accent,#00B8A0); }
+    .prov-card-body .cardf-subhead:first-child, .prov-fcard-body .cardf-subhead:first-child { margin-top:0.15rem; }
     .cardf-list { margin:0.55rem 0; padding-left:1.25rem; }
     .cardf-list li { margin:0.32rem 0; line-height:1.55; }
     .cardf-rec { margin:0.9rem 0 0; padding:0.72rem 0.95rem; border-left:3px solid var(--primary,#0036FF);

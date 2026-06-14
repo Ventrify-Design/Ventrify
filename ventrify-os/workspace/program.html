@@ -459,7 +459,7 @@
             ${statusPill}
           </div>
           <div class="prov-card-title">${escBrief(c.title || '')}</div>
-          ${c.body ? `<div class="prov-card-body">${renderCardBody(c.body)}</div>` : ''}
+          ${c.body ? `<div class="prov-card-body">${renderCardBody(c.body, c.title)}</div>` : ''}
           ${response}
           ${sendBtn}
         </div>`;

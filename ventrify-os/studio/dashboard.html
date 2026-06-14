@@ -261,7 +261,7 @@
         <div class="prov-fcard" id="pf-${c.id}">
           <div class="prov-fcard-meta">${esc((c.hub || '').toUpperCase())} &middot; ${esc(c.level || 'L1')} #${c.number || ''}</div>
           <div class="prov-fcard-title">${esc(c.title || '')}</div>
-          ${c.body ? `<div class="prov-fcard-body">${renderCardBody(c.body)}</div>` : ''}
+          ${c.body ? `<div class="prov-fcard-body">${renderCardBody(c.body, c.title)}</div>` : ''}
           <textarea class="prov-fcard-input" id="pfc-${c.id}" placeholder="Add a comment (optional) — tell your operator why."></textarea>
           <div class="prov-fcard-actions">
             <button class="btn btn-sm prov-btn-accept" onclick="window.__respondCard('${c.id}','accept')">Accept</button>
