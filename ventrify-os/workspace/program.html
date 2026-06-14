@@ -684,17 +684,57 @@
         </div></div>`;
     }
 
+    // Canonical diligence priority — 3 tiers, normalized from whatever the agent emits
+    // (critical/high/medium/low/p0…). See ASSESSMENT-CONTRACT.md → Diligence checklist.
+    const DIL_TIERS = { blocker: { label: 'Blocker', dot: 'fill' }, key: { label: 'Key', dot: 'fill' }, standard: { label: 'Standard', dot: 'hollow' } };
+    const DIL_NORM = {
+      critical: 'blocker', blocker: 'blocker', blocking: 'blocker', dealbreaker: 'blocker', must: 'blocker', musthave: 'blocker', p0: 'blocker', urgent: 'blocker', showstopper: 'blocker', gate: 'blocker',
+      high: 'key', hi: 'key', important: 'key', major: 'key', p1: 'key', key: 'key', significant: 'key',
+      medium: 'standard', med: 'standard', moderate: 'standard', normal: 'standard', p2: 'standard', low: 'standard', lo: 'standard', minor: 'standard', optional: 'standard', p3: 'standard', standard: 'standard', routine: 'standard'
+    };
+    function dilTier(pr) {
+      const s = String(pr == null ? '' : pr).toLowerCase();
+      return DIL_NORM[s.replace(/[^a-z0-9]+/g, '')] || DIL_NORM[(s.split(/[^a-z0-9]+/).filter(Boolean)[0]) || ''] || 'standard';
+    }
+    function dilParse(txt) {
+      const m = String(txt).match(/^(.*?\S)\s+[—–-]\s+([\s\S]*)$/);
+      const label = m ? m[1].trim() : String(txt).trim();
+      let clauses = (m ? m[2].trim() : '').split(/\s*;\s*/).map(c => c.trim()).filter(Boolean);
+      let noWire = false;
+      clauses = clauses.filter(c => { if (/no wire without this/i.test(c)) { noWire = true; return false; } return true; });
+      return { label, clauses, noWire };
+    }
     function diligenceChecklistHTML(p) {
       const items = (p.assessment && p.assessment.diligence) || []; if (!items.length) return '';
+      const order = ['blocker', 'key', 'standard'];
+      const buckets = { blocker: [], key: [], standard: [] };
+      items.forEach(it => buckets[dilTier(it.priority)].push(it));
+      const countTxt = { blocker: n => `${n} blocker${n === 1 ? '' : 's'}`, key: n => `${n} key`, standard: n => `${n} standard` };
+      const summary = `<div class="dil-summary"><span class="dil-summary-label">Diligence</span>${
+        order.filter(k => buckets[k].length).map(k => `<span class="dil-chip dil-chip-${k}">${countTxt[k](buckets[k].length)}</span>`).join('')
+      }<span class="dil-chip">${items.length} item${items.length === 1 ? '' : 's'}</span></div>`;
+      const groups = order.filter(k => buckets[k].length).map(k => {
+        const rows = buckets[k].map((it, i) => {
+          const { label, clauses, noWire } = dilParse(it.item || it);
+          const detail = clauses.length > 1
+            ? `<ul class="dil-clauses">${clauses.map(c => `<li>${escBrief(c)}</li>`).join('')}</ul>`
+            : (clauses.length === 1 ? `<div class="dil-detail">${escBrief(clauses[0])}</div>` : '');
+          return `<div class="dil-row dil-${k}${i === buckets[k].length - 1 ? ' dil-row-last' : ''}">
+            <div class="dil-head">
+              <span class="dil-dot dil-dot-${DIL_TIERS[k].dot}"></span>
+              <span class="dil-label">${escBrief(label)}</span>
+              ${noWire ? `<span class="dil-nowire">No wire</span>` : ''}
+              <span class="dil-pill dil-pill-${k}">${DIL_TIERS[k].label}</span>
+            </div>${detail}
+          </div>`;
+        }).join('');
+        return `<div class="dil-group"><div class="dil-group-label">${DIL_TIERS[k].label} &middot; ${buckets[k].length}</div>${rows}</div>`;
+      }).join('');
       return `<div class="section">
-        <div class="section-head"><div><div class="section-title">Diligence checklist</div><div class="section-sub">What to verify before committing &mdash; the gaps to close first.</div></div></div>
-        <div class="card"><div style="display:flex;flex-direction:column;gap:0.65rem;">
-          ${items.map(it => { const pr = prioColor(it.priority); return `<div style="display:flex;gap:0.65rem;align-items:flex-start;">
-            <span style="flex:none;width:14px;height:14px;border:2px solid ${pr};border-radius:4px;margin-top:0.15rem;"></span>
-            <div style="font-size:0.9rem;line-height:1.5;flex:1;">${escBrief(it.item || it)}</div>
-            ${it.priority ? `<span class="text-mono" style="flex:none;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.05em;color:${pr};font-weight:700;">${escBrief(it.priority)}</span>` : ''}
-          </div>`; }).join('')}
-        </div></div></div>`;
+        <div class="section-head"><div><div class="section-title">Diligence checklist</div><div class="section-sub">What to verify before wiring &mdash; ranked by what blocks the deal.</div></div></div>
+        ${summary}
+        <div class="card dil-card">${groups}</div>
+      </div>`;
     }
 
     // Prominent entry point into the deep research (the Data Room below). Drills
