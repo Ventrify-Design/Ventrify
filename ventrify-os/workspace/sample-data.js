@@ -257,7 +257,15 @@ const SAMPLE_PROGRAMS = [
       mustBeTrue: ['Field trials replicate the 40% reduction across 3+ soil types', 'A repeatable distribution channel into row-crop farmers exists', 'Unit economics survive real agricultural CAC'],
       bull: ['Real cost + emissions saving on a non-discretionary input', 'Regulatory + buyer tailwind (regenerative ag, carbon)', 'Defensible strain IP'],
       bear: ['Greenhouse-to-field efficacy gap', 'Long, seasonal sales cycles', 'Commodity price sensitivity'],
-      valuation: { verdict: 'Fair', note: '$12M pre for pre-field-data biologicals is in range — fair if efficacy holds, rich if it does not.', comps: [{ name: 'Pivot Bio', stage: 'Category reference', detail: 'sets the efficacy + distribution bar' }] },
+      valuation: {
+        verdict: 'Fair, leaning cheap if the field data holds',
+        note: 'At $12M pre with greenhouse-only data, the round prices below the biological-inputs comps at equivalent stage — Pivot Bio raised its Series A at a materially higher mark on similar early evidence. The discount reflects the unproven field efficacy and the absent distribution channel; if the multi-site trials replicate the 40% reduction, $12M pre is a cheap entry into a validated input category.',
+        comps: [
+          { name: 'Pivot Bio', stage: 'Series A (2017)', detail: '$70M Series A on nitrogen-fixing microbes with early field data. The category reference — sets the efficacy and distribution bar Verdana is benchmarked against. Reached $600M+ raised and millions of paid acres; the outcome Verdana is underwriting toward.' },
+          { name: 'Sound Agriculture', stage: 'Series C', detail: '$45M Series C; nutrient-efficiency biologicals with commercial traction. Validates the retail-partner distribution model Verdana lacks — the gap the round must close before Series A.' },
+          { name: 'Andes', stage: 'Series B', detail: '$30M Series B (Leaps by Bayer) on seed-coating microbes. A closer modality comp; its strategic-backer round signals that ag-input majors will fund biologicals that clear field-efficacy diligence.' }
+        ]
+      },
       exit: { acquirers: ['Corteva', 'Bayer', 'Nutrien'], path: 'Strategic acquisition by an ag-input major once field efficacy + a channel are proven.', returns: 'Credible strategic multiple if the science holds; binary on field data.' },
       diligence: [{ item: 'Commission independent multi-site field trials', priority: 'high' }, { item: 'Quantify the advantage vs Pivot Bio with data', priority: 'high' }, { item: 'Secure a distribution LOI with an ag-input retailer', priority: 'medium' }],
       provenance: { competitors: 5, rounds: 6, marketReports: 4, foundersResearched: true, sources: 19 },

@@ -500,9 +500,9 @@
     }
     function valColor(v) {
       const s = String(v || '').toLowerCase();
-      if (s.startsWith('cheap') || s.includes('under')) return '#00897b';
-      if (s.startsWith('rich') || s.startsWith('expensive') || s.includes('over')) return '#C0392B';
-      return '#6E3AFA'; // fair
+      if (s.startsWith('cheap') || s.includes('under')) return 'var(--band-strong, #00A368)';
+      if (s.startsWith('rich') || s.startsWith('expensive') || s.includes('over')) return 'var(--band-weak, #C42233)';
+      return 'var(--primary, #0036FF)'; // fair / in-range
     }
     function prioColor(pr) { const s = String(pr || '').toLowerCase(); return s === 'high' ? '#C0392B' : s === 'low' ? '#6B7594' : '#C77700'; }
 
@@ -559,18 +559,26 @@
       const v = p.assessment && p.assessment.valuation; if (!v || (!v.verdict && !v.note && !(v.comps || []).length)) return '';
       const vc = valColor(v.verdict);
       const comps = v.comps || [];
-      const compHTML = comps.length ? `
-        <div style="margin-top:0.9rem;display:flex;flex-direction:column;gap:0.45rem;">
-          ${comps.map(c => `<div style="display:flex;justify-content:space-between;gap:0.8rem;font-size:0.86rem;border-bottom:1px solid rgba(0,0,0,0.05);padding-bottom:0.45rem;"><div><strong>${escBrief(c.name || '')}</strong>${c.stage ? ` <span class="dim">&middot; ${escBrief(c.stage)}</span>` : ''}</div><div class="text-mono dim" style="text-align:right;">${escBrief(c.detail || c.valuation || '')}</div></div>`).join('')}
+      // A short band word for the chip (Cheap / Fair / Rich) if the verdict leads with one.
+      const w = String(v.verdict || '').trim().split(/[\s,;.]/)[0];
+      const chip = /^(cheap|fair|rich|under|over|expensive)$/i.test(w) ? w : '';
+      const anchors = comps.length ? `
+        <div class="dv-anchors">
+          <div class="dv-anchors-title">Valuation anchors &middot; ${comps.length}</div>
+          ${comps.map(c => `<div class="dv-anchor">
+            <div class="dv-anchor-head"><span class="dv-anchor-name">${escBrief(c.name || '')}</span>${c.stage ? `<span class="dv-anchor-stage">${escBrief(c.stage)}</span>` : ''}</div>
+            ${(c.detail || c.valuation) ? `<div class="dv-anchor-detail">${escBrief(c.detail || c.valuation)}</div>` : ''}
+          </div>`).join('')}
         </div>` : '';
       return `<div class="section">
         <div class="section-head"><div><div class="section-title">Deal &amp; valuation</div><div class="section-sub">Is the ask fair against comparable rounds at this stage and sector?</div></div></div>
         <div class="card">
-          <div style="display:flex;align-items:center;gap:0.8rem;flex-wrap:wrap;">
-            ${v.verdict ? `<span style="background:${vc};color:#fff;font-weight:700;font-size:0.82rem;padding:0.3rem 0.8rem;border-radius:7px;text-transform:uppercase;letter-spacing:0.03em;">${escBrief(v.verdict)}</span>` : ''}
-            ${v.note ? `<div style="font-size:0.92rem;line-height:1.5;flex:1;min-width:240px;">${escBrief(v.note)}</div>` : ''}
-          </div>
-          ${compHTML}
+          ${v.verdict ? `<div class="dv-verdict" style="--vc:${vc};">
+            <div class="dv-verdict-label">${chip ? `<span class="dv-verdict-chip">${escBrief(chip)}</span>` : ''}Valuation verdict</div>
+            <div class="dv-verdict-text">${escBrief(v.verdict)}</div>
+          </div>` : ''}
+          ${v.note ? `<div class="dv-note">${escBrief(v.note)}</div>` : ''}
+          ${anchors}
         </div></div>`;
     }
 

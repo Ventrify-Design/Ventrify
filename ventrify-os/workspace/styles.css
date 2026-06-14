@@ -823,6 +823,22 @@ a.topbar-lockup-item:hover { background: var(--surface-alt); }
 .tdd-bg { font-size: 0.86rem; color: var(--text-muted); line-height: 1.5; margin-top: 0.15rem; }
 .tdd-gaps { margin-top: 0.9rem; padding-top: 0.8rem; border-top: 1px solid var(--border, rgba(0,0,0,0.07)); font-size: 0.86rem; color: var(--text-muted); }
 .tdd-gaps strong { color: var(--text); }
+
+/* Deal & valuation — verdict statement + stacked "valuation anchors" (each comp
+   reads as a name/stage header with its full reasoning paragraph; scales to any count). */
+.dv-verdict { border-left: 3px solid var(--vc, var(--text-muted)); padding: 0.15rem 0 0.2rem 0.95rem; margin-bottom: 0.95rem; }
+.dv-verdict-label { display: flex; align-items: center; gap: 0.5rem; font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700; color: var(--vc, var(--text-muted)); margin-bottom: 0.35rem; }
+.dv-verdict-chip { color: #fff; background: var(--vc, var(--text-muted)); padding: 0.1rem 0.5rem; border-radius: 5px; letter-spacing: 0.04em; }
+.dv-verdict-text { font-size: 1rem; font-weight: 600; color: var(--text); line-height: 1.45; }
+.dv-note { font-size: 0.9rem; line-height: 1.6; color: var(--text-muted); margin-bottom: 1.1rem; }
+.dv-anchors { border-top: 1px solid var(--border, rgba(0,0,0,0.07)); padding-top: 1rem; }
+.dv-anchors-title { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.07em; text-transform: uppercase; font-weight: 700; color: var(--accent, #00B8A0); margin-bottom: 0.8rem; }
+.dv-anchor { padding: 0.75rem 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
+.dv-anchor:last-child { border-bottom: none; padding-bottom: 0; }
+.dv-anchor-head { display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.35rem; }
+.dv-anchor-name { font-weight: 600; font-size: 0.92rem; color: var(--text); }
+.dv-anchor-stage { font-size: 0.72rem; color: var(--text-muted); background: var(--surface-alt, #F5F5F7); padding: 0.12rem 0.55rem; border-radius: 980px; }
+.dv-anchor-detail { font-size: 0.86rem; line-height: 1.6; color: var(--text-muted); }
 .program-card-reason {
   display: flex;
   align-items: flex-start;
