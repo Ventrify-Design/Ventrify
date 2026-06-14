@@ -442,7 +442,7 @@
         : (r
           ? `<span class="pill ${r.decision === 'accept' ? 'health-on-track' : r.decision === 'reject' ? 'health-stuck' : 'health-attention'}"><span class="dot"></span> Founder: ${escBrief(r.decision)}</span>`
           : `<span class="pill"><span class="dot"></span> Awaiting founder</span>`));
-      const typePill = c.type ? `<span class="text-mono dim" style="font-size:0.62rem;letter-spacing:0.06em;text-transform:uppercase;">&middot; ${escBrief(String(c.type).replace(/-/g, ' '))}</span>` : '';
+      const typePill = c.type ? `<span class="text-mono dim" style="font-size:0.62rem;letter-spacing:0.06em;text-transform:uppercase;">&middot; ${escBrief(String(c.type).replace(/[-_]/g, ' '))}</span>` : '';
       const response = r
         ? `<div class="prov-card-response">
              <div class="prov-card-response-label">Founder responded &middot; ${escBrief(r.decision)}${r.respondedAt ? ' &middot; ' + escBrief(r.respondedAt) : ''}</div>
@@ -459,7 +459,7 @@
             ${statusPill}
           </div>
           <div class="prov-card-title">${escBrief(c.title || '')}</div>
-          ${c.body ? `<div class="prov-card-body">${renderCardBody(c.body, c.title)}</div>` : ''}
+          ${c.body ? `<div class="prov-card-body">${renderCardBody(c.body, c.title, c.evidenceLinks)}</div>` : ''}
           ${response}
           ${sendBtn}
         </div>`;
@@ -664,7 +664,7 @@
         <div class="card">
           ${v.verdict ? `<div class="dv-verdict" style="--vc:${vc};">
             <div class="dv-verdict-label">${chip ? `<span class="dv-verdict-chip">${escBrief(chip)}</span>` : ''}Valuation verdict</div>
-            <div class="dv-verdict-text">${escBrief(v.verdict)}</div>
+            ${String(v.verdict).trim().toLowerCase() !== String(chip).toLowerCase() ? `<div class="dv-verdict-text">${escBrief(v.verdict)}</div>` : ''}
           </div>` : ''}
           ${v.note ? `<div class="dv-note">${escBrief(v.note)}</div>` : ''}
           ${anchors}

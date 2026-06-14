@@ -31,41 +31,61 @@ const isEvidence = l => /^\[?\s*See the evidence\b/i.test(l.trim());
 const isHeading  = l => /^#{1,6}\s/.test(l.trim());
 const norm       = s => String(s == null ? '' : s).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 
-// Render a card body Markdown string to HTML. Drops the leading heading (it's the
-// card title, shown in the header already); INNER headings (## Why It Matters,
-// ## Suggested Response Direction) become styled subheads — not literal "##".
-// Pass `title` to drop a lead paragraph that just repeats it (derived titles).
-export function renderCardBody(md, title) {
+// Legacy card-body section headings → canonical anatomy, so off-template cards still
+// align with the curator template (see ASSESSMENT-CONTRACT.md). Generic / "why it
+// matters" headings fold into the narrative; the response/recommendation heading turns
+// its paragraph into the decision callout; any other heading stays a styled subhead.
+const HEAD_DROP = /^(the )?(provocation|finding|surprising finding|key finding|the question|open question|the assumption|assumption( flag)?|the insight|insight|observation|tension|takeaway|summary|context|what we found|why (it|this) matters|implications?|so what|what s at stake|what changes|downstream)$/;
+const HEAD_REC  = /^(suggested response( direction)?|recommended (response|direction|next steps?)|our recommendation|the recommendation|recommendation|response direction|what to do)$/;
+
+function prettyEvidence(link) {
+  if (!link) return '';
+  if (typeof link === 'string') return link;
+  const f = link.file || link.path || link.source || '';
+  const base = String(f).split('/').pop().replace(/\.[a-z0-9]+$/i, '').replace(/[-_]+/g, ' ').trim();
+  return base.replace(/\b\w/g, c => c.toUpperCase());
+}
+function evidenceFooterHTML(refs) {
+  if (!refs.length) return '';
+  return `<div class="cardf-evidence"><span class="cardf-evidence-label">Evidence</span>` +
+    refs.map(r => `<span class="cardf-cite">${inline(r)}</span>`).join('<span class="cardf-dot">·</span>') + `</div>`;
+}
+
+// Render a card body Markdown string to HTML, normalising every card to the canonical
+// anatomy: narrative → "We recommend… your call" decision callout → evidence footer.
+// `title` lets us drop a lead line that just repeats it; `evidenceLinks` supplies the
+// footer when the body has no in-body "See the evidence" line.
+export function renderCardBody(md, title, evidenceLinks) {
   if (!md) return '';
   const lines = String(md).replace(/\r/g, '').split('\n');
 
-  // Drop leading blanks + the first heading line (the duplicate / generic label).
+  // Drop leading blanks + the first heading line (the title, shown in the header).
   while (lines.length && !lines[0].trim()) lines.shift();
   if (lines.length && isHeading(lines[0])) lines.shift();
 
   const nt = norm(title);
   const blocks = [];
-  let i = 0, leadDone = false;
+  let i = 0, leadDone = false, pendingRec = false, evidenceEmitted = false;
   while (i < lines.length) {
     const line = lines[i];
     if (!line.trim()) { i++; continue; }
 
-    // Inner heading → styled section subhead (the fix for the literal "##" symbols).
+    // Headings → map to the canonical anatomy.
     const head = line.trim().match(/^#{1,6}\s+(.*)$/);
     if (head) {
-      blocks.push(`<h4 class="cardf-subhead">${inline(head[1].replace(/[:#\s]+$/, '').trim())}</h4>`);
+      const label = head[1].replace(/[#*:]+/g, '').trim();
+      const key = norm(label);
+      if (HEAD_REC.test(key)) { pendingRec = true; i++; continue; }    // next paragraph = decision callout
+      if (HEAD_DROP.test(key)) { i++; continue; }                       // fold into the narrative
+      blocks.push(`<h4 class="cardf-subhead">${inline(label)}</h4>`);   // a genuinely novel heading
       i++; continue;
     }
 
-    // Evidence footer
+    // In-body evidence footer
     if (isEvidence(line)) {
       const inner = line.trim().replace(/^\[?\s*See the evidence[:\s]*/i, '').replace(/\]\s*$/, '');
       const refs = inner.split(/\s*[,;]\s*|\s+·\s+/).map(s => s.trim()).filter(Boolean);
-      blocks.push(
-        `<div class="cardf-evidence"><span class="cardf-evidence-label">Evidence</span>` +
-        refs.map(r => `<span class="cardf-cite">${inline(r)}</span>`).join('<span class="cardf-dot">·</span>') +
-        `</div>`
-      );
+      blocks.push(evidenceFooterHTML(refs)); evidenceEmitted = true;
       i++; continue;
     }
 
@@ -95,14 +115,18 @@ export function renderCardBody(md, title) {
     if (!leadDone) {
       leadDone = true;
       const np = norm(stripped);
-      if (nt && np && (np === nt || np.startsWith(nt) || nt.startsWith(np))) continue;
+      if (nt && np && (np === nt || np.startsWith(nt) || nt.startsWith(np))) { pendingRec = false; continue; }
     }
-    // The founder's decision prompt → accent callout.
-    if (/^we recommend\b/i.test(stripped) || /\b(you decide|your call)\b/i.test(stripped)) {
-      blocks.push(`<div class="cardf-rec">${inline(text)}</div>`);
-    } else {
-      blocks.push(`<p>${inline(text)}</p>`);
-    }
+    // Decision callout: a response-section heading, or the template's "We recommend…" line.
+    const isRec = pendingRec || /^we recommend\b/i.test(stripped) || /\b(you decide|your call)\b/i.test(stripped);
+    pendingRec = false;
+    blocks.push(isRec ? `<div class="cardf-rec">${inline(text)}</div>` : `<p>${inline(text)}</p>`);
+  }
+
+  // Evidence from the structured field when the body had no in-body footer (e.g. ORE).
+  if (!evidenceEmitted && Array.isArray(evidenceLinks) && evidenceLinks.length) {
+    const refs = evidenceLinks.map(prettyEvidence).filter(Boolean);
+    if (refs.length) blocks.push(evidenceFooterHTML(refs));
   }
   return blocks.join('');
 }
