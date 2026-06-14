@@ -569,8 +569,9 @@
       if (status === 'done') note = `<div class="run-banner-sub">&#10003; Assessment complete &mdash; score &amp; findings below.</div>`;
       else if (status === 'error') note = `<div class="run-banner-sub" style="color:var(--danger,#C0392B);">Last run errored: ${escBrief((rs && rs.error) || 'unknown error')}. Safe to retry.</div>`;
       else if (status === 'limit-paused') note = `<div class="run-banner-sub" style="color:#C77700;">Paused &mdash; Claude usage limit reached.</div>`;
+      else if (status === 'needs-attention') note = `<div class="run-banner-sub" style="color:#C77700;">&#9888;&nbsp; ${escBrief((rs && rs.label) || 'The research published, but the verdict &amp; score didn’t serialize. Re-run to regenerate the summary panels.')}</div>`;
       else note = `<div class="run-banner-sub">&#10003; Pitch deck ready. Assess this venture from the uploaded documents &mdash; a score, key findings, and how to strengthen it.</div>`;
-      const btnLabel = status === 'done' ? '&#8635;&nbsp; Re-run assessment' : '&#9654;&nbsp; Run assessment';
+      const btnLabel = (status === 'done' || status === 'needs-attention') ? '&#8635;&nbsp; Re-run assessment' : '&#9654;&nbsp; Run assessment';
       return `<div class="run-banner run-idle"><div class="run-banner-main"><div class="run-banner-title">Assessment</div>${note}</div><button id="run-trigger-btn" class="btn btn-primary" onclick="window.__triggerRun('${p.id}','assess')">${btnLabel}</button></div>`;
     }
     function findingsSectionHTML(cards) {
