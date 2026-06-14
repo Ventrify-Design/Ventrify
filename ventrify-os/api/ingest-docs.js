@@ -54,8 +54,9 @@ module.exports = async (req, res) => {
     const engagementId = String(body.engagementId || '').trim();
     const file = body.file || {};
     const name = String(file.name || '').trim();
+    const docType = body.docType === 'pitch' ? 'pitch' : 'dataroom';
     if (!idToken) { res.status(401).json({ error: 'no_token' }); return; }
-    if (!engagementId || !name || !file.dataBase64) { res.status(400).json({ error: 'bad_request' }); return; }
+    if (!engagementId || !name || (!file.dataBase64 && file.text == null)) { res.status(400).json({ error: 'bad_request' }); return; }
 
     ensureAdmin();
     const decoded = await admin.auth().verifyIdToken(idToken);
@@ -77,10 +78,14 @@ module.exports = async (req, res) => {
     }
     if (!isFounder && !isOperator) { res.status(403).json({ error: 'forbidden' }); return; }
 
-    const buf = Buffer.from(String(file.dataBase64).replace(/^data:[^;]+;base64,/, ''), 'base64');
     let text = '';
-    try { text = await extractText(name, buf); }
-    catch (e) { res.status(422).json({ error: 'could_not_read', detail: String(e.message || e) }); return; }
+    if (file.text != null) {
+      text = String(file.text);    // pre-extracted client-side (e.g. a large PDF parsed in the browser)
+    } else {
+      const buf = Buffer.from(String(file.dataBase64).replace(/^data:[^;]+;base64,/, ''), 'base64');
+      try { text = await extractText(name, buf); }
+      catch (e) { res.status(422).json({ error: 'could_not_read', detail: String(e.message || e) }); return; }
+    }
     text = (text || '').replace(/\n{3,}/g, '\n\n').trim();    // tidy big blank gaps, keep words
     if (!text) { res.status(422).json({ error: 'no_text', detail: 'No readable text found in the document.' }); return; }
     // Keep it sane for Firestore (1MB doc cap) — store up to ~200k chars.
@@ -89,15 +94,16 @@ module.exports = async (req, res) => {
 
     const docRef = db.collection('engagements').doc(engagementId).collection('founderDocs').doc();
     await docRef.set({
-      name, chars: text.length, truncated, text,
+      name, docType, chars: text.length, truncated, text,
       uploadedBy: caller, uploadedAt: admin.firestore.FieldValue.serverTimestamp()
     });
 
-    // Lightweight count on the engagement so both surfaces can show "N attached".
-    await db.collection('engagements').doc(engagementId).set(
-      { founderDocCount: admin.firestore.FieldValue.increment(1) }, { merge: true });
+    // Count + (for the pitch) mark the engagement so the page can gate the run on it.
+    const engUpdate = { founderDocCount: admin.firestore.FieldValue.increment(1) };
+    if (docType === 'pitch') engUpdate.pitchDoc = { name, at: admin.firestore.FieldValue.serverTimestamp() };
+    await db.collection('engagements').doc(engagementId).set(engUpdate, { merge: true });
 
-    res.status(200).json({ ok: true, id: docRef.id, name, chars: text.length, truncated });
+    res.status(200).json({ ok: true, id: docRef.id, name, docType, chars: text.length, truncated });
   } catch (e) {
     res.status(500).json({ error: String((e && e.message) || e) });
   }

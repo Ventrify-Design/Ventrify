@@ -60,6 +60,14 @@ module.exports = async (req, res) => {
     const supers = ((cfgSnap.exists && cfgSnap.data().superAdminEmails) || []).map(e => String(e).toLowerCase());
     if (!ops.includes(caller) && !supers.includes(caller)) { res.status(403).json({ error: 'forbidden' }); return; }
 
+    // Gate: an assessment cannot run without a pitch deck — it underpins the ask
+    // and the whole thesis. (The data room is supplementary evidence.)
+    const engData = engSnap.data();
+    if (engData.engagementType === 'assessment' && phase === 'assess' && !engData.pitchDoc) {
+      res.status(400).json({ error: 'pitch_required', detail: 'Add the pitch deck before running the assessment.' });
+      return;
+    }
+
     // Stamp runState=queued so the Workspace banner moves immediately.
     await db.collection('engagements').doc(engagementId).update({
       runState: {

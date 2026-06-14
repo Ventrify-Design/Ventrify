@@ -19,7 +19,16 @@
     .run-spinner { width:14px; height:14px; border:2px solid rgba(110,58,250,0.25); border-top-color:var(--brand,#6E3AFA); border-radius:50%; display:inline-block; animation:run-spin 0.7s linear infinite; flex:none; }
     @keyframes run-spin { to { transform:rotate(360deg); } }
     .prov-card-draft { border-left:3px solid var(--brand,#6E3AFA); }
-    @media (max-width:640px){ .run-banner{ flex-direction:column; align-items:stretch; } }
+    .upload-rows { display:flex; flex-direction:column; gap:0.75rem; }
+    .upload-row { display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:0.95rem 1.1rem; border-radius:12px; background:var(--surface,#F0F4F8); box-shadow:inset 2px 2px 5px rgba(0,0,0,0.05), inset -2px -2px 5px rgba(255,255,255,0.7); }
+    .upload-row.is-required { box-shadow:inset 0 0 0 1.5px rgba(196,34,51,0.35); background:rgba(196,34,51,0.03); }
+    .upload-row.is-set { box-shadow:inset 0 0 0 1.5px rgba(0,184,160,0.3); background:rgba(0,184,160,0.04); }
+    .upload-row-main { min-width:0; }
+    .upload-row-label { font-weight:600; font-size:0.92rem; color:var(--text,#141414); display:flex; align-items:center; gap:0.5rem; }
+    .upload-row-state { font-size:0.82rem; color:var(--text-muted,#656565); margin-top:0.2rem; line-height:1.45; }
+    .upload-req { font-size:0.6rem; letter-spacing:0.06em; text-transform:uppercase; font-weight:700; color:#C42233; background:rgba(196,34,51,0.1); padding:0.12rem 0.45rem; border-radius:5px; }
+    .upload-row .btn { flex:none; white-space:nowrap; }
+    @media (max-width:640px){ .run-banner{ flex-direction:column; align-items:stretch; } .upload-row{ flex-direction:column; align-items:stretch; } .upload-row .btn{ width:100%; } }
   </style>
 </head>
 <body>
@@ -113,8 +122,17 @@
               body: JSON.stringify({ idToken, engagementId, phase })
             });
             if (resp.ok) return;                 // cloud Action fired
+            // A real rejection (e.g. no pitch deck attached) — surface it, don't
+            // silently fall through to the local-daemon queue.
+            if (resp.status >= 400 && resp.status < 500 && resp.status !== 503) {
+              const d = await resp.json().catch(() => ({}));
+              throw new Error(d.detail || d.error || ('Run rejected (' + resp.status + ')'));
+            }
           }
-        } catch (e) { /* fall through to local-daemon queue */ }
+        } catch (e) {
+          if (e && /pitch|Run rejected|forbidden/i.test(String(e.message || ''))) throw e;
+          /* otherwise fall through to local-daemon queue */
+        }
         await data.requestRun(engagementId, phase, (me && me.email) || null);
       } catch (e) {
         alert('Could not start the run: ' + ((e && (e.code || e.message)) || e));
@@ -127,8 +145,28 @@
     function __readFileB64(file) {
       return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result)); r.onerror = () => rej(new Error('read failed')); r.readAsDataURL(file); });
     }
-    window.__uploadDeck = async function(engagementId) {
-      const input = document.getElementById('deck-input');
+    // Large PDFs (e.g. an image-heavy pitch deck over 4MB) can't go whole through
+    // the serverless body limit — so we extract their text in the browser with
+    // pdf.js and send only the text. Small files still go as bytes (server extracts).
+    let __pdfjs = null;
+    async function __extractPdfText(arrayBuffer) {
+      if (!__pdfjs) {
+        __pdfjs = await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.min.mjs');
+        __pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.worker.min.mjs';
+      }
+      const pdf = await __pdfjs.getDocument({ data: arrayBuffer }).promise;
+      let out = '';
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const tc = await (await pdf.getPage(i)).getTextContent();
+        out += tc.items.map(it => it.str).join(' ') + '\n\n';
+      }
+      return out.trim();
+    }
+
+    // Shared ingest core. docType: 'pitch' | 'dataroom'. Walks .zip data rooms and
+    // handles oversized PDFs via client-side text extraction.
+    async function __ingestFiles(engagementId, inputId, docType) {
+      const input = document.getElementById(inputId);
       const files = Array.from((input && input.files) || []);
       if (input) input.value = '';
       if (!files.length) return;
@@ -138,12 +176,20 @@
       const SUPPORTED = /\.(pdf|docx?|xlsx?|xlsm|txt|md|csv)$/i;
       let ingested = 0, skipped = 0;
 
-      // Send one document's bytes to the ingest pipeline (extracts + stores it).
       async function ingestOne(name, blob) {
-        if (blob.size > 4 * 1024 * 1024) { skipped++; return; }
-        if (stateEl) stateEl.innerHTML = `<span class="run-spinner"></span> Reading ${escBrief(name)}…`;
-        const dataBase64 = await __readFileB64(blob);
-        const resp = await fetch('/api/ingest-docs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken, engagementId, file: { name, dataBase64 } }) });
+        let payload;
+        if (/\.pdf$/i.test(name) && blob.size > 4 * 1024 * 1024) {
+          if (stateEl) stateEl.innerHTML = `<span class="run-spinner"></span> Extracting ${escBrief(name)}…`;
+          let text = ''; try { text = await __extractPdfText(await blob.arrayBuffer()); } catch (e) { text = ''; }
+          if (!text || text.length < 40) { skipped++; return; }   // scanned/image PDF — no text layer
+          payload = { idToken, engagementId, docType, file: { name, text } };
+        } else if (blob.size > 4 * 1024 * 1024) {
+          skipped++; return;                                        // non-PDF over the 4MB limit
+        } else {
+          if (stateEl) stateEl.innerHTML = `<span class="run-spinner"></span> Reading ${escBrief(name)}…`;
+          payload = { idToken, engagementId, docType, file: { name, dataBase64: await __readFileB64(blob) } };
+        }
+        const resp = await fetch('/api/ingest-docs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
         const d = await resp.json().catch(() => ({}));
         if (!resp.ok) throw new Error(d.detail || d.error || ('HTTP ' + resp.status));
         ingested++;
@@ -152,17 +198,12 @@
       for (const file of files) {
         try {
           if (/\.zip$/i.test(file.name)) {
-            // Crack open the zip in the browser, walk every folder, ingest each readable file.
             if (stateEl) stateEl.innerHTML = `<span class="run-spinner"></span> Opening ${escBrief(file.name)}…`;
             const JSZip = (await import('https://cdn.jsdelivr.net/npm/jszip@3.10.1/+esm')).default;
             const zip = await JSZip.loadAsync(file);
-            const entries = Object.values(zip.files).filter(e =>
-              !e.dir && SUPPORTED.test(e.name) && !/(^|\/)(__MACOSX\/|\.)/.test(e.name));
+            const entries = Object.values(zip.files).filter(e => !e.dir && SUPPORTED.test(e.name) && !/(^|\/)(__MACOSX\/|\.)/.test(e.name));
             if (!entries.length) { if (stateEl) stateEl.innerHTML = `<span style="color:var(--danger,#C0392B);">No readable documents found inside ${escBrief(file.name)}.</span>`; continue; }
-            for (const entry of entries) {
-              try { await ingestOne(entry.name, await entry.async('blob')); }
-              catch (e) { skipped++; }
-            }
+            for (const entry of entries) { try { await ingestOne(entry.name, await entry.async('blob')); } catch (e) { skipped++; } }
           } else {
             await ingestOne(file.name, file);
           }
@@ -170,9 +211,11 @@
           if (stateEl) stateEl.innerHTML = `<span style="color:var(--danger,#C0392B);">Couldn&rsquo;t read ${escBrief(file.name)}: ${escBrief((e && e.message) || e)}</span>`;
         }
       }
-      if (stateEl && ingested) stateEl.innerHTML = `<span style="color:var(--accent,#00B8A0);">Ingested ${ingested} document${ingested === 1 ? '' : 's'}${skipped ? ` &middot; ${skipped} skipped (unsupported or over 4MB)` : ''}.</span>`;
-      setTimeout(() => window.location.reload(), ingested ? 900 : 1600);   // refresh the deck count + list
-    };
+      if (stateEl && ingested) stateEl.innerHTML = `<span style="color:var(--accent,#00B8A0);">${docType === 'pitch' ? 'Pitch deck added' : 'Ingested ' + ingested + ' document' + (ingested === 1 ? '' : 's')}${skipped ? ` &middot; ${skipped} skipped (unsupported or unreadable)` : ''}.</span>`;
+      setTimeout(() => window.location.reload(), ingested ? 900 : 1600);
+    }
+    window.__uploadPitch = (id) => __ingestFiles(id, 'pitch-input', 'pitch');
+    window.__uploadDataRoom = (id) => __ingestFiles(id, 'dataroom-input', 'dataroom');
     // Best-effort email nudge to the other side — never blocks the action.
     async function notifyRecipient(direction) {
       try {
@@ -481,21 +524,40 @@
 
     // ---------------- Assessment view (investor mode, Workspace-only) ----------
     function deckUploadHTML(p) {
-      const n = p.founderDocCount || 0;
+      const hasPitch = !!p.pitchDoc;
+      const pitchName = (p.pitchDoc && p.pitchDoc.name) || '';
+      const total = p.founderDocCount || 0;
+      const dataN = Math.max(0, total - (hasPitch ? 1 : 0));
       return `<div class="run-banner" style="display:block;">
-        <div class="run-banner-title" style="margin-bottom:0.4rem;">Pitch deck &amp; documents</div>
-        <div class="run-banner-sub" style="margin-bottom:0.9rem;">${n ? `${n} document${n === 1 ? '' : 's'} attached.` : 'Upload the pitch deck, financial model, or any documents (PDF, Word, Excel, text) &mdash; or a <strong>.zip of the whole data room</strong> and we&rsquo;ll open it, walk every folder, and read each file.'} The assessment reads these &mdash; producing a score, key findings, and how to strengthen the venture.</div>
-        <input type="file" id="deck-input" accept=".pdf,.docx,.xlsx,.xls,.xlsm,.txt,.md,.csv,.zip" multiple style="display:none;" onchange="window.__uploadDeck('${p.id}')">
-        <button class="btn btn-outline btn-sm" onclick="document.getElementById('deck-input').click()">${n ? '+ Add more documents' : 'Upload documents'}</button>
-        <span id="deck-state" style="margin-left:0.75rem;font-size:0.85rem;color:var(--text-muted);"></span>
+        <div class="run-banner-title" style="margin-bottom:0.4rem;">Documents</div>
+        <div class="run-banner-sub" style="margin-bottom:1rem;">The assessment reads everything you attach. The <strong>pitch deck is required</strong> &mdash; it underpins the ask and the thesis; the data room is supporting evidence.</div>
+        <div class="upload-rows">
+          <div class="upload-row ${hasPitch ? 'is-set' : 'is-required'}">
+            <div class="upload-row-main">
+              <div class="upload-row-label">Pitch deck ${hasPitch ? '' : '<span class="upload-req">Required</span>'}</div>
+              <div class="upload-row-state">${hasPitch ? `&#10003; ${escBrief(pitchName)}` : 'Not added yet &mdash; the assessment can&rsquo;t run without it.'}</div>
+            </div>
+            <input type="file" id="pitch-input" accept=".pdf,.docx" style="display:none;" onchange="window.__uploadPitch('${p.id}')">
+            <button class="btn btn-${hasPitch ? 'outline' : 'primary'} btn-sm" onclick="document.getElementById('pitch-input').click()">${hasPitch ? 'Replace' : 'Upload pitch deck'}</button>
+          </div>
+          <div class="upload-row">
+            <div class="upload-row-main">
+              <div class="upload-row-label">Data room <span class="dim" style="font-weight:400;">&middot; optional</span></div>
+              <div class="upload-row-state">${dataN ? `${dataN} document${dataN === 1 ? '' : 's'} attached` : 'Financials, SAFEs, team, customers &mdash; upload files or a <strong>.zip</strong> of the whole room.'}</div>
+            </div>
+            <input type="file" id="dataroom-input" accept=".pdf,.docx,.xlsx,.xls,.xlsm,.txt,.md,.csv,.zip" multiple style="display:none;" onchange="window.__uploadDataRoom('${p.id}')">
+            <button class="btn btn-outline btn-sm" onclick="document.getElementById('dataroom-input').click()">${dataN ? '+ Add more' : 'Upload data room'}</button>
+          </div>
+        </div>
+        <span id="deck-state" style="display:block;margin-top:0.85rem;font-size:0.85rem;color:var(--text-muted);"></span>
       </div>`;
     }
     function assessRunBannerHTML(rs, p) {
-      const deckIn = (p.founderDocCount || 0) > 0;
+      const hasPitch = !!p.pitchDoc;
       const status = (rs && rs.status) || 'idle';
       const active = ['queued', 'running', 'partial'].includes(status);
-      if (!deckIn && !active) {
-        return `<div class="run-banner run-idle"><div class="run-banner-main"><div class="run-banner-title">Assessment</div><div class="run-banner-sub">Upload a document above, then run the assessment.</div></div><button class="btn btn-primary" disabled style="opacity:0.5;cursor:not-allowed;">&#9654;&nbsp; Run assessment</button></div>`;
+      if (!hasPitch && !active) {
+        return `<div class="run-banner run-idle"><div class="run-banner-main"><div class="run-banner-title">Assessment</div><div class="run-banner-sub">Upload the <strong>pitch deck</strong> above to run the assessment &mdash; it&rsquo;s required.</div></div><button class="btn btn-primary" disabled style="opacity:0.5;cursor:not-allowed;">&#9654;&nbsp; Run assessment</button></div>`;
       }
       if (active) {
         const total = rs.totalSteps || 0, step = rs.step || 0;
@@ -507,7 +569,7 @@
       if (status === 'done') note = `<div class="run-banner-sub">&#10003; Assessment complete &mdash; score &amp; findings below.</div>`;
       else if (status === 'error') note = `<div class="run-banner-sub" style="color:var(--danger,#C0392B);">Last run errored: ${escBrief((rs && rs.error) || 'unknown error')}. Safe to retry.</div>`;
       else if (status === 'limit-paused') note = `<div class="run-banner-sub" style="color:#C77700;">Paused &mdash; Claude usage limit reached.</div>`;
-      else note = `<div class="run-banner-sub">Assess this venture from the uploaded documents &mdash; a score, key findings, and how to strengthen it.</div>`;
+      else note = `<div class="run-banner-sub">&#10003; Pitch deck ready. Assess this venture from the uploaded documents &mdash; a score, key findings, and how to strengthen it.</div>`;
       const btnLabel = status === 'done' ? '&#8635;&nbsp; Re-run assessment' : '&#9654;&nbsp; Run assessment';
       return `<div class="run-banner run-idle"><div class="run-banner-main"><div class="run-banner-title">Assessment</div>${note}</div><button id="run-trigger-btn" class="btn btn-primary" onclick="window.__triggerRun('${p.id}','assess')">${btnLabel}</button></div>`;
     }

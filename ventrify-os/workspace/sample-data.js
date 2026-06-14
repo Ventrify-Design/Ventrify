@@ -248,6 +248,8 @@ const SAMPLE_PROGRAMS = [
     assignedOperator: 'op-01',
     health: 'on-track',
     cards: { drafted: 5, awaitingFounder: 0, resolved: 5, awaitingL3Rebuild: 0 },
+    founderDocCount: 9,
+    pitchDoc: { name: 'Verdana-Bio-Seed-Deck.pdf' },
     assessment: {
       recommendation: 'Diligence further',
       conviction: 'Medium',
