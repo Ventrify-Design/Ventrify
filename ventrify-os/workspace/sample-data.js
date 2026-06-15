@@ -303,17 +303,59 @@ const SAMPLE_PROGRAMS = [
       }
     },
     investabilitySnapshot: {
-      composite: 23, maxPossible: 35, pct: 66, band: 'feedback', bandLabel: 'Promising — gaps to close', ratedCount: 35,
+      composite: 18, maxPossible: 27, pct: 67, band: 'feedback', bandLabel: 'Promising — named gaps to close before partner meeting',
+      ratedCount: 27, pendingCount: 8,
       categories: [
-        { label: 'Market', sum: 4.5, max: 5, band: 'green' },
-        { label: 'Team', sum: 3, max: 5, band: 'yellow' },
-        { label: 'Product', sum: 3.5, max: 5, band: 'yellow' },
-        { label: 'Technical', sum: 3.5, max: 5, band: 'yellow' },
-        { label: 'Financial', sum: 3, max: 5, band: 'yellow' },
-        { label: 'Execution', sum: 2.5, max: 5, band: 'yellow' },
-        { label: 'Evidence', sum: 3, max: 5, band: 'yellow' }
+        { key: 'market', label: 'Market Opportunity', sum: 4, max: 5, rated: 5, pending: 0, band: 'green', subs: [
+          { slug: 'market_size', score: 1, note: '$190B fertiliser; ~$1.2B near-term microbial-N SOM — well above $1B. · ref: research/market-analysis' },
+          { slug: 'market_growth', score: 1, note: 'Biological inputs ~20% CAGR — the fastest-growing input segment.' },
+          { slug: 'why_now', score: 1, note: 'Input-cost inflation + regenerative-ag buyer programs + carbon credits.' },
+          { slug: 'demand_validation', score: 0.5, note: 'Buyer pull is real, but no paying farmers or field LOIs yet.' },
+          { slug: 'gross_margin', score: 0.5, note: 'Input-style margins plausible; unproven at field scale.' } ] },
+        { key: 'team', label: 'Team & Founder-Market Fit', sum: 3, max: 5, rated: 5, pending: 0, band: 'yellow', subs: [
+          { slug: 'ceo_vision', score: 0.5, note: 'Credible scientific vision; commercial-ag leadership unproven.' },
+          { slug: 'talent_attraction', score: 0.5, note: 'Strong science bench; no senior commercial / distribution hire.' },
+          { slug: 'founder_market_fit', score: 0.5, note: 'Deep microbiology fit; thin on row-crop go-to-market.' },
+          { slug: 'execution_record', score: 0.5, note: 'Lab / greenhouse delivery shown; no field or commercial record.' },
+          { slug: 'ethics_trust', score: 1, note: 'Deck is candid about the field-efficacy risk.' } ] },
+        { key: 'product', label: 'Product & Solution Clarity', sum: 2, max: 5, rated: 3, pending: 2, band: 'yellow', subs: [
+          { slug: 'value_prop_clarity', score: 1, note: '"Cut synthetic fertiliser 40%" — crisp and repeatable.' },
+          { slug: 'improvement_10x', score: 0.5, note: '40% reduction is material, not 10x; field-unproven.' },
+          { slug: 'moscow_discipline', score: null, note: 'Not assessable in a deck-only assessment (build-engagement artifact).' },
+          { slug: 'persona_depth', score: null, note: 'Not assessable in a deck-only assessment (build-engagement artifact).' },
+          { slug: 'problem_validation', score: 0.5, note: 'Fertiliser cost + emissions are real; validated only in greenhouse.' } ] },
+        { key: 'moat', label: 'Technical / Competitive Moat', sum: 2, max: 5, rated: 5, pending: 0, band: 'red', subs: [
+          { slug: 'differentiation', score: 0.5, note: 'Engineered strains, but mechanism close to Pivot Bio.' },
+          { slug: 'ip_defensibility', score: 0.5, note: 'Strain IP claimed; freedom-to-operate unverified.' },
+          { slug: 'switching_costs', score: 0, note: 'No lock-in — pre-commercial.' },
+          { slug: 'scalability', score: 0.5, note: 'Fermentation should scale; cost curve unproven.' },
+          { slug: 'ecosystem_moats', score: 0.5, note: 'Possible ag-input partnerships; none signed.' } ] },
+        { key: 'financial', label: 'Financial Defensibility', sum: 2.5, max: 5, rated: 3, pending: 2, band: 'green', subs: [
+          { slug: 'files_complete', score: null, note: 'Not assessable in a deck-only assessment (the 11 build financial files).' },
+          { slug: 'ltv_cac_ratio', score: null, note: 'Not yet assessable pre-revenue.' },
+          { slug: 'sensitivity_coverage', score: 0.5, note: 'Bull / bear sketched; no multi-variable model.' },
+          { slug: 'milestone_anchored_ask', score: 1, note: '$3M ask tied to multi-site field trials — the value event. · ref: assessment/deal-memo' },
+          { slug: 'risk_honesty', score: 1, note: 'Greenhouse-to-field risk named up front, not buried.' } ] },
+        { key: 'execution', label: 'Execution & Traction', sum: 0.5, max: 5, rated: 1, pending: 4, band: 'yellow', subs: [
+          { slug: 'live_surfaces', score: null, note: 'Not assessable in a deck-only assessment (build-engagement artifact).' },
+          { slug: 'ia_coverage', score: null, note: 'Not assessable in a deck-only assessment (build-engagement artifact).' },
+          { slug: 'gate_velocity', score: null, note: 'Not assessable in a deck-only assessment (build-engagement artifact).' },
+          { slug: 'payment_cadence', score: null, note: 'Not assessable in a deck-only assessment (build-engagement artifact).' },
+          { slug: 'traction_signals', score: 0.5, note: 'Greenhouse results; no field data, revenue or LOIs.' } ] },
+        { key: 'evidence', label: 'Evidence Integrity', sum: 4, max: 5, rated: 5, pending: 0, band: 'green', subs: [
+          { slug: 'citation_density', score: 1, note: 'Material claims carry inline citations.' },
+          { slug: 'source_count', score: 1, note: '19 distinct credible sources across the research.' },
+          { slug: 'hallucination_check', score: 0.5, note: 'Sources clean; greenhouse efficacy unverifiable externally.' },
+          { slug: 'methodology_disclosure', score: 0.5, note: 'Market sizing has method; field extrapolation under-specified.' },
+          { slug: 'cross_file_consistency', score: 1, note: 'Figures reconcile across research and the ask.' } ] }
       ]
     },
+    provCards: [
+      { id: 'vb-f1', hub: 'research', level: 'L2', number: 1, type: 'kill-risk', title: 'Greenhouse results rarely survive contact with real fields', body: 'The 40% reduction is greenhouse-only. Across 3+ field sites, variable soils, weather and application routinely collapse gains like this to single digits. This is the load-bearing assumption — independent multi-site trials must replicate it before any wire.' },
+      { id: 'vb-f2', hub: 'research', level: 'L2', number: 2, type: 'gap', title: 'No distribution channel into row-crop farmers', body: 'Verdana has no signed retailer or co-op channel. The comparable winners leaned on retail partners (Sound Agriculture) — the round must evidence a route to the farmer, not just a product.' },
+      { id: 'vb-f3', hub: 'research', level: 'L2', number: 3, type: 'moat', title: 'Strain IP is the only moat — and it is unverified', body: 'Differentiation vs Pivot Bio rests on proprietary strains. Without granted composition-of-matter claims and a freedom-to-operate opinion, a well-funded incumbent can fast-follow within a few seasons.' },
+      { id: 'vb-f4', hub: 'research', level: 'L2', number: 4, type: 'upside', title: 'At $12M pre, the entry is cheap — if the field data holds', body: 'Pivot Bio raised its Series A at a materially higher mark on similar early evidence. If the multi-site trials replicate the 40% reduction, $12M pre is a cheap entry into a validated input category. The bet is binary on field efficacy.' }
+    ],
     investabilitySuggestions: { items: [
       { category: 'Evidence', suggestion: 'Run independent multi-site field trials — greenhouse data alone will not clear diligence.' },
       { category: 'Execution', suggestion: 'Sign a distribution LOI with an ag-input retailer to evidence the channel.' }
