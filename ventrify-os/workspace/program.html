@@ -39,7 +39,7 @@
   <script type="module">
     import { renderCardBody, ensureCardStyles } from '../shared/card-format.js';
     import { renderDataRoom, hydrateDataRoom, ensureHubStyles } from '../shared/hub-view.js';
-    import { renderVSSScorecard, renderStrengthenSuggestions, ensureInvestabilityStyles } from '../shared/investability-view.js';
+    import { renderVSSScorecard, renderStrengthenSuggestions, ensureInvestabilityStyles, bandColor } from '../shared/investability-view.js';
     import { esc as escBrief } from '../shared/util.js';
     await window.WORKSPACE_READY;
     ensureCardStyles();
@@ -493,9 +493,12 @@
 
     // ---------------- Investability (operator summary, VSS v2) ----------
     function investabilitySectionHTML(snap, p) {
-      const subCopy = isAssess
-        ? 'VSS v2 (TDK 7×5) &mdash; investor-lens score from the deck + diligence. Operator-only.'
-        : 'VSS v2 (TDK 7×5) &mdash; the founder sees this in their Studio. Updates each gate.';
+      // The band sentence is the subtitle (it had no room in the §1 scoreboard).
+      const subCopy = snap
+        ? escBrief(snap.bandLabel || snap.band || 'Investor-lens score across 35 signals.')
+        : (isAssess
+          ? 'VSS v2 (TDK 7×5) &mdash; investor-lens score from the deck + diligence. Operator-only.'
+          : 'VSS v2 (TDK 7×5) &mdash; the founder sees this in their Studio. Updates each gate.');
       const head = `<div class="section-head"><div><div class="section-title">Investability</div><div class="section-sub">${subCopy}</div></div></div>`;
       if (!snap) {
         const emptyCopy = isAssess
@@ -504,9 +507,11 @@
         return `<div class="section">${head}<div class="card" style="text-align:center;padding:1.75rem;color:var(--text-muted);">${emptyCopy}</div></div>`;
       }
       const sg = (p.investabilitySuggestions && p.investabilitySuggestions.items) || [];
+      // On the assess page the composite/% headline lives in the §1 "The call" scoreboard,
+      // so suppress it here; build engagements (no Call) keep it.
       return `<div class="section">${head}
         <div class="card">
-          ${renderVSSScorecard(snap, { variant: 'operator', esc: escBrief, metaText: `Auto-scored · ${snap.ratedCount || 0} of 35 signals rated` })}
+          ${renderVSSScorecard(snap, { variant: 'operator', headline: !isAssess, esc: escBrief, metaText: `Auto-scored · ${snap.ratedCount || 0} of 35 signals rated` })}
           ${renderStrengthenSuggestions(sg, { esc: escBrief })}
         </div></div>`;
     }
@@ -595,12 +600,36 @@
     }
     function prioColor(pr) { const s = String(pr || '').toLowerCase(); return s === 'high' ? '#C0392B' : s === 'low' ? '#6B7594' : '#C77700'; }
 
-    function verdictHeaderHTML(p) {
+    function verdictHeaderHTML(p, snap) {
       const a = p.assessment; if (!a || !a.recommendation) return '';
       const rc = recColor(a.recommendation);
       const must = a.mustBeTrue || a.must_be_true || [];
       const ask = a.theAsk || a.the_ask;
       const risk = a.biggestRisk || a.biggest_risk;
+      // Conviction → 3-segment meter (Low 1, Medium 2, High 3), filled in the rec colour.
+      const conv = String(a.conviction || '').toLowerCase();
+      const fill = conv.startsWith('high') ? 3 : conv.startsWith('med') ? 2 : conv.startsWith('low') ? 1 : 0;
+      const convHTML = a.conviction ? `<div class="vh-conv"><div class="vh-conv-label">Conviction</div>
+        <div class="vh-conv-row">${[1, 2, 3].map(n => `<span class="vh-conv-seg${n <= fill ? ' on' : ''}" style="--c:${rc};"></span>`).join('')}<span class="vh-conv-word" style="color:${rc};">${escBrief(a.conviction)}</span></div></div>` : '';
+      // Scoreboard — the investability % is the hero; composite + band word beneath it.
+      let scoreHTML = '';
+      if (snap && (snap.pct != null || snap.composite != null)) {
+        const bc = bandColor(snap.band);
+        const pct = snap.pct != null ? snap.pct : Math.round((snap.composite / (snap.maxPossible || 35)) * 100);
+        const bandWord = String(snap.bandLabel || snap.band || '').split(/\s*[—–-]\s*|\s+/)[0];
+        scoreHTML = `<div class="vh-score" style="--bc:${bc};">
+          <div class="vh-score-pct">${escBrief(pct)}<span class="vh-score-sym">%</span></div>
+          <div class="vh-score-comp">${escBrief(snap.composite)} / ${escBrief(snap.maxPossible || 35)}</div>
+          ${bandWord ? `<div class="vh-score-band">${escBrief(bandWord)}</div>` : ''}
+        </div>`;
+      }
+      // Ask → its own strip; a trailing (round) parenthetical becomes a meta chip.
+      let askHTML = '';
+      if (ask) {
+        const m = String(ask).match(/^(.*?)\s*\(([^)]*)\)\s*$/);
+        const main = m ? m[1].trim() : String(ask).trim();
+        askHTML = `<div class="vh-ask"><span class="vh-ask-label">Ask</span><span class="vh-ask-val">${escBrief(main)}</span>${m && m[2].trim() ? `<span class="vh-ask-meta">&middot; ${escBrief(m[2].trim())}</span>` : ''}</div>`;
+      }
       const mustHTML = must.length ? `
         <div style="margin-top:1.1rem;border-top:1px solid rgba(0,0,0,0.07);padding-top:0.9rem;">
           <div class="text-mono" style="font-size:0.62rem;letter-spacing:0.07em;text-transform:uppercase;font-weight:700;color:var(--accent,#00B8A0);margin-bottom:0.6rem;">For the thesis to hold, these must be true</div>
@@ -610,14 +639,14 @@
         </div>` : '';
       return `<div class="section">
         <div class="section-head"><div><div class="section-title">The call</div><div class="section-sub">The decision-grade verdict &mdash; recommendation, thesis, and the deal-breaker.</div></div></div>
-        <div class="card" style="border-top:3px solid ${rc};">
-          <div style="display:flex;align-items:center;gap:0.9rem;flex-wrap:wrap;margin-bottom:0.9rem;">
-            <span style="background:${rc};color:#fff;font-weight:700;font-size:0.95rem;padding:0.4rem 0.95rem;border-radius:8px;">${escBrief(a.recommendation)}</span>
-            ${a.conviction ? `<span class="text-mono dim" style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;">${escBrief(a.conviction)} conviction</span>` : ''}
-            ${ask ? `<span class="text-mono dim" style="font-size:0.72rem;margin-left:auto;">Ask: <strong style="color:var(--text);">${escBrief(ask)}</strong></span>` : ''}
+        <div class="card vh-card" style="border-top:3px solid ${rc};">
+          <div class="vh-header">
+            <div class="vh-left"><span class="vh-rec" style="background:${rc};">${escBrief(a.recommendation)}</span>${convHTML}</div>
+            ${scoreHTML}
           </div>
-          ${a.thesis ? `<div style="font-size:1.02rem;line-height:1.55;font-weight:500;color:var(--text);margin-bottom:0.9rem;">${escBrief(a.thesis)}</div>` : ''}
-          ${risk ? `<div style="border-left:3px solid var(--danger,#C0392B);background:rgba(192,57,43,0.06);border-radius:0 8px 8px 0;padding:0.7rem 0.85rem;font-size:0.9rem;line-height:1.5;"><strong style="color:var(--danger,#C0392B);">Biggest kill-risk &mdash;</strong> ${escBrief(risk)}</div>` : ''}
+          ${askHTML}
+          ${a.thesis ? `<div class="vh-thesis">${escBrief(a.thesis)}</div>` : ''}
+          ${risk ? `<div class="vh-risk"><strong>Biggest kill-risk &mdash;</strong> ${escBrief(risk)}</div>` : ''}
           ${mustHTML}
         </div></div>`;
     }
@@ -832,7 +861,7 @@
         ${deckUploadHTML(p)}
         <div id="run-region">${assessRunBannerHTML(p.runState, p)}</div>
         <div id="provenance-region">${provenanceStripHTML(p)}</div>
-        <div id="verdict-region">${verdictHeaderHTML(p)}</div>
+        <div id="verdict-region">${verdictHeaderHTML(p, invSnapshot)}</div>
         <div id="bullbear-region">${bullBearHTML(p)}</div>
         ${investabilitySectionHTML(invSnapshot, p)}
         <div id="dealval-region">${dealValuationHTML(p)}</div>
@@ -986,7 +1015,7 @@
             p.assessment = eng.assessment;
             const set = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
             set('provenance-region', provenanceStripHTML(p));
-            set('verdict-region', verdictHeaderHTML(p));
+            set('verdict-region', verdictHeaderHTML(p, invSnapshot));
             set('bullbear-region', bullBearHTML(p));
             set('dealval-region', dealValuationHTML(p));
             set('market-region', marketSizingHTML(p));

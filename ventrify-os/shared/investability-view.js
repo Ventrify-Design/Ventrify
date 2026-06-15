@@ -32,21 +32,29 @@ export function renderVSSScorecard(snap, opts = {}) {
   const esc = opts.esc || _esc;
   const cc = bandColor(snap.band);
   const max = snap.maxPossible || 35;
-  const cats = (snap.categories || []).map(c => {
-    const cmax = c.max || 5;
-    const pct = Math.max(0, Math.min(100, (c.sum / cmax) * 100));
-    return `<div class="vss-cat">
-        <div class="vss-cat-head"><span>${esc(c.label)}</span><span class="vss-cat-val">${c.sum}/${cmax}</span></div>
-        <div class="vss-bar"><div class="vss-bar-fill" style="width:${pct}%;background:${bandColor(c.band)};"></div></div>
-      </div>`;
-  }).join('');
-  const meta = opts.metaText ? `<div class="vss-meta">${esc(opts.metaText)}</div>` : '';
-  return `<div class="vss-headline">
+  // Headline (composite + band) — shown unless the caller renders it elsewhere
+  // (the assess page moves it into the "The call" scoreboard → headline:false).
+  const headline = opts.headline === false ? '' : `<div class="vss-headline">
       <div><span class="vss-score" style="color:${cc};">${esc(snap.composite)}</span><span class="vss-score-of"> / ${esc(max)}</span></div>
       <div class="vss-band" style="color:${cc};">${esc(snap.pct)}% &middot; ${esc(snap.bandLabel || snap.band)}</div>
-    </div>
-    <div class="vss-grid vss-${opts.variant || 'operator'}">${cats}</div>
-    ${meta}`;
+    </div>`;
+  // Sort every category by score, then split into Strengths vs Gaps so where the
+  // venture is strong / weak reads in one glance.
+  const cats = (snap.categories || []).map(c => ({ ...c, max: c.max || 5 }));
+  const isStrong = c => String(c.band || '').toLowerCase() === 'green' || (c.sum / c.max) >= 0.7;
+  const ratio = c => c.sum / c.max;
+  const strengths = cats.filter(isStrong).sort((a, b) => ratio(b) - ratio(a));
+  const gaps = cats.filter(c => !isStrong(c)).sort((a, b) => ratio(b) - ratio(a));
+  const row = c => {
+    const pct = Math.max(0, Math.min(100, ratio(c) * 100));
+    return `<div class="vss-cat">
+        <div class="vss-cat-head"><span>${esc(c.label)}</span><span class="vss-cat-val">${c.sum}/${c.max}</span></div>
+        <div class="vss-bar"><div class="vss-bar-fill" style="width:${pct}%;background:${bandColor(c.band)};"></div></div>
+      </div>`;
+  };
+  const group = (label, list) => list.length ? `<div class="vss-group"><div class="vss-group-label">${label} &middot; ${list.length}</div>${list.map(row).join('')}</div>` : '';
+  const meta = opts.metaText ? `<div class="vss-meta">${esc(opts.metaText)}</div>` : '';
+  return `${headline}${group('Strengths', strengths)}${group('Gaps to close', gaps)}${meta}`;
 }
 
 // The "how to strengthen this venture" list (was duplicated across both surfaces).
@@ -72,6 +80,11 @@ export function ensureInvestabilityStyles() {
     .vss-band { font-family:var(--font-mono); text-transform:uppercase; font-size:0.72rem; letter-spacing:0.06em; font-weight:600; }
     .vss-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:0.9rem 1.6rem; }
     .vss-grid.vss-studio { grid-template-columns:1fr; }
+    .vss-group { margin-bottom:1.2rem; }
+    .vss-group:last-of-type { margin-bottom:0; }
+    .vss-group-label { font-family:var(--font-mono); font-weight:700; font-size:0.62rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--accent,#00B8A0); margin-bottom:0.7rem; }
+    .vss-cat { margin-bottom:0.75rem; }
+    .vss-cat:last-child { margin-bottom:0; }
     .vss-cat-head { display:flex; justify-content:space-between; gap:0.5rem; font-size:0.82rem; color:var(--text); margin-bottom:0.32rem; }
     .vss-cat-val { font-family:var(--font-mono); color:var(--text-subtle); }
     .vss-bar { height:6px; background:rgba(0,0,0,0.06); border-radius:3px; overflow:hidden; }
