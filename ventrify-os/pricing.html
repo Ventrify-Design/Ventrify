@@ -795,7 +795,7 @@
        ROI SECTION
        ============================================ */
     .roi-grid {
-      display:grid; grid-template-columns:repeat(3,1fr);
+      display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
       gap:1.5rem; margin-top:3rem;
     }
     .roi-card {
@@ -1100,7 +1100,7 @@
       <div style="text-align:center;max-width:640px;margin:0 auto 3rem;">
         <div class="s-label" style="justify-content:center;">Platform Licences</div>
         <h2 class="s-title s-title-shimmer">License the operating system.</h2>
-        <p class="s-sub" style="margin:0 auto;">Annual subscription. Scale tiers to your program volume. No per-engagement fees, ever.</p>
+        <p class="s-sub" style="margin:0 auto;">One annual licence, both products &mdash; run venture engagements <strong>and</strong> assess any venture. Scale tiers to your volume. No per-engagement fees, ever.</p>
       </div>
 
       <div class="tier-grid">
@@ -1112,8 +1112,9 @@
           <p class="tier-tag">For accelerators running a handful of ventures.</p>
           <ul class="tier-list">
             <li><span class="tier-dot"></span>1 Workspace operator seat</li>
-            <li><span class="tier-dot"></span>Up to 6 ventures / year</li>
-            <li><span class="tier-dot"></span>Every venture earns the full 70+ scope</li>
+            <li><span class="tier-dot"></span>Up to 6 venture builds / year</li>
+            <li><span class="tier-dot"></span>Every build earns the full 70+ scope</li>
+            <li><span class="tier-dot"></span><strong>Assess</strong> &mdash; unlimited venture assessments</li>
             <li><span class="tier-dot"></span>Self-serve &middot; community support</li>
           </ul>
           <a href="mailto:hello@ventrify.io?subject=Starter%20tier%20enquiry" class="btn btn-outline btn-sm tier-cta">Book a demo</a>
@@ -1127,7 +1128,8 @@
           <p class="tier-tag">For incubators running batches.</p>
           <ul class="tier-list">
             <li><span class="tier-dot"></span>Multiple Workspace operator seats</li>
-            <li><span class="tier-dot"></span>Cohort-sized program throughput</li>
+            <li><span class="tier-dot"></span>Cohort-sized build throughput</li>
+            <li><span class="tier-dot"></span><strong>Assess</strong> &mdash; unlimited venture assessments</li>
             <li><span class="tier-dot"></span>Embedded onboarding</li>
             <li><span class="tier-dot"></span>Dedicated success contact</li>
           </ul>
@@ -1142,6 +1144,7 @@
           <ul class="tier-list">
             <li><span class="tier-dot"></span>Unlimited Workspace seats</li>
             <li><span class="tier-dot"></span>White-label Workspace + custom domain</li>
+            <li><span class="tier-dot"></span><strong>Assess</strong> &mdash; unlimited venture assessments</li>
             <li><span class="tier-dot"></span>SLA &amp; embedded onboarding</li>
             <li><span class="tier-dot"></span>Procurement-ready &middot; custom config</li>
           </ul>
@@ -1150,7 +1153,7 @@
 
       </div>
 
-      <p style="font-size:0.92rem;color:var(--text-dark-muted);text-align:center;margin-top:2.5rem;max-width:680px;margin-left:auto;margin-right:auto;line-height:1.65;">Common to all tiers: <strong>no per-engagement fees, no SOWs per venture, no consumption pricing.</strong> The annual licence is the agreement. Every venture earns the full 70+ deliverable scope.</p>
+      <p style="font-size:0.92rem;color:var(--text-dark-muted);text-align:center;margin-top:2.5rem;max-width:680px;margin-left:auto;margin-right:auto;line-height:1.65;">Common to all tiers: <strong>no per-engagement fees, no SOWs per venture, no consumption pricing.</strong> The annual licence is the agreement. Every build earns the full 70+ deliverable scope &mdash; and you can run unlimited venture assessments.</p>
     </div>
   </section>
 
@@ -1163,7 +1166,7 @@
       <h2 class="s-title s-title-shimmer">What every program produces</h2>
       <p class="s-sub">70+ production-grade deliverables per venture across 12 categories. Mostly live &mdash; not PDFs. Every venture earns the same full scope, regardless of which licence tier the operator is on.</p>
 
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:3rem;">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.5rem;margin-top:3rem;">
 
         <!-- 1. The Studio — Layers icon -->
         <div style="background:#F5F5F7;border-radius:var(--radius-card);padding:2rem 1.75rem;text-align:center;" data-reveal data-delay="1">
@@ -1354,7 +1357,7 @@
   <section class="final-cta">
     <div class="cta-content" data-reveal>
       <div class="s-label-dark">Get Started</div>
-      <h2>License the platform.<br>Run programs that ship.</h2>
+      <h2>License the platform.<br>Build ventures, and assess them.</h2>
       <p class="cta-sub">A 30-minute demo, sized to your program volume. We&rsquo;ll walk through tier fit, onboarding, and outcomes from real ventures.</p>
       <div class="cta-buttons">
         <a href="mailto:hello@ventrify.io?subject=Ventrify%20OS%20demo%20request" class="btn btn-dark-primary btn-lg">Book a platform demo</a>
