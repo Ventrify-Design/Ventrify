@@ -507,13 +507,14 @@
         return `<div class="section">${head}<div class="card" style="text-align:center;padding:1.75rem;color:var(--text-muted);">${emptyCopy}</div></div>`;
       }
       const sg = (p.investabilitySuggestions && p.investabilitySuggestions.items) || [];
-      // On the assess page the composite/% headline lives in the §1 "The call" scoreboard,
-      // so suppress it here; build engagements (no Call) keep it.
+      // The scorecard renders its own self-contained panels (hero / breakdown /
+      // heatmap), so it sits directly in the section — no outer card wrapper.
+      // On the assess page the composite/% hero lives in the §1 "The call"
+      // scoreboard, so suppress the hero here; build engagements (no Call) keep it.
       return `<div class="section">${head}
-        <div class="card">
-          ${renderVSSScorecard(snap, { variant: 'operator', headline: !isAssess, esc: escBrief, metaText: `Auto-scored · ${snap.ratedCount || 0} of 35 signals rated` })}
-          ${renderStrengthenSuggestions(sg, { esc: escBrief })}
-        </div></div>`;
+        ${renderVSSScorecard(snap, { variant: 'operator', headline: !isAssess, esc: escBrief })}
+        ${sg.length ? `<div class="card" style="margin-top:1.25rem;">${renderStrengthenSuggestions(sg, { esc: escBrief })}</div>` : ''}
+      </div>`;
     }
 
     function dangerZoneHTML(p) {
