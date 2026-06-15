@@ -236,6 +236,23 @@
       background:rgba(0,0,0,0.04);
     }
     .nav-cta { display:flex; align-items:center; margin-left:4px; }
+    /* Platform dropdown */
+    .nav-dd { position:relative; }
+    .nav-dd-trigger { background:none; border:none; font:inherit; cursor:pointer; color:inherit; display:inline-flex; align-items:center; gap:5px; padding:0; }
+    .nav-dd-caret { font-size:0.62em; transition:transform .2s ease; opacity:0.7; }
+    .nav-dd:hover .nav-dd-caret { transform:rotate(180deg); }
+    .nav-dd-panel { position:absolute; top:calc(100% + 18px); left:50%; transform:translateX(-50%) translateY(-6px); width:340px; background:#fff; border-radius:16px; box-shadow:0 20px 50px rgba(0,0,0,0.16),0 0 0 1px rgba(0,0,0,0.05); padding:0.9rem; opacity:0; visibility:hidden; transition:opacity .18s ease, transform .18s ease; z-index:200; }
+    .nav-dd-panel::before { content:''; position:absolute; top:-18px; left:0; right:0; height:18px; }
+    .nav-dd:hover .nav-dd-panel, .nav-dd:focus-within .nav-dd-panel { opacity:1; visibility:visible; transform:translateX(-50%) translateY(0); }
+    .nav-dd-head { font-family:var(--font-mono); font-size:0.58rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#9aa0ab; padding:0.45rem 0.6rem 0.3rem; }
+    .nav-dd-jobs { display:grid; grid-template-columns:1fr 1fr; gap:0.35rem; margin-bottom:0.5rem; }
+    .nav-dd-job { display:flex; flex-direction:column; padding:0.65rem 0.7rem; border-radius:11px; text-decoration:none; transition:background .15s ease; }
+    .nav-dd-job:hover { background:#F5F5F7; }
+    .nav-dd-job-t { font-weight:600; font-size:0.95rem; color:var(--text-dark,#141414); }
+    .nav-dd-job-d { font-size:0.74rem; color:#888; margin-top:0.15rem; line-height:1.3; }
+    .nav-dd-infra { display:grid; grid-template-columns:1fr 1fr; gap:0.1rem; }
+    .nav-dd-infra a { padding:0.5rem 0.65rem; border-radius:9px; text-decoration:none; font-size:0.88rem; color:var(--text-dark,#141414); transition:background .15s ease; }
+    .nav-dd-infra a:hover { background:#F5F5F7; }
     .nav-cta .btn {
       background:var(--primary);
       color:#fff;
@@ -1762,10 +1779,23 @@
   <nav>
     <a href="index.html" class="logo">VENTRIFY <span class="os">OS</span></a>
     <div class="nav-links">
-      <a href="#build">Build</a>
-      <a href="assess.html">Assess</a>
-      <a href="the-workspace.html">Workspace</a>
-      <a href="agents.html">Agents</a>
+      <div class="nav-dd">
+        <button type="button" class="nav-dd-trigger">Platform <span class="nav-dd-caret" aria-hidden="true">&#9662;</span></button>
+        <div class="nav-dd-panel">
+          <div class="nav-dd-head">Two jobs, one Workspace</div>
+          <div class="nav-dd-jobs">
+            <a href="build.html" class="nav-dd-job"><span class="nav-dd-job-t">Build</span><span class="nav-dd-job-d">Run a venture, idea to launch</span></a>
+            <a href="assess.html" class="nav-dd-job"><span class="nav-dd-job-t">Assess</span><span class="nav-dd-job-d">Diligence a deck, score to memo</span></a>
+          </div>
+          <div class="nav-dd-head">How it works</div>
+          <div class="nav-dd-infra">
+            <a href="the-workspace.html">The Workspace</a>
+            <a href="agents.html">The Agents</a>
+            <a href="the-data-room.html">The Data Room</a>
+            <a href="system.html">System</a>
+          </div>
+        </div>
+      </div>
       <a href="showcase.html">Showcase</a>
       <a href="pricing.html">Pricing</a>
     </div>
@@ -1782,10 +1812,12 @@
 
   <!-- Mobile Menu -->
   <div class="mobile-menu">
-    <a href="#build" class="m-nav-link">Build</a>
+    <a href="build.html" class="m-nav-link">Build</a>
     <a href="assess.html" class="m-nav-link">Assess</a>
     <a href="the-workspace.html" class="m-nav-link">Workspace</a>
     <a href="agents.html" class="m-nav-link">Agents</a>
+    <a href="the-data-room.html" class="m-nav-link">Data Room</a>
+    <a href="system.html" class="m-nav-link">System</a>
     <a href="showcase.html" class="m-nav-link">Showcase</a>
     <a href="pricing.html" class="m-nav-link">Pricing</a>
     <div class="m-cta">
@@ -1856,950 +1888,142 @@
     </div>
   </section>
 
-  <!-- ═══════════════════════════════════════════
-       3. THE CONTRAST — Split comparison
-       ═══════════════════════════════════════════ -->
-  <section class="section" id="contrast">
-    <div class="container" data-reveal>
-      <div class="s-label">The Contrast</div>
-      <h2 class="s-title s-title-shimmer">One program manager.<br>Not a 10-person agency.</h2>
-      <div class="contrast-card">
-        <div class="contrast-side traditional">
-          <h3>Traditional Agency</h3>
-          <div class="contrast-row">
-            <span class="cr-label">Team size</span>
-            <span class="cr-value">8&ndash;12 people</span>
-          </div>
-          <div class="contrast-row">
-            <span class="cr-label">Timeline per venture</span>
-            <span class="cr-value">6&ndash;9 months</span>
-          </div>
-          <div class="contrast-row">
-            <span class="cr-label">Deliverables</span>
-            <span class="cr-value">3&ndash;5</span>
-          </div>
-          <div class="contrast-row">
-            <span class="cr-label">Cost per engagement</span>
-            <span class="cr-value">$80&ndash;200K</span>
-          </div>
-          <div class="contrast-row">
-            <span class="cr-label">Throughput</span>
-            <span class="cr-value">2&ndash;4 ventures / yr</span>
-          </div>
-        </div>
-        <div class="contrast-side os-side">
-          <h3>Ventrify OS</h3>
-          <div class="contrast-row">
-            <span class="cr-label">Team size</span>
-            <span class="cr-value">1 program manager + AI agents</span>
-          </div>
-          <div class="contrast-row">
-            <span class="cr-label">Timeline per venture</span>
-            <span class="cr-value">6&ndash;16 weeks</span>
-          </div>
-          <div class="contrast-row">
-            <span class="cr-label">Deliverables</span>
-            <span class="cr-value">70+</span>
-          </div>
-          <div class="contrast-row">
-            <span class="cr-label">Cost per engagement</span>
-            <span class="cr-value">Fixed annual licence</span>
-          </div>
-          <div class="contrast-row">
-            <span class="cr-label">Throughput</span>
-            <span class="cr-value">Up to 24+ ventures / yr</span>
-          </div>
-        </div>
-      </div>
-      <p class="contrast-punchline" data-reveal>Same outcome. 4x the speed. 20x the deliverables. 6x the throughput. One annual licence.</p>
-    </div>
-  </section>
 
   <!-- ═══════════════════════════════════════════
-       3.5 THE DATA ROOM — L1 / L2 / L3 architecture
+       BEAT 3 — BUILD
        ═══════════════════════════════════════════ -->
-  <section class="section" id="data-room">
+  <section class="section" id="build-beat">
     <div class="container" data-reveal>
-      <div class="s-label">The Data Room</div>
-      <h2 class="s-title s-title-shimmer">Founders don&rsquo;t read decks.<br>They resolve cards.</h2>
-      <p class="s-sub">Every program hub on Ventrify OS renders as a three-layer data room. The engagement gates on founders resolving questions, not on weeks of deck revisions. This is what makes 6&ndash;16 weeks credible.</p>
-
-      <div class="dr-grid" data-reveal>
-
-        <!-- L1 — Provocation Cards -->
-        <div class="dr-card dr-card-l1" data-reveal data-delay="1">
-          <div class="dr-layer-tag">L1 &mdash; Default view</div>
-          <h3 class="dr-card-title">Provocation Cards</h3>
-          <p class="dr-card-lede">5&ndash;7 strategic forks per hub. One question per card. Founder reads, comments inline, resolves.</p>
-
-          <div class="dr-sample-card">
-            <div class="dr-sample-tag">Card 03 &middot; Strategy</div>
-            <p class="dr-sample-q">The data says your real competitor isn&rsquo;t another fintech &mdash; it&rsquo;s Reddit. Do we build <em>for</em> that or <em>against</em> it?</p>
-            <div class="dr-sample-controls">
-              <span class="dr-chip dr-chip-agree">Agree</span>
-              <span class="dr-chip dr-chip-discuss">Let&rsquo;s discuss</span>
-              <span class="dr-chip dr-chip-text">Reply&hellip;</span>
-            </div>
-          </div>
-
-          <div class="dr-card-meta">
-            <span class="dr-dot dr-dot-on"></span>
-            <span>Always visible to the founder</span>
-          </div>
+      <div class="s-label" style="color:var(--primary);">Build</div>
+      <h2 class="s-title s-title-shimmer">Run a venture,<br>idea to launch.</h2>
+      <p class="s-sub">A full engagement, run by the agents and shaped with the founder &mdash; research, strategy, MVP, brand and an investor deck. 70+ deliverables, mostly live, not PDFs.</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:2.5rem;align-items:start;margin-top:2.75rem;">
+        <div style="display:flex;flex-direction:column;gap:1.25rem;">
+          
+        <div style="display:flex;gap:0.8rem;align-items:flex-start;">
+          <span style="flex:none;width:7px;height:7px;border-radius:50%;background:var(--primary);margin-top:0.55rem;"></span>
+          <div><div style="font-weight:600;font-size:1rem;color:var(--text-dark);margin-bottom:0.2rem;">The founder shapes it in their Studio</div><div style="font-size:0.92rem;color:var(--text-dark-muted);line-height:1.6;">They answer sharp, specific questions &mdash; not 40-page decks &mdash; and sign off the direction at each gate.</div></div>
         </div>
-
-        <!-- L2 — Evidence -->
-        <div class="dr-card dr-card-l2" data-reveal data-delay="2">
-          <div class="dr-layer-tag">L2 &mdash; Click &lsquo;See why&rsquo;</div>
-          <h3 class="dr-card-title">Evidence</h3>
-          <p class="dr-card-lede">The 2&ndash;3 charts, quotes, or numbers that drove each question. Surfaced on demand &mdash; not in the founder&rsquo;s face.</p>
-
-          <div class="dr-stack">
-            <div class="dr-stack-row">
-              <span class="dr-stack-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="12"/><line x1="12" y1="20" x2="12" y2="6"/><line x1="18" y1="20" x2="18" y2="14"/><line x1="3" y1="20" x2="21" y2="20"/></svg></span>
-              <span class="dr-stack-text">User-research: 41% engagement on community forums</span>
-            </div>
-            <div class="dr-stack-row">
-              <span class="dr-stack-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8v.5z"/></svg></span>
-              <span class="dr-stack-text">5 founder interviews flagged Reddit by name</span>
-            </div>
-            <div class="dr-stack-row">
-              <span class="dr-stack-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></span>
-              <span class="dr-stack-text">Competitor map: 0 incumbents claim the social wedge</span>
-            </div>
-          </div>
-
-          <div class="dr-card-meta">
-            <span class="dr-dot"></span>
-            <span>Collapsed by default</span>
-          </div>
+          
+        <div style="display:flex;gap:0.8rem;align-items:flex-start;">
+          <span style="flex:none;width:7px;height:7px;border-radius:50%;background:var(--primary);margin-top:0.55rem;"></span>
+          <div><div style="font-weight:600;font-size:1rem;color:var(--text-dark);margin-bottom:0.2rem;">Everything stays in lockstep</div><div style="font-size:0.92rem;color:var(--text-dark-muted);line-height:1.6;">Every output traces to cited research and stays consistent across the brand, the numbers and the build.</div></div>
         </div>
-
-        <!-- L3 — Full Research -->
-        <div class="dr-card dr-card-l3" data-reveal data-delay="3">
-          <div class="dr-layer-tag">L3 &mdash; &lsquo;Go deep&rsquo;</div>
-          <h3 class="dr-card-title">Full Research</h3>
-          <p class="dr-card-lede">The complete 3,000&ndash;8,000 word document per hub. What an agency would have shipped as a PDF. Here, the supporting reference &mdash; only if the founder wants the depth.</p>
-
-          <div class="dr-research-stack">
-            <div class="dr-research-line"></div>
-            <div class="dr-research-line dr-research-line-short"></div>
-            <div class="dr-research-line"></div>
-            <div class="dr-research-line"></div>
-            <div class="dr-research-line dr-research-line-short"></div>
-            <div class="dr-research-line"></div>
-            <div class="dr-research-line dr-research-line-medium"></div>
-            <div class="dr-research-fade"></div>
-          </div>
-
-          <div class="dr-card-meta">
-            <span class="dr-dot"></span>
-            <span>3,000&ndash;8,000 words, citation-attributed</span>
-          </div>
+          
+        <div style="display:flex;gap:0.8rem;align-items:flex-start;">
+          <span style="flex:none;width:7px;height:7px;border-radius:50%;background:var(--primary);margin-top:0.55rem;"></span>
+          <div><div style="font-weight:600;font-size:1rem;color:var(--text-dark);margin-bottom:0.2rem;">One operator, the leverage of a team</div><div style="font-size:0.92rem;color:var(--text-dark-muted);line-height:1.6;">A single operator runs the whole engagement &mdash; the output of a ten-person agency, without the headcount.</div></div>
         </div>
-
-      </div>
-
-      <!-- Sign-off loop -->
-      <div class="dr-signoff" data-reveal>
-        <div class="dr-signoff-eyebrow">The sign-off loop</div>
-        <div class="dr-signoff-chain">
-          <div class="dr-signoff-step">
-            <div class="dr-signoff-num">01</div>
-            <div class="dr-signoff-label">Cards resolved</div>
-          </div>
-          <div class="dr-signoff-arrow">&rarr;</div>
-          <div class="dr-signoff-step">
-            <div class="dr-signoff-num">02</div>
-            <div class="dr-signoff-label">L3 current against decisions</div>
-          </div>
-          <div class="dr-signoff-arrow">&rarr;</div>
-          <div class="dr-signoff-step">
-            <div class="dr-signoff-num">03</div>
-            <div class="dr-signoff-label">Gate sign-off auto-unlocks</div>
-          </div>
-          <div class="dr-signoff-arrow">&rarr;</div>
-          <div class="dr-signoff-step">
-            <div class="dr-signoff-num">04</div>
-            <div class="dr-signoff-label">Next phase begins</div>
-          </div>
+          <a href="build.html" class="btn btn-primary btn-lg" style="align-self:flex-start;margin-top:0.5rem;">Explore Build &rarr;</a>
         </div>
-        <p class="dr-signoff-foot">Permanent audit trail in git. Every comment, every &lsquo;won&rsquo;t fix&rsquo;, every sign-off &mdash; tracked forever.</p>
-      </div>
-
-      <div style="text-align:center;margin-top:3rem;" data-reveal>
-        <a href="the-data-room.html" class="btn btn-primary btn-lg">How the data room works &rarr;</a>
+        <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-card);padding:1.75rem;">
+          <div style="font-family:var(--font-mono);font-size:0.66rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-dark-muted);margin-bottom:1rem;">What ships, every venture</div>
+          <div style="display:flex;flex-wrap:wrap;gap:0.55rem;"><span style="font-size:0.82rem;color:var(--text-dark);background:#F5F5F7;border:1px solid rgba(0,0,0,0.05);padding:0.4rem 0.85rem;border-radius:980px;">Research</span><span style="font-size:0.82rem;color:var(--text-dark);background:#F5F5F7;border:1px solid rgba(0,0,0,0.05);padding:0.4rem 0.85rem;border-radius:980px;">Strategy</span><span style="font-size:0.82rem;color:var(--text-dark);background:#F5F5F7;border:1px solid rgba(0,0,0,0.05);padding:0.4rem 0.85rem;border-radius:980px;">MVP app</span><span style="font-size:0.82rem;color:var(--text-dark);background:#F5F5F7;border:1px solid rgba(0,0,0,0.05);padding:0.4rem 0.85rem;border-radius:980px;">Brand identity</span><span style="font-size:0.82rem;color:var(--text-dark);background:#F5F5F7;border:1px solid rgba(0,0,0,0.05);padding:0.4rem 0.85rem;border-radius:980px;">Design system</span><span style="font-size:0.82rem;color:var(--text-dark);background:#F5F5F7;border:1px solid rgba(0,0,0,0.05);padding:0.4rem 0.85rem;border-radius:980px;">Marketing site</span><span style="font-size:0.82rem;color:var(--text-dark);background:#F5F5F7;border:1px solid rgba(0,0,0,0.05);padding:0.4rem 0.85rem;border-radius:980px;">Investor deck</span><span style="font-size:0.82rem;color:var(--text-dark);background:#F5F5F7;border:1px solid rgba(0,0,0,0.05);padding:0.4rem 0.85rem;border-radius:980px;">Brand photos</span><span style="font-size:0.82rem;color:var(--text-dark);background:#F5F5F7;border:1px solid rgba(0,0,0,0.05);padding:0.4rem 0.85rem;border-radius:980px;">Social + content</span></div>
+          <div style="margin-top:1.25rem;font-size:0.85rem;color:var(--text-dark-muted);line-height:1.6;">&hellip; and the rest of the 70+ deliverable scope &mdash; all built in one Workspace.</div>
+        </div>
       </div>
     </div>
   </section>
 
   <!-- ═══════════════════════════════════════════
-       3.7 THE WORKSPACE — operator command center
+       BEAT 4 — ASSESS
        ═══════════════════════════════════════════ -->
-  <section class="section-alt" id="workspace">
+  <section class="section-alt" id="assess-beat">
     <div class="container" data-reveal>
-      <div class="s-label">The Workspace</div>
-      <h2 class="s-title s-title-shimmer">Where your operators<br>run the whole portfolio.</h2>
-      <p class="s-sub">Founders get their portal. Operators get the Workspace &mdash; one screen showing every program your team is running, every gate that needs closing, every founder who&rsquo;s gone quiet. The surface that makes annual licensing actually work.</p>
-
-      <div style="margin-top:3rem;max-width:1080px;margin-left:auto;margin-right:auto;background:linear-gradient(135deg,#F0F2F7 0%,#E8ECF4 100%);border-radius:var(--radius-card);padding:12px;box-shadow:0 24px 48px rgba(0,0,0,0.08),0 4px 12px rgba(0,0,0,0.04),0 0 0 1px rgba(0,0,0,0.04);" data-reveal>
+      <div class="s-label" style="color:#00A368;">Assess</div>
+      <h2 class="s-title s-title-shimmer">Assess a venture,<br>in hours not weeks.</h2>
+      <p class="s-sub">Upload a pitch deck and data room; get a decision in hours &mdash; deep web research, a competitive benchmark, an investability score and a deal memo. Every claim traced to a cited source.</p>
+      
+      <div style="margin-top:2.5rem;background:linear-gradient(135deg,#F0F2F7 0%,#E8ECF4 100%);border-radius:var(--radius-card);padding:12px;box-shadow:0 24px 48px rgba(0,0,0,0.08),0 4px 12px rgba(0,0,0,0.04),0 0 0 1px rgba(0,0,0,0.04);" data-reveal>
         <div style="display:flex;align-items:center;gap:6px;padding:0 4px 10px;">
           <span style="width:10px;height:10px;border-radius:50%;background:#FF5F57;"></span>
           <span style="width:10px;height:10px;border-radius:50%;background:#FEBC2E;"></span>
           <span style="width:10px;height:10px;border-radius:50%;background:#28C840;"></span>
-          <span style="flex:1;margin-left:10px;padding:4px 12px;background:rgba(255,255,255,0.7);border-radius:var(--radius-pill);font-family:var(--font-mono);font-size:0.72rem;color:var(--text-dark-muted);letter-spacing:0.02em;">ventrify.io/workspace/dashboard</span>
+          <span style="flex:1;margin-left:10px;padding:4px 12px;background:rgba(255,255,255,0.7);border-radius:var(--radius-pill);font-family:var(--font-mono);font-size:0.72rem;color:var(--text-dark-muted);">ventrify.io/workspace/assessment</span>
         </div>
-        <div style="position:relative;max-height:520px;overflow:hidden;border-radius:8px;background:#fff;">
-          <img src="workspace/assets/screenshots/dashboard.png" alt="Ventrify OS Workspace — portfolio dashboard" style="width:100%;height:auto;display:block;background:#fff;">
+        <div style="position:relative;max-height:540px;overflow:hidden;border-radius:8px;background:#fff;">
+          <img src="assets/assess/verdict.png" alt="A Ventrify OS assessment verdict — recommendation, conviction, investability score and thesis" style="width:100%;height:auto;display:block;background:#fff;">
           <div style="position:absolute;bottom:0;left:0;right:0;height:120px;background:linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.7) 65%, rgba(255,255,255,0.97) 100%);pointer-events:none;"></div>
         </div>
       </div>
-
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.5rem;margin-top:3rem;">
-        <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.04);border-radius:var(--radius-card);padding:1.75rem;" data-reveal data-delay="1">
-          <div style="font-family:var(--font-mono);font-size:0.7rem;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.6rem;">Portfolio view</div>
-          <h3 style="font-size:1.1rem;font-weight:600;letter-spacing:-0.015em;margin-bottom:0.5rem;color:var(--text-dark);">Every program at a glance</h3>
-          <p style="font-size:0.9rem;color:var(--text-dark-muted);line-height:1.6;">Phase, gate, health, last activity, card resolution &mdash; one card per venture. Filter by phase, health, or operator.</p>
-        </div>
-        <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.04);border-radius:var(--radius-card);padding:1.75rem;" data-reveal data-delay="2">
-          <div style="font-family:var(--font-mono);font-size:0.7rem;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.6rem;">Action queue</div>
-          <h3 style="font-size:1.1rem;font-weight:600;letter-spacing:-0.015em;margin-bottom:0.5rem;color:var(--text-dark);">Your work this week</h3>
-          <p style="font-size:0.9rem;color:var(--text-dark-muted);line-height:1.6;">Gates ready to close. Cards awaiting your review. Stuck founders. Aggregated across every program your team runs.</p>
-        </div>
-        <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.04);border-radius:var(--radius-card);padding:1.75rem;" data-reveal data-delay="3">
-          <div style="font-family:var(--font-mono);font-size:0.7rem;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.6rem;">Drill-down</div>
-          <h3 style="font-size:1.1rem;font-weight:600;letter-spacing:-0.015em;margin-bottom:0.5rem;color:var(--text-dark);">Per-program detail</h3>
-          <p style="font-size:0.9rem;color:var(--text-dark-muted);line-height:1.6;">7 hubs per program, status-coded. Timeline of agent runs and founder actions. One click to the the Studio view.</p>
-        </div>
-      </div>
-
-      <div style="text-align:center;margin-top:3rem;" data-reveal>
-        <a href="the-workspace.html" class="btn btn-primary btn-lg">Tour the Workspace &rarr;</a>
+      <div style="text-align:center;margin-top:2.5rem;">
+        <a href="assess.html" class="btn btn-primary btn-lg">Explore Assess &rarr;</a>
       </div>
     </div>
   </section>
 
   <!-- ═══════════════════════════════════════════
-       4. HOW IT WORKS — 3 Steps
+       BEAT 5 — ONE WORKSPACE (shared infra)
        ═══════════════════════════════════════════ -->
-  <section class="section" id="system">
+  <section class="section" id="workspace">
     <div class="container" data-reveal>
       <div class="s-label">How It Works</div>
-      <h2 class="s-title s-title-shimmer">Three steps. One platform.<br>Every venture ships.</h2>
-      <div class="steps-container">
-
-        <!-- Step 1 -->
-        <div class="step-row" data-reveal data-delay="1">
-          <div class="step-text">
-            <div class="step-number">01</div>
-            <h3>Spin up the program</h3>
-            <p>Your program manager signs in, names the engagement, picks a tier &mdash; and <strong>within sixty seconds</strong> the workspace is provisioned. Engagement repo created. 47 specialist agents armed. The Studio access codes generated. Intake form spun up. <code>workflow-orchestrator</code> primed to surface what fires next. The platform configures itself around the brief.</p>
-          </div>
-          <div class="code-block">
-            <div class="code-block-bar">
-              <div class="code-block-dot"></div>
-              <div class="code-block-dot"></div>
-              <div class="code-block-dot"></div>
-            </div>
-            <div class="code-block-content">
-<span class="dir">/[client]-venture/</span>
-<span class="file">&boxv;&boxh;&boxh; CLAUDE.md</span>          <span class="comment">&larr; 4,242 lines</span>
-<span class="file">&boxv;&boxh;&boxh; brief.md</span>           <span class="comment">&larr; Client intake</span>
-<span class="dir">&boxv;&boxh;&boxh; /research/</span>         <span class="comment">&larr; 7 documents</span>
-<span class="dir">&boxv;&boxh;&boxh; /define/</span>           <span class="comment">&larr; 7 documents</span>
-<span class="dir">&boxv;&boxh;&boxh; /design/</span>           <span class="comment">&larr; Component specs</span>
-<span class="dir">&boxv;&boxh;&boxh; /decks/</span>            <span class="comment">&larr; Investor PDF + archives</span>
-<span class="dir">&boxv;&boxh;&boxh; /marketing/</span>        <span class="comment">&larr; Social + blog</span>
-<span class="dir">&boxv;&boxh;&boxh; /product/</span>          <span class="comment">&larr; MVP app code</span>
-<span class="dir">&boxv;&boxh;&boxh; /website/</span>          <span class="comment">&larr; Next.js site</span>
-<span class="dir">&boxv;&boxh;&boxh; /design-system/</span>    <span class="comment">&larr; 33+ page DS</span>
-<span class="dir">&boxv;&boxh;&boxh; /figma-plugins/</span>    <span class="comment">&larr; 3 plugins</span>
-<span class="dir">&boxv;&boxh;&boxh; /screens/</span>          <span class="comment">&larr; Screen compositor</span>
-<span class="dir">&boxv;&boxh;&boxh; /tools/</span>            <span class="comment">&larr; PDF generators</span>
-<span class="dir">&boxv;&boxh;&boxh; /qa/</span>               <span class="comment">&larr; 3 QA validators</span>
-<span class="dir">&boxv;&boxh;&boxh; /brand/imagery/</span>    <span class="comment">&larr; 37 auto-sourced photos</span>
-<span class="dir">&boxv;&boxh;&boxh; /.claude/agents/</span>   <span class="comment">&larr; 47 agents · 7 domains</span>
-<span class="dir">&boxdr;&boxh;&boxh; /.claude/memory/</span>   <span class="comment">&larr; Persistent memory</span>
-            </div>
-          </div>
+      <h2 class="s-title s-title-shimmer">Both jobs.<br>One Workspace.</h2>
+      <p class="s-sub">Build and Assess are two jobs in the same platform. The agents do the work, the data room keeps it cited, and your operators run everything &mdash; every venture and every deal &mdash; from one screen.</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.5rem;margin-top:3rem;">
+        
+        <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-card);padding:1.6rem 1.5rem;">
+          <div style="font-family:var(--font-mono);font-size:0.66rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.55rem;">The Workspace</div>
+          <h3 style="font-size:1.1rem;font-weight:600;letter-spacing:-0.015em;margin:0 0 0.5rem;color:var(--text-dark);">One screen for the portfolio</h3>
+          <p style="font-size:0.9rem;color:var(--text-dark-muted);line-height:1.6;margin:0;">Every venture being built and every deal being assessed, with the work that needs you next. The operator&rsquo;s command center.</p>
         </div>
-
-        <!-- Step 2 -->
-        <div class="step-row" data-reveal data-delay="2">
-          <div class="step-text">
-            <div class="step-number">02</div>
-            <h3>Agents run the workflow</h3>
-            <p>Five phases fire in sequence. Discover, Define, Financials (2.5), Design, Develop, Deliver. AI agents execute. Your program manager orchestrates. Three formal gates lock scope &mdash; Gate 1, Gate 2, Gate 2.5. Parallel workstreams maximise speed. QA validators check every deliverable before it ships.</p>
-          </div>
-          <div class="phase-list">
-            <div class="phase-list-item">
-              <span class="phase-list-num">01</span>
-              <span class="phase-list-name">Discover</span>
-              <span class="phase-list-weeks">Wks 1&ndash;2</span>
-            </div>
-            <div class="phase-list-item">
-              <span class="phase-list-num">02</span>
-              <span class="phase-list-name">Define</span>
-              <span class="phase-list-weeks">Wks 2&ndash;4</span>
-            </div>
-            <div class="phase-list-item">
-              <span class="phase-list-num">03</span>
-              <span class="phase-list-name">Design</span>
-              <span class="phase-list-weeks">Wks 3&ndash;8</span>
-            </div>
-            <div class="phase-list-item">
-              <span class="phase-list-num">04</span>
-              <span class="phase-list-name">Develop</span>
-              <span class="phase-list-weeks">Wks 6&ndash;14</span>
-            </div>
-            <div class="phase-list-item">
-              <span class="phase-list-num">05</span>
-              <span class="phase-list-name">Deliver</span>
-              <span class="phase-list-weeks">Wks 10&ndash;16</span>
-            </div>
-          </div>
+        
+        <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-card);padding:1.6rem 1.5rem;">
+          <div style="font-family:var(--font-mono);font-size:0.66rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.55rem;">The Agents</div>
+          <h3 style="font-size:1.1rem;font-weight:600;letter-spacing:-0.015em;margin:0 0 0.5rem;color:var(--text-dark);">A fleet of specialists</h3>
+          <p style="font-size:0.9rem;color:var(--text-dark-muted);line-height:1.6;margin:0;">Specialist agents that research, build and check &mdash; so one person ships the work of a whole team, to a consistent standard.</p>
         </div>
-
-        <!-- Step 3 -->
-        <div class="step-row" data-reveal data-delay="3">
-          <div class="step-text">
-            <div class="step-number">03</div>
-            <h3>Every venture ships</h3>
-            <p>70+ production-grade deliverables per venture. The Studio with 7 live hubs, MVP app, 9-page marketing website, per-engagement design system, 37 brand photos, social content, promo video, investor deck. Branded for the founder. Owned by your program.</p>
-          </div>
-          <div class="mini-deliv-grid">
-            <div class="mini-deliv">
-              <span class="mini-deliv-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 L21 8 L12 13 L3 8 Z"/><path d="M3 12 L12 17 L21 12"/><path d="M3 16 L12 21 L21 16" opacity="0.55"/></svg></span>
-              The Studio (7 hubs)
-            </div>
-            <div class="mini-deliv">
-              <span class="mini-deliv-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><line x1="11" y1="18" x2="13" y2="18"/></svg></span>
-              MVP App
-            </div>
-            <div class="mini-deliv">
-              <span class="mini-deliv-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.8"><rect x="3.5" y="3.5" width="7" height="7" rx="1.2"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.2"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.2"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.2" fill="#FFFFFF"/></svg></span>
-              Design System Site
-            </div>
-            <div class="mini-deliv">
-              <span class="mini-deliv-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="15" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/></svg></span>
-              Marketing Website
-            </div>
-            <div class="mini-deliv">
-              <span class="mini-deliv-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2.5 L6 2.5 C5 2.5 4 3.5 4 4.5 L4 19.5 C4 20.5 5 21.5 6 21.5 L18 21.5 C19 21.5 20 20.5 20 19.5 L20 8.5 Z"/><polyline points="14 2.5 14 8.5 20 8.5"/></svg></span>
-              Investor Pitch Deck
-            </div>
-            <div class="mini-deliv">
-              <span class="mini-deliv-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2.2"/><circle cx="9" cy="9" r="1.6"/><polyline points="21 15 16 10 5 21"/></svg></span>
-              37 Brand Photos
-            </div>
-            <div class="mini-deliv">
-              <span class="mini-deliv-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="17" rx="2"/><line x1="3" y1="9.5" x2="21" y2="9.5"/><line x1="8" y1="2.5" x2="8" y2="6.5"/><line x1="16" y1="2.5" x2="16" y2="6.5"/></svg></span>
-              Social + Content Pack
-            </div>
-            <div class="mini-deliv">
-              <span class="mini-deliv-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><polygon points="10.5 8.5 16 12 10.5 15.5" fill="#FFFFFF" stroke="none"/></svg></span>
-              Promo Video
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══════════════════════════════════════════
-       THE MOAT — 5 interlinking spines
-       ═══════════════════════════════════════════ -->
-  <section class="section-alt" id="moat">
-    <div class="container" data-reveal>
-      <div class="s-label">The Moat</div>
-      <h2 class="s-title s-title-shimmer">Why this compounds.<br>Five spines that bind the fleet.</h2>
-      <p class="s-sub" style="max-width:780px;margin:0 auto 3rem;text-align:center;">The agent fleet only behaves as one orchestra because five interlinking spines run through every workstream. They keep the lexicon, the brand, the numbers, the visuals, and the design&hairsp;&harr;&hairsp;dev handoff in lockstep &mdash; so each agent compounds the next.</p>
-
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;max-width:1200px;margin:0 auto;">
-
-        <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md);padding:1.5rem;position:relative;">
-          <div style="font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.6rem;">Spine 01</div>
-          <h3 style="font-size:1.1rem;font-weight:600;letter-spacing:-0.01em;margin-bottom:0.5rem;">Lexicon</h3>
-          <p style="font-size:0.88rem;line-height:1.6;color:var(--text-dark-muted);margin-bottom:0.75rem;">A canonical vocabulary &amp; voice-principle file, bound by <code style="font-size:0.78rem;">founder-lexicon-keeper</code>. Every writer reads it before opening their mouth. Output across blog, social, deck, app, pitch is recognisably one voice.</p>
-          <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-dark-muted);">Prevents &middot; voice drift across content surfaces</div>
-        </div>
-
-        <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md);padding:1.5rem;position:relative;">
-          <div style="font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.6rem;">Spine 02</div>
-          <h3 style="font-size:1.1rem;font-weight:600;letter-spacing:-0.01em;margin-bottom:0.5rem;">Brand</h3>
-          <p style="font-size:0.88rem;line-height:1.6;color:var(--text-dark-muted);margin-bottom:0.75rem;">A single <code style="font-size:0.78rem;">tokens.json</code> authored by <code style="font-size:0.78rem;">brand-designer</code> drives app code, marketing CSS, Figma plugins, App Store screenshots, promo video colour grade. One source, every surface.</p>
-          <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-dark-muted);">Prevents &middot; visual fragmentation between teams</div>
-        </div>
-
-        <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md);padding:1.5rem;position:relative;">
-          <div style="font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.6rem;">Spine 03</div>
-          <h3 style="font-size:1.1rem;font-weight:600;letter-spacing:-0.01em;margin-bottom:0.5rem;">Financial</h3>
-          <p style="font-size:0.88rem;line-height:1.6;color:var(--text-dark-muted);margin-bottom:0.75rem;">Cap-table, model and pitch numbers cross-referenced by <code style="font-size:0.78rem;">consistency-checker</code> at every gate. The &ldquo;$240k deck vs $260k model&rdquo; class of error is structurally impossible to ship.</p>
-          <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-dark-muted);">Prevents &middot; investor-facing number mismatches</div>
-        </div>
-
-        <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md);padding:1.5rem;position:relative;">
-          <div style="font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.6rem;">Spine 04</div>
-          <h3 style="font-size:1.1rem;font-weight:600;letter-spacing:-0.01em;margin-bottom:0.5rem;">Visual</h3>
-          <p style="font-size:0.88rem;line-height:1.6;color:var(--text-dark-muted);margin-bottom:0.75rem;">One capture directory chosen by <code style="font-size:0.78rem;">screenshot-cinematographer</code> feeds the marketing site, investor deck, App Store, social promos and product video. The hero shot is the same hero shot everywhere.</p>
-          <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-dark-muted);">Prevents &middot; mismatched screens across launch surfaces</div>
-        </div>
-
-        <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md);padding:1.5rem;position:relative;">
-          <div style="font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.6rem;">Spine 05</div>
-          <h3 style="font-size:1.1rem;font-weight:600;letter-spacing:-0.01em;margin-bottom:0.5rem;">Designer &harr; Dev</h3>
-          <p style="font-size:0.88rem;line-height:1.6;color:var(--text-dark-muted);margin-bottom:0.75rem;">Figma artboards and shipped components remain bound through token sync, contract-tested handoff and visual-diff gates. The handoff that breaks every other studio runs deterministically here.</p>
-          <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-dark-muted);">Prevents &middot; design&hairsp;&harr;&hairsp;code divergence in flight</div>
-        </div>
-
-      </div>
-
-      <p style="text-align:center;margin-top:2.5rem;font-size:0.95rem;color:var(--text-dark-muted);max-width:680px;margin-left:auto;margin-right:auto;font-style:italic;" data-reveal>Pull any one of these spines and the fleet drifts. Together, they&rsquo;re the structural reason a single operator can ship the work of a 10-person studio at the quality of a 10-person studio.</p>
-    </div>
-  </section>
-
-  <!-- ═══════════════════════════════════════════
-       OPERATOR ECONOMICS — Buyer-economics close
-       ═══════════════════════════════════════════ -->
-  <section class="proof-section" id="economics">
-    <div class="container" data-reveal>
-      <div class="s-label">Operator Economics</div>
-      <h2 class="s-title s-title-shimmer">Same headcount.<br>Six times the throughput.</h2>
-      <div class="proof-narrative">
-        <div class="proof-text">
-          <p>A traditional venture studio gets 3&ndash;4 ventures a year per program manager &mdash; each one costing $400&ndash;600K to ship. On Ventrify OS Enterprise, <span style="color:var(--text-dark);font-weight:600;">one program manager runs 15&ndash;20 ventures a year</span>. The marginal cost per venture drops from ~$700K to ~$30K of program-manager attention.</p>
-          <p class="proof-punchline">16% gross margin &rarr; 70% gross margin. Same team. Same craft. Different economics.</p>
-          <p style="font-size:0.88rem;color:var(--text-dark-muted);margin-top:1.25rem;font-style:italic;">Predictable annual licence. No per-engagement fees. The buyer can model per-venture cost before a single program kicks off.</p>
-          <div style="margin-top:1.75rem;display:flex;gap:12px;flex-wrap:wrap;">
-            <a href="pricing.html" class="btn btn-outline btn-sm">See pricing</a>
-            <a href="mailto:hello@ventrify.io?subject=Ventrify%20OS%20demo%20request" class="btn btn-primary btn-sm">Book a demo</a>
-          </div>
-        </div>
-        <div class="proof-stats-grid">
-          <div class="proof-stat-card" data-reveal data-delay="1">
-            <div class="ps-val">15&ndash;20</div>
-            <div class="ps-lbl">Ventures / yr per program manager</div>
-          </div>
-          <div class="proof-stat-card" data-reveal data-delay="2">
-            <div class="ps-val">~$30K</div>
-            <div class="ps-lbl">Marginal cost per venture (was ~$700K)</div>
-          </div>
-          <div class="proof-stat-card" data-reveal data-delay="3">
-            <div class="ps-val">16% &rarr; 70%</div>
-            <div class="ps-lbl">Gross margin shift</div>
-          </div>
-          <div class="proof-stat-card" data-reveal data-delay="4">
-            <div class="ps-val">6&ndash;16</div>
-            <div class="ps-lbl">Weeks idea to launch</div>
-          </div>
+        
+        <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-card);padding:1.6rem 1.5rem;">
+          <div style="font-family:var(--font-mono);font-size:0.66rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.55rem;">The Data Room</div>
+          <h3 style="font-size:1.1rem;font-weight:600;letter-spacing:-0.015em;margin:0 0 0.5rem;color:var(--text-dark);">Cited, never asserted</h3>
+          <p style="font-size:0.9rem;color:var(--text-dark-muted);line-height:1.6;margin:0;">Every output traces back to a source. Founders answer questions; investors drill into the evidence behind the score.</p>
         </div>
       </div>
-    </div>
-  </section>
-
-  <!-- ═══════════════════════════════════════════
-       5. FULL DELIVERABLES — Expandable
-       ═══════════════════════════════════════════ -->
-  <section class="section deliv-section" id="deliverables">
-    <div class="container" data-reveal>
-      <div class="s-label">What Ships</div>
-      <h2 class="s-title s-title-shimmer">70+ deliverables. 12 categories.<br>Every venture earns the full scope.</h2>
-      <p class="s-sub" style="max-width:760px;">Mostly live &mdash; not PDFs. Each venture ships seven portal hubs as three-layer data rooms, a per-venture design system site, a working MVP investors can demo on day one, and a tight set of PDFs only for what genuinely needs to be a file.</p>
-      <p class="deliv-teaser">
-        <span>7 Portal hubs</span> &middot;
-        <span>DS site (24 components)</span> &middot;
-        <span>MVP (iOS + Android)</span> &middot;
-        <span>Marketing site (9 pages)</span> &middot;
-        <span>37 brand photos</span> &middot;
-        <span>Investor deck (PDF)</span> &middot;
-        <span>SOW + contracts (PDF)</span>
-      </p>
-
-      <details class="deliv-details">
-        <summary>View the complete deliverables list</summary>
-        <div class="deliv-details-content">
-
-          <!-- 1. The Studio — 7 Hubs -->
-          <div class="deliv-category">
-            <div class="deliv-category-header">The Studio &mdash; 7 Live Data Room Hubs</div>
-            <p style="font-size:0.88rem;color:var(--text-dark-muted);margin:-0.5rem 0 1rem;font-style:italic;">The data room every founder lives inside the engagement. Each hub renders as L1 Provocation Cards &middot; L2 Evidence &middot; L3 Full Research.</p>
-            <div class="deliv-grid">
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Research Hub</h4><p>5&ndash;7 Provocation Cards + 3,000&ndash;8,000-word L3 research</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Vision Hub</h4><p>Personas, MVP, IA, journeys &middot; signoff at Gate 2</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Strategy Hub</h4><p>Tone of voice, social strategy, 30-day calendar</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Financials Hub</h4><p>11 financial files with embedded charts &middot; signoff at Gate 2.5</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Marketing Launch Hub</h4><p>Operational hub for launch coordination</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Video Hub</h4><p>Video brief + production assets (Venture Pro)</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Blog Hub</h4><p>Blog content + promo posts</p></div></div>
-            </div>
-          </div>
-
-          <!-- 2. Underlying Research — L3 documents -->
-          <div class="deliv-category">
-            <div class="deliv-category-header">Underlying Research &amp; Definition &mdash; 24 Documents</div>
-            <p style="font-size:0.88rem;color:var(--text-dark-muted);margin:-0.5rem 0 1rem;font-style:italic;">The fully-cited L3 layer behind every Provocation Card. Source-verified by the <code style="font-family:var(--font-mono);font-size:0.85em;background:rgba(var(--primary-rgb),0.07);padding:1px 6px;border-radius:5px;color:var(--primary);">source-verifier</code> agent.</p>
-            <div class="deliv-grid">
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Market Analysis</h4><p>TAM/SAM/SOM sizing, market trends, growth vectors</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Competitor Analysis</h4><p>Feature matrices, positioning gaps, pricing benchmarks</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>User Insights</h4><p>Pain points, motivations, behavioural patterns</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>SWOT &amp; Opportunities</h4><p>Strategic positioning + whitespace analysis</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Unit Economics</h4><p>CAC, LTV, margins, break-even projections</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Partnerships</h4><p>Strategic partnership mapping and outreach framework</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Personas, Vision, MVP Features</h4><p>The product foundation that prevents scope creep</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Tech Stack, Journeys, Roadmap, IA</h4><p>40&ndash;65 screens mapped by the <code style="font-family:var(--font-mono);font-size:0.85em;">information-architect</code> agent</p></div></div>
-            </div>
-          </div>
-
-          <!-- 3. Financials Hub — Phase 2.5 -->
-          <div class="deliv-category">
-            <div class="deliv-category-header">Financials &mdash; 11 Files (Phase 2.5)</div>
-            <p style="font-size:0.88rem;color:var(--text-dark-muted);margin:-0.5rem 0 1rem;font-style:italic;">Generated by the <code style="font-family:var(--font-mono);font-size:0.85em;background:rgba(var(--primary-rgb),0.07);padding:1px 6px;border-radius:5px;color:var(--primary);">financial-modeler</code> &rarr; <code style="font-family:var(--font-mono);font-size:0.85em;background:rgba(var(--primary-rgb),0.07);padding:1px 6px;border-radius:5px;color:var(--primary);">investor-readiness-reviewer</code> &rarr; <code style="font-family:var(--font-mono);font-size:0.85em;background:rgba(var(--primary-rgb),0.07);padding:1px 6px;border-radius:5px;color:var(--primary);">scope-loop-reviewer</code> sequence.</p>
-            <div class="deliv-grid">
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Build Costs &amp; OpEx</h4><p>Project costs + ongoing operational spend</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Revenue Model</h4><p>Pricing tiers, unit economics, repeatability</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Cash Flow</h4><p>Embedded charts, monthly projections, runway</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Marketing Budget</h4><p>Channel-by-channel spend plan</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Hiring Plan</h4><p>Role-by-role timeline and burn modelling</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Sensitivity Analysis</h4><p>What breaks at what threshold &mdash; surfaced as cards</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Funding Ask &amp; Valuation</h4><p>Recommended raise, range, dilution, red flags</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Scope-Change Recommendations</h4><p>Looped back into Research and Define before SOW</p></div></div>
-            </div>
-          </div>
-
-          <!-- 4. Design System Site -->
-          <div class="deliv-category">
-            <div class="deliv-category-header">Design System Site &mdash; Per Engagement</div>
-            <p style="font-size:0.88rem;color:var(--text-dark-muted);margin:-0.5rem 0 1rem;font-style:italic;">A live design-system site per venture &mdash; built with the founder, not handed off as a PDF.</p>
-            <div class="deliv-grid">
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>24 Components</h4><p>Live previews, variants, tokens, usage rules</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>8 Lockups</h4><p>Component compositions (Timestamp, Stat, etc.)</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Design Tokens</h4><p>Colours, typography, spacing, icons, elevation</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Personas page</h4><p>Canonical persona cards rendered from JSON</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>User Stories &amp; Flows</h4><p>MoSCoW grid, decision-point flow cards</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Wireframes</h4><p>iPhone-bezel frames + per-screen specs (replaces the old wireframe PDF)</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Accessibility</h4><p>WCAG 2.1 AA compliance documentation</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Tone of Voice &amp; UI Copy</h4><p>Brand voice + UI copy patterns</p></div></div>
-            </div>
-          </div>
-
-          <!-- 5. Product — built assets -->
-          <div class="deliv-category">
-            <div class="deliv-category-header">Product &mdash; Built Assets</div>
-            <p style="font-size:0.88rem;color:var(--text-dark-muted);margin:-0.5rem 0 1rem;font-style:italic;">The things the founder actually launches. Every MVP ships with <code style="font-family:var(--font-mono);font-size:0.85em;background:rgba(var(--primary-rgb),0.07);padding:1px 6px;border-radius:5px;color:var(--primary);">DEMO_MODE</code> &mdash; investor-demo-ready on day one.</p>
-            <div class="deliv-grid">
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>MVP App</h4><p>iOS + Android (Expo + React Native). DEMO_MODE built in.</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Marketing Website</h4><p>Next.js, 9 pages, SEO + analytics, brand-aligned</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>3 Figma Plugins</h4><p>Variables, components, screens &mdash; populate the founder&rsquo;s Figma file</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>3 GitHub Repos</h4><p>App, marketing, DS site &mdash; transferred at handoff</p></div></div>
-            </div>
-          </div>
-
-          <!-- 6. Marketing & Content -->
-          <div class="deliv-category">
-            <div class="deliv-category-header">Marketing &amp; Content &mdash; 8 Assets</div>
-            <p style="font-size:0.88rem;color:var(--text-dark-muted);margin:-0.5rem 0 1rem;font-style:italic;">Launch-day ready on day one &mdash; not promised &ldquo;later.&rdquo;</p>
-            <div class="deliv-grid">
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Tone of Voice</h4><p>Brand voice guidelines &middot; audited by <code style="font-family:var(--font-mono);font-size:0.85em;">copy-reviewer</code></p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Social Strategy</h4><p>Platform-specific strategy and content pillars</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>30-day Content Calendar</h4><p>Publishing schedule across channels</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>20 Social Posts</h4><p>Platform-ready copy + CTAs</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>5 Blog Posts</h4><p>SEO-optimised long-form content</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Social Graphics</h4><p>20 branded PNGs for campaigns</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Promo Video</h4><p>Automated 60&ndash;65s branded promo &middot; <code style="font-family:var(--font-mono);font-size:0.85em;">video-producer</code></p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>37 Brand Photos</h4><p>Auto-sourced + treated to the venture&rsquo;s industry</p></div></div>
-            </div>
-          </div>
-
-          <!-- 7. PDFs — only what needs to be a file -->
-          <div class="deliv-category">
-            <div class="deliv-category-header">PDFs &mdash; Sent as Files</div>
-            <p style="font-size:0.88rem;color:var(--text-dark-muted);margin:-0.5rem 0 1rem;font-style:italic;">The targeted set of deliverables that genuinely need to be a file &mdash; for investors, legal, or hand-off.</p>
-            <div class="deliv-grid">
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Investor Pitch Deck</h4><p>The one deck investors actually want as a file</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>SOW</h4><p>Statement of Work &middot; signed legal document</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Welcome Pack</h4><p>Ventrify-branded onboarding artefact</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Marketing Launch Pack</h4><p>Comprehensive launch reference</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Video Production Brief</h4><p>Hand-off to video production (Venture Pro)</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Blog Content Pack</h4><p>Reference for blog publishing</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4>Invoices</h4><p>Milestone-linked, sent to the founder</p></div></div>
-            </div>
-          </div>
-
-          <!-- 8. 47 Specialist Agents -->
-          <div class="deliv-category">
-            <div class="deliv-category-header">47 Specialist Agents &mdash; Across 7 Domains</div>
-            <p style="font-size:0.88rem;color:var(--text-dark-muted);margin:-0.5rem 0 1rem;font-style:italic;">Core / Substrate (3) &middot; Design (7) &middot; Content (7) &middot; Visual Production (7) &middot; Operations (7) &middot; QA (7) &middot; Business (9). Three substrate keystones are load-bearing for the entire fleet:</p>
-            <div class="deliv-grid">
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4><code>founder-lexicon-keeper</code> <span style="font-family:var(--font-mono);font-size:0.66em;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--primary);background:rgba(0,54,255,0.08);padding:1px 6px;border-radius:980px;margin-left:6px;vertical-align:middle;">Substrate</span></h4><p>Canonical voice source &mdash; every writer reads it before writing</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4><code>workflow-orchestrator</code> <span style="font-family:var(--font-mono);font-size:0.66em;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--primary);background:rgba(0,54,255,0.08);padding:1px 6px;border-radius:980px;margin-left:6px;vertical-align:middle;">Substrate</span></h4><p>Routing brain &mdash; daily briefing of what fires next</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4><code>agent-output-validator</code> <span style="font-family:var(--font-mono);font-size:0.66em;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--primary);background:rgba(0,54,255,0.08);padding:1px 6px;border-radius:980px;margin-left:6px;vertical-align:middle;">Substrate</span></h4><p>Mandatory post-hook on every run &mdash; the fleet&rsquo;s immune system</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4><code>brand-designer</code></h4><p>Authors <code>tokens.json</code> &mdash; consumed by every visual surface</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4><code>copywriter</code></h4><p>Marketing-site long copy &middot; reads the lexicon spine</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4><code>screenshot-cinematographer</code></h4><p>Decides which screens earn marketing real estate</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4><code>financial-modeler</code></h4><p>11 canonical financial files in Phase 2.5</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4><code>investor-readiness-scanner</code></h4><p>Adversarial scan of the rendered pitch deck PDF</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4><code>consistency-checker</code></h4><p>Catches the &ldquo;$240k deck vs $260k model&rdquo; class of error</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4><code>tier-compliance-auditor</code></h4><p>Phase 5 handoff gate &middot; verifies every tier deliverable</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4><code>ux-designer</code></h4><p>3 design audit rounds &middot; structural, nav + WCAG, polish</p></div></div>
-              <div class="deliv-item"><div class="deliv-dot"></div><div><h4><code>video-producer</code></h4><p>Executes manifest &rarr; renders final MP4</p></div></div>
-            </div>
-            <p style="font-size:0.85rem;color:var(--text-dark-muted);margin-top:1rem;text-align:center;"><a href="agents.html" style="color:var(--primary);font-weight:500;">See the full agent fleet &rarr;</a></p>
-          </div>
-
-        </div>
-      </details>
-    </div>
-  </section>
-
-  <!-- ═══════════════════════════════════════════
-       COMMON QUESTIONS — Objection handling
-       ═══════════════════════════════════════════ -->
-  <section class="section-alt" id="objections">
-    <div class="container" data-reveal>
-      <div class="s-label">Common Questions</div>
-      <h2 class="s-title s-title-shimmer">Before you ask</h2>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:2rem;margin-top:2.5rem;">
-
-        <!-- Card 1: Operator orchestration -->
-        <div class="card" data-reveal data-delay="1">
-          <div class="card-visual" style="background:linear-gradient(135deg,#EEF1F8 0%,#DCE3F0 100%);height:220px;display:flex;align-items:center;justify-content:center;padding:1.25rem;overflow:hidden;position:relative;">
-            <!-- ambient blob -->
-            <div style="position:absolute;top:-40px;right:-30px;width:140px;height:140px;border-radius:50%;background:radial-gradient(circle,rgba(0,54,255,0.12),transparent 70%);pointer-events:none;"></div>
-            <!-- mini app panel -->
-            <div style="background:#FFFFFF;border-radius:12px;padding:0.9rem;box-shadow:0 10px 28px rgba(0,0,0,0.1),0 1px 3px rgba(0,0,0,0.04);width:100%;max-width:240px;position:relative;z-index:1;">
-              <!-- operator row -->
-              <div style="display:flex;align-items:center;gap:9px;padding-bottom:0.7rem;border-bottom:1px solid rgba(0,0,0,0.05);">
-                <div style="width:26px;height:26px;border-radius:50%;background:#0036FF;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-family:'Inter',sans-serif;font-size:0.66rem;font-weight:600;letter-spacing:-0.01em;flex-shrink:0;">AD</div>
-                <div style="flex:1;min-width:0;">
-                  <div style="font-family:'Inter',sans-serif;font-size:0.74rem;font-weight:600;color:#141414;letter-spacing:-0.01em;line-height:1.15;">Alex Doré</div>
-                  <div style="font-family:'Inter',sans-serif;font-size:0.62rem;color:#656565;line-height:1.2;margin-top:1px;">Program Lead</div>
-                </div>
-                <div style="font-family:'JetBrains Mono',monospace;font-size:0.56rem;font-weight:500;letter-spacing:0.07em;text-transform:uppercase;color:#0036FF;background:rgba(0,54,255,0.09);padding:3px 7px;border-radius:980px;white-space:nowrap;">Orchestrating</div>
-              </div>
-              <!-- agent rows -->
-              <div style="margin-top:0.65rem;display:flex;flex-direction:column;gap:5px;">
-                <div style="display:flex;align-items:center;gap:7px;padding:5px 8px;background:rgba(0,0,0,0.025);border-radius:7px;">
-                  <span style="width:6px;height:6px;border-radius:50%;background:#00B872;flex-shrink:0;box-shadow:0 0 0 2px rgba(0,184,114,0.18);"></span>
-                  <span style="font-family:'JetBrains Mono',monospace;font-size:0.64rem;color:#0036FF;font-weight:500;letter-spacing:-0.005em;">research-curator</span>
-                </div>
-                <div style="display:flex;align-items:center;gap:7px;padding:5px 8px;background:rgba(0,0,0,0.025);border-radius:7px;">
-                  <span style="width:6px;height:6px;border-radius:50%;background:#00B872;flex-shrink:0;box-shadow:0 0 0 2px rgba(0,184,114,0.18);"></span>
-                  <span style="font-family:'JetBrains Mono',monospace;font-size:0.64rem;color:#0036FF;font-weight:500;letter-spacing:-0.005em;">ux-designer</span>
-                </div>
-                <div style="display:flex;align-items:center;gap:7px;padding:5px 8px;background:rgba(0,0,0,0.025);border-radius:7px;">
-                  <span style="width:6px;height:6px;border-radius:50%;background:#E6A91A;flex-shrink:0;box-shadow:0 0 0 2px rgba(230,169,26,0.2);"></span>
-                  <span style="font-family:'JetBrains Mono',monospace;font-size:0.64rem;color:#0036FF;font-weight:500;letter-spacing:-0.005em;">financial-modeler</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="card-body">
-            <h3>Who actually runs the workflow?</h3>
-            <div class="card-divider"></div>
-            <p>Your own program managers. The platform replaces specialist headcount &mdash; not the human leading the engagement. AI agents execute every phase. Your operator orchestrates, reviews, and approves at the gates.</p>
-          </div>
-        </div>
-
-        <!-- Card 2: Gate review status -->
-        <div class="card" data-reveal data-delay="2">
-          <div class="card-visual" style="background:linear-gradient(135deg,#EEF1F8 0%,#DCE3F0 100%);height:220px;display:flex;align-items:center;justify-content:center;padding:1.25rem;overflow:hidden;position:relative;">
-            <div style="position:absolute;bottom:-50px;left:-40px;width:160px;height:160px;border-radius:50%;background:radial-gradient(circle,rgba(0,184,114,0.14),transparent 70%);pointer-events:none;"></div>
-            <!-- mini app panel -->
-            <div style="background:#FFFFFF;border-radius:12px;padding:0.9rem;box-shadow:0 10px 28px rgba(0,0,0,0.1),0 1px 3px rgba(0,0,0,0.04);width:100%;max-width:240px;position:relative;z-index:1;">
-              <!-- gate header -->
-              <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:0.7rem;border-bottom:1px solid rgba(0,0,0,0.05);">
-                <div>
-                  <div style="font-family:'JetBrains Mono',monospace;font-size:0.56rem;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:#656565;margin-bottom:2px;">Gate 2.5 &middot; Review</div>
-                  <div style="font-family:'Inter',sans-serif;font-size:0.74rem;font-weight:600;color:#141414;letter-spacing:-0.01em;">Financials Hub</div>
-                </div>
-                <div style="font-family:'JetBrains Mono',monospace;font-size:0.56rem;font-weight:500;letter-spacing:0.07em;text-transform:uppercase;color:#00B872;background:rgba(0,184,114,0.1);padding:3px 7px;border-radius:980px;white-space:nowrap;">Ready</div>
-              </div>
-              <!-- check rows -->
-              <div style="margin-top:0.65rem;display:flex;flex-direction:column;gap:6px;">
-                <div style="display:flex;align-items:center;gap:7px;font-size:0.66rem;color:#141414;line-height:1.3;">
-                  <span style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;background:rgba(0,184,114,0.12);color:#00B872;font-weight:600;flex-shrink:0;font-size:0.7rem;line-height:1;">&#10003;</span>
-                  <span><span style="font-family:'JetBrains Mono',monospace;color:#0036FF;font-size:0.62rem;">source-verifier</span> &middot; 14 sources</span>
-                </div>
-                <div style="display:flex;align-items:center;gap:7px;font-size:0.66rem;color:#141414;line-height:1.3;">
-                  <span style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;background:rgba(0,184,114,0.12);color:#00B872;font-weight:600;flex-shrink:0;font-size:0.7rem;line-height:1;">&#10003;</span>
-                  <span><span style="font-family:'JetBrains Mono',monospace;color:#0036FF;font-size:0.62rem;">ux-designer</span> &middot; R2 complete</span>
-                </div>
-                <div style="display:flex;align-items:center;gap:7px;font-size:0.66rem;color:#141414;line-height:1.3;">
-                  <span style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;background:rgba(0,184,114,0.12);color:#00B872;font-weight:600;flex-shrink:0;font-size:0.7rem;line-height:1;">&#10003;</span>
-                  <span><span style="font-family:'JetBrains Mono',monospace;color:#0036FF;font-size:0.62rem;">scope-loop-reviewer</span></span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="card-body">
-            <h3>How is quality enforced at scale?</h3>
-            <div class="card-divider"></div>
-            <p>Every venture runs through 3 QA validators, three formal gate reviews (Gate 1, Gate 2, Gate 2.5), and a persistent memory system that learns from every program. The platform catches issues before deliverables reach the founder.</p>
-          </div>
-        </div>
-
-        <!-- Card 3: Onboarding timeline -->
-        <div class="card" data-reveal data-delay="3">
-          <div class="card-visual" style="background:linear-gradient(135deg,#EEF1F8 0%,#DCE3F0 100%);height:220px;display:flex;align-items:center;justify-content:center;padding:1.25rem;overflow:hidden;position:relative;">
-            <div style="position:absolute;top:-50px;left:50%;transform:translateX(-50%);width:200px;height:140px;background:radial-gradient(ellipse,rgba(0,54,255,0.1),transparent 70%);pointer-events:none;"></div>
-            <!-- mini app panel -->
-            <div style="background:#FFFFFF;border-radius:12px;padding:0.95rem 1rem;box-shadow:0 10px 28px rgba(0,0,0,0.1),0 1px 3px rgba(0,0,0,0.04);width:100%;max-width:240px;position:relative;z-index:1;">
-              <!-- header -->
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.85rem;">
-                <div style="font-family:'JetBrains Mono',monospace;font-size:0.56rem;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:#0036FF;">Onboarding</div>
-                <div style="font-family:'JetBrains Mono',monospace;font-size:0.56rem;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:#656565;">7 days</div>
-              </div>
-              <!-- timeline -->
-              <div style="position:relative;padding:0 6px;">
-                <!-- progress line bg -->
-                <div style="position:absolute;left:6px;right:6px;top:7px;height:2px;background:rgba(0,0,0,0.06);border-radius:1px;"></div>
-                <!-- progress line filled -->
-                <div style="position:absolute;left:6px;width:calc(50% - 6px);top:7px;height:2px;background:#0036FF;border-radius:1px;"></div>
-                <div style="display:flex;justify-content:space-between;position:relative;">
-                  <div style="display:flex;flex-direction:column;align-items:flex-start;">
-                    <span style="width:16px;height:16px;border-radius:50%;background:#0036FF;border:2px solid #FFFFFF;box-shadow:0 0 0 2px #0036FF;display:block;"></span>
-                    <span style="font-family:'JetBrains Mono',monospace;font-size:0.56rem;color:#0036FF;font-weight:600;letter-spacing:0.04em;margin-top:8px;text-transform:uppercase;">Day 1</span>
-                    <span style="font-family:'Inter',sans-serif;font-size:0.62rem;color:#141414;font-weight:500;margin-top:2px;">Kick-off</span>
-                  </div>
-                  <div style="display:flex;flex-direction:column;align-items:center;">
-                    <span style="width:16px;height:16px;border-radius:50%;background:#0036FF;border:2px solid #FFFFFF;box-shadow:0 0 0 2px #0036FF;display:block;"></span>
-                    <span style="font-family:'JetBrains Mono',monospace;font-size:0.56rem;color:#0036FF;font-weight:600;letter-spacing:0.04em;margin-top:8px;text-transform:uppercase;">Day 4</span>
-                    <span style="font-family:'Inter',sans-serif;font-size:0.62rem;color:#141414;font-weight:500;margin-top:2px;">Certified</span>
-                  </div>
-                  <div style="display:flex;flex-direction:column;align-items:flex-end;">
-                    <span style="width:16px;height:16px;border-radius:50%;background:#FFFFFF;border:2px solid rgba(0,54,255,0.5);display:block;"></span>
-                    <span style="font-family:'JetBrains Mono',monospace;font-size:0.56rem;color:#656565;font-weight:600;letter-spacing:0.04em;margin-top:8px;text-transform:uppercase;">Day 7</span>
-                    <span style="font-family:'Inter',sans-serif;font-size:0.62rem;color:#141414;font-weight:500;margin-top:2px;">Venture starts</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="card-body">
-            <h3>How fast can a program start?</h3>
-            <div class="card-divider"></div>
-            <p>Onboarding takes days, not months. Once your operators are certified on the platform, your first venture can begin the same week. Cohort and Enterprise tiers include embedded onboarding and a dedicated success contact.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══════════════════════════════════════════
-       6. WHO IT'S FOR + PRICING — Merged
-       ═══════════════════════════════════════════ -->
-  <section class="section-alt" id="pricing">
-    <div class="container" data-reveal>
-      <div class="s-label">Who Licenses This</div>
-      <h2 class="s-title s-title-shimmer">Built for the people who build ventures<br>&mdash; and the people who back them.</h2>
-      <div class="who-pricing-grid">
-
-        <!-- Card 1: Accelerators & Incubators — Cohort dashboard mockup -->
-        <div class="wp-card" data-reveal data-delay="1">
-          <div class="wp-card-visual" style="height:220px;padding:1.25rem;display:flex;align-items:center;justify-content:center;gap:0;flex-direction:row;position:relative;overflow:hidden;background:linear-gradient(135deg,#EEF1F8 0%,#DCE3F0 100%);">
-            <div style="position:absolute;top:-30px;right:-40px;width:160px;height:160px;border-radius:50%;background:radial-gradient(circle,rgba(0,54,255,0.12),transparent 70%);pointer-events:none;"></div>
-            <div style="background:#FFFFFF;border-radius:12px;padding:0.85rem 0.9rem;box-shadow:0 10px 28px rgba(0,0,0,0.1),0 1px 3px rgba(0,0,0,0.04);width:100%;max-width:240px;position:relative;z-index:1;">
-              <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:0.6rem;border-bottom:1px solid rgba(0,0,0,0.05);">
-                <div style="font-family:'JetBrains Mono',monospace;font-size:0.56rem;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:#656565;">Spring &rsquo;26 Cohort</div>
-                <div style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;font-weight:600;color:#0036FF;background:rgba(0,54,255,0.09);padding:2px 7px;border-radius:980px;">12</div>
-              </div>
-              <div style="margin-top:0.55rem;display:flex;flex-direction:column;gap:4px;">
-                <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 7px;background:rgba(0,0,0,0.025);border-radius:6px;">
-                  <div style="display:flex;align-items:center;gap:6px;">
-                    <span style="width:5px;height:5px;border-radius:50%;background:#00B872;flex-shrink:0;"></span>
-                    <span style="font-family:'Inter',sans-serif;font-size:0.66rem;font-weight:500;color:#141414;letter-spacing:-0.01em;">Stellaria</span>
-                  </div>
-                  <span style="font-family:'JetBrains Mono',monospace;font-size:0.54rem;color:#0036FF;letter-spacing:0.04em;text-transform:uppercase;">Define</span>
-                </div>
-                <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 7px;background:rgba(0,0,0,0.025);border-radius:6px;">
-                  <div style="display:flex;align-items:center;gap:6px;">
-                    <span style="width:5px;height:5px;border-radius:50%;background:#00B872;flex-shrink:0;"></span>
-                    <span style="font-family:'Inter',sans-serif;font-size:0.66rem;font-weight:500;color:#141414;letter-spacing:-0.01em;">Quill</span>
-                  </div>
-                  <span style="font-family:'JetBrains Mono',monospace;font-size:0.54rem;color:#0036FF;letter-spacing:0.04em;text-transform:uppercase;">Gate 2.5</span>
-                </div>
-                <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 7px;background:rgba(0,0,0,0.025);border-radius:6px;">
-                  <div style="display:flex;align-items:center;gap:6px;">
-                    <span style="width:5px;height:5px;border-radius:50%;background:#E6A91A;flex-shrink:0;"></span>
-                    <span style="font-family:'Inter',sans-serif;font-size:0.66rem;font-weight:500;color:#141414;letter-spacing:-0.01em;">Halo Sound</span>
-                  </div>
-                  <span style="font-family:'JetBrains Mono',monospace;font-size:0.54rem;color:#E6A91A;letter-spacing:0.04em;text-transform:uppercase;">Stuck</span>
-                </div>
-                <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 7px;background:rgba(0,0,0,0.025);border-radius:6px;">
-                  <div style="display:flex;align-items:center;gap:6px;">
-                    <span style="width:5px;height:5px;border-radius:50%;background:#00B872;flex-shrink:0;"></span>
-                    <span style="font-family:'Inter',sans-serif;font-size:0.66rem;font-weight:500;color:#141414;letter-spacing:-0.01em;">Northwind</span>
-                  </div>
-                  <span style="font-family:'JetBrains Mono',monospace;font-size:0.54rem;color:#0036FF;letter-spacing:0.04em;text-transform:uppercase;">Develop</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="wp-card-body">
-            <h3 style="font-family:var(--font-heading);font-size:1.15rem;font-weight:600;color:var(--text-dark);letter-spacing:-0.015em;margin-bottom:1rem;">Accelerators &amp; Incubators</h3>
-            <p>Every cohort is the same problem at scale: 10&ndash;30 ventures, each needing research, brand, MVP, pitch materials. License the platform and your existing program managers ship investor-ready outputs for every founder &mdash; without growing headcount.</p>
-          </div>
-        </div>
-
-        <!-- Card 2: Venture Studios — Throughput stat panel -->
-        <div class="wp-card" data-reveal data-delay="2">
-          <div class="wp-card-visual" style="height:220px;padding:1.25rem;display:flex;align-items:center;justify-content:center;gap:0;flex-direction:row;position:relative;overflow:hidden;background:linear-gradient(135deg,#EEF1F8 0%,#DCE3F0 100%);">
-            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(0,54,255,0.1),transparent 70%);pointer-events:none;"></div>
-            <div style="background:#FFFFFF;border-radius:12px;padding:1rem 1.1rem;box-shadow:0 10px 28px rgba(0,0,0,0.1),0 1px 3px rgba(0,0,0,0.04);width:100%;max-width:240px;position:relative;z-index:1;">
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.65rem;">
-                <div style="font-family:'JetBrains Mono',monospace;font-size:0.56rem;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:#656565;">Throughput &middot; Q2</div>
-                <div style="font-family:'JetBrains Mono',monospace;font-size:0.56rem;font-weight:500;letter-spacing:0.06em;color:#00B872;background:rgba(0,184,114,0.1);padding:2px 7px;border-radius:980px;">+8</div>
-              </div>
-              <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:0.35rem;">
-                <div style="font-family:var(--font-heading);font-size:2.4rem;font-weight:600;color:#141414;letter-spacing:-0.03em;line-height:1;">24</div>
-                <div style="font-family:'Inter',sans-serif;font-size:0.7rem;color:#656565;letter-spacing:-0.01em;">ventures shipped</div>
-              </div>
-              <div style="display:flex;align-items:center;gap:8px;padding-top:0.6rem;border-top:1px solid rgba(0,0,0,0.05);margin-top:0.65rem;">
-                <div style="width:22px;height:22px;border-radius:50%;background:#7A3FFF;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-family:'Inter',sans-serif;font-size:0.6rem;font-weight:600;flex-shrink:0;">PS</div>
-                <div style="font-family:'Inter',sans-serif;font-size:0.7rem;color:#141414;font-weight:500;line-height:1.2;">
-                  Priya Singh
-                  <div style="font-size:0.6rem;color:#656565;font-weight:400;margin-top:1px;">1 operator &middot; AI agents</div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="wp-card-body">
-            <h3 style="font-family:var(--font-heading);font-size:1.15rem;font-weight:600;color:var(--text-dark);letter-spacing:-0.015em;margin-bottom:1rem;">Venture Studios</h3>
-            <p>Studios live and die on throughput. The platform turns one operator into a full delivery team and lets you run more parallel ventures with predictable economics. Compounding case studies. Compounding outcome data. Compounding leverage.</p>
-          </div>
-        </div>
-
-        <!-- Card 3: Corporate Innovation Labs — Enterprise config panel -->
-        <div class="wp-card" data-reveal data-delay="3">
-          <div class="wp-card-visual" style="height:220px;padding:1.25rem;display:flex;align-items:center;justify-content:center;gap:0;flex-direction:row;position:relative;overflow:hidden;background:linear-gradient(135deg,#EEF1F8 0%,#DCE3F0 100%);">
-            <div style="position:absolute;bottom:-40px;right:-30px;width:160px;height:160px;border-radius:50%;background:radial-gradient(circle,rgba(0,54,255,0.12),transparent 70%);pointer-events:none;"></div>
-            <div style="background:#FFFFFF;border-radius:12px;padding:0.95rem 1rem;box-shadow:0 10px 28px rgba(0,0,0,0.1),0 1px 3px rgba(0,0,0,0.04);width:100%;max-width:240px;position:relative;z-index:1;">
-              <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:0.6rem;border-bottom:1px solid rgba(0,0,0,0.05);">
-                <div style="font-family:'JetBrains Mono',monospace;font-size:0.56rem;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:#656565;">Enterprise &middot; Licence</div>
-                <div style="font-family:'JetBrains Mono',monospace;font-size:0.56rem;font-weight:500;letter-spacing:0.07em;text-transform:uppercase;color:#0036FF;background:rgba(0,54,255,0.09);padding:3px 7px;border-radius:980px;">Active</div>
-              </div>
-              <div style="margin-top:0.65rem;display:flex;flex-direction:column;gap:5px;">
-                <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;">
-                  <span style="font-family:'Inter',sans-serif;font-size:0.7rem;color:#141414;font-weight:500;">White-label</span>
-                  <div style="width:26px;height:14px;background:#0036FF;border-radius:980px;padding:2px;display:flex;align-items:center;justify-content:flex-end;"><div style="width:10px;height:10px;background:#FFFFFF;border-radius:50%;"></div></div>
-                </div>
-                <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;">
-                  <span style="font-family:'Inter',sans-serif;font-size:0.7rem;color:#141414;font-weight:500;">Custom domain</span>
-                  <div style="width:26px;height:14px;background:#0036FF;border-radius:980px;padding:2px;display:flex;align-items:center;justify-content:flex-end;"><div style="width:10px;height:10px;background:#FFFFFF;border-radius:50%;"></div></div>
-                </div>
-                <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;">
-                  <span style="font-family:'Inter',sans-serif;font-size:0.7rem;color:#141414;font-weight:500;">SLA contract</span>
-                  <div style="width:26px;height:14px;background:#0036FF;border-radius:980px;padding:2px;display:flex;align-items:center;justify-content:flex-end;"><div style="width:10px;height:10px;background:#FFFFFF;border-radius:50%;"></div></div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="wp-card-body">
-            <h3 style="font-family:var(--font-heading);font-size:1.15rem;font-weight:600;color:var(--text-dark);letter-spacing:-0.015em;margin-bottom:1rem;">Corporate Innovation Labs</h3>
-            <p>Internal innovation programs need agency-grade output without paying agency rates. White-label the platform, run it inside your security perimeter, and produce launch-ready ventures on a fixed annual licence. Enterprise tier includes SLA and embedded onboarding.</p>
-          </div>
-        </div>
-
-        <!-- Card 4: Angels & Syndicates — Assessment verdict mockup (Assess product) -->
-        <div class="wp-card" data-reveal data-delay="4">
-          <div class="wp-card-visual" style="height:220px;padding:1.25rem;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;background:linear-gradient(135deg,#EEF1F8 0%,#DCE3F0 100%);">
-            <div style="position:absolute;top:-30px;left:-40px;width:160px;height:160px;border-radius:50%;background:radial-gradient(circle,rgba(0,184,114,0.16),transparent 70%);pointer-events:none;"></div>
-            <div style="background:#FFFFFF;border-radius:12px;padding:0.9rem 1rem;box-shadow:0 10px 28px rgba(0,0,0,0.1),0 1px 3px rgba(0,0,0,0.04);width:100%;max-width:240px;position:relative;z-index:1;border-top:3px solid #E6A91A;">
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.55rem;">
-                <span style="font-family:'Inter',sans-serif;font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:#FFFFFF;background:#E6A91A;padding:3px 8px;border-radius:6px;">Diligence further</span>
-                <span style="font-family:var(--font-heading);font-size:1.2rem;font-weight:600;color:#E6A91A;">72<span style="font-size:0.55em;">%</span></span>
-              </div>
-              <div style="font-family:'Inter',sans-serif;font-size:0.64rem;line-height:1.45;color:#141414;margin-bottom:0.6rem;">Real physics, fair price &mdash; four data-room contradictions to resolve before a cheque.</div>
-              <div style="display:flex;flex-direction:column;gap:5px;">
-                <div style="display:flex;align-items:center;gap:6px;"><span style="font-family:'JetBrains Mono',monospace;font-size:0.5rem;color:#656565;width:46px;flex:none;text-transform:uppercase;letter-spacing:0.04em;">Market</span><div style="flex:1;height:4px;background:rgba(0,0,0,0.07);border-radius:2px;overflow:hidden;"><div style="width:85%;height:100%;background:#00B872;"></div></div></div>
-                <div style="display:flex;align-items:center;gap:6px;"><span style="font-family:'JetBrains Mono',monospace;font-size:0.5rem;color:#656565;width:46px;flex:none;text-transform:uppercase;letter-spacing:0.04em;">Team</span><div style="flex:1;height:4px;background:rgba(0,0,0,0.07);border-radius:2px;overflow:hidden;"><div style="width:55%;height:100%;background:#E6A91A;"></div></div></div>
-                <div style="display:flex;align-items:center;gap:6px;"><span style="font-family:'JetBrains Mono',monospace;font-size:0.5rem;color:#656565;width:46px;flex:none;text-transform:uppercase;letter-spacing:0.04em;">Moat</span><div style="flex:1;height:4px;background:rgba(0,0,0,0.07);border-radius:2px;overflow:hidden;"><div style="width:40%;height:100%;background:#E6A91A;"></div></div></div>
-              </div>
-            </div>
-          </div>
-          <div class="wp-card-body">
-            <h3 style="font-family:var(--font-heading);font-size:1.15rem;font-weight:600;color:var(--text-dark);letter-spacing:-0.015em;margin-bottom:1rem;">Angels &amp; Syndicates</h3>
-            <p>Diligence that used to mean a $5&ndash;15K consultant or weeks of analyst time &mdash; in hours. Upload a deck and data room; get deep web research, a competitive benchmark, an investability score and a deal memo. So you decide which ventures to back with conviction.</p>
-          </div>
-        </div>
-
-      </div>
-      <div style="text-align:center;margin-top:3.5rem;padding:3rem;background:#F5F5F7;border-radius:var(--radius-card);" data-reveal>
-        <div style="font-family:var(--font-mono);font-size:0.78rem;color:var(--text-dark-muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:0.5rem;">Platform licence &mdash; from</div>
-        <div style="font-family:var(--font-heading);font-size:clamp(2rem,4vw,3rem);font-weight:600;color:var(--text-dark);letter-spacing:-0.02em;">$4,800<span style="font-size:0.5em;color:var(--text-dark-muted);font-weight:400;"> /yr</span></div>
-        <p style="font-size:1rem;color:var(--text-dark-muted);margin:0.75rem 0 0.25rem;">Four annual tiers. No per-engagement fees.</p>
-        <p style="font-size:0.88rem;color:var(--text-dark-muted);margin-bottom:2rem;">Starter through Enterprise &mdash; scale the licence to your program volume.</p>
-        <a href="pricing.html" class="btn btn-primary btn-lg">View pricing</a>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══════════════════════════════════════════
-       7. FAQs — Top 5 with link to full FAQs page
-       ═══════════════════════════════════════════ -->
-  <section class="section" id="faqs">
-    <div class="container" data-reveal>
-      <div style="text-align:center;">
-        <div class="s-label" style="justify-content:center;">FAQs</div>
-        <h2 class="s-title s-title-shimmer">Common questions</h2>
-        <p class="s-sub" style="margin:0 auto 2.5rem;">The five questions every prospective licensee asks first.</p>
-      </div>
-
-      <div class="faq-list">
-        <details class="faq-item" data-reveal data-delay="1">
-          <summary>
-            <span>Who is Ventrify OS for?</span>
-            <span class="faq-icon" aria-hidden="true">+</span>
-          </summary>
-          <div class="faq-answer">
-            <p>Accelerators, incubators, venture studios, and corporate innovation labs that run multiple ventures a year. The Starter tier also fits boutique studios and individual operators running their own programs at smaller volumes.</p>
-          </div>
-        </details>
-
-        <details class="faq-item" data-reveal data-delay="1">
-          <summary>
-            <span>Is this a subscription?</span>
-            <span class="faq-icon" aria-hidden="true">+</span>
-          </summary>
-          <div class="faq-answer">
-            <p>Yes. Ventrify OS is licensed annually. Four tiers from Starter ($4,800/yr) to Enterprise ($150,000+/yr) covering everything from a single operator running 6 programs a year to a full institution with unlimited operators and white-labelling.</p>
-          </div>
-        </details>
-
-        <details class="faq-item" data-reveal data-delay="2">
-          <summary>
-            <span>Are there per-engagement fees?</span>
-            <span class="faq-icon" aria-hidden="true">+</span>
-          </summary>
-          <div class="faq-answer">
-            <p>No. The annual licence covers unlimited programs within your tier. Predictable economics &mdash; you can model the cost of every venture before it starts.</p>
-          </div>
-        </details>
-
-        <details class="faq-item" data-reveal data-delay="2">
-          <summary>
-            <span>Who actually delivers the work?</span>
-            <span class="faq-icon" aria-hidden="true">+</span>
-          </summary>
-          <div class="faq-answer">
-            <p>Your own program manager, orchestrating the platform. AI agents execute every phase &mdash; research, design, build, brand, marketing. Your operator reviews, approves at the gates, and runs the founder relationship.</p>
-          </div>
-        </details>
-
-        <details class="faq-item" data-reveal data-delay="3">
-          <summary>
-            <span>How long does onboarding take?</span>
-            <span class="faq-icon" aria-hidden="true">+</span>
-          </summary>
-          <div class="faq-answer">
-            <p>Days, not months. Cohort and Enterprise tiers include embedded onboarding and a dedicated success contact. Once your first operator is certified, your first venture can start that week.</p>
-          </div>
-        </details>
-      </div>
-
       <div style="text-align:center;margin-top:3rem;" data-reveal>
-        <a href="faqs.html" class="btn btn-outline btn-lg">View all FAQs &rarr;</a>
+        <a href="the-workspace.html" class="btn btn-outline btn-lg">Tour the Workspace &rarr;</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       BEAT 6 — WHY IT'S DIFFERENT
+       ═══════════════════════════════════════════ -->
+  <section class="section-alt" id="contrast">
+    <div class="container" data-reveal>
+      <div class="s-label">Why It's Different</div>
+      <h2 class="s-title s-title-shimmer">One operator.<br>Not a ten-person team.</h2>
+      <p class="s-sub">Same craft, same quality &mdash; at a fraction of the time and cost, because the agents do the work and stay in lockstep.</p>
+      <div class="contrast-card">
+        <div class="contrast-side traditional">
+          <h3>The old way</h3>
+          <div class="contrast-row"><span class="cr-label">Team</span><span class="cr-value">8&ndash;12 people</span></div>
+          <div class="contrast-row"><span class="cr-label">A venture build</span><span class="cr-value">6&ndash;9 months</span></div>
+          <div class="contrast-row"><span class="cr-label">A diligence pass</span><span class="cr-value">$5&ndash;15K, days</span></div>
+          <div class="contrast-row"><span class="cr-label">Throughput</span><span class="cr-value">A few a year</span></div>
+        </div>
+        <div class="contrast-side os-side">
+          <h3>Ventrify OS</h3>
+          <div class="contrast-row"><span class="cr-label">Team</span><span class="cr-value">1 operator + agents</span></div>
+          <div class="contrast-row"><span class="cr-label">A venture build</span><span class="cr-value">6&ndash;16 weeks</span></div>
+          <div class="contrast-row"><span class="cr-label">A diligence pass</span><span class="cr-value">~1&ndash;2 hours</span></div>
+          <div class="contrast-row"><span class="cr-label">Throughput</span><span class="cr-value">Many times more</span></div>
+        </div>
+      </div>
+      <p style="text-align:center;margin-top:2.5rem;"><a href="showcase.html" style="color:var(--primary);font-weight:600;">See ventures built on Ventrify OS &rarr;</a></p>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       BEAT 7 — PRICING TEASER
+       ═══════════════════════════════════════════ -->
+  <section class="section" id="pricing">
+    <div class="container" data-reveal>
+      <div style="max-width:640px;margin:0 auto;text-align:center;">
+        <div class="s-label" style="justify-content:center;">Pricing</div>
+        <h2 class="s-title s-title-shimmer">One annual licence.<br>No per-venture fees.</h2>
+        <p class="s-sub" style="margin:0 auto;">Both products included &mdash; build and assess. Four tiers, from a solo operator to a full institution.</p>
+        <div style="margin-top:2rem;"><a href="pricing.html" class="btn btn-primary btn-lg">See pricing &rarr;</a></div>
       </div>
     </div>
   </section>
@@ -2809,8 +2033,8 @@
        ═══════════════════════════════════════════ -->
   <section class="final-cta">
     <div class="cta-content" data-reveal>
-      <h2>License the platform.<br>Run programs that ship.</h2>
-      <p class="cta-sub">A single fixed annual licence replaces what used to take a 10-person agency. Your program managers gain the leverage of an entire delivery team. Your throughput compounds every cohort. Book a 30-minute platform demo &mdash; we&rsquo;ll walk through tier fit, onboarding, and outcomes from real programs.</p>
+      <h2>See it on a real venture.</h2>
+      <p class="cta-sub">Book a 30-minute demo &mdash; we&rsquo;ll run Build or Assess live, on a venture you bring.</p>
       <div class="cta-buttons">
         <a href="mailto:hello@ventrify.io?subject=Ventrify%20OS%20demo%20request" class="btn btn-dark-primary btn-lg">Book a platform demo</a>
         <a href="pricing.html" class="btn btn-dark-outline btn-lg">View pricing</a>
@@ -2826,14 +2050,16 @@
       <div class="footer-top">
         <div class="footer-brand">
           <div class="logo">VENTRIFY <span class="os">OS</span></div>
-          <p>The operating system for startup programs.</p>
+          <p>Build ventures and assess them — one operator, one Workspace.</p>
         </div>
         <div class="footer-links">
-          <a href="system.html">System</a>
+          <a href="build.html">Build</a>
+          <a href="assess.html">Assess</a>
+          <a href="the-workspace.html">Workspace</a>
+          <a href="agents.html">Agents</a>
           <a href="the-data-room.html">Data Room</a>
-      <a href="the-workspace.html">Workspace</a>
-      <a href="agents.html">Agents</a>
-      <a href="showcase.html">Showcase</a>
+          <a href="system.html">System</a>
+          <a href="showcase.html">Showcase</a>
           <a href="pricing.html">Pricing</a>
           <a href="faqs.html">FAQs</a>
           <a href="mailto:hello@ventrify.io?subject=Ventrify%20OS%20demo%20request">Book a demo</a>
