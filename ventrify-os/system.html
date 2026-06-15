@@ -1115,14 +1115,26 @@
       font-size:0.85rem; color:rgba(255,255,255,0.6); line-height:1.7;
       max-width:260px; font-weight:400;
     }
-    .footer-links {
-      display:flex; gap:3rem;
+    .footer-cta {
+      display:inline-flex; align-items:center; gap:0.4rem; margin-top:1.25rem;
+      font-size:0.86rem; font-weight:500; color:var(--primary-light,#3366FF);
+      transition:gap var(--transition), color var(--transition);
     }
-    .footer-links a {
+    .footer-cta:hover { color:#fff; gap:0.65rem; }
+    .footer-cols {
+      display:flex; gap:4rem;
+    }
+    .footer-col { display:flex; flex-direction:column; gap:0.85rem; }
+    .footer-col-title {
+      font-size:0.7rem; font-weight:600; letter-spacing:0.13em;
+      text-transform:uppercase; color:rgba(255,255,255,0.38);
+      margin-bottom:0.2rem;
+    }
+    .footer-col a {
       font-size:0.88rem; color:rgba(255,255,255,0.6);
       transition:color var(--transition); font-weight:400;
     }
-    .footer-links a:hover { color:rgba(255,255,255,0.85); }
+    .footer-col a:hover { color:rgba(255,255,255,0.9); }
     .footer-bottom {
       padding-top:2rem;
       border-top:1px solid rgba(255,255,255,0.06);
@@ -1200,7 +1212,8 @@
       .tools-grid { grid-template-columns:1fr 1fr; }
 
       .footer-top { flex-direction:column; }
-      .footer-links { flex-wrap:wrap; gap:1.5rem; }
+      .footer-cols { flex-wrap:wrap; gap:2rem 3rem; }
+      .footer-col { min-width:130px; }
 
     }
 
@@ -2213,18 +2226,27 @@
         <div class="footer-brand">
           <div class="logo">VENTRIFY <span class="os">OS</span></div>
           <p>Build ventures and assess them — one operator, one Workspace.</p>
+          <a class="footer-cta" href="mailto:hello@ventrify.io?subject=Ventrify%20OS%20demo%20request">Book a demo &rarr;</a>
         </div>
-        <div class="footer-links">
-          <a href="build.html">Build</a>
-          <a href="assess.html">Assess</a>
-          <a href="the-workspace.html">Workspace</a>
-          <a href="agents.html">Agents</a>
-          <a href="the-data-room.html">Data Room</a>
-          <a href="system.html">System</a>
-          <a href="showcase.html">Showcase</a>
-          <a href="pricing.html">Pricing</a>
-          <a href="faqs.html">FAQs</a>
-          <a href="mailto:hello@ventrify.io?subject=Ventrify%20OS%20demo%20request">Book a demo</a>
+        <div class="footer-cols">
+          <div class="footer-col">
+            <div class="footer-col-title">Products</div>
+            <a href="build.html">Build</a>
+            <a href="assess.html">Assess</a>
+          </div>
+          <div class="footer-col">
+            <div class="footer-col-title">Platform</div>
+            <a href="the-workspace.html">Workspace</a>
+            <a href="agents.html">Agents</a>
+            <a href="the-data-room.html">Data Room</a>
+            <a href="system.html">System</a>
+          </div>
+          <div class="footer-col">
+            <div class="footer-col-title">Explore</div>
+            <a href="showcase.html">Showcase</a>
+            <a href="pricing.html">Pricing</a>
+            <a href="faqs.html">FAQs</a>
+          </div>
         </div>
       </div>
       <div class="footer-bottom">
