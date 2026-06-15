@@ -194,14 +194,15 @@
         .nav-cta { display:flex; align-items:center; margin-left:4px; }
     /* Platform dropdown */
     .nav-dd { position:relative; }
-    .nav-dd-trigger { background:none; border:none; font:inherit; cursor:pointer; color:inherit; display:inline-flex; align-items:center; gap:5px; padding:0; }
+    .nav-dd-trigger { background:none; border:none; cursor:pointer; font-family:inherit; font-size:0.82rem; font-weight:500; color:var(--text-dark-muted); padding:6px 14px; border-radius:8px; display:inline-flex; align-items:center; gap:5px; transition:background var(--transition,.2s ease), color var(--transition,.2s ease); white-space:nowrap; }
+    .nav-dd:hover .nav-dd-trigger { background:rgba(0,0,0,0.04); color:var(--text-dark); }
     .nav-dd-caret { font-size:0.62em; transition:transform .2s ease; opacity:0.7; }
     .nav-dd:hover .nav-dd-caret { transform:rotate(180deg); }
     .nav-dd-panel { position:absolute; top:calc(100% + 18px); left:50%; transform:translateX(-50%) translateY(-6px); width:340px; background:#fff; border-radius:16px; box-shadow:0 20px 50px rgba(0,0,0,0.16),0 0 0 1px rgba(0,0,0,0.05); padding:0.9rem; opacity:0; visibility:hidden; transition:opacity .18s ease, transform .18s ease; z-index:200; }
     .nav-dd-panel::before { content:''; position:absolute; top:-18px; left:0; right:0; height:18px; }
     .nav-dd:hover .nav-dd-panel, .nav-dd:focus-within .nav-dd-panel { opacity:1; visibility:visible; transform:translateX(-50%) translateY(0); }
     .nav-dd-head { font-family:var(--font-mono); font-size:0.58rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#9aa0ab; padding:0.45rem 0.6rem 0.3rem; }
-    .nav-dd-jobs { display:grid; grid-template-columns:1fr 1fr; gap:0.35rem; margin-bottom:0.5rem; }
+    .nav-dd-jobs { display:flex; flex-direction:column; gap:0.15rem; margin-bottom:0.45rem; }
     .nav-dd-job { display:flex; flex-direction:column; padding:0.65rem 0.7rem; border-radius:11px; text-decoration:none; transition:background .15s ease; }
     .nav-dd-job:hover { background:#F5F5F7; }
     .nav-dd-job-t { font-weight:600; font-size:0.95rem; color:var(--text-dark,#141414); }
@@ -1484,6 +1485,13 @@
     }
     .mobile-menu .m-cta { margin-top:2.5rem; }
     .mobile-menu .m-cta .btn { width:100%; justify-content:center; font-size:0.92rem; padding:0.95rem 1.5rem; }
+    .mobile-menu { overflow-y:auto; }
+    .m-nav-section { font-family:var(--font-mono); font-size:0.6rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:rgba(255,255,255,0.4); padding:0.45rem 0 0.3rem; margin-top:1.1rem; }
+    .m-nav-section:first-child { margin-top:0; }
+    .mobile-menu a.m-nav-sub { display:block; font-family:var(--font-heading); font-size:1.05rem; font-weight:500; color:rgba(255,255,255,0.6); padding:0.7rem 0; border-bottom:1px solid rgba(255,255,255,0.06); transition:color var(--transition); }
+    .mobile-menu a.m-nav-sub:hover { color:#fff; }
+    .mobile-menu a.m-nav-sub.active, .mobile-menu a.m-nav-link.active { color:#fff; }
+    .m-nav-divider { height:1px; background:rgba(255,255,255,0.1); margin:1.2rem 0 0.3rem; }
 
     /* ============================================
        RESPONSIVE -- TABLET (900px)
@@ -1592,14 +1600,18 @@
 
   <!-- Mobile Menu -->
   <div class="mobile-menu">
-    <a href="build.html" class="m-nav-link">Build</a>
+    <div class="m-nav-section">Two jobs, one Workspace</div>
+    <a href="build.html" class="m-nav-link active">Build</a>
     <a href="assess.html" class="m-nav-link">Assess</a>
-    <a href="the-workspace.html" class="m-nav-link">Workspace</a>
-    <a href="agents.html" class="m-nav-link">Agents</a>
-    <a href="the-data-room.html" class="m-nav-link">Data Room</a>
-    <a href="system.html" class="m-nav-link">System</a>
+    <div class="m-nav-section">How it works</div>
+    <a href="the-workspace.html" class="m-nav-sub">The Workspace</a>
+    <a href="agents.html" class="m-nav-sub">The Agents</a>
+    <a href="the-data-room.html" class="m-nav-sub">The Data Room</a>
+    <a href="system.html" class="m-nav-sub">System</a>
+    <div class="m-nav-divider"></div>
     <a href="showcase.html" class="m-nav-link">Showcase</a>
     <a href="pricing.html" class="m-nav-link">Pricing</a>
+    <a href="faqs.html" class="m-nav-link">FAQs</a>
     <div class="m-cta">
       <a href="workspace/index.html" class="m-nav-link m-nav-signin">Sign in to Workspace</a>
     <a href="mailto:hello@ventrify.io?subject=Ventrify%20OS%20demo%20request" class="btn btn-dark-primary btn-lg">Book a demo</a>
@@ -1635,7 +1647,7 @@
   <section class="page-intro-section">
     <div class="container" data-reveal>
       <div style="max-width:820px;margin:0 auto;">
-        <p style="font-size:clamp(1.15rem,2.5vw,1.4rem);line-height:1.75;color:var(--text-light-muted);font-weight:400;text-align:center;"><span style="color:#FFFFFF;font-weight:500;">Every venture needs an agency it can&rsquo;t afford.</span> Research, strategy, an MVP, a brand, a pitch &mdash; six to nine months and a ten-person team, at $80&ndash;200K an engagement. Ventrify OS gives one operator that whole delivery team as a fleet of agents &mdash; so a single program manager ships investor-ready ventures, on a fixed annual licence.</p>
+        <p style="font-size:clamp(1.15rem,2.5vw,1.4rem);line-height:1.75;color:var(--text-light-muted);font-weight:400;text-align:center;"><span style="color:#FFFFFF;font-weight:500;">Every venture needs an agency it can&rsquo;t afford.</span> Research, strategy, an MVP, a brand, a pitch &mdash; six to nine months and a ten-person team, at $80&ndash;200K an engagement. Ventrify OS gives one operator that whole delivery team as a fleet of agents &mdash; so a single operator ships investor-ready ventures, on a fixed annual licence.</p>
       </div>
     </div>
   </section>
@@ -1795,9 +1807,14 @@
       <div class="footer-top">
         <div class="footer-brand">
           <div class="logo">VENTRIFY <span class="os">OS</span></div>
-          <p>The operating system for startup programs.</p>
+          <p>Build ventures and assess them — one operator, one Workspace.</p>
         </div>
         <div class="footer-links">
+          <a href="build.html">Build</a>
+          <a href="assess.html">Assess</a>
+          <a href="the-workspace.html">Workspace</a>
+          <a href="agents.html">Agents</a>
+          <a href="the-data-room.html">Data Room</a>
           <a href="system.html">System</a>
           <a href="showcase.html">Showcase</a>
           <a href="pricing.html">Pricing</a>

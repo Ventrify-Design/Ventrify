@@ -194,14 +194,15 @@
         .nav-cta { display:flex; align-items:center; margin-left:4px; }
     /* Platform dropdown */
     .nav-dd { position:relative; }
-    .nav-dd-trigger { background:none; border:none; font:inherit; cursor:pointer; color:inherit; display:inline-flex; align-items:center; gap:5px; padding:0; }
+    .nav-dd-trigger { background:none; border:none; cursor:pointer; font-family:inherit; font-size:0.82rem; font-weight:500; color:var(--text-dark-muted); padding:6px 14px; border-radius:8px; display:inline-flex; align-items:center; gap:5px; transition:background var(--transition,.2s ease), color var(--transition,.2s ease); white-space:nowrap; }
+    .nav-dd:hover .nav-dd-trigger { background:rgba(0,0,0,0.04); color:var(--text-dark); }
     .nav-dd-caret { font-size:0.62em; transition:transform .2s ease; opacity:0.7; }
     .nav-dd:hover .nav-dd-caret { transform:rotate(180deg); }
     .nav-dd-panel { position:absolute; top:calc(100% + 18px); left:50%; transform:translateX(-50%) translateY(-6px); width:340px; background:#fff; border-radius:16px; box-shadow:0 20px 50px rgba(0,0,0,0.16),0 0 0 1px rgba(0,0,0,0.05); padding:0.9rem; opacity:0; visibility:hidden; transition:opacity .18s ease, transform .18s ease; z-index:200; }
     .nav-dd-panel::before { content:''; position:absolute; top:-18px; left:0; right:0; height:18px; }
     .nav-dd:hover .nav-dd-panel, .nav-dd:focus-within .nav-dd-panel { opacity:1; visibility:visible; transform:translateX(-50%) translateY(0); }
     .nav-dd-head { font-family:var(--font-mono); font-size:0.58rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#9aa0ab; padding:0.45rem 0.6rem 0.3rem; }
-    .nav-dd-jobs { display:grid; grid-template-columns:1fr 1fr; gap:0.35rem; margin-bottom:0.5rem; }
+    .nav-dd-jobs { display:flex; flex-direction:column; gap:0.15rem; margin-bottom:0.45rem; }
     .nav-dd-job { display:flex; flex-direction:column; padding:0.65rem 0.7rem; border-radius:11px; text-decoration:none; transition:background .15s ease; }
     .nav-dd-job:hover { background:#F5F5F7; }
     .nav-dd-job-t { font-weight:600; font-size:0.95rem; color:var(--text-dark,#141414); }
@@ -1179,6 +1180,13 @@
     }
     .mobile-menu .m-cta { margin-top:2.5rem; }
     .mobile-menu .m-cta .btn { width:100%; justify-content:center; font-size:0.92rem; padding:0.95rem 1.5rem; }
+    .mobile-menu { overflow-y:auto; }
+    .m-nav-section { font-family:var(--font-mono); font-size:0.6rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:rgba(255,255,255,0.4); padding:0.45rem 0 0.3rem; margin-top:1.1rem; }
+    .m-nav-section:first-child { margin-top:0; }
+    .mobile-menu a.m-nav-sub { display:block; font-family:var(--font-heading); font-size:1.05rem; font-weight:500; color:rgba(255,255,255,0.6); padding:0.7rem 0; border-bottom:1px solid rgba(255,255,255,0.06); transition:color var(--transition); }
+    .mobile-menu a.m-nav-sub:hover { color:#fff; }
+    .mobile-menu a.m-nav-sub.active, .mobile-menu a.m-nav-link.active { color:#fff; }
+    .m-nav-divider { height:1px; background:rgba(255,255,255,0.1); margin:1.2rem 0 0.3rem; }
 
     /* ============================================
        RESPONSIVE -- TABLET (900px)
@@ -1287,14 +1295,18 @@
 
   <!-- Mobile Menu -->
   <div class="mobile-menu">
+    <div class="m-nav-section">Two jobs, one Workspace</div>
     <a href="build.html" class="m-nav-link">Build</a>
     <a href="assess.html" class="m-nav-link">Assess</a>
-    <a href="the-workspace.html" class="m-nav-link">Workspace</a>
-    <a href="agents.html" class="m-nav-link">Agents</a>
-    <a href="the-data-room.html" class="m-nav-link">Data Room</a>
-    <a href="system.html" class="m-nav-link">System</a>
+    <div class="m-nav-section">How it works</div>
+    <a href="the-workspace.html" class="m-nav-sub">The Workspace</a>
+    <a href="agents.html" class="m-nav-sub">The Agents</a>
+    <a href="the-data-room.html" class="m-nav-sub">The Data Room</a>
+    <a href="system.html" class="m-nav-sub active">System</a>
+    <div class="m-nav-divider"></div>
     <a href="showcase.html" class="m-nav-link">Showcase</a>
     <a href="pricing.html" class="m-nav-link">Pricing</a>
+    <a href="faqs.html" class="m-nav-link">FAQs</a>
     <div class="m-cta">
       <a href="workspace/index.html" class="m-nav-link m-nav-signin">Sign in to Workspace</a>
     <a href="mailto:hello@ventrify.io?subject=Ventrify%20OS%20demo%20request" class="btn btn-dark-primary btn-lg">Book a demo</a>
@@ -1337,7 +1349,7 @@
       <div class="system-layout">
         <div class="system-text">
           <p>The CLAUDE.md file is the brain of the platform. It defines every phase the agents execute, every deliverable specification, every quality gate, every checkpoint, and every prompt template the system runs.</p>
-          <p>When your program manager initialises a venture, the platform reads it and orchestrates a full-stack delivery team &mdash; structured so a single operator can run a complete engagement from brief to launch.</p>
+          <p>When your operator initialises a venture, the platform reads it and orchestrates a full-stack delivery team &mdash; structured so a single operator can run a complete engagement from brief to launch.</p>
         </div>
         <div class="code-block">
           <div class="code-block-bar">
@@ -1410,7 +1422,7 @@
           <div class="agent-card" data-reveal data-delay="2" style="border-color:rgba(var(--primary-rgb),0.25);box-shadow:0 4px 16px rgba(var(--primary-rgb),0.06);">
             <div class="agent-name"><code>workflow-orchestrator</code></div>
             <div class="agent-phase">Fires at &middot; Session start + daily cron</div>
-            <p class="agent-output">The routing layer. Reads state, produces a daily briefing, surfaces what fires next for the program manager. The fleet&rsquo;s air-traffic control.</p>
+            <p class="agent-output">The routing layer. Reads state, produces a daily briefing, surfaces what fires next for the operator. The fleet&rsquo;s air-traffic control.</p>
           </div>
           <div class="agent-card" data-reveal data-delay="3" style="border-color:rgba(var(--primary-rgb),0.25);box-shadow:0 4px 16px rgba(var(--primary-rgb),0.06);">
             <div class="agent-name"><code>agent-output-validator</code></div>
@@ -1501,7 +1513,7 @@
         </div>
       </div>
 
-      <p style="text-align:center;margin-top:2.5rem;font-size:0.95rem;color:var(--text-dark-muted);max-width:680px;margin-left:auto;margin-right:auto;" data-reveal>Each agent runs in sequence with defined inputs and outputs. The platform orchestrates the orchestra. Your program manager orchestrates the platform.<br><a href="agents.html" style="color:var(--primary);font-weight:500;display:inline-block;margin-top:0.75rem;">See all 47 agents &rarr;</a></p>
+      <p style="text-align:center;margin-top:2.5rem;font-size:0.95rem;color:var(--text-dark-muted);max-width:680px;margin-left:auto;margin-right:auto;" data-reveal>Each agent runs in sequence with defined inputs and outputs. The platform orchestrates the orchestra. Your operator orchestrates the platform.<br><a href="agents.html" style="color:var(--primary);font-weight:500;display:inline-block;margin-top:0.75rem;">See all 47 agents &rarr;</a></p>
     </div>
   </section>
 
@@ -1545,7 +1557,7 @@
     <div class="container" data-reveal>
       <div class="s-label">The Tooling</div>
       <h2 class="s-title s-title-shimmer">15 operator tools.<br>14 deterministic quality-substrate tools.</h2>
-      <p class="s-sub">Two layers of tooling. The operator surface &mdash; what your program manager and founder see &mdash; sits on top of a deterministic Node-script substrate that gates every agent output before it gets to a human.</p>
+      <p class="s-sub">Two layers of tooling. The operator surface &mdash; what your operator and founder see &mdash; sits on top of a deterministic Node-script substrate that gates every agent output before it gets to a human.</p>
       <div style="display:flex;align-items:center;gap:10px;margin-top:2.5rem;margin-bottom:1.25rem;">
         <span style="font-family:var(--font-mono);font-size:0.72rem;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:var(--primary);">Layer 1 &middot; Operator tools (15)</span>
         <span style="flex:1;height:1px;background:rgba(0,0,0,0.06);"></span>
@@ -2173,14 +2185,16 @@
       <div class="footer-top">
         <div class="footer-brand">
           <div class="logo">VENTRIFY <span class="os">OS</span></div>
-          <p>The operating system for startup programs.</p>
+          <p>Build ventures and assess them — one operator, one Workspace.</p>
         </div>
         <div class="footer-links">
-          <a href="system.html">System</a>
+          <a href="build.html">Build</a>
+          <a href="assess.html">Assess</a>
+          <a href="the-workspace.html">Workspace</a>
+          <a href="agents.html">Agents</a>
           <a href="the-data-room.html">Data Room</a>
-      <a href="the-workspace.html">Workspace</a>
-      <a href="agents.html">Agents</a>
-      <a href="showcase.html">Showcase</a>
+          <a href="system.html">System</a>
+          <a href="showcase.html">Showcase</a>
           <a href="pricing.html">Pricing</a>
           <a href="faqs.html">FAQs</a>
           <a href="mailto:hello@ventrify.io?subject=Ventrify%20OS%20demo%20request">Book a demo</a>
