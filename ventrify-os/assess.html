@@ -355,21 +355,21 @@
 
     /* Light section defaults */
     .section {
-      padding:7rem 3rem;
+      padding:5.5rem 3rem;
       background:var(--bg-light);
     }
     .section-alt {
-      padding:7rem 3rem;
+      padding:5.5rem 3rem;
       background:#FAFAFA;
     }
 
     /* Section labels — light bg */
     .s-label {
-      display:inline-flex; align-items:center; gap:8px;
+      display:flex; justify-content:center; align-items:center; gap:8px;
       font-size:0.75rem; font-weight:500; letter-spacing:0.1em;
       text-transform:uppercase;
       color:var(--primary);
-      margin-bottom:0.75rem;
+      margin-bottom:1rem;
       font-family:var(--font-mono);
     }
     .s-label::before {
@@ -397,9 +397,10 @@
       font-size:clamp(2rem, 4.5vw, 3rem);
       letter-spacing:-0.03em;
       line-height:1.15;
-      margin-bottom:1rem;
+      margin-bottom:1.25rem;
       font-weight:600;
       color:var(--text-dark);
+      text-align:center;
     }
 
     /* Section titles — dark bg */
@@ -416,8 +417,16 @@
       font-size:1.1rem;
       line-height:1.7;
       color:var(--text-dark-muted);
-      max-width:560px;
+      max-width:600px;
       font-weight:400;
+      text-align:center;
+      margin-left:auto;
+      margin-right:auto;
+    }
+    /* Assess pipeline — 5 steps in one clean row (no orphaned 5th card) */
+    .assess-steps { display:grid; grid-template-columns:repeat(5,1fr); gap:0.85rem; margin-top:3rem; }
+    @media (max-width:900px) {
+      .assess-steps { grid-template-columns:1fr; max-width:540px; margin-left:auto; margin-right:auto; }
     }
     /* Contrast card — shared with the homepage "Why It's Different" section */
     .contrast-card {
@@ -1569,7 +1578,7 @@
       .section, .section-alt { padding:4rem 1.25rem; }
       .hero { padding:7rem 1.25rem 5rem; min-height:auto; }
       .hero h1 { font-size:clamp(2.2rem, 8vw, 3.2rem); }
-      .hero-sub { font-size:1rem; }
+      .hero-sub { font-size:1.05rem; }
 
       .hero-mono-label { font-size:0.72rem; }
 
@@ -1690,8 +1699,8 @@
   <!-- PAGE INTRO — the gap it fills -->
   <section class="page-intro-section">
     <div class="container" data-reveal>
-      <div style="max-width:820px;margin:0 auto;">
-        <p style="font-size:clamp(1.15rem,2.5vw,1.4rem);line-height:1.75;color:var(--text-light-muted);font-weight:400;text-align:center;"><span style="color:#FFFFFF;font-weight:500;">Real diligence is slow and expensive.</span> A consultant runs $5&ndash;15K and takes a week; an analyst burns days reading the deck, the data room and the market. Most angels skip it &mdash; and write cheques on vibes. Ventrify OS does the work an associate would, on every deck, in a couple of hours &mdash; web-researched, benchmarked, and traceable to its sources.</p>
+      <div style="max-width:720px;margin:0 auto;">
+        <p style="font-size:clamp(1.15rem,2.5vw,1.35rem);line-height:1.75;color:var(--text-light-muted);font-weight:400;text-align:center;"><span style="color:#FFFFFF;font-weight:500;">Real diligence is slow and expensive.</span> A consultant runs $5&ndash;15K and takes a week; an analyst burns days reading the deck, the data room and the market. Most angels skip it &mdash; and write cheques on vibes. Ventrify OS does the work an associate would, on every deck, in a couple of hours &mdash; web-researched, benchmarked, and traceable to its sources.</p>
       </div>
     </div>
   </section>
@@ -1702,36 +1711,36 @@
       <div class="s-label">How Assess Works</div>
       <h2 class="s-title s-title-shimmer">Deck in. Decision out.<br>Five steps, one Workspace.</h2>
       <p class="s-sub">Drop in the pitch deck and a zip of the data room. A fleet of senior investor-lens agents runs the pipeline &mdash; every claim traced back to a cited source &mdash; and pipes it all into one coherent verdict.</p>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:0.85rem;margin-top:3rem;">
-        
+      <div class="assess-steps">
+
         <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md,14px);padding:1.4rem 1.3rem;">
-          <div style="font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.55rem;">Step 1 · Ingest</div>
+          <div style="font-family:var(--font-mono);font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.55rem;">Step 1 · Ingest</div>
           <h3 style="font-size:1.02rem;font-weight:600;letter-spacing:-0.01em;margin:0 0 0.5rem;">Deck &amp; data room</h3>
-          <p style="font-size:0.86rem;color:var(--text-dark-muted);line-height:1.6;margin:0;">Upload the pitch deck and a zip of the data room. We read every file &mdash; financial model, SAFEs, cap table, customer contracts &mdash; and the live website.</p>
+          <p style="font-size:0.9rem;color:var(--text-dark-muted);line-height:1.6;margin:0;">Upload the pitch deck and a zip of the data room. We read every file &mdash; financial model, SAFEs, cap table, customer contracts &mdash; and the live website.</p>
         </div>
         
         <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md,14px);padding:1.4rem 1.3rem;">
-          <div style="font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.55rem;">Step 2 · Research</div>
+          <div style="font-family:var(--font-mono);font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.55rem;">Step 2 · Research</div>
           <h3 style="font-size:1.02rem;font-weight:600;letter-spacing:-0.01em;margin:0 0 0.5rem;">Deep web research</h3>
-          <p style="font-size:0.86rem;color:var(--text-dark-muted);line-height:1.6;margin:0;">Market analysis, competitor landscape, demand &amp; traction and unit economics &mdash; web-researched and fully cited. The L3 evidence the score traces to.</p>
+          <p style="font-size:0.9rem;color:var(--text-dark-muted);line-height:1.6;margin:0;">Market analysis, competitor landscape, demand &amp; traction and unit economics &mdash; web-researched and fully cited. The L3 evidence the score traces to.</p>
         </div>
         
         <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md,14px);padding:1.4rem 1.3rem;">
-          <div style="font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.55rem;">Step 3 · Diligence</div>
+          <div style="font-family:var(--font-mono);font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.55rem;">Step 3 · Diligence</div>
           <h3 style="font-size:1.02rem;font-weight:600;letter-spacing:-0.01em;margin:0 0 0.5rem;">Investor-lens checks</h3>
-          <p style="font-size:0.86rem;color:var(--text-dark-muted);line-height:1.6;margin:0;">A competitive benchmark vs named rivals, TAM/SAM/SOM sizing, founder &amp; team diligence, and comparable funding rounds &mdash; each handed to the verdict.</p>
+          <p style="font-size:0.9rem;color:var(--text-dark-muted);line-height:1.6;margin:0;">A competitive benchmark vs named rivals, TAM/SAM/SOM sizing, founder &amp; team diligence, and comparable funding rounds &mdash; each handed to the verdict.</p>
         </div>
         
         <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md,14px);padding:1.4rem 1.3rem;">
-          <div style="font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.55rem;">Step 4 · Score</div>
+          <div style="font-family:var(--font-mono);font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.55rem;">Step 4 · Score</div>
           <h3 style="font-size:1.02rem;font-weight:600;letter-spacing:-0.01em;margin:0 0 0.5rem;">Investability score</h3>
-          <p style="font-size:0.86rem;color:var(--text-dark-muted);line-height:1.6;margin:0;">Thirty-five signals across seven categories &mdash; market, team, product, moat, financial, execution, evidence &mdash; the quantification of the same research.</p>
+          <p style="font-size:0.9rem;color:var(--text-dark-muted);line-height:1.6;margin:0;">Thirty-five signals across seven categories &mdash; market, team, product, moat, financial, execution, evidence &mdash; the quantification of the same research.</p>
         </div>
         
         <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md,14px);padding:1.4rem 1.3rem;">
-          <div style="font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.55rem;">Step 5 · Decide</div>
+          <div style="font-family:var(--font-mono);font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.55rem;">Step 5 · Decide</div>
           <h3 style="font-size:1.02rem;font-weight:600;letter-spacing:-0.01em;margin:0 0 0.5rem;">The deal memo</h3>
-          <p style="font-size:0.86rem;color:var(--text-dark-muted);line-height:1.6;margin:0;">Recommendation, conviction, the ask, the valuation read, the kill-risks, the bull and bear &mdash; one decision-grade memo an investor can act on.</p>
+          <p style="font-size:0.9rem;color:var(--text-dark-muted);line-height:1.6;margin:0;">Recommendation, conviction, the ask, the valuation read, the kill-risks, the bull and bear &mdash; one decision-grade memo an investor can act on.</p>
         </div>
       </div>
     </div>
@@ -1833,27 +1842,27 @@
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1.1rem;margin-top:3rem;">
         
         <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md,14px);padding:1.4rem 1.3rem;">
-          <div style="font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.55rem;">Angels</div>
+          <div style="font-family:var(--font-mono);font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.55rem;">Angels</div>
           <h3 style="font-size:1.02rem;font-weight:600;letter-spacing:-0.01em;margin:0 0 0.5rem;">Angel investors</h3>
-          <p style="font-size:0.86rem;color:var(--text-dark-muted);line-height:1.6;margin:0;">Screen every deck that lands in your inbox to the same standard &mdash; not just the ones from warm intros. Decide with conviction, in an evening.</p>
+          <p style="font-size:0.9rem;color:var(--text-dark-muted);line-height:1.6;margin:0;">Screen every deck that lands in your inbox to the same standard &mdash; not just the ones from warm intros. Decide with conviction, in an evening.</p>
         </div>
         
         <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md,14px);padding:1.4rem 1.3rem;">
-          <div style="font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.55rem;">Syndicates</div>
+          <div style="font-family:var(--font-mono);font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.55rem;">Syndicates</div>
           <h3 style="font-size:1.02rem;font-weight:600;letter-spacing:-0.01em;margin:0 0 0.5rem;">Syndicates &amp; SPVs</h3>
-          <p style="font-size:0.86rem;color:var(--text-dark-muted);line-height:1.6;margin:0;">Give your members a consistent, cited diligence pack on every deal you bring &mdash; the memo, the score, the comps &mdash; without a full-time analyst.</p>
+          <p style="font-size:0.9rem;color:var(--text-dark-muted);line-height:1.6;margin:0;">Give your members a consistent, cited diligence pack on every deal you bring &mdash; the memo, the score, the comps &mdash; without a full-time analyst.</p>
         </div>
         
         <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md,14px);padding:1.4rem 1.3rem;">
-          <div style="font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.55rem;">Scouts</div>
+          <div style="font-family:var(--font-mono);font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.55rem;">Scouts</div>
           <h3 style="font-size:1.02rem;font-weight:600;letter-spacing:-0.01em;margin:0 0 0.5rem;">Scouts &amp; micro-VCs</h3>
-          <p style="font-size:0.86rem;color:var(--text-dark-muted);line-height:1.6;margin:0;">Cover more of the market with the same headcount. Run first-pass diligence on everything; spend your time on the deals that earn it.</p>
+          <p style="font-size:0.9rem;color:var(--text-dark-muted);line-height:1.6;margin:0;">Cover more of the market with the same headcount. Run first-pass diligence on everything; spend your time on the deals that earn it.</p>
         </div>
         
         <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md,14px);padding:1.4rem 1.3rem;">
-          <div style="font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.55rem;">Studios</div>
+          <div style="font-family:var(--font-mono);font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.55rem;">Studios</div>
           <h3 style="font-size:1.02rem;font-weight:600;letter-spacing:-0.01em;margin:0 0 0.5rem;">Studios &amp; family offices</h3>
-          <p style="font-size:0.86rem;color:var(--text-dark-muted);line-height:1.6;margin:0;">Pressure-test inbound and your own builds against the market before committing capital or a build slot &mdash; one platform for both jobs.</p>
+          <p style="font-size:0.9rem;color:var(--text-dark-muted);line-height:1.6;margin:0;">Pressure-test inbound and your own builds against the market before committing capital or a build slot &mdash; one platform for both jobs.</p>
         </div>
       </div>
     </div>
