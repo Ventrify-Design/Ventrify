@@ -105,12 +105,11 @@ export function renderVSSScorecard(snap, opts = {}) {
   const ratedCount = snap.ratedCount != null ? snap.ratedCount
     : cats.reduce((n, c) => n + (c.rated != null ? c.rated : (c.subs || []).filter(s => s.score != null).length), 0);
   const pendingCount = snap.pendingCount != null ? snap.pendingCount : Math.max(0, 35 - ratedCount);
-  const pct = snap.pct != null ? snap.pct : Math.round((snap.composite / (max || 35)) * 100);
 
-  // ── Hero ──────────────────────────────────────────────────────────────
+  // ── Hero — the score itself is the headline (no percentage here) ───────
   const band = String(snap.band || 'unrated').toLowerCase();
   const bandWord = BAND_WORD[band] || (snap.bandLabel || snap.band || '');
-  const ratedLine = `${esc(pct)}% scored &middot; ${esc(ratedCount)} of 35 signals rated${pendingCount ? ` &middot; ${esc(pendingCount)} not assessable here` : ''}`;
+  const ratedLine = `${esc(ratedCount)} of 35 signals rated${pendingCount ? ` &middot; ${esc(pendingCount)} not assessable here` : ''}`;
   const hero = opts.headline === false ? '' : `<div class="vss-hero">
       <div class="vss-hero-number" style="color:${cc};">${esc(snap.composite)}<span class="vss-hero-suffix"> / ${esc(max)}</span></div>
       <div class="vss-hero-body">
@@ -240,9 +239,9 @@ export function ensureInvestabilityStyles() {
     s.textContent = `
     :root { --vss-surf: var(--surface-2, #fff); --vss-bd: var(--border, rgba(0,0,0,0.07)); --vss-mut: var(--muted, #6B7594); --vss-txt: var(--text, #1A1A2E); --vss-mono: var(--font-mono, ui-monospace, 'SF Mono', monospace); --vss-disp: var(--font-heading, 'Space Grotesk', sans-serif); }
     /* Hero */
-    .vss-hero { display:grid; grid-template-columns:minmax(140px,auto) 1fr auto; gap:1.6rem; align-items:center; padding:1.4rem 1.5rem; background:var(--vss-surf); border:1px solid var(--vss-bd); border-radius:16px; margin-bottom:1.25rem; }
-    .vss-hero-number { font-family:var(--vss-disp); font-size:4.4rem; font-weight:700; line-height:1; letter-spacing:-0.03em; white-space:nowrap; }
-    .vss-hero-suffix { font-size:1.3rem; color:var(--vss-mut); font-weight:500; }
+    .vss-hero { display:grid; grid-template-columns:minmax(170px,auto) 1fr auto; gap:1.8rem; align-items:center; padding:1.6rem 1.8rem; background:var(--vss-surf); border:1px solid var(--vss-bd); border-radius:16px; margin-bottom:1.25rem; }
+    .vss-hero-number { font-family:var(--vss-disp); font-size:clamp(3.6rem, 7vw, 6rem); font-weight:700; line-height:0.95; letter-spacing:-0.035em; white-space:nowrap; }
+    .vss-hero-suffix { font-size:0.32em; color:var(--vss-mut); font-weight:500; letter-spacing:-0.02em; }
     .vss-hero-body { display:flex; flex-direction:column; gap:0.45rem; min-width:0; }
     .vss-band-pill { align-self:flex-start; font-family:var(--vss-mono); font-size:0.66rem; font-weight:700; letter-spacing:0.09em; text-transform:uppercase; padding:0.28rem 0.7rem; border-radius:999px; }
     .vss-band-label { font-size:0.92rem; color:var(--vss-txt); line-height:1.4; }

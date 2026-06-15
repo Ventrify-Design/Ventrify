@@ -509,10 +509,10 @@
       const sg = (p.investabilitySuggestions && p.investabilitySuggestions.items) || [];
       // The scorecard renders its own self-contained panels (hero / breakdown /
       // heatmap), so it sits directly in the section — no outer card wrapper.
-      // On the assess page the composite/% hero lives in the §1 "The call"
-      // scoreboard, so suppress the hero here; build engagements (no Call) keep it.
+      // The hero plays the score itself back big (composite / ceiling, no %);
+      // the % lives in the §1 "The call" scoreboard for assess engagements.
       return `<div class="section">${head}
-        ${renderVSSScorecard(snap, { variant: 'operator', headline: !isAssess, esc: escBrief })}
+        ${renderVSSScorecard(snap, { variant: 'operator', esc: escBrief })}
         ${sg.length ? `<div class="card" style="margin-top:1.25rem;">${renderStrengthenSuggestions(sg, { esc: escBrief })}</div>` : ''}
       </div>`;
     }
