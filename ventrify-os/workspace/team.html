@@ -19,21 +19,67 @@
     await window.WORKSPACE_READY;
     const W = window.WORKSPACE;
     const { operators, org, helpers } = W;
+    const isLive = W.mode === 'live';
     const orgName = (org && org.name) || 'your Workspace';
-    const orgTier = (org && org.tier) || '—';
     const seatsLimit = (org && org.operatorSeatsLimit) || 'Unlimited';
+
+    function toast(msg, isError) {
+      let t = document.getElementById('team-toast');
+      if (!t) { t = document.createElement('div'); t.id = 'team-toast'; t.className = 'settings-toast'; document.body.appendChild(t); }
+      t.innerHTML = (isError ? '<span style="font-size:0.65rem;">&#9888;</span> ' : '<span style="font-size:0.65rem;">✓</span> ') + msg;
+      t.style.background = isError ? 'var(--danger,#C0392B)' : '';
+      t.classList.remove('hide'); t.classList.add('show');
+      clearTimeout(t._h); t._h = setTimeout(() => { t.classList.remove('show'); t.classList.add('hide'); }, isError ? 3200 : 1800);
+    }
+    const ERR = { already_operator: 'That email is already an operator.', last_operator: 'You can’t remove the last operator.', bad_email: 'Enter a valid email address.', forbidden: 'You don’t have permission to manage the team.', not_an_operator: 'That person isn’t an operator.' };
+
+    async function apiOperator(action, email) {
+      const { auth } = await import('../firebase/firebase.js');
+      const idToken = auth.currentUser ? await auth.currentUser.getIdToken() : null;
+      const resp = await fetch('/api/manage-operator', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken, orgId: org.id, action, email }) });
+      const d = await resp.json().catch(() => ({}));
+      if (!resp.ok) throw new Error(ERR[d.error] || d.error || ('HTTP ' + resp.status));
+      return d;
+    }
+
+    window.__toggleInvite = function() {
+      const f = document.getElementById('invite-form'); if (!f) return;
+      const open = f.style.display !== 'none'; f.style.display = open ? 'none' : 'flex';
+      if (!open) { const i = document.getElementById('invite-email'); if (i) i.focus(); }
+    };
+    window.__addOperator = async function() {
+      const input = document.getElementById('invite-email');
+      const email = ((input && input.value) || '').trim().toLowerCase();
+      if (!email) { toast('Enter an email address.', true); return; }
+      const btn = document.getElementById('invite-send'); if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+      try {
+        if (isLive) { const d = await apiOperator('add', email); toast(d.emailSent ? `Invite sent to ${email}` : `${email} added — they can sign in at this Workspace`); }
+        else { const list = W.storage.readJSON('workspace.operators', []); list.push({ id: email, email, name: email.split('@')[0], role: 'Operator', avatar: email.slice(0, 2).toUpperCase(), avatarColor: (org && org.primaryColor) || '#0036FF' }); W.storage.writeJSON('workspace.operators', list); toast(`${email} added`); }
+        setTimeout(() => window.location.reload(), 950);
+      } catch (e) { toast(String(e.message || e), true); if (btn) { btn.disabled = false; btn.textContent = 'Send invite'; } }
+    };
+    window.__removeOperator = async function(email) {
+      if (!window.confirm(`Remove ${email} from the Workspace? They lose access immediately.`)) return;
+      try {
+        if (isLive) await apiOperator('remove', email);
+        else W.storage.writeJSON('workspace.operators', W.storage.readJSON('workspace.operators', []).filter(o => (o.email || '').toLowerCase() !== email));
+        toast(`${email} removed`); setTimeout(() => window.location.reload(), 750);
+      } catch (e) { toast(String(e.message || e), true); }
+    };
 
     function operatorCardHTML(op) {
       const assignedPrograms = helpers.programsForOperator(op.id);
       const programNames = assignedPrograms.map(p => p.name).join(' &middot; ') || '<span class="dim">No engagements assigned</span>';
+      const canRemove = isLive && !op.isCurrentUser && operators.length > 1;
       return `
         <div class="team-card">
           <div class="team-card-head">
             <div class="avatar avatar-lg" style="background:${op.avatarColor};">${op.avatar}</div>
-            <div>
-              <div class="team-card-name">${op.name}</div>
+            <div style="flex:1;min-width:0;">
+              <div class="team-card-name">${op.name}${op.isCurrentUser ? ' <span class="team-you">You</span>' : ''}</div>
               <div class="team-card-email">${op.email}</div>
             </div>
+            ${canRemove ? `<button class="team-remove" title="Remove operator" onclick="window.__removeOperator('${op.email}')">Remove</button>` : ''}
           </div>
           <div class="team-card-role">${op.role}</div>
           <div class="team-card-programs">
@@ -48,7 +94,7 @@
       <div class="page-header">
         <div class="page-eyebrow">Team</div>
         <h1 class="page-title">Operators on ${orgName}</h1>
-        <p class="page-sub">Everyone with Workspace access for your organisation. ${orgTier} tier &mdash; ${typeof seatsLimit === 'string' ? seatsLimit.toLowerCase() : seatsLimit} operator seats. Assign programs, manage roles.</p>
+        <p class="page-sub">Everyone with Workspace access for your organisation. Add an operator and they get a one-click sign-in link to this same Workspace.</p>
       </div>
 
       <div class="section">
@@ -57,7 +103,13 @@
             <div class="section-title">Active operators &middot; ${operators.length}</div>
             <div class="section-sub">Seats used: ${operators.length} of ${seatsLimit}</div>
           </div>
-          <button class="btn btn-primary btn-sm">Invite operator</button>
+          <button class="btn btn-primary btn-sm" onclick="window.__toggleInvite()">Invite operator</button>
+        </div>
+
+        <div id="invite-form" class="team-invite" style="display:none;">
+          <input id="invite-email" type="email" autocomplete="off" placeholder="teammate@email.com" class="team-invite-input">
+          <button id="invite-send" class="btn btn-primary btn-sm" onclick="window.__addOperator()">Send invite</button>
+          <button class="btn btn-ghost btn-sm" onclick="window.__toggleInvite()">Cancel</button>
         </div>
 
         ${operators.length === 0
@@ -65,21 +117,10 @@
           : `<div class="team-grid">${operators.map(operatorCardHTML).join('')}</div>`
         }
       </div>
-
-      <div class="section">
-        <div class="section-head">
-          <div>
-            <div class="section-title">Pending invites</div>
-            <div class="section-sub">Invitations sent but not yet accepted.</div>
-          </div>
-        </div>
-        <div class="card" style="display:flex;align-items:center;justify-content:space-between;">
-          <div style="font-size:0.92rem;color:var(--text-muted);">No pending invites.</div>
-        </div>
-      </div>
     `;
 
     window.renderShell(main);
+    document.getElementById('invite-email')?.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); window.__addOperator(); } });
   </script>
 </body>
 </html>

@@ -117,19 +117,21 @@ async function loadLive(user) {
     throw e;
   }
 
-  // Operator identity = the signed-in user (single-operator for now).
-  const operator = {
-    id: user.uid,
-    name: user.displayName || (user.email || 'Operator').split('@')[0],
-    email: user.email || '',
-    role: 'Program Lead',
-    avatar: initialsOf(user.displayName || user.email || 'OP'),
-    avatarColor: (org && org.primaryColor) || '#0036FF'
+  // The team = every email in org.operatorEmails; the signed-in user is flagged.
+  const brand = (org && org.primaryColor) || '#0036FF';
+  const mkOp = (em) => {
+    const e = String(em).toLowerCase();
+    const me = e === email;
+    const display = (me && user.displayName) ? user.displayName : e.split('@')[0].replace(/[._-]+/g, ' ');
+    const name = display.replace(/\b\w/g, c => c.toUpperCase());
+    return { id: me ? user.uid : e, name, email: e, role: 'Operator', avatar: initialsOf(name), avatarColor: brand, isCurrentUser: me };
   };
+  let operators = (org.operatorEmails || []).map(mkOp);
+  if (!operators.some(o => o.isCurrentUser)) operators.unshift(mkOp(email));
 
   applyBranding(org);
   return buildWorkspace({
-    org, operators: [operator], programs, actions: [],
+    org, operators, programs, actions: [],
     currentOperatorId: user.uid, demoMode: 'off', mode: 'live', isSuperAdmin: superAdmin
   });
 }

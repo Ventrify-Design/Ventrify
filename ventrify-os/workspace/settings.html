@@ -40,26 +40,37 @@
       return (a + b).toUpperCase().slice(0, 2);
     }
 
-    // Save org to localStorage and re-apply branding live
-    function saveOrgPatch(patch) {
-      const updated = { ...org, ...patch };
-      storage.writeJSON('workspace.organisation', updated);
-      Object.assign(org, patch);
-      flashSaved();
+    // Persist a brand patch where it belongs: Firestore (live, applies to the whole
+    // org) via the operator-only API, or localStorage (demo/local).
+    async function persistPatch(patch) {
+      if (W.mode === 'live') {
+        const { auth } = await import('../firebase/firebase.js');
+        const idToken = auth.currentUser ? await auth.currentUser.getIdToken() : null;
+        const resp = await fetch('/api/update-org', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idToken, orgId: org.id, patch })
+        });
+        const d = await resp.json().catch(() => ({}));
+        if (!resp.ok) throw new Error(d.error === 'logo_too_large' ? 'That logo is too large — use an image under ~300KB or an SVG.' : (d.error || ('HTTP ' + resp.status)));
+      } else {
+        storage.writeJSON('workspace.organisation', { ...org, ...patch });
+      }
+    }
+
+    // Re-apply the brand live (CSS var + topbar) without a reload.
+    function applyBrandLive(patch) {
       if (patch.primaryColor) {
-        // re-inject CSS var so changes are live without reload
-        const tag = document.getElementById('org-brand-vars') || (() => {
-          const t = document.createElement('style');
-          t.id = 'org-brand-vars';
-          document.head.appendChild(t);
-          return t;
-        })();
+        const tag = document.getElementById('org-brand-vars') || (() => { const t = document.createElement('style'); t.id = 'org-brand-vars'; document.head.appendChild(t); return t; })();
         tag.textContent = `:root { --brand-primary: ${patch.primaryColor}; --primary: ${patch.primaryColor}; }`;
       }
-      if (patch.name !== undefined || patch.logoDataUrl !== undefined || patch.primaryColor !== undefined) {
-        // Re-render topbar with new brand. Since topbar lives outside the main re-render, do a soft refresh.
-        updateTopbarBrand();
-      }
+      if (patch.name !== undefined || patch.logoUrl !== undefined || patch.primaryColor !== undefined) updateTopbarBrand();
+    }
+
+    // Optimistic: apply locally, persist, toast (or surface the error).
+    function saveOrgPatch(patch) {
+      Object.assign(org, patch);
+      applyBrandLive(patch);
+      persistPatch(patch).then(() => flashSaved()).catch(e => flashSaved(String(e.message || e), true));
     }
 
     function updateTopbarBrand() {
@@ -67,8 +78,8 @@
       const brandName = document.querySelector('.topbar-logo-branded .topbar-logo-name');
       if (brandLogo) {
         brandLogo.setAttribute('style', `background:${org.primaryColor || '#0036FF'};`);
-        if (org.logoDataUrl) {
-          brandLogo.innerHTML = `<img src="${org.logoDataUrl}" alt="${org.name}">`;
+        if (org.logoUrl) {
+          brandLogo.innerHTML = `<img src="${org.logoUrl}" alt="${org.name}">`;
         } else {
           brandLogo.innerHTML = `<span class="topbar-logo-mark-text">${initialsOf(org.name)}</span>`;
         }
@@ -77,22 +88,18 @@
       // Topbar tier pill / "Powered by" stays static (those are inline texts).
     }
 
-    function flashSaved() {
+    function flashSaved(msg, isError) {
       let t = document.getElementById('settings-saved-toast');
-      if (!t) {
-        t = document.createElement('div');
-        t.id = 'settings-saved-toast';
-        t.className = 'settings-toast';
-        t.innerHTML = '<span style="font-size:0.65rem;">✓</span> Saved';
-        document.body.appendChild(t);
-      }
+      if (!t) { t = document.createElement('div'); t.id = 'settings-saved-toast'; t.className = 'settings-toast'; document.body.appendChild(t); }
+      t.innerHTML = isError ? `<span style="font-size:0.65rem;">&#9888;</span> ${msg || 'Could not save'}` : '<span style="font-size:0.65rem;">✓</span> Saved';
+      t.style.background = isError ? 'var(--danger,#C0392B)' : '';
       t.classList.remove('hide');
       t.classList.add('show');
       clearTimeout(t._hideTimer);
       t._hideTimer = setTimeout(() => {
         t.classList.remove('show');
         t.classList.add('hide');
-      }, 1400);
+      }, isError ? 2800 : 1400);
     }
 
     // -------- Card markup ----------------------------------------------
@@ -124,15 +131,15 @@
           <label class="settings-label">Logo</label>
           <div class="logo-dropzone" id="brand-logo-dropzone" onclick="document.getElementById('brand-logo-input').click()">
             <div class="logo-preview" id="brand-logo-preview" style="background:${org.primaryColor || 'rgba(0,0,0,0.05)'};color:#fff;">
-              ${org.logoDataUrl ? `<img src="${org.logoDataUrl}" alt="logo">` : `<span>${initialsOf(org.name)}</span>`}
+              ${org.logoUrl ? `<img src="${org.logoUrl}" alt="logo">` : `<span>${initialsOf(org.name)}</span>`}
             </div>
             <div class="logo-dropzone-body">
-              <div class="logo-dropzone-title">${org.logoDataUrl ? 'Click to replace' : 'Click to upload'}</div>
+              <div class="logo-dropzone-title">${org.logoUrl ? 'Click to replace' : 'Click to upload'}</div>
               <div class="logo-dropzone-sub">PNG or SVG. Square works best.</div>
             </div>
             <div style="display:flex;gap:6px;">
               <button type="button" class="logo-trigger" onclick="event.stopPropagation(); document.getElementById('brand-logo-input').click();">Upload</button>
-              ${org.logoDataUrl ? `<button type="button" class="logo-trigger" onclick="event.stopPropagation(); window.__removeLogo();" style="color:var(--danger,#c0392b);">Remove</button>` : ''}
+              ${org.logoUrl ? `<button type="button" class="logo-trigger" onclick="event.stopPropagation(); window.__removeLogo();" style="color:var(--danger,#c0392b);">Remove</button>` : ''}
             </div>
             <input type="file" id="brand-logo-input" class="logo-input" accept="image/png,image/svg+xml,image/jpeg">
           </div>
@@ -208,7 +215,7 @@
         const next = nameInput.value.trim();
         if (next && next !== org.name) saveOrgPatch({ name: next });
         // Update logo placeholder text if no logo
-        if (!org.logoDataUrl) {
+        if (!org.logoUrl) {
           const text = document.querySelector('#brand-logo-preview span');
           if (text) text.textContent = initialsOf(org.name);
         }
@@ -234,23 +241,35 @@
     document.getElementById('brand-color-pick')?.addEventListener('input', e => applyColor(e.target.value));
     document.getElementById('brand-color-hex')?.addEventListener('change', e => applyColor(e.target.value));
 
+    // SVG passes through (small); raster is downscaled to ≤256px PNG so the data URL
+    // stays well within the org doc's size budget.
+    function readDataUrl(file) { return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result)); r.onerror = () => rej(new Error('read failed')); r.readAsDataURL(file); }); }
+    async function processLogo(file) {
+      if (file.type === 'image/svg+xml') return readDataUrl(file);
+      const src = await readDataUrl(file);
+      const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('not an image')); i.src = src; });
+      const scale = Math.min(1, 256 / Math.max(img.width, img.height));
+      const w = Math.max(1, Math.round(img.width * scale)), h = Math.max(1, Math.round(img.height * scale));
+      const c = document.createElement('canvas'); c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      return c.toDataURL('image/png');
+    }
     // Logo upload
-    document.getElementById('brand-logo-input')?.addEventListener('change', e => {
+    document.getElementById('brand-logo-input')?.addEventListener('change', async e => {
       const file = e.target.files[0];
       if (!file) return;
-      const reader = new FileReader();
-      reader.onload = ev => {
-        const dataUrl = ev.target.result;
-        saveOrgPatch({ logoDataUrl: dataUrl });
-        // Re-render the brand card to reflect "Remove" button + new preview
-        window.location.reload();
-      };
-      reader.readAsDataURL(file);
+      try {
+        const dataUrl = await processLogo(file);
+        Object.assign(org, { logoUrl: dataUrl });
+        applyBrandLive({ logoUrl: dataUrl });
+        await persistPatch({ logoUrl: dataUrl });
+        window.location.reload();   // reflect Remove button + new preview
+      } catch (err) { flashSaved(String((err && err.message) || err), true); }
     });
-    window.__removeLogo = function() {
+    window.__removeLogo = async function() {
       if (!window.confirm('Remove the logo? The Workspace will fall back to your initials.')) return;
-      saveOrgPatch({ logoDataUrl: null });
-      window.location.reload();
+      try { Object.assign(org, { logoUrl: null }); await persistPatch({ logoUrl: null }); window.location.reload(); }
+      catch (err) { flashSaved(String((err && err.message) || err), true); }
     };
   </script>
 </body>
