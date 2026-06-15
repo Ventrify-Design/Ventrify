@@ -1288,11 +1288,14 @@
     /* Hero with embedded big screenshot */
     .ws-hero-frame {
       max-width: 1080px;
-      margin: -3rem auto 0;
+      margin: 1.5rem auto 0;
       padding: 0 3rem;
       position: relative;
       z-index: 1;
     }
+    /* Only the hero shot floats up to overlap the dark hero; in-content
+       shots use normal spacing so the label/copy above them stays clear. */
+    .ws-hero-frame.is-hero { margin-top: -3rem; }
     .ws-hero-frame .ws-frame {
       background: linear-gradient(135deg, #1A2E78 0%, #111B52 100%);
       box-shadow:
@@ -1674,7 +1677,7 @@
     </div>
   </section>
 
-  <div class="ws-hero-frame" data-reveal>
+  <div class="ws-hero-frame is-hero" data-reveal>
     <div class="ws-frame">
       <div class="ws-frame-bar"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span><span class="url">ventrify.io/workspace/assessment</span></div>
       <div style="position:relative;overflow:hidden;border-radius:8px;background:#fff;">
