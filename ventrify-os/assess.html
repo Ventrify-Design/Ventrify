@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>The Data Room — Ventrify OS</title>
-  <meta name="description" content="Every program hub on Ventrify OS renders as a three-layer data room: Provocation Cards, Evidence, Full Research. The engagement gates on founders resolving cards — not on weeks of deck revisions.">
-  <meta property="og:title" content="The Data Room — Ventrify OS">
-  <meta property="og:description" content="L1 Provocation Cards · L2 Evidence · L3 Full Research. How Ventrify OS replaces agency deck cycles with founder-driven sign-off loops.">
+  <title>Assess — Ventrify OS</title>
+  <meta name="description" content="Investor-grade venture diligence in hours. Upload a pitch deck and data room; Ventrify OS runs deep web research, a competitive benchmark, market sizing and founder checks, then scores investability and writes a deal memo. Built for angels, syndicates and scouts.">
+  <meta property="og:title" content="The Workspace — Ventrify OS">
+  <meta property="og:description" content="The third surface in the Ventrify stack. Where one operator manages 24 ventures a year without losing a thread.">
   <meta property="og:type" content="website">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -899,17 +899,9 @@
       border-radius:var(--radius-sm);
     }
     .dr-stack-icon {
+      font-size:0.95rem;
       flex-shrink:0;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      width:22px;
-      height:22px;
-      border-radius:6px;
-      background:rgba(var(--primary-rgb), 0.08);
-      color:var(--primary);
     }
-    .dr-stack-icon svg { display:block; }
     .dr-stack-text {
       font-size:0.85rem;
       color:var(--text-dark-muted);
@@ -1149,6 +1141,211 @@
     }
 
     /* ============================================
+       WORKSPACE PAGE — screenshot showcase patterns
+       ============================================ */
+    .ws-showcase {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+      align-items: center;
+      margin-top: 3rem;
+    }
+    .ws-showcase.reverse { direction: rtl; }
+    .ws-showcase.reverse > * { direction: ltr; }
+    .ws-showcase-copy h3 {
+      font-size: clamp(1.4rem, 2.2vw, 1.8rem);
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin-bottom: 0.9rem;
+      color: var(--text-dark);
+    }
+    .ws-showcase-copy p {
+      font-size: 1rem;
+      line-height: 1.65;
+      color: var(--text-dark-muted);
+      margin-bottom: 1rem;
+    }
+    .ws-showcase-copy p:last-of-type { margin-bottom: 0; }
+    .ws-showcase-copy .ws-bullets {
+      list-style: none;
+      padding: 0;
+      margin: 1.25rem 0 0;
+    }
+    .ws-showcase-copy .ws-bullets li {
+      font-size: 0.92rem;
+      color: var(--text-dark);
+      line-height: 1.55;
+      padding: 0.5rem 0 0.5rem 1.5rem;
+      position: relative;
+      border-top: 1px solid rgba(0,0,0,0.05);
+    }
+    .ws-showcase-copy .ws-bullets li:first-child { border-top: none; }
+    .ws-showcase-copy .ws-bullets li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0.95rem;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(var(--primary-rgb), 0.2);
+      border: 1.5px solid rgba(var(--primary-rgb), 0.4);
+    }
+
+    /* Screenshot frame — adds subtle browser chrome */
+    .ws-frame {
+      position: relative;
+      background: linear-gradient(135deg, #F0F2F7 0%, #E8ECF4 100%);
+      border-radius: var(--radius-card);
+      padding: 12px;
+      box-shadow:
+        0 24px 48px rgba(0, 0, 0, 0.08),
+        0 4px 12px rgba(0, 0, 0, 0.04),
+        0 0 0 1px rgba(0, 0, 0, 0.04);
+    }
+    .ws-frame-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 4px 10px;
+    }
+    .ws-frame-bar .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    .ws-frame-bar .dot.red { background: #FF5F57; }
+    .ws-frame-bar .dot.yellow { background: #FEBC2E; }
+    .ws-frame-bar .dot.green { background: #28C840; }
+    .ws-frame-bar .url {
+      flex: 1;
+      margin-left: 10px;
+      padding: 4px 12px;
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: var(--radius-pill);
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--text-dark-muted);
+      letter-spacing: 0.02em;
+    }
+    .ws-frame img {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    /* Hero with embedded big screenshot */
+    .ws-hero-frame {
+      max-width: 1080px;
+      margin: -3rem auto 0;
+      padding: 0 3rem;
+      position: relative;
+      z-index: 1;
+    }
+    .ws-hero-frame .ws-frame {
+      background: linear-gradient(135deg, #1A2E78 0%, #111B52 100%);
+      box-shadow:
+        0 32px 80px rgba(0, 0, 0, 0.25),
+        0 8px 24px rgba(0, 0, 0, 0.12),
+        0 0 60px rgba(var(--primary-rgb), 0.15);
+    }
+    .ws-hero-frame .ws-frame-bar .url {
+      background: rgba(0, 0, 0, 0.25);
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    /* 3-surface stack diagram */
+    .ws-stack {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.25rem;
+      margin-top: 3rem;
+    }
+    .ws-stack-card {
+      background: #F5F5F7;
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      border-radius: var(--radius-card);
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      position: relative;
+    }
+    .ws-stack-card.featured {
+      background: #FFFFFF;
+      border: 1.5px solid rgba(var(--primary-rgb), 0.3);
+      box-shadow: 0 8px 24px rgba(var(--primary-rgb), 0.08);
+    }
+    .ws-stack-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--primary);
+    }
+    .ws-stack-card.featured .ws-stack-eyebrow { color: var(--primary); }
+    .ws-stack-card:not(.featured) .ws-stack-eyebrow { color: var(--text-dark-muted); }
+    .ws-stack-name {
+      font-size: 1.15rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: var(--text-dark);
+    }
+    .ws-stack-who {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      letter-spacing: 0.04em;
+      color: var(--text-dark-muted);
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+    .ws-stack-desc {
+      font-size: 0.9rem;
+      line-height: 1.6;
+      color: var(--text-dark-muted);
+    }
+
+    /* KPI metric strip */
+    .ws-metrics {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.25rem;
+      margin-top: 3rem;
+    }
+    .ws-metric-card {
+      background: #F5F5F7;
+      border-radius: var(--radius-card);
+      padding: 1.5rem;
+      text-align: center;
+    }
+    .ws-metric-val {
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: clamp(1.6rem, 2.8vw, 2.2rem);
+      letter-spacing: -0.02em;
+      color: var(--text-dark);
+      line-height: 1;
+      margin-bottom: 0.45rem;
+    }
+    .ws-metric-lbl {
+      font-size: 0.85rem;
+      color: var(--text-dark-muted);
+      line-height: 1.45;
+    }
+
+    @media (max-width: 900px) {
+      .ws-showcase { grid-template-columns: 1fr; gap: 2rem; }
+      .ws-showcase.reverse { direction: ltr; }
+      .ws-stack { grid-template-columns: 1fr; }
+      .ws-metrics { grid-template-columns: repeat(2, 1fr); }
+      .ws-hero-frame { padding: 0 1.5rem; }
+    }
+
+    /* ============================================
        FINAL CTA — Dark island (bookend)
        ============================================ */
     .final-cta {
@@ -1346,7 +1543,7 @@
     <a href="index.html" class="logo">VENTRIFY <span class="os">OS</span></a>
     <div class="nav-links">
       <a href="index.html#build">Build</a>
-      <a href="assess.html">Assess</a>
+      <a href="assess.html" class="active">Assess</a>
       <a href="the-workspace.html">Workspace</a>
       <a href="agents.html">Agents</a>
       <a href="showcase.html">Showcase</a>
@@ -1366,7 +1563,7 @@
   <!-- Mobile Menu -->
   <div class="mobile-menu">
     <a href="index.html#build" class="m-nav-link">Build</a>
-    <a href="assess.html" class="m-nav-link">Assess</a>
+    <a href="assess.html" class="m-nav-link active">Assess</a>
     <a href="the-workspace.html" class="m-nav-link">Workspace</a>
     <a href="agents.html" class="m-nav-link">Agents</a>
     <a href="showcase.html" class="m-nav-link">Showcase</a>
@@ -1377,347 +1574,206 @@
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════
-       1. HERO — Dark to Light Gradient
-       ═══════════════════════════════════════════ -->
+
+  <!-- HERO -->
   <section class="hero" id="main-content">
     <div class="hero-content">
-      <h1>The Data Room</h1>
-      <p class="hero-sub">Every program hub on Ventrify OS renders as a three-layer data room. The engagement gates on founders resolving questions &mdash; not on weeks of deck revisions. This is how a 10-person agency&rsquo;s output ships in 6&ndash;16 weeks.</p>
+      <h1>Assess any venture<br>in hours, not weeks.</h1>
+      <p class="hero-sub">Upload a pitch deck and data room. Ventrify OS runs deep web research, benchmarks the competition, sizes the market and checks the founders &mdash; then scores investability and writes a decision-grade deal memo. The diligence of a week with an analyst, before your second coffee.</p>
+      <div class="hero-ctas">
+        <a href="mailto:hello@ventrify.io?subject=Ventrify%20OS%20Assess%20demo" class="btn btn-hero-primary btn-lg">Book a demo</a>
+        <a href="#how" class="btn btn-hero-outline btn-lg">See how it works</a>
+      </div>
     </div>
   </section>
 
-  <!-- ═══════════════════════════════════════════
-       PAGE INTRO — Dark band: the problem
-       ═══════════════════════════════════════════ -->
+  <div class="ws-hero-frame" data-reveal>
+    <div class="ws-frame">
+      <div class="ws-frame-bar"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span><span class="url">ventrify.io/workspace/assessment</span></div>
+      <div style="position:relative;max-height:560px;overflow:hidden;border-radius:8px;background:#fff;">
+        <img src="assets/assess/verdict.png" alt="Ventrify OS — the assessment verdict: recommendation, conviction, investability score, thesis and kill-risk">
+        <div style="position:absolute;bottom:0;left:0;right:0;height:120px;background:linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.7) 60%, rgba(255,255,255,0.97) 100%);pointer-events:none;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE INTRO — the gap it fills -->
   <section class="page-intro-section">
     <div class="container" data-reveal>
-      <div style="max-width:780px;margin:0 auto;">
-        <p style="font-size:clamp(1.15rem,2.5vw,1.4rem);line-height:1.75;color:var(--text-light-muted);font-weight:400;text-align:center;"><span style="color:#FFFFFF;font-weight:500;">Traditional venture studios and agencies ship giant decks.</span> The founder reads (maybe), emails feedback, the agency revises, the cycle takes weeks. This produces revisions, not decisions. Ventrify OS replaces it with an architecture that forces engagement at the point of decision.</p>
+      <div style="max-width:820px;margin:0 auto;">
+        <p style="font-size:clamp(1.15rem,2.5vw,1.4rem);line-height:1.75;color:var(--text-light-muted);font-weight:400;text-align:center;"><span style="color:#FFFFFF;font-weight:500;">Real diligence is slow and expensive.</span> A consultant runs $5&ndash;15K and takes a week; an analyst burns days reading the deck, the data room and the market. Most angels skip it &mdash; and write cheques on vibes. Ventrify OS does the work an associate would, on every deck, in a couple of hours &mdash; web-researched, benchmarked, and traceable to its sources.</p>
       </div>
     </div>
   </section>
 
-  <!-- ═══════════════════════════════════════════
-       2. THE THREE LAYERS
-       ═══════════════════════════════════════════ -->
-  <section class="section" id="three-layers">
+  <!-- HOW IT WORKS -->
+  <section class="section" id="how">
     <div class="container" data-reveal>
-      <div class="s-label">Architecture</div>
-      <h2 class="s-title s-title-shimmer">Three layers per hub.<br>One way to engage.</h2>
-      <p class="s-sub">Research, Vision, Strategy, Financials &mdash; every program hub in the Studio uses the same three-layer structure. Founders see the questions first. The depth is available when they want it.</p>
-
-      <div class="dr-grid" data-reveal>
-
-        <!-- L1 — Provocation Cards -->
-        <div class="dr-card dr-card-l1" data-reveal data-delay="1">
-          <div class="dr-layer-tag">L1 &mdash; Default view</div>
-          <h3 class="dr-card-title">Provocation Cards</h3>
-          <p class="dr-card-lede">5&ndash;7 strategic forks per hub. Surprising findings, hidden insights, assumption flags, open questions. Each card is one question the founder must engage with &mdash; not a paragraph to skim.</p>
-
-          <div class="dr-sample-card">
-            <div class="dr-sample-tag">Card 03 &middot; Strategy</div>
-            <p class="dr-sample-q">The data says your real competitor isn&rsquo;t another fintech &mdash; it&rsquo;s Reddit. Do we build <em>for</em> that or <em>against</em> it?</p>
-            <div class="dr-sample-controls">
-              <span class="dr-chip dr-chip-agree">Agree</span>
-              <span class="dr-chip dr-chip-discuss">Let&rsquo;s discuss</span>
-              <span class="dr-chip dr-chip-text">Reply&hellip;</span>
-            </div>
-          </div>
-
-          <div class="dr-card-meta">
-            <span class="dr-dot dr-dot-on"></span>
-            <span>Always visible &middot; the founder must engage</span>
-          </div>
+      <div class="s-label">How Assess Works</div>
+      <h2 class="s-title s-title-shimmer">Deck in. Decision out.<br>Five steps, one Workspace.</h2>
+      <p class="s-sub">Drop in the pitch deck and a zip of the data room. A fleet of senior investor-lens agents runs the pipeline &mdash; every claim traced back to a cited source &mdash; and pipes it all into one coherent verdict.</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:0.85rem;margin-top:3rem;">
+        
+        <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md,14px);padding:1.4rem 1.3rem;">
+          <div style="font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.55rem;">Step 1 · Ingest</div>
+          <h3 style="font-size:1.02rem;font-weight:600;letter-spacing:-0.01em;margin:0 0 0.5rem;">Deck &amp; data room</h3>
+          <p style="font-size:0.86rem;color:var(--text-dark-muted);line-height:1.6;margin:0;">Upload the pitch deck and a zip of the data room. We read every file &mdash; financial model, SAFEs, cap table, customer contracts &mdash; and the live website.</p>
         </div>
-
-        <!-- L2 — Evidence -->
-        <div class="dr-card dr-card-l2" data-reveal data-delay="2">
-          <div class="dr-layer-tag">L2 &mdash; Click &lsquo;See why&rsquo;</div>
-          <h3 class="dr-card-title">Evidence</h3>
-          <p class="dr-card-lede">The 2&ndash;3 charts, quotes, or numbers that drove each question. Surfaced on demand &mdash; not in the founder&rsquo;s face. The reasoning behind every card sits one click away.</p>
-
-          <div class="dr-stack">
-            <div class="dr-stack-row">
-              <span class="dr-stack-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="12"/><line x1="12" y1="20" x2="12" y2="6"/><line x1="18" y1="20" x2="18" y2="14"/><line x1="3" y1="20" x2="21" y2="20"/></svg></span>
-              <span class="dr-stack-text">User-research: 41% engagement on community forums</span>
-            </div>
-            <div class="dr-stack-row">
-              <span class="dr-stack-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8v.5z"/></svg></span>
-              <span class="dr-stack-text">5 founder interviews flagged Reddit by name</span>
-            </div>
-            <div class="dr-stack-row">
-              <span class="dr-stack-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></span>
-              <span class="dr-stack-text">Competitor map: 0 incumbents claim the social wedge</span>
-            </div>
-          </div>
-
-          <div class="dr-card-meta">
-            <span class="dr-dot"></span>
-            <span>Collapsed by default &middot; click to expand</span>
-          </div>
+        
+        <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md,14px);padding:1.4rem 1.3rem;">
+          <div style="font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.55rem;">Step 2 · Research</div>
+          <h3 style="font-size:1.02rem;font-weight:600;letter-spacing:-0.01em;margin:0 0 0.5rem;">Deep web research</h3>
+          <p style="font-size:0.86rem;color:var(--text-dark-muted);line-height:1.6;margin:0;">Market analysis, competitor landscape, demand &amp; traction and unit economics &mdash; web-researched and fully cited. The L3 evidence the score traces to.</p>
         </div>
-
-        <!-- L3 — Full Research -->
-        <div class="dr-card dr-card-l3" data-reveal data-delay="3">
-          <div class="dr-layer-tag">L3 &mdash; &lsquo;Go deep&rsquo;</div>
-          <h3 class="dr-card-title">Full Research</h3>
-          <p class="dr-card-lede">The complete 3,000&ndash;8,000 word document per hub. What an agency would have shipped as a PDF. Here it&rsquo;s the supporting reference &mdash; opened only when the founder genuinely wants the depth.</p>
-
-          <div class="dr-research-stack">
-            <div class="dr-research-line"></div>
-            <div class="dr-research-line dr-research-line-short"></div>
-            <div class="dr-research-line"></div>
-            <div class="dr-research-line"></div>
-            <div class="dr-research-line dr-research-line-short"></div>
-            <div class="dr-research-line"></div>
-            <div class="dr-research-line dr-research-line-medium"></div>
-            <div class="dr-research-fade"></div>
-          </div>
-
-          <div class="dr-card-meta">
-            <span class="dr-dot"></span>
-            <span>3,000&ndash;8,000 words &middot; fully cited</span>
-          </div>
+        
+        <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md,14px);padding:1.4rem 1.3rem;">
+          <div style="font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.55rem;">Step 3 · Diligence</div>
+          <h3 style="font-size:1.02rem;font-weight:600;letter-spacing:-0.01em;margin:0 0 0.5rem;">Investor-lens checks</h3>
+          <p style="font-size:0.86rem;color:var(--text-dark-muted);line-height:1.6;margin:0;">A competitive benchmark vs named rivals, TAM/SAM/SOM sizing, founder &amp; team diligence, and comparable funding rounds &mdash; each handed to the verdict.</p>
         </div>
-
+        
+        <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md,14px);padding:1.4rem 1.3rem;">
+          <div style="font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.55rem;">Step 4 · Score</div>
+          <h3 style="font-size:1.02rem;font-weight:600;letter-spacing:-0.01em;margin:0 0 0.5rem;">Investability score</h3>
+          <p style="font-size:0.86rem;color:var(--text-dark-muted);line-height:1.6;margin:0;">Thirty-five signals across seven categories &mdash; market, team, product, moat, financial, execution, evidence &mdash; the quantification of the same research.</p>
+        </div>
+        
+        <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md,14px);padding:1.4rem 1.3rem;">
+          <div style="font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.55rem;">Step 5 · Decide</div>
+          <h3 style="font-size:1.02rem;font-weight:600;letter-spacing:-0.01em;margin:0 0 0.5rem;">The deal memo</h3>
+          <p style="font-size:0.86rem;color:var(--text-dark-muted);line-height:1.6;margin:0;">Recommendation, conviction, the ask, the valuation read, the kill-risks, the bull and bear &mdash; one decision-grade memo an investor can act on.</p>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- ═══════════════════════════════════════════
-       2.5 THE STUDIO — 3 hub groups + Investability
-       ═══════════════════════════════════════════ -->
-  <section class="section" id="portal-shape">
+  <!-- THE OUTPUT -->
+  <section class="section section-alt">
     <div class="container" data-reveal>
-      <div class="s-label">The The Studio</div>
-      <h2 class="s-title s-title-shimmer">Three hub groups.<br>One Investability tab.</h2>
-      <p class="s-sub">The Studio organises every hub into three groups &mdash; Foundations, Data Room, Deliverables &mdash; with a fourth dedicated tab for Investability. Founders always know which bucket they&rsquo;re working in.</p>
-
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;margin-top:3rem;">
-
-        <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md);padding:1.5rem;">
-          <div style="font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.6rem;">Group 01</div>
-          <h3 style="font-size:1.15rem;font-weight:600;letter-spacing:-0.01em;margin-bottom:0.6rem;">Foundations</h3>
-          <p style="font-size:0.88rem;line-height:1.6;color:var(--text-dark-muted);margin-bottom:0.85rem;">Brief, Lexicon, Brand. The ground truth every other hub binds to. Resolved first, referenced forever.</p>
-          <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-dark-muted);">3 hubs &middot; Gate 1</div>
-        </div>
-
-        <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md);padding:1.5rem;">
-          <div style="font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.6rem;">Group 02</div>
-          <h3 style="font-size:1.15rem;font-weight:600;letter-spacing:-0.01em;margin-bottom:0.6rem;">Data Room</h3>
-          <p style="font-size:0.88rem;line-height:1.6;color:var(--text-dark-muted);margin-bottom:0.85rem;">Research, Vision, Strategy, Financials. The provocation-driven hubs that move the engagement through Gate 2 and Gate 2.5.</p>
-          <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-dark-muted);">4 hubs &middot; Gate 2 + 2.5</div>
-        </div>
-
-        <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md);padding:1.5rem;">
-          <div style="font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.6rem;">Group 03</div>
-          <h3 style="font-size:1.15rem;font-weight:600;letter-spacing:-0.01em;margin-bottom:0.6rem;">Deliverables</h3>
-          <p style="font-size:0.88rem;line-height:1.6;color:var(--text-dark-muted);margin-bottom:0.85rem;">Marketing site, Pitch deck, Video, Blog, Brand kit, App. The shipped surfaces. Each renders inline &mdash; not buried in a PDF.</p>
-          <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-dark-muted);">6+ surfaces &middot; Phase 5 handoff</div>
-        </div>
-
-        <div style="background:#FFFFFF;border:1px solid rgba(var(--primary-rgb),0.25);border-radius:var(--radius-md);padding:1.5rem;box-shadow:0 4px 16px rgba(var(--primary-rgb),0.06);">
-          <div style="font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.6rem;">Tab</div>
-          <h3 style="font-size:1.15rem;font-weight:600;letter-spacing:-0.01em;margin-bottom:0.6rem;">Investability</h3>
-          <p style="font-size:0.88rem;line-height:1.6;color:var(--text-dark-muted);margin-bottom:0.85rem;">The TDK 7&times;5 scorecard. Calculated deterministically from the data room post-Gate-2.5. A live, defensible view of where the venture sits with investors.</p>
-          <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-dark-muted);">35-cell rubric &middot; live-scored</div>
-        </div>
-
-      </div>
-
-      <p style="text-align:center;margin-top:2.5rem;font-size:0.95rem;color:var(--text-dark-muted);max-width:680px;margin-left:auto;margin-right:auto;font-style:italic;" data-reveal>The founder never sees a 200-page PDF. They see three buckets, one rubric, and the next card they need to resolve.</p>
+      <div class="s-label">The Output</div>
+      <h2 class="s-title s-title-shimmer">Not a summary.<br>A decision-grade verdict.</h2>
+      <p class="s-sub">Every assessment lands in the same shape &mdash; a verdict bound to a score, an evidence base you can drill into, and a benchmark against the field. Here is a real one.</p>
     </div>
-  </section>
 
-  <!-- ═══════════════════════════════════════════
-       3. THE PLAYBOOK — How a hub gets built
-       ═══════════════════════════════════════════ -->
-  <section class="section-alt" id="playbook">
     <div class="container" data-reveal>
-      <div class="s-label">The Playbook</div>
-      <h2 class="s-title s-title-shimmer">How a hub gets built.</h2>
-      <p class="s-sub">Seven steps from raw brief to gate sign-off. Same sequence every time, every hub.</p>
-
-      <div class="dr-playbook">
-
-        <div class="dr-play-step" data-reveal data-delay="1">
-          <div class="dr-play-num">01</div>
-          <div class="dr-play-body">
-            <h3>AI research agents write L3</h3>
-            <p>3,000&ndash;8,000 words per hub. Every claim sourced, every number cited. Hubs are produced in parallel by domain-specific agents &mdash; <code>research-curator</code>, <code>source-verifier</code>, <code>financial-modeler</code> &mdash; depending on the phase.</p>
-          </div>
-        </div>
-
-        <div class="dr-play-step" data-reveal data-delay="2">
-          <div class="dr-play-num">02</div>
-          <div class="dr-play-body">
-            <h3>Cards drafted from L3</h3>
-            <p>The <code>research-curator</code> agent reads L3 and drafts 5&ndash;7 Provocation Cards. Each card distils a strategic fork or surfaces an assumption hidden in the research that needs the founder&rsquo;s judgement.</p>
-          </div>
-        </div>
-
-        <div class="dr-play-step" data-reveal data-delay="3">
-          <div class="dr-play-num">03</div>
-          <div class="dr-play-body">
-            <h3>Founder reviews L1 in the Studio</h3>
-            <p>The founder opens the hub and sees only the cards. Each card is one question. They comment inline, agree, pick a direction, or ask for more.</p>
-          </div>
-        </div>
-
-        <div class="dr-play-step" data-reveal data-delay="4">
-          <div class="dr-play-num">04</div>
-          <div class="dr-play-body">
-            <h3>Cards resolved</h3>
-            <p>Every card is closed by founder action &mdash; agreement, a chosen direction, or a deliberate &lsquo;won&rsquo;t fix&rsquo;. Permanent audit trail in git.</p>
-          </div>
-        </div>
-
-        <div class="dr-play-step" data-reveal data-delay="5">
-          <div class="dr-play-num">05</div>
-          <div class="dr-play-body">
-            <h3>L3 rebuilt against decisions</h3>
-            <p>If material strategic changes came out of the cards, the underlying research document is rebuilt to reflect the resolved direction. L3 always represents the current state of the engagement.</p>
-          </div>
-        </div>
-
-        <div class="dr-play-step" data-reveal data-delay="6">
-          <div class="dr-play-num">06</div>
-          <div class="dr-play-body">
-            <h3>L3 published for founder review</h3>
-            <p>The &lsquo;View source documents&rsquo; expander unlocks. The founder can now read the full research aligned with the decisions they&rsquo;ve made &mdash; not the version that existed before they engaged.</p>
-          </div>
-        </div>
-
-        <div class="dr-play-step" data-reveal data-delay="7">
-          <div class="dr-play-num">07</div>
-          <div class="dr-play-body">
-            <h3>Gate sign-off in the Studio</h3>
-            <p>Single click in the hub. <code>STATUS.md</code> auto-updates in the engagement repo. The next phase unlocks for your operator. No calendar invite. No follow-up email.</p>
-          </div>
-        </div>
-
+      <div style="max-width:760px;margin:3rem auto 0;text-align:center;">
+        <div class="s-label" style="justify-content:center;">Investability</div>
+        <p class="s-sub" style="margin-top:0.4rem;">A 0&ndash;100% score across 35 signals, split into the strengths to lead with and the gaps to close before a partner meeting.</p>
       </div>
     </div>
-  </section>
+    
+  <div class="ws-hero-frame" data-reveal>
+    <div class="ws-frame">
+      <div class="ws-frame-bar"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span><span class="url">ventrify.io/workspace/assessment — investability</span></div>
+      <div style="position:relative;max-height:620px;overflow:hidden;border-radius:8px;background:#fff;">
+        <img src="assets/assess/investability.png" alt="The investability scorecard — strengths and gaps across seven categories">
+        <div style="position:absolute;bottom:0;left:0;right:0;height:120px;background:linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.7) 60%, rgba(255,255,255,0.97) 100%);pointer-events:none;"></div>
+      </div>
+    </div>
+  </div>
 
-  <!-- ═══════════════════════════════════════════
-       4. THE SIGN-OFF LOOP
-       ═══════════════════════════════════════════ -->
-  <section class="section" id="signoff">
     <div class="container" data-reveal>
-      <div class="s-label">The Sign-off Loop</div>
-      <h2 class="s-title s-title-shimmer">Gates close themselves.</h2>
-      <p class="s-sub">Every gate in the engagement &mdash; Gate 1 (after Discover), Gate 2 (scope lock), Gate 2.5 (financials) &mdash; closes via the same in-portal loop. Operator workflow is unblocked the moment the founder clicks sign-off.</p>
-
-      <div class="dr-signoff" data-reveal>
-        <div class="dr-signoff-eyebrow">Per gate, every hub</div>
-        <div class="dr-signoff-chain">
-          <div class="dr-signoff-step">
-            <div class="dr-signoff-num">01</div>
-            <div class="dr-signoff-label">Cards resolved</div>
-          </div>
-          <div class="dr-signoff-arrow">&rarr;</div>
-          <div class="dr-signoff-step">
-            <div class="dr-signoff-num">02</div>
-            <div class="dr-signoff-label">L3 current against decisions</div>
-          </div>
-          <div class="dr-signoff-arrow">&rarr;</div>
-          <div class="dr-signoff-step">
-            <div class="dr-signoff-num">03</div>
-            <div class="dr-signoff-label">Gate sign-off auto-unlocks</div>
-          </div>
-          <div class="dr-signoff-arrow">&rarr;</div>
-          <div class="dr-signoff-step">
-            <div class="dr-signoff-num">04</div>
-            <div class="dr-signoff-label">Next phase begins</div>
-          </div>
-        </div>
-        <p class="dr-signoff-foot">Every comment, every &lsquo;won&rsquo;t fix&rsquo;, every sign-off &mdash; tracked in git forever.</p>
+      <div style="max-width:760px;margin:3.5rem auto 0;text-align:center;">
+        <div class="s-label" style="justify-content:center;">The Data Room</div>
+        <p class="s-sub" style="margin-top:0.4rem;">Every claim traces to web-researched, cited evidence &mdash; the deal memo, the benchmark, the market sizing, the deep research &mdash; grouped the way an investor reads a deal.</p>
       </div>
     </div>
-  </section>
+    
+  <div class="ws-hero-frame" data-reveal>
+    <div class="ws-frame">
+      <div class="ws-frame-bar"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span><span class="url">ventrify.io/workspace/assessment — data room</span></div>
+      <div style="position:relative;max-height:620px;overflow:hidden;border-radius:8px;background:#fff;">
+        <img src="assets/assess/dataroom.png" alt="The deep-research data room — every document grouped by investor question">
+        <div style="position:absolute;bottom:0;left:0;right:0;height:120px;background:linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.7) 60%, rgba(255,255,255,0.97) 100%);pointer-events:none;"></div>
+      </div>
+    </div>
+  </div>
 
-  <!-- ═══════════════════════════════════════════
-       5. SAFETY RAILS
-       ═══════════════════════════════════════════ -->
-  <section class="section-alt" id="rails">
     <div class="container" data-reveal>
-      <div class="s-label">Safety Rails</div>
-      <h2 class="s-title s-title-shimmer">The Studio protects the loop.</h2>
-      <p class="s-sub">Two enforcement rules sit inside the Studio itself. Operators can&rsquo;t accidentally skip the sequence &mdash; the Studio won&rsquo;t let them.</p>
-
-      <div class="dr-rails">
-        <div class="dr-rail" data-reveal data-delay="1">
-          <h4>L3 stays hidden until current</h4>
-          <p>The &lsquo;View source documents&rsquo; expander is hidden from the founder until L3 has been rebuilt against the resolved cards. Founders never review stale work &mdash; the depth they read is always aligned with the decisions they&rsquo;ve made.</p>
-        </div>
-        <div class="dr-rail" data-reveal data-delay="2">
-          <h4>Sign-off button stays disabled</h4>
-          <p>The gate sign-off button is greyed out until every card is resolved AND L3 is current. A gate can&rsquo;t close prematurely &mdash; the engagement can&rsquo;t skip a decision the founder hasn&rsquo;t made.</p>
-        </div>
+      <div style="max-width:760px;margin:3.5rem auto 0;text-align:center;">
+        <div class="s-label" style="justify-content:center;">Competitive Benchmark</div>
+        <p class="s-sub" style="margin-top:0.4rem;">A side-by-side matrix against named competitors on the dimensions that decide the contest &mdash; so the score is earned, not asserted.</p>
       </div>
     </div>
+    
+  <div class="ws-hero-frame" data-reveal>
+    <div class="ws-frame">
+      <div class="ws-frame-bar"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span><span class="url">ventrify.io/workspace/assessment — benchmark</span></div>
+      <div style="position:relative;max-height:560px;overflow:hidden;border-radius:8px;background:#fff;">
+        <img src="assets/assess/benchmark.png" alt="The competitive benchmark matrix vs named competitors">
+        <div style="position:absolute;bottom:0;left:0;right:0;height:120px;background:linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.7) 60%, rgba(255,255,255,0.97) 100%);pointer-events:none;"></div>
+      </div>
+    </div>
+  </div>
   </section>
 
-  <!-- ═══════════════════════════════════════════
-       6. PROVOCATIONS ACROSS HUBS
-       ═══════════════════════════════════════════ -->
-  <section class="section" id="examples">
+  <!-- THE CONTRAST -->
+  <section class="section" id="contrast">
     <div class="container" data-reveal>
-      <div class="s-label">Examples</div>
-      <h2 class="s-title s-title-shimmer">Provocations look different<br>in every hub.</h2>
-      <p class="s-sub">Each hub generates cards specific to its domain. Same architecture &mdash; different decisions to force.</p>
-
-      <div class="dr-hub-grid">
-        <div class="dr-hub-card" data-reveal data-delay="1">
-          <div class="dr-hub-eyebrow">Research Hub</div>
-          <p class="dr-hub-q">The data says your real competitor isn&rsquo;t another fintech &mdash; it&rsquo;s Reddit. Do we build <em>for</em> that or <em>against</em> it?</p>
-          <p class="dr-hub-foot">Strategic positioning fork.</p>
+      <div class="s-label">The Contrast</div>
+      <h2 class="s-title s-title-shimmer">A week of an analyst.<br>In a couple of hours.</h2>
+      <div class="contrast-card">
+        <div class="contrast-side traditional">
+          <h3>Analyst / consultant</h3>
+          <div class="contrast-row"><span class="cr-label">Time per deck</span><span class="cr-value">3&ndash;7 days</span></div>
+          <div class="contrast-row"><span class="cr-label">Cost per assessment</span><span class="cr-value">$5&ndash;15K</span></div>
+          <div class="contrast-row"><span class="cr-label">Web research</span><span class="cr-value">Ad hoc</span></div>
+          <div class="contrast-row"><span class="cr-label">Investability score</span><span class="cr-value">None</span></div>
+          <div class="contrast-row"><span class="cr-label">Decks per month</span><span class="cr-value">A handful</span></div>
         </div>
-
-        <div class="dr-hub-card" data-reveal data-delay="2">
-          <div class="dr-hub-eyebrow">Vision Hub</div>
-          <p class="dr-hub-q">Onboarding can either force email sign-up before value, or stay frictionless. <em>Pick one.</em> Both have a known cost.</p>
-          <p class="dr-hub-foot">Product trade-off.</p>
-        </div>
-
-        <div class="dr-hub-card" data-reveal data-delay="3">
-          <div class="dr-hub-eyebrow">Financials Hub</div>
-          <p class="dr-hub-q">Your unit economics break at 6,000 users unless price goes up 20% or CAC drops by half. <em>Which lever?</em></p>
-          <p class="dr-hub-foot">Business-model decision.</p>
-        </div>
-
-        <div class="dr-hub-card" data-reveal data-delay="1">
-          <div class="dr-hub-eyebrow">Strategy Hub</div>
-          <p class="dr-hub-q">3 of 5 user interviews surfaced a feature you&rsquo;re not building. <em>Scope expansion</em> or <em>v2 roadmap</em>?</p>
-          <p class="dr-hub-foot">Scope-change recommendation.</p>
-        </div>
-
-        <div class="dr-hub-card" data-reveal data-delay="2">
-          <div class="dr-hub-eyebrow">Research Hub</div>
-          <p class="dr-hub-q">The TAM looks like $4B. Underneath, three sub-markets behave nothing alike. Which <em>SOM</em> do we model against?</p>
-          <p class="dr-hub-foot">Market segmentation.</p>
-        </div>
-
-        <div class="dr-hub-card" data-reveal data-delay="3">
-          <div class="dr-hub-eyebrow">Vision Hub</div>
-          <p class="dr-hub-q">Your defined MVP scope ships in 10 weeks. A reduced scope ships in 6 and reaches investors sooner. <em>Speed or completeness?</em></p>
-          <p class="dr-hub-foot">Time-to-market trade-off.</p>
+        <div class="contrast-side os-side">
+          <h3>Ventrify OS &middot; Assess</h3>
+          <div class="contrast-row"><span class="cr-label">Time per deck</span><span class="cr-value">~1&ndash;2 hours</span></div>
+          <div class="contrast-row"><span class="cr-label">Cost per assessment</span><span class="cr-value">Included in licence</span></div>
+          <div class="contrast-row"><span class="cr-label">Web research</span><span class="cr-value">Deep &amp; cited</span></div>
+          <div class="contrast-row"><span class="cr-label">Investability score</span><span class="cr-value">35 signals, 7 categories</span></div>
+          <div class="contrast-row"><span class="cr-label">Decks per month</span><span class="cr-value">As many as you screen</span></div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ═══════════════════════════════════════════
-       7. FINAL CTA — Dark bookend
-       ═══════════════════════════════════════════ -->
+  <!-- WHO IT'S FOR -->
+  <section class="section section-alt">
+    <div class="container" data-reveal>
+      <div class="s-label">Who Assesses</div>
+      <h2 class="s-title s-title-shimmer">For everyone who has<br>to decide before they wire.</h2>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1.1rem;margin-top:3rem;">
+        
+        <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md,14px);padding:1.4rem 1.3rem;">
+          <div style="font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.55rem;">Angels</div>
+          <h3 style="font-size:1.02rem;font-weight:600;letter-spacing:-0.01em;margin:0 0 0.5rem;">Angel investors</h3>
+          <p style="font-size:0.86rem;color:var(--text-dark-muted);line-height:1.6;margin:0;">Screen every deck that lands in your inbox to the same standard &mdash; not just the ones from warm intros. Decide with conviction, in an evening.</p>
+        </div>
+        
+        <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md,14px);padding:1.4rem 1.3rem;">
+          <div style="font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.55rem;">Syndicates</div>
+          <h3 style="font-size:1.02rem;font-weight:600;letter-spacing:-0.01em;margin:0 0 0.5rem;">Syndicates &amp; SPVs</h3>
+          <p style="font-size:0.86rem;color:var(--text-dark-muted);line-height:1.6;margin:0;">Give your members a consistent, cited diligence pack on every deal you bring &mdash; the memo, the score, the comps &mdash; without a full-time analyst.</p>
+        </div>
+        
+        <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md,14px);padding:1.4rem 1.3rem;">
+          <div style="font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.55rem;">Scouts</div>
+          <h3 style="font-size:1.02rem;font-weight:600;letter-spacing:-0.01em;margin:0 0 0.5rem;">Scouts &amp; micro-VCs</h3>
+          <p style="font-size:0.86rem;color:var(--text-dark-muted);line-height:1.6;margin:0;">Cover more of the market with the same headcount. Run first-pass diligence on everything; spend your time on the deals that earn it.</p>
+        </div>
+        
+        <div style="background:#FFFFFF;border:1px solid rgba(0,0,0,0.05);border-radius:var(--radius-md,14px);padding:1.4rem 1.3rem;">
+          <div style="font-family:var(--font-mono);font-size:0.66rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--primary);margin-bottom:0.55rem;">Studios</div>
+          <h3 style="font-size:1.02rem;font-weight:600;letter-spacing:-0.01em;margin:0 0 0.5rem;">Studios &amp; family offices</h3>
+          <p style="font-size:0.86rem;color:var(--text-dark-muted);line-height:1.6;margin:0;">Pressure-test inbound and your own builds against the market before committing capital or a build slot &mdash; one platform for both jobs.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
   <section class="final-cta">
     <div class="cta-content" data-reveal>
-      <h2>See the data room<br>in a live program.</h2>
-      <p class="cta-sub">A 30-minute walk-through with a real engagement. You&rsquo;ll see the Provocation Cards, the sign-off loop, and the founder workflow &mdash; not slides about it.</p>
+      <h2>Run a real deck<br>through Assess.</h2>
+      <p class="cta-sub">A 30-minute walk-through on a live venture &mdash; the verdict, the investability score, the cited data room and the deal memo. Bring a deck you&rsquo;re looking at and we&rsquo;ll assess it together.</p>
       <div class="cta-buttons">
-        <a href="mailto:hello@ventrify.io?subject=Ventrify%20OS%20demo%20request" class="btn btn-dark-primary btn-lg">Book a platform demo</a>
+        <a href="mailto:hello@ventrify.io?subject=Ventrify%20OS%20Assess%20demo" class="btn btn-dark-primary btn-lg">Book a demo</a>
         <a href="pricing.html" class="btn btn-dark-outline btn-lg">View pricing</a>
       </div>
     </div>

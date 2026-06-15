@@ -1298,7 +1298,7 @@
        ============================================ */
     .who-pricing-grid {
       display:grid;
-      grid-template-columns:repeat(3,1fr);
+      grid-template-columns:repeat(2,1fr);
       gap:1.5rem;
       margin-top:3rem;
       align-items:start;
@@ -1762,8 +1762,8 @@
   <nav>
     <a href="index.html" class="logo">VENTRIFY <span class="os">OS</span></a>
     <div class="nav-links">
-      <a href="system.html">System</a>
-      <a href="the-data-room.html">Data Room</a>
+      <a href="#build">Build</a>
+      <a href="assess.html">Assess</a>
       <a href="the-workspace.html">Workspace</a>
       <a href="agents.html">Agents</a>
       <a href="showcase.html">Showcase</a>
@@ -1782,8 +1782,8 @@
 
   <!-- Mobile Menu -->
   <div class="mobile-menu">
-    <a href="system.html" class="m-nav-link">System</a>
-    <a href="the-data-room.html" class="m-nav-link">Data Room</a>
+    <a href="#build" class="m-nav-link">Build</a>
+    <a href="assess.html" class="m-nav-link">Assess</a>
     <a href="the-workspace.html" class="m-nav-link">Workspace</a>
     <a href="agents.html" class="m-nav-link">Agents</a>
     <a href="showcase.html" class="m-nav-link">Showcase</a>
@@ -1799,11 +1799,11 @@
        ═══════════════════════════════════════════ -->
   <section class="hero" id="main-content">
     <div class="hero-content">
-      <h1 class="shimmer-text">The operating system<br>for startup programs.</h1>
-      <p class="hero-sub">Licensed by accelerators, incubators, venture studios, and corporate innovation labs. AI agents do the work. Your program manager orchestrates. 70+ deliverables per venture in 6&ndash;16 weeks &mdash; without a 10-person agency.</p>
+      <h1 class="shimmer-text">The AI operating system<br>for venture work.</h1>
+      <p class="hero-sub">One platform, two jobs &mdash; <span style="color:#fff;font-weight:600;">build</span> ventures end to end, and <span style="color:#fff;font-weight:600;">assess</span> them for investment. AI agents do the work; your operator orchestrates. Built for venture studios, accelerators, and the investors who back them.</p>
       <div class="hero-ctas">
         <a href="mailto:hello@ventrify.io?subject=Ventrify%20OS%20demo%20request" class="btn btn-hero-primary btn-lg">Book a platform demo</a>
-        <a href="#contrast" class="btn btn-hero-outline btn-lg">See how it works</a>
+        <a href="#build" class="btn btn-hero-outline btn-lg">See the two products</a>
       </div>
     </div>
   </section>
@@ -1818,26 +1818,40 @@
   <!-- ═══════════════════════════════════════════
        2. IN SHORT — Elevator pitch
        ═══════════════════════════════════════════ -->
-  <section class="page-intro-section" id="in-short">
+  <section class="page-intro-section" id="build">
+    <style>
+      .products-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:1.5rem; max-width:940px; margin:2.75rem auto 0; }
+      .product-card { display:flex; flex-direction:column; text-align:left; padding:1.9rem 1.8rem 1.6rem; border-radius:18px; background:rgba(255,255,255,0.035); border:1px solid rgba(255,255,255,0.1); border-top:3px solid var(--accent,#0036FF); text-decoration:none; transition:transform .25s cubic-bezier(.34,1.56,.64,1), background .25s ease, border-color .25s ease; }
+      .product-card:hover { transform:translateY(-4px); background:rgba(255,255,255,0.06); }
+      .product-card.assess { border-top-color:#00B872; }
+      .product-eyebrow { font-family:var(--font-mono,monospace); font-size:0.66rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--accent,#3366FF); margin-bottom:0.55rem; }
+      .product-card.assess .product-eyebrow { color:#1FD491; }
+      .product-title { font-family:var(--font-heading); font-size:1.5rem; font-weight:600; color:#fff; letter-spacing:-0.02em; margin:0 0 0.7rem; }
+      .product-desc { font-size:0.96rem; line-height:1.62; color:var(--text-light-muted,#9aa3b2); margin:0 0 1.1rem; }
+      .product-meta { font-family:var(--font-mono,monospace); font-size:0.68rem; letter-spacing:0.04em; color:rgba(255,255,255,0.45); margin-bottom:1.2rem; }
+      .product-link { margin-top:auto; font-weight:600; font-size:0.92rem; color:#fff; }
+      .product-card.assess .product-link { color:#1FD491; }
+      @media (max-width:760px){ .products-grid { grid-template-columns:1fr; } }
+    </style>
     <div class="container" data-reveal>
-      <div style="max-width:780px;margin:0 auto;text-align:center;">
-        <p style="font-size:clamp(1.15rem,2.5vw,1.4rem);line-height:1.75;color:var(--text-light-muted);font-weight:400;">Imagine running 15&ndash;20 ventures a year through your program with a single program manager. Research, strategy, MVP, brand, investor narrative, launch &mdash; every deliverable produced by <span style="color:#FFFFFF;font-weight:500;">47 specialist AI agents across 7 domains</span>, backed by 14 deterministic quality-substrate tools, all working inside one orchestrated workflow. Three-layer data room. Formal gate reviews. Investor-demo-ready MVPs in 6&ndash;16 weeks. <span style="color:#FFFFFF;font-weight:500;">The leverage of a 10-person agency, behind one annual licence.</span></p>
+      <div style="max-width:760px;margin:0 auto;text-align:center;">
+        <p style="font-size:clamp(1.15rem,2.5vw,1.4rem);line-height:1.7;color:var(--text-light-muted);font-weight:400;">A fleet of specialist AI agents, one operator, and a structured workflow &mdash; pointed at whichever job you have. <span style="color:#FFFFFF;font-weight:500;">Run a venture from idea to launch, or run investor-grade diligence on a deck.</span> Same platform, same Workspace.</p>
       </div>
-      <div style="display:flex;align-items:center;justify-content:center;gap:0;margin-top:2rem;flex-wrap:wrap;">
-        <div style="text-align:center;padding:0 3rem;">
-          <div style="font-family:var(--font-heading);font-size:clamp(1.8rem,3.5vw,2.5rem);font-weight:600;color:#FFFFFF;letter-spacing:-0.02em;">4,242</div>
-          <div style="font-size:0.82rem;color:var(--text-light-muted);margin-top:0.25rem;">Lines. One file.</div>
-        </div>
-        <div style="width:1px;height:40px;background:rgba(255,255,255,0.1);flex-shrink:0;"></div>
-        <div style="text-align:center;padding:0 3rem;">
-          <div style="font-family:var(--font-heading);font-size:clamp(1.8rem,3.5vw,2.5rem);font-weight:600;color:#FFFFFF;letter-spacing:-0.02em;">70+</div>
-          <div style="font-size:0.82rem;color:var(--text-light-muted);margin-top:0.25rem;">Deliverables per program</div>
-        </div>
-        <div style="width:1px;height:40px;background:rgba(255,255,255,0.1);flex-shrink:0;"></div>
-        <div style="text-align:center;padding:0 3rem;">
-          <div style="font-family:var(--font-heading);font-size:clamp(1.8rem,3.5vw,2.5rem);font-weight:600;color:#FFFFFF;letter-spacing:-0.02em;">6&ndash;16</div>
-          <div style="font-size:0.82rem;color:var(--text-light-muted);margin-top:0.25rem;">Weeks. Idea to launch.</div>
-        </div>
+      <div class="products-grid">
+        <a href="#contrast" class="product-card build">
+          <div class="product-eyebrow">Build</div>
+          <h3 class="product-title">Run the venture</h3>
+          <p class="product-desc">Take a venture from idea to launch &mdash; research, strategy, MVP, brand, investor narrative. 70+ deliverables, produced by the agent fleet and shaped by the founder in their own Studio.</p>
+          <div class="product-meta">Venture studios &middot; accelerators &middot; innovation labs</div>
+          <span class="product-link">Explore Build &rarr;</span>
+        </a>
+        <a href="assess.html" class="product-card assess">
+          <div class="product-eyebrow">Assess</div>
+          <h3 class="product-title">Assess the venture</h3>
+          <p class="product-desc">Upload a pitch deck and data room, get decision-grade diligence in hours &mdash; deep web research, a competitive benchmark, market sizing, founder checks, an investability score and a deal memo.</p>
+          <div class="product-meta">Angels &middot; syndicates &middot; scouts &middot; micro-VCs</div>
+          <span class="product-link">Explore Assess &rarr;</span>
+        </a>
       </div>
     </div>
   </section>
@@ -2578,7 +2592,7 @@
   <section class="section-alt" id="pricing">
     <div class="container" data-reveal>
       <div class="s-label">Who Licenses This</div>
-      <h2 class="s-title s-title-shimmer">Built for the institutions<br>that run startup programs.</h2>
+      <h2 class="s-title s-title-shimmer">Built for the people who build ventures<br>&mdash; and the people who back them.</h2>
       <div class="who-pricing-grid">
 
         <!-- Card 1: Accelerators & Incubators — Cohort dashboard mockup -->
@@ -2684,6 +2698,29 @@
           <div class="wp-card-body">
             <h3 style="font-family:var(--font-heading);font-size:1.15rem;font-weight:600;color:var(--text-dark);letter-spacing:-0.015em;margin-bottom:1rem;">Corporate Innovation Labs</h3>
             <p>Internal innovation programs need agency-grade output without paying agency rates. White-label the platform, run it inside your security perimeter, and produce launch-ready ventures on a fixed annual licence. Enterprise tier includes SLA and embedded onboarding.</p>
+          </div>
+        </div>
+
+        <!-- Card 4: Angels & Syndicates — Assessment verdict mockup (Assess product) -->
+        <div class="wp-card" data-reveal data-delay="4">
+          <div class="wp-card-visual" style="height:220px;padding:1.25rem;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;background:linear-gradient(135deg,#EEF1F8 0%,#DCE3F0 100%);">
+            <div style="position:absolute;top:-30px;left:-40px;width:160px;height:160px;border-radius:50%;background:radial-gradient(circle,rgba(0,184,114,0.16),transparent 70%);pointer-events:none;"></div>
+            <div style="background:#FFFFFF;border-radius:12px;padding:0.9rem 1rem;box-shadow:0 10px 28px rgba(0,0,0,0.1),0 1px 3px rgba(0,0,0,0.04);width:100%;max-width:240px;position:relative;z-index:1;border-top:3px solid #E6A91A;">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.55rem;">
+                <span style="font-family:'Inter',sans-serif;font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:#FFFFFF;background:#E6A91A;padding:3px 8px;border-radius:6px;">Diligence further</span>
+                <span style="font-family:var(--font-heading);font-size:1.2rem;font-weight:600;color:#E6A91A;">72<span style="font-size:0.55em;">%</span></span>
+              </div>
+              <div style="font-family:'Inter',sans-serif;font-size:0.64rem;line-height:1.45;color:#141414;margin-bottom:0.6rem;">Real physics, fair price &mdash; four data-room contradictions to resolve before a cheque.</div>
+              <div style="display:flex;flex-direction:column;gap:5px;">
+                <div style="display:flex;align-items:center;gap:6px;"><span style="font-family:'JetBrains Mono',monospace;font-size:0.5rem;color:#656565;width:46px;flex:none;text-transform:uppercase;letter-spacing:0.04em;">Market</span><div style="flex:1;height:4px;background:rgba(0,0,0,0.07);border-radius:2px;overflow:hidden;"><div style="width:85%;height:100%;background:#00B872;"></div></div></div>
+                <div style="display:flex;align-items:center;gap:6px;"><span style="font-family:'JetBrains Mono',monospace;font-size:0.5rem;color:#656565;width:46px;flex:none;text-transform:uppercase;letter-spacing:0.04em;">Team</span><div style="flex:1;height:4px;background:rgba(0,0,0,0.07);border-radius:2px;overflow:hidden;"><div style="width:55%;height:100%;background:#E6A91A;"></div></div></div>
+                <div style="display:flex;align-items:center;gap:6px;"><span style="font-family:'JetBrains Mono',monospace;font-size:0.5rem;color:#656565;width:46px;flex:none;text-transform:uppercase;letter-spacing:0.04em;">Moat</span><div style="flex:1;height:4px;background:rgba(0,0,0,0.07);border-radius:2px;overflow:hidden;"><div style="width:40%;height:100%;background:#E6A91A;"></div></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="wp-card-body">
+            <h3 style="font-family:var(--font-heading);font-size:1.15rem;font-weight:600;color:var(--text-dark);letter-spacing:-0.015em;margin-bottom:1rem;">Angels &amp; Syndicates</h3>
+            <p>Diligence that used to mean a $5&ndash;15K consultant or weeks of analyst time &mdash; in hours. Upload a deck and data room; get deep web research, a competitive benchmark, an investability score and a deal memo. So you decide which ventures to back with conviction.</p>
           </div>
         </div>
 
