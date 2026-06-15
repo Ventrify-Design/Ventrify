@@ -419,6 +419,32 @@
       max-width:560px;
       font-weight:400;
     }
+    /* Contrast card — shared with the homepage "Why It's Different" section */
+    .contrast-card {
+      display:grid; grid-template-columns:1fr 1fr; margin-top:3rem;
+      border-radius:var(--radius-card); overflow:hidden;
+      box-shadow:0 4px 24px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .contrast-side { padding:3rem; }
+    .contrast-side.traditional { background:#F5F5F7; }
+    .contrast-side.os-side { background:#FFFFFF; border-left:3px solid var(--primary); }
+    .contrast-side h3 {
+      font-size:1.1rem; font-weight:600; margin-bottom:1.5rem;
+      color:var(--text-dark); letter-spacing:-0.01em;
+    }
+    .contrast-side.traditional h3 { color:var(--text-dark-muted); }
+    .contrast-row {
+      display:flex; justify-content:space-between; align-items:baseline;
+      padding:0.65rem 0; border-bottom:1px solid rgba(0,0,0,0.06); font-size:0.92rem;
+    }
+    .contrast-row:last-child { border-bottom:none; }
+    .contrast-row .cr-label { color:var(--text-dark-muted); font-weight:400; }
+    .contrast-row .cr-value { font-weight:400; color:var(--text-dark-muted); text-align:right; }
+    .contrast-side.os-side .contrast-row .cr-value { font-weight:600; color:var(--text-dark); }
+    @media (max-width:900px) {
+      .contrast-card { grid-template-columns:1fr; }
+      .contrast-side.os-side { border-left:none; border-top:3px solid var(--primary); }
+    }
     .s-sub-dark {
       font-size:1.1rem;
       line-height:1.7;
@@ -560,6 +586,10 @@
     .hero-sub {
       font-size:1.15rem; line-height:1.75; color:rgba(255,255,255,0.55);
       max-width:640px; margin-bottom:0; font-weight:400;
+    }
+    .hero-ctas {
+      display:flex; gap:12px; flex-wrap:wrap; justify-content:center;
+      margin-bottom:0;
     }
 
     /* ============================================
@@ -1767,8 +1797,9 @@
   <!-- THE CONTRAST -->
   <section class="section" id="contrast">
     <div class="container" data-reveal>
-      <div class="s-label">The Contrast</div>
+      <div class="s-label">Why It's Different</div>
       <h2 class="s-title s-title-shimmer">A week of an analyst.<br>In a couple of hours.</h2>
+      <p class="s-sub">The depth of a week with an analyst, at a fraction of the time and cost &mdash; because the agents do the research and the operator makes the call.</p>
       <div class="contrast-card">
         <div class="contrast-side traditional">
           <h3>Analyst / consultant</h3>
@@ -1787,6 +1818,7 @@
           <div class="contrast-row"><span class="cr-label">Decks per month</span><span class="cr-value">As many as you screen</span></div>
         </div>
       </div>
+      <p style="text-align:center;margin-top:2.5rem;"><a href="showcase.html" style="color:var(--primary);font-weight:600;">See Ventrify OS in action &rarr;</a></p>
     </div>
   </section>
 
