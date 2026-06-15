@@ -294,7 +294,7 @@ export function ensureInvestabilityStyles() {
     .vss-heat-header { display:flex; justify-content:space-between; align-items:baseline; gap:1rem; flex-wrap:wrap; margin-bottom:0.9rem; }
     .vss-heat-title { font-family:var(--vss-mono); font-size:0.66rem; font-weight:700; letter-spacing:0.13em; text-transform:uppercase; color:var(--vss-mut); }
     .vss-heat-meta { font-family:var(--vss-mono); font-size:0.66rem; color:var(--vss-mut); }
-    .vss-heat-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:0.8rem; }
+    .vss-heat-grid { display:flex; flex-direction:column; gap:0.7rem; }
     .vss-def { padding:0.8rem 0.95rem; border-radius:10px; background:rgba(0,0,0,0.02); border-left:3px solid var(--band-weak,#C42233); display:flex; flex-direction:column; gap:0.45rem; }
     .vss-def-head { display:flex; align-items:center; gap:0.5rem; font-family:var(--vss-mono); font-size:0.62rem; color:var(--vss-mut); letter-spacing:0.03em; text-transform:uppercase; }
     .vss-def-cat { font-weight:700; color:var(--vss-txt); }
