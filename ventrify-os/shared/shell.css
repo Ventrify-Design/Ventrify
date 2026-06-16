@@ -1,0 +1,351 @@
+/* ============================================================
+   VENTRIFY OS — APP SHELL  (SHARED · single source of truth)
+   The framed-console chrome: sticky topbar + partnership lockup +
+   left sidebar (sectioned nav, active rail, badges) + inset main +
+   mobile off-canvas drawer.
+
+   Consumed by BOTH surfaces — imported AFTER shared/ds.css and
+   BEFORE each surface's own styles.css:
+     · Operator Workspace  (Ventrify OS · Org lockup, operator nav)
+     · Founder Studio      (Org · Venture lockup, founder nav)
+
+   Depends on ds.css tokens (--sidebar-w, --topbar-h, --space-*,
+   --primary, --primary-rgb, --surface-alt, --content-max, radii +
+   motion). The ONLY tokens defined here are the chrome-composition
+   layer below — they reference DS tokens and invent no new colour.
+   ============================================================ */
+
+:root {
+  --chrome-surface: var(--surface);              /* topbar + sidebar share this */
+  --chrome-border:  var(--border-strong);        /* the ONE continuous chrome edge */
+  --chrome-elevation: 0 1px 0 rgba(0,0,0,0.02);  /* topbar hairline lift, no heavy drop */
+  --content-inset-shadow:                        /* the soft recess the chrome casts onto the page */
+    inset 1px 0 0 rgba(0,0,0,0.04),
+    inset 0 1px 0 rgba(0,0,0,0.03),
+    inset 6px 6px 14px -10px rgba(0,0,0,0.10);
+}
+
+/* The .topbar is rendered OUTSIDE .app-shell (in body flow, sticky), so the
+   shell grid must NOT reserve a topbar row — doing so painted an empty 64px
+   white band above the content. The shell is just sidebar + main, sized to fill
+   below the topbar. */
+.app-shell {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  grid-template-areas: "sidebar main";
+  min-height: calc(100vh - var(--topbar-h));
+  background: var(--chrome-surface);   /* chrome plane is the base; content paints gray on top */
+}
+
+/* Top bar — exactly --topbar-h tall (kills the dead band), shares the chrome
+   surface + one continuous border with the sidebar (the connected L). */
+.topbar {
+  grid-area: topbar;
+  height: var(--topbar-h);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 0 var(--space-5);
+  background: var(--chrome-surface);
+  border-bottom: 1px solid var(--chrome-border);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  box-shadow: var(--chrome-elevation);
+}
+/* Shell entrance — the frame steadies once on first load (not on route change).
+   The sidebar settle is DESKTOP-ONLY: on mobile the sidebar is the off-canvas
+   drawer, whose transform: translateX must not be overridden by a translateY
+   entrance animation. */
+@media (prefers-reduced-motion: no-preference) {
+  .topbar { animation: ds-shell-settle var(--dur-base) var(--ease-out) both; }
+}
+@media (prefers-reduced-motion: no-preference) and (min-width: 901px) {
+  .sidebar { animation: ds-shell-settle var(--dur-base) var(--ease-out) both; }
+}
+/* Partnership lockup — Ventrify OS + operating organisation, side by side.
+   Reads as "Ventrify OS · in partnership with · {Org}". Each half has equal
+   visual weight, separated by a subtle vertical divider. */
+.topbar-lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+.topbar-lockup-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+  padding: 6px 8px;
+  border-radius: 10px;
+  transition: background var(--transition);
+}
+a.topbar-lockup-item:hover { background: var(--surface-alt); }
+.topbar-lockup-mark {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1rem;
+  color: #fff;
+  letter-spacing: 0;
+}
+.topbar-lockup-mark img { width: 100%; height: 100%; object-fit: contain; }
+.topbar-lockup-mark-ventrify {
+  background: var(--text);             /* Ventrify mark sits on near-black so it doesn't compete with the org colour */
+  color: #fff;
+}
+.topbar-lockup-mark-text { font-weight: 700; }
+.topbar-lockup-mark-empty {
+  background: rgba(0,0,0,0.06);
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.topbar-lockup-name {
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  white-space: nowrap;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 600;
+}
+.topbar-lockup-name .lockup-name-strong { font-weight: 700; letter-spacing: 0.02em; }
+.topbar-lockup-name .lockup-name-weak {
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+}
+.topbar-lockup-empty .topbar-lockup-name { color: var(--text-muted); font-weight: 500; }
+.topbar-lockup-divider {
+  width: 1px;
+  height: 38px;
+  background: var(--border);
+  margin: 0 4px;
+  display: inline-block;
+}
+.topbar-spacer { flex: 1; }
+.topbar-utility {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.topbar-utility-link {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition), color var(--transition);
+}
+.topbar-utility-link:hover {
+  background: var(--surface-alt);
+  color: var(--text);
+}
+.topbar-divider {
+  width: 1px;
+  height: 22px;
+  background: var(--border);
+  margin: 0 8px;
+}
+.topbar-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 3px var(--border);
+}
+
+/* Sidebar — top edge butts directly against the topbar's bottom border.
+   No padding-top, no margin-top on the first section, no gap. */
+.sidebar {
+  grid-area: sidebar;
+  background: var(--chrome-surface);
+  border-right: 1px solid var(--chrome-border);
+  padding: var(--space-3) var(--space-3) var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  position: sticky;                       /* pinned below the topbar; bound to one token */
+  top: var(--topbar-h);
+  height: calc(100vh - var(--topbar-h));
+  overflow-y: auto;
+}
+.sidebar-section {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-subtle);
+  padding: 0.55rem 1rem 0.4rem;
+  margin-top: 0.75rem;
+}
+.sidebar-section:first-of-type { margin-top: 0; padding-top: var(--space-1); }
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0.7rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  border-radius: var(--radius-md);
+  transition: background var(--transition), color var(--transition);
+  position: relative;
+}
+.sidebar-link:hover {
+  background: var(--surface-alt);
+  color: var(--text);
+}
+.sidebar-link.active {
+  background: rgba(var(--primary-rgb), 0.08);
+  color: var(--primary);
+  font-weight: 600;
+}
+/* Active rail — every link owns its ::before so the indicator springs in on
+   activation (scaleY 0 -> 1) and collapses on the one you leave. */
+.sidebar-link::before {
+  content: '';
+  position: absolute;
+  left: calc(-1 * var(--space-3));
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background: var(--primary);
+  transform: scaleY(0);
+  transform-origin: center;
+  opacity: 0;
+  transition: transform var(--dur-base) var(--ease),
+              opacity var(--dur-fast) var(--ease-out);
+}
+.sidebar-link.active::before { transform: scaleY(1); opacity: 1; }
+.sidebar-link-icon {
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
+  flex-shrink: 0;
+  opacity: 0.8;
+}
+.sidebar-link.active .sidebar-link-icon { opacity: 1; }
+.sidebar-link .badge {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: rgba(var(--primary-rgb), 0.1);
+  color: var(--primary);
+  min-width: 24px;
+  text-align: center;
+}
+.sidebar-link.active .badge {
+  background: var(--primary);
+  color: #fff;
+}
+
+/* Main content area — sits on --bg gray, inset inside the chrome. The inset
+   shadow makes the chrome's right + bottom edges read as a recess holding the
+   page (the single most important "framed console" cue). */
+.main {
+  grid-area: main;
+  background: var(--bg);
+  box-shadow: var(--content-inset-shadow);
+  padding: var(--space-7) var(--space-8) var(--space-9);
+  overflow-y: auto;
+}
+.main-inner { max-width: var(--content-max); margin: 0 auto; }
+
+/* Solo shell — no sidebar (loading, error, focused single-task screens).
+   The main fills the full width; no recess shadow (nothing to inset against). */
+.app-shell--solo { grid-template-columns: 1fr; grid-template-areas: "main"; }
+.app-shell--solo .main { box-shadow: none; }
+
+/* Hamburger lives in the topbar; hidden on desktop, the off-canvas drawer trigger
+   below 900px. The .nav-scrim sits in the shell markup, shown only on mobile. */
+.topbar-menu-btn { display: none; }
+.nav-scrim { display: none; }
+
+@media (max-width: 900px) {
+  .topbar-menu-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 40px; height: 40px; margin-left: calc(-1 * var(--space-1)); flex: none;
+    border: none; background: transparent; color: var(--text);
+    border-radius: var(--radius-sm); cursor: pointer;
+    transition: background var(--dur-base) var(--ease-out);
+  }
+  .topbar-menu-btn:hover { background: var(--surface-alt); }
+
+  /* Shell drops to a single column; the sidebar leaves the grid and becomes a
+     fixed off-canvas drawer that keeps the same chrome surface + border. */
+  .app-shell { grid-template-columns: 1fr; grid-template-areas: "main"; }
+
+  .sidebar {
+    position: fixed; top: var(--topbar-h); left: 0; z-index: 60;
+    width: min(84vw, var(--sidebar-w)); height: calc(100vh - var(--topbar-h));
+    flex-direction: column; gap: 2px; overflow-y: auto;
+    border-right: 1px solid var(--chrome-border);
+    transform: translateX(-100%);
+    transition: transform var(--dur-base) var(--ease-out);
+    box-shadow: var(--shadow-lg);
+  }
+  body.nav-open .sidebar { transform: translateX(0); }
+
+  .nav-scrim {
+    display: block; position: fixed; inset: var(--topbar-h) 0 0 0; z-index: 55;
+    background: rgba(15,15,18,0.40);
+    opacity: 0; pointer-events: none;
+    transition: opacity var(--dur-base) var(--ease-out);
+  }
+  body.nav-open .nav-scrim { opacity: 1; pointer-events: auto; }
+  body.nav-open { overflow: hidden; }   /* scroll-lock while the drawer is open */
+
+  .main { box-shadow: none; padding: var(--space-6) var(--space-5) var(--space-8); }
+}
+@media (max-width: 640px) {
+  .topbar { padding: 0 var(--space-4); gap: var(--space-2); }
+  .topbar-lockup-name { display: none; }       /* keep the org avatar, drop the name to fit */
+  .topbar-lockup-divider { display: none; }
+  .main { padding: var(--space-5) var(--space-4) var(--space-6); }
+}
+
+/* Nav icon nudges 1px on hover — signals interactivity without moving the row. */
+.sidebar-link-icon { transition: transform var(--dur-base) var(--ease-out); }
+.sidebar-link:hover .sidebar-link-icon { transform: translateX(1px); }
+
+/* Avatar base — the topbar avatar layers .topbar-avatar over this. */
+.avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.avatar-lg { width: 40px; height: 40px; font-size: 0.88rem; }
+.avatar-sm { width: 22px; height: 22px; font-size: 0.62rem; }

@@ -4,9 +4,29 @@
    Inter + JetBrains Mono. Light, generous, founder-facing.
    ============================================================ */
 
+/* The app-shell chrome (topbar · sidebar · main · mobile drawer) is the SAME
+   shared component the Operator Workspace uses — single source of truth in
+   shared/shell.css, rendered from shared/shell.js. The Studio keeps its own
+   founder-facing palette below; only the shell-layout tokens it was missing
+   (spacing, sidebar width, motion) are added so shell.css resolves. */
+@import url("../shared/shell.css");
+
 :root {
   --brand-primary: #0036FF;         /* overridden at runtime by org */
   --primary: var(--brand-primary);
+  --primary-rgb: 0,54,255;          /* overridden per-org by applyBranding() — drives the side-nav active state */
+
+  /* Shell-layout tokens shell.css needs (values mirror shared/ds.css; the
+     Studio keeps its own colour palette, just borrows the layout constants). */
+  --surface-alt: #F5F6F8;
+  --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
+  --space-5: 24px; --space-6: 32px; --space-7: 40px; --space-8: 48px; --space-9: 64px;
+  --shadow-lg: 0 10px 32px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
+  --ease-out: cubic-bezier(0.6, 0.6, 0, 1);
+  --dur-fast: 0.15s; --dur-base: 0.25s;
+  --sidebar-w: 248px;
+  --topbar-h: 64px;
+  --content-max: 1240px;
 
   --bg: #FAFAFB;
   --surface: #FFFFFF;
@@ -52,174 +72,6 @@ img { max-width: 100%; display: block; }
 .text-mono { font-family: var(--font-mono); }
 .dim { color: var(--text-muted); }
 
-/* ============================================================
-   APP SHELL — topbar + tab nav + content
-   ============================================================ */
-.app-shell {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-/* --- Topbar (org brand + venture identity + founder avatar) --- */
-.topbar {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 14px 28px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  height: 64px;
-  position: sticky;
-  top: 0;
-  z-index: 50;
-}
-.topbar-brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  text-decoration: none;
-  color: inherit;
-  flex-shrink: 0;
-}
-.topbar-brand-mark {
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  background: var(--brand-primary);
-  color: #fff;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  font-family: var(--font-heading);
-  font-weight: 600;
-  font-size: 0.78rem;
-  letter-spacing: 0.01em;
-  flex-shrink: 0;
-}
-.topbar-brand-mark img { width: 100%; height: 100%; object-fit: contain; }
-.topbar-brand-name {
-  font-family: var(--font-heading);
-  font-weight: 600;
-  font-size: 0.95rem;
-  color: var(--text);
-  letter-spacing: -0.01em;
-  white-space: nowrap;
-  max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.topbar-divider {
-  width: 1px;
-  height: 22px;
-  background: var(--border-strong);
-  margin: 0 6px;
-}
-.topbar-venture {
-  display: inline-flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
-}
-.topbar-venture-name {
-  font-weight: 600;
-  font-size: 0.92rem;
-  letter-spacing: -0.01em;
-  color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 280px;
-}
-.topbar-venture-meta {
-  font-family: var(--font-mono);
-  font-size: 0.66rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  white-space: nowrap;
-}
-.topbar-spacer { flex: 1; }
-.topbar-utility {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-.topbar-utility-link {
-  font-size: 0.82rem;
-  color: var(--text-muted);
-  transition: color var(--transition);
-}
-.topbar-utility-link:hover { color: var(--text); }
-.topbar-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-heading);
-  font-weight: 600;
-  font-size: 0.78rem;
-  color: #fff;
-}
-
-/* --- Tab nav (Foundations / Data Room / Deliverables / Investability) --- */
-.tabnav {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  padding: 0 28px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  height: 54px;
-  position: sticky;
-  top: 64px;
-  z-index: 49;
-  overflow-x: auto;
-}
-.tabnav-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 16px;
-  height: 100%;
-  font-size: 0.88rem;
-  font-weight: 500;
-  color: var(--text-muted);
-  border-bottom: 2px solid transparent;
-  transition: color var(--transition), border-color var(--transition);
-  white-space: nowrap;
-}
-.tabnav-link:hover { color: var(--text); }
-.tabnav-link.active {
-  color: var(--text);
-  border-bottom-color: var(--brand-primary);
-}
-.tabnav-link .badge {
-  background: rgba(0,0,0,0.06);
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-  font-size: 0.66rem;
-  letter-spacing: 0.05em;
-  padding: 2px 7px;
-  border-radius: 980px;
-  font-weight: 500;
-}
-.tabnav-link.active .badge {
-  background: rgba(var(--brand-primary-rgb, 0,54,255), 0.12);
-  color: var(--brand-primary);
-}
-
-/* --- Main content --- */
-.main {
-  flex: 1;
-  padding: 2.5rem 2rem;
-  max-width: 1240px;
-  width: 100%;
-  margin: 0 auto;
-}
 .page-header {
   margin-bottom: 2.5rem;
 }

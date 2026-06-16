@@ -12,6 +12,7 @@
 // ============================================================
 
 import { FIREBASE_ENABLED } from '../firebase/config.js';
+import { renderAppShell, wireAppShell } from '../shared/shell.js';
 
 const FB_AUTH_URL = 'https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js';
 
@@ -191,7 +192,9 @@ const activeMap = {
 };
 const active = activeMap[currentPath] || 'dashboard';
 
-function renderTopbar() {
+// Topbar config for the shared shell — Ventrify OS · Org partnership lockup,
+// utility links + the operator avatar. (Markup lives in shared/shell.js.)
+function shellTopbarConfig() {
   const W = window.WORKSPACE;
   const org = W.org;
   const orgName = org ? org.name : 'Unconfigured workspace';
@@ -199,42 +202,29 @@ function renderTopbar() {
   const orgInitials = org ? initialsOf(org.name) : '?';
   const orgColor = (org && org.primaryColor) || '#0036FF';
   const opAvatar = W.helpers.currentOperator();
-  const avatarBg = opAvatar ? opAvatar.avatarColor : '#999';
-  const avatarTxt = opAvatar ? opAvatar.avatar : '?';
 
-  const partnerHTML = org
-    ? `<a href="dashboard.html" class="topbar-lockup-item topbar-lockup-partner" title="${orgName}">
-        <span class="topbar-lockup-mark" style="background:${orgColor};">
-          ${orgLogo ? `<img src="${orgLogo}" alt="${orgName}">` : `<span class="topbar-lockup-mark-text">${orgInitials}</span>`}
-        </span>
-        <span class="topbar-lockup-name">${orgName}</span>
-      </a>`
-    : `<span class="topbar-lockup-item topbar-lockup-partner topbar-lockup-empty">
-        <span class="topbar-lockup-mark topbar-lockup-mark-empty">?</span>
-        <span class="topbar-lockup-name">Unconfigured</span>
-      </span>`;
+  const osItem = {
+    href: 'dashboard.html', title: 'Ventrify OS', itemCls: 'topbar-lockup-os',
+    mark: { html: 'V', cls: 'topbar-lockup-mark-ventrify' },
+    name: { html: '<span class="lockup-name-strong">VENTRIFY</span> <span class="lockup-name-weak">OS</span>' },
+  };
+  const partnerItem = org
+    ? { href: 'dashboard.html', title: orgName, itemCls: 'topbar-lockup-partner',
+        mark: { bg: orgColor, html: orgLogo ? `<img src="${orgLogo}" alt="${orgName}">` : `<span class="topbar-lockup-mark-text">${orgInitials}</span>` },
+        name: { text: orgName } }
+    : { itemCls: 'topbar-lockup-partner topbar-lockup-empty',
+        mark: { html: '?', cls: 'topbar-lockup-mark-empty' },
+        name: { text: 'Unconfigured' } };
 
-  return `
-    <div class="topbar">
-      <button class="topbar-menu-btn" aria-label="Toggle navigation" aria-expanded="false" aria-controls="app-sidebar">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-      </button>
-      <div class="topbar-lockup">
-        <a href="dashboard.html" class="topbar-lockup-item topbar-lockup-os" title="Ventrify OS">
-          <span class="topbar-lockup-mark topbar-lockup-mark-ventrify">V</span>
-          <span class="topbar-lockup-name"><span class="lockup-name-strong">VENTRIFY</span> <span class="lockup-name-weak">OS</span></span>
-        </a>
-        <span class="topbar-lockup-divider" aria-hidden="true"></span>
-        ${partnerHTML}
-      </div>
-      <div class="topbar-spacer"></div>
-      <div class="topbar-utility">
-        <a href="#" class="topbar-utility-link">Docs</a>
-        <a href="#" class="topbar-utility-link">Help</a>
-        <a href="#" class="topbar-utility-link" onclick="event.preventDefault(); window.__signOut();">Sign out</a>
-        <div class="avatar topbar-avatar" style="background:${avatarBg};" title="${opAvatar ? opAvatar.name : 'No operator'}">${avatarTxt}</div>
-      </div>
-    </div>`;
+  return {
+    lockup: [osItem, partnerItem],
+    utility: [
+      { label: 'Docs', href: '#' },
+      { label: 'Help', href: '#' },
+      { label: 'Sign out', href: '#', onclick: 'event.preventDefault(); window.__signOut();' },
+    ],
+    avatar: { initials: opAvatar ? opAvatar.avatar : '?', bg: opAvatar ? opAvatar.avatarColor : '#999', title: opAvatar ? opAvatar.name : 'No operator' },
+  };
 }
 
 window.__signOut = async function() {
@@ -254,32 +244,22 @@ function queueBadgeCount() {
   catch (e) { return (W.actions || []).length; }
 }
 
-function renderSidebar() {
+// Left side-nav config for the shared shell — Operate + Manage sections.
+function shellNavConfig() {
   const W = window.WORKSPACE;
-  return `
-    <aside class="sidebar" id="app-sidebar">
-      <div class="sidebar-section">Operate</div>
-      <a href="dashboard.html" class="sidebar-link ${active === 'dashboard' ? 'active' : ''}">
-        <span class="sidebar-link-icon">&#x25A4;</span><span>Portfolio</span>
-        <span class="badge">${W.programs.length}</span>
-      </a>
-      <a href="queue.html" class="sidebar-link ${active === 'queue' ? 'active' : ''}">
-        <span class="sidebar-link-icon">&#x25C6;</span><span>Action queue</span>
-        <span class="badge">${queueBadgeCount()}</span>
-      </a>
-      <div class="sidebar-section">Manage</div>
-      <a href="team.html" class="sidebar-link ${active === 'team' ? 'active' : ''}">
-        <span class="sidebar-link-icon">&#x25CB;</span><span>Team</span>
-        <span class="badge">${W.operators.length}</span>
-      </a>
-      <a href="settings.html" class="sidebar-link ${active === 'settings' ? 'active' : ''}">
-        <span class="sidebar-link-icon">&#x25C7;</span><span>Settings</span>
-      </a>
-      ${(W.isSuperAdmin || (W.org && W.helpers.currentOperator() && String(W.org.ownerEmail || '').toLowerCase() === String((W.helpers.currentOperator() || {}).email || '').toLowerCase())) ? `
-        <a href="admin.html" class="sidebar-link ${active === 'admin' ? 'active' : ''}">
-          <span class="sidebar-link-icon">&#x2699;</span><span>${W.isSuperAdmin ? 'Platform admin' : 'Operators'}</span>
-        </a>` : ''}
-    </aside>`;
+  const showAdmin = W.isSuperAdmin || (W.org && W.helpers.currentOperator() && String(W.org.ownerEmail || '').toLowerCase() === String((W.helpers.currentOperator() || {}).email || '').toLowerCase());
+  const manage = [
+    { href: 'team.html', icon: '&#x25CB;', label: 'Team', badge: W.operators.length, active: active === 'team' },
+    { href: 'settings.html', icon: '&#x25C7;', label: 'Settings', active: active === 'settings' },
+  ];
+  if (showAdmin) manage.push({ href: 'admin.html', icon: '&#x2699;', label: W.isSuperAdmin ? 'Platform admin' : 'Operators', active: active === 'admin' });
+  return [
+    { section: 'Operate', links: [
+      { href: 'dashboard.html', icon: '&#x25A4;', label: 'Portfolio', badge: W.programs.length, active: active === 'dashboard' },
+      { href: 'queue.html', icon: '&#x25C6;', label: 'Action queue', badge: queueBadgeCount(), active: active === 'queue' },
+    ]},
+    { section: 'Manage', links: manage },
+  ];
 }
 
 function renderDevToggle() {
@@ -326,28 +306,16 @@ function renderNoAccess(user) {
 }
 
 window.renderShell = function(mainContentHTML) {
-  document.body.innerHTML = renderTopbar() + `
-    <div class="app-shell">
-      ${renderSidebar()}
-      <main class="main">
-        <div class="main-inner">${mainContentHTML}</div>
-      </main>
-    </div>
-    <div class="nav-scrim" aria-hidden="true"></div>
-    ${renderDevToggle()}`;
+  document.body.innerHTML = renderAppShell({
+    ...shellTopbarConfig(),
+    nav: shellNavConfig(),
+    main: mainContentHTML,
+    after: renderDevToggle(),
+  });
 };
 
 // Mobile nav drawer — delegated listeners survive renderShell()'s innerHTML reset.
-(function setupMobileNav() {
-  if (window.__navWired) return; window.__navWired = true;
-  document.addEventListener('click', (e) => {
-    const btn = e.target.closest('.topbar-menu-btn');
-    if (btn) { const open = document.body.classList.toggle('nav-open'); btn.setAttribute('aria-expanded', String(open)); return; }
-    if (e.target.closest('.nav-scrim') || e.target.closest('.sidebar-link')) document.body.classList.remove('nav-open');
-  });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') document.body.classList.remove('nav-open'); });
-  window.addEventListener('resize', () => { if (window.innerWidth > 900) document.body.classList.remove('nav-open'); });
-})();
+wireAppShell();
 
 // ----- Tiny shared display helpers ----------------------------------------
 window.hubStatusClass = function(status) { return status || 'pending'; };

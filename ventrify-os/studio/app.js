@@ -11,6 +11,7 @@
 // ============================================================
 
 import { FIREBASE_ENABLED } from '../firebase/config.js';
+import { renderAppShell, wireAppShell } from '../shared/shell.js';
 
 const FB_AUTH_URL = 'https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js';
 
@@ -40,6 +41,10 @@ function initialsOf(s) {
   const b = parts.length > 1 ? (parts[parts.length - 1][0] || '') : '';
   return (a + b).toUpperCase().slice(0, 2);
 }
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
 function phaseLabel(p) {
   return ({ 0: 'Phase 0 · Intake', 1: 'Phase 1 · Discover', 2: 'Phase 2 · Define',
     2.5: 'Phase 2.5 · Financials', 3: 'Phase 3 · Design', 4: 'Phase 4 · Develop',
@@ -59,7 +64,7 @@ function applyBranding(org) {
   const b = parseInt(hex.substring(4, 6), 16);
   const styleEl = document.createElement('style');
   styleEl.id = 'studio-brand-vars';
-  styleEl.textContent = `:root { --brand-primary: ${org.primaryColor}; --brand-primary-rgb: ${r}, ${g}, ${b}; --primary: ${org.primaryColor}; }`;
+  styleEl.textContent = `:root { --brand-primary: ${org.primaryColor}; --brand-primary-rgb: ${r}, ${g}, ${b}; --primary: ${org.primaryColor}; --primary-rgb: ${r}, ${g}, ${b}; }`;
   document.head.appendChild(styleEl);
 }
 
@@ -141,78 +146,71 @@ const activeTab = ({
   'hub.html': null, 'investability.html': 'investability'
 })[path] || null;
 
-function renderTopbar() {
+// Topbar config for the shared shell — Org · Venture lockup (mirrors the
+// Workspace's Ventrify OS · Org lockup), utility links + the founder avatar.
+function shellTopbarConfig() {
   const S = window.STUDIO;
   const org = S.org, engagement = S.engagement;
-  if (!org) {
-    return `
-      <div class="topbar">
-        <a href="/studio/" class="topbar-brand">
-          <span class="topbar-brand-mark">V</span>
-          <span class="topbar-brand-name">Ventrify Studio</span>
-        </a>
-        <div class="topbar-spacer"></div>
-        <div class="topbar-utility"><a href="/" class="topbar-utility-link">OS site</a></div>
-      </div>`;
-  }
-  const orgInitials = initialsOf(org.name);
-  const orgLogo = org.logoDataUrl || org.logoUrl;
-  const brandHTML = orgLogo ? `<img src="${orgLogo}" alt="${org.name}">` : `<span>${orgInitials}</span>`;
 
-  const ventureHTML = engagement
-    ? `<span class="topbar-divider"></span>
-       <div class="topbar-venture">
-         <span class="topbar-venture-name">${engagement.name}</span>
-         <span class="topbar-venture-meta">${phaseLabel(engagement.phase)} · ${engagement.founderName || 'Founder'}</span>
-       </div>`
-    : `<span class="topbar-divider"></span>
-       <div class="topbar-venture">
-         <span class="topbar-venture-name">No engagement selected</span>
-         <span class="topbar-venture-meta">Choose one from the login screen</span>
-       </div>`;
+  // Pre-login (no org): a minimal Ventrify Studio lockup.
+  if (!org) {
+    return {
+      lockup: [{ href: '/studio/', title: 'Ventrify Studio',
+        mark: { html: 'V', cls: 'topbar-lockup-mark-ventrify' }, name: { text: 'Ventrify Studio' } }],
+      utility: [{ label: 'OS site', href: '/' }],
+      avatar: null,
+    };
+  }
+
+  const orgLogo = org.logoDataUrl || org.logoUrl;
+  const orgMark = orgLogo ? `<img src="${esc(orgLogo)}" alt="${esc(org.name)}">` : `<span class="topbar-lockup-mark-text">${esc(initialsOf(org.name))}</span>`;
+  const orgItem = {
+    href: '/studio/', title: org.name,
+    mark: { bg: org.primaryColor || '#0036FF', html: orgMark },
+    name: { text: org.name },
+  };
+
+  const ventureItem = engagement
+    ? { title: `${engagement.name} · ${phaseLabel(engagement.phase)}`,
+        mark: { bg: 'var(--text)', text: initialsOf(engagement.name) },
+        name: { html: `${esc(engagement.name)} <span class="lockup-name-weak">Phase ${esc(engagement.phase)}</span>` } }
+    : { itemCls: 'topbar-lockup-empty',
+        mark: { html: '?', cls: 'topbar-lockup-mark-empty' },
+        name: { text: 'No engagement selected' } };
 
   const founder = engagement
-    ? { name: engagement.founderName, color: engagement.founderAvatarColor || org.primaryColor, initials: engagement.founderAvatar || initialsOf(engagement.founderName) }
+    ? { initials: engagement.founderAvatar || initialsOf(engagement.founderName), bg: engagement.founderAvatarColor || org.primaryColor, title: engagement.founderName }
     : null;
 
-  return `
-    <div class="topbar">
-      <a href="/studio/" class="topbar-brand">
-        <span class="topbar-brand-mark" style="background:${org.primaryColor || '#0036FF'};">${brandHTML}</span>
-        <span class="topbar-brand-name">${org.name}</span>
-      </a>
-      ${ventureHTML}
-      <div class="topbar-spacer"></div>
-      <div class="topbar-utility">
-        <a href="/studio/" class="topbar-utility-link">Switch engagement</a>
-        <a href="/" class="topbar-utility-link">Powered by Ventrify OS</a>
-        ${founder ? `<div class="topbar-avatar" style="background:${founder.color};" title="${founder.name}">${founder.initials}</div>` : ''}
-      </div>
-    </div>`;
+  return {
+    lockup: [orgItem, ventureItem],
+    utility: [
+      { label: 'Switch engagement', href: '/studio/' },
+      { label: 'Powered by Ventrify OS', href: '/' },
+    ],
+    avatar: founder,
+  };
 }
 
-function renderTabnav() {
+// Left side-nav config for the shared shell — the founder's venture journey
+// (was the top tabnav). Same active logic; grouped Your venture / Outcome.
+function shellNavConfig() {
   const S = window.STUDIO;
   const engagement = S.engagement;
-  if (!engagement) return '';
-  if (path === 'brief.html') return '';
-
-  const tabs = [
-    { key: 'foundations',   label: 'Foundations',   href: `/studio/dashboard.html?id=${engagement.id}&group=foundations`,  badge: 3 },
-    { key: 'data-room',     label: 'Data Room',     href: `/studio/dashboard.html?id=${engagement.id}&group=data-room`,    badge: 4 },
-    { key: 'deliverables',  label: 'Deliverables',  href: `/studio/dashboard.html?id=${engagement.id}&group=deliverables`, badge: 4 },
-    { key: 'investability', label: 'Investability', href: `/studio/investability.html?id=${engagement.id}`,                 badge: null }
+  if (!engagement) return [];
+  const id = engagement.id;
+  const groupActive = params.get('group') || (activeTab === 'foundations' ? 'foundations' : null);
+  const isActive = (key) => activeTab === 'investability' ? key === 'investability' : key === (groupActive || 'foundations');
+  return [
+    { section: 'Your venture', links: [
+      { href: `/studio/dashboard.html?id=${id}&group=foundations`,  icon: '&#x25A4;', label: 'Foundations',  badge: 3, active: isActive('foundations') },
+      { href: `/studio/dashboard.html?id=${id}&group=data-room`,    icon: '&#x25A6;', label: 'Data Room',    badge: 4, active: isActive('data-room') },
+      { href: `/studio/dashboard.html?id=${id}&group=deliverables`, icon: '&#x25C9;', label: 'Deliverables', badge: 4, active: isActive('deliverables') },
+    ]},
+    { section: 'Outcome', links: [
+      { href: `/studio/investability.html?id=${id}`, icon: '&#x25C8;', label: 'Investability', active: isActive('investability') },
+    ]},
   ];
-  const urlGroup = params.get('group');
-  const groupActive = urlGroup || (activeTab === 'foundations' ? 'foundations' : null);
-
-  return `
-    <div class="tabnav">
-      ${tabs.map(t => {
-        const isActive = activeTab === 'investability' ? t.key === 'investability' : t.key === (groupActive || 'foundations');
-        return `<a href="${t.href}" class="tabnav-link ${isActive ? 'active' : ''}"><span>${t.label}</span>${t.badge ? `<span class="badge">${t.badge}</span>` : ''}</a>`;
-      }).join('')}
-    </div>`;
 }
 
 function renderDevToggle() {
@@ -238,12 +236,14 @@ window.__studioReset = async function() {
 
 window.renderShell = function(mainContentHTML, opts) {
   opts = opts || {};
-  const skipTabnav = opts.skipTabnav === true;
-  document.body.innerHTML = `
-    <div class="app-shell">
-      ${renderTopbar()}
-      ${skipTabnav ? '' : renderTabnav()}
-      <main class="main">${mainContentHTML}</main>
-    </div>
-    ${renderDevToggle()}`;
+  const solo = opts.skipTabnav === true;   // loading / error / focused brief — topbar only
+  document.body.innerHTML = renderAppShell({
+    ...shellTopbarConfig(),
+    nav: solo ? [] : shellNavConfig(),
+    main: mainContentHTML,
+    after: renderDevToggle(),
+  });
 };
+
+// Mobile nav drawer — delegated listeners survive renderShell()'s innerHTML reset.
+wireAppShell();
