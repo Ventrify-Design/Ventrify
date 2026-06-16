@@ -145,6 +145,30 @@
     };
     window.__runResearch = (id) => window.__triggerRun(id, 'research');
 
+    // Republish — re-apply a run's SAVED output to the page (no AI re-run, no cost).
+    // Every run autosaves its full output (score, verdict, research, cards); this
+    // dispatches a ~2-min cloud step that recovers the latest bundle and re-applies
+    // it. The live banner takes over once it's queued. Cloud-only (the saved bundle
+    // lives in the cloud), so no local-daemon fallback here.
+    window.__republish = async function(engagementId) {
+      const btns = document.querySelectorAll('[data-republish]');
+      btns.forEach(b => { b.disabled = true; b.textContent = 'Re-applying…'; });
+      try {
+        const { auth } = await import('../firebase/firebase.js');
+        const idToken = auth.currentUser ? await auth.currentUser.getIdToken() : null;
+        if (!idToken) throw new Error('Please sign in again.');
+        const resp = await fetch('/api/dispatch-run', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idToken, engagementId, phase: 'republish' })
+        });
+        if (!resp.ok) { const d = await resp.json().catch(() => ({})); throw new Error(d.detail || d.error || ('Republish rejected (' + resp.status + ')')); }
+        // success → the live runState banner now shows "Recovering your saved results…"
+      } catch (e) {
+        alert('Could not republish: ' + ((e && (e.code || e.message)) || e));
+        btns.forEach(b => { b.disabled = false; b.innerHTML = '&#8635;&nbsp; Republish results'; });
+      }
+    };
+
     // Deck/document upload on the Workspace (assessment mode). Reuses /api/ingest-docs.
     function __readFileB64(file) {
       return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result)); r.onerror = () => rej(new Error('read failed')); r.readAsDataURL(file); });
@@ -427,17 +451,20 @@
       // Terminal states — result + run-again.
       const meta = (rs && rs.finishedAt) ? `<span class="text-mono dim" style="font-size:0.72rem;">Last run ${escBrief(rs.finishedAt)}</span>` : '';
       let note;
+      const recoverable = (status === 'error');
       if (status === 'done') note = `<div class="run-banner-sub">&#10003; Research complete &mdash; review the draft cards below, then send them to the founder.</div>`;
-      else if (status === 'error') note = `<div class="run-banner-sub" style="color:var(--danger,#C0392B);">Last run errored: ${escBrief((rs && rs.error) || 'unknown error')}. Safe to retry.</div>`;
+      else if (status === 'error') note = `<div class="run-banner-sub" style="color:var(--danger,#C0392B);">Last run reported an error${(rs && rs.error) ? ': ' + escBrief(rs.error) : ''}. If it produced cards &amp; research they're <strong>saved</strong> &mdash; try <strong>Republish</strong> first; if nothing's recoverable it'll tell you, then re-run.</div>`;
       else if (status === 'limit-paused') note = `<div class="run-banner-sub" style="color:#C77700;">Paused &mdash; Claude usage limit reached. Resume when your window resets; it picks up where it left off.</div>`;
       else note = `<div class="run-banner-sub">Run the deep research and draft the provocation cards from the brief. Runs on your Claude subscription &mdash; no VS Code.</div>`;
       const btnLabel = status === 'limit-paused' ? '&#9654;&nbsp; Resume run' : (status === 'done' ? '&#8635;&nbsp; Re-run research' : '&#9654;&nbsp; Run research agents');
+      const republishBtn = recoverable ? `<button data-republish class="btn btn-outline btn-sm" onclick="window.__republish('${p.id}')">&#8635;&nbsp; Republish saved results</button>` : '';
       return `<div class="run-banner run-idle">
         <div class="run-banner-main">
           <div class="run-banner-title">Research agents</div>
           ${note}
         </div>
         <div style="display:flex;flex-direction:column;gap:0.4rem;align-items:flex-end;">
+          ${republishBtn}
           <button id="run-trigger-btn" class="btn btn-primary" onclick="window.__runResearch('${p.id}')">${btnLabel}</button>
           ${meta}
         </div>
@@ -583,13 +610,19 @@
         return `<div class="run-banner run-running"><div class="run-banner-main"><div class="run-banner-title"><span class="run-spinner"></span> ${status === 'queued' ? 'Queued' : 'Assessing'} ${counter}</div><div class="run-banner-sub">${escBrief(rs.label || 'Running the assessment…')}</div><div class="progress" style="margin-top:0.75rem;"><div class="progress-bar" style="width:${pct}%;transition:width .5s ease;"></div></div></div></div>`;
       }
       let note;
+      // recoverable = the run finished its work but the display didn't land. The
+      // assessment is SAVED; it just needs re-applying — say so honestly, and lead
+      // with Republish (re-apply, no AI re-run) over a full Re-run.
+      const recoverable = (status === 'needs-attention' || status === 'error');
       if (status === 'done') note = `<div class="run-banner-sub">&#10003; Assessment complete &mdash; score &amp; findings below.</div>`;
-      else if (status === 'error') note = `<div class="run-banner-sub" style="color:var(--danger,#C0392B);">Last run errored: ${escBrief((rs && rs.error) || 'unknown error')}. Safe to retry.</div>`;
+      else if (status === 'needs-attention') note = `<div class="run-banner-sub" style="color:#C77700;">&#9888;&nbsp; The assessment finished and all its research, analysis &amp; score are <strong>saved safely</strong> &mdash; they just need applying to this page. Click <strong>Republish results</strong> (no re-run needed).</div>`;
+      else if (status === 'error') note = `<div class="run-banner-sub" style="color:var(--danger,#C0392B);">Last run reported an error${(rs && rs.error) ? ': ' + escBrief(rs.error) : ''}. If it produced results they're <strong>saved</strong> &mdash; try <strong>Republish results</strong> first; if nothing's recoverable it'll tell you, then re-run.</div>`;
       else if (status === 'limit-paused') note = `<div class="run-banner-sub" style="color:#C77700;">Paused &mdash; Claude usage limit reached.</div>`;
-      else if (status === 'needs-attention') note = `<div class="run-banner-sub" style="color:#C77700;">&#9888;&nbsp; ${escBrief((rs && rs.label) || 'The research published, but the verdict &amp; score didn’t serialize. Re-run to regenerate the summary panels.')}</div>`;
       else note = `<div class="run-banner-sub">&#10003; Pitch deck ready. Assess this venture from the uploaded documents &mdash; a score, key findings, and how to strengthen it.</div>`;
-      const btnLabel = (status === 'done' || status === 'needs-attention') ? '&#8635;&nbsp; Re-run assessment' : '&#9654;&nbsp; Run assessment';
-      return `<div class="run-banner run-idle"><div class="run-banner-main"><div class="run-banner-title">Assessment</div>${note}</div><button id="run-trigger-btn" class="btn btn-primary" onclick="window.__triggerRun('${p.id}','assess')">${btnLabel}</button></div>`;
+      const rerunLabel = (status === 'done' || recoverable) ? '&#8635;&nbsp; Re-run assessment' : '&#9654;&nbsp; Run assessment';
+      const rerunBtn = `<button id="run-trigger-btn" class="btn ${recoverable ? 'btn-outline btn-sm' : 'btn-primary'}" onclick="window.__triggerRun('${p.id}','assess')">${rerunLabel}</button>`;
+      const republishBtn = recoverable ? `<button data-republish class="btn btn-primary btn-sm" onclick="window.__republish('${p.id}')">&#8635;&nbsp; Republish results</button>` : '';
+      return `<div class="run-banner run-idle"><div class="run-banner-main"><div class="run-banner-title">Assessment</div>${note}</div><div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">${republishBtn}${rerunBtn}</div></div>`;
     }
     function findingsSectionHTML(cards) {
       const head = `<div class="section-head"><div><div class="section-title">Key findings</div><div class="section-sub">The strategic forks, risks, and load-bearing assumptions the agents surfaced from the deck.</div></div></div>`;
