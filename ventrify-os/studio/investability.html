@@ -562,6 +562,8 @@
     if (window.STUDIO.mode === 'live') {
       try { const data = await import('/firebase/data.js'); snapshots = await data.listInvestabilitySnapshots(engagement.id); }
       catch (e) { console.warn('investability load failed', e); }
+    } else if (engagement.investabilitySnapshot) {
+      snapshots = [engagement.investabilitySnapshot];   // demo/sample fixture (parity with the Workspace)
     }
     const latest = snapshots.length ? snapshots[snapshots.length - 1] : null;
 
@@ -596,7 +598,9 @@
 
     function renderScorecardVSS() {
       const cc = bandColor(latest.band);
-      const headline = latest.band === 'approved' ? 'Strong — investor-ready.'
+      const forming = latest.status === 'forming' || latest.band === 'forming';
+      const headline = forming ? 'Forming — your starting position.'
+                     : latest.band === 'approved' ? 'Strong — investor-ready.'
                      : latest.band === 'feedback' ? 'Promising — named gaps to close.'
                      : 'Early — material gaps to work through.';
       const when = latest.computedAt ? new Date(latest.computedAt).toLocaleDateString() : 'recently';

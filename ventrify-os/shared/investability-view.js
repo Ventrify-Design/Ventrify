@@ -22,6 +22,7 @@ export function bandColor(band) {
   const b = String(band || '').toLowerCase();
   if (b === 'green' || b === 'approved' || b === 'strong') return 'var(--band-strong, #00A368)';
   if (b === 'red' || b === 'pass' || b === 'weak' || b === 'rework') return 'var(--band-weak, #C42233)';
+  if (b === 'forming' || b === 'unrated' || b === 'na') return 'var(--text-subtle, #888888)'; // neutral — nothing scored yet
   return 'var(--band-mid, #C77700)'; // yellow / feedback / mid
 }
 // Soft tint of the band colour, for chip/pill backgrounds.
@@ -29,6 +30,7 @@ export function bandTint(band) {
   const b = String(band || '').toLowerCase();
   if (b === 'green' || b === 'approved' || b === 'strong') return 'rgba(0,163,104,0.12)';
   if (b === 'red' || b === 'pass' || b === 'weak' || b === 'rework') return 'rgba(196,34,51,0.10)';
+  if (b === 'forming' || b === 'unrated' || b === 'na') return 'rgba(0,0,0,0.05)';
   return 'rgba(199,119,0,0.13)';
 }
 
@@ -82,7 +84,7 @@ const SUB_Q = {
   methodology_disclosure: 'Are assumptions named and methodology ranges specified (not buried)?',
   cross_file_consistency: 'Do the numbers cross-check arithmetically across research, financial, and ask?',
 };
-const BAND_WORD = { approved: 'Strong', feedback: 'Promising', rework: 'Material gaps', unrated: 'Not yet rated' };
+const BAND_WORD = { approved: 'Strong', feedback: 'Promising', rework: 'Material gaps', forming: 'Forming', unrated: 'Not yet rated' };
 
 function ratioBand(r) { return r >= 0.8 ? 'green' : r >= 0.5 ? 'yellow' : 'red'; }
 // Notes may end with " · ref: <ref>" (folded in at publish time) — split it back out.
@@ -109,7 +111,9 @@ export function renderVSSScorecard(snap, opts = {}) {
   // ── Hero — the score itself is the headline (no percentage here) ───────
   const band = String(snap.band || 'unrated').toLowerCase();
   const bandWord = BAND_WORD[band] || (snap.bandLabel || snap.band || '');
-  const ratedLine = `${esc(ratedCount)} of 35 signals rated${pendingCount ? ` &middot; ${esc(pendingCount)} not assessable here` : ''}`;
+  const ratedLine = (snap.status === 'forming' || band === 'forming')
+    ? `${esc(ratedCount)} of 35 signals rated &middot; grows as the venture builds`
+    : `${esc(ratedCount)} of 35 signals rated${pendingCount ? ` &middot; ${esc(pendingCount)} not assessable here` : ''}`;
   const hero = opts.headline === false ? '' : `<div class="vss-hero">
       <div class="vss-hero-number" style="color:${cc};">${esc(snap.composite)}<span class="vss-hero-suffix"> / ${esc(max)}</span></div>
       <div class="vss-hero-body">

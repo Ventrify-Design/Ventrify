@@ -879,7 +879,7 @@
               <p class="program-detail-pitch">${escBrief(p.venturePitch || 'Investor assessment — upload a deck to begin.')}</p>
               <div class="program-detail-meta">
                 <span class="pill" style="background:rgba(110,58,250,0.1);color:var(--brand,#6E3AFA);"><span class="dot"></span> Assessment</span>
-                ${invSnapshot ? `<span class="pill"><span class="dot"></span> ${invSnapshot.pct}% investability</span>` : ''}
+                ${invSnapshot ? `<span class="pill"><span class="dot"></span> ${invSnapshot.status === 'forming' ? 'Forming' : (invSnapshot.pct || 0) + '% investability'}</span>` : ''}
               </div>
             </div>
           </div>

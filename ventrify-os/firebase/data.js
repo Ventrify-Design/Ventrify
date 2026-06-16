@@ -15,6 +15,7 @@
 // ============================================================
 
 import { db } from './firebase.js';
+import { buildFormingSnapshot, snapshotSummary } from '../shared/vss-rubric.js';
 import {
   collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc,
   query, where, orderBy, onSnapshot, serverTimestamp
@@ -120,6 +121,7 @@ export async function deleteEngagementDeep(id) {
 }
 
 // Founder submits their brief → stored on the engagement, flips briefSubmitted.
+// Also seeds the living investability scaffold so the score exists from day one.
 export async function saveBrief(id, brief) {
   await updateDoc(engRef(id), {
     brief,
@@ -127,6 +129,23 @@ export async function saveBrief(id, brief) {
     briefSubmittedAt: serverTimestamp(),
     updatedAt: serverTimestamp()
   });
+  // The score becomes a living artifact the moment the brief lands. Non-blocking
+  // — a failed seed must never block the brief itself.
+  try { await seedFormingInvestability(id); } catch (e) { console.warn('seedFormingInvestability failed', e); }
+}
+
+// Seed the "forming" VSS snapshot — all 35 signals present but unrated — so both
+// surfaces show a living score ("0 / 35 · forming") from brief-time, growing as
+// welcome/research/gate runs rate more signals. Idempotent + never clobbers a
+// real score: skips entirely if any snapshot already exists.
+export async function seedFormingInvestability(engagementId) {
+  const col = collection(db, 'engagements', engagementId, 'investabilitySnapshots');
+  const existing = await getDocs(col);
+  if (!existing.empty) return;
+  const snap = buildFormingSnapshot();
+  await setDoc(doc(col, 'seed-forming'), { ...snap, computedAt: serverTimestamp(), seededBy: 'brief' });
+  // Denormalise a compact summary for the dashboard list + program header badge.
+  await updateDoc(engRef(engagementId), { investabilityScore: snapshotSummary(snap), updatedAt: serverTimestamp() });
 }
 
 // ---- Run orchestration (web → headless runner trigger) --------------------
