@@ -186,9 +186,11 @@
   <script type="module">
     import { renderCardBody, ensureCardStyles } from '../shared/card-format.js';
     import { renderDataRoom, hydrateDataRoom, ensureHubStyles } from '../shared/hub-view.js';
+    import { renderWelcomePack, ensureWelcomePackStyles } from '../shared/welcome-pack-view.js';
     await window.STUDIO_READY;
     ensureCardStyles();
     ensureHubStyles();
+    ensureWelcomePackStyles();
     const { engagement, org, groups, labels, helpers } = window.STUDIO;
     const params = new URLSearchParams(window.location.search);
     const groupKey = params.get('group') || 'foundations';
@@ -515,6 +517,13 @@
 
     // Welcome pack — shows the moment the brief lands, until the first cards arrive.
     function welcomeHTML() {
+      // The real welcome pack (proof of understanding) once the operator sends it.
+      const wp = engagement.welcomePack;
+      if (wp && wp.status === 'sent') {
+        const pack = { ...wp, org: { name: org && org.name, primaryColor: org && org.primaryColor, logoUrl: org && org.logoUrl }, venture: { ...(wp.venture || {}), name: (wp.venture && wp.venture.name) || engagement.name, founderName: engagement.founderName } };
+        return `<div style="margin-bottom:1.75rem;">${renderWelcomePack(pack, { surface: 'founder', esc })}</div>`;
+      }
+      // Fallback: brief is in but the welcome pack hasn't been sent yet.
       if (!engagement.briefSubmitted || (provCards && provCards.length)) return '';
       const founderFirst = esc((engagement.founderName || 'there').split(' ')[0]);
       const steps = [
