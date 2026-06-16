@@ -334,6 +334,55 @@ a.topbar-lockup-item:hover { background: var(--surface-alt); }
 .sidebar-link-icon { transition: transform var(--dur-base) var(--ease-out); }
 .sidebar-link:hover .sidebar-link-icon { transform: translateX(1px); }
 
+/* ============================================================
+   IN-PAGE SECTION TABS  (tier-2 nav · shared/subnav.js)
+   A horizontal bar inside a page that breaks one section's content
+   into digestible tabs (one focused view per tab). Sits under the
+   page header; driven by ?tab=. Brand-coloured active underline.
+   ============================================================ */
+.subnav {
+  display: flex;
+  gap: 2px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--space-6);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.subnav::-webkit-scrollbar { display: none; }
+.subnav-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.7rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  transition: color var(--transition), border-color var(--transition);
+}
+.subnav-tab:hover { color: var(--text); }
+.subnav-tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  font-weight: 600;
+}
+.subnav-badge {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 1px 7px;
+  border-radius: var(--radius-pill);
+  background: rgba(var(--primary-rgb), 0.1);
+  color: var(--primary);
+}
+@media (max-width: 640px) {
+  .subnav { margin-bottom: var(--space-5); }
+  .subnav-tab { padding: 0.65rem 0.85rem; }
+}
+
 /* Avatar base — the topbar avatar layers .topbar-avatar over this. */
 .avatar {
   width: 30px;

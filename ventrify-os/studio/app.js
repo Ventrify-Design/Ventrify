@@ -203,7 +203,7 @@ function shellNavConfig() {
   const isActive = (key) => activeTab === 'investability' ? key === 'investability' : key === (groupActive || 'foundations');
   return [
     { section: 'Your venture', links: [
-      { href: `/studio/dashboard.html?id=${id}&group=foundations`,  icon: '&#x25A4;', label: 'Foundations',  badge: 3, active: isActive('foundations') },
+      { href: `/studio/dashboard.html?id=${id}&group=foundations`,  icon: '&#x25A4;', label: 'Foundations',  badge: 5, active: isActive('foundations') },
       { href: `/studio/dashboard.html?id=${id}&group=data-room`,    icon: '&#x25A6;', label: 'Data Room',    badge: 4, active: isActive('data-room') },
       { href: `/studio/dashboard.html?id=${id}&group=deliverables`, icon: '&#x25C9;', label: 'Deliverables', badge: 4, active: isActive('deliverables') },
     ]},
