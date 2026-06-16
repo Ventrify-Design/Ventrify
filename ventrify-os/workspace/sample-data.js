@@ -61,6 +61,36 @@ const SAMPLE_PROGRAMS = [
     assignedOperator: 'op-01',
     health: 'on-track',
     cards: { drafted: 24, awaitingFounder: 0, resolved: 24, awaitingL3Rebuild: 0 },
+    welcomePack: {
+      status: 'sent',
+      venture: { name: 'Northwind', oneLiner: 'AI-driven energy-consumption insights for SMBs' },
+      intro: "We've read your Northwind brief end to end — here's what we understood, the voice we'll protect, and what we already see. Tell us if any of it is off; we'd rather adjust now than build the wrong product.",
+      heard: [
+        "Northwind turns messy energy data into clear, AI-driven insights that help small and mid-sized businesses cut consumption and cost.",
+        "The pain is that SMBs see a bill, not a signal — no easy way to know what's driving usage or what to change.",
+        "Your wedge is making energy legible without an energy team: plug in, see where the money goes, get specific actions.",
+        "Success is measurable savings the customer can feel, repeat engagement, and case studies that prove the ROI."
+      ],
+      voice: { title: "Your product feel — we'll preserve it", points: [
+        "Clear and confident — insights a non-technical owner trusts at a glance.",
+        "Data-forward but human — the dashboard explains, it doesn't just chart.",
+        "Action over analysis — every screen ends in a thing to do, not just a number."
+      ], footer: "Every screen and deliverable will sound and look like Northwind — never a template." },
+      observations: [
+        { text: "SMB energy spend is rising and largely unmanaged — most owners have no tooling between the meter and the bill.", source: "SMB energy benchmarks · to source-verify in Phase 1" },
+        { text: "Efficiency incentives and ESG pressure are pushing reporting down-market to smaller firms.", source: "policy trend · preflight" },
+        { text: "The competitive set skews enterprise — leaving the SMB segment underserved on price and simplicity.", source: "competitor scan · preflight" }
+      ],
+      hypotheses: [
+        "Which SMB vertical — retail, light industrial, hospitality — has the clearest savings story and fastest payback?",
+        "Is the wedge the insight dashboard or the automated action — which earns the subscription?",
+        "What integration (utility data, meters, accounting) is the minimum to deliver a credible first insight?"
+      ],
+      next: [
+        "We run deep research across your market, competitors, demand and unit economics — then a short set of decision cards you shape in minutes.",
+        "From there: vision and strategy, the MVP definition, design, build and launch — each gated by your sign-off."
+      ]
+    },
     hubs: {
       research: { status: 'signed', cards: 6 },
       vision: { status: 'signed', cards: 7 },

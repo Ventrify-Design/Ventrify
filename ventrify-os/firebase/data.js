@@ -241,6 +241,13 @@ export async function sendCardToFounder(cardId) {
   });
 }
 
+// Welcome pack — operator releases the reviewed draft pack to the founder's Studio.
+export async function sendWelcomePack(engagementId) {
+  await updateDoc(engRef(engagementId), {
+    'welcomePack.status': 'sent', 'welcomePack.sentAt': serverTimestamp(), updatedAt: serverTimestamp()
+  });
+}
+
 // Release every still-draft card for an engagement in one click. Returns count.
 export async function sendDraftsToFounder(engagementId) {
   const drafts = (await listCardsForEngagement(engagementId)).filter(c => c.status === 'draft');

@@ -40,11 +40,13 @@
     import { renderCardBody, ensureCardStyles } from '../shared/card-format.js';
     import { renderDataRoom, hydrateDataRoom, ensureHubStyles } from '../shared/hub-view.js';
     import { renderVSSScorecard, renderStrengthenSuggestions, ensureInvestabilityStyles, bandColor } from '../shared/investability-view.js';
+    import { renderWelcomePack, ensureWelcomePackStyles } from '../shared/welcome-pack-view.js';
     import { esc as escBrief } from '../shared/util.js';
     await window.WORKSPACE_READY;
     ensureCardStyles();
     ensureHubStyles();
     ensureInvestabilityStyles();
+    ensureWelcomePackStyles();
     const W = window.WORKSPACE;
     const A = window.WORKSPACE_AGENTS;
     const { helpers, labels, programs: allPrograms } = W;
@@ -241,6 +243,13 @@
         const n = await data.sendDraftsToFounder(engagementId);
         if (n) notifyRecipient('founder'); else alert('No draft cards to send.');
       } catch (e) { alert('Could not send the cards: ' + ((e && (e.code || e.message)) || e)); }
+    };
+    // Welcome pack — generate (cloud 'welcome' run) then operator reviews + sends.
+    window.__generateWelcomePack = (id) => window.__triggerRun(id, 'welcome');
+    window.__sendWelcomePack = async function(id) {
+      const data = await import('../firebase/data.js');
+      try { await data.sendWelcomePack(id); notifyRecipient('founder'); }
+      catch (e) { alert('Could not send the welcome pack: ' + ((e && (e.code || e.message)) || e)); }
     };
     window.__deleteEngagement = async function() {
       if (!window.confirm(`Delete "${p.name}" permanently?\n\nThis removes it from the Workspace AND ${p.founderName || 'the founder'}'s Studio, including all its provocation cards. This cannot be undone.`)) return;
@@ -845,6 +854,20 @@
         <div class="card"><div class="tdd-list">${members}</div>${gaps}</div></div>`;
     }
 
+    // Welcome pack (build-only) — operator generates from the brief, reviews, sends.
+    // First proof-of-understanding the founder sees; precedes the research run.
+    function welcomePackSectionHTML(p) {
+      if (isAssess || p.briefSubmitted === false) return '';
+      const org = (W.org || {});
+      const head = `<div class="section-head"><div><div class="section-title">Welcome pack</div><div class="section-sub">What you heard, the voice you&rsquo;ll keep, and three things you already see &mdash; sent to ${escBrief(p.founderName || 'the founder')}&rsquo;s Studio in your brand, before the deep work begins.</div></div></div>`;
+      if (!p.welcomePack) {
+        return `<div class="section">${head}<div class="run-banner run-idle"><div class="run-banner-main"><div class="run-banner-title">Welcome pack</div><div class="run-banner-sub">Generate it from ${escBrief(p.name)}&rsquo;s brief &mdash; a fast proof-of-understanding the founder sees first, before research.</div></div><button class="btn btn-primary" onclick="window.__generateWelcomePack('${p.id}')">&#9654;&nbsp; Generate welcome pack</button></div></div>`;
+      }
+      const wp = p.welcomePack;
+      const pack = { ...wp, engagementId: p.id, org: { name: org.name, primaryColor: org.primaryColor, logoUrl: org.logoUrl }, venture: { ...(wp.venture || {}), name: (wp.venture && wp.venture.name) || p.name, founderName: p.founderName } };
+      return `<div class="section">${head}<div id="welcome-pack-region">${renderWelcomePack(pack, { surface: 'operator', esc: escBrief })}</div></div>`;
+    }
+
     function assessMainHTML() {
       return `
         <div style="margin-bottom:1rem;"><a href="dashboard.html" class="text-small dim" style="font-size:0.85rem;">&larr; All engagements</a></div>
@@ -946,6 +969,8 @@
       ${investabilitySectionHTML(invSnapshot, p)}
 
       ${briefSectionHTML(p)}
+
+      ${welcomePackSectionHTML(p)}
 
       <div id="run-region">${runBannerHTML(p.runState, p)}</div>
 
