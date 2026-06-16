@@ -87,7 +87,6 @@ async function awaitCurrentUser() {
 async function loadLive() {
   const data = await import('../firebase/data.js');
   const user = await awaitCurrentUser();
-  const org = await data.getOrganisation();
 
   const requestedId = params.get('id');
   // A signed-in founder's own engagements (matched by invite email).
@@ -102,6 +101,13 @@ async function loadLive() {
   } else if (programs.length === 1) {
     engagement = programs[0];
   }
+
+  // The Studio shows the OPERATOR ORG that owns the founder's engagement — its
+  // name + brand — not the default tenant. Resolve the org from the engagement's
+  // orgId (engagement/program loaded first), then fetch that org.
+  const orgId = (engagement && engagement.orgId) || (programs[0] && programs[0].orgId) || data.getOrgContext();
+  data.setOrgContext(orgId);
+  const org = await data.getOrganisation();
 
   return buildStudio({ org, programs, engagement, user, mode: 'live' });
 }
