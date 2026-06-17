@@ -37,7 +37,7 @@ export function bandTint(band) {
 // Canonical rubric metadata (mirrors reference_venture_sentiment_score.md) so a
 // snapshot that carries only slug+score+note still renders the human question.
 const CAT_ORDER = ['market', 'team', 'product', 'moat', 'financial', 'execution', 'evidence'];
-const CAT_SHORT = { market: 'Market', team: 'Team', product: 'Product', moat: 'Moat', financial: 'Financial', execution: 'Execution', evidence: 'Evidence' };
+const CAT_SHORT = { market: 'Market', team: 'Team', product: 'Product', moat: 'Moat', financial: 'Financial', execution: 'Exec', evidence: 'Evidence' };
 const CAT_DESC = {
   market: 'Is the market large, growing, and timed right — with credible demand signals?',
   team: 'Can this team attract talent, close deals, and out-execute under capital constraints?',
@@ -118,15 +118,14 @@ export function renderVSSScorecard(snap, opts = {}) {
   const ratedLine = (snap.status === 'forming' || band === 'forming')
     ? `${esc(ratedCount)} of 35 signals rated &middot; grows as the venture builds`
     : `${esc(ratedCount)} of 35 signals rated${pendingCount ? ` &middot; ${esc(pendingCount)} not assessable here` : ''}`;
-  const hero = opts.headline === false ? '' : `<div class="vss-hero">
-      <div class="vss-hero-number" style="color:${cc};">${esc(snap.composite)}<span class="vss-hero-suffix"> / ${esc(max)}</span></div>
+  const hero = opts.headline === false ? '' : `<div class="vss-hero" style="border-left:4px solid ${cc};">
+      <div class="vss-hero-number">${esc(snap.composite)}<span class="vss-hero-suffix"> / ${esc(max)}</span></div>
       <div class="vss-hero-body">
         <span class="vss-band-pill" style="color:${cc};background:${bandTint(snap.band)};">${esc(bandWord)}</span>
         <div class="vss-band-label">${esc(snap.bandLabel || '')}</div>
         <div class="vss-hero-meta">${ratedLine}</div>
         <div class="vss-attribution">VSS v3 &middot; weighted &middot; TDK Ventures &middot; GoingVC &middot; VCII / Payne</div>
       </div>
-      <div class="vss-sparkline"><svg viewBox="0 0 120 36"><circle cx="112" cy="18" r="3.5" fill="${cc}"/></svg></div>
     </div>`;
 
   // ── Category breakdown (expandable rows → sub-criteria) ────────────────
@@ -179,17 +178,16 @@ export function renderVSSScorecard(snap, opts = {}) {
       const w = wOf(c);
       if (frac != null) den += w;
       return { c, rated, frac, w };
-    });
-    const trows = rows.map(({ c, rated, frac, w }) => {
-      const cb = frac != null ? ratioBand(frac) : 'unrated';
-      const contrib = (frac != null && den > 0) ? (100 * frac * w / den) : 0;
+    }).map(r => ({ ...r, cb: r.frac != null ? ratioBand(r.frac) : 'unrated', contrib: (r.frac != null && den > 0) ? (100 * r.frac * r.w / den) : 0 }));
+    const maxContrib = Math.max(0.001, ...rows.map(r => r.contrib));
+    const trows = rows.map(({ c, rated, frac, w, cb, contrib }) => {
+      const barW = Math.round((contrib / maxContrib) * 100);
+      const bar = frac != null ? `<span class="vss-sb-bar" style="width:${barW}%;background:${bandTint(cb)};border-left:2px solid ${bandColor(cb)};"></span>` : '';
       return `<tr>
           <td class="vss-sb-cat">${esc(c.label)}</td>
           <td class="vss-sb-num">${Math.round(w * 100)}%</td>
           <td class="vss-sb-num">${frac != null ? `${esc(c.sum)}/${esc(rated)}` : '&ndash;'}</td>
-          <td class="vss-sb-num">${frac != null ? frac.toFixed(2) : '&ndash;'}</td>
-          <td><span class="vss-sb-band" style="color:${bandColor(cb)};background:${bandTint(cb)};">${frac != null ? SB_BAND[cb] : 'n/a'}</span></td>
-          <td class="vss-sb-num vss-sb-contrib" style="color:${bandColor(cb)};">${frac != null ? `+${contrib.toFixed(1)}` : '&ndash;'}</td>
+          <td class="vss-sb-contribcell">${bar}<span class="vss-sb-contrib" style="color:${bandColor(cb)};">${frac != null ? `+${contrib.toFixed(1)}` : '&ndash;'}</span></td>
         </tr>`;
     }).join('');
     scoreboard = `<div class="vss-scoreboard">
@@ -197,10 +195,11 @@ export function renderVSSScorecard(snap, opts = {}) {
         <div class="vss-sb-title">How the score is calculated</div>
         <p class="vss-sb-explainer">Each of the 7 categories is scored as a fraction of its rated criteria (0&ndash;1), <strong>weighted by importance</strong> &mdash; Team and Market carry the most &mdash; then summed to a 0&ndash;100 score. The contributions below add up to the headline <strong style="color:${cc};">${esc(snap.composite)}</strong>.</p>
         <table class="vss-sb-table">
-          <thead><tr><th>Category</th><th>Weight</th><th>Rated</th><th>Fraction</th><th>Band</th><th>Contribution</th></tr></thead>
+          <thead><tr><th>Category</th><th>Weight</th><th>Rated</th><th>Contribution</th></tr></thead>
           <tbody>${trows}</tbody>
-          <tfoot><tr><td>Investability score</td><td></td><td></td><td></td><td></td><td class="vss-sb-num vss-sb-total" style="color:${cc};">${esc(snap.composite)} / ${esc(max)}</td></tr></tfoot>
+          <tfoot><tr><td>Investability score</td><td></td><td></td><td class="vss-sb-num vss-sb-total" style="color:${cc};">${esc(snap.composite)} / ${esc(max)}</td></tr></tfoot>
         </table>
+        <div class="vss-sb-legend">Contribution = (rated &divide; max) &times; weight. Bands: <b style="color:${bandColor('green')};">Strong</b> &ge;0.80 &middot; <b style="color:${bandColor('yellow')};">Mixed</b> 0.50&ndash;0.79 &middot; <b style="color:${bandColor('red')};">Gap</b> &lt;0.50. Unassessable signals are excluded, not scored zero.</div>
       </div>
       <div class="vss-sb-radar">${renderRadar(ordered, esc)}<div class="vss-sb-radar-cap">7-axis profile</div></div>
     </div>`;
@@ -230,7 +229,7 @@ export function renderVSSScorecard(snap, opts = {}) {
       <div class="vss-heat-header"><div class="vss-heat-title">Deficiency heatmap${top.length ? ` &middot; top ${top.length}` : ''}</div><div class="vss-heat-meta">Ranked by lift potential</div></div>
       ${top.length ? `<div class="vss-heat-grid">${top.map(d => `
         <div class="vss-def" style="border-left-color:${bandColor(d.score === 0.5 ? 'yellow' : 'red')};">
-          <div class="vss-def-head"><span class="vss-def-cat">${esc(d.catLabel)}</span><span class="vss-def-slug">${esc(d.slug)}</span><span class="vss-def-lift" style="color:${bandColor(d.score === 0.5 ? 'yellow' : 'red')};background:${bandTint(d.score === 0.5 ? 'yellow' : 'red')};">+${d.lift === 0.5 ? '0.5' : '1.0'}</span></div>
+          <div class="vss-def-head"><span class="vss-def-cat">${esc(d.catLabel)}</span><span class="vss-def-slug">${esc(String(d.slug).replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()))}</span><span class="vss-def-lift" style="color:${bandColor(d.score === 0.5 ? 'yellow' : 'red')};background:${bandTint(d.score === 0.5 ? 'yellow' : 'red')};">+${d.lift === 0.5 ? '0.5' : '1.0'}</span></div>
           <div class="vss-def-q">${esc(d.q)}</div>
           ${d.note ? `<div class="vss-def-note">&ldquo;${esc(d.note)}&rdquo;</div>` : ''}
           ${d.ref ? `<span class="vss-ev" title="${esc(d.ref)}">${esc(d.ref)}</span>` : ''}
@@ -252,16 +251,19 @@ function renderRadar(ordered, esc) {
   const grid = [0.25, 0.5, 0.75, 1].map(lv => `<polygon class="vss-radar-grid" points="${cats.map((_, i) => `${CX + Math.cos(ang(i)) * R * lv},${CY + Math.sin(ang(i)) * R * lv}`).join(' ')}"/>`).join('');
   const axes = cats.map((_, i) => `<line class="vss-radar-grid" x1="${CX}" y1="${CY}" x2="${CX + Math.cos(ang(i)) * R}" y2="${CY + Math.sin(ang(i)) * R}"/>`).join('');
   const poly = cats.map((c, i) => `${CX + Math.cos(ang(i)) * R * ratioOf(c)},${CY + Math.sin(ang(i)) * R * ratioOf(c)}`).join(' ');
+  const dots = cats.map((c, i) => { const r = ratioOf(c); return `<circle class="vss-radar-dot" cx="${CX + Math.cos(ang(i)) * R * r}" cy="${CY + Math.sin(ang(i)) * R * r}" r="2.6"/>`; }).join('');
   const labels = cats.map((c, i) => {
     const a = ang(i), x = CX + Math.cos(a) * LR, y = CY + Math.sin(a) * LR;
     let anc = 'middle'; if (Math.cos(a) > 0.3) anc = 'start'; else if (Math.cos(a) < -0.3) anc = 'end';
     const dy = Math.sin(a) > 0.3 ? 11 : Math.sin(a) < -0.3 ? -5 : 3;
     return `<text class="vss-radar-lbl" x="${x}" y="${y + dy}" text-anchor="${anc}">${esc(CAT_SHORT[c.key] || c.key)}</text>`;
   }).join('');
-  return `<svg class="vss-radar" viewBox="0 0 ${SIZE} ${SIZE}" role="img" aria-label="Investability radar">
+  // viewBox padded horizontally so the left/right axis labels (Market, Exec, Moat) never clip.
+  const PAD = 52;
+  return `<svg class="vss-radar" viewBox="${-PAD} 0 ${SIZE + 2 * PAD} ${SIZE}" role="img" aria-label="Investability radar">
       ${grid}${axes}
       <polygon class="vss-radar-fill" points="${poly}"/><polygon class="vss-radar-stroke" points="${poly}"/>
-      ${labels}
+      ${dots}${labels}
     </svg>`;
 }
 
@@ -285,8 +287,8 @@ export function ensureInvestabilityStyles() {
     s.textContent = `
     :root { --vss-surf: var(--surface-2, #fff); --vss-bd: var(--border, rgba(0,0,0,0.07)); --vss-mut: var(--muted, #6B7594); --vss-txt: var(--text, #1A1A2E); --vss-mono: var(--font-mono, ui-monospace, 'SF Mono', monospace); --vss-disp: var(--font-heading, 'Space Grotesk', sans-serif); }
     /* Hero */
-    .vss-hero { display:grid; grid-template-columns:minmax(170px,auto) 1fr auto; gap:1.8rem; align-items:center; padding:1.6rem 1.8rem; background:var(--vss-surf); border:1px solid var(--vss-bd); border-radius:16px; margin-bottom:1.25rem; }
-    .vss-hero-number { font-family:var(--vss-disp); font-size:clamp(3.6rem, 7vw, 6rem); font-weight:700; line-height:0.95; letter-spacing:-0.035em; white-space:nowrap; }
+    .vss-hero { display:grid; grid-template-columns:minmax(150px,auto) 1fr; gap:1.8rem; align-items:center; padding:1.6rem 1.8rem; background:var(--vss-surf); border:1px solid var(--vss-bd); border-radius:16px; margin-bottom:1.25rem; }
+    .vss-hero-number { font-family:var(--vss-disp); font-size:clamp(3.6rem, 7vw, 6rem); font-weight:700; line-height:0.95; letter-spacing:-0.035em; white-space:nowrap; color:var(--vss-txt); }
     .vss-hero-suffix { font-size:0.32em; color:var(--vss-mut); font-weight:500; letter-spacing:-0.02em; }
     .vss-hero-body { display:flex; flex-direction:column; gap:0.45rem; min-width:0; }
     .vss-band-pill { align-self:flex-start; font-family:var(--vss-mono); font-size:0.66rem; font-weight:700; letter-spacing:0.09em; text-transform:uppercase; padding:0.28rem 0.7rem; border-radius:999px; }
@@ -305,15 +307,18 @@ export function ensureInvestabilityStyles() {
     .vss-sb-table td { padding:0.5rem 0.55rem; border-bottom:1px solid var(--vss-bd); color:var(--vss-txt); text-align:right; }
     .vss-sb-table td:first-child { text-align:left; font-weight:550; }
     .vss-sb-num { font-family:var(--vss-mono); font-variant-numeric:tabular-nums; }
-    .vss-sb-contrib { font-weight:700; }
-    .vss-sb-band { display:inline-block; font-family:var(--vss-mono); font-size:0.58rem; font-weight:700; letter-spacing:0.04em; text-transform:uppercase; padding:0.14rem 0.5rem; border-radius:999px; }
+    .vss-sb-contribcell { position:relative; text-align:right; min-width:78px; }
+    .vss-sb-bar { position:absolute; left:0; top:50%; transform:translateY(-50%); height:62%; border-radius:4px; z-index:0; }
+    .vss-sb-contrib { position:relative; z-index:1; font-family:var(--vss-mono); font-weight:700; font-variant-numeric:tabular-nums; }
+    .vss-sb-legend { margin-top:0.8rem; font-size:0.72rem; color:var(--vss-mut); line-height:1.55; }
+    .vss-sb-legend b { font-weight:700; }
     .vss-sb-table tfoot td { border-bottom:none; border-top:2px solid var(--vss-bd); padding-top:0.7rem; }
     .vss-sb-table tfoot td:first-child { font-family:var(--vss-disp); font-weight:700; letter-spacing:-0.01em; }
     .vss-sb-total { font-family:var(--vss-disp); font-weight:700; font-size:1rem; }
     .vss-sb-radar { display:flex; flex-direction:column; align-items:center; gap:0.4rem; padding-top:0.3rem; }
     .vss-sb-radar .vss-radar { width:280px; max-width:100%; }
     .vss-sb-radar-cap { font-family:var(--vss-mono); font-size:0.59rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--vss-mut); }
-    @media (max-width:760px){ .vss-scoreboard{ grid-template-columns:1fr; } .vss-sb-radar{ order:-1; } .vss-sb-table{ font-size:0.78rem; } }
+    @media (max-width:760px){ .vss-scoreboard{ grid-template-columns:1fr; } .vss-sb-table{ font-size:0.8rem; } }
     /* Dimensions panel */
     .vss-dimensions { background:var(--vss-surf); border:1px solid var(--vss-bd); border-radius:16px; padding:1.3rem 1.5rem; margin-bottom:1.25rem; }
     .vss-dim-header { display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; margin-bottom:0.4rem; }
@@ -350,10 +355,11 @@ export function ensureInvestabilityStyles() {
     .vss-radar-wrap { display:none; padding:1.2rem 0 0.3rem; justify-content:center; }
     .vss-radar-wrap.vss-open { display:flex; }
     .vss-radar { width:300px; max-width:100%; }
-    .vss-radar-grid { stroke:rgba(0,0,0,0.09); stroke-width:1; fill:none; }
-    .vss-radar-fill { fill:var(--primary,#6E3AFA); fill-opacity:0.14; }
-    .vss-radar-stroke { stroke:var(--primary,#6E3AFA); stroke-width:2; fill:none; }
-    .vss-radar-lbl { font-family:var(--vss-mono); font-size:0.6rem; fill:var(--vss-mut); }
+    .vss-radar-grid { stroke:rgba(0,0,0,0.12); stroke-width:1; fill:none; }
+    .vss-radar-fill { fill:var(--primary,#6E3AFA); fill-opacity:0.08; }
+    .vss-radar-stroke { stroke:var(--primary,#6E3AFA); stroke-width:1.5; fill:none; }
+    .vss-radar-dot { fill:var(--primary,#6E3AFA); }
+    .vss-radar-lbl { font-family:var(--vss-mono); font-size:0.62rem; fill:var(--vss-txt); }
     /* Heatmap */
     .vss-heatmap { background:var(--vss-surf); border:1px solid var(--vss-bd); border-radius:16px; padding:1.3rem 1.5rem; }
     .vss-heat-header { display:flex; justify-content:space-between; align-items:baseline; gap:1rem; flex-wrap:wrap; margin-bottom:0.9rem; }
