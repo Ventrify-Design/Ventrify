@@ -145,6 +145,14 @@ export function renderVSSScorecard(snap, opts = {}) {
     return { c, rated, frac, w, cb: frac != null ? ratioBand(frac) : 'unrated', contrib: (frac != null && den > 0) ? (100 * frac * w / den) : 0 };
   });
   const showBreakdown = ordered.length && snap.status !== 'forming' && band !== 'forming';
+  // The "How it's calculated" contributions, the potential/uplift overlay and the
+  // "reach your potential" framing are all calibrated for the modern weighted 0–100
+  // score (VSS v3). An engagement scored before the v3 cutover and never re-run still
+  // carries a /35-or-/27 raw-sum snapshot; mixing those scales renders incoherently
+  // (contributions that sum to ~88 under a "25 / 35" total, or "Now 25 / Potential ~84").
+  // Detect a genuine 0–100 scored snapshot and gate the v3-only chrome on it — the hero,
+  // the category breakdown, the radar's "now" shape and the gap list always render.
+  const isV3Scale = Number(snap.maxPossible) === 100 && Number(snap.composite) > 0 && Number(snap.composite) <= 100 && ratedCount > 0;
 
   // ── Priority gaps we surface — ranked by lift, then by category weight (so the
   //    "top" are the genuinely impactful fixes). Shared by BOTH the potential overlay
@@ -214,7 +222,7 @@ export function renderVSSScorecard(snap, opts = {}) {
           <td class="vss-sb-contribcell">${bar}<span class="vss-sb-contrib" style="color:${bandColor(cb)};">${frac != null ? `+${contrib.toFixed(1)}` : '&ndash;'}</span></td>
         </tr>`;
     }).join('');
-    scoreboard = `<div class="vss-scoreboard">
+    scoreboard = isV3Scale ? `<div class="vss-scoreboard">
       <div class="vss-sb-main">
         <div class="vss-sb-title">How the score is calculated</div>
         <p class="vss-sb-explainer">Each of the 7 categories is scored as a fraction of its rated criteria (0&ndash;1), <strong>weighted by importance</strong> &mdash; Team and Market carry the most &mdash; then summed to a 0&ndash;100 score. The contributions below add up to the headline <strong style="color:${cc};">${esc(composite)}</strong>.</p>
@@ -225,7 +233,7 @@ export function renderVSSScorecard(snap, opts = {}) {
         </table>
         <div class="vss-sb-legend">Contribution = (rated &divide; max) &times; weight. Bands: <b style="color:${bandColor('green')};">Strong</b> &ge;0.80 &middot; <b style="color:${bandColor('yellow')};">Mixed</b> 0.50&ndash;0.79 &middot; <b style="color:${bandColor('red')};">Gap</b> &lt;0.50. Unassessable signals are excluded, not scored zero.</div>
       </div>
-    </div>`;
+    </div>` : '';
 
     // ── Category profile — the radar with its CURRENT shape plus a dashed "potential"
     //    overlay (the achievable shape if the flagged, addressable gaps close), a
@@ -251,7 +259,7 @@ export function renderVSSScorecard(snap, opts = {}) {
       for (const s of (r.c.subs || [])) { if (s.score == null) continue; prated++; psum += flaggedSlugs.has(s.slug) ? 1 : s.score; }
       if (prated > 0) { const pf = psum / prated; potMap[r.c.key] = pf; pnum += pf * r.w; pden += r.w; }
     });
-    const potential = pden > 0 ? Math.round(100 * pnum / pden) : composite;
+    const potential = (isV3Scale && pden > 0) ? Math.round(100 * pnum / pden) : composite;
     const uplift = Math.max(0, potential - composite);
     const human = s => String(s).replace(/_/g, ' ').replace(/\b\w/g, ch => ch.toUpperCase());
     const upliftRead = uplift > 0
@@ -265,15 +273,15 @@ export function renderVSSScorecard(snap, opts = {}) {
         </div>`
       : '';
     profile = `<div class="vss-profile">
-      <div class="vss-profile-radar">${renderRadar(ordered, esc, potMap)}
-        <div class="vss-radar-legend"><span class="vss-leg now">Now ${esc(composite)}</span><span class="vss-leg pot">Potential ~${esc(potential)}</span></div>
+      <div class="vss-profile-radar">${renderRadar(ordered, esc, uplift > 0 ? potMap : null)}
+        <div class="vss-radar-legend"><span class="vss-leg now">Now ${esc(composite)}</span>${uplift > 0 ? `<span class="vss-leg pot">Potential ~${esc(potential)}</span>` : ''}</div>
       </div>
       <div class="vss-profile-body">
-        <div class="vss-sb-title">Category profile &mdash; now vs. potential</div>
+        <div class="vss-sb-title">Category profile${uplift > 0 ? ' &mdash; now vs. potential' : ''}</div>
         <p class="vss-profile-read">${upliftRead}${shapeRead}</p>
         ${fixesList}
         <div class="vss-profile-split"><span style="color:${bandColor('green')};">${greens} strong</span> &middot; <span style="color:${bandColor('yellow')};">${yellows} mixed</span> &middot; <span style="color:${bandColor('red')};">${reds} ${reds === 1 ? 'gap' : 'gaps'}</span></div>
-        <p class="vss-profile-how"><strong>Solid</strong> = where it scores now; <strong>dashed</strong> = where it could reach by closing the gaps listed above. Only the gaps we flag move &mdash; it's &ldquo;fix what we flagged&rdquo;, not &ldquo;fix everything&rdquo;.</p>
+        ${uplift > 0 ? `<p class="vss-profile-how"><strong>Solid</strong> = where it scores now; <strong>dashed</strong> = where it could reach by closing the gaps listed above. Only the gaps we flag move &mdash; it's &ldquo;fix what we flagged&rdquo;, not &ldquo;fix everything&rdquo;.</p>` : ''}
       </div>
     </div>`;
   }
@@ -291,7 +299,7 @@ export function renderVSSScorecard(snap, opts = {}) {
   // ── Deficiency Heatmap — the SAME `top` priority gaps the potential overlay closes
   //    (computed once, above). This is the detailed "fix this next" with evidence. ──
   const heatmap = `<div class="vss-heatmap">
-      <div class="vss-heat-header"><div class="vss-heat-title">Fixes to reach your potential${top.length ? ` &middot; top ${top.length}` : ''}</div><div class="vss-heat-meta">Ranked by lift &times; weight</div></div>
+      <div class="vss-heat-header"><div class="vss-heat-title">${isV3Scale ? 'Fixes to reach your potential' : 'Priority gaps'}${top.length ? ` &middot; top ${top.length}` : ''}</div><div class="vss-heat-meta">Ranked by lift &times; weight</div></div>
       ${top.length ? `<div class="vss-heat-grid">${top.map(d => `
         <div class="vss-def" style="border-left-color:${bandColor(d.score === 0.5 ? 'yellow' : 'red')};">
           <div class="vss-def-head"><span class="vss-def-cat">${esc(d.catLabel)}</span><span class="vss-def-slug">${esc(String(d.slug).replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()))}</span><span class="vss-def-lift" style="color:${bandColor(d.score === 0.5 ? 'yellow' : 'red')};background:${bandTint(d.score === 0.5 ? 'yellow' : 'red')};">+${d.lift === 0.5 ? '0.5' : '1.0'}</span></div>
