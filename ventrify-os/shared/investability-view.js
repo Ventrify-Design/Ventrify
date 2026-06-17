@@ -146,6 +146,20 @@ export function renderVSSScorecard(snap, opts = {}) {
   });
   const showBreakdown = ordered.length && snap.status !== 'forming' && band !== 'forming';
 
+  // ── Priority gaps we surface — ranked by lift, then by category weight (so the
+  //    "top" are the genuinely impactful fixes). Shared by BOTH the potential overlay
+  //    (what closing them reaches) and the deficiency heatmap below — one source. ──
+  const defs = [];
+  ordered.forEach(c => (c.subs || []).forEach(s => {
+    if (s.score === 0 || s.score === 0.5) {
+      const { note, ref } = splitRef(s.note);
+      defs.push({ catKey: c.key, catLabel: c.label, slug: s.slug, score: s.score, lift: 1 - s.score, weight: c.weight != null ? c.weight : (CAT_WEIGHTS[c.key] || 0), q: SUB_Q[s.slug] || s.slug, note, ref });
+    }
+  }));
+  defs.sort((a, b) => b.lift - a.lift || b.weight - a.weight || a.score - b.score);
+  const top = defs.slice(0, 5);
+  const flaggedSlugs = new Set(top.map(d => d.slug));
+
   // ── The accordion row — the per-category DETAIL surface (expands to the 5
   //    sub-criteria). Weight + contribution live in the calc table above, so this
   //    stays clean: label + fraction bar + score + the drill-down. ─────────────
@@ -228,20 +242,27 @@ export function renderVSSScorecard(snap, opts = {}) {
     const shapeRead = byFrac.length >= 4
       ? `Strongest on <strong>${nm(byFrac[0])}</strong> and <strong>${nm(byFrac[1])}</strong>; thinnest on <strong>${nm(byFrac[byFrac.length - 1])}</strong> and <strong>${nm(byFrac[byFrac.length - 2])}</strong> &mdash; ${shape}.`
       : '';
-    // Potential = lift each rated sub-criterion below 1 up to 1, EXCEPT structural factors
-    // a founder can't simply "fix" (market size & growth, gross margin) — held at current.
-    // An honest conditional ceiling: "if you close the addressable gaps we flagged."
-    const STRUCTURAL = new Set(['market_size', 'market_growth', 'gross_margin']);
+    // Potential = close ONLY the priority gaps we surface (the `top` flagged items) to
+    // their resolved value; every other score is held. A bounded, honest "fix what we
+    // flagged" ceiling — it CANNOT reach 100, because unflagged scores never move.
     const potMap = {}; let pnum = 0, pden = 0;
     computed.forEach(r => {
       let psum = 0, prated = 0;
-      for (const s of (r.c.subs || [])) { if (s.score == null) continue; prated++; psum += STRUCTURAL.has(s.slug) ? s.score : 1; }
+      for (const s of (r.c.subs || [])) { if (s.score == null) continue; prated++; psum += flaggedSlugs.has(s.slug) ? 1 : s.score; }
       if (prated > 0) { const pf = psum / prated; potMap[r.c.key] = pf; pnum += pf * r.w; pden += r.w; }
     });
     const potential = pden > 0 ? Math.round(100 * pnum / pden) : composite;
     const uplift = Math.max(0, potential - composite);
+    const human = s => String(s).replace(/_/g, ' ').replace(/\b\w/g, ch => ch.toUpperCase());
     const upliftRead = uplift > 0
-      ? `Closing the gaps we flag could lift the score from <strong>${esc(composite)}</strong> to <strong style="color:${bandColor('green')};">~${esc(potential)}</strong> (+${esc(uplift)}). `
+      ? `Closing the <strong>${esc(top.length)}</strong> priority gaps below would lift the score from <strong>${esc(composite)}</strong> to <strong style="color:${bandColor('green')};">~${esc(potential)}</strong> (+${esc(uplift)}). `
+      : '';
+    // Play back the actual fixes that move the dashed line, tied to the radar.
+    const fixesList = (uplift > 0 && top.length)
+      ? `<div class="vss-fixes">
+          <div class="vss-fixes-t">The fixes &mdash; close these to move the dashed line</div>
+          <ul class="vss-fixes-l">${top.map(d => `<li><span class="vss-fix-dot" style="background:${bandColor(d.score === 0.5 ? 'yellow' : 'red')};"></span><strong>${esc(CAT_PROSE[d.catKey] || d.catLabel)}</strong> &mdash; ${esc(human(d.slug))}<span class="vss-fix-lift">+${d.lift === 0.5 ? '0.5' : '1.0'}</span></li>`).join('')}</ul>
+        </div>`
       : '';
     profile = `<div class="vss-profile">
       <div class="vss-profile-radar">${renderRadar(ordered, esc, potMap)}
@@ -250,8 +271,9 @@ export function renderVSSScorecard(snap, opts = {}) {
       <div class="vss-profile-body">
         <div class="vss-sb-title">Category profile &mdash; now vs. potential</div>
         <p class="vss-profile-read">${upliftRead}${shapeRead}</p>
+        ${fixesList}
         <div class="vss-profile-split"><span style="color:${bandColor('green')};">${greens} strong</span> &middot; <span style="color:${bandColor('yellow')};">${yellows} mixed</span> &middot; <span style="color:${bandColor('red')};">${reds} ${reds === 1 ? 'gap' : 'gaps'}</span></div>
-        <p class="vss-profile-how"><strong>Solid</strong> = where it scores now; <strong>dashed</strong> = the achievable ceiling if the flagged, addressable gaps close. Structural factors (market size &amp; growth) are held &mdash; not assumed away.</p>
+        <p class="vss-profile-how"><strong>Solid</strong> = where it scores now; <strong>dashed</strong> = where it could reach by closing the gaps listed above. Only the gaps we flag move &mdash; it's &ldquo;fix what we flagged&rdquo;, not &ldquo;fix everything&rdquo;.</p>
       </div>
     </div>`;
   }
@@ -266,18 +288,10 @@ export function renderVSSScorecard(snap, opts = {}) {
       ${ordered.map(catRow).join('')}
     </div>` : '';
 
-  // ── Deficiency Heatmap (top-5 lowest-scored sub-criteria) ─────────────
-  const defs = [];
-  ordered.forEach(c => (c.subs || []).forEach(s => {
-    if (s.score === 0 || s.score === 0.5) {
-      const { note, ref } = splitRef(s.note);
-      defs.push({ catLabel: c.label, slug: s.slug, score: s.score, lift: 1 - s.score, q: SUB_Q[s.slug] || s.slug, note, ref });
-    }
-  }));
-  defs.sort((a, b) => b.lift - a.lift || a.score - b.score);
-  const top = defs.slice(0, 5);
+  // ── Deficiency Heatmap — the SAME `top` priority gaps the potential overlay closes
+  //    (computed once, above). This is the detailed "fix this next" with evidence. ──
   const heatmap = `<div class="vss-heatmap">
-      <div class="vss-heat-header"><div class="vss-heat-title">Deficiency heatmap${top.length ? ` &middot; top ${top.length}` : ''}</div><div class="vss-heat-meta">Ranked by lift potential</div></div>
+      <div class="vss-heat-header"><div class="vss-heat-title">Fixes to reach your potential${top.length ? ` &middot; top ${top.length}` : ''}</div><div class="vss-heat-meta">Ranked by lift &times; weight</div></div>
       ${top.length ? `<div class="vss-heat-grid">${top.map(d => `
         <div class="vss-def" style="border-left-color:${bandColor(d.score === 0.5 ? 'yellow' : 'red')};">
           <div class="vss-def-head"><span class="vss-def-cat">${esc(d.catLabel)}</span><span class="vss-def-slug">${esc(String(d.slug).replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()))}</span><span class="vss-def-lift" style="color:${bandColor(d.score === 0.5 ? 'yellow' : 'red')};background:${bandTint(d.score === 0.5 ? 'yellow' : 'red')};">+${d.lift === 0.5 ? '0.5' : '1.0'}</span></div>
@@ -379,15 +393,22 @@ export function ensureInvestabilityStyles() {
     .vss-seg-empty { background:transparent; }
     .vss-scorebar-cap { font-size:0.8rem; color:var(--vss-txt); line-height:1.5; }
     .vss-scorebar-track { color:var(--vss-mut); }
-    /* Category profile card — radar (left) + auto-generated shape reading (right) */
-    .vss-profile { display:grid; grid-template-columns:340px 1fr; gap:1.8rem; align-items:center; background:var(--vss-surf); border:1px solid var(--vss-bd); border-radius:16px; padding:1.5rem 1.7rem; margin-bottom:1.25rem; }
-    .vss-profile-radar { display:flex; justify-content:center; }
-    .vss-profile-radar .vss-radar { width:320px; max-width:100%; }
+    /* Category profile card — radar (left, large) + reading + the fixes (right) */
+    .vss-profile { display:grid; grid-template-columns:minmax(380px,440px) 1fr; gap:2rem; align-items:center; background:var(--vss-surf); border:1px solid var(--vss-bd); border-radius:16px; padding:1.6rem 1.8rem; margin-bottom:1.25rem; }
+    .vss-profile-radar { display:flex; flex-direction:column; align-items:center; gap:0.3rem; }
+    .vss-profile-radar .vss-radar { width:100%; max-width:440px; }
     .vss-profile-body { min-width:0; }
     .vss-profile-read { font-size:0.95rem; color:var(--vss-txt); line-height:1.6; margin:0.45rem 0 0.85rem; }
-    .vss-profile-split { font-family:var(--vss-mono); font-size:0.72rem; font-weight:700; letter-spacing:0.04em; margin-bottom:0.95rem; }
+    .vss-profile-split { font-family:var(--vss-mono); font-size:0.72rem; font-weight:700; letter-spacing:0.04em; margin:0.9rem 0; }
     .vss-profile-how { font-size:0.8rem; color:var(--vss-mut); line-height:1.55; margin:0; }
-    @media (max-width:760px){ .vss-profile{ grid-template-columns:1fr; gap:0.9rem; padding:1.3rem 1.4rem; } }
+    /* The fixes — playback of the gaps that move the dashed potential line */
+    .vss-fixes { margin:0.2rem 0 0.2rem; }
+    .vss-fixes-t { font-family:var(--vss-mono); font-size:0.62rem; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--vss-mut); margin-bottom:0.5rem; }
+    .vss-fixes-l { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:0.45rem; }
+    .vss-fixes-l li { display:flex; align-items:center; gap:0.55rem; font-size:0.86rem; color:var(--vss-txt); line-height:1.35; }
+    .vss-fix-dot { width:8px; height:8px; border-radius:50%; flex:none; }
+    .vss-fix-lift { margin-left:auto; font-family:var(--vss-mono); font-size:0.66rem; font-weight:700; color:var(--vss-mut); padding-left:0.6rem; }
+    @media (max-width:760px){ .vss-profile{ grid-template-columns:1fr; gap:1rem; padding:1.3rem 1.4rem; } .vss-profile-radar .vss-radar{ max-width:360px; } }
     .vss-sb-table tfoot td { border-bottom:none; border-top:2px solid var(--vss-bd); padding-top:0.7rem; }
     .vss-sb-table tfoot td:first-child { font-family:var(--vss-disp); font-weight:700; letter-spacing:-0.01em; }
     .vss-sb-total { font-family:var(--vss-disp); font-weight:700; font-size:1rem; }
