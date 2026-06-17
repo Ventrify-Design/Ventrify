@@ -89,6 +89,9 @@ const SB_BAND = { green: 'Strong', yellow: 'Mixed', red: 'Gap', unrated: 'n/a' }
 // Fallback category weights (mirror of vss-rubric.js) for any snapshot that predates
 // VSS v3 and doesn't carry per-category weight. v3 snapshots carry c.weight directly.
 const CAT_WEIGHTS = { market: 0.20, team: 0.25, product: 0.15, moat: 0.15, financial: 0.10, execution: 0.10, evidence: 0.05 };
+// Prose-friendly short names for the auto-generated profile reading (CAT_SHORT uses
+// "Exec" which reads oddly in a sentence).
+const CAT_PROSE = { market: 'Market', team: 'Team', product: 'Product', moat: 'Moat', financial: 'Financial', execution: 'Execution', evidence: 'Evidence' };
 
 function ratioBand(r) { return r >= 0.8 ? 'green' : r >= 0.5 ? 'yellow' : 'red'; }
 // Notes may end with " · ref: <ref>" (folded in at publish time) — split it back out.
@@ -178,7 +181,7 @@ export function renderVSSScorecard(snap, opts = {}) {
 
   // ── Score breakdown panel — the weighted "score bar" (segments sum to the score)
   //    + plain-English explainer + the radar. Replaces the old number table. ────
-  let scoreboard = '';
+  let scoreboard = '', profile = '';
   if (showBreakdown) {
     const composite = Number(snap.composite) || 0;
     const segs = byContrib.filter(r => r.frac != null && r.contrib > 0).map(r =>
@@ -197,7 +200,30 @@ export function renderVSSScorecard(snap, opts = {}) {
         ${caption ? `<div class="vss-scorebar-cap">${caption} <span class="vss-scorebar-track">Grey = unearned points to 100.</span></div>` : ''}
         <div class="vss-sb-legend">Contribution = (rated &divide; max) &times; weight. Bands: <b style="color:${bandColor('green')};">Strong</b> &ge;0.80 &middot; <b style="color:${bandColor('yellow')};">Mixed</b> 0.50&ndash;0.79 &middot; <b style="color:${bandColor('red')};">Gap</b> &lt;0.50. Unassessable signals are excluded, not scored zero.</div>
       </div>
-      <div class="vss-sb-radar">${renderRadar(ordered, esc)}<div class="vss-sb-radar-cap">7-axis profile</div></div>
+    </div>`;
+
+    // ── Category profile — the radar gets its OWN card with a plain-English reading
+    //    of the shape (strongest/weakest axes + balance), so it INTERPRETS rather than
+    //    just re-plots the fractions. Data-driven from the same per-category metrics. ─
+    const ratedC = computed.filter(r => r.frac != null);
+    const byFrac = [...ratedC].sort((a, b) => b.frac - a.frac);
+    const nm = r => esc(CAT_PROSE[r.c.key] || r.c.label);
+    const greens = ratedC.filter(r => r.cb === 'green').length;
+    const yellows = ratedC.filter(r => r.cb === 'yellow').length;
+    const reds = ratedC.filter(r => r.cb === 'red').length;
+    const spread = byFrac.length ? (byFrac[0].frac - byFrac[byFrac.length - 1].frac) : 0;
+    const shape = spread <= 0.25 ? 'an even, balanced profile' : spread >= 0.45 ? 'a concentrated profile &mdash; strengths and gaps are pronounced' : 'a moderately uneven profile';
+    const reading = byFrac.length >= 4
+      ? `Strongest on <strong>${nm(byFrac[0])}</strong> and <strong>${nm(byFrac[1])}</strong>; thinnest on <strong>${nm(byFrac[byFrac.length - 1])}</strong> and <strong>${nm(byFrac[byFrac.length - 2])}</strong> &mdash; ${shape}.`
+      : '';
+    profile = `<div class="vss-profile">
+      <div class="vss-profile-radar">${renderRadar(ordered, esc)}</div>
+      <div class="vss-profile-body">
+        <div class="vss-sb-title">Category profile</div>
+        ${reading ? `<p class="vss-profile-read">${reading}</p>` : ''}
+        <div class="vss-profile-split"><span style="color:${bandColor('green')};">${greens} strong</span> &middot; <span style="color:${bandColor('yellow')};">${yellows} mixed</span> &middot; <span style="color:${bandColor('red')};">${reds} ${reds === 1 ? 'gap' : 'gaps'}</span></div>
+        <p class="vss-profile-how">Each axis is one category; a fuller, more even shape means strength across the board, while a spiky shape means the score rests on a few areas.</p>
+      </div>
     </div>`;
   }
 
@@ -234,7 +260,7 @@ export function renderVSSScorecard(snap, opts = {}) {
     </div>`;
 
   const meta = opts.metaText ? `<div class="vss-meta">${esc(opts.metaText)}</div>` : '';
-  return `${hero}${scoreboard}${dims}${heatmap}${meta}`;
+  return `${hero}${scoreboard}${profile}${dims}${heatmap}${meta}`;
 }
 
 // ── 7-axis radar (collapsed by default) ─────────────────────────────────────
@@ -294,7 +320,7 @@ export function ensureInvestabilityStyles() {
     .vss-sparkline svg { width:120px; height:36px; }
     @media (max-width:640px){ .vss-hero{ grid-template-columns:1fr; text-align:center; } .vss-band-pill{ align-self:center; } .vss-sparkline{ display:none; } }
     /* Score breakdown (scoreboard) — table of how the headline is built + the radar, always visible */
-    .vss-scoreboard { display:grid; grid-template-columns:1fr 300px; gap:1.6rem; align-items:start; background:var(--vss-surf); border:1px solid var(--vss-bd); border-radius:16px; padding:1.4rem 1.6rem; margin-bottom:1.25rem; }
+    .vss-scoreboard { display:block; background:var(--vss-surf); border:1px solid var(--vss-bd); border-radius:16px; padding:1.4rem 1.6rem; margin-bottom:1.25rem; }
     .vss-sb-title { font-family:var(--vss-mono); font-size:0.66rem; font-weight:700; letter-spacing:0.13em; text-transform:uppercase; color:var(--vss-mut); margin-bottom:0.5rem; }
     .vss-sb-explainer { font-size:0.86rem; color:var(--vss-txt); line-height:1.55; margin:0 0 1rem; }
     .vss-sb-table { width:100%; border-collapse:collapse; font-size:0.83rem; }
@@ -315,6 +341,15 @@ export function ensureInvestabilityStyles() {
     .vss-seg-empty { background:transparent; }
     .vss-scorebar-cap { font-size:0.8rem; color:var(--vss-txt); line-height:1.5; }
     .vss-scorebar-track { color:var(--vss-mut); }
+    /* Category profile card — radar (left) + auto-generated shape reading (right) */
+    .vss-profile { display:grid; grid-template-columns:340px 1fr; gap:1.8rem; align-items:center; background:var(--vss-surf); border:1px solid var(--vss-bd); border-radius:16px; padding:1.5rem 1.7rem; margin-bottom:1.25rem; }
+    .vss-profile-radar { display:flex; justify-content:center; }
+    .vss-profile-radar .vss-radar { width:320px; max-width:100%; }
+    .vss-profile-body { min-width:0; }
+    .vss-profile-read { font-size:0.95rem; color:var(--vss-txt); line-height:1.6; margin:0.45rem 0 0.85rem; }
+    .vss-profile-split { font-family:var(--vss-mono); font-size:0.72rem; font-weight:700; letter-spacing:0.04em; margin-bottom:0.95rem; }
+    .vss-profile-how { font-size:0.8rem; color:var(--vss-mut); line-height:1.55; margin:0; }
+    @media (max-width:760px){ .vss-profile{ grid-template-columns:1fr; gap:0.9rem; padding:1.3rem 1.4rem; } }
     .vss-sb-table tfoot td { border-bottom:none; border-top:2px solid var(--vss-bd); padding-top:0.7rem; }
     .vss-sb-table tfoot td:first-child { font-family:var(--vss-disp); font-weight:700; letter-spacing:-0.01em; }
     .vss-sb-total { font-family:var(--vss-disp); font-weight:700; font-size:1rem; }
