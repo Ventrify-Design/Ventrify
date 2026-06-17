@@ -128,19 +128,29 @@ export function renderVSSScorecard(snap, opts = {}) {
       </div>
     </div>`;
 
-  // ── Category breakdown (expandable rows → sub-criteria) ────────────────
+  // ── Compute each category ONCE: fraction, weight, band, contribution. Shared by
+  //    the score bar AND the accordion — one source of truth, no duplicate table. ─
   const ordered = CAT_ORDER.map(k => cats.find(c => c.key === k)).filter(Boolean)
     .concat(cats.filter(c => !CAT_ORDER.includes(c.key)));
-  const catRow = (c) => {
+  const wOf = c => (c.weight != null ? c.weight : (CAT_WEIGHTS[c.key] || 0));
+  let den = 0;
+  ordered.forEach(c => { const rated = c.rated != null ? c.rated : (c.subs || []).filter(s => s.score != null).length; if (rated > 0) den += wOf(c); });
+  const computed = ordered.map(c => {
+    const rated = c.rated != null ? c.rated : (c.subs || []).filter(s => s.score != null).length;
+    const frac = rated > 0 ? c.sum / rated : null;
+    const w = wOf(c);
+    return { c, rated, frac, w, cb: frac != null ? ratioBand(frac) : 'unrated', contrib: (frac != null && den > 0) ? (100 * frac * w / den) : 0 };
+  });
+  const byContrib = [...computed].sort((a, b) => b.contrib - a.contrib);   // rank: what moves the score
+  const showBreakdown = ordered.length && snap.status !== 'forming' && band !== 'forming';
+
+  // ── The accordion row — now the SINGLE per-category surface (weight + contribution
+  //    in the header, expands to the 5 sub-criteria). No separate calc table. ────
+  const catRow = ({ c, rated, frac, w, cb, contrib }) => {
     const subs = c.subs || [];
-    const rated = c.rated != null ? c.rated : subs.filter(s => s.score != null).length;
-    const ratio = rated > 0 ? c.sum / rated : 0;
-    const cb = rated > 0 ? ratioBand(ratio) : 'unrated';
-    const fill = bandColor(cb);
+    const ratio = frac != null ? frac : 0;
+    const fill = bandColor(frac != null ? cb : 'unrated');
     const pendN = c.pending != null ? c.pending : subs.filter(s => s.score == null).length;
-    const num = rated > 0
-      ? `<div class="vss-cat-num">${esc(c.sum)}<span class="vss-denom"> / ${esc(rated)}</span></div>`
-      : `<div class="vss-cat-num vss-muted">n/a</div>`;
     const subRows = subs.map(s => {
       const { note, ref } = splitRef(s.note);
       const na = s.score == null;
@@ -156,49 +166,35 @@ export function renderVSSScorecard(snap, opts = {}) {
     }).join('');
     return `<div class="vss-cat-row">
         <div class="vss-cat-head">
-          <div class="vss-cat-label">${esc(c.label)}</div>
+          <div class="vss-cat-label">${esc(c.label)} <span class="vss-cat-weight">${Math.round(w * 100)}%</span></div>
           <div class="vss-cat-bar"><div class="vss-cat-bar-fill" style="width:${Math.round(ratio * 100)}%;background:${fill};"></div></div>
-          ${num}
+          <div class="vss-cat-contrib" style="color:${fill};">${frac != null ? `+${contrib.toFixed(1)}` : 'n/a'}</div>
           <div class="vss-chev">&#9662;</div>
-          <div class="vss-cat-desc">${esc(CAT_DESC[c.key] || '')}${pendN ? ` <em>&middot; ${esc(pendN)} not assessable</em>` : ''}</div>
+          <div class="vss-cat-desc">${frac != null ? `${esc(c.sum)} / ${esc(rated)} rated` : 'not assessable here'}${pendN ? ` &middot; <em>${esc(pendN)} not assessable</em>` : ''} &mdash; ${esc(CAT_DESC[c.key] || '')}</div>
         </div>
         <div class="vss-cat-body">${subRows}</div>
       </div>`;
   };
-  // ── Score breakdown — how the headline is built (table) + the radar, always
-  //    visible, sitting right under the score. Skipped for the forming scaffold.
-  const showBreakdown = ordered.length && snap.status !== 'forming' && band !== 'forming';
+
+  // ── Score breakdown panel — the weighted "score bar" (segments sum to the score)
+  //    + plain-English explainer + the radar. Replaces the old number table. ────
   let scoreboard = '';
   if (showBreakdown) {
-    const wOf = c => (c.weight != null ? c.weight : (CAT_WEIGHTS[c.key] || 0));
-    let den = 0;
-    const rows = ordered.map(c => {
-      const rated = c.rated != null ? c.rated : (c.subs || []).filter(s => s.score != null).length;
-      const frac = rated > 0 ? c.sum / rated : null;
-      const w = wOf(c);
-      if (frac != null) den += w;
-      return { c, rated, frac, w };
-    }).map(r => ({ ...r, cb: r.frac != null ? ratioBand(r.frac) : 'unrated', contrib: (r.frac != null && den > 0) ? (100 * r.frac * r.w / den) : 0 }));
-    const maxContrib = Math.max(0.001, ...rows.map(r => r.contrib));
-    const trows = rows.map(({ c, rated, frac, w, cb, contrib }) => {
-      const barW = Math.round((contrib / maxContrib) * 100);
-      const bar = frac != null ? `<span class="vss-sb-bar" style="width:${barW}%;background:${bandTint(cb)};border-left:2px solid ${bandColor(cb)};"></span>` : '';
-      return `<tr>
-          <td class="vss-sb-cat">${esc(c.label)}</td>
-          <td class="vss-sb-num">${Math.round(w * 100)}%</td>
-          <td class="vss-sb-num">${frac != null ? `${esc(c.sum)}/${esc(rated)}` : '&ndash;'}</td>
-          <td class="vss-sb-contribcell">${bar}<span class="vss-sb-contrib" style="color:${bandColor(cb)};">${frac != null ? `+${contrib.toFixed(1)}` : '&ndash;'}</span></td>
-        </tr>`;
-    }).join('');
+    const composite = Number(snap.composite) || 0;
+    const segs = byContrib.filter(r => r.frac != null && r.contrib > 0).map(r =>
+      `<div class="vss-seg" style="width:${r.contrib}%;background:${bandColor(r.cb)};" title="${esc(r.c.label)} +${r.contrib.toFixed(1)}">${r.contrib >= 8 ? `<span class="vss-seg-lbl">${esc(CAT_SHORT[r.c.key] || r.c.label)} ${Math.round(r.contrib)}</span>` : ''}</div>`
+    ).join('');
+    const remain = Math.max(0, 100 - composite);
+    const top2 = byContrib.filter(r => r.frac != null).slice(0, 2);
+    const caption = top2.length === 2
+      ? `<strong>${esc(CAT_SHORT[top2[0].c.key] || top2[0].c.label)} &amp; ${esc(CAT_SHORT[top2[1].c.key] || top2[1].c.label)}</strong> drive ${Math.round(top2[0].contrib + top2[1].contrib)} of the ${esc(composite)} points.`
+      : '';
     scoreboard = `<div class="vss-scoreboard">
       <div class="vss-sb-main">
         <div class="vss-sb-title">How the score is calculated</div>
-        <p class="vss-sb-explainer">Each of the 7 categories is scored as a fraction of its rated criteria (0&ndash;1), <strong>weighted by importance</strong> &mdash; Team and Market carry the most &mdash; then summed to a 0&ndash;100 score. The contributions below add up to the headline <strong style="color:${cc};">${esc(snap.composite)}</strong>.</p>
-        <table class="vss-sb-table">
-          <thead><tr><th>Category</th><th>Weight</th><th>Rated</th><th>Contribution</th></tr></thead>
-          <tbody>${trows}</tbody>
-          <tfoot><tr><td>Investability score</td><td></td><td></td><td class="vss-sb-num vss-sb-total" style="color:${cc};">${esc(snap.composite)} / ${esc(max)}</td></tr></tfoot>
-        </table>
+        <p class="vss-sb-explainer">Each of the 7 categories is scored as a fraction of its rated criteria, <strong>weighted by importance</strong> &mdash; Team and Market carry the most &mdash; then summed to a 0&ndash;100 score. The bar shows each category's contribution to the headline <strong style="color:${cc};">${esc(composite)}</strong>.</p>
+        <div class="vss-scorebar" role="img" aria-label="Score composition by category">${segs}<div class="vss-seg vss-seg-empty" style="width:${remain}%;"></div></div>
+        ${caption ? `<div class="vss-scorebar-cap">${caption} <span class="vss-scorebar-track">Grey = unearned points to 100.</span></div>` : ''}
         <div class="vss-sb-legend">Contribution = (rated &divide; max) &times; weight. Bands: <b style="color:${bandColor('green')};">Strong</b> &ge;0.80 &middot; <b style="color:${bandColor('yellow')};">Mixed</b> 0.50&ndash;0.79 &middot; <b style="color:${bandColor('red')};">Gap</b> &lt;0.50. Unassessable signals are excluded, not scored zero.</div>
       </div>
       <div class="vss-sb-radar">${renderRadar(ordered, esc)}<div class="vss-sb-radar-cap">7-axis profile</div></div>
@@ -207,12 +203,12 @@ export function renderVSSScorecard(snap, opts = {}) {
 
   const dims = ordered.length ? `<div class="vss-dimensions">
       <div class="vss-dim-header">
-        <div class="vss-dim-title">Category breakdown &mdash; 7 &times; 5 scorecard</div>
+        <div class="vss-dim-title">Category breakdown &mdash; ranked by contribution</div>
         <div class="vss-dim-toggles">
           <button type="button" class="vss-toggle" data-vss="expand">Expand all &#9662;</button>
         </div>
       </div>
-      ${ordered.map(catRow).join('')}
+      ${byContrib.map(catRow).join('')}
     </div>` : '';
 
   // ── Deficiency Heatmap (top-5 lowest-scored sub-criteria) ─────────────
@@ -312,6 +308,13 @@ export function ensureInvestabilityStyles() {
     .vss-sb-contrib { position:relative; z-index:1; font-family:var(--vss-mono); font-weight:700; font-variant-numeric:tabular-nums; }
     .vss-sb-legend { margin-top:0.8rem; font-size:0.72rem; color:var(--vss-mut); line-height:1.55; }
     .vss-sb-legend b { font-weight:700; }
+    /* Weighted score bar — segments sum to the headline; grey track = unearned to 100 */
+    .vss-scorebar { display:flex; width:100%; height:32px; border-radius:9px; overflow:hidden; background:rgba(0,0,0,0.05); margin:0.5rem 0 0.7rem; }
+    .vss-seg { display:flex; align-items:center; justify-content:center; min-width:0; transition:width .6s cubic-bezier(0.4,0,0.2,1); }
+    .vss-seg-lbl { font-family:var(--vss-mono); font-size:0.58rem; font-weight:700; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:0 5px; letter-spacing:0.02em; }
+    .vss-seg-empty { background:transparent; }
+    .vss-scorebar-cap { font-size:0.8rem; color:var(--vss-txt); line-height:1.5; }
+    .vss-scorebar-track { color:var(--vss-mut); }
     .vss-sb-table tfoot td { border-bottom:none; border-top:2px solid var(--vss-bd); padding-top:0.7rem; }
     .vss-sb-table tfoot td:first-child { font-family:var(--vss-disp); font-weight:700; letter-spacing:-0.01em; }
     .vss-sb-total { font-family:var(--vss-disp); font-weight:700; font-size:1rem; }
@@ -335,6 +338,8 @@ export function ensureInvestabilityStyles() {
     .vss-cat-bar-fill { height:100%; border-radius:999px; transition:width .6s cubic-bezier(0.4,0,0.2,1); }
     .vss-cat-num { font-family:var(--vss-disp); font-size:1.25rem; font-weight:600; text-align:right; letter-spacing:-0.02em; color:var(--vss-txt); }
     .vss-cat-num.vss-muted { font-family:var(--vss-mono); font-size:0.78rem; color:var(--vss-mut); }
+    .vss-cat-weight { font-family:var(--vss-mono); font-size:0.58rem; font-weight:700; color:var(--vss-mut); background:rgba(0,0,0,0.05); padding:0.1rem 0.4rem; border-radius:999px; margin-left:0.45rem; vertical-align:middle; white-space:nowrap; }
+    .vss-cat-contrib { font-family:var(--vss-disp); font-size:1.2rem; font-weight:700; text-align:right; letter-spacing:-0.02em; font-variant-numeric:tabular-nums; }
     .vss-denom { color:var(--vss-mut); font-size:0.85rem; font-weight:500; }
     .vss-chev { font-size:0.7rem; color:var(--vss-mut); text-align:center; transition:transform .2s ease; }
     .vss-cat-row.vss-open .vss-chev { transform:rotate(180deg); }
