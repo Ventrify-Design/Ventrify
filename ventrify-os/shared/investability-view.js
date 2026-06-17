@@ -132,7 +132,7 @@ export function renderVSSScorecard(snap, opts = {}) {
     </div>`;
 
   // ── Compute each category ONCE: fraction, weight, band, contribution. Shared by
-  //    the score bar AND the accordion — one source of truth, no duplicate table. ─
+  //    the calc table AND the profile reading — one source of truth. ─────────────
   const ordered = CAT_ORDER.map(k => cats.find(c => c.key === k)).filter(Boolean)
     .concat(cats.filter(c => !CAT_ORDER.includes(c.key)));
   const wOf = c => (c.weight != null ? c.weight : (CAT_WEIGHTS[c.key] || 0));
@@ -144,16 +144,21 @@ export function renderVSSScorecard(snap, opts = {}) {
     const w = wOf(c);
     return { c, rated, frac, w, cb: frac != null ? ratioBand(frac) : 'unrated', contrib: (frac != null && den > 0) ? (100 * frac * w / den) : 0 };
   });
-  const byContrib = [...computed].sort((a, b) => b.contrib - a.contrib);   // rank: what moves the score
   const showBreakdown = ordered.length && snap.status !== 'forming' && band !== 'forming';
 
-  // ── The accordion row — now the SINGLE per-category surface (weight + contribution
-  //    in the header, expands to the 5 sub-criteria). No separate calc table. ────
-  const catRow = ({ c, rated, frac, w, cb, contrib }) => {
+  // ── The accordion row — the per-category DETAIL surface (expands to the 5
+  //    sub-criteria). Weight + contribution live in the calc table above, so this
+  //    stays clean: label + fraction bar + score + the drill-down. ─────────────
+  const catRow = (c) => {
     const subs = c.subs || [];
-    const ratio = frac != null ? frac : 0;
-    const fill = bandColor(frac != null ? cb : 'unrated');
+    const rated = c.rated != null ? c.rated : subs.filter(s => s.score != null).length;
+    const ratio = rated > 0 ? c.sum / rated : 0;
+    const cb = rated > 0 ? ratioBand(ratio) : 'unrated';
+    const fill = bandColor(cb);
     const pendN = c.pending != null ? c.pending : subs.filter(s => s.score == null).length;
+    const num = rated > 0
+      ? `<div class="vss-cat-num">${esc(c.sum)}<span class="vss-denom"> / ${esc(rated)}</span></div>`
+      : `<div class="vss-cat-num vss-muted">n/a</div>`;
     const subRows = subs.map(s => {
       const { note, ref } = splitRef(s.note);
       const na = s.score == null;
@@ -169,35 +174,41 @@ export function renderVSSScorecard(snap, opts = {}) {
     }).join('');
     return `<div class="vss-cat-row">
         <div class="vss-cat-head">
-          <div class="vss-cat-label">${esc(c.label)} <span class="vss-cat-weight">${Math.round(w * 100)}%</span></div>
+          <div class="vss-cat-label">${esc(c.label)}</div>
           <div class="vss-cat-bar"><div class="vss-cat-bar-fill" style="width:${Math.round(ratio * 100)}%;background:${fill};"></div></div>
-          <div class="vss-cat-contrib" style="color:${fill};">${frac != null ? `+${contrib.toFixed(1)}` : 'n/a'}</div>
+          ${num}
           <div class="vss-chev">&#9662;</div>
-          <div class="vss-cat-desc">${frac != null ? `${esc(c.sum)} / ${esc(rated)} rated` : 'not assessable here'}${pendN ? ` &middot; <em>${esc(pendN)} not assessable</em>` : ''} &mdash; ${esc(CAT_DESC[c.key] || '')}</div>
+          <div class="vss-cat-desc">${esc(CAT_DESC[c.key] || '')}${pendN ? ` <em>&middot; ${esc(pendN)} not assessable</em>` : ''}</div>
         </div>
         <div class="vss-cat-body">${subRows}</div>
       </div>`;
   };
 
-  // ── Score breakdown panel — the weighted "score bar" (segments sum to the score)
-  //    + plain-English explainer + the radar. Replaces the old number table. ────
+  // ── Score breakdown panel — the calc TABLE (Category · Weight · Rated · Contribution,
+  //    contributions sum to the headline) + the explainer + legend. ─────────────
   let scoreboard = '', profile = '';
   if (showBreakdown) {
     const composite = Number(snap.composite) || 0;
-    const segs = byContrib.filter(r => r.frac != null && r.contrib > 0).map(r =>
-      `<div class="vss-seg" style="width:${r.contrib}%;background:${bandColor(r.cb)};" title="${esc(r.c.label)} +${r.contrib.toFixed(1)}">${r.contrib >= 8 ? `<span class="vss-seg-lbl">${esc(CAT_SHORT[r.c.key] || r.c.label)} ${Math.round(r.contrib)}</span>` : ''}</div>`
-    ).join('');
-    const remain = Math.max(0, 100 - composite);
-    const top2 = byContrib.filter(r => r.frac != null).slice(0, 2);
-    const caption = top2.length === 2
-      ? `<strong>${esc(CAT_SHORT[top2[0].c.key] || top2[0].c.label)} &amp; ${esc(CAT_SHORT[top2[1].c.key] || top2[1].c.label)}</strong> drive ${Math.round(top2[0].contrib + top2[1].contrib)} of the ${esc(composite)} points.`
-      : '';
+    const maxContrib = Math.max(0.001, ...computed.map(r => r.contrib));
+    const trows = computed.map(({ c, rated, frac, w, cb, contrib }) => {
+      const barW = Math.round((contrib / maxContrib) * 100);
+      const bar = frac != null ? `<span class="vss-sb-bar" style="width:${barW}%;background:${bandTint(cb)};border-left:2px solid ${bandColor(cb)};"></span>` : '';
+      return `<tr>
+          <td class="vss-sb-cat">${esc(c.label)}</td>
+          <td class="vss-sb-num">${Math.round(w * 100)}%</td>
+          <td class="vss-sb-num">${frac != null ? `${esc(c.sum)}/${esc(rated)}` : '&ndash;'}</td>
+          <td class="vss-sb-contribcell">${bar}<span class="vss-sb-contrib" style="color:${bandColor(cb)};">${frac != null ? `+${contrib.toFixed(1)}` : '&ndash;'}</span></td>
+        </tr>`;
+    }).join('');
     scoreboard = `<div class="vss-scoreboard">
       <div class="vss-sb-main">
         <div class="vss-sb-title">How the score is calculated</div>
-        <p class="vss-sb-explainer">Each of the 7 categories is scored as a fraction of its rated criteria, <strong>weighted by importance</strong> &mdash; Team and Market carry the most &mdash; then summed to a 0&ndash;100 score. The bar shows each category's contribution to the headline <strong style="color:${cc};">${esc(composite)}</strong>.</p>
-        <div class="vss-scorebar" role="img" aria-label="Score composition by category">${segs}<div class="vss-seg vss-seg-empty" style="width:${remain}%;"></div></div>
-        ${caption ? `<div class="vss-scorebar-cap">${caption} <span class="vss-scorebar-track">Grey = unearned points to 100.</span></div>` : ''}
+        <p class="vss-sb-explainer">Each of the 7 categories is scored as a fraction of its rated criteria (0&ndash;1), <strong>weighted by importance</strong> &mdash; Team and Market carry the most &mdash; then summed to a 0&ndash;100 score. The contributions below add up to the headline <strong style="color:${cc};">${esc(composite)}</strong>.</p>
+        <table class="vss-sb-table">
+          <thead><tr><th>Category</th><th>Weight</th><th>Rated</th><th>Contribution</th></tr></thead>
+          <tbody>${trows}</tbody>
+          <tfoot><tr><td>Investability score</td><td></td><td></td><td class="vss-sb-num vss-sb-total" style="color:${cc};">${esc(composite)} / ${esc(max)}</td></tr></tfoot>
+        </table>
         <div class="vss-sb-legend">Contribution = (rated &divide; max) &times; weight. Bands: <b style="color:${bandColor('green')};">Strong</b> &ge;0.80 &middot; <b style="color:${bandColor('yellow')};">Mixed</b> 0.50&ndash;0.79 &middot; <b style="color:${bandColor('red')};">Gap</b> &lt;0.50. Unassessable signals are excluded, not scored zero.</div>
       </div>
     </div>`;
@@ -229,12 +240,12 @@ export function renderVSSScorecard(snap, opts = {}) {
 
   const dims = ordered.length ? `<div class="vss-dimensions">
       <div class="vss-dim-header">
-        <div class="vss-dim-title">Category breakdown &mdash; ranked by contribution</div>
+        <div class="vss-dim-title">Category breakdown &mdash; 7 &times; 5 scorecard</div>
         <div class="vss-dim-toggles">
           <button type="button" class="vss-toggle" data-vss="expand">Expand all &#9662;</button>
         </div>
       </div>
-      ${byContrib.map(catRow).join('')}
+      ${ordered.map(catRow).join('')}
     </div>` : '';
 
   // ── Deficiency Heatmap (top-5 lowest-scored sub-criteria) ─────────────
@@ -260,7 +271,7 @@ export function renderVSSScorecard(snap, opts = {}) {
     </div>`;
 
   const meta = opts.metaText ? `<div class="vss-meta">${esc(opts.metaText)}</div>` : '';
-  return `${hero}${scoreboard}${profile}${dims}${heatmap}${meta}`;
+  return `${hero}${scoreboard}${dims}${profile}${heatmap}${meta}`;
 }
 
 // ── 7-axis radar (collapsed by default) ─────────────────────────────────────
