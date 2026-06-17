@@ -213,9 +213,10 @@ export function renderVSSScorecard(snap, opts = {}) {
       </div>
     </div>`;
 
-    // ── Category profile — the radar gets its OWN card with a plain-English reading
-    //    of the shape (strongest/weakest axes + balance), so it INTERPRETS rather than
-    //    just re-plots the fractions. Data-driven from the same per-category metrics. ─
+    // ── Category profile — the radar with its CURRENT shape plus a dashed "potential"
+    //    overlay (the achievable shape if the flagged, addressable gaps close), a
+    //    plain-English reading, and the resulting "now → potential" uplift. All derived
+    //    in the view from the snapshot — NO pipeline dependency. ────────────────────
     const ratedC = computed.filter(r => r.frac != null);
     const byFrac = [...ratedC].sort((a, b) => b.frac - a.frac);
     const nm = r => esc(CAT_PROSE[r.c.key] || r.c.label);
@@ -224,16 +225,33 @@ export function renderVSSScorecard(snap, opts = {}) {
     const reds = ratedC.filter(r => r.cb === 'red').length;
     const spread = byFrac.length ? (byFrac[0].frac - byFrac[byFrac.length - 1].frac) : 0;
     const shape = spread <= 0.25 ? 'an even, balanced profile' : spread >= 0.45 ? 'a concentrated profile &mdash; strengths and gaps are pronounced' : 'a moderately uneven profile';
-    const reading = byFrac.length >= 4
+    const shapeRead = byFrac.length >= 4
       ? `Strongest on <strong>${nm(byFrac[0])}</strong> and <strong>${nm(byFrac[1])}</strong>; thinnest on <strong>${nm(byFrac[byFrac.length - 1])}</strong> and <strong>${nm(byFrac[byFrac.length - 2])}</strong> &mdash; ${shape}.`
       : '';
+    // Potential = lift each rated sub-criterion below 1 up to 1, EXCEPT structural factors
+    // a founder can't simply "fix" (market size & growth, gross margin) — held at current.
+    // An honest conditional ceiling: "if you close the addressable gaps we flagged."
+    const STRUCTURAL = new Set(['market_size', 'market_growth', 'gross_margin']);
+    const potMap = {}; let pnum = 0, pden = 0;
+    computed.forEach(r => {
+      let psum = 0, prated = 0;
+      for (const s of (r.c.subs || [])) { if (s.score == null) continue; prated++; psum += STRUCTURAL.has(s.slug) ? s.score : 1; }
+      if (prated > 0) { const pf = psum / prated; potMap[r.c.key] = pf; pnum += pf * r.w; pden += r.w; }
+    });
+    const potential = pden > 0 ? Math.round(100 * pnum / pden) : composite;
+    const uplift = Math.max(0, potential - composite);
+    const upliftRead = uplift > 0
+      ? `Closing the gaps we flag could lift the score from <strong>${esc(composite)}</strong> to <strong style="color:${bandColor('green')};">~${esc(potential)}</strong> (+${esc(uplift)}). `
+      : '';
     profile = `<div class="vss-profile">
-      <div class="vss-profile-radar">${renderRadar(ordered, esc)}</div>
+      <div class="vss-profile-radar">${renderRadar(ordered, esc, potMap)}
+        <div class="vss-radar-legend"><span class="vss-leg now">Now ${esc(composite)}</span><span class="vss-leg pot">Potential ~${esc(potential)}</span></div>
+      </div>
       <div class="vss-profile-body">
-        <div class="vss-sb-title">Category profile</div>
-        ${reading ? `<p class="vss-profile-read">${reading}</p>` : ''}
+        <div class="vss-sb-title">Category profile &mdash; now vs. potential</div>
+        <p class="vss-profile-read">${upliftRead}${shapeRead}</p>
         <div class="vss-profile-split"><span style="color:${bandColor('green')};">${greens} strong</span> &middot; <span style="color:${bandColor('yellow')};">${yellows} mixed</span> &middot; <span style="color:${bandColor('red')};">${reds} ${reds === 1 ? 'gap' : 'gaps'}</span></div>
-        <p class="vss-profile-how">Each axis is one category; a fuller, more even shape means strength across the board, while a spiky shape means the score rests on a few areas.</p>
+        <p class="vss-profile-how"><strong>Solid</strong> = where it scores now; <strong>dashed</strong> = the achievable ceiling if the flagged, addressable gaps close. Structural factors (market size &amp; growth) are held &mdash; not assumed away.</p>
       </div>
     </div>`;
   }
@@ -274,8 +292,10 @@ export function renderVSSScorecard(snap, opts = {}) {
   return `${hero}${scoreboard}${dims}${profile}${heatmap}${meta}`;
 }
 
-// ── 7-axis radar (collapsed by default) ─────────────────────────────────────
-function renderRadar(ordered, esc) {
+// ── 7-axis radar — current shape, with an optional dashed "potential" overlay.
+//    `potential` is an optional { catKey: fraction } map (the achievable shape if the
+//    flagged, addressable gaps close). Purely presentational — no pipeline dependency.
+function renderRadar(ordered, esc, potential) {
   const cats = CAT_ORDER.map(k => ordered.find(c => c.key === k)).filter(Boolean);
   if (cats.length < 3) return '';
   const SIZE = 320, CX = SIZE / 2, CY = SIZE / 2, R = 116, LR = 146, N = cats.length;
@@ -283,6 +303,12 @@ function renderRadar(ordered, esc) {
   const ratioOf = c => { const rated = c.rated != null ? c.rated : (c.subs || []).filter(s => s.score != null).length; return rated > 0 ? c.sum / rated : 0; };
   const grid = [0.25, 0.5, 0.75, 1].map(lv => `<polygon class="vss-radar-grid" points="${cats.map((_, i) => `${CX + Math.cos(ang(i)) * R * lv},${CY + Math.sin(ang(i)) * R * lv}`).join(' ')}"/>`).join('');
   const axes = cats.map((_, i) => `<line class="vss-radar-grid" x1="${CX}" y1="${CY}" x2="${CX + Math.cos(ang(i)) * R}" y2="${CY + Math.sin(ang(i)) * R}"/>`).join('');
+  // Potential overlay (dashed, drawn first so the solid "now" shape sits on top).
+  let potPoly = '';
+  if (potential) {
+    const pPts = cats.map((c, i) => { const pv = potential[c.key] != null ? potential[c.key] : ratioOf(c); return `${CX + Math.cos(ang(i)) * R * pv},${CY + Math.sin(ang(i)) * R * pv}`; }).join(' ');
+    potPoly = `<polygon class="vss-radar-potential" points="${pPts}"/>`;
+  }
   const poly = cats.map((c, i) => `${CX + Math.cos(ang(i)) * R * ratioOf(c)},${CY + Math.sin(ang(i)) * R * ratioOf(c)}`).join(' ');
   const dots = cats.map((c, i) => { const r = ratioOf(c); return `<circle class="vss-radar-dot" cx="${CX + Math.cos(ang(i)) * R * r}" cy="${CY + Math.sin(ang(i)) * R * r}" r="2.6"/>`; }).join('');
   const labels = cats.map((c, i) => {
@@ -295,6 +321,7 @@ function renderRadar(ordered, esc) {
   const PAD = 52;
   return `<svg class="vss-radar" viewBox="${-PAD} 0 ${SIZE + 2 * PAD} ${SIZE}" role="img" aria-label="Investability radar">
       ${grid}${axes}
+      ${potPoly}
       <polygon class="vss-radar-fill" points="${poly}"/><polygon class="vss-radar-stroke" points="${poly}"/>
       ${dots}${labels}
     </svg>`;
@@ -410,7 +437,12 @@ export function ensureInvestabilityStyles() {
     .vss-radar-fill { fill:var(--primary,#6E3AFA); fill-opacity:0.08; }
     .vss-radar-stroke { stroke:var(--primary,#6E3AFA); stroke-width:1.5; fill:none; }
     .vss-radar-dot { fill:var(--primary,#6E3AFA); }
+    .vss-radar-potential { fill:var(--band-strong,#00A368); fill-opacity:0.06; stroke:var(--band-strong,#00A368); stroke-width:1.5; stroke-dasharray:4 3; }
     .vss-radar-lbl { font-family:var(--vss-mono); font-size:0.62rem; fill:var(--vss-txt); }
+    .vss-radar-legend { display:flex; gap:1.1rem; justify-content:center; margin-top:0.3rem; font-family:var(--vss-mono); font-size:0.62rem; color:var(--vss-mut); }
+    .vss-leg { display:inline-flex; align-items:center; gap:0.4rem; }
+    .vss-leg::before { content:''; width:16px; border-top:2px solid var(--primary,#6E3AFA); }
+    .vss-leg.pot::before { border-top:2px dashed var(--band-strong,#00A368); }
     /* Heatmap */
     .vss-heatmap { background:var(--vss-surf); border:1px solid var(--vss-bd); border-radius:16px; padding:1.3rem 1.5rem; }
     .vss-heat-header { display:flex; justify-content:space-between; align-items:baseline; gap:1rem; flex-wrap:wrap; margin-bottom:0.9rem; }
