@@ -202,17 +202,17 @@
       const { auth } = await import('../firebase/firebase.js');
       const idToken = auth.currentUser ? await auth.currentUser.getIdToken() : null;
       const SUPPORTED = /\.(pdf|docx?|xlsx?|xlsm|txt|md|csv)$/i;
-      let ingested = 0, skipped = 0;
+      let ingested = 0; const skippedFiles = [];   // {name, reason} — never silently dropped
 
       async function ingestOne(name, blob) {
         let payload;
         if (/\.pdf$/i.test(name) && blob.size > 4 * 1024 * 1024) {
           if (stateEl) stateEl.innerHTML = `<span class="run-spinner"></span> Extracting ${escBrief(name)}…`;
           let text = ''; try { text = await __extractPdfText(await blob.arrayBuffer()); } catch (e) { text = ''; }
-          if (!text || text.length < 40) { skipped++; return; }   // scanned/image PDF — no text layer
+          if (!text || text.length < 40) { skippedFiles.push({ name, reason: 'scanned/image PDF over 4MB — no text layer; upload a copy under 4MB so the original is stored for a direct read' }); return; }
           payload = { idToken, engagementId, docType, file: { name, text } };
         } else if (blob.size > 4 * 1024 * 1024) {
-          skipped++; return;                                        // non-PDF over the 4MB limit
+          skippedFiles.push({ name, reason: 'over the 4MB limit' }); return;   // non-PDF over the 4MB limit
         } else {
           if (stateEl) stateEl.innerHTML = `<span class="run-spinner"></span> Reading ${escBrief(name)}…`;
           payload = { idToken, engagementId, docType, file: { name, dataBase64: await __readFileB64(blob) } };
@@ -231,16 +231,22 @@
             const zip = await JSZip.loadAsync(file);
             const entries = Object.values(zip.files).filter(e => !e.dir && SUPPORTED.test(e.name) && !/(^|\/)(__MACOSX\/|\.)/.test(e.name));
             if (!entries.length) { if (stateEl) stateEl.innerHTML = `<span style="color:var(--danger,#C0392B);">No readable documents found inside ${escBrief(file.name)}.</span>`; continue; }
-            for (const entry of entries) { try { await ingestOne(entry.name, await entry.async('blob')); } catch (e) { skipped++; } }
+            for (const entry of entries) { try { await ingestOne(entry.name, await entry.async('blob')); } catch (e) { skippedFiles.push({ name: entry.name, reason: (e && e.message) || String(e) }); } }
           } else {
             await ingestOne(file.name, file);
           }
         } catch (e) {
-          if (stateEl) stateEl.innerHTML = `<span style="color:var(--danger,#C0392B);">Couldn&rsquo;t read ${escBrief(file.name)}: ${escBrief((e && e.message) || e)}</span>`;
+          skippedFiles.push({ name: file.name, reason: (e && e.message) || String(e) });
         }
       }
-      if (stateEl && ingested) stateEl.innerHTML = `<span style="color:var(--accent,#00B8A0);">${docType === 'pitch' ? 'Pitch deck added' : 'Ingested ' + ingested + ' document' + (ingested === 1 ? '' : 's')}${skipped ? ` &middot; ${skipped} skipped (unsupported or unreadable)` : ''}.</span>`;
-      setTimeout(() => window.location.reload(), ingested ? 900 : 1600);
+      // Reconciliation: report ingested AND every skip BY NAME — a dropped doc is never silent.
+      if (stateEl) {
+        const okMsg = ingested ? `<span style="color:var(--accent,#00B8A0);">${docType === 'pitch' ? 'Pitch deck added' : 'Ingested ' + ingested + ' document' + (ingested === 1 ? '' : 's')}.</span>` : '';
+        const skipMsg = skippedFiles.length ? `<div style="color:var(--danger,#C0392B);margin-top:.4rem;"><strong>Couldn&rsquo;t ingest ${skippedFiles.length}:</strong> ${skippedFiles.map(s => escBrief(s.name) + ' &mdash; ' + escBrief(s.reason)).join('; ')}</div>` : '';
+        stateEl.innerHTML = okMsg + skipMsg || '<span style="color:var(--danger,#C0392B);">No documents ingested.</span>';
+      }
+      // Only auto-reload on a clean run — otherwise the skip warning must stay on screen.
+      if (!skippedFiles.length) setTimeout(() => window.location.reload(), ingested ? 900 : 1600);
     }
     window.__uploadPitch = (id) => __ingestFiles(id, 'pitch-input', 'pitch');
     window.__uploadDataRoom = (id) => __ingestFiles(id, 'dataroom-input', 'dataroom');

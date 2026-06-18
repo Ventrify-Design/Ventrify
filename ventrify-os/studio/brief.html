@@ -768,7 +768,7 @@
           <strong>${docs.length} document${docs.length === 1 ? '' : 's'} attached.</strong>
           Our agents will read ${docs.length === 1 ? 'it' : 'them'} to steer your research and fill in any brief fields you leave blank.
           <div style="margin-top:0.55rem;display:flex;flex-direction:column;gap:0.3rem;">
-            ${docs.map(d => `<div style="font-size:0.85rem;color:var(--text-muted);">&#128206; ${String(d.name || '').replace(/</g, '&lt;')}${d.chars ? ` &middot; ${Math.round(d.chars / 1000) || 1}k chars` : ''}</div>`).join('')}
+            ${docs.map(d => `<div style="font-size:0.85rem;color:var(--text-muted);">&#128206; ${String(d.name || '').replace(/</g, '&lt;')}${d.needsDeepRead ? ' &middot; scanned &mdash; our agents read it directly' : (d.chars ? ` &middot; ${Math.round(d.chars / 1000) || 1}k chars` : '')}</div>`).join('')}
           </div>
         </div>`;
     }
@@ -785,9 +785,10 @@
     async function handleDocsUpload(files) {
       const stateEl = document.getElementById('docs-state');
       const live = window.STUDIO.mode === 'live';
+      const skipped = [];   // {name, reason} — surfaced persistently, never silently dropped
       for (const file of files) {
         if (file.size > 4 * 1024 * 1024) {
-          stateEl.innerHTML = `<div class="pdf-analyzing" style="color:var(--danger,#C0392B);">&ldquo;${file.name}&rdquo; is over 4MB &mdash; please split it or export a smaller file.</div>`;
+          skipped.push({ name: file.name, reason: 'over 4MB — split it or export a smaller copy so the original can be stored' });
           continue;
         }
         stateEl.innerHTML = `<div class="pdf-analyzing"><span class="pdf-analyzing-spinner"></span><span>Reading <strong>${file.name}</strong>&hellip;</span></div>`;
@@ -802,13 +803,17 @@
           });
           const data = await resp.json().catch(() => ({}));
           if (!resp.ok) throw new Error(data.detail || data.error || ('HTTP ' + resp.status));
-          brief.founderDocs.push({ id: data.id, name: data.name, chars: data.chars });
+          // A scanned/signed doc now ingests fine (original stored for a direct read) — flag it so the list is honest.
+          brief.founderDocs.push({ id: data.id, name: data.name, chars: data.chars, needsDeepRead: !!data.needsDeepRead });
           save(); renderDocsList();
         } catch (e) {
-          stateEl.innerHTML = `<div class="pdf-analyzing" style="color:var(--danger,#C0392B);">Couldn&rsquo;t read &ldquo;${file.name}&rdquo;: ${(e && (e.message || e))}</div>`;
+          skipped.push({ name: file.name, reason: (e && (e.message || e)) });
         }
       }
-      stateEl.innerHTML = '';
+      // Persist any skips on screen — a dropped doc must never disappear silently.
+      stateEl.innerHTML = skipped.length
+        ? `<div class="pdf-analyzing" style="color:var(--danger,#C0392B);"><strong>Couldn&rsquo;t add ${skipped.length}:</strong> ${skipped.map(s => `&ldquo;${s.name}&rdquo; — ${s.reason}`).join('; ')}</div>`
+        : '';
       renderDocsList();
     }
 
