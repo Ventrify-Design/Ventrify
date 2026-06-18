@@ -152,13 +152,27 @@ export function renderDataRoom(hubDocs, opts) {
 }
 
 // ── Reading view ─────────────────────────────────────────────────────────────
+// Research/analysis prose uses `~` as "approximately" (~43.5%, ~$450k, ~7.6 months).
+// marked's GFM strikethrough reads a single `~text~` as crossed-out and strikes the whole
+// span between two such tildes — so the analyst's "approximately" markers silently struck
+// out big chunks of text. Escape lone tildes to literal `~` (outside code spans), while
+// preserving any intentional `~~strikethrough~~`. Verified against marked@12.
+function escapeApproxTildes(md) {
+  return String(md).split(/(```[\s\S]*?```|`[^`]*`)/g).map((seg, i) =>
+    i % 2 === 1 ? seg // code span/fence — leave tildes untouched
+      // A lone ~ = "approximately" → escape to literal; a ~~ run = intentional strikethrough → keep.
+      : seg.replace(/~+/g, run => run.length === 1 ? '\\~' : run)
+  ).join('');
+}
+
 let _marked = null;
 async function toHtml(mdStr) {
   if (_marked === null) {
     try { const m = await import('https://cdn.jsdelivr.net/npm/marked@12/lib/marked.esm.js'); _marked = m.marked || m.default || false; }
     catch (e) { _marked = false; }
   }
-  if (_marked) { try { return (_marked.parse ? _marked.parse(mdStr) : _marked(mdStr)); } catch (e) { /* fall through */ } }
+  const md = escapeApproxTildes(mdStr);
+  if (_marked) { try { return (_marked.parse ? _marked.parse(md) : _marked(md)); } catch (e) { /* fall through */ } }
   return '<pre style="white-space:pre-wrap;">' + esc(mdStr) + '</pre>';
 }
 
