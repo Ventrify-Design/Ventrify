@@ -81,8 +81,16 @@ module.exports = async (req, res) => {
     }
     if (!isFounder && !isOperator) { res.status(403).json({ error: 'forbidden' }); return; }
 
-    // Create the doc ref up front so the raw file can be keyed by its id.
-    const docRef = db.collection('engagements').doc(engagementId).collection('founderDocs').doc();
+    // Idempotent by name — re-uploading the same file REPLACES its record (and any stale
+    // raw chunks) instead of creating a duplicate, so re-uploading a whole data room is safe.
+    const fdCol = db.collection('engagements').doc(engagementId).collection('founderDocs');
+    const existing = await fdCol.where('name', '==', name).limit(1).get();
+    const isNewDoc = existing.empty;
+    const docRef = isNewDoc ? fdCol.doc() : existing.docs[0].ref;
+    if (!isNewDoc) {
+      const oldChunks = await docRef.collection('rawChunks').get();
+      if (!oldChunks.empty) { let b = db.batch(); oldChunks.docs.forEach(d => b.delete(d.ref)); await b.commit(); }
+    }
     const ext = (name.split('.').pop() || '').toLowerCase();
 
     // Raw bytes are present for every file uploaded as base64 (all <=4MB files). We
@@ -146,10 +154,11 @@ module.exports = async (req, res) => {
       if (ops) await batch.commit();
     }
 
-    // Count + (for the pitch) mark the engagement so the page can gate the run on it.
-    const engUpdate = { founderDocCount: admin.firestore.FieldValue.increment(1) };
+    // Count only NEW docs (a replace keeps the count) + (for the pitch) gate the run.
+    const engUpdate = {};
+    if (isNewDoc) engUpdate.founderDocCount = admin.firestore.FieldValue.increment(1);
     if (docType === 'pitch') engUpdate.pitchDoc = { name, at: admin.firestore.FieldValue.serverTimestamp() };
-    await db.collection('engagements').doc(engagementId).set(engUpdate, { merge: true });
+    if (Object.keys(engUpdate).length) await db.collection('engagements').doc(engagementId).set(engUpdate, { merge: true });
 
     res.status(200).json({ ok: true, id: docRef.id, name, docType, chars: text.length, truncated, extraction, needsDeepRead: extraction !== 'ok', storedOriginal: !!rawChunks });
   } catch (e) {

@@ -190,6 +190,23 @@
       }
       return out.trim();
     }
+    // Large .docx can overflow the serverless body limit too (base64 inflates ~33%), which
+    // truncates the upload and makes server-side extraction return empty. Extract their text
+    // in the browser with mammoth and send only the text — no size limit.
+    let __mammoth = null;
+    async function __extractDocxText(arrayBuffer) {
+      if (!__mammoth) {
+        await new Promise((res, rej) => {
+          const s = document.createElement('script');
+          s.src = 'https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js';
+          s.onload = res; s.onerror = () => rej(new Error('mammoth failed to load'));
+          document.head.appendChild(s);
+        });
+        __mammoth = window.mammoth;
+      }
+      const r = await __mammoth.extractRawText({ arrayBuffer });
+      return ((r && r.value) || '').trim();
+    }
 
     // Shared ingest core. docType: 'pitch' | 'dataroom'. Walks .zip data rooms and
     // handles oversized PDFs via client-side text extraction.
@@ -209,10 +226,15 @@
         if (/\.pdf$/i.test(name) && blob.size > 4 * 1024 * 1024) {
           if (stateEl) stateEl.innerHTML = `<span class="run-spinner"></span> Extracting ${escBrief(name)}…`;
           let text = ''; try { text = await __extractPdfText(await blob.arrayBuffer()); } catch (e) { text = ''; }
-          if (!text || text.length < 40) { skippedFiles.push({ name, reason: 'scanned/image PDF over 4MB — no text layer; upload a copy under 4MB so the original is stored for a direct read' }); return; }
+          if (!text || text.length < 40) { skippedFiles.push({ name, reason: 'scanned/image PDF over 4MB — no text layer; upload a copy under 3MB so the original is stored for a direct read' }); return; }
+          payload = { idToken, engagementId, docType, file: { name, text } };
+        } else if (/\.docx$/i.test(name) && blob.size > 3 * 1024 * 1024) {
+          if (stateEl) stateEl.innerHTML = `<span class="run-spinner"></span> Extracting ${escBrief(name)}…`;
+          let text = ''; try { text = await __extractDocxText(await blob.arrayBuffer()); } catch (e) { text = ''; }
+          if (!text || text.length < 40) { skippedFiles.push({ name, reason: 'large .docx with no extractable text — export it as a PDF or a copy under 3MB' }); return; }
           payload = { idToken, engagementId, docType, file: { name, text } };
         } else if (blob.size > 4 * 1024 * 1024) {
-          skippedFiles.push({ name, reason: 'over the 4MB limit' }); return;   // non-PDF over the 4MB limit
+          skippedFiles.push({ name, reason: 'over the 4MB limit' }); return;   // non-PDF/-docx over the 4MB limit
         } else {
           if (stateEl) stateEl.innerHTML = `<span class="run-spinner"></span> Reading ${escBrief(name)}…`;
           payload = { idToken, engagementId, docType, file: { name, dataBase64: await __readFileB64(blob) } };
