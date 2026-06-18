@@ -127,10 +127,13 @@ module.exports = async (req, res) => {
       } catch (e) { storagePath = null; extractionDetail = (extractionDetail ? extractionDetail + ' · ' : '') + 'raw-store failed: ' + String((e && e.message) || e).slice(0, 200); }
     }
 
-    // The ONLY unusable case: no readable text AND no stored original (e.g. a >4MB
-    // scanned PDF parsed in-browser that sent text-only and yielded nothing).
+    // The ONLY unusable case: no readable text AND no stored original. Surface the REAL
+    // reason (Storage error if the save threw; "no bytes" if the client sent text-only).
     if (extraction !== 'ok' && !text && !storagePath) {
-      res.status(422).json({ error: 'no_text', detail: 'No readable text, and the original could not be stored (no file bytes were sent — e.g. a >4MB scanned PDF). Re-upload so the original is stored for a direct read.' });
+      const why = buf
+        ? `No readable text, and storing the original FAILED: ${extractionDetail || 'unknown storage error'}`
+        : 'No readable text, and no file bytes were sent (e.g. a >4MB file parsed client-side). Re-upload so the original can be stored.';
+      res.status(422).json({ error: 'no_text', detail: why });
       return;
     }
 
