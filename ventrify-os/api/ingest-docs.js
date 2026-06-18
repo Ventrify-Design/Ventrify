@@ -15,14 +15,9 @@
 
 const admin = require('firebase-admin');
 
-const STORAGE_BUCKET = 'ventrify-os.firebasestorage.app';
-
 function ensureAdmin() {
   if (admin.apps.length) return;
-  admin.initializeApp({
-    credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)),
-    storageBucket: STORAGE_BUCKET,
-  });
+  admin.initializeApp({ credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)) });
 }
 
 const MIME = { pdf: 'application/pdf', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', doc: 'application/msword', xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', xls: 'application/vnd.ms-excel', xlsm: 'application/vnd.ms-excel.sheet.macroEnabled.12', txt: 'text/plain', md: 'text/markdown', csv: 'text/csv' };
@@ -115,40 +110,48 @@ module.exports = async (req, res) => {
     const truncated = text.length > 200000;
     if (truncated) text = text.slice(0, 200000);
 
-    // Persist the original bytes to Storage (Admin SDK → bypasses Storage rules).
-    let storagePath = null;
-    if (buf) {
-      storagePath = `founder-docs/${engagementId}/${docRef.id}.${ext || 'bin'}`;
-      try {
-        await admin.storage().bucket().file(storagePath).save(buf, {
-          resumable: false, contentType: mimeFor(ext),
-          metadata: { metadata: { originalName: name, engagementId, docType } },
-        });
-      } catch (e) { storagePath = null; extractionDetail = (extractionDetail ? extractionDetail + ' · ' : '') + 'raw-store failed: ' + String((e && e.message) || e).slice(0, 200); }
+    // Persist the original bytes INTO FIRESTORE as base64 chunks — no Firebase Storage /
+    // Blaze required. Only for docs we couldn't text-extract (scanned/signed PDFs), so the
+    // runner can write the original out and the agent reads it directly. Born-digital text
+    // docs need no raw copy. Capped by the request body limit (~4.5MB base64 ≈ ~3.3MB raw).
+    const RAW_CHUNK = 700000;            // chars/chunk — well under Firestore's 1MiB doc cap
+    let rawChunks = 0, rawB64 = null;
+    if (extraction !== 'ok' && buf) {
+      rawB64 = buf.toString('base64');
+      rawChunks = Math.ceil(rawB64.length / RAW_CHUNK);
     }
 
-    // The ONLY unusable case: no readable text AND no stored original. Surface the REAL
-    // reason (Storage error if the save threw; "no bytes" if the client sent text-only).
-    if (extraction !== 'ok' && !text && !storagePath) {
-      const why = buf
-        ? `No readable text, and storing the original FAILED: ${extractionDetail || 'unknown storage error'}`
-        : 'No readable text, and no file bytes were sent (e.g. a >4MB file parsed client-side). Re-upload so the original can be stored.';
-      res.status(422).json({ error: 'no_text', detail: why });
+    // The ONLY unusable case: no readable text AND no storable original.
+    if (extraction !== 'ok' && !text && !rawChunks) {
+      res.status(422).json({ error: 'no_text', detail: 'No readable text, and no file bytes were sent (a >4MB file parsed in-browser). Re-upload a copy under ~3MB so the original can be stored for a direct read.' });
       return;
     }
 
     await docRef.set({
       name, docType, chars: text.length, truncated, text,
-      extraction, extractionDetail, storagePath, mimeType: mimeFor(ext),
+      extraction, extractionDetail,
+      rawEncoding: rawChunks ? 'base64' : null, rawExt: rawChunks ? (ext || 'bin') : null,
+      rawMime: rawChunks ? mimeFor(ext) : null, rawChunks,
       uploadedBy: caller, uploadedAt: admin.firestore.FieldValue.serverTimestamp()
     });
+
+    // Raw bytes → a rawChunks subcollection (each doc well under the 1MiB cap). Kept OUT of
+    // the parent doc so listing founderDocs stays light.
+    if (rawChunks) {
+      let batch = db.batch(), ops = 0;
+      for (let i = 0; i < rawChunks; i++) {
+        batch.set(docRef.collection('rawChunks').doc(String(i).padStart(4, '0')), { i, data: rawB64.slice(i * RAW_CHUNK, (i + 1) * RAW_CHUNK) });
+        if (++ops === 400) { await batch.commit(); batch = db.batch(); ops = 0; }
+      }
+      if (ops) await batch.commit();
+    }
 
     // Count + (for the pitch) mark the engagement so the page can gate the run on it.
     const engUpdate = { founderDocCount: admin.firestore.FieldValue.increment(1) };
     if (docType === 'pitch') engUpdate.pitchDoc = { name, at: admin.firestore.FieldValue.serverTimestamp() };
     await db.collection('engagements').doc(engagementId).set(engUpdate, { merge: true });
 
-    res.status(200).json({ ok: true, id: docRef.id, name, docType, chars: text.length, truncated, extraction, needsDeepRead: extraction !== 'ok', storedOriginal: !!storagePath });
+    res.status(200).json({ ok: true, id: docRef.id, name, docType, chars: text.length, truncated, extraction, needsDeepRead: extraction !== 'ok', storedOriginal: !!rawChunks });
   } catch (e) {
     res.status(500).json({ error: String((e && e.message) || e) });
   }
