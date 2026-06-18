@@ -1,0 +1,22 @@
+rules_version = '2';
+
+// Firebase Storage security rules.
+//
+// Only ONE client-writable area: founder-uploaded data-room originals (large files the
+// browser uploads straight to Storage to bypass the serverless body limit). Writes require
+// a signed-in user and are size-capped; READS are denied here — originals are read ONLY by
+// the Admin SDK (the /api/ingest-docs endpoint and the cloud runner), which bypasses these
+// rules. The real authorization gate is /api/ingest-docs: before registering a document it
+// verifies the caller is the engagement's founder or an operator of its org, and that the
+// path belongs to that engagement. An unregistered blob is inert (unreadable, unreferenced).
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /founder-docs/{engagementId}/{fileName=**} {
+      allow read: if false;
+      allow write: if request.auth != null && request.resource.size < 50 * 1024 * 1024;
+    }
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
