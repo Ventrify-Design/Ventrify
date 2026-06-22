@@ -1,6 +1,9 @@
 # OS site deploys from its own Vercel project
 ventrify-os/
 
+# Verdict marketing site deploys from its own Vercel project (verdict.ventrify.io)
+ventrify-assess/
+
 # Dev / scratch
 node_modules/
 temporary screenshots/
