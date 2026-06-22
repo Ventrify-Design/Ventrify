@@ -49,6 +49,15 @@ export async function findOperatorOrg(email) {
   const snap = await getDocs(query(collection(db, 'organisations'), where('operatorEmails', 'array-contains', norm)));
   return snap.empty ? null : { id: snap.docs[0].id, ...snap.docs[0].data() };
 }
+// Every org this operator belongs to (for the workspace switcher). Sorted by
+// name so the switcher list is stable.
+export async function listOperatorOrgs(email) {
+  const norm = (email || '').trim().toLowerCase();
+  if (!norm) return [];
+  const snap = await getDocs(query(collection(db, 'organisations'), where('operatorEmails', 'array-contains', norm)));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }))
+    .sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
+}
 export async function isSuperAdmin(email) {
   const norm = (email || '').trim().toLowerCase();
   try {

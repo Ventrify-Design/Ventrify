@@ -43,6 +43,8 @@ function initialsOf(s) {
   const b = parts.length > 1 ? (parts[parts.length - 1][0] || '') : '';
   return (a + b).toUpperCase().slice(0, 2);
 }
+function escHtml(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+const ORG_SWITCH_CHEVRON = `<svg class="org-switch-caret" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>`;
 
 // ----- localStorage IO (still used for demo mode + small prefs) -----------
 function readJSON(key, fallback) {
@@ -68,14 +70,14 @@ function applyBranding(org) {
 }
 
 // ----- Assemble window.WORKSPACE ------------------------------------------
-function buildWorkspace({ org, operators, programs, actions, currentOperatorId, demoMode, mode, isSuperAdmin }) {
+function buildWorkspace({ org, orgs, operators, programs, actions, currentOperatorId, demoMode, mode, isSuperAdmin }) {
   function getProgram(id) { return programs.find(p => p.id === id) || null; }
   function getOperator(id) { return operators.find(o => o.id === id) || null; }
   function currentOperator() { return getOperator(currentOperatorId); }
   function programsForOperator(opId) { return programs.filter(p => p.assignedOperator === opId); }
 
   window.WORKSPACE = {
-    org, operators, programs, actions, currentOperatorId, demoMode, mode, isSuperAdmin: !!isSuperAdmin,
+    org, orgs: orgs || (org ? [org] : []), operators, programs, actions, currentOperatorId, demoMode, mode, isSuperAdmin: !!isSuperAdmin,
     plan: Plan.resolvePlan(org),
     helpers: { getProgram, getOperator, currentOperator, programsForOperator, phaseLabel, phaseProgressPct, hubStatusLabel },
     labels: { phase: PHASE_LABELS, hub: HUB_LABELS },
@@ -97,18 +99,20 @@ async function loadLive(user) {
   const data = await import('../firebase/data.js');
   const email = (user.email || '').toLowerCase();
 
-  // Multi-tenant: resolve the operator's org (the org whose operatorEmails lists
-  // their email). Each operator works only in their own org.
-  const myOrg = await data.findOperatorOrg(email);
+  // Multi-tenant: an operator may belong to several orgs. Resolve them all (for
+  // the workspace switcher) and pick the active one — the last one they chose
+  // (workspace.activeOrg), else the first alphabetically.
+  const myOrgs = await data.listOperatorOrgs(email);
   const superAdmin = await data.isSuperAdmin(email);
-  if (!myOrg) {
+  if (!myOrgs.length) {
     // Signed in but not an operator of any org. (Super-admins with no org of
     // their own get the platform console — added in the next stage.)
     renderNoAccess(user);
     return new Promise(() => {});
   }
-  data.setOrgContext(myOrg.id);
-  const org = myOrg;
+  const storedActive = localStorage.getItem('workspace.activeOrg');
+  const org = myOrgs.find(o => o.id === storedActive) || myOrgs[0];
+  data.setOrgContext(org.id);
 
   // A signed-in but non-operator (got a magic link, but not on the operator
   // allowlist) is denied engagements by the security rules. Catch that and show
@@ -138,7 +142,7 @@ async function loadLive(user) {
 
   applyBranding(org);
   return buildWorkspace({
-    org, operators, programs, actions: [],
+    org, orgs: myOrgs, operators, programs, actions: [],
     currentOperatorId: user.uid, demoMode: 'off', mode: 'live', isSuperAdmin: superAdmin
   });
 }
@@ -218,10 +222,17 @@ function shellTopbarConfig() {
     mark: { html: 'V', cls: 'topbar-lockup-mark-ventrify' },
     name: { html: '<span class="lockup-name-strong">VENTRIFY</span> <span class="lockup-name-weak">OS</span>' },
   };
+  // When the operator belongs to >1 org, the partner lockup becomes a workspace
+  // switcher: drop the href (so it's a non-navigating <span> the delegated
+  // listener handles) and add a caret. One org → the original dashboard link.
+  const multiOrg = ((W.orgs || []).length) > 1;
+  const orgMark = { bg: orgColor, html: orgLogo ? `<img src="${orgLogo}" alt="${escHtml(orgName)}">` : `<span class="topbar-lockup-mark-text">${orgInitials}</span>` };
   const partnerItem = org
-    ? { href: 'dashboard.html', title: orgName, itemCls: 'topbar-lockup-partner',
-        mark: { bg: orgColor, html: orgLogo ? `<img src="${orgLogo}" alt="${orgName}">` : `<span class="topbar-lockup-mark-text">${orgInitials}</span>` },
-        name: { text: orgName } }
+    ? (multiOrg
+        ? { title: 'Switch workspace', itemCls: 'topbar-lockup-partner topbar-lockup-switch',
+            mark: orgMark, name: { html: escHtml(orgName) + ORG_SWITCH_CHEVRON } }
+        : { href: 'dashboard.html', title: orgName, itemCls: 'topbar-lockup-partner',
+            mark: orgMark, name: { text: orgName } })
     : { itemCls: 'topbar-lockup-partner topbar-lockup-empty',
         mark: { html: '?', cls: 'topbar-lockup-mark-empty' },
         name: { text: 'Unconfigured' } };
@@ -322,10 +333,75 @@ window.renderShell = function(mainContentHTML) {
     main: mainContentHTML,
     after: renderDevToggle(),
   });
+  mountOrgSwitcher();
 };
+
+// ----- Workspace switcher (multi-org operators) ---------------------------
+// Rebuilt after every renderShell (which resets body.innerHTML). Renders only
+// when the operator belongs to >1 org. Workspace-only — the shared shell/Studio
+// are untouched.
+window.__switchOrg = function(orgId) {
+  try { localStorage.setItem('workspace.activeOrg', orgId); } catch (e) {}
+  // Land on the new org's portfolio (the current page may reference an
+  // engagement that doesn't exist in the org being switched to).
+  window.location.href = 'dashboard.html';
+};
+function mountOrgSwitcher() {
+  const W = window.WORKSPACE;
+  const existing = document.getElementById('org-switch-panel');
+  if (existing) existing.remove();
+  const orgs = (W && W.orgs) || [];
+  if (orgs.length <= 1) return;
+  const activeId = W.org && W.org.id;
+  const items = orgs.map(o => {
+    const isActive = o.id === activeId;
+    const color = o.primaryColor || '#0036FF';
+    const logo = o.logoDataUrl || o.logoUrl || null;
+    const mark = logo ? `<img src="${escHtml(logo)}" alt="">` : escHtml(initialsOf(o.name));
+    return `<button type="button" class="org-switch-item${isActive ? ' active' : ''}" role="menuitem" onclick="window.__switchOrg('${escHtml(o.id)}')"${isActive ? ' aria-current="true"' : ''}>
+        <span class="org-switch-mark" style="background:${escHtml(color)};">${mark}</span>
+        <span class="org-switch-name">${escHtml(o.name)}</span>
+        ${isActive ? '<span class="org-switch-check" aria-hidden="true">&#10003;</span>' : ''}
+      </button>`;
+  }).join('');
+  const panel = document.createElement('div');
+  panel.id = 'org-switch-panel';
+  panel.className = 'org-switch-panel';
+  panel.setAttribute('hidden', '');
+  panel.setAttribute('role', 'menu');
+  panel.innerHTML = `<div class="org-switch-head">Switch workspace</div>${items}`;
+  document.body.appendChild(panel);
+}
+function wireOrgSwitcher() {
+  if (window.__orgSwitchWired) return;
+  window.__orgSwitchWired = true;
+  const close = () => {
+    const panel = document.getElementById('org-switch-panel');
+    if (panel) panel.setAttribute('hidden', '');
+    document.querySelectorAll('.topbar-lockup-switch.open').forEach(t => t.classList.remove('open'));
+  };
+  document.addEventListener('click', (e) => {
+    const trigger = e.target.closest('.topbar-lockup-switch');
+    const panel = document.getElementById('org-switch-panel');
+    if (trigger && panel) {
+      e.preventDefault();
+      if (panel.hasAttribute('hidden')) {
+        const r = trigger.getBoundingClientRect();
+        panel.style.top = (r.bottom + 8) + 'px';
+        panel.style.left = r.left + 'px';
+        panel.removeAttribute('hidden');
+        trigger.classList.add('open');
+      } else { close(); }
+      return;
+    }
+    if (panel && !panel.hasAttribute('hidden') && !e.target.closest('#org-switch-panel')) close();
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+}
 
 // Mobile nav drawer — delegated listeners survive renderShell()'s innerHTML reset.
 wireAppShell();
+wireOrgSwitcher();
 
 // ----- Tiny shared display helpers ----------------------------------------
 window.hubStatusClass = function(status) { return status || 'pending'; };
