@@ -2258,3 +2258,19 @@ code { font-family: var(--font-mono); }
 .org-switch-mark img { width: 100%; height: 100%; object-fit: cover; }
 .org-switch-name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
 .org-switch-check { color: var(--primary, #0036FF); font-weight: 700; flex-shrink: 0; }
+
+/* ----- Deal pipeline controls ------------------------------------------- */
+.pipeline-sort {
+  height: 38px; border: 1px solid rgba(0,0,0,0.1); border-radius: 9px; background: #fff;
+  padding: 0 2rem 0 0.85rem; font: inherit; font-size: 0.86rem; color: var(--text, #141414);
+  cursor: pointer; margin-right: 0.6rem;
+  appearance: none; -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B7594' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 0.7rem center;
+}
+.pipeline-sort:hover { border-color: rgba(0,0,0,0.2); }
+.filter-bar-sub { margin-top: 0.6rem; align-items: center; }
+.filter-sublabel {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.62rem; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--text-muted, #6B7594); margin-right: 0.6rem;
+}

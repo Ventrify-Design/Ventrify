@@ -286,6 +286,57 @@
       `;
     }
 
+    // ----- Deal pipeline: filter + sort -----------------------------------
+    // The filter bar was previously decorative; this wires it and adds
+    // assessment-oriented controls (filter by recommendation, sort by score).
+    const hasAssessments = programs.some(p => p.engagementType === 'assessment');
+    function recBucket(p) {
+      if (p.engagementType !== 'assessment') return null;
+      const r = String((p.assessment && p.assessment.recommendation) || '').toLowerCase();
+      if (!r) return null;
+      if (r.startsWith('invest') || r.includes('back')) return 'invest';
+      if (r.startsWith('pass') || r.includes('decline')) return 'pass';
+      return 'consider';
+    }
+    let view = { health: 'all', rec: 'all', sort: 'recent', q: '' };
+    try { const s = JSON.parse(localStorage.getItem('workspace.dashView') || 'null'); if (s) view = { ...view, health: s.health || 'all', rec: s.rec || 'all', sort: s.sort || 'recent' }; } catch (e) {}
+
+    const pill = (label, dim, key, active) => `<button class="filter-pill${active === key ? ' active' : ''}" data-${dim}="${key}">${label}</button>`;
+    function filterBarHTML() {
+      const healthPills = [['all','All'],['on-track','On track'],['attention','Needs attention'],['stuck','Stuck'],['mine','Assigned to me']].map(([k,l]) => pill(l, 'health', k, view.health)).join('');
+      const recPills = [['all','All'],['invest','Invest'],['consider','Consider'],['pass','Pass']].map(([k,l]) => pill(l, 'rec', k, view.rec)).join('');
+      const sortSel = hasAssessments ? `<select id="dash-sort" class="pipeline-sort" aria-label="Sort">
+          <option value="recent">Recently active</option>
+          <option value="scoreDesc">Score: high → low</option>
+          <option value="scoreAsc">Score: low → high</option>
+        </select>` : '';
+      const search = `<div class="search"><span class="search-icon">&#x1F50D;</span><input type="text" id="dash-search" placeholder="Search ${ASSESS_ONLY ? 'ventures' : 'programs or founders'}…"></div>`;
+      const subRow = (!ASSESS_ONLY && hasAssessments)
+        ? `<div class="filter-bar filter-bar-sub"><span class="filter-sublabel">Recommendation</span>${recPills}</div>` : '';
+      return `<div class="filter-bar">${ASSESS_ONLY ? recPills : healthPills}<div class="filter-spacer"></div>${sortSel}${search}</div>${subRow}`;
+    }
+    function applyView() {
+      let list = programs.map((p, i) => ({ p, i }));
+      if (view.health !== 'all') list = list.filter(({ p }) => view.health === 'mine' ? p.assignedOperator === W.currentOperatorId : p.health === view.health);
+      if (view.rec !== 'all') list = list.filter(({ p }) => recBucket(p) === view.rec);
+      const q = view.q.trim().toLowerCase();
+      if (q) list = list.filter(({ p }) => [p.name, p.founderName, p.industry, p.stage].filter(Boolean).some(s => String(s).toLowerCase().includes(q)));
+      const score = p => (p.investability && p.investability.pct != null) ? p.investability.pct : null;
+      if (view.sort === 'scoreDesc') list.sort((a, b) => ((score(b.p) ?? -1) - (score(a.p) ?? -1)) || (a.i - b.i));
+      else if (view.sort === 'scoreAsc') list.sort((a, b) => ((score(a.p) ?? 1e9) - (score(b.p) ?? 1e9)) || (a.i - b.i));
+      else list.sort((a, b) => a.i - b.i);
+      return list.map(({ p }) => p);
+    }
+    function renderGrid() {
+      const grid = document.querySelector('.programs-grid');
+      if (!grid) return;
+      const list = applyView();
+      grid.innerHTML = list.length
+        ? list.map(programCardHTML).join('')
+        : `<div class="card" style="grid-column:1/-1;text-align:center;padding:2.5rem;color:var(--text-muted);">No matching ${ASSESS_ONLY ? 'assessments' : 'engagements'}. Adjust the filters.</div>`;
+      try { localStorage.setItem('workspace.dashView', JSON.stringify({ health: view.health, rec: view.rec, sort: view.sort })); } catch (e) {}
+    }
+
     const main = `
       <div class="page-header-row">
         <div class="page-header">
@@ -337,25 +388,25 @@
         </div>
       </div>
 
-      <div class="filter-bar">
-        <button class="filter-pill active">All</button>
-        <button class="filter-pill">On track</button>
-        <button class="filter-pill">Needs attention</button>
-        <button class="filter-pill">Stuck</button>
-        <button class="filter-pill">Assigned to me</button>
-        <div class="filter-spacer"></div>
-        <div class="search">
-          <span class="search-icon">&#x1F50D;</span>
-          <input type="text" placeholder="Search programs or founders...">
-        </div>
-      </div>
+      ${filterBarHTML()}
 
-      <div class="programs-grid">
-        ${programs.map(programCardHTML).join('')}
-      </div>
+      <div class="programs-grid"></div>
     `;
 
     window.renderShell(main);
+    renderGrid();
+
+    // Wire the pipeline controls (filter pills, sort, search).
+    document.addEventListener('click', (e) => {
+      const hp = e.target.closest('[data-health]');
+      const rp = e.target.closest('[data-rec]');
+      if (hp) { view.health = hp.dataset.health; document.querySelectorAll('[data-health]').forEach(b => b.classList.toggle('active', b === hp)); renderGrid(); }
+      else if (rp) { view.rec = rp.dataset.rec; document.querySelectorAll('[data-rec]').forEach(b => b.classList.toggle('active', b === rp)); renderGrid(); }
+    });
+    const sortEl = document.getElementById('dash-sort');
+    if (sortEl) { sortEl.value = view.sort; sortEl.addEventListener('change', () => { view.sort = sortEl.value; renderGrid(); }); }
+    const searchEl = document.getElementById('dash-search');
+    if (searchEl) searchEl.addEventListener('input', () => { view.q = searchEl.value; renderGrid(); });
   </script>
 </body>
 </html>
