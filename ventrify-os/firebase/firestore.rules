@@ -51,7 +51,12 @@ service cloud.firestore {
     match /engagements/{engId} {
       allow read, update: if signedIn()
         && (userEmail() == resource.data.founderEmail || isOperatorOf(resource.data.orgId));
-      allow create: if isOperatorOf(request.resource.data.orgId);
+      // Creation is intentionally NOT allowed from the client. It goes through
+      // /api/create-engagement (Admin SDK), which enforces the org's licence
+      // capabilities + quota server-side — so the one-off / licence limits
+      // can't be bypassed by a hand-crafted write. Operators still read/update/
+      // delete their org's engagements.
+      allow create: if false;
       allow delete: if isOperatorOf(resource.data.orgId);
 
       // Investability trajectory — readable by founder/operator; written only

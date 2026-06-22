@@ -20,6 +20,14 @@
     const W = window.WORKSPACE;
     const { operators, helpers, org } = W;
 
+    // Org licence gating — which engagement types this org may create, and
+    // whether it has any allowance left. ALLOWED_TYPES is in display order
+    // (build first). createGate() re-checks the current type's quota live.
+    const Plan = window.VentrifyPlan;
+    const plan = W.plan;
+    const ALLOWED_TYPES = Plan.allowedTypes(plan);
+    function createGate() { return Plan.canCreate(plan, W.programs, state.engagementType); }
+
     // Every engagement on a Ventrify OS licence earns the full deliverable scope.
     // The org's licence tier determines program *volume* (set at setup), not what
     // each engagement contains. So the wizard no longer asks the operator to pick
@@ -65,7 +73,8 @@
     const opDefault = (helpers.currentOperator() || operators[0] || {}).id || '';
     const state = {
       step: 1,
-      engagementType: 'build', // 'build' (MVP) | 'assessment' (investor, deck-first)
+      // Default to the first type the org's licence allows (build preferred).
+      engagementType: ALLOWED_TYPES.includes('build') ? 'build' : 'assessment', // 'build' (MVP) | 'assessment' (investor, deck-first)
       basics: { name: '', founderName: '', founderEmail: '', website: '', stage: '' },
       start: new Date().toISOString().slice(0,10),
       operator: opDefault,
@@ -119,10 +128,11 @@
             ? 'No build &mdash; upload a pitch deck and get a venture score, key findings, and how to strengthen it. Everything happens here in the Workspace; there&rsquo;s no founder Studio.'
             : 'Only what <em>you</em> need from your deal pipeline &mdash; venture name, who the founder is, when work starts, and who&rsquo;s running it. The venture&rsquo;s pitch and the rest come from the founder&rsquo;s brief inside the Studio.'}</p>
 
+          ${ALLOWED_TYPES.length > 1 ? `
           <div style="display:flex;gap:0.85rem;margin-bottom:1.5rem;">
-            ${typeCard('build', 'Build an MVP', 'Full engagement: research &rarr; cards &rarr; strategy &rarr; financials &rarr; build. Founder fills the brief in their Studio.')}
-            ${typeCard('assessment', 'Assess a venture', 'Investor assessment from a pitch deck: score, findings, how to strengthen. No build, no founder Studio.')}
-          </div>
+            ${ALLOWED_TYPES.includes('build') ? typeCard('build', 'Build an MVP', 'Full engagement: research &rarr; cards &rarr; strategy &rarr; financials &rarr; build. Founder fills the brief in their Studio.') : ''}
+            ${ALLOWED_TYPES.includes('assessment') ? typeCard('assessment', 'Assess a venture', 'Investor assessment from a pitch deck: score, findings, how to strengthen. No build, no founder Studio.') : ''}
+          </div>` : ''}
 
           <div class="wiz-grid">
             <div class="wiz-field span-2">
@@ -358,6 +368,22 @@
       });
     };
 
+    // Shown when the org has run out of allowance for the current type
+    // (e.g. a one-off plan that has already used its single assessment).
+    function limitBannerHTML() {
+      const gate = createGate();
+      if (gate.allowed || gate.reason !== 'limit') return '';
+      const lim = Plan.limitFor(plan, state.engagementType);
+      const noun = state.engagementType === 'assessment' ? 'assessment' : 'MVP build';
+      return `
+        <div style="display:flex;align-items:flex-start;gap:0.85rem;background:rgba(192,57,43,0.05);border:1px solid rgba(192,57,43,0.2);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1.5rem;">
+          <span style="flex-shrink:0;width:24px;height:24px;border-radius:6px;background:var(--danger,#C0392B);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:0.82rem;font-weight:700;">!</span>
+          <div style="font-size:0.88rem;color:var(--text);line-height:1.55;">
+            <strong>Plan limit reached.</strong> Your workspace plan includes ${lim} ${noun}${lim === 1 ? '' : 's'}, and ${lim === 1 ? 'it has' : 'they have all'} been used. Ask your Ventrify admin to upgrade the plan to create more.
+          </div>
+        </div>`;
+    }
+
     function canAdvance() {
       if (state.step === 1) {
         const b = state.basics;
@@ -372,6 +398,8 @@
       const seq = stepSeq();
       const pos = seq.indexOf(state.step);
       const onLast = pos === seq.length - 1;
+      // On the final step the create button also respects the plan's quota.
+      const blocked = onLast && !createGate().allowed;
       const advanceLabel = onLast ? (state.engagementType === 'assessment' ? 'Create assessment' : 'Launch engagement') : 'Continue';
       return `
         <div class="wizard-actions">
@@ -379,7 +407,7 @@
             ${pos > 0 ? '<button class="btn btn-ghost" id="btn-back">&larr; Back</button>' : ''}
             <a href="dashboard.html" class="btn btn-ghost">Cancel</a>
           </div>
-          <button class="btn btn-primary" id="btn-next" ${canAdvance() ? '' : 'disabled style="opacity:0.5;cursor:not-allowed;"'}>${advanceLabel}</button>
+          <button class="btn btn-primary" id="btn-next" ${(canAdvance() && !blocked) ? '' : 'disabled style="opacity:0.5;cursor:not-allowed;"'}>${advanceLabel}</button>
         </div>`;
     }
 
@@ -434,9 +462,24 @@
         createdAt: new Date().toISOString()
       };
       if (W.mode === 'live') {
-        // Source of truth is Firestore — the founder (any browser) reads it back.
-        const data = await import('../firebase/data.js');
-        await data.createEngagement(newProgram);
+        // Creation goes through /api/create-engagement (Admin SDK), which
+        // enforces the org's licence capabilities + quota server-side — the
+        // client can't write engagements directly (firestore.rules forbid it).
+        const { auth } = await import('../firebase/firebase.js');
+        const idToken = await auth.currentUser.getIdToken();
+        const resp = await fetch('/api/create-engagement', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idToken, engagement: newProgram })
+        });
+        const out = await resp.json().catch(() => ({}));
+        if (!resp.ok) {
+          const msg = out.reason === 'limit'
+            ? 'Your workspace plan has no allowance left for this engagement type. Ask your Ventrify admin to upgrade the plan.'
+            : out.reason === 'capability'
+              ? 'Your workspace plan doesn’t include this engagement type.'
+              : (out.error || ('HTTP ' + resp.status));
+          throw new Error(msg);
+        }
         // Phase 2.5: auto-send the founder their Studio invite. Prefer the
         // branded sender (/api/send-invite → Resend from hello@ventrify.io);
         // fall back to Firebase's default email if it isn't configured yet.
@@ -470,6 +513,7 @@
         <div class="wizard-shell">
           <a href="dashboard.html" class="text-small dim" style="font-size:0.85rem;display:inline-block;margin-bottom:1rem;">&larr; Cancel and return to Portfolio</a>
           ${renderProgress()}
+          ${limitBannerHTML()}
           ${stepFns[state.step]()}
           ${navHTML()}
         </div>`;
@@ -547,6 +591,7 @@
           render();
           window.scrollTo({ top: 0, behavior: 'smooth' });
         } else {
+          if (!createGate().allowed) return; // plan capability/limit guard
           next.disabled = true; next.textContent = 'Launching…';
           try {
             const { programId, slug } = await persistAndLaunch();

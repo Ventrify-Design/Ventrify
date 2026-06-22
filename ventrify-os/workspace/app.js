@@ -13,6 +13,11 @@
 
 import { FIREBASE_ENABLED } from '../firebase/config.js';
 import { renderAppShell, wireAppShell } from '../shared/shell.js';
+import * as Plan from './plan.js';
+
+// Org licence / capability model — available to every page once the module
+// loads (pages read it after `await window.WORKSPACE_READY`).
+window.VentrifyPlan = Plan;
 
 const FB_AUTH_URL = 'https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js';
 
@@ -71,6 +76,7 @@ function buildWorkspace({ org, operators, programs, actions, currentOperatorId, 
 
   window.WORKSPACE = {
     org, operators, programs, actions, currentOperatorId, demoMode, mode, isSuperAdmin: !!isSuperAdmin,
+    plan: Plan.resolvePlan(org),
     helpers: { getProgram, getOperator, currentOperator, programsForOperator, phaseLabel, phaseProgressPct, hubStatusLabel },
     labels: { phase: PHASE_LABELS, hub: HUB_LABELS },
     storage: { readJSON, writeJSON, setDemoMode }
@@ -148,7 +154,11 @@ function loadDemoOrLocal() {
   const storedActions   = readJSON('workspace.actions', []);
   const storedCurrentOp = localStorage.getItem('workspace.currentOperator') || null;
 
-  const org        = storedOrg || (demoOn ? sample.org : null);
+  let org          = storedOrg || (demoOn ? sample.org : null);
+  // Demo-only: ?plan=one-off|assess|full|custom lets us preview licence gating
+  // without editing any data. Harmless in demo mode; never runs live.
+  const demoPlan = new URLSearchParams(window.location.search).get('plan');
+  if (org && demoPlan) org = { ...org, plan: { preset: demoPlan } };
   const operators  = demoOn ? [...storedOperators, ...sample.operators] : storedOperators;
   const programs   = demoOn ? [...storedPrograms,  ...sample.programs]  : storedPrograms;
   const actions    = demoOn ? [...storedActions,   ...sample.actions]   : storedActions;

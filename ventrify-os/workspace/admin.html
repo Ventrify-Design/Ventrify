@@ -22,10 +22,52 @@
     const myEmail = ((me && me.email) || '').toLowerCase();
     const isSuper = !!W.isSuperAdmin;
     const isOwner = !!(W.org && String(W.org.ownerEmail || '').toLowerCase() === myEmail);
+    const PLAN = window.VentrifyPlan;
 
     if (!isSuper && !isOwner) { window.location.href = 'dashboard.html'; throw new Error('halt'); }
 
     const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    // ----- Plan picker (preset dropdown + a custom capabilities/limits block) -
+    // `plan` is a resolved plan object (from PLAN.resolvePlan) or null for a
+    // fresh org. Reused by the create-org form and each org's inline editor.
+    function planFieldHTML(prefix, plan) {
+      const preset = (plan && plan.preset) || 'full';
+      const isCustom = preset === 'custom';
+      const capAssess = plan ? plan.capabilities.assess : true;
+      const capBuild = plan ? plan.capabilities.build : true;
+      const limA = (plan && plan.limits.assessments != null) ? plan.limits.assessments : '';
+      const limB = (plan && plan.limits.builds != null) ? plan.limits.builds : '';
+      const opt = v => `<option value="${v}" ${v === preset ? 'selected' : ''}>${PLAN.PLAN_PRESETS[v].label}</option>`;
+      return `
+        <select id="${prefix}-preset" class="login-input" style="margin:0;" onchange="window.__togglePlanCustom('${prefix}')">
+          ${['full','assess','one-off','custom'].map(opt).join('')}
+        </select>
+        <div id="${prefix}-custom" style="display:${isCustom ? 'block' : 'none'};margin-top:0.75rem;padding:0.85rem 1rem;background:rgba(0,0,0,0.03);border-radius:10px;">
+          <div style="display:flex;gap:1.25rem;margin-bottom:0.75rem;flex-wrap:wrap;">
+            <label style="display:flex;align-items:center;gap:0.45rem;font-size:0.88rem;cursor:pointer;"><input type="checkbox" id="${prefix}-cap-assess" ${capAssess ? 'checked' : ''}> Assess ventures</label>
+            <label style="display:flex;align-items:center;gap:0.45rem;font-size:0.88rem;cursor:pointer;"><input type="checkbox" id="${prefix}-cap-build" ${capBuild ? 'checked' : ''}> Build MVPs</label>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+            <div><label class="wiz-label" style="font-size:0.7rem;">Max assessments</label><input id="${prefix}-lim-assess" class="login-input" value="${limA}" placeholder="unlimited" style="margin:0;"></div>
+            <div><label class="wiz-label" style="font-size:0.7rem;">Max builds</label><input id="${prefix}-lim-build" class="login-input" value="${limB}" placeholder="unlimited" style="margin:0;"></div>
+          </div>
+          <div class="text-mono dim" style="font-size:0.62rem;margin-top:0.5rem;">Leave a limit blank for unlimited.</div>
+        </div>`;
+    }
+    window.__togglePlanCustom = function(prefix) {
+      const sel = document.getElementById(prefix + '-preset');
+      const block = document.getElementById(prefix + '-custom');
+      if (block) block.style.display = (sel && sel.value === 'custom') ? 'block' : 'none';
+    };
+    function readPlan(prefix) {
+      const preset = (document.getElementById(prefix + '-preset') || {}).value || 'full';
+      if (preset !== 'custom') return { preset };
+      const val = id => (document.getElementById(prefix + '-' + id) || {}).value;
+      const ck = id => !!(document.getElementById(prefix + '-' + id) || {}).checked;
+      const num = s => (s == null || String(s).trim() === '') ? null : Math.max(0, Math.floor(Number(s)) || 0);
+      return { preset: 'custom', capabilities: { assess: ck('cap-assess'), build: ck('cap-build') }, limits: { assessments: num(val('lim-assess')), builds: num(val('lim-build')) } };
+    }
 
     async function adminCall(payload) {
       const { auth } = await import('../firebase/firebase.js');
@@ -41,8 +83,12 @@
       const slug = document.getElementById('org-slug').value.trim();
       const ownerEmail = document.getElementById('org-owner').value.trim();
       if (!name || !ownerEmail) { alert('Organisation name and owner email are required.'); return; }
-      try { await adminCall({ action: 'create-org', name, slug, ownerEmail }); window.location.reload(); }
+      try { await adminCall({ action: 'create-org', name, slug, ownerEmail, plan: readPlan('neworg') }); window.location.reload(); }
       catch (e) { alert('Could not create org: ' + e.message); }
+    };
+    window.__setOrgPlan = async function(orgId) {
+      try { await adminCall({ action: 'set-plan', orgId, plan: readPlan('plan-' + orgId) }); window.location.reload(); }
+      catch (e) { alert('Could not update plan: ' + e.message); }
     };
     window.__addOperator = async function(orgId) {
       const input = document.getElementById('addop-' + orgId);
@@ -82,6 +128,7 @@
     function orgCardHTML(o) {
       const ops = o.operatorEmails || [];
       const owner = String(o.ownerEmail || '').toLowerCase();
+      const sp = PLAN.planSummary(PLAN.resolvePlan(o));
       return `
         <div class="card" style="margin-bottom:1rem;">
           <div style="display:flex;justify-content:space-between;align-items:baseline;gap:1rem;margin-bottom:0.85rem;">
@@ -90,6 +137,7 @@
               <div class="text-mono dim" style="font-size:0.7rem;">${esc(o.id)} &middot; owner ${esc(o.ownerEmail || '—')}</div>
             </div>
             <div style="display:flex;gap:0.6rem;align-items:center;">
+              <span class="pill" title="${esc(sp.detail || sp.label)}">${esc(sp.label)}</span>
               <span class="pill"><span class="dot"></span> ${ops.length} operator${ops.length === 1 ? '' : 's'}</span>
               ${(isSuper && o.id !== 'default') ? `<button class="btn btn-ghost btn-sm" style="color:var(--danger,#C0392B);" onclick="window.__deleteOrg('${o.id}')">Delete org</button>` : ''}
             </div>
@@ -105,6 +153,12 @@
             <input id="addop-${o.id}" class="login-input" type="email" placeholder="operator@email.com" style="flex:1;height:40px;margin:0;">
             <button class="btn btn-primary btn-sm" onclick="window.__addOperator('${o.id}')">Add operator</button>
           </div>
+          ${isSuper ? `
+          <div style="margin-top:0.95rem;padding-top:0.95rem;border-top:1px solid rgba(0,0,0,0.06);">
+            <label class="wiz-label" style="display:block;margin-bottom:0.45rem;">Plan</label>
+            ${planFieldHTML('plan-' + o.id, PLAN.resolvePlan(o))}
+            <div style="margin-top:0.75rem;"><button class="btn btn-outline btn-sm" onclick="window.__setOrgPlan('${o.id}')">Save plan</button></div>
+          </div>` : ''}
         </div>`;
     }
 
@@ -116,6 +170,7 @@
             <div class="wiz-field"><label class="wiz-label">Organisation name</label><input id="org-name" class="login-input" placeholder="e.g. Acme Accelerator" style="margin:0;"></div>
             <div class="wiz-field"><label class="wiz-label">Slug (optional)</label><input id="org-slug" class="login-input" placeholder="acme-accelerator" style="margin:0;"></div>
             <div class="wiz-field" style="grid-column:1/-1;"><label class="wiz-label">Owner email (their lead operator)</label><input id="org-owner" class="login-input" type="email" placeholder="lead@acme.com" style="margin:0;"></div>
+            <div class="wiz-field" style="grid-column:1/-1;"><label class="wiz-label">Plan — what this org can do</label>${planFieldHTML('neworg', null)}</div>
           </div>
           <div style="margin-top:1.1rem;"><button class="btn btn-primary" onclick="window.__createOrg()">Create org</button></div>
         </div>

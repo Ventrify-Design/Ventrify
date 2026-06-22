@@ -7,7 +7,8 @@
  *
  * Actions (body.action):
  *   list-orgs                         → super-admin: all orgs
- *   create-org {name, slug?, ownerEmail, primaryColor?} → super-admin: new org
+ *   create-org {name, slug?, ownerEmail, primaryColor?, plan?} → super-admin: new org
+ *   set-plan {orgId, plan}            → super-admin: change an org's licence
  *   add-operator {orgId, email}       → super-admin OR that org's owner
  *   remove-operator {orgId, email}    → super-admin OR that org's owner
  *
@@ -23,6 +24,34 @@ function ensureAdmin() {
 }
 function slugify(s) {
   return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
+}
+
+// Org licence presets — MUST mirror workspace/plan.js PLAN_PRESETS. The server
+// is the source of truth: clients can suggest a plan, but it's normalised here
+// before it touches Firestore so a tampered request can't grant extra scope.
+const SERVER_PLAN_PRESETS = {
+  'one-off': { capabilities: { assess: true, build: false }, limits: { assessments: 1, builds: 0 } },
+  'assess':  { capabilities: { assess: true, build: false }, limits: { assessments: null, builds: 0 } },
+  'full':    { capabilities: { assess: true, build: true },  limits: { assessments: null, builds: null } },
+};
+function normLimit(v) {
+  if (v == null || v === '' || v === 'unlimited') return null;
+  const n = Math.floor(Number(v));
+  return (isNaN(n) || n < 0) ? null : n;
+}
+function normalisePlan(input) {
+  const preset = (input && input.preset) || 'full';
+  if (preset !== 'custom' && SERVER_PLAN_PRESETS[preset]) {
+    const def = SERVER_PLAN_PRESETS[preset];
+    return { preset, capabilities: { ...def.capabilities }, limits: { ...def.limits } };
+  }
+  const c = (input && input.capabilities) || {};
+  const l = (input && input.limits) || {};
+  return {
+    preset: 'custom',
+    capabilities: { assess: !!c.assess, build: !!c.build },
+    limits: { assessments: normLimit(l.assessments), builds: normLimit(l.builds) },
+  };
 }
 
 module.exports = async (req, res) => {
@@ -58,9 +87,22 @@ module.exports = async (req, res) => {
       await db.doc('organisations/' + id).set({
         name, slug: id, ownerEmail, operatorEmails: [ownerEmail],
         primaryColor: body.primaryColor || '#0036FF',
+        plan: normalisePlan(body.plan),
         createdAt: FieldValue.serverTimestamp()
       });
       res.status(200).json({ ok: true, id });
+      return;
+    }
+
+    if (action === 'set-plan') {
+      // Changing a licence is a platform/billing decision — super-admin only.
+      if (!isSuper) { res.status(403).json({ error: 'forbidden' }); return; }
+      const orgId = String(body.orgId || '').trim();
+      if (!orgId) { res.status(400).json({ error: 'org_required' }); return; }
+      const orgRef = db.doc('organisations/' + orgId);
+      if (!(await orgRef.get()).exists) { res.status(404).json({ error: 'org_not_found' }); return; }
+      await orgRef.update({ plan: normalisePlan(body.plan) });
+      res.status(200).json({ ok: true });
       return;
     }
 

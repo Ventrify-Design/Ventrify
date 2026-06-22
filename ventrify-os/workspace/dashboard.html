@@ -21,6 +21,15 @@
     const A = window.WORKSPACE_AGENTS;
     const { actions, operators, programs, helpers, org } = W;
 
+    // Org licence gating — the "New …" CTA adapts its label to what the org may
+    // create, and is disabled outright when no allowance is left.
+    const Plan = window.VentrifyPlan;
+    const plan = W.plan;
+    const ALLOWED_TYPES = Plan.allowedTypes(plan);
+    const ASSESS_ONLY = ALLOWED_TYPES.length === 1 && ALLOWED_TYPES[0] === 'assessment';
+    const NEW_LABEL = ASSESS_ONLY ? 'New assessment' : 'New engagement';
+    const canCreateAny = ALLOWED_TYPES.some(t => Plan.canCreate(plan, programs, t).allowed);
+
     // Aggregate stats. Action queue is now computed by workflow-orchestrator
     // (agents.js) across the operator's own engagements — same shape as the
     // sample actions, but derived from real engagement state.
@@ -38,25 +47,17 @@
     // ----- Empty-state view: shown when no engagements exist yet ---------
     if (totalPrograms === 0) {
       const orgName = (org && org.name) ? org.name : 'your Workspace';
-      const emptyMain = `
-        <div class="page-header">
-          <div class="page-eyebrow">Portfolio</div>
-          <h1 class="page-title">Welcome to ${orgName}.</h1>
-          <p class="page-sub">No engagements yet. Create your first one &mdash; the platform scaffolds the rest.</p>
-        </div>
-
-        <div class="empty-hero">
-          <div class="empty-hero-body">
-            <div class="empty-hero-eyebrow">First engagement</div>
-            <h2 class="empty-hero-title">Create your first<br>engagement.</h2>
-            <p class="empty-hero-sub">Click &ldquo;New engagement&rdquo;. A five-step wizard captures the brief. The platform sets up the workspace, seeds the agents, opens Phase 0, and slots the venture into this portfolio.</p>
-            <a href="new-engagement.html" class="btn btn-primary btn-lg empty-hero-cta">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Start your first engagement
-            </a>
-          </div>
-
-          <div class="empty-hero-steps">
+      // Assess-only orgs never touch the build flow (founder, hubs, Phase 0),
+      // so the first-run copy describes the deck-in / verdict-out loop instead.
+      const emptyHeaderSub = ASSESS_ONLY
+        ? 'No assessments yet. Run your first one &mdash; upload a deck and Ventrify does the rest.'
+        : 'No engagements yet. Create your first one &mdash; the platform scaffolds the rest.';
+      const emptyEyebrow = ASSESS_ONLY ? 'First assessment' : 'First engagement';
+      const emptyTitle = ASSESS_ONLY ? 'Run your first<br>assessment.' : 'Create your first<br>engagement.';
+      const emptySub = ASSESS_ONLY
+        ? 'Click &ldquo;New assessment&rdquo;, then upload a pitch deck and any supporting docs. Ventrify returns a venture score, the key findings, and how to strengthen it &mdash; all here in the Workspace, with no founder needed.'
+        : 'Click &ldquo;New engagement&rdquo;. A five-step wizard captures the brief. The platform sets up the workspace, seeds the agents, opens Phase 0, and slots the venture into this portfolio.';
+      const buildSteps = `
             <div class="empty-hero-step">
               <span class="empty-hero-step-tag">Brief</span>
               <div class="empty-hero-step-title">Brief intake</div>
@@ -76,7 +77,48 @@
               <span class="empty-hero-step-tag">Live</span>
               <div class="empty-hero-step-title">Portal &amp; portfolio</div>
               <p>The Studio goes live and the engagement appears in your portfolio.</p>
+            </div>`;
+      const assessSteps = `
+            <div class="empty-hero-step">
+              <span class="empty-hero-step-tag">Deck</span>
+              <div class="empty-hero-step-title">Deck &amp; data room</div>
+              <p>Upload the pitch deck plus any supporting docs. Large files are extracted in-browser.</p>
             </div>
+            <div class="empty-hero-step">
+              <span class="empty-hero-step-tag">Research</span>
+              <div class="empty-hero-step-title">Evidence gathering</div>
+              <p>Agents pressure-test the claims, size the market, benchmark competitors, and check the founders.</p>
+            </div>
+            <div class="empty-hero-step">
+              <span class="empty-hero-step-tag">Score</span>
+              <div class="empty-hero-step-title">Investability score</div>
+              <p>A weighted 0&ndash;100 venture score across seven categories, with the gaps called out.</p>
+            </div>
+            <div class="empty-hero-step">
+              <span class="empty-hero-step-tag">Verdict</span>
+              <div class="empty-hero-step-title">Decision-grade verdict</div>
+              <p>Recommendation, thesis, key findings, and how to strengthen it &mdash; ready to act on.</p>
+            </div>`;
+      const emptyMain = `
+        <div class="page-header">
+          <div class="page-eyebrow">Portfolio</div>
+          <h1 class="page-title">Welcome to ${orgName}.</h1>
+          <p class="page-sub">${emptyHeaderSub}</p>
+        </div>
+
+        <div class="empty-hero">
+          <div class="empty-hero-body">
+            <div class="empty-hero-eyebrow">${emptyEyebrow}</div>
+            <h2 class="empty-hero-title">${emptyTitle}</h2>
+            <p class="empty-hero-sub">${emptySub}</p>
+            <a href="new-engagement.html" class="btn btn-primary btn-lg empty-hero-cta">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              ${ASSESS_ONLY ? 'Start your first assessment' : 'Start your first engagement'}
+            </a>
+          </div>
+
+          <div class="empty-hero-steps">
+            ${ASSESS_ONLY ? assessSteps : buildSteps}
           </div>
         </div>
 
@@ -252,10 +294,15 @@
           <p class="page-sub">Every venture running on your Workspace. Click an engagement for the full hub view and timeline.</p>
         </div>
         <div class="page-header-cta">
-          <a href="new-engagement.html" class="btn btn-primary">
+          ${canCreateAny
+            ? `<a href="new-engagement.html" class="btn btn-primary">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            New engagement
-          </a>
+            ${NEW_LABEL}
+          </a>`
+            : `<button class="btn btn-primary" disabled style="opacity:0.5;cursor:not-allowed;" title="Plan limit reached — ask your Ventrify admin to upgrade">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            ${NEW_LABEL}
+          </button>`}
         </div>
       </div>
 
