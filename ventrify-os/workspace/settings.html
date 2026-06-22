@@ -157,15 +157,31 @@
       </div>
     `;
 
+    // Plan & usage — reads the org's licence (capabilities + per-type limits)
+    // from the shared plan model and shows live usage against it.
+    const Plan = window.VentrifyPlan;
+    const plan = W.plan;
+    const presetDef = (Plan.PLAN_PRESETS[plan.preset] || {});
+    function capUsageRow(type, label) {
+      if (!Plan.orgCan(plan, type)) return '';
+      const used = Plan.usageFor(programs, type);
+      const limit = Plan.limitFor(plan, type);
+      const atLimit = limit != null && used >= limit;
+      const right = limit == null ? `${used} <span class="dim">· unlimited</span>` : `${used} of ${limit}`;
+      return `<div class="settings-row"><span class="l">${label}</span><span class="v"${atLimit ? ' style="color:var(--danger,#C0392B);font-weight:600;"' : ''}>${right}</span></div>`;
+    }
     const tierCard = `
       <div class="settings-card">
-        <h3>Licence &amp; capacity</h3>
-        <div class="settings-row"><span class="l">Tier</span><span class="v">${org.tier}</span></div>
-        <div class="settings-row"><span class="l">Operators</span><span class="v">${operators.length} of ${org.operatorSeatsLimit || 'Unlimited'}</span></div>
-        <div class="settings-row"><span class="l">Engagements running</span><span class="v">${programs.length} of ${org.programsLimit || 'Unlimited'}</span></div>
+        <h3>Plan &amp; usage</h3>
+        <div class="settings-row"><span class="l">Plan</span><span class="v">${Plan.planLabel(plan)}</span></div>
+        ${presetDef.blurb ? `<p class="text-small dim" style="margin:0.1rem 0 0.6rem;">${presetDef.blurb}</p>` : ''}
+        ${capUsageRow('assessment', 'Assessments')}
+        ${capUsageRow('build', 'MVP builds')}
+        <div class="settings-row"><span class="l">Operators</span><span class="v">${operators.length}${org.operatorSeatsLimit ? ' of ' + org.operatorSeatsLimit : ''}</span></div>
+        ${org.renewalDate ? `<div class="settings-row"><span class="l">Renews</span><span class="v">${new Date(org.renewalDate).toLocaleDateString()}</span></div>` : ''}
         <div style="margin-top:1rem;display:flex;gap:0.5rem;">
-          <a href="../pricing.html" class="btn btn-outline btn-sm">View pricing</a>
-          <a href="mailto:hello@ventrify.io?subject=Upgrade%20tier" class="btn btn-ghost btn-sm">Talk to us</a>
+          <a href="../pricing.html" target="_blank" class="btn btn-outline btn-sm">View pricing</a>
+          <button type="button" class="btn btn-primary btn-sm" onclick="window.__requestUpgrade()">Request upgrade</button>
         </div>
       </div>
     `;

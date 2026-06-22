@@ -379,7 +379,8 @@
         <div style="display:flex;align-items:flex-start;gap:0.85rem;background:rgba(192,57,43,0.05);border:1px solid rgba(192,57,43,0.2);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1.5rem;">
           <span style="flex-shrink:0;width:24px;height:24px;border-radius:6px;background:var(--danger,#C0392B);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:0.82rem;font-weight:700;">!</span>
           <div style="font-size:0.88rem;color:var(--text);line-height:1.55;">
-            <strong>Plan limit reached.</strong> Your workspace plan includes ${lim} ${noun}${lim === 1 ? '' : 's'}, and ${lim === 1 ? 'it has' : 'they have all'} been used. Ask your Ventrify admin to upgrade the plan to create more.
+            <strong>Plan limit reached.</strong> Your workspace plan includes ${lim} ${noun}${lim === 1 ? '' : 's'}, and ${lim === 1 ? 'it has' : 'they have all'} been used. Upgrade the plan to create more.
+            <div style="margin-top:0.7rem;"><button type="button" class="btn btn-primary btn-sm" onclick="window.__requestUpgrade()">Request upgrade</button></div>
           </div>
         </div>`;
     }

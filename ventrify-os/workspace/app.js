@@ -248,6 +248,46 @@ function shellTopbarConfig() {
   };
 }
 
+// Small global toast (mirrors the settings-toast styling). Used by the upgrade
+// flow and available to any page after the shell loads.
+window.__toast = function(msg, isError) {
+  let t = document.getElementById('ws-toast');
+  if (!t) { t = document.createElement('div'); t.id = 'ws-toast'; t.className = 'settings-toast'; document.body.appendChild(t); }
+  t.innerHTML = `<span style="font-size:0.65rem;">${isError ? '&#9888;' : '✓'}</span> ${escHtml(msg)}`;
+  t.style.background = isError ? 'var(--danger,#C0392B)' : '';
+  t.classList.remove('hide'); t.classList.add('show');
+  clearTimeout(t._h);
+  t._h = setTimeout(() => { t.classList.remove('show'); t.classList.add('hide'); }, isError ? 3400 : 2600);
+};
+
+// Request a licence upgrade — emails the Ventrify team via /api/request-upgrade
+// (live), or opens a prefilled mailto (demo, or if the endpoint isn't ready).
+window.__requestUpgrade = async function(note) {
+  const W = window.WORKSPACE;
+  const org = W && W.org;
+  const orgName = (org && org.name) || 'your organisation';
+  const planLabel = (window.VentrifyPlan && W && W.plan) ? window.VentrifyPlan.planLabel(W.plan) : '';
+  if (!window.confirm(`Send an upgrade request to the Ventrify team for ${orgName}? They'll follow up by email.`)) return;
+  const mailto = () => {
+    const subject = encodeURIComponent(`Upgrade request — ${orgName}`);
+    const lines = [`Organisation: ${orgName}`, planLabel ? `Current plan: ${planLabel}` : '', '', "We'd like to upgrade our Ventrify plan.", note ? `\nNote: ${note}` : ''];
+    window.location.href = `mailto:hello@ventrify.io?subject=${subject}&body=${encodeURIComponent(lines.filter(l => l !== undefined).join('\n'))}`;
+  };
+  if (!W || W.mode !== 'live') { mailto(); return; }
+  try {
+    const { auth } = await import('../firebase/firebase.js');
+    const idToken = auth.currentUser ? await auth.currentUser.getIdToken() : null;
+    const resp = await fetch('/api/request-upgrade', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken, note: note || null })
+    });
+    if (!resp.ok) throw new Error('http ' + resp.status);
+    window.__toast('Upgrade request sent — the Ventrify team will be in touch.');
+  } catch (e) {
+    mailto(); // endpoint not configured / failed → fall back to the mail client
+  }
+};
+
 window.__signOut = async function() {
   if (!window.confirm('Sign out of the Workspace? Your organisation and engagements stay saved — only this session ends.')) return;
   if (FIREBASE_ENABLED) {
