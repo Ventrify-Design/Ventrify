@@ -112,6 +112,58 @@
     return parseLastActivityAge(p.lastActivity);
   }
 
+  // Whole days since an ISO timestamp (null if missing/unparseable).
+  function daysSince(iso) {
+    if (!iso) return null;
+    const t = Date.parse(iso);
+    if (isNaN(t)) return null;
+    return Math.floor((Date.now() - t) / 86400000);
+  }
+
+  // The next action for an ASSESSMENT engagement, mirroring the run banner's
+  // lifecycle: no deck → upload; deck → run; running → in progress; done →
+  // review (while recent); error/needs-attention → republish.
+  function assessmentAction(p) {
+    const rs = p.runState || {};
+    const status = rs.status || 'idle';
+    const hasPitch = !!p.pitchDoc;
+    const hasVerdict = !!(p.assessment && p.assessment.recommendation);
+    const active = ['queued', 'running', 'partial'].includes(status);
+    if (active) {
+      return { id: `act-assess-run-${p.id}`, type: 'assessment-running', urgency: 'low', programId: p.id,
+        title: `Assessment running for ${p.name}`,
+        detail: rs.label ? String(rs.label) : 'The agents are assessing the venture from the uploaded documents.',
+        age: p.lastActivity || 'just now', cta: 'Open assessment', score: 40 };
+    }
+    if (status === 'needs-attention' || status === 'error') {
+      return { id: `act-assess-fix-${p.id}`, type: 'assessment-attention', urgency: 'high', programId: p.id,
+        title: `${p.name} assessment needs attention`,
+        detail: status === 'error' ? 'The last run reported an error. Its results may be saved — try Republish, or re-run.' : 'The assessment finished but needs republishing to this page.',
+        age: p.lastActivity || 'recently', cta: 'Open assessment', score: 88 };
+    }
+    if (status === 'done' && hasVerdict) {
+      const age = daysSince(rs.finishedAt);
+      if (age == null || age <= 7) {
+        const pct = (p.investability && p.investability.pct != null) ? ` · ${p.investability.pct}% investability` : '';
+        return { id: `act-assess-ready-${p.id}`, type: 'assessment-ready', urgency: 'high', programId: p.id,
+          title: `${p.name} assessment is ready to review`,
+          detail: `The verdict is in: ${p.assessment.recommendation}${pct}. Open the verdict, review the findings, and download the deal memo.`,
+          age: p.lastActivity || 'recently', cta: 'Review verdict', score: 90 };
+      }
+      return null; // assumed reviewed after a week — drops off the queue
+    }
+    if (!hasPitch) {
+      return { id: `act-assess-deck-${p.id}`, type: 'assessment-deck', urgency: 'medium', programId: p.id,
+        title: `Upload a deck for ${p.name}`,
+        detail: 'This assessment is waiting on a pitch deck. Upload it (and any supporting docs) to run the assessment.',
+        age: p.lastActivity || 'recently', cta: 'Upload deck', score: 65 };
+    }
+    return { id: `act-assess-go-${p.id}`, type: 'assessment-run', urgency: 'medium', programId: p.id,
+      title: `Run the assessment for ${p.name}`,
+      detail: 'The deck is uploaded. Run the assessment to get a score, key findings, and a verdict.',
+      age: p.lastActivity || 'recently', cta: 'Run assessment', score: 70 };
+  }
+
   // ---- 2. workflow-orchestrator ---------------------------------------
   // Produces a rank-ordered action queue for the operator across all
   // engagements they own. Same shape as the sample-data `actions[]`,
@@ -123,6 +175,14 @@
     owned.forEach(p => {
       const cards = p.cards || {};
       const lastAge = parseLastActivityAge(p.lastActivity);
+
+      // ASSESSMENT engagements have their own lifecycle (deck → run → review),
+      // not the build brief/gate/cards flow — handle them and move on.
+      if (p.engagementType === 'assessment') {
+        const act = assessmentAction(p);
+        if (act) queue.push(act);
+        return;
+      }
 
       // BRIEF overdue
       if (p.briefSubmitted === false) {
