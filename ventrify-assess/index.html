@@ -536,7 +536,13 @@
     .foot-col h4 { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 0.9rem; }
     .foot-col a { display: block; color: rgba(255,255,255,0.6); font-size: 0.9rem; padding: 0.3rem 0; transition: color .2s; }
     .foot-col a:hover { color: #fff; }
-    .foot-bottom { margin-top: 3rem; padding-top: 1.8rem; border-top: 1px solid var(--border-dark); font-size: 0.82rem; color: rgba(255,255,255,0.4); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+    .foot-bottom { margin-top: 3rem; padding-top: 1.8rem; border-top: 1px solid var(--border-dark); font-size: 0.82rem; color: rgba(255,255,255,0.4); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+    .foot-currency { display: flex; align-items: center; gap: 0.5rem; }
+    .foot-cur-label { font-size: 0.72rem; letter-spacing: 0.04em; text-transform: uppercase; color: rgba(255,255,255,0.3); }
+    .currency-selector { display: inline-flex; gap: 2px; }
+    .currency-btn { background: transparent; border: 1px solid transparent; border-radius: 8px; padding: 3px 6px; font-size: 0.95rem; line-height: 1; cursor: pointer; opacity: 0.5; transition: opacity var(--transition), background var(--transition); min-width: 30px; min-height: 30px; }
+    .currency-btn:hover { opacity: 0.85; background: rgba(255,255,255,0.06); }
+    .currency-btn.active { opacity: 1; background: rgba(255,255,255,0.1); border-color: var(--border-dark-strong); }
 
     /* Reveal */
     .reveal { opacity: 0; transform: translateY(24px); transition: opacity .7s var(--ease), transform .7s var(--ease); }
@@ -971,16 +977,29 @@
     <section class="section alt" id="pricing">
       <div class="wrap">
         <div class="section-head center reveal">
-          <span class="s-label">Licensing</span>
-          <h2>License the verdict engine.</h2>
-          <p style="margin-left:auto;margin-right:auto;">An annual licence for your organisation — your team, your pipeline, the same rigorous bar on every deal. The same model as Ventrify OS.</p>
+          <span class="s-label">Pricing</span>
+          <h2>Start with one deal. Or license the engine.</h2>
+          <p style="margin-left:auto;margin-right:auto;">Run Verdict on a single venture for a flat one-off, or license it for your whole pipeline — the same investor-grade bar either way.</p>
         </div>
         <div class="pricing reveal">
+          <div class="price">
+            <span class="ptag">One-off</span>
+            <div class="pname">Single venture assessment</div>
+            <div class="pdesc">One deck in, one full verdict out. No licence, no commitment — perfect for a single deal.</div>
+            <div class="pprice" data-price-gbp="500" data-price-suffix=" one-off"><span class="pcur">£</span>500<span class="per"> one-off</span></div>
+            <ul>
+              <li><svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5"/></svg>One venture, full investor-grade memo</li>
+              <li><svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5"/></svg>Investability score + how to strengthen it</li>
+              <li><svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5"/></svg>Cited research, benchmark &amp; comps</li>
+              <li><svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5"/></svg>Delivered in hours, not weeks</li>
+            </ul>
+            <a href="#cta" id="buyOneoff" class="btn btn-primary">Get your assessment</a>
+          </div>
           <div class="price">
             <span class="ptag">Network</span>
             <div class="pname">Angel network &amp; syndicate</div>
             <div class="pdesc">For angel groups and syndicates assessing deal flow for their members.</div>
-            <div class="pprice">£6,000<span class="per"> / yr</span></div>
+            <div class="pprice" data-price-gbp="6000" data-price-suffix=" / yr"><span class="pcur">£</span>6,000<span class="per"> / yr</span></div>
             <ul>
               <li><svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5"/></svg>Annual org licence + member seats</li>
               <li><svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5"/></svg>Shared workspace &amp; saved history</li>
@@ -994,7 +1013,7 @@
             <span class="ptag">Fund</span>
             <div class="pname">Fund &amp; family office</div>
             <div class="pdesc">For VC funds, scouts and family offices running a live pipeline across a team.</div>
-            <div class="pprice">£24,000<span class="per"> / yr</span></div>
+            <div class="pprice" data-price-gbp="24000" data-price-suffix=" / yr"><span class="pcur">£</span>24,000<span class="per"> / yr</span></div>
             <ul>
               <li><svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5"/></svg>Everything in Network</li>
               <li><svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5"/></svg>Higher volume + team seats</li>
@@ -1003,20 +1022,8 @@
             </ul>
             <a href="#cta" class="btn btn-primary">Talk to us</a>
           </div>
-          <div class="price">
-            <span class="ptag">Platform</span>
-            <div class="pname">Enterprise &amp; white-label</div>
-            <div class="pdesc">For institutions and platforms embedding diligence into their own stack.</div>
-            <div class="pprice">Custom</div>
-            <ul>
-              <li><svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5"/></svg>Unlimited assessments</li>
-              <li><svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5"/></svg>White-label + full API</li>
-              <li><svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5"/></svg>SSO + dedicated support</li>
-            </ul>
-            <a href="#cta" class="btn btn-outline">Talk to us</a>
-          </div>
         </div>
-        <p class="price-note">Indicative annual licence figures — final pricing on enquiry.</p>
+        <p class="price-note">The one-off is a single venture assessment — pay once, no licence. Annual licence figures are indicative; final pricing on enquiry. White-label &amp; API available on request.</p>
       </div>
     </section>
 
@@ -1033,7 +1040,7 @@
           <details class="qa"><summary>What files can I upload?<span class="plus">+</span></summary><p>Pitch decks, financial models and spreadsheets, and documents — including scanned and signed legal files (cap tables, agreements, incorporation docs) that most tools silently drop. If a document can't be read, it's flagged for review, never scored as missing.</p></details>
           <details class="qa"><summary>Is it just an AI summary of the deck?<span class="plus">+</span></summary><p>No. It does the work an associate would — live web research, a rebuilt market size, comparable rounds, founder checks against public record, and a weighted score — then writes a memo with a recommendation you can defend.</p></details>
           <details class="qa"><summary>What is the Investability Score?<span class="plus">+</span></summary><p>A weighted 0–100 composite across seven dimensions and 35 sub-signals, stage-calibrated so an early idea and a Series A are judged on the right bar. The radar also shows the venture's potential — where it could reach by closing the gaps the memo identifies.</p></details>
-          <details class="qa"><summary>How does licensing work?<span class="plus">+</span></summary><p>Verdict is licensed annually to your organisation — the same model as Ventrify OS — with member or team seats and the same rigorous bar on every deal. Higher tiers add your own rubric weights, white-label and API. Final pricing is on enquiry.</p></details>
+          <details class="qa"><summary>Do I have to license it, or can I just try one deal?<span class="plus">+</span></summary><p>Either. Run a single venture as a one-off — pay once, no licence — or license Verdict annually for your whole organisation with member or team seats and the same rigorous bar on every deal. Annual licences can add your own rubric weights; white-label and API are available on request. Final licence pricing is on enquiry.</p></details>
         </div>
       </div>
     </section>
@@ -1098,6 +1105,7 @@
       </div>
       <div class="foot-bottom">
         <span>© 2026 Ventrify. All rights reserved.</span>
+        <div class="foot-currency"><span class="foot-cur-label">Prices in</span></div>
         <span>Ventrify · Verdict</span>
       </div>
     </div>
@@ -1157,6 +1165,17 @@
     // blocks server-side on the free plan).
     const WEB3FORMS_KEY = '0c7e6dc6-a0b0-4dcf-9317-8899e8884f8e';
     const FORM_ENDPOINT = WEB3FORMS_KEY ? 'https://api.web3forms.com/submit' : '';
+
+    // One-off "Get your assessment" → Stripe Payment Link.
+    // Paste your Stripe Payment Link URL between the quotes once it's created.
+    // Until then the button keeps its default href="#cta" and scrolls to the
+    // enquiry form — so it always does something sensible.
+    const STRIPE_PAYMENT_LINK = '';
+    (function () {
+      var buy = document.getElementById('buyOneoff');
+      if (buy && STRIPE_PAYMENT_LINK) buy.href = STRIPE_PAYMENT_LINK;
+    })();
+
     const form = document.getElementById('enquiryForm');
     const done = document.getElementById('enquiryDone');
     // Graceful fallback: if the API ever fails (or no endpoint is configured),
@@ -1188,5 +1207,6 @@
       }
     });
   </script>
+  <script src="scripts/currency.js" defer></script>
 </body>
 </html>
