@@ -1044,6 +1044,7 @@
         <h2>License Verdict for your firm.</h2>
         <p>Bring investor-grade diligence to your whole pipeline — every deal, the same bar, traceable to every source. Tell us about your firm and we'll set up a demo with a real deck.</p>
         <form class="enquiry" id="enquiryForm" novalidate>
+          <input type="checkbox" name="botcheck" tabindex="-1" aria-hidden="true" style="display:none;">
           <div class="field"><input type="text" name="name" placeholder="Your name" required autocomplete="name"></div>
           <div class="field"><input type="email" name="email" placeholder="Work email" required autocomplete="email"></div>
           <div class="field"><input type="text" name="org" placeholder="Organisation" autocomplete="organization"></div>
@@ -1152,9 +1153,10 @@
 
     // Enquiry form — submits via Web3Forms (no backend) if a key is set, else
     // falls back to a pre-filled email. In-page success either way.
-    // ↓ Paste your Web3Forms access key here (it's public + safe to commit).
-    //   Get one free at web3forms.com; it just emails submissions to hello@ventrify.io.
-    const WEB3FORMS_KEY = '';
+    // Web3Forms access key (public — same one used by contact.html; emails
+    // submissions to the Ventrify inbox). Must be sent client-side (Web3Forms
+    // blocks server-side on the free plan).
+    const WEB3FORMS_KEY = '0c7e6dc6-a0b0-4dcf-9317-8899e8884f8e';
     const FORM_ENDPOINT = WEB3FORMS_KEY ? 'https://api.web3forms.com/submit' : '';
     const form = document.getElementById('enquiryForm');
     const done = document.getElementById('enquiryDone');
