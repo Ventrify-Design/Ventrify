@@ -1,9 +1,10 @@
 /**
- * POST /api/manage-operator — add or remove an operator on an org (operator-only).
+ * POST /api/manage-operator — add or remove an operator on an org (owner/super-admin only).
  *
  * Operators are the list organisations/{orgId}.operatorEmails — the multi-tenant
- * boundary (findOperatorOrg resolves an operator's org from it). Any operator of
- * the org may manage the team (verified against operatorEmails). On add we also
+ * boundary (findOperatorOrg resolves an operator's org from it). Only the org OWNER
+ * (org.ownerEmail) or a platform super-admin (app/config.superAdminEmails) may manage
+ * the team — an invited operator cannot add or remove colleagues. On add we also
  * email a branded one-click Workspace sign-in link (Firebase magic link + Resend),
  * so the new operator can log straight in. Email is best-effort — access is granted
  * the moment the email lands in operatorEmails regardless.
@@ -53,6 +54,7 @@ module.exports = async (req, res) => {
     ensureAdmin();
     const decoded = await admin.auth().verifyIdToken(idToken);
     const caller = (decoded.email || '').toLowerCase();
+    if (!caller) { res.status(401).json({ error: 'no_token' }); return; }   // a token with no email can't be authorized
     const db = admin.firestore();
     const FieldValue = admin.firestore.FieldValue;
 
@@ -61,7 +63,12 @@ module.exports = async (req, res) => {
     if (!snap.exists) { res.status(404).json({ error: 'org_not_found' }); return; }
     const org = snap.data();
     const ops = (org.operatorEmails || []).map(e => String(e).toLowerCase());
-    if (!ops.includes(caller)) { res.status(403).json({ error: 'forbidden' }); return; }
+    const ownerEmail = String(org.ownerEmail || '').trim().toLowerCase();
+    // Only the org OWNER or a platform super-admin may manage the team — NOT every
+    // operator. An invited teammate must never be able to add or remove colleagues.
+    const cfg = (await db.doc('app/config').get()).data() || {};
+    const isSuper = (cfg.superAdminEmails || []).map(e => String(e).toLowerCase()).includes(caller);
+    if (caller !== ownerEmail && !isSuper) { res.status(403).json({ error: 'forbidden' }); return; }
 
     let emailSent = false;
     if (action === 'add') {
@@ -85,6 +92,7 @@ module.exports = async (req, res) => {
       }
     } else {
       if (!ops.includes(email)) { res.status(404).json({ error: 'not_an_operator' }); return; }
+      if (email === ownerEmail) { res.status(409).json({ error: 'cannot_remove_owner' }); return; }   // the owner can't be removed via team management
       if (ops.length <= 1) { res.status(409).json({ error: 'last_operator' }); return; }   // never orphan the org
       await ref.update({ operatorEmails: FieldValue.arrayRemove(email), updatedAt: FieldValue.serverTimestamp() });
     }

@@ -22,6 +22,11 @@
     const isLive = W.mode === 'live';
     const orgName = (org && org.name) || 'your Workspace';
     const seatsLimit = (org && org.operatorSeatsLimit) || 'Unlimited';
+    // Team management is owner/super-admin only (mirrors the API enforcement). Demo
+    // mode is a local sandbox, so allow it there.
+    const me = (helpers.currentOperator && helpers.currentOperator()) || {};
+    const ownerEmail = String((org && org.ownerEmail) || '').toLowerCase();
+    const canManage = !isLive || !!W.isSuperAdmin || (ownerEmail !== '' && String(me.email || '').toLowerCase() === ownerEmail);
 
     function toast(msg, isError) {
       let t = document.getElementById('team-toast');
@@ -31,7 +36,7 @@
       t.classList.remove('hide'); t.classList.add('show');
       clearTimeout(t._h); t._h = setTimeout(() => { t.classList.remove('show'); t.classList.add('hide'); }, isError ? 3200 : 1800);
     }
-    const ERR = { already_operator: 'That email is already an operator.', last_operator: 'You can’t remove the last operator.', bad_email: 'Enter a valid email address.', forbidden: 'You don’t have permission to manage the team.', not_an_operator: 'That person isn’t an operator.' };
+    const ERR = { already_operator: 'That email is already an operator.', last_operator: 'You can’t remove the last operator.', bad_email: 'Enter a valid email address.', forbidden: 'Only the workspace owner can manage the team.', not_an_operator: 'That person isn’t an operator.', cannot_remove_owner: 'The workspace owner can’t be removed.' };
 
     async function apiOperator(action, email) {
       const { auth } = await import('../firebase/firebase.js');
@@ -70,7 +75,7 @@
     function operatorCardHTML(op) {
       const assignedPrograms = helpers.programsForOperator(op.id);
       const programNames = assignedPrograms.map(p => p.name).join(' &middot; ') || '<span class="dim">No engagements assigned</span>';
-      const canRemove = isLive && !op.isCurrentUser && operators.length > 1;
+      const canRemove = canManage && isLive && !op.isCurrentUser && String(op.email || '').toLowerCase() !== ownerEmail && operators.length > 1;
       return `
         <div class="team-card">
           <div class="team-card-head">
@@ -103,7 +108,7 @@
             <div class="section-title">Active operators &middot; ${operators.length}</div>
             <div class="section-sub">Seats used: ${operators.length} of ${seatsLimit}</div>
           </div>
-          <button class="btn btn-primary btn-sm" onclick="window.__toggleInvite()">Invite operator</button>
+          ${canManage ? `<button class="btn btn-primary btn-sm" onclick="window.__toggleInvite()">Invite operator</button>` : ''}
         </div>
 
         <div id="invite-form" class="team-invite" style="display:none;">
