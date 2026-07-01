@@ -21,7 +21,6 @@
     const { operators, org, helpers } = W;
     const isLive = W.mode === 'live';
     const orgName = (org && org.name) || 'your Workspace';
-    const seatsLimit = (org && org.operatorSeatsLimit) || 'Unlimited';
     // Team management is owner/super-admin only (mirrors the API enforcement). Demo
     // mode is a local sandbox, so allow it there.
     const me = (helpers.currentOperator && helpers.currentOperator()) || {};
@@ -64,7 +63,7 @@
       } catch (e) { toast(String(e.message || e), true); if (btn) { btn.disabled = false; btn.textContent = 'Send invite'; } }
     };
     window.__removeOperator = async function(email) {
-      if (!window.confirm(`Remove ${email} from the Workspace? They lose access immediately.`)) return;
+      if (!(await window.__confirm({ title: 'Remove operator?', message: `${email} loses Workspace access immediately.`, confirmLabel: 'Remove', danger: true }))) return;
       try {
         if (isLive) await apiOperator('remove', email);
         else W.storage.writeJSON('workspace.operators', W.storage.readJSON('workspace.operators', []).filter(o => (o.email || '').toLowerCase() !== email));
@@ -106,7 +105,7 @@
         <div class="section-head">
           <div>
             <div class="section-title">Active operators &middot; ${operators.length}</div>
-            <div class="section-sub">Seats used: ${operators.length} of ${seatsLimit}</div>
+            <div class="section-sub">${operators.length} operator${operators.length === 1 ? '' : 's'} with Workspace access</div>
           </div>
           ${canManage ? `<button class="btn btn-primary btn-sm" onclick="window.__toggleInvite()">Invite operator</button>` : ''}
         </div>
@@ -118,7 +117,7 @@
         </div>
 
         ${operators.length === 0
-          ? `<div class="card" style="text-align:center;padding:2.5rem 2rem;color:var(--text-muted,#656565);font-size:0.9rem;">No operators yet. <a href="setup.html" style="color:var(--brand-primary,var(--primary,#0036FF));">Run setup</a> to add yourself as the first operator.</div>`
+          ? `<div class="card" style="text-align:center;padding:2.5rem 2rem;color:var(--text-muted,#656565);font-size:0.9rem;">No operators yet.</div>`
           : `<div class="team-grid">${operators.map(operatorCardHTML).join('')}</div>`
         }
       </div>

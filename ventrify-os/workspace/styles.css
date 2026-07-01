@@ -167,9 +167,9 @@ code { font-family: var(--font-mono); }
   border: 1px solid rgba(0, 0, 0, 0.04);
 }
 .pill-primary { background: rgba(var(--primary-rgb), 0.08); color: var(--primary); border-color: rgba(var(--primary-rgb), 0.12); }
-.pill-success { background: rgba(0, 184, 114, 0.08); color: var(--success); border-color: rgba(0, 184, 114, 0.15); }
-.pill-warning { background: rgba(230, 169, 26, 0.1); color: var(--warning); border-color: rgba(230, 169, 26, 0.18); }
-.pill-danger { background: rgba(224, 57, 74, 0.08); color: var(--danger); border-color: rgba(224, 57, 74, 0.15); }
+.pill-success { background: rgba(var(--success-rgb), 0.08); color: var(--success); border-color: rgba(var(--success-rgb), 0.15); }
+.pill-warning { background: rgba(var(--warning-rgb), 0.1); color: var(--warning); border-color: rgba(var(--warning-rgb), 0.18); }
+.pill-danger { background: rgba(var(--danger-rgb), 0.08); color: var(--danger); border-color: rgba(var(--danger-rgb), 0.15); }
 .pill .dot {
   width: 6px;
   height: 6px;
@@ -179,9 +179,9 @@ code { font-family: var(--font-mono); }
 }
 
 /* Health indicators */
-.health-on-track { color: var(--success); background: rgba(0,184,114,0.08); border-color: rgba(0,184,114,0.15); }
-.health-attention { color: var(--warning); background: rgba(230,169,26,0.1); border-color: rgba(230,169,26,0.18); }
-.health-stuck { color: var(--danger); background: rgba(224,57,74,0.08); border-color: rgba(224,57,74,0.15); }
+.health-on-track { color: var(--success); background: rgba(var(--success-rgb),0.08); border-color: rgba(var(--success-rgb),0.15); }
+.health-attention { color: var(--warning); background: rgba(var(--warning-rgb),0.1); border-color: rgba(var(--warning-rgb),0.18); }
+.health-stuck { color: var(--danger); background: rgba(var(--danger-rgb),0.08); border-color: rgba(var(--danger-rgb),0.15); }
 
 
 /* Progress bar */
@@ -799,8 +799,8 @@ code { font-family: var(--font-mono); }
 }
 .action-icon.type-gate-ready { background: rgba(var(--primary-rgb), 0.08); color: var(--primary); }
 .action-icon.type-cards-to-review { background: rgba(122, 63, 255, 0.08); color: #7A3FFF; }
-.action-icon.type-stuck-program { background: rgba(224, 57, 74, 0.08); color: var(--danger); }
-.action-icon.type-qa-flag { background: rgba(230, 169, 26, 0.1); color: var(--warning); }
+.action-icon.type-stuck-program { background: rgba(var(--danger-rgb), 0.08); color: var(--danger); }
+.action-icon.type-qa-flag { background: rgba(var(--warning-rgb), 0.1); color: var(--warning); }
 .action-icon.type-l3-rebuild { background: rgba(0, 184, 160, 0.08); color: #00B8A0; }
 .action-icon.type-intake { background: var(--surface-alt); color: var(--text-muted); }
 .action-body { min-width: 0; }
@@ -897,8 +897,8 @@ code { font-family: var(--font-mono); }
   box-shadow: var(--shadow-sm);
   transform: translateY(-1px);
 }
-.hub-card.signed { background: linear-gradient(180deg, rgba(0,184,114,0.04), transparent); }
-.hub-card.awaiting-founder { border-color: rgba(230, 169, 26, 0.4); background: linear-gradient(180deg, rgba(230,169,26,0.04), transparent); }
+.hub-card.signed { background: linear-gradient(180deg, rgba(var(--success-rgb),0.04), transparent); }
+.hub-card.awaiting-founder { border-color: rgba(var(--warning-rgb), 0.4); background: linear-gradient(180deg, rgba(var(--warning-rgb),0.04), transparent); }
 .hub-card.ready-to-sign { border-color: rgba(var(--primary-rgb), 0.4); background: linear-gradient(180deg, rgba(var(--primary-rgb), 0.04), transparent); }
 .hub-card-head {
   display: flex;
@@ -924,9 +924,9 @@ code { font-family: var(--font-mono); }
 }
 .hub-card-status.pending { background: var(--surface-alt); color: var(--text-subtle); }
 .hub-card-status.in-progress { background: rgba(var(--primary-rgb), 0.08); color: var(--primary); }
-.hub-card-status.awaiting-founder { background: rgba(230, 169, 26, 0.1); color: var(--warning); }
+.hub-card-status.awaiting-founder { background: rgba(var(--warning-rgb), 0.1); color: var(--warning); }
 .hub-card-status.ready-to-sign { background: rgba(var(--primary-rgb), 0.12); color: var(--primary); }
-.hub-card-status.signed { background: rgba(0, 184, 114, 0.08); color: var(--success); }
+.hub-card-status.signed { background: rgba(var(--success-rgb), 0.08); color: var(--success); }
 .hub-card-detail {
   font-size: 0.86rem;
   color: var(--text-muted);
@@ -1654,7 +1654,7 @@ code { font-family: var(--font-mono); }
   align-items: center;
   justify-content: center;
   margin-bottom: 1.5rem;
-  box-shadow: 0 12px 28px rgba(0, 184, 114, 0.25);
+  box-shadow: 0 12px 28px rgba(var(--success-rgb), 0.25);
 }
 .success-title {
   font-size: 2rem;

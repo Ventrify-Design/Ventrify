@@ -25,8 +25,7 @@
       window.renderShell(`
         <div style="text-align:center;padding:5rem 2rem;">
           <h1 style="font-size:1.4rem;margin-bottom:0.5rem;color:var(--text,#141414);">No organisation configured</h1>
-          <p style="margin-bottom:1.5rem;color:var(--text-muted,#656565);">Run the first-time setup to create your organisation before opening settings.</p>
-          <a href="setup.html" class="btn btn-primary">Open setup</a>
+          <p style="margin-bottom:1.5rem;color:var(--text-muted,#656565);">Your organisation is set up by the Ventrify team. Contact your administrator to get Workspace access.</p>
         </div>
       `);
       throw new Error('halt-render');
@@ -177,8 +176,7 @@
         ${presetDef.blurb ? `<p class="text-small dim" style="margin:0.1rem 0 0.6rem;">${presetDef.blurb}</p>` : ''}
         ${capUsageRow('assessment', 'Assessments')}
         ${capUsageRow('build', 'MVP builds')}
-        <div class="settings-row"><span class="l">Operators</span><span class="v">${operators.length}${org.operatorSeatsLimit ? ' of ' + org.operatorSeatsLimit : ''}</span></div>
-        ${org.renewalDate ? `<div class="settings-row"><span class="l">Renews</span><span class="v">${new Date(org.renewalDate).toLocaleDateString()}</span></div>` : ''}
+        <div class="settings-row"><span class="l">Operators</span><span class="v">${operators.length}</span></div>
         <div style="margin-top:1rem;display:flex;gap:0.5rem;">
           <a href="../pricing.html" target="_blank" class="btn btn-outline btn-sm">View pricing</a>
           <button type="button" class="btn btn-primary btn-sm" onclick="window.__requestUpgrade()">Request upgrade</button>
@@ -283,7 +281,7 @@
       } catch (err) { flashSaved(String((err && err.message) || err), true); }
     });
     window.__removeLogo = async function() {
-      if (!window.confirm('Remove the logo? The Workspace will fall back to your initials.')) return;
+      if (!(await window.__confirm({ title: 'Remove the logo?', message: 'The Workspace will fall back to your initials.', confirmLabel: 'Remove', danger: true }))) return;
       try { Object.assign(org, { logoUrl: null }); await persistPatch({ logoUrl: null }); window.location.reload(); }
       catch (err) { flashSaved(String((err && err.message) || err), true); }
     };

@@ -98,7 +98,7 @@
       catch (e) { alert('Could not add operator: ' + e.message); }
     };
     window.__removeOperator = async function(orgId, email) {
-      if (!window.confirm('Remove ' + email + ' as an operator? They lose Workspace access.')) return;
+      if (!(await window.__confirm({ title: 'Remove operator?', message: email + ' loses Workspace access.', confirmLabel: 'Remove', danger: true }))) return;
       try { await adminCall({ action: 'remove-operator', orgId, email }); window.location.reload(); }
       catch (e) { alert('Could not remove operator: ' + e.message); }
     };

@@ -240,8 +240,6 @@ function shellTopbarConfig() {
   return {
     lockup: [osItem, partnerItem],
     utility: [
-      { label: 'Docs', href: '#' },
-      { label: 'Help', href: '#' },
       { label: 'Sign out', href: '#', onclick: 'event.preventDefault(); window.__signOut();' },
     ],
     avatar: { initials: opAvatar ? opAvatar.avatar : '?', bg: opAvatar ? opAvatar.avatarColor : '#999', title: opAvatar ? opAvatar.name : 'No operator' },
@@ -260,6 +258,52 @@ window.__toast = function(msg, isError) {
   t._h = setTimeout(() => { t.classList.remove('show'); t.classList.add('hide'); }, isError ? 3400 : 2600);
 };
 
+// Branded confirm dialog — replaces window.confirm(). Returns a Promise<boolean>.
+// Uses the shared .modal-scrim/.modal-card styles, so every destructive action gets a
+// consistent on-brand dialog instead of the native pop-up (which leaks the origin URL
+// on some mobile browsers). Available to every page + inline handler as window.__confirm.
+window.__confirm = function(opts) {
+  opts = opts || {};
+  const danger = !!opts.danger;
+  return new Promise((resolve) => {
+    const scrim = document.createElement('div');
+    scrim.className = 'modal-scrim';
+    scrim.setAttribute('role', 'dialog');
+    scrim.setAttribute('aria-modal', 'true');
+    scrim.innerHTML = `<div class="modal-card" style="max-width:430px;">
+      <h2 style="font-size:1.1rem;font-weight:700;letter-spacing:-0.01em;margin:0 0 0.5rem;color:var(--text,#141414);">${escHtml(opts.title || 'Are you sure?')}</h2>
+      ${opts.message ? `<p style="margin:0 0 1.35rem;font-size:0.92rem;line-height:1.6;color:var(--text-muted,#656565);white-space:pre-line;">${escHtml(opts.message)}</p>` : '<div style="height:0.5rem;"></div>'}
+      <div style="display:flex;justify-content:flex-end;gap:0.6rem;">
+        <button type="button" data-act="cancel" class="btn btn-ghost btn-sm">${escHtml(opts.cancelLabel || 'Cancel')}</button>
+        <button type="button" data-act="ok" class="btn btn-sm ${danger ? '' : 'btn-primary'}"${danger ? ' style="background:var(--danger,#C42233);color:#fff;border-color:var(--danger,#C42233);"' : ''}>${escHtml(opts.confirmLabel || 'Confirm')}</button>
+      </div>
+    </div>`;
+    document.body.appendChild(scrim);
+    requestAnimationFrame(() => scrim.classList.add('open'));
+    const close = (val) => {
+      document.removeEventListener('keydown', onKey);
+      scrim.classList.remove('open');
+      setTimeout(() => { if (scrim.parentNode) scrim.parentNode.removeChild(scrim); }, 220);
+      resolve(val);
+    };
+    const onKey = (e) => {
+      if (e.key === 'Escape') { close(false); return; }
+      if (e.key !== 'Enter') return;
+      // Enter follows the FOCUSED button (danger dialogs focus Cancel), so a reflexive
+      // Enter never fires a destructive action — matching native confirm() safety.
+      const act = document.activeElement && document.activeElement.closest && document.activeElement.closest('[data-act]');
+      close(act ? act.getAttribute('data-act') === 'ok' : !danger);
+    };
+    document.addEventListener('keydown', onKey);
+    scrim.addEventListener('click', (e) => {
+      if (e.target === scrim) return close(false);
+      const b = e.target.closest('[data-act]'); if (b) close(b.getAttribute('data-act') === 'ok');
+    });
+    const fb = scrim.querySelector(danger ? '[data-act="cancel"]' : '[data-act="ok"]');
+    if (fb) fb.focus();
+  });
+};
+
 // Request a licence upgrade — emails the Ventrify team via /api/request-upgrade
 // (live), or opens a prefilled mailto (demo, or if the endpoint isn't ready).
 window.__requestUpgrade = async function(note) {
@@ -267,7 +311,7 @@ window.__requestUpgrade = async function(note) {
   const org = W && W.org;
   const orgName = (org && org.name) || 'your organisation';
   const planLabel = (window.VentrifyPlan && W && W.plan) ? window.VentrifyPlan.planLabel(W.plan) : '';
-  if (!window.confirm(`Send an upgrade request to the Ventrify team for ${orgName}? They'll follow up by email.`)) return;
+  if (!(await window.__confirm({ title: 'Request an upgrade?', message: `We'll send an upgrade request to the Ventrify team for ${orgName}. They'll follow up by email.`, confirmLabel: 'Send request' }))) return;
   const mailto = () => {
     const subject = encodeURIComponent(`Upgrade request — ${orgName}`);
     const lines = [`Organisation: ${orgName}`, planLabel ? `Current plan: ${planLabel}` : '', '', "We'd like to upgrade our Ventrify plan.", note ? `\nNote: ${note}` : ''];
@@ -289,7 +333,7 @@ window.__requestUpgrade = async function(note) {
 };
 
 window.__signOut = async function() {
-  if (!window.confirm('Sign out of the Workspace? Your organisation and engagements stay saved — only this session ends.')) return;
+  if (!(await window.__confirm({ title: 'Sign out?', message: 'Your organisation and engagements stay saved — only this session ends.', confirmLabel: 'Sign out' }))) return;
   if (FIREBASE_ENABLED) {
     try { const { signOutUser } = await import('../firebase/auth.js'); await signOutUser(); } catch (e) {}
   }
@@ -346,8 +390,8 @@ window.__toggleDemoMode = function() {
   setDemoMode(next);
   window.location.reload();
 };
-window.__resetWorkspace = function() {
-  if (!window.confirm('Clear all workspace data (org, programs, operators, actions) and reload?')) return;
+window.__resetWorkspace = async function() {
+  if (!(await window.__confirm({ title: 'Clear all workspace data?', message: 'This clears the org, programs, operators and actions from this browser, then reloads.', confirmLabel: 'Clear data', danger: true }))) return;
   ['workspace.organisation', 'workspace.operators', 'workspace.programs',
    'workspace.actions', 'workspace.currentOperator', 'workspace.demoMode'
   ].forEach(k => localStorage.removeItem(k));
