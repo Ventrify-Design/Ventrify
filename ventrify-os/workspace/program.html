@@ -40,6 +40,7 @@
     import { renderCardBody, ensureCardStyles } from '../shared/card-format.js';
     import { renderDataRoom, hydrateDataRoom, ensureHubStyles } from '../shared/hub-view.js';
     import { renderVSSScorecard, renderStrengthenSuggestions, ensureInvestabilityStyles, bandColor } from '../shared/investability-view.js';
+    import { MAX_POSSIBLE } from '../shared/vss-rubric.js';
     import { renderWelcomePack, ensureWelcomePackStyles } from '../shared/welcome-pack-view.js';
     import { esc as escBrief } from '../shared/util.js';
     await window.WORKSPACE_READY;
@@ -446,6 +447,33 @@
     // ---------------- Run banner (live agent-run status) ----------------
     // The single control for the research run. Locked until the brief is in;
     // then trigger → queued → running (live step/totalSteps) → done/error.
+    // Client-side run timing + stall detection. runState carries requestedAt (and
+    // startedAt once the runner picks it up) as ISO strings. We surface elapsed time
+    // so a multi-minute run never looks like a hang, and flag a likely stall (queued
+    // and never picked up, or running far past the window) with an escape hatch — the
+    // out-of-repo runner writes no client-visible error if it crashes mid-run, so
+    // without this the operator can hit a permanent spinner they can't re-run.
+    function runAge(rs) {
+      const t = rs && (rs.startedAt || rs.requestedAt);
+      if (!t) return null;
+      const ms = Date.now() - new Date(t).getTime();
+      return ms >= 0 ? ms : null;
+    }
+    function fmtElapsed(ms) {
+      if (ms == null) return '';
+      const m = Math.floor(ms / 60000);
+      if (m < 1) return 'just started';
+      if (m < 60) return m + 'm elapsed';
+      return Math.floor(m / 60) + 'h ' + (m % 60) + 'm elapsed';
+    }
+    function runStalled(rs) {
+      const ms = runAge(rs); if (ms == null) return false;
+      const s = (rs && rs.status) || '';
+      if (s === 'queued') return ms > 3 * 60000;                 // never picked up by the runner
+      if (s === 'running' || s === 'partial') return ms > 20 * 60000; // hung far past the window
+      return false;
+    }
+
     function runBannerHTML(rs, p) {
       const briefIn = p.briefSubmitted !== false && !!p.brief;
       const status = (rs && rs.status) || 'idle';
@@ -466,12 +494,17 @@
         const step = rs.step || 0;
         const pct = total ? Math.round((step / total) * 100) : (status === 'queued' ? 6 : 14);
         const label = rs.label || (status === 'queued' ? 'Queued &mdash; waiting for the engagement runner&hellip;' : 'Running research agents&hellip;');
-        const counter = total ? `<span class="text-mono dim" style="font-size:0.8rem;">&middot; ${step}/${total} sections</span>` : '';
+        const elapsed = fmtElapsed(runAge(rs));
+        const counter = `<span class="text-mono dim" style="font-size:0.8rem;">${total ? `&middot; ${step}/${total} sections` : ''}${elapsed ? ` &middot; ${elapsed}` : ''}</span>`;
+        const stalled = runStalled(rs);
+        const stallNote = stalled ? `<div class="run-banner-sub" style="color:#C77700;margin-top:0.55rem;">&#9888;&nbsp; This is taking longer than usual${status === 'queued' ? ' to start' : ''}. The run may have stalled &mdash; you can re-run it.</div>` : '';
+        const stallBtn = stalled ? `<div style="margin-top:0.6rem;"><button class="btn btn-outline btn-sm" onclick="window.__runResearch('${p.id}')">&#8635;&nbsp; Re-run research</button></div>` : '';
         return `<div class="run-banner run-running">
           <div class="run-banner-main">
             <div class="run-banner-title"><span class="run-spinner"></span> ${status === 'queued' ? 'Queued' : 'Research running'} ${counter}</div>
             <div class="run-banner-sub">${escBrief(label)}</div>
             <div class="progress" style="margin-top:0.75rem;"><div class="progress-bar" style="width:${pct}%;transition:width .5s ease;"></div></div>
+            ${stallNote}${stallBtn}
           </div>
         </div>`;
       }
@@ -634,8 +667,12 @@
       if (active) {
         const total = rs.totalSteps || 0, step = rs.step || 0;
         const pct = total ? Math.round((step / total) * 100) : (status === 'queued' ? 6 : 14);
-        const counter = total ? `<span class="text-mono dim" style="font-size:0.8rem;">&middot; ${step}/${total}</span>` : '';
-        return `<div class="run-banner run-running"><div class="run-banner-main"><div class="run-banner-title"><span class="run-spinner"></span> ${status === 'queued' ? 'Queued' : 'Assessing'} ${counter}</div><div class="run-banner-sub">${escBrief(rs.label || 'Running the assessment…')}</div><div class="progress" style="margin-top:0.75rem;"><div class="progress-bar" style="width:${pct}%;transition:width .5s ease;"></div></div></div></div>`;
+        const elapsed = fmtElapsed(runAge(rs));
+        const counter = `<span class="text-mono dim" style="font-size:0.8rem;">${total ? `&middot; ${step}/${total}` : ''}${elapsed ? ` &middot; ${elapsed}` : ''}</span>`;
+        const stalled = runStalled(rs);
+        const stallNote = stalled ? `<div class="run-banner-sub" style="color:#C77700;margin-top:0.55rem;">&#9888;&nbsp; This is taking longer than usual${status === 'queued' ? ' to start' : ''}. The run may have stalled &mdash; you can re-run it.</div>` : '';
+        const stallBtn = stalled ? `<div style="margin-top:0.6rem;"><button class="btn btn-outline btn-sm" onclick="window.__triggerRun('${p.id}','assess')">&#8635;&nbsp; Re-run assessment</button></div>` : '';
+        return `<div class="run-banner run-running"><div class="run-banner-main"><div class="run-banner-title"><span class="run-spinner"></span> ${status === 'queued' ? 'Queued' : 'Assessing'} ${counter}</div><div class="run-banner-sub">${escBrief(rs.label || 'Running the assessment…')}</div><div class="progress" style="margin-top:0.75rem;"><div class="progress-bar" style="width:${pct}%;transition:width .5s ease;"></div></div>${stallNote}${stallBtn}</div></div>`;
       }
       let note;
       // recoverable = the run finished its work but the display didn't land. The
@@ -688,11 +725,11 @@
       let scoreHTML = '';
       if (snap && (snap.pct != null || snap.composite != null)) {
         const bc = bandColor(snap.band);
-        const pct = snap.pct != null ? snap.pct : Math.round((snap.composite / (snap.maxPossible || 35)) * 100);
+        const pct = snap.pct != null ? snap.pct : Math.round((snap.composite / (snap.maxPossible || MAX_POSSIBLE)) * 100);
         const bandWord = String(snap.bandLabel || snap.band || '').split(/\s*[—–-]\s*|\s+/)[0];
         scoreHTML = `<div class="vh-score" style="--bc:${bc};">
           <div class="vh-score-pct">${escBrief(pct)}<span class="vh-score-sym">%</span></div>
-          <div class="vh-score-comp">${escBrief(snap.composite)} / ${escBrief(snap.maxPossible || 35)}</div>
+          <div class="vh-score-comp">${escBrief(snap.composite)} / ${escBrief(snap.maxPossible || MAX_POSSIBLE)}</div>
           ${bandWord ? `<div class="vh-score-band">${escBrief(bandWord)}</div>` : ''}
         </div>`;
       }
@@ -950,9 +987,9 @@
       // Score
       let scoreBlock = '';
       if (snap && (snap.pct != null || snap.composite != null)) {
-        const pct = snap.pct != null ? snap.pct : Math.round((snap.composite / (snap.maxPossible || 35)) * 100);
+        const pct = snap.pct != null ? snap.pct : Math.round((snap.composite / (snap.maxPossible || MAX_POSSIBLE)) * 100);
         const bandWord = String(snap.bandLabel || snap.band || '').split(/\s*[—–-]\s*|\s+/)[0];
-        scoreBlock = `<div class="m-score"><div class="m-score-pct">${esc(pct)}<span>%</span></div><div class="m-score-meta">${esc(snap.composite)} / ${esc(snap.maxPossible || 35)}${bandWord ? ` · ${esc(bandWord)}` : ''}<div class="m-score-cap">Investability</div></div></div>`;
+        scoreBlock = `<div class="m-score"><div class="m-score-pct">${esc(pct)}<span>%</span></div><div class="m-score-meta">${esc(snap.composite)} / ${esc(snap.maxPossible || MAX_POSSIBLE)}${bandWord ? ` · ${esc(bandWord)}` : ''}<div class="m-score-cap">Investability</div></div></div>`;
       }
       const ask = a.theAsk || a.the_ask;
       const risk = a.biggestRisk || a.biggest_risk;
@@ -988,7 +1025,11 @@
 
       // Investability breakdown
       const cats = (snap && snap.categories) || [];
-      const catBlock = cats.length ? `<table class="m-tbl m-cat"><tbody>${cats.map(c => { const pc = c.max ? Math.round((c.sum / c.max) * 100) : 0; return `<tr><td>${esc(c.label)}</td><td class="m-bar"><span style="width:${pc}%;background:${brand}"></span></td><td class="m-num">${esc(c.sum)} / ${esc(c.max)}</td></tr>`; }).join('')}</tbody></table>` : '';
+      // Mirror the on-screen scorecard EXACTLY: each category is a fraction of its
+      // RATED sub-criteria (sum / rated), not sum / max — build-only signals are
+      // nulled by the runner, so dividing by max (5) understates the score and the
+      // PDF would disagree with the app (and the headline %).
+      const catBlock = cats.length ? `<table class="m-tbl m-cat"><tbody>${cats.map(c => { const rated = c.rated != null ? c.rated : (c.subs || []).filter(s => s.score != null).length; const pc = rated ? Math.round((c.sum / rated) * 100) : 0; return `<tr><td>${esc(c.label)}</td><td class="m-bar"><span style="width:${pc}%;background:${brand}"></span></td><td class="m-num">${esc(c.sum)} / ${esc(rated)}</td></tr>`; }).join('')}</tbody></table>` : '';
 
       // Diligence
       const dil = a.diligence || [];
@@ -1129,7 +1170,7 @@
         <div id="provenance-region">${provenanceStripHTML(p)}</div>
         <div id="verdict-region">${verdictHeaderHTML(p, invSnapshot)}</div>
         <div id="bullbear-region">${bullBearHTML(p)}</div>
-        ${investabilitySectionHTML(invSnapshot, p)}
+        <div id="investability-region">${investabilitySectionHTML(invSnapshot, p)}</div>
         <div id="dealval-region">${dealValuationHTML(p)}</div>
         <div id="market-region">${marketSizingHTML(p)}</div>
         <div id="benchmark-region">${benchmarkMatrixHTML(p)}</div>
@@ -1206,7 +1247,7 @@
         </div>
       </div>
 
-      ${investabilitySectionHTML(invSnapshot, p)}
+      <div id="investability-region">${investabilitySectionHTML(invSnapshot, p)}</div>
 
       ${briefSectionHTML(p)}
 
@@ -1267,6 +1308,33 @@
     window.renderShell(main);
     hydrateDataRoom(document);
 
+    // Client-side ticker: while a run is active, repaint the run banner every 30s so
+    // the elapsed time keeps moving and the stall guard fires even when the runner
+    // (out of repo) writes nothing new to the engagement doc.
+    let latestRunState = p.runState;
+    function paintRunBanner() {
+      const region = document.getElementById('run-region');
+      if (region) region.innerHTML = isAssess ? assessRunBannerHTML(latestRunState, p) : runBannerHTML(latestRunState, p);
+    }
+    let __runTicker = null;
+    function ensureRunTicker() {
+      const active = latestRunState && ['queued', 'running', 'partial'].includes(latestRunState.status);
+      if (active && !__runTicker) __runTicker = setInterval(paintRunBanner, 30000);
+      else if (!active && __runTicker) { clearInterval(__runTicker); __runTicker = null; }
+    }
+    ensureRunTicker();
+
+    // Deep-link focus from the action queue (?focus=<action-type>) → scroll to the
+    // section where the work is, so "Review cards" / "Run assessment" land in context.
+    try {
+      const focus = new URLSearchParams(location.search).get('focus');
+      if (focus) {
+        const FOCUS_REGION = { 'cards-to-review': 'cards-region', 'assessment-ready': 'verdict-region', 'qa-flag': 'investability-region', 'l3-rebuild': 'deep-research' };
+        const el = document.getElementById(FOCUS_REGION[focus] || 'run-region') || document.getElementById('run-region');
+        if (el) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'center' }), 250);
+      }
+    } catch (e) {}
+
     // ---- Live run + cards subscriptions (realtime, live mode only) -------
     // The run banner reflects runState as the headless runner drives it; the
     // cards region repaints the moment the runner publishes drafts or the
@@ -1274,14 +1342,37 @@
     if (W.mode === 'live') {
       try {
         const data = await import('../firebase/data.js');
-        data.watchEngagement(p.id, (eng) => {
+        data.watchEngagement(p.id, async (eng) => {
           if (!eng) return;
+          const set = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
           const region = document.getElementById('run-region');
           if (region) region.innerHTML = isAssess ? assessRunBannerHTML(eng.runState, { ...p, ...eng }) : runBannerHTML(eng.runState, { ...p, ...eng });
+          latestRunState = eng.runState || latestRunState;
+          ensureRunTicker();
+
+          // Strengthen-suggestions can land with (or independently of) a score change —
+          // copy them every tick so the scorecard's repaint below always uses the latest.
+          if (eng.investabilitySuggestions) p.investabilitySuggestions = eng.investabilitySuggestions;
+
+          // Live-refresh the investability score + the whole VSS scorecard when a run
+          // updates the score. The runner writes the light denormalised summary to
+          // eng.investability (composite/pct — NO status, NO categories), so we diff on
+          // composite/pct only (comparing status would loop forever, since the full
+          // snapshot has none) and re-fetch the full snapshot from the subcollection for
+          // the categories, then repaint the headline % + the scorecard — no reload.
+          const engScore = eng.investability || eng.investabilityScore;
+          if (engScore && (!invSnapshot || engScore.composite !== invSnapshot.composite || engScore.pct !== invSnapshot.pct)) {
+            try {
+              const snaps = await data.listInvestabilitySnapshots(p.id);
+              invSnapshot = snaps.length ? snaps[snaps.length - 1] : engScore;
+            } catch (e) { invSnapshot = invSnapshot || engScore; }
+            set('verdict-region', verdictHeaderHTML(p, invSnapshot));
+            set('investability-region', investabilitySectionHTML(invSnapshot, p));
+          }
+
           // Decision panels appear the moment a run publishes engagement.assessment — no reload.
           if (isAssess && eng.assessment) {
             p.assessment = eng.assessment;
-            const set = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
             set('provenance-region', provenanceStripHTML(p));
             set('verdict-region', verdictHeaderHTML(p, invSnapshot));
             set('bullbear-region', bullBearHTML(p));

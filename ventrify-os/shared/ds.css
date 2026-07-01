@@ -120,6 +120,19 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 @keyframes ds-shimmer { 100% { transform: translateX(100%); } }
+@keyframes ds-skel-sweep { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+/* First-paint skeleton — painted instantly while auth + data resolve, so no page
+   ever flashes blank white before renderShell() replaces <body>. Pure CSS on the
+   empty #root, so it works on every page with zero per-page JS and vanishes the
+   moment the shell renders. */
+#root:empty { display: block; min-height: 100vh; background: var(--bg, #FAFAFB); }
+#root:empty::before { content: ""; display: block; height: 61px; background: var(--surface, #fff); border-bottom: 1px solid var(--border, rgba(0,0,0,0.06)); }
+#root:empty::after {
+  content: ""; display: block; max-width: 1120px; height: 58vh; margin: 2.5rem auto; border-radius: 16px;
+  background: linear-gradient(90deg, rgba(0,0,0,0.035) 0%, rgba(0,0,0,0.065) 50%, rgba(0,0,0,0.035) 100%);
+  background-size: 200% 100%; animation: ds-skel-sweep 1.3s ease-in-out infinite;
+}
 @keyframes ds-run-pulse {
   0%   { box-shadow: 0 0 0 0   rgba(var(--primary-rgb), 0.35); }
   70%  { box-shadow: 0 0 0 8px rgba(var(--primary-rgb), 0); }
