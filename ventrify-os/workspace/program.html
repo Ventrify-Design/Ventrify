@@ -710,6 +710,25 @@
     }
     function prioColor(pr) { const s = String(pr || '').toLowerCase(); return s === 'high' ? '#C0392B' : s === 'low' ? '#6B7594' : '#C77700'; }
 
+    // Confidence model — how much the score had to work with, from existing data:
+    // input depth (deck-only vs data room) + evidence coverage (rated signals). Shown
+    // on the verdict + the deal memo so a thin read and a deep read never look equally
+    // certain. Pure view-time computation — no runner/backend change.
+    function assessmentConfidence(p, snap) {
+      const docN = Math.max((p.founderDocCount || 0), (p.pitchDoc ? 1 : 0));
+      const hasDataRoom = Math.max(0, docN - (p.pitchDoc ? 1 : 0)) > 0;
+      const sourcesN = (p.assessment && p.assessment.provenance && p.assessment.provenance.sources) || 0;
+      const cats = (snap && snap.categories) || [];
+      const ratedCount = (snap && snap.ratedCount != null) ? snap.ratedCount
+        : cats.reduce((n, c) => n + (c.rated != null ? c.rated : (c.subs || []).filter(s => s.score != null).length), 0);
+      const scored = ratedCount > 0;
+      const frac = ratedCount / 35;
+      const pts = (frac >= 0.8 ? 2 : frac >= 0.55 ? 1 : 0) + (hasDataRoom ? 1 : 0);
+      const level = !scored ? '' : (pts >= 3 ? 'High' : pts >= 2 ? 'Medium' : 'Low');
+      const inputBadge = hasDataRoom ? `Full data room · ${docN} document${docN === 1 ? '' : 's'}` : (p.pitchDoc ? 'Deck only' : '');
+      return { level, scored, docN, hasDataRoom, sourcesN, ratedCount, inputBadge };
+    }
+
     function verdictHeaderHTML(p, snap) {
       const a = p.assessment; if (!a || !a.recommendation) return '';
       const rc = recColor(a.recommendation);
@@ -751,13 +770,20 @@
       // (documents read, sources cited, signals scored) to build conviction in the
       // call. The legal 'not investment advice' disclaimer lives in the deal-memo
       // footer + site terms, not stamped on the hero output.
-      const docN = Math.max(p.founderDocCount || 0, p.pitchDoc ? 1 : 0);
-      const sourcesN = (a.provenance && a.provenance.sources) || 0;
-      const provParts = [];
-      if (docN) provParts.push(`Assessed from ${docN} document${docN === 1 ? '' : 's'}`);
-      if (sourcesN) provParts.push(`${sourcesN} source${sourcesN === 1 ? '' : 's'} cited`);
-      provParts.push('scored across 35 signals');
-      const provLine = `<div style="margin-top:1.1rem;border-top:1px solid rgba(0,0,0,0.07);padding-top:0.75rem;font-size:0.72rem;line-height:1.5;color:var(--text-muted,#656565);display:flex;flex-wrap:wrap;gap:0.35rem 0.7rem;align-items:center;">${provParts.map((t, i) => `${i > 0 ? '<span style="opacity:0.35;">&middot;</span>' : ''}<span>${escBrief(t)}</span>`).join('')}</div>`;
+      // Confidence + provenance strip — input depth, evidence coverage, and a derived
+      // Confidence chip, so the reader weights the call by how much it had to work with.
+      const cf = assessmentConfidence(p, snap);
+      const CF_STYLE = {
+        High:   'color:var(--success,#00A368);background:rgba(var(--success-rgb),0.1);border-color:rgba(var(--success-rgb),0.3);',
+        Medium: 'color:var(--warning,#C77700);background:rgba(var(--warning-rgb),0.1);border-color:rgba(var(--warning-rgb),0.3);',
+        Low:    'color:var(--text-subtle,#6B7280);background:rgba(0,0,0,0.04);border-color:rgba(0,0,0,0.12);',
+      };
+      const confChip = cf.level ? `<span title="How much the score had to work with — input depth and how many of the 35 signals were evidenceable." style="display:inline-flex;align-items:center;gap:5px;font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:0.6rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;padding:2px 8px;border-radius:999px;border:1px solid transparent;${CF_STYLE[cf.level] || ''}">Confidence &middot; ${escBrief(cf.level)}</span>` : '';
+      const provItems = [];
+      if (cf.inputBadge) provItems.push(cf.inputBadge);
+      if (cf.sourcesN) provItems.push(`${cf.sourcesN} source${cf.sourcesN === 1 ? '' : 's'} cited`);
+      provItems.push(cf.scored ? `${cf.ratedCount} of 35 signals rated` : 'scored across 35 signals');
+      const provLine = `<div style="margin-top:1.1rem;border-top:1px solid rgba(0,0,0,0.07);padding-top:0.75rem;display:flex;flex-wrap:wrap;gap:0.5rem 0.7rem;align-items:center;">${confChip}<span style="font-size:0.72rem;line-height:1.5;color:var(--text-muted,#656565);display:inline-flex;flex-wrap:wrap;gap:0.3rem 0.6rem;align-items:center;">${provItems.map((t, i) => `${i > 0 ? '<span style="opacity:0.35;">&middot;</span>' : ''}<span>${escBrief(t)}</span>`).join('')}</span></div>`;
       return `<div class="section">
         <div class="section-head" style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;">
           <div><div class="section-title">The call</div><div class="section-sub">The decision-grade verdict &mdash; recommendation, thesis, and the deal-breaker.</div></div>
@@ -1003,6 +1029,14 @@
         const bandWord = String(snap.bandLabel || snap.band || '').split(/\s*[—–-]\s*|\s+/)[0];
         scoreBlock = `<div class="m-score"><div class="m-score-pct">${esc(pct)}<span>%</span></div><div class="m-score-meta">${esc(snap.composite)} / ${esc(snap.maxPossible || MAX_POSSIBLE)}${bandWord ? ` · ${esc(bandWord)}` : ''}<div class="m-score-cap">Investability</div></div></div>`;
       }
+      // Confidence line for the forwarded memo (same model as the on-screen verdict).
+      const mcf = assessmentConfidence(p, snap);
+      const mcfItems = [];
+      if (mcf.level) mcfItems.push(`Confidence: ${mcf.level}`);
+      if (mcf.inputBadge) mcfItems.push(mcf.inputBadge);
+      if (mcf.sourcesN) mcfItems.push(`${mcf.sourcesN} source${mcf.sourcesN === 1 ? '' : 's'} cited`);
+      mcfItems.push(mcf.scored ? `${mcf.ratedCount} of 35 signals rated` : 'scored across 35 signals');
+      const confBlock = `<p class="m-confidence">${mcfItems.map(esc).join(' · ')}</p>`;
       const ask = a.theAsk || a.the_ask;
       const risk = a.biggestRisk || a.biggest_risk;
       const must = a.mustBeTrue || a.must_be_true || [];
@@ -1087,6 +1121,7 @@
   .m-score-pct{font-size:34px;font-weight:800;line-height:1;color:#141414;}
   .m-score-pct span{font-size:16px;color:#9aa0ab;}
   .m-score-meta{font-size:12px;color:#777;}
+  .m-confidence{font-size:11px;color:#9aa0ab;margin:6px 0 0;letter-spacing:0.01em;}
   .m-score-cap{font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:#aab0b8;}
   .m-sec{margin:22px 0;page-break-inside:avoid;}
   .m-sec h2{font-size:12px;text-transform:uppercase;letter-spacing:0.08em;color:${brand};border-bottom:1px solid #eee;padding-bottom:6px;margin:0 0 10px;}
@@ -1136,6 +1171,7 @@
         ${a.conviction ? `<span class="m-conv">Conviction <strong>${esc(a.conviction)}</strong></span>` : ''}
         ${scoreBlock}
       </div>
+      ${confBlock}
       ${a.thesis ? `<p>${esc(a.thesis)}</p>` : ''}
       ${risk ? `<p><strong style="color:${rc}">Biggest kill-risk —</strong> ${esc(risk)}</p>` : ''}
       ${must.length ? sec('For the thesis to hold, these must be true', list(must, rc)) : ''}
@@ -1163,6 +1199,27 @@
       } catch (e) { window.__toast('Could not build the deal memo: ' + ((e && e.message) || e), true); }
     };
 
+    // Lifecycle gate — never present a hard verdict as final while a run is still
+    // working. If a run is active (queued/running/partial) AND a verdict is showing
+    // (a partial run, or a re-run over the previous verdict), flag it PRELIMINARY.
+    // Fully live-updatable from runState + assessment, so it clears the moment the
+    // run finishes. (The confidence chip handles the thin-evidence 'done' case.)
+    function lifecycleBannerHTML(p) {
+      const status = (p.runState && p.runState.status) || 'idle';
+      const runActive = ['queued', 'running', 'partial', 'limit-paused'].includes(status);
+      const hasVerdict = !!(p.assessment && p.assessment.recommendation);
+      if (!(runActive && hasVerdict)) return '';
+      return `<div class="section" style="margin-bottom:0;">
+        <div style="display:flex;gap:0.75rem;align-items:flex-start;padding:0.85rem 1.1rem;border-radius:var(--radius-md,12px);background:rgba(var(--warning-rgb,199,119,0),0.08);border:1px solid rgba(var(--warning-rgb,199,119,0),0.25);">
+          <span style="flex:none;color:var(--warning,#C77700);font-size:1.05rem;line-height:1.25;">&#9888;</span>
+          <div style="font-size:0.88rem;line-height:1.55;color:var(--text,#141414);">
+            <span style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:0.62rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--warning,#C77700);display:block;margin-bottom:0.15rem;">Preliminary</span>
+            A run is still in progress &mdash; the verdict below is <strong>preliminary</strong>, and its score, figures and evidence may change as it completes.
+          </div>
+        </div>
+      </div>`;
+    }
+
     function assessMainHTML() {
       return `
         <div style="margin-bottom:1rem;"><a href="dashboard.html" class="text-small dim" style="font-size:0.85rem;">&larr; All engagements</a></div>
@@ -1182,6 +1239,7 @@
         ${deckUploadHTML(p)}
         <div id="run-region">${assessRunBannerHTML(p.runState, p)}</div>
         <div id="provenance-region">${provenanceStripHTML(p)}</div>
+        <div id="lifecycle-region">${lifecycleBannerHTML(p)}</div>
         <div id="verdict-region">${verdictHeaderHTML(p, invSnapshot)}</div>
         <div id="bullbear-region">${bullBearHTML(p)}</div>
         <div id="investability-region">${investabilitySectionHTML(invSnapshot, p)}</div>
@@ -1363,6 +1421,7 @@
           if (region) region.innerHTML = isAssess ? assessRunBannerHTML(eng.runState, { ...p, ...eng }) : runBannerHTML(eng.runState, { ...p, ...eng });
           latestRunState = eng.runState || latestRunState;
           ensureRunTicker();
+          if (isAssess) set('lifecycle-region', lifecycleBannerHTML({ ...p, runState: eng.runState, assessment: eng.assessment || p.assessment }));
 
           // Strengthen-suggestions can land with (or independently of) a score change —
           // copy them every tick so the scorecard's repaint below always uses the latest.
