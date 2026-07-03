@@ -82,38 +82,38 @@
       const name = document.getElementById('org-name').value.trim();
       const slug = document.getElementById('org-slug').value.trim();
       const ownerEmail = document.getElementById('org-owner').value.trim();
-      if (!name || !ownerEmail) { alert('Organisation name and owner email are required.'); return; }
+      if (!name || !ownerEmail) { window.__toast('Organisation name and owner email are required.', true); return; }
       try { await adminCall({ action: 'create-org', name, slug, ownerEmail, plan: readPlan('neworg') }); window.location.reload(); }
-      catch (e) { alert('Could not create org: ' + e.message); }
+      catch (e) { window.__toast('Could not create org: ' + e.message, true); }
     };
     window.__setOrgPlan = async function(orgId) {
       try { await adminCall({ action: 'set-plan', orgId, plan: readPlan('plan-' + orgId) }); window.location.reload(); }
-      catch (e) { alert('Could not update plan: ' + e.message); }
+      catch (e) { window.__toast('Could not update plan: ' + e.message, true); }
     };
     window.__addOperator = async function(orgId) {
       const input = document.getElementById('addop-' + orgId);
       const email = (input && input.value || '').trim();
       if (!email) return;
       try { await adminCall({ action: 'add-operator', orgId, email }); window.location.reload(); }
-      catch (e) { alert('Could not add operator: ' + e.message); }
+      catch (e) { window.__toast('Could not add operator: ' + e.message, true); }
     };
     window.__removeOperator = async function(orgId, email) {
       if (!(await window.__confirm({ title: 'Remove operator?', message: email + ' loses Workspace access.', confirmLabel: 'Remove', danger: true }))) return;
       try { await adminCall({ action: 'remove-operator', orgId, email }); window.location.reload(); }
-      catch (e) { alert('Could not remove operator: ' + e.message); }
+      catch (e) { window.__toast('Could not remove operator: ' + e.message, true); }
     };
     window.__deleteOrg = async function(orgId) {
       const o = (orgs || []).find(x => x.id === orgId) || {};
       const name = o.name || orgId;
       const typed = window.prompt('This permanently deletes "' + name + '" and ALL of its engagements, cards, and scores. This cannot be undone.\n\nType the organisation name to confirm:');
       if (typed == null) return;
-      if (typed.trim() !== name) { alert('Name did not match — deletion cancelled.'); return; }
+      if (typed.trim() !== name) { window.__toast('Name did not match — deletion cancelled.', true); return; }
       try {
         const r = await adminCall({ action: 'delete-org', orgId });
         const d = r.deleted || {};
-        alert('Deleted "' + name + '" — removed ' + (d.engagements || 0) + ' engagement(s) and ' + (d.cards || 0) + ' card(s).');
-        window.location.reload();
-      } catch (e) { alert('Could not delete org: ' + e.message); }
+        window.__toast('Deleted "' + name + '" — removed ' + (d.engagements || 0) + ' engagement(s) and ' + (d.cards || 0) + ' card(s).', false);
+        setTimeout(() => window.location.reload(), 2600);
+      } catch (e) { window.__toast('Could not delete org: ' + e.message, true); }
     };
 
     let orgs = [];

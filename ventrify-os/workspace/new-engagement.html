@@ -600,7 +600,7 @@
             window.scrollTo({ top: 0 });
           } catch (e) {
             next.disabled = false; next.textContent = 'Launch engagement';
-            alert('Could not launch engagement: ' + ((e && (e.code || e.message)) || e));
+            window.__toast('Could not launch engagement: ' + ((e && (e.code || e.message)) || e), true);
           }
         }
       });

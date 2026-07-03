@@ -140,7 +140,7 @@
         }
         await data.requestRun(engagementId, phase, (me && me.email) || null);
       } catch (e) {
-        alert('Could not start the run: ' + ((e && (e.code || e.message)) || e));
+        window.__toast('Could not start the run: ' + ((e && (e.code || e.message)) || e), true);
         if (btn) { btn.disabled = false; btn.textContent = 'Run'; }
       }
     };
@@ -165,7 +165,7 @@
         if (!resp.ok) { const d = await resp.json().catch(() => ({})); throw new Error(d.detail || d.error || ('Republish rejected (' + resp.status + ')')); }
         // success → the live runState banner now shows "Recovering your saved results…"
       } catch (e) {
-        alert('Could not republish: ' + ((e && (e.code || e.message)) || e));
+        window.__toast('Could not republish: ' + ((e && (e.code || e.message)) || e), true);
         btns.forEach(b => { b.disabled = false; b.innerHTML = '&#8635;&nbsp; Republish results'; });
       }
     };
@@ -288,21 +288,21 @@
     window.__sendCard = async function(cardId) {
       const data = await import('../firebase/data.js');
       try { await data.sendCardToFounder(cardId); notifyRecipient('founder'); } // cards re-render live
-      catch (e) { alert('Could not send the card: ' + ((e && (e.code || e.message)) || e)); }
+      catch (e) { window.__toast('Could not send the card: ' + ((e && (e.code || e.message)) || e), true); }
     };
     window.__sendAllDrafts = async function(engagementId) {
       const data = await import('../firebase/data.js');
       try {
         const n = await data.sendDraftsToFounder(engagementId);
-        if (n) notifyRecipient('founder'); else alert('No draft cards to send.');
-      } catch (e) { alert('Could not send the cards: ' + ((e && (e.code || e.message)) || e)); }
+        if (n) notifyRecipient('founder'); else window.__toast('No draft cards to send.', false);
+      } catch (e) { window.__toast('Could not send the cards: ' + ((e && (e.code || e.message)) || e), true); }
     };
     // Welcome pack — generate (cloud 'welcome' run) then operator reviews + sends.
     window.__generateWelcomePack = (id) => window.__triggerRun(id, 'welcome');
     window.__sendWelcomePack = async function(id) {
       const data = await import('../firebase/data.js');
       try { await data.sendWelcomePack(id); notifyRecipient('founder'); }
-      catch (e) { alert('Could not send the welcome pack: ' + ((e && (e.code || e.message)) || e)); }
+      catch (e) { window.__toast('Could not send the welcome pack: ' + ((e && (e.code || e.message)) || e), true); }
     };
     window.__deleteEngagement = async function() {
       if (!(await window.__confirm({ title: `Delete "${p.name}" permanently?`, message: `This removes it from the Workspace and ${p.founderName || 'the founder'}'s Studio, including all its provocation cards. This cannot be undone.`, confirmLabel: 'Delete', danger: true }))) return;
@@ -311,7 +311,7 @@
         await data.deleteEngagementDeep(p.id);
         window.location.href = 'dashboard.html';
       } catch (e) {
-        alert('Could not delete the engagement: ' + ((e && (e.code || e.message)) || e));
+        window.__toast('Could not delete the engagement: ' + ((e && (e.code || e.message)) || e), true);
       }
     };
 
@@ -1158,9 +1158,9 @@
       try {
         const html = dealMemoHTML(p, invSnapshot, W.org);
         const w = window.open('', '_blank');
-        if (!w) { alert('Please allow pop-ups for this site to download the deal memo.'); return; }
+        if (!w) { window.__toast('Please allow pop-ups for this site to download the deal memo.', true); return; }
         w.document.open(); w.document.write(html); w.document.close();
-      } catch (e) { alert('Could not build the deal memo: ' + ((e && e.message) || e)); }
+      } catch (e) { window.__toast('Could not build the deal memo: ' + ((e && e.message) || e), true); }
     };
 
     function assessMainHTML() {

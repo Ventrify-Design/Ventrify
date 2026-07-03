@@ -1,0 +1,37 @@
+name: sweep-stuck-runs
+
+# Watchdog trigger for the OS workspace. Every ~15 minutes it POSTs the stuck-run
+# watchdog endpoint (ventrify-os/api/sweep-stuck-runs.js), which flips genuinely-dead
+# assessment runs to 'error' so the Workspace's republish / re-run banner takes over.
+# Plan-agnostic (works on any Vercel tier). The endpoint decides which runs are stale;
+# this workflow just pings it on a schedule.
+#
+# No setup needed — the endpoint is open by default, so this works as soon as it lands
+# on main. To lock it down later (optional): add a CRON_SECRET repo secret here AND set
+# the same value as an env var on the os.ventrify.io Vercel project. The workflow already
+# sends the bearer, so it keeps working.
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'   # every 15 min (GitHub best-effort; may be delayed under load)
+  workflow_dispatch: {}       # allow manual runs from the Actions tab
+
+permissions: {}               # no repo access needed — it only calls an external URL
+
+concurrency:
+  group: sweep-stuck-runs
+  cancel-in-progress: false
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping stuck-run watchdog
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          resp=$(curl -fsS -X POST "https://os.ventrify.io/api/sweep-stuck-runs" \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            -H "Content-Type: application/json" \
+            -d '{}')
+          echo "watchdog: $resp"
