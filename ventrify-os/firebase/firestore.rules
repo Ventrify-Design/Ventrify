@@ -49,8 +49,17 @@ service cloud.firestore {
 
     // Engagements — a founder sees only their own; operators see their org's.
     match /engagements/{engId} {
-      allow read, update: if signedIn()
+      allow read: if signedIn()
         && (userEmail() == resource.data.founderEmail || isOperatorOf(resource.data.orgId));
+      // Update is open to founder/operator EXCEPT the server-managed integrity fields:
+      //   • assessmentSignoff — the operator endorsement that rides into the shared memo;
+      //   • shareLink        — the public share-link pointer.
+      // These are set ONLY by the Admin SDK (/api/sign-off, /api/share-memo), which
+      // bypasses these rules. Blocking them here stops a founder from forging a
+      // senior-partner sign-off (or a share link) via a hand-crafted SDK write.
+      allow update: if signedIn()
+        && (userEmail() == resource.data.founderEmail || isOperatorOf(resource.data.orgId))
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['assessmentSignoff', 'shareLink']);
       // Creation is intentionally NOT allowed from the client. It goes through
       // /api/create-engagement (Admin SDK), which enforces the org's licence
       // capabilities + quota server-side — so the one-off / licence limits

@@ -784,10 +784,38 @@
       if (cf.sourcesN) provItems.push(`${cf.sourcesN} source${cf.sourcesN === 1 ? '' : 's'} cited`);
       provItems.push(cf.scored ? `${cf.ratedCount} of 35 signals rated` : 'scored across 35 signals');
       const provLine = `<div style="margin-top:1.1rem;border-top:1px solid rgba(0,0,0,0.07);padding-top:0.75rem;display:flex;flex-wrap:wrap;gap:0.5rem 0.7rem;align-items:center;">${confChip}<span style="font-size:0.72rem;line-height:1.5;color:var(--text-muted,#656565);display:inline-flex;flex-wrap:wrap;gap:0.3rem 0.6rem;align-items:center;">${provItems.map((t, i) => `${i > 0 ? '<span style="opacity:0.35;">&middot;</span>' : ''}<span>${escBrief(t)}</span>`).join('')}</span></div>`;
+      // Operator sign-off — the human endorsement on top of the AI-assisted read. When
+      // present it renders as a green reviewed-by bar (and carries into the memo); when
+      // absent, a subtle prompt to sign off before forwarding. If the score has moved
+      // since sign-off (a later re-run), we flag the drift so a stale endorsement can't
+      // ride a changed number.
+      const so = p.assessmentSignoff;
+      const curPct = snap ? (snap.pct != null ? snap.pct : (snap.composite != null ? Math.round((snap.composite / (snap.maxPossible || MAX_POSSIBLE)) * 100) : null)) : null;
+      const soDrift = so && so.pct != null && curPct != null && so.pct !== curPct;
+      const soDate = so && so.at ? new Date(so.at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+      const signoffHTML = (so && so.by)
+        ? `<div style="margin-top:0.9rem;padding:0.7rem 0.85rem;border-radius:var(--radius-md,10px);background:rgba(var(--success-rgb,0,163,104),0.07);border:1px solid rgba(var(--success-rgb,0,163,104),0.25);border-left:3px solid var(--success,#00A368);display:flex;flex-wrap:wrap;gap:0.4rem 0.9rem;align-items:center;justify-content:space-between;">
+            <div style="font-size:0.82rem;line-height:1.5;color:var(--text,#141414);min-width:0;">
+              <span style="color:var(--success,#00A368);font-weight:700;">&#10003;</span> Reviewed &amp; signed off by <strong>${escBrief(so.by)}</strong>${soDate ? ` <span style="color:var(--text-muted,#656565);">&middot; ${escBrief(soDate)}</span>` : ''}
+              ${soDrift ? `<span style="display:block;margin-top:0.15rem;font-size:0.72rem;color:var(--warning,#C77700);">Score has moved since sign-off (${escBrief(so.pct)}% &rarr; ${escBrief(curPct)}%) &mdash; re-review recommended.</span>` : ''}
+              ${so.note ? `<span style="display:block;margin-top:0.3rem;font-size:0.78rem;color:var(--text-muted,#656565);font-style:italic;">&ldquo;${escBrief(so.note)}&rdquo;</span>` : ''}
+            </div>
+            <div style="display:flex;gap:0.4rem;flex:none;">
+              <button class="btn btn-outline btn-sm" onclick="window.__signOff()" style="white-space:nowrap;">Update</button>
+              <button class="btn btn-outline btn-sm" onclick="window.__revokeSignoff()" style="white-space:nowrap;color:#C0392B;">Revoke</button>
+            </div>
+          </div>`
+        : `<div style="margin-top:0.9rem;padding:0.6rem 0.85rem;border-radius:var(--radius-md,10px);border:1px dashed rgba(0,0,0,0.16);display:flex;flex-wrap:wrap;gap:0.5rem 0.9rem;align-items:center;justify-content:space-between;">
+            <span style="font-size:0.8rem;color:var(--text-muted,#656565);">Endorse this call with your name before you forward it.</span>
+            <button class="btn btn-outline btn-sm" onclick="window.__signOff()" style="white-space:nowrap;flex:none;">&#10003;&nbsp; Sign off &amp; endorse</button>
+          </div>`;
       return `<div class="section">
         <div class="section-head" style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;">
           <div><div class="section-title">The call</div><div class="section-sub">The decision-grade verdict &mdash; recommendation, thesis, and the deal-breaker.</div></div>
-          <button class="btn btn-outline btn-sm" onclick="window.__downloadMemo()" style="flex:none;white-space:nowrap;" title="Download a branded PDF deal memo to share with your team">&#8595;&nbsp; Deal memo</button>
+          <div style="display:flex;gap:0.5rem;flex:none;flex-wrap:wrap;">
+            <button class="btn btn-outline btn-sm" onclick="window.__downloadMemo()" style="white-space:nowrap;" title="Download a branded PDF deal memo to save or print">&#8595;&nbsp; Deal memo</button>
+            <button class="btn btn-outline btn-sm" onclick="window.__shareMemo()" style="white-space:nowrap;" title="Create a stable, read-only link to forward to your committee — no login needed">&#128279;&nbsp; ${p.shareLink && p.shareLink.token ? 'Manage link' : 'Share link'}</button>
+          </div>
         </div>
         <div class="card vh-card" style="border-top:3px solid ${rc};">
           <div class="vh-header">
@@ -799,6 +827,7 @@
           ${risk ? `<div class="vh-risk"><strong>Biggest kill-risk &mdash;</strong> ${escBrief(risk)}</div>` : ''}
           ${mustHTML}
           ${provLine}
+          ${signoffHTML}
         </div></div>`;
     }
 
@@ -1012,7 +1041,9 @@
     // assessment data shown on screen. Opens in its own window (fully isolated
     // from the app's styles) and prints — the operator saves it as a PDF to
     // forward to a partner / investment committee.
-    function dealMemoHTML(p, snap, org) {
+    function dealMemoHTML(p, snap, org, opts) {
+      opts = opts || {};
+      const shared = !!opts.shared;   // shared (hosted, read-only) vs downloaded (self-print) variant
       const a = p.assessment || {};
       const esc = escBrief;
       const brand = (org && org.primaryColor) || '#0036FF';
@@ -1037,6 +1068,13 @@
       if (mcf.sourcesN) mcfItems.push(`${mcf.sourcesN} source${mcf.sourcesN === 1 ? '' : 's'} cited`);
       mcfItems.push(mcf.scored ? `${mcf.ratedCount} of 35 signals rated` : 'scored across 35 signals');
       const confBlock = `<p class="m-confidence">${mcfItems.map(esc).join(' · ')}</p>`;
+      // Operator sign-off — the human endorsement that turns an AI-assisted read into a
+      // reviewed one. Carried into the forwarded memo so the IC sees who stood behind it.
+      const so = p.assessmentSignoff;
+      const soDate = so && so.at ? new Date(so.at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+      const signoffBlock = (so && so.by)
+        ? `<div class="m-signoff"><div class="m-signoff-h"><span class="m-signoff-tick">✓</span> Reviewed &amp; signed off by <strong>${esc(so.by)}</strong>${soDate ? ` · ${esc(soDate)}` : ''}</div>${so.note ? `<div class="m-signoff-n">${esc(so.note)}</div>` : ''}</div>`
+        : '';
       const ask = a.theAsk || a.the_ask;
       const risk = a.biggestRisk || a.biggest_risk;
       const must = a.mustBeTrue || a.must_be_true || [];
@@ -1123,6 +1161,11 @@
   .m-score-meta{font-size:12px;color:#777;}
   .m-confidence{font-size:11px;color:#9aa0ab;margin:6px 0 0;letter-spacing:0.01em;}
   .m-score-cap{font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:#aab0b8;}
+  .m-signoff{margin:12px 0 4px;padding:10px 13px;border:1px solid #cdeadd;border-left:3px solid #00A368;border-radius:9px;background:#f2fbf6;}
+  .m-signoff-h{font-size:12.5px;color:#1f2937;}
+  .m-signoff-tick{color:#00A368;font-weight:700;}
+  .m-signoff-n{font-size:12px;color:#4b5563;margin-top:5px;font-style:italic;}
+  .m-hint{font-size:12px;color:#c9cdd6;}
   .m-sec{margin:22px 0;page-break-inside:avoid;}
   .m-sec h2{font-size:12px;text-transform:uppercase;letter-spacing:0.08em;color:${brand};border-bottom:1px solid #eee;padding-bottom:6px;margin:0 0 10px;}
   .m-sec h3{font-size:11px;text-transform:uppercase;letter-spacing:0.06em;margin:0 0 6px;}
@@ -1156,7 +1199,7 @@
 </style></head>
 <body>
   <div class="m-page">
-    <div class="m-toolbar"><span>${esc(p.name || 'Venture')} — Deal Memo</span><button onclick="window.print()">Print / Save as PDF</button></div>
+    <div class="m-toolbar"><span>${esc(p.name || 'Venture')} — Deal Memo</span>${shared ? `<span class="m-hint">Read-only · press ⌘/Ctrl&nbsp;+&nbsp;P to save as PDF</span>` : `<button onclick="window.print()">Print / Save as PDF</button>`}</div>
     <div class="m-band"></div>
     <div class="m-head">
       <div><div class="m-org">${esc(orgName)} <span>Assessment</span></div><div class="m-doc">Investment deal memo · Confidential</div></div>
@@ -1172,6 +1215,7 @@
         ${scoreBlock}
       </div>
       ${confBlock}
+      ${signoffBlock}
       ${a.thesis ? `<p>${esc(a.thesis)}</p>` : ''}
       ${risk ? `<p><strong style="color:${rc}">Biggest kill-risk —</strong> ${esc(risk)}</p>` : ''}
       ${must.length ? sec('For the thesis to hold, these must be true', list(must, rc)) : ''}
@@ -1187,7 +1231,7 @@
     <div class="m-foot">Generated by ${esc(orgName)} on ${esc(today)}${provItems.length ? ` · ${provItems.map(esc).join(' · ')}` : ''} · Powered by Ventrify OS</div>
     <div class="m-disclaimer">This report is decision-support, prepared with AI-assisted research and analysis and traceable to the cited sources. It does not constitute investment advice, a recommendation, or an offer or solicitation to transact. Recipients should carry out their own due diligence and take professional advice before making any investment decision.</div>
   </div>
-  <script>window.addEventListener('load', function(){ setTimeout(function(){ try{ window.print(); }catch(e){} }, 300); });<\/script>
+  ${shared ? '' : `<script>window.addEventListener('load', function(){ setTimeout(function(){ try{ window.print(); }catch(e){} }, 300); });<\/script>`}
 </body></html>`;
     }
     window.__downloadMemo = function() {
@@ -1197,6 +1241,164 @@
         if (!w) { window.__toast('Please allow pop-ups for this site to download the deal memo.', true); return; }
         w.document.open(); w.document.write(html); w.document.close();
       } catch (e) { window.__toast('Could not build the deal memo: ' + ((e && e.message) || e), true); }
+    };
+
+    // ---- Sign-off + shareable link (Track A · Piece 3) ---------------------
+    // Module-scope region setter (the watchEngagement callback declares its own
+    // block-scoped `set`; this one serves the handlers below that re-render regions
+    // after an optimistic write — sign-off, share link).
+    const set = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+    // A lightweight overlay used by the sign-off + share modals below.
+    function __overlay(inner) {
+      const ov = document.createElement('div');
+      ov.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(10,12,20,0.5);display:flex;align-items:center;justify-content:center;padding:1.5rem;';
+      ov.innerHTML = `<div style="background:var(--surface-2,#fff);border-radius:14px;max-width:460px;width:100%;padding:1.5rem 1.5rem 1.25rem;box-shadow:0 20px 60px rgba(0,0,0,0.3);color:var(--text,#141414);">${inner}</div>`;
+      document.body.appendChild(ov);
+      return ov;
+    }
+
+    function __signoffModal(existing) {
+      return new Promise((resolve) => {
+        const ov = __overlay(`
+          <div style="font-size:1.02rem;font-weight:700;margin-bottom:0.35rem;">Sign off &amp; endorse</div>
+          <div style="font-size:0.85rem;color:var(--text-muted,#656565);line-height:1.5;margin-bottom:0.9rem;">Your name and today&rsquo;s date will appear on the assessment and any memo you share, marking it reviewed. Add an optional note for the committee.</div>
+          <textarea id="__so-note" rows="3" placeholder="Optional — your take for the IC (e.g. &lsquo;Endorse, subject to the data-room caveats&rsquo;)." style="width:100%;box-sizing:border-box;border:1px solid rgba(0,0,0,0.16);border-radius:9px;padding:0.6rem 0.7rem;font:inherit;font-size:0.9rem;resize:vertical;background:var(--surface,#fff);color:inherit;"></textarea>
+          <div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-top:1rem;">
+            <button id="__so-cancel" class="btn btn-outline btn-sm">Cancel</button>
+            <button id="__so-ok" class="btn btn-primary btn-sm">&#10003;&nbsp; Sign off</button>
+          </div>`);
+        const ta = ov.querySelector('#__so-note');
+        ta.value = (existing && existing.note) || '';
+        const done = (v) => { ov.remove(); resolve(v); };
+        ov.querySelector('#__so-cancel').onclick = () => done(null);
+        ov.querySelector('#__so-ok').onclick = () => done({ note: (ta.value || '').trim() });
+        ov.addEventListener('click', (e) => { if (e.target === ov) done(null); });
+        setTimeout(() => ta.focus(), 40);
+      });
+    }
+
+    // Sign-off goes through /api/sign-off (Admin SDK): the server verifies the caller
+    // is an OPERATOR and stamps the signer's identity from the verified token — the
+    // client cannot assert a name. (A matching Firestore rule blocks direct writes to
+    // assessmentSignoff, so this endpoint is the only path — a founder can't forge it.)
+    window.__signOff = async function () {
+      const r = await __signoffModal(p.assessmentSignoff);
+      if (!r) return;
+      try {
+        const { auth } = await import('../firebase/firebase.js');
+        const idToken = auth.currentUser ? await auth.currentUser.getIdToken() : null;
+        if (!idToken) throw new Error('Please sign in again.');
+        const resp = await fetch('/api/sign-off', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idToken, engagementId: p.id, action: 'sign', note: r.note || null })
+        });
+        const d = await resp.json().catch(() => ({}));
+        if (!resp.ok) throw new Error(d.detail || d.error || ('Sign-off failed (' + resp.status + ')'));
+        p.assessmentSignoff = d.signoff || null;
+        set('verdict-region', verdictHeaderHTML(p, invSnapshot));
+        window.__toast('Signed off — your endorsement now appears on the assessment and shared memo.', false);
+      } catch (e) { window.__toast('Could not save the sign-off: ' + ((e && (e.code || e.message)) || e), true); }
+    };
+
+    window.__revokeSignoff = async function () {
+      if (!(await window.__confirm({ title: 'Revoke sign-off?', message: 'Your endorsement is removed from the assessment and any memo you share afterwards. It does not change the verdict itself.', confirmLabel: 'Revoke', danger: true }))) return;
+      try {
+        const { auth } = await import('../firebase/firebase.js');
+        const idToken = auth.currentUser ? await auth.currentUser.getIdToken() : null;
+        if (!idToken) throw new Error('Please sign in again.');
+        const resp = await fetch('/api/sign-off', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idToken, engagementId: p.id, action: 'revoke' })
+        });
+        if (!resp.ok) { const d = await resp.json().catch(() => ({})); throw new Error(d.detail || d.error || ('Revoke failed (' + resp.status + ')')); }
+        p.assessmentSignoff = null;
+        set('verdict-region', verdictHeaderHTML(p, invSnapshot));
+        window.__toast('Sign-off revoked.', false);
+      } catch (e) { window.__toast('Could not revoke: ' + ((e && (e.code || e.message)) || e), true); }
+    };
+
+    function __shareModal(url, freshened) {
+      return new Promise((resolve) => {
+        const safe = String(url).replace(/"/g, '&quot;');
+        const ov = __overlay(`
+          <div style="font-size:1.02rem;font-weight:700;margin-bottom:0.35rem;">Shareable memo link</div>
+          <div style="font-size:0.85rem;color:var(--text-muted,#656565);line-height:1.5;">Anyone with this link sees a read-only copy of the deal memo &mdash; no login. The link is stable: after a re-run or a new sign-off, hit <strong>Publish update</strong> and everyone with the link sees the latest version &mdash; no need to resend it.</div>
+          ${freshened ? `<div style="margin-top:0.6rem;font-size:0.78rem;color:var(--success,#00A368);">&#10003; Updated &mdash; the link now shows the latest memo.</div>` : ''}
+          <div style="display:flex;gap:0.4rem;margin-top:0.9rem;">
+            <input id="__sh-url" readonly value="${safe}" style="flex:1;min-width:0;border:1px solid rgba(0,0,0,0.16);border-radius:9px;padding:0.55rem 0.7rem;font:inherit;font-size:0.82rem;background:var(--surface,#f6f7f9);color:inherit;">
+            <button id="__sh-copy" class="btn btn-primary btn-sm" style="flex:none;">Copy</button>
+          </div>
+          <div style="display:flex;gap:0.5rem;justify-content:space-between;align-items:center;margin-top:1rem;flex-wrap:wrap;">
+            <button id="__sh-revoke" class="btn btn-outline btn-sm" style="color:#C0392B;">Revoke link</button>
+            <span style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+              <button id="__sh-refresh" class="btn btn-outline btn-sm" title="Re-freeze the current memo at this same link">&#8635;&nbsp; Publish update</button>
+              <a href="${safe}" target="_blank" rel="noopener" class="btn btn-outline btn-sm">Open</a>
+              <button id="__sh-done" class="btn btn-outline btn-sm">Done</button>
+            </span>
+          </div>`);
+        const done = (v) => { ov.remove(); resolve(v); };
+        ov.querySelector('#__sh-copy').onclick = async () => {
+          const b = ov.querySelector('#__sh-copy');
+          try { await navigator.clipboard.writeText(url); b.textContent = 'Copied ✓'; setTimeout(() => { b.textContent = 'Copy'; }, 1600); }
+          catch (e) { const i = ov.querySelector('#__sh-url'); i.focus(); i.select(); try { document.execCommand('copy'); b.textContent = 'Copied ✓'; setTimeout(() => { b.textContent = 'Copy'; }, 1600); } catch (_) {} }
+        };
+        ov.querySelector('#__sh-done').onclick = () => done('done');
+        ov.querySelector('#__sh-revoke').onclick = () => done('revoke');
+        ov.querySelector('#__sh-refresh').onclick = () => done('refresh');
+        ov.addEventListener('click', (e) => { if (e.target === ov) done('done'); });
+      });
+    }
+
+    // Build the current memo and POST it to /api/share-memo (action:create). The server
+    // reuses the engagement's existing token when there is one, so this both creates the
+    // first link AND refreshes an existing one in place (same url). Returns { url } or throws.
+    async function __publishShareMemo() {
+      const html = dealMemoHTML(p, invSnapshot, W.org, { shared: true });
+      const { auth } = await import('../firebase/firebase.js');
+      const idToken = auth.currentUser ? await auth.currentUser.getIdToken() : null;
+      if (!idToken) throw new Error('Please sign in again.');
+      const me = (W.helpers && W.helpers.currentOperator && W.helpers.currentOperator()) || {};
+      const pct = invSnapshot && invSnapshot.pct != null ? invSnapshot.pct : null;
+      const resp = await fetch('/api/share-memo', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken, engagementId: p.id, action: 'create', html, meta: { name: p.name, pct } })
+      });
+      const d = await resp.json().catch(() => ({}));
+      if (!resp.ok) throw new Error(d.detail || d.error || ('Share failed (' + resp.status + ')'));
+      p.shareLink = { token: d.token, by: me.email || null, at: new Date().toISOString(), pct };
+      set('verdict-region', verdictHeaderHTML(p, invSnapshot));
+      return d;
+    }
+
+    async function __manageShare(url, freshened) {
+      const r = await __shareModal(url, freshened);
+      if (r === 'refresh') {
+        window.__toast('Publishing the latest memo…', false);
+        try { const d = await __publishShareMemo(); return __manageShare(d.url || url, true); }
+        catch (e) { window.__toast('Could not publish the update: ' + ((e && (e.code || e.message)) || e), true); return __manageShare(url); }
+      }
+      if (r !== 'revoke') return;
+      if (!(await window.__confirm({ title: 'Revoke share link?', message: 'The link stops working immediately for anyone you sent it to. You can create a fresh link at any time.', confirmLabel: 'Revoke', danger: true }))) { return __manageShare(url); }
+      try {
+        const { auth } = await import('../firebase/firebase.js');
+        const idToken = auth.currentUser ? await auth.currentUser.getIdToken() : null;
+        if (!idToken) throw new Error('Please sign in again.');
+        const resp = await fetch('/api/share-memo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken, engagementId: p.id, action: 'revoke' }) });
+        if (!resp.ok) { const d = await resp.json().catch(() => ({})); throw new Error(d.error || ('Revoke failed (' + resp.status + ')')); }
+        p.shareLink = null;
+        set('verdict-region', verdictHeaderHTML(p, invSnapshot));
+        window.__toast('Share link revoked — it no longer opens.', false);
+      } catch (e) { window.__toast('Could not revoke the link: ' + ((e && (e.code || e.message)) || e), true); }
+    }
+
+    window.__shareMemo = async function () {
+      // Already shared → reopen the manage modal with the live link (rebuilt from the token).
+      if (p.shareLink && p.shareLink.token) return __manageShare(location.origin + '/m/' + p.shareLink.token);
+      window.__toast('Creating your share link…', false);
+      try {
+        const d = await __publishShareMemo();
+        await __manageShare(d.url);
+      } catch (e) { window.__toast('Could not create the share link: ' + ((e && (e.code || e.message)) || e), true); }
     };
 
     // Lifecycle gate — never present a hard verdict as final while a run is still
@@ -1422,6 +1624,22 @@
           latestRunState = eng.runState || latestRunState;
           ensureRunTicker();
           if (isAssess) set('lifecycle-region', lifecycleBannerHTML({ ...p, runState: eng.runState, assessment: eng.assessment || p.assessment }));
+
+          // Sign-off + share-link are operator actions that can change in another
+          // session — mirror them so the verdict badge/button stay truthful. Re-render
+          // the verdict only when they actually change (the score/assessment blocks
+          // below already repaint it on their own triggers). watchEngagement delivers
+          // the FULL doc each tick, so an ABSENT field means the value is gone (a revoke
+          // deletes shareLink) — coerce to null and mirror it, never guard on `in eng`
+          // (that would leave a revoked link stale in other sessions).
+          if (isAssess) {
+            let vChanged = false;
+            const soNext = eng.assessmentSignoff || null;
+            if (JSON.stringify(soNext) !== JSON.stringify(p.assessmentSignoff || null)) { p.assessmentSignoff = soNext; vChanged = true; }
+            const slNext = eng.shareLink || null;
+            if (JSON.stringify(slNext) !== JSON.stringify(p.shareLink || null)) { p.shareLink = slNext; vChanged = true; }
+            if (vChanged) set('verdict-region', verdictHeaderHTML(p, invSnapshot));
+          }
 
           // Strengthen-suggestions can land with (or independently of) a score change —
           // copy them every tick so the scorecard's repaint below always uses the latest.
