@@ -488,9 +488,9 @@
         if (newProgram.founderEmail && state.engagementType !== 'assessment') {
           const fe = newProgram.founderEmail.trim();
           try {
-            const resp = await fetch('/api/send-invite', {
+            const resp = await fetch('/api/send-email', {
               method: 'POST', headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ email: fe, ventureName: newProgram.name, orgName: (org && org.name) || 'Ventrify' })
+              body: JSON.stringify({ type: 'invite', email: fe, ventureName: newProgram.name, orgName: (org && org.name) || 'Ventrify' })
             });
             if (!resp.ok) throw new Error('send-invite ' + resp.status);
           } catch (e) {

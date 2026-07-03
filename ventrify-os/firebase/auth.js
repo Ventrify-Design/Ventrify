@@ -36,10 +36,10 @@ export async function sendMagicLink(email, continueUrl) {
   // fall back to Firebase's built-in sender (which is fine there).
   try {
     const surface = /\/studio\//.test(url) ? 'Studio' : 'Workspace';
-    const resp = await fetch('/api/send-login-link', {
+    const resp = await fetch('/api/send-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, continueUrl: url, surface })
+      body: JSON.stringify({ type: 'login', email, continueUrl: url, surface })
     });
     if (resp.ok) return;                       // sent via Resend — done
     // Function reachable but errored (e.g. not configured) → fall through.

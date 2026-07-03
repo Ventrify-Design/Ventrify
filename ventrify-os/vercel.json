@@ -2,6 +2,6 @@
   "cleanUrls": true,
   "trailingSlash": false,
   "rewrites": [
-    { "source": "/m/:token", "destination": "/api/m?t=:token" }
+    { "source": "/m/:token", "destination": "/api/memo?t=:token" }
   ]
 }

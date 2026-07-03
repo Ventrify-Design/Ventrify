@@ -1277,7 +1277,7 @@
       });
     }
 
-    // Sign-off goes through /api/sign-off (Admin SDK): the server verifies the caller
+    // Sign-off goes through /api/memo (Admin SDK): the server verifies the caller
     // is an OPERATOR and stamps the signer's identity from the verified token — the
     // client cannot assert a name. (A matching Firestore rule blocks direct writes to
     // assessmentSignoff, so this endpoint is the only path — a founder can't forge it.)
@@ -1288,7 +1288,7 @@
         const { auth } = await import('../firebase/firebase.js');
         const idToken = auth.currentUser ? await auth.currentUser.getIdToken() : null;
         if (!idToken) throw new Error('Please sign in again.');
-        const resp = await fetch('/api/sign-off', {
+        const resp = await fetch('/api/memo', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ idToken, engagementId: p.id, action: 'sign', note: r.note || null })
         });
@@ -1306,9 +1306,9 @@
         const { auth } = await import('../firebase/firebase.js');
         const idToken = auth.currentUser ? await auth.currentUser.getIdToken() : null;
         if (!idToken) throw new Error('Please sign in again.');
-        const resp = await fetch('/api/sign-off', {
+        const resp = await fetch('/api/memo', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ idToken, engagementId: p.id, action: 'revoke' })
+          body: JSON.stringify({ idToken, engagementId: p.id, action: 'revoke-sign' })
         });
         if (!resp.ok) { const d = await resp.json().catch(() => ({})); throw new Error(d.detail || d.error || ('Revoke failed (' + resp.status + ')')); }
         p.assessmentSignoff = null;
@@ -1349,7 +1349,7 @@
       });
     }
 
-    // Build the current memo and POST it to /api/share-memo (action:create). The server
+    // Build the current memo and POST it to /api/memo (action:share). The server
     // reuses the engagement's existing token when there is one, so this both creates the
     // first link AND refreshes an existing one in place (same url). Returns { url } or throws.
     async function __publishShareMemo() {
@@ -1359,9 +1359,9 @@
       if (!idToken) throw new Error('Please sign in again.');
       const me = (W.helpers && W.helpers.currentOperator && W.helpers.currentOperator()) || {};
       const pct = invSnapshot && invSnapshot.pct != null ? invSnapshot.pct : null;
-      const resp = await fetch('/api/share-memo', {
+      const resp = await fetch('/api/memo', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken, engagementId: p.id, action: 'create', html, meta: { name: p.name, pct } })
+        body: JSON.stringify({ idToken, engagementId: p.id, action: 'share', html, meta: { name: p.name, pct } })
       });
       const d = await resp.json().catch(() => ({}));
       if (!resp.ok) throw new Error(d.detail || d.error || ('Share failed (' + resp.status + ')'));
@@ -1383,7 +1383,7 @@
         const { auth } = await import('../firebase/firebase.js');
         const idToken = auth.currentUser ? await auth.currentUser.getIdToken() : null;
         if (!idToken) throw new Error('Please sign in again.');
-        const resp = await fetch('/api/share-memo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken, engagementId: p.id, action: 'revoke' }) });
+        const resp = await fetch('/api/memo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken, engagementId: p.id, action: 'revoke-share' }) });
         if (!resp.ok) { const d = await resp.json().catch(() => ({})); throw new Error(d.error || ('Revoke failed (' + resp.status + ')')); }
         p.shareLink = null;
         set('verdict-region', verdictHeaderHTML(p, invSnapshot));

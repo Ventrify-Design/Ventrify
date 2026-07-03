@@ -79,9 +79,9 @@
       btn.disabled = true; btn.textContent = 'Sending…';
       try {
         // Branded sender first; fall back to Firebase's default email.
-        const resp = await fetch('/api/send-invite', {
+        const resp = await fetch('/api/send-email', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, orgName })
+          body: JSON.stringify({ type: 'invite', email, orgName })
         });
         if (!resp.ok) throw new Error('send-invite ' + resp.status);
         showSent(email, false);
