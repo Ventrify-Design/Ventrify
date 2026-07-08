@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Assessment · Scorecard-forward · MoneyGym</title>
+<meta name="description" content="Scorecard-forward reimagining of the MoneyGym Verdict screen — a hero investability score, ranked category scorecard, and severity-grouped diligence.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../theme.css">
+<style>
+  /* ============================================================
+     Scorecard-forward — the investability SCORE is the star.
+     One hero card; everything else sits on the background.
+     ============================================================ */
+  body { background:
+      radial-gradient(1100px 620px at 12% -6%, rgba(208,188,255,0.10), transparent 60%),
+      radial-gradient(900px 560px at 108% 4%, rgba(111,219,180,0.05), transparent 55%),
+      var(--md-sys-color-surface);
+    min-height:100vh; }
+  :root.light body { background:
+      radial-gradient(1100px 620px at 12% -6%, rgba(103,80,164,0.08), transparent 60%),
+      radial-gradient(900px 560px at 108% 4%, rgba(28,107,76,0.05), transparent 55%),
+      var(--md-sys-color-surface); }
+
+  .wrap { max-width: 1160px; margin: 0 auto; padding: 26px clamp(20px, 4vw, 52px) 120px; }
+
+  /* ---- slim context header (on background) ---- */
+  .ctx { display:flex; align-items:center; gap:14px; padding: 6px 2px 22px; }
+  .ctx .av { flex:none; width:40px; height:40px; border-radius:12px; display:grid; place-items:center;
+    font-weight:500; font-size:15px; background:var(--md-sys-color-primary-container); color:var(--md-sys-color-on-primary-container); }
+  .ctx .nm { font-size:18px; font-weight:500; letter-spacing:.01em; }
+  .ctx .stage { color:var(--md-sys-color-on-surface-variant); font-size:13px; }
+  .ctx .sp { flex:1; }
+  .ctx .vtag { color:var(--md-sys-color-on-surface-variant); font-size:11px; font-weight:500; letter-spacing:.5px; text-transform:uppercase; }
+
+  /* ---- section header ---- */
+  .sec { margin-top: 44px; }
+  .sec-head { display:flex; align-items:baseline; justify-content:space-between; gap:16px; margin-bottom:18px; }
+  .sec-head .t { font-size:11px; font-weight:500; letter-spacing:.5px; text-transform:uppercase; color:var(--md-sys-color-on-surface-variant); }
+  .sec-head .t b { color:var(--md-sys-color-on-surface); }
+  .sec-head .m { font-size:11px; font-weight:500; letter-spacing:.5px; text-transform:uppercase; color:var(--md-sys-color-on-surface-variant); }
+  .hr { height:1px; background:var(--md-sys-color-surface-container-highest); border:none; }
+
+  /* ============ HERO — the one prominent card ============ */
+  .hero { position:relative; overflow:hidden;
+    background:
+      radial-gradient(560px 380px at 20% 8%, rgba(208,188,255,0.10), transparent 62%),
+      var(--md-sys-color-surface-container);
+    border-radius: var(--md-sys-shape-corner-xl); padding: 40px 44px;
+    box-shadow: var(--md-elev-3);
+    display:grid; grid-template-columns: 316px 1fr; gap: 52px; align-items:center; }
+  .hero::before { content:""; position:absolute; inset:0; pointer-events:none;
+    border-radius:inherit; box-shadow: inset 0 1px 0 rgba(255,255,255,0.04); }
+
+  /* gauge column */
+  .gcol { display:flex; flex-direction:column; align-items:center; gap:6px; }
+  .gauge { position:relative; width:300px; height:300px; margin:0 auto; }
+  .gauge svg { width:100%; height:100%; display:block; }
+  .g-track { fill:none; stroke:var(--md-sys-color-surface-container-highest); stroke-width:20; }
+  .g-now { fill:none; stroke:url(#gNow); stroke-width:20; stroke-linecap:round; }
+  .g-pot { fill:none; stroke:url(#gPot); stroke-width:20; stroke-linecap:round; opacity:.9; }
+  .gauge-center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .gscore { font-size:118px; line-height:.9; font-weight:500; letter-spacing:-.03em; color:var(--md-sys-color-on-surface); }
+  .gscore span { font-size:30px; font-weight:400; color:var(--md-sys-color-on-surface-variant); letter-spacing:0; }
+  .gband { margin-top:12px; display:inline-flex; align-items:center; gap:7px; height:30px; padding:0 14px; border-radius:999px;
+    font-size:12px; font-weight:500; letter-spacing:.5px; background:var(--warning-container); color:var(--on-warning-container); }
+  .gband .material-symbols-rounded { font-size:17px; }
+  .g-legend { display:flex; justify-content:center; gap:20px; margin-top:8px; font-size:12px; color:var(--md-sys-color-on-surface-variant); }
+  .g-legend span { display:inline-flex; align-items:center; gap:7px; }
+  .g-legend b { color:var(--md-sys-color-on-surface); font-weight:500; }
+  .g-legend .kn { width:11px; height:11px; border-radius:999px; background:var(--md-sys-color-primary); }
+  .g-legend .kp { width:11px; height:11px; border-radius:999px; border:2px solid var(--success); box-sizing:border-box; }
+  .g-legend .up { color:var(--success); font-weight:500; }
+
+  /* verdict column */
+  .vd { align-self:stretch; display:flex; flex-direction:column; justify-content:center;
+    padding-left:52px; border-left:1px solid var(--md-sys-color-surface-container-highest); }
+  .vd .ov { font-size:11px; font-weight:500; letter-spacing:.5px; text-transform:uppercase; color:var(--md-sys-color-on-surface-variant); }
+  .vd .rec-lg { align-self:flex-start; margin-top:12px; display:inline-flex; align-items:center; gap:10px; height:52px; padding:0 26px; border-radius:999px;
+    font-size:20px; font-weight:500; letter-spacing:.1px; background:var(--warning); color:var(--on-warning);
+    box-shadow: 0 6px 18px rgba(247,192,103,0.18); }
+  .vd .rec-lg .material-symbols-rounded { font-size:24px; }
+  .vd-grid { margin-top:26px; display:grid; grid-template-columns: 1fr 1fr; gap:22px 34px; }
+  .vd-cell .k { font-size:11px; font-weight:500; letter-spacing:.5px; text-transform:uppercase; color:var(--md-sys-color-on-surface-variant); margin-bottom:7px; }
+  .vd-cell .v { font-size:16px; color:var(--md-sys-color-on-surface); }
+  .vd-cell .v b { font-weight:500; }
+  .vd-cell .v small { color:var(--md-sys-color-on-surface-variant); font-size:13px; }
+  .seg { display:inline-flex; gap:4px; vertical-align:middle; margin-left:10px; }
+  .seg i { width:22px; height:7px; border-radius:3px; background:var(--md-sys-color-surface-container-highest); }
+  .seg i.on { background:var(--warning); }
+  .vd-conf { grid-column:1 / -1; margin-top:4px; padding-top:18px; border-top:1px solid var(--md-sys-color-surface-container-highest);
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  .conf-pill { display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 12px; border-radius:8px; font-size:12px; font-weight:500; letter-spacing:.5px;
+    background:var(--success-container); color:var(--on-success-container); }
+  .conf-pill .material-symbols-rounded { font-size:16px; }
+  .vd-conf .cl { font-size:12px; color:var(--md-sys-color-on-surface-variant); }
+
+  /* ---- thesis lead (on background) ---- */
+  .thesis { margin-top:34px; font-size:19px; line-height:1.62; color:var(--md-sys-color-on-surface); max-width:none; }
+  .thesis b { font-weight:500; color:var(--md-sys-color-primary); }
+
+  /* ============ RANKED SCORECARD (radar alternative) ============ */
+  .sc-legend { display:flex; align-items:center; gap:22px; margin-bottom:6px; font-size:12px; color:var(--md-sys-color-on-surface-variant); }
+  .sc-legend span { display:inline-flex; align-items:center; gap:8px; }
+  .sc-legend .kband { width:40px; height:9px; border-radius:999px;
+    background:linear-gradient(90deg, var(--md-sys-color-error) 0 33%, var(--warning) 33% 66%, var(--success) 66% 100%); }
+  .sc-legend .ktick { display:inline-flex; align-items:center; gap:6px; }
+  .sc-legend .ktick::before { content:""; width:14px; height:9px; border-radius:0 999px 999px 0; background:var(--success); opacity:.24; }
+  .sc-legend .ktick::after { content:""; width:3px; height:15px; border-radius:2px; background:var(--success); }
+  .cat-row { display:grid; grid-template-columns: 236px 1fr 66px 132px; align-items:center; gap:22px;
+    padding:15px 6px; border-top:1px solid var(--md-sys-color-surface-container-highest);
+    border-radius:12px; transition: background .18s var(--md-sys-motion-standard); }
+  .cat-row:hover { background:var(--md-sys-color-surface-container-low); }
+  .cat-name { font-size:15px; font-weight:500; color:var(--md-sys-color-on-surface); }
+  .cat-weight { font-size:12px; color:var(--md-sys-color-on-surface-variant); margin-top:3px; }
+  .ctrack { position:relative; height:14px; border-radius:999px; background:var(--md-sys-color-surface-container-highest); }
+  .cnow { position:absolute; left:0; top:0; height:100%; border-radius:999px; }
+  .cnow.strong { background:var(--success); }
+  .cnow.mixed  { background:var(--warning); }
+  .cnow.gap    { background:var(--md-sys-color-error); }
+  .cghost { position:absolute; top:0; height:100%; border-radius:0 999px 999px 0;
+    background:var(--success); opacity:.24; }
+  .cpot { position:absolute; top:-4px; width:3px; height:22px; border-radius:2px; background:var(--success);
+    transform:translateX(-50%); box-shadow: 0 0 0 2px var(--md-sys-color-surface-container); }
+  .cval { text-align:right; font-variant-numeric: tabular-nums; }
+  .cval b { font-size:19px; font-weight:500; color:var(--md-sys-color-on-surface); }
+  .cval span { font-size:12px; color:var(--md-sys-color-on-surface-variant); }
+  .cmeta { display:flex; align-items:center; justify-content:flex-end; gap:12px; }
+  .bchip { display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:500; letter-spacing:.4px; text-transform:uppercase; color:var(--md-sys-color-on-surface-variant); }
+  .bchip i { width:8px; height:8px; border-radius:999px; }
+  .bchip.strong i { background:var(--success); } .bchip.mixed i { background:var(--warning); } .bchip.gap i { background:var(--md-sys-color-error); }
+  .cdelta { display:inline-flex; align-items:center; gap:2px; font-size:13px; font-weight:500; color:var(--success); min-width:52px; justify-content:flex-end; }
+  .cdelta .material-symbols-rounded { font-size:15px; }
+  .cflat { font-size:12px; color:var(--md-sys-color-on-surface-variant); min-width:52px; text-align:right; }
+  .sc-foot { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-top:16px; padding-top:16px; border-top:1px solid var(--md-sys-color-surface-container-highest); }
+  .sc-split { font-size:13px; color:var(--md-sys-color-on-surface-variant); }
+  .sc-split b.s { color:var(--success); } .sc-split b.m { color:var(--warning); } .sc-split b.g { color:var(--md-sys-color-error); }
+  .sc-thresh { font-size:12px; color:var(--md-sys-color-on-surface-variant); }
+  .sc-thresh b { color:var(--md-sys-color-on-surface); font-weight:500; }
+
+  /* ============ CASE BOTH WAYS ============ */
+  .cases { display:grid; grid-template-columns:1fr 1fr; gap:40px; }
+  .case-h { display:flex; align-items:center; gap:8px; font-size:11px; font-weight:500; letter-spacing:.5px; text-transform:uppercase; margin-bottom:14px; }
+  .case.bull .case-h { color:var(--success); }
+  .case.bear .case-h { color:var(--md-sys-color-error); }
+  .case-h .material-symbols-rounded { font-size:18px; }
+  .case-row { display:flex; gap:12px; padding:11px 0; font-size:14.5px; line-height:1.55; color:var(--md-sys-color-on-surface);
+    border-top:1px solid var(--md-sys-color-surface-container-highest); }
+  .case-row:first-of-type { border-top:none; }
+  .case-row .material-symbols-rounded { flex:none; font-size:19px; margin-top:1px; }
+  .case.bull .case-row .material-symbols-rounded { color:var(--success); }
+  .case.bear .case-row .material-symbols-rounded { color:var(--md-sys-color-error); }
+
+  /* ============ CRUX — kill-risk + must-be-true ============ */
+  .crux { display:grid; grid-template-columns: 1.05fr 1fr; gap:30px; align-items:start; }
+  .killrisk { position:relative; border-radius:var(--md-sys-shape-corner-lg); padding:24px 26px 26px;
+    background:linear-gradient(180deg, rgba(147,0,10,0.14), rgba(147,0,10,0.05));
+    border-left:4px solid var(--md-sys-color-error); }
+  .killrisk .kh { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .killrisk .kh .material-symbols-rounded { font-size:22px; color:var(--md-sys-color-error); }
+  .killrisk .kh .lab { font-size:12px; font-weight:500; letter-spacing:.5px; text-transform:uppercase; color:var(--md-sys-color-error); }
+  .killrisk .kh .tag { margin-left:auto; font-size:12px; font-weight:500; color:var(--md-sys-color-on-error-container);
+    background:var(--md-sys-color-error-container); padding:3px 12px; border-radius:999px; }
+  .killrisk .kt { font-size:19px; font-weight:500; color:var(--md-sys-color-on-surface); margin-bottom:8px; }
+  .killrisk .kx { font-size:14.5px; line-height:1.58; color:var(--md-sys-color-on-surface-variant); }
+  .mbt .mh { font-size:11px; font-weight:500; letter-spacing:.5px; text-transform:uppercase; color:var(--success); margin-bottom:6px; }
+  .mbt .msub { font-size:13px; color:var(--md-sys-color-on-surface-variant); margin-bottom:16px; }
+  .must { display:flex; gap:14px; padding:13px 0; border-top:1px solid var(--md-sys-color-surface-container-highest); font-size:14.5px; line-height:1.55; color:var(--md-sys-color-on-surface); }
+  .must:first-of-type { border-top:none; }
+  .must .n { flex:none; width:26px; height:26px; border-radius:999px; display:grid; place-items:center; font-size:13px; font-weight:500;
+    background:var(--md-sys-color-secondary-container); color:var(--md-sys-color-on-secondary-container); }
+
+  /* ============ DILIGENCE — severity-grouped, colour-coded rails ============ */
+  .dil-summary { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:26px; }
+  .dsum { display:inline-flex; align-items:center; gap:8px; height:34px; padding:0 14px; border-radius:10px; font-size:13px; font-weight:500; }
+  .dsum i { width:9px; height:9px; border-radius:999px; }
+  .dsum.err { background:var(--md-sys-color-error-container); color:var(--md-sys-color-on-error-container); } .dsum.err i { background:var(--md-sys-color-error); }
+  .dsum.warn { background:var(--warning-container); color:var(--on-warning-container); } .dsum.warn i { background:var(--warning); }
+  .dsum.info { background:var(--md-sys-color-secondary-container); color:var(--md-sys-color-on-secondary-container); } .dsum.info i { background:var(--md-sys-color-secondary); }
+  .dsum-cleared { margin-left:auto; display:inline-flex; align-items:center; gap:8px; font-size:13px; color:var(--md-sys-color-on-surface-variant); }
+  .dsum-cleared .track { width:120px; height:8px; border-radius:999px; background:var(--md-sys-color-surface-container-highest); overflow:hidden; }
+  .dil-group { margin-bottom:26px; }
+  .dil-ghead { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+  .dil-gdot { width:12px; height:12px; border-radius:999px; flex:none; }
+  .dil-gdot.blocker { background:var(--md-sys-color-error); } .dil-gdot.key { background:var(--warning); } .dil-gdot.std { background:var(--md-sys-color-secondary); }
+  .dil-gtitle { font-size:15px; font-weight:500; color:var(--md-sys-color-on-surface); }
+  .dil-gcount { width:22px; height:22px; border-radius:999px; display:grid; place-items:center; font-size:12px; font-weight:500;
+    background:var(--md-sys-color-surface-container-highest); color:var(--md-sys-color-on-surface-variant); }
+  .dil-gsub { font-size:13px; color:var(--md-sys-color-on-surface-variant); }
+  .dil-item { position:relative; display:flex; gap:16px; align-items:flex-start; padding:16px 18px; margin-bottom:8px;
+    border-radius:12px; border-left:4px solid transparent; transition: background .18s var(--md-sys-motion-standard); }
+  .dil-item.blocker { background:rgba(147,0,10,0.09);  border-left-color:var(--md-sys-color-error); }
+  .dil-item.key     { background:rgba(247,192,103,0.08); border-left-color:var(--warning); }
+  .dil-item.std     { background:var(--md-sys-color-surface-container-low); border-left-color:var(--md-sys-color-secondary); }
+  .dil-item:hover { background:var(--md-sys-color-surface-container); }
+  .dil-item.blocker:hover { background:rgba(147,0,10,0.15); }
+  .dil-check { flex:none; width:22px; height:22px; border-radius:999px; margin-top:1px;
+    border:2px solid var(--md-sys-color-outline); }
+  .dil-item.blocker .dil-check { border-color:var(--md-sys-color-error); }
+  .dil-item.key .dil-check { border-color:var(--warning); }
+  .dil-body { flex:1; min-width:0; }
+  .dil-title { font-size:15.5px; font-weight:500; color:var(--md-sys-color-on-surface); margin-bottom:5px; }
+  .dil-note { font-size:14px; line-height:1.55; color:var(--md-sys-color-on-surface-variant); }
+  .dil-num { flex:none; font-size:13px; font-weight:500; letter-spacing:.5px; color:var(--md-sys-color-on-surface-variant);
+    font-variant-numeric:tabular-nums; opacity:.7; }
+
+  /* ---- sign-off banner ---- */
+  .signoff { margin-top:40px; display:flex; align-items:center; gap:16px; padding:20px 24px; border-radius:var(--md-sys-shape-corner-lg);
+    background:linear-gradient(180deg, rgba(8,68,47,0.34), rgba(8,68,47,0.16)); border-left:4px solid var(--success); }
+  .signoff .material-symbols-rounded { flex:none; font-size:26px; color:var(--success); }
+  .signoff .so-b { font-size:14.5px; color:var(--md-sys-color-on-surface); }
+  .signoff .so-b b { font-weight:500; }
+  .signoff .so-b .who { color:var(--success); font-weight:500; }
+  .signoff .so-note { font-style:italic; color:var(--md-sys-color-on-surface-variant); margin-top:3px; font-size:14px; }
+  .signoff .so-act { margin-left:auto; }
+
+  /* ---- responsive ---- */
+  @media (max-width: 1080px) {
+    .hero { grid-template-columns:1fr; gap:32px; padding:32px 26px; }
+    .gauge { width:260px; height:260px; }
+    .gscore { font-size:96px; }
+    .cases, .crux { grid-template-columns:1fr; gap:26px; }
+  }
+  @media (max-width: 720px) {
+    .cat-row { grid-template-columns: 1fr auto; grid-template-areas: "name val" "bar bar" "meta meta"; gap:8px 14px; }
+    .cat-row .cn { grid-area:name; } .cat-row .cb { grid-area:bar; } .cat-row .cv { grid-area:val; } .cat-row .cm { grid-area:meta; justify-content:flex-start; }
+    .vd-grid { grid-template-columns:1fr; }
+    .dsum-cleared { margin-left:0; }
+  }
+</style>
+</head>
+<body data-palette="#D0BCFF,#6FDBB4,#F7C067,#FFB4AB">
+<div class="wrap" id="app"></div>
+
+<script type="module">
+import { ASSESSMENT as A, SCORE as S } from '../data.js';
+const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const sym = n => `<span class="material-symbols-rounded">${n}</span>`;
+
+/* ---------- context header ---------- */
+const ctx = `<div class="ctx">
+  <span class="av">${esc(A.initials)}</span>
+  <div><div class="nm">${esc(A.name)}</div><div class="stage">Seed · Raising ${esc(A.theAsk)}</div></div>
+  <span class="status ok" style="margin-left:14px">${sym('check_circle')} ${esc(A.status.label)}</span>
+  <span class="sp"></span>
+  <span class="vtag">Investability · VSS V3</span>
+</div>`;
+
+/* ---------- hero: gauge + verdict ---------- */
+const R = 130, C = 2 * Math.PI * R, cx = 160;
+const nowLen = (S.composite / 100) * C;
+const gapArc = 9;
+const potLen = ((S.potential - S.composite) / 100) * C - gapArc;
+const convOn = A.conviction === 'High' ? 4 : A.conviction === 'Medium' ? 3 : 2;
+const uplift = S.potential - S.composite;
+
+const gauge = `<div class="gcol"><div class="gauge">
+  <svg viewBox="0 0 320 320">
+    <defs>
+      <linearGradient id="gNow" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#EADDFF"/><stop offset="1" stop-color="#B69DF8"/>
+      </linearGradient>
+      <linearGradient id="gPot" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#8FF8CE"/><stop offset="1" stop-color="#6FDBB4"/>
+      </linearGradient>
+    </defs>
+    <circle class="g-track" cx="${cx}" cy="${cx}" r="${R}"/>
+    <circle class="g-pot" cx="${cx}" cy="${cx}" r="${R}" transform="rotate(-90 ${cx} ${cx})"
+      stroke-dasharray="0 ${(nowLen + gapArc).toFixed(1)} ${potLen.toFixed(1)} ${C.toFixed(1)}"/>
+    <circle class="g-now" cx="${cx}" cy="${cx}" r="${R}" transform="rotate(-90 ${cx} ${cx})"
+      stroke-dasharray="${nowLen.toFixed(1)} ${C.toFixed(1)}"/>
+  </svg>
+  <div class="gauge-center">
+    <div class="gscore">${S.composite}<span>/100</span></div>
+    <div class="gband">${sym('trending_flat')} ${esc(S.band)}</div>
+  </div>
+</div>
+<div class="g-legend">
+  <span><span class="kn"></span> Now <b>${S.composite}</b></span>
+  <span><span class="kp"></span> Potential <b>${S.potential}</b> <b class="up">+${uplift}</b></span>
+</div></div>`;
+
+const verdict = `<div class="vd">
+  <div class="ov">Recommendation</div>
+  <div class="rec-lg">${sym('balance')} ${esc(A.recommendation)}</div>
+  <div class="vd-grid">
+    <div class="vd-cell">
+      <div class="k">Conviction</div>
+      <div class="v"><b>${esc(A.conviction)}</b><span class="seg">${[1,2,3,4,5].map(n => `<i class="${n <= convOn ? 'on' : ''}"></i>`).join('')}</span></div>
+    </div>
+    <div class="vd-cell">
+      <div class="k">The ask</div>
+      <div class="v"><b>$20M</b> on <b>$60M</b> pre <small>· ${esc(A.askMeta)}</small></div>
+    </div>
+    <div class="vd-conf">
+      <span class="conf-pill">${sym('verified')} Confidence · ${esc(A.confidence.level)}</span>
+      <span class="cl">${esc(A.confidence.line)}</span>
+    </div>
+  </div>
+</div>`;
+
+const hero = `<div class="hero">${gauge}${verdict}</div>`;
+
+/* ---------- thesis lead ---------- */
+const thesis = `<p class="thesis"><b>Thesis.</b> ${esc(A.thesis)}</p>`;
+
+/* ---------- ranked scorecard (radar alternative) ---------- */
+const BANDLABEL = { strong: 'Strong', mixed: 'Mixed', gap: 'Gap' };
+const band = f => f >= 0.8 ? 'strong' : f >= 0.5 ? 'mixed' : 'gap';
+const cats = [...S.categories].sort((a, b) => b.frac - a.frac || b.weightPct - a.weightPct);
+const catRows = cats.map(c => {
+  const b = band(c.frac);
+  const delta = (c.pot - c.frac) * 5;
+  const hasLift = delta > 0.05;
+  const ghost = hasLift
+    ? `<div class="cghost" style="left:calc(${(c.frac * 100).toFixed(1)}% + 3px);width:calc(${((c.pot - c.frac) * 100).toFixed(1)}% - 3px)"></div><div class="cpot" style="left:${(c.pot * 100).toFixed(1)}%"></div>`
+    : '';
+  const meta = hasLift
+    ? `<span class="cdelta">${sym('north_east')}+${delta.toFixed(1)}</span>`
+    : `<span class="cflat">holds</span>`;
+  return `<div class="cat-row">
+    <div class="cn"><div class="cat-name">${esc(c.label)}</div><div class="cat-weight">${c.weightPct}% weight</div></div>
+    <div class="cb"><div class="ctrack"><div class="cnow ${b}" style="width:${(c.frac * 100).toFixed(1)}%"></div>${ghost}</div></div>
+    <div class="cv cval"><b>${esc(c.num)}</b><span>/5</span></div>
+    <div class="cm cmeta"><span class="bchip ${b}"><i></i>${BANDLABEL[b]}</span>${meta}</div>
+  </div>`;
+}).join('');
+
+const scorecard = `<section class="sec">
+  <div class="sec-head"><span class="t"><b>Investability scorecard</b> — ranked, now → potential</span><span class="m">7 categories · weighted 0–100</span></div>
+  <div class="sc-legend">
+    <span><span class="kband"></span> Rated now · colour = band</span>
+    <span><span class="ktick"></span> Potential ceiling</span>
+    <span style="margin-left:auto;color:var(--md-sys-color-on-surface)">Closing the gaps lifts <b style="font-weight:500">${S.composite}</b> → <b style="color:var(--success);font-weight:500">${S.potential}</b></span>
+  </div>
+  ${catRows}
+  <div class="sc-foot">
+    <span class="sc-split"><b class="s">1 strong</b> · <b class="m">4 mixed</b> · <b class="g">2 gaps</b> — a concentrated profile: thinnest on <b class="g" style="color:var(--md-sys-color-on-surface);font-weight:500">Execution</b> and <b style="color:var(--md-sys-color-on-surface);font-weight:500">Technical moat</b>.</span>
+    <span class="sc-thresh"><b>Strong</b> ≥0.80 · <b>Mixed</b> 0.50–0.79 · <b>Gap</b> &lt;0.50</span>
+  </div>
+</section>`;
+
+/* ---------- case both ways ---------- */
+const bullRows = A.bull.map(t => `<div class="case-row">${sym('check_circle')}<span>${esc(t)}</span></div>`).join('');
+const bearRows = A.bear.map(t => `<div class="case-row">${sym('cancel')}<span>${esc(t)}</span></div>`).join('');
+const cases = `<section class="sec">
+  <div class="sec-head"><span class="t"><b>The case, both ways</b></span><span class="m">Bull · Bear</span></div>
+  <hr class="hr" style="margin-bottom:24px">
+  <div class="cases">
+    <div class="case bull"><div class="case-h">${sym('trending_up')} The case for</div>${bullRows}</div>
+    <div class="case bear"><div class="case-h">${sym('trending_down')} The case against</div>${bearRows}</div>
+  </div>
+</section>`;
+
+/* ---------- crux: kill-risk + must-be-true ---------- */
+const mustRows = A.mustBeTrue.map((m, i) => `<div class="must"><span class="n">${i + 1}</span><span>${esc(m)}</span></div>`).join('');
+const crux = `<section class="sec">
+  <div class="sec-head"><span class="t"><b>The crux</b> — what could kill it, what must hold</span></div>
+  <div class="crux">
+    <div class="killrisk">
+      <div class="kh">${sym('dangerous')}<span class="lab">Biggest kill-risk</span><span class="tag">${esc(A.biggestRisk.label)}</span></div>
+      <div class="kt">Distribution can’t reach the milestone</div>
+      <div class="kx">${esc(A.biggestRisk.text)}</div>
+    </div>
+    <div class="mbt">
+      <div class="mh">For the thesis to hold</div>
+      <div class="msub">Three things must be true — none are proven today.</div>
+      ${mustRows}
+    </div>
+  </div>
+</section>`;
+
+/* ---------- diligence: severity-grouped ---------- */
+const SEV = [
+  { tag: 'Blocker',  key: 'blocker', dsum: 'err',  title: 'Blockers',       sub: 'Resolve before you wire a dollar.' },
+  { tag: 'Key',      key: 'key',     dsum: 'warn', title: 'Key diligence',  sub: 'Material to the thesis — clear this quarter.' },
+  { tag: 'Standard', key: 'std',     dsum: 'info', title: 'Standard checks', sub: 'Confirm during confirmatory diligence.' }
+];
+const counts = Object.fromEntries(SEV.map(s => [s.tag, A.diligence.filter(d => d.tag === s.tag).length]));
+const total = A.diligence.length;
+let n = 0;
+const dilGroups = SEV.map(sv => {
+  const items = A.diligence.filter(d => d.tag === sv.tag);
+  const rows = items.map(d => {
+    n++;
+    return `<div class="dil-item ${sv.key}">
+      <span class="dil-check"></span>
+      <div class="dil-body"><div class="dil-title">${esc(d.title)}</div><div class="dil-note">${esc(d.note)}</div></div>
+      <span class="dil-num">${String(n).padStart(2, '0')}</span>
+    </div>`;
+  }).join('');
+  return `<div class="dil-group">
+    <div class="dil-ghead"><span class="dil-gdot ${sv.key}"></span><span class="dil-gtitle">${sv.title}</span><span class="dil-gcount">${items.length}</span><span class="dil-gsub">${sv.sub}</span></div>
+    ${rows}
+  </div>`;
+}).join('');
+const diligence = `<section class="sec">
+  <div class="sec-head"><span class="t"><b>Diligence checklist</b> — before you wire</span><span class="m">${total} items · severity-ordered</span></div>
+  <div class="dil-summary">
+    <span class="dsum err"><i></i>${counts.Blocker} Blockers</span>
+    <span class="dsum warn"><i></i>${counts.Key} Key</span>
+    <span class="dsum info"><i></i>${counts.Standard} Standard</span>
+    <span class="dsum-cleared"><span class="track"></span>0 / ${total} cleared</span>
+  </div>
+  ${dilGroups}
+</section>`;
+
+/* ---------- sign-off ---------- */
+const signoff = `<div class="signoff">
+  ${sym('task_alt')}
+  <div><div class="so-b"><b>Endorsed for further diligence</b> by <span class="who">${esc(A.signoff.by)}</span> · ${esc(A.signoff.at)}</div>
+  <div class="so-note">“${esc(A.signoff.note)}”</div></div>
+  <div class="so-act"><button class="btn text">Update</button></div>
+</div>`;
+
+document.getElementById('app').insertAdjacentHTML('beforeend',
+  ctx + hero + thesis + scorecard + cases + crux + diligence + signoff);
+</script>
+</body>
+</html>

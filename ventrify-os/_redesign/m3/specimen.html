@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Specimen · Ventrify OS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" rel="stylesheet">
+<script>
+  // theme: explicit ?theme= wins, else the shared localStorage choice
+  try {
+    var p = new URLSearchParams(location.search), t = p.get('theme');
+    if (t === 'light' || (!t && localStorage.getItem('ventrify-theme') === 'light')) document.documentElement.classList.add('light');
+  } catch (e) {}
+</script>
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="ds.css">
+<link rel="stylesheet" href="assess-editorial.css">
+<style>
+  html, body { background: var(--md-sys-color-surface); }
+  .specimen { padding: clamp(16px, 4vw, 32px); }
+  .specimen.bleed { padding: 0; height: 100vh; }
+  .specimen.bleed > * { height: 100%; }
+  .missing { padding: 40px; color: var(--md-sys-color-on-surface-variant); font-family: 'Roboto', sans-serif; }
+</style>
+</head>
+<body>
+<div id="root" class="specimen"><div class="missing">Loading specimen…</div></div>
+<script type="module">
+  import * as DS from './ds.js';
+  import { CATALOG } from './registry.js';
+  const params = new URLSearchParams(location.search);
+  const id = params.get('id');
+  const instanceKey = params.get('i') || undefined;   // a named instance (state)
+  const cfg = Object.fromEntries(params.entries());    // full config (for template composers)
+  const entry = CATALOG[id];
+  const root = document.getElementById('root');
+  if (entry && entry.src && !entry.html) {
+    // Page-level entries are real files — load the page itself.
+    location.replace(entry.src);
+  } else if (!entry) {
+    root.innerHTML = `<div class="missing">No specimen for <code>${id || '(none)'}</code>. Pass <code>?id=&lt;key&gt;</code>.</div>`;
+  } else {
+    document.title = entry.title + ' · specimen';
+    if (!entry.pad) root.classList.add('bleed');
+    if (entry.maxw) { root.style.maxWidth = entry.maxw + 'px'; root.style.margin = '0 auto'; }
+    root.innerHTML = entry.html(instanceKey, cfg);
+    DS.initShell();
+  }
+</script>
+</body>
+</html>

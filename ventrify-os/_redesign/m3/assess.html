@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Assessment · MoneyGym · Ventrify OS</title>
+<meta name="description" content="MoneyGym Seed assessment — the verdict memo, investability strength profile, market, team, diligence and the deep research behind it.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" rel="stylesheet">
+<script>try{if(localStorage.getItem("ventrify-theme")==="light")document.documentElement.classList.add("light")}catch(e){}</script>
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="ds.css">
+<link rel="stylesheet" href="assess-editorial.css">
+<link rel="stylesheet" href="transitions.css">
+</head>
+<body>
+<div id="app"></div>
+<script type="module">
+  import * as DS from './ds.js';
+  import { ASSESSMENT as A, SCORE as S } from './data.js';
+  import { resolveActions } from '../../shared/actions.js';
+  // visible-taxonomy scope: no approval state passed → no workflow primary yet (the rulebook encodes
+  // Submit/Approve·Reject/Finalise per role×state; wiring that is the deferred "full" build).
+  const acts = resolveActions({ page: 'assess' });
+
+  // ── Editorial assessment — a single scrolling verdict MEMO on the Verdict tab, with the
+  //    deep-dives kept as their own tabs. The memo, strength profile and diligence are
+  //    data-driven editorial components (ds.js); Market/Team/Research reuse the card views. ──
+  const body = `
+    <div class="tab-panel active">${DS.verdictMemo(A, S)}</div>
+    <div class="tab-panel"><div class="brief">${DS.investabilityHero(S, A)}<hr class="rule">${DS.investabilityComposition(S, 'openInvest')}<hr class="rule">${DS.strengthProfile(S, 'openInvest')}</div></div>
+    <div class="tab-panel">${DS.marketMemo(A)}</div>
+    <div class="tab-panel">${DS.teamMemo(A)}</div>
+    <div class="tab-panel">${DS.diligenceEditorial(A)}</div>
+    <div class="tab-panel">${DS.researchMemo(A, S)}</div>`;
+
+  document.getElementById('app').outerHTML = DS.pageShell({
+    active: 'portfolio',
+    aux: {}, auxMode: 'push', rail: acts.rail, railOverflow: acts.overflow,
+    masthead: DS.masthead({
+      breadcrumb: { label: 'Portfolio', href: 'portfolio.html' },
+      crumbTail: A.name,
+      avatar: A.initials,
+      headline: A.name,
+      status: A.status,
+      subheading: A.stageLine,
+      compact: A.name,
+      actions: acts.decision.length ? acts.decision : (acts.primary ? [acts.primary] : []),
+      tabs: ['Verdict', 'Investability', 'Market', 'Team', 'Diligence', 'Research'],
+      activeTab: 0
+    }),
+    body
+  });
+  DS.initShell();
+  DS.initTabs({ names: ['verdict', 'investability', 'market', 'team', 'diligence', 'research'] });
+
+  // investability drill-down — clicking a category (bar row or contribution row) opens its
+  // full breakdown in the aux panel: figures + the sub-signals that would lift the score.
+  window.openInvest = (key) => {
+    const d = DS.categoryDetail(S, key);
+    window.openAux({ mode: 'push', title: d.title, subtitle: d.subtitle, body: d.body });
+  };
+
+  // aux drill-down peeks — research rows + benchmark/team "read the full…" (real content, never placeholder)
+  const peekFooter = `<button class="m3-btn filled" style="flex:1" onclick="location.href='research-detail.html'"><span class="material-symbols-rounded">open_in_full</span>Open full page</button>`;
+  window.openPeek = (kind, i) => {
+    let title = '', inner = '';
+    if (kind === 'research') { const r = A.research[i]; title = r.title; inner = `<span class="status ${r.tagKind || 'info'}" style="align-self:flex-start">${r.tag}</span><p class="body-m">${r.note}</p>`; }
+    else if (kind === 'benchmark') { title = 'Competitive benchmark'; inner = `<p class="body-m">${A.benchmark.note}</p>`; }
+    else if (kind === 'team') { title = 'Team & founder diligence'; inner = `<p class="body-m">${A.team.peek || A.team.summary}</p>`; }
+    window.openAux({ mode: 'push', title, subtitle: 'L3 · Deep research', body: inner, footer: peekFooter });
+  };
+
+  // ---- Sources rail panel — the engagement's inputs + lifecycle + re-run (the "Sources" utility) ----
+  // authored content for the rail's 'sources' tool; also openable inline (from the Research data-room card).
+  window.RAIL_PANELS = { sources: () => DS.sourcesPanel(A) };
+  window.openSources = () => window.openAux({ mode: 'push', ...DS.sourcesPanel(A) });
+  window.__toast = (msg) => {
+    let t = document.getElementById('__toast');
+    if (!t) { t = document.createElement('div'); t.id = '__toast';
+      t.style.cssText = 'position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(12px);z-index:9999;background:var(--md-sys-color-inverse-surface,#2a2b30);color:var(--md-sys-color-inverse-on-surface,#eaeaea);padding:12px 18px;border-radius:12px;font:500 13px/1.4 Roboto,sans-serif;box-shadow:0 8px 28px rgba(0,0,0,.45);opacity:0;transition:opacity .2s ease,transform .2s ease;pointer-events:none;max-width:88vw;';
+      document.body.appendChild(t); }
+    t.textContent = msg; requestAnimationFrame(() => { t.style.opacity = '1'; t.style.transform = 'translateX(-50%) translateY(0)'; });
+    clearTimeout(window.__toastT); window.__toastT = setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(-50%) translateY(12px)'; }, 2600);
+  };
+  window.rerunAssessment = () => window.__toast('Re-running the assessment on the latest v3 rubric…');
+  window.addDocuments = () => window.__toast('Add documents — the founder uploads re-trigger the assessment.');
+</script>
+</body>
+</html>

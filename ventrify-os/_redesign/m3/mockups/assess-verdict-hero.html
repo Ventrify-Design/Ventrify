@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Assessment · Verdict hero band · MoneyGym</title>
+<meta name="description" content="Reimagined MoneyGym Seed assessment — a hero verdict band, bullet-bar investability profile, the case both ways, and a pre-wire diligence tracker.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../theme.css">
+<style>
+  /* ============================================================
+     Verdict hero band — assessment content redesign
+     Two elevated surfaces earn their place (the HERO, the diligence
+     TRACKER); everything else flows on the #141218 background with
+     light structure. Dark-first, desktop 1440. On-brand M3 tokens.
+     ============================================================ */
+  body { background: var(--md-sys-color-surface); }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 30px clamp(20px, 4vw, 52px) 128px; }
+  .block { margin-top: 46px; }
+  .material-symbols-rounded { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+
+  /* ---- shared section header (sits on the background) ---- */
+  .sec-hd { margin-bottom: 22px; }
+  .sec-hd .overline { display: block; margin-bottom: 6px; }
+  .sec-hd h2 { font-size: 22px; line-height: 28px; font-weight: 500; letter-spacing: -0.1px; color: var(--md-sys-color-on-surface); }
+  .sec-hd .hd-sub { margin-top: 5px; font-size: 14px; line-height: 20px; letter-spacing: .25px; color: var(--md-sys-color-on-surface-variant); }
+  .sec-hd.row { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+
+  /* ================= CONTEXT HEADER (on background) ================= */
+  .ctx { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;
+         padding-bottom: 20px; border-bottom: 1px solid var(--md-sys-color-surface-container-highest); }
+  .ctx-id { display: flex; align-items: center; gap: 16px; min-width: 0; }
+  .ctx-av { flex: none; width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center;
+            font-weight: 500; font-size: 16px; letter-spacing: .5px;
+            background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
+  .ctx-name { display: flex; align-items: center; gap: 12px; font-size: 20px; font-weight: 500; letter-spacing: -.1px; color: var(--md-sys-color-on-surface); }
+  .ctx-sub { margin-top: 3px; font-size: 13px; letter-spacing: .25px; color: var(--md-sys-color-on-surface-variant); }
+  .ctx-badge { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 11px; border-radius: 8px;
+               font-size: 12px; font-weight: 500; letter-spacing: .3px;
+               background: var(--success-container); color: var(--on-success-container); }
+  .ctx-badge .material-symbols-rounded { font-size: 16px; }
+  .ctx-meta { display: flex; align-items: center; gap: 12px; font-size: 12.5px; letter-spacing: .3px; color: var(--md-sys-color-on-surface-variant); }
+  .ctx-meta .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--md-sys-color-outline); }
+
+  /* ================= HERO BAND (elevated — the star) ================= */
+  .hero {
+    position: relative; margin-top: 28px; overflow: hidden;
+    border-radius: 28px; border: 1px solid var(--md-sys-color-outline-variant);
+    background:
+      radial-gradient(130% 150% at 100% -10%, rgba(247,192,103,0.13), transparent 52%),
+      radial-gradient(120% 130% at -5% 115%, rgba(208,188,255,0.10), transparent 55%),
+      linear-gradient(158deg, var(--md-sys-color-surface-container-high), var(--md-sys-color-surface-container));
+    box-shadow: var(--md-elev-3);
+  }
+  .hero-main { display: grid; grid-template-columns: 1fr 300px; gap: 8px 44px; padding: 34px 40px 26px; align-items: center; }
+
+  /* -- recommendation (left) -- */
+  .hero-rec .overline { color: var(--md-sys-color-on-surface-variant); }
+  .rec-lede { display: flex; align-items: center; gap: 14px; margin-top: 14px; }
+  .rec-ic { flex: none; width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center;
+            background: var(--warning-container); color: var(--warning); }
+  .rec-ic .material-symbols-rounded { font-size: 30px; font-variation-settings: 'FILL' 1; }
+  .rec-word { font-size: 40px; line-height: 1.02; font-weight: 500; letter-spacing: -1px; color: var(--warning); }
+  .rec-word small { display: block; font-size: 13px; font-weight: 500; letter-spacing: .3px; color: var(--md-sys-color-on-surface-variant); margin-top: 2px; }
+  .rec-facts { display: flex; align-items: center; gap: 26px; margin-top: 24px; flex-wrap: wrap; }
+  .fact .fl { font-size: 11px; letter-spacing: .5px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); }
+  .fact .fv { margin-top: 4px; font-size: 15px; font-weight: 500; color: var(--md-sys-color-on-surface); display: flex; align-items: center; gap: 10px; }
+  .fact .fv .money { color: var(--md-sys-color-on-surface); }
+  .fact .fv .sub { font-weight: 400; font-size: 13px; color: var(--md-sys-color-on-surface-variant); }
+  .seg { display: inline-flex; gap: 4px; }
+  .seg i { width: 16px; height: 6px; border-radius: 3px; background: var(--md-sys-color-surface-container-highest); }
+  .seg i.on { background: var(--warning); }
+
+  /* -- score gauge (right) -- */
+  .hero-score { justify-self: center; text-align: center; }
+  .gauge { position: relative; width: 224px; height: 224px; margin: 0 auto; }
+  .gauge svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .g-track { fill: none; stroke: var(--md-sys-color-surface-container-highest); stroke-width: 15; }
+  .g-pot   { fill: none; stroke: var(--success); stroke-width: 15; stroke-linecap: round; opacity: .55; }
+  .g-now   { fill: none; stroke: var(--warning); stroke-width: 15; stroke-linecap: round; }
+  .gauge-mid { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .g-eyebrow { font-size: 10px; letter-spacing: .8px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); }
+  .g-score { font-size: 68px; line-height: 1; font-weight: 500; letter-spacing: -2px; color: var(--md-sys-color-on-surface); margin-top: 2px; }
+  .g-score span { font-size: 20px; font-weight: 400; letter-spacing: -.5px; color: var(--md-sys-color-on-surface-variant); }
+  .g-pill { margin-top: 9px; display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 12px; border-radius: 999px;
+            font-size: 12px; font-weight: 500; letter-spacing: .3px; background: var(--warning-container); color: var(--on-warning-container); }
+  .g-pot-line { margin-top: 16px; display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--md-sys-color-on-surface-variant); }
+  .g-pot-line .material-symbols-rounded { font-size: 18px; color: var(--success); }
+  .g-pot-line b { color: var(--success); font-weight: 500; }
+  .g-plus { padding: 1px 7px; border-radius: 6px; font-size: 12px; font-weight: 500; background: var(--success-container); color: var(--on-success-container); }
+
+  /* -- hero rigor strip -- */
+  .hero-foot { display: flex; align-items: center; gap: 10px 20px; flex-wrap: wrap;
+               padding: 15px 40px; border-top: 1px solid rgba(255,255,255,0.06);
+               background: rgba(0,0,0,0.12); font-size: 12.5px; letter-spacing: .3px; color: var(--md-sys-color-on-surface-variant); }
+  .rigor { display: inline-flex; align-items: center; gap: 7px; }
+  .rigor .material-symbols-rounded { font-size: 16px; color: var(--success); }
+  .rigor b { color: var(--md-sys-color-on-surface); font-weight: 500; }
+  .rigor + .rigor::before { content: "·"; margin-right: 20px; color: var(--md-sys-color-outline); }
+
+  /* ================= THESIS + KILL-RISK (on background) ================= */
+  .read { display: grid; grid-template-columns: 1.35fr 1fr; gap: 32px; align-items: start; }
+  .thesis .overline { display: block; margin-bottom: 12px; }
+  .thesis p { font-size: 18px; line-height: 30px; letter-spacing: .1px; color: var(--md-sys-color-on-surface); font-weight: 300; }
+  .thesis p b { font-weight: 500; }
+  .killrisk { position: relative; padding: 20px 22px 20px 24px; border-radius: 16px;
+              background: rgba(147,0,10,0.16); }
+  .killrisk::before { content: ""; position: absolute; left: 0; top: 14px; bottom: 14px; width: 4px; border-radius: 4px; background: var(--md-sys-color-error); }
+  .kr-hd { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .kr-hd .material-symbols-rounded { font-size: 20px; color: var(--md-sys-color-error); }
+  .kr-hd .kr-lbl { font-size: 12px; font-weight: 500; letter-spacing: .5px; text-transform: uppercase; color: var(--md-sys-color-error); }
+  .kr-tag { margin-left: auto; height: 24px; padding: 0 11px; display: inline-flex; align-items: center; border-radius: 8px;
+            font-size: 12px; font-weight: 500; background: var(--md-sys-color-error-container); color: var(--md-sys-color-on-error-container); }
+  .killrisk p { font-size: 14px; line-height: 21px; letter-spacing: .2px; color: var(--md-sys-color-on-surface); }
+
+  /* ================= INVESTABILITY PROFILE — bullet bars (on background) ================= */
+  .legend { display: flex; align-items: center; gap: 18px; font-size: 12.5px; color: var(--md-sys-color-on-surface-variant); }
+  .legend i { display: inline-flex; align-items: center; gap: 7px; }
+  .legend .sw { width: 22px; height: 8px; border-radius: 3px; }
+  .legend .sw.now { background: linear-gradient(90deg, var(--md-sys-color-error), var(--warning), var(--success)); }
+  .legend .sw.pot { background: transparent; border: none; position: relative; width: 22px; }
+  .legend .sw.pot::after { content: ""; position: absolute; left: 9px; top: -3px; width: 2px; height: 14px; background: var(--success); border-radius: 2px; }
+
+  .bars { display: flex; flex-direction: column; }
+  .bar-row { display: grid; grid-template-columns: 232px 1fr 128px; align-items: center; gap: 22px;
+             padding: 13px 4px; border-top: 1px solid var(--md-sys-color-surface-container-highest); }
+  .bar-row:first-child { border-top: none; }
+  .bar-lead { min-width: 0; }
+  .bar-name { display: block; font-size: 14px; font-weight: 500; letter-spacing: .1px; color: var(--md-sys-color-on-surface); }
+  .bar-wt { font-size: 11.5px; letter-spacing: .3px; color: var(--md-sys-color-on-surface-variant); }
+  .bar-track { position: relative; height: 14px; border-radius: 8px; background: var(--md-sys-color-surface-container-highest); }
+  .bar-ghost { position: absolute; left: 0; top: 0; height: 100%; border-radius: 8px; background: rgba(111,219,180,0.20); }
+  .bar-fill { position: absolute; left: 0; top: 0; height: 100%; border-radius: 8px; }
+  .bar-tick { position: absolute; top: -4px; width: 2px; height: 22px; border-radius: 2px; background: var(--success); transform: translateX(-1px); }
+  .bar-tick::after { content: ""; position: absolute; left: -3px; top: -5px; width: 8px; height: 8px; border-radius: 50%; background: var(--success); }
+  .bar-val { text-align: right; display: flex; align-items: baseline; justify-content: flex-end; gap: 4px; }
+  .bar-num { font-size: 19px; font-weight: 500; letter-spacing: -.3px; color: var(--md-sys-color-on-surface); }
+  .bar-den { font-size: 12px; color: var(--md-sys-color-on-surface-variant); }
+  .bar-delta { margin-left: 8px; display: inline-flex; align-items: center; gap: 2px; padding: 2px 7px; border-radius: 6px;
+               font-size: 11.5px; font-weight: 500; background: var(--success-container); color: var(--on-success-container); align-self: center; }
+  .bar-delta .material-symbols-rounded { font-size: 13px; }
+  [data-band="strong"] .bar-fill { background: var(--success); }
+  [data-band="mixed"]  .bar-fill { background: var(--warning); }
+  [data-band="gap"]    .bar-fill { background: var(--md-sys-color-error); }
+  [data-band="gap"] .bar-name::after { content: "GAP"; margin-left: 8px; font-size: 9.5px; font-weight: 700; letter-spacing: .6px;
+               color: var(--md-sys-color-error); vertical-align: middle; }
+
+  .bars-foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+               margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--md-sys-color-surface-container-highest); }
+  .split { display: flex; align-items: center; gap: 18px; font-size: 13px; color: var(--md-sys-color-on-surface-variant); }
+  .split b { color: var(--md-sys-color-on-surface); font-weight: 500; }
+  .split i { display: inline-flex; align-items: center; gap: 7px; font-style: normal; }
+  .split .d { width: 9px; height: 9px; border-radius: 50%; }
+  .split .d.s { background: var(--success); } .split .d.m { background: var(--warning); } .split .d.g { background: var(--md-sys-color-error); }
+  .recap { font-size: 13.5px; color: var(--md-sys-color-on-surface-variant); }
+  .recap b { color: var(--md-sys-color-on-surface); font-weight: 500; }
+  .recap .up { color: var(--success); font-weight: 500; }
+
+  /* ================= CASE BOTH WAYS (two light columns on background) ================= */
+  .case { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+  .case-col { padding: 0 30px; }
+  .case-col:first-child { padding-left: 4px; border-right: 1px solid var(--md-sys-color-surface-container-highest); }
+  .case-col:last-child { padding-right: 4px; }
+  .case-hd { display: flex; align-items: center; gap: 10px; padding-bottom: 14px; margin-bottom: 6px; border-bottom: 2px solid; }
+  .case-bull .case-hd { border-color: var(--success); }
+  .case-bear .case-hd { border-color: var(--md-sys-color-error); }
+  .case-hd .material-symbols-rounded { font-size: 20px; }
+  .case-bull .case-hd .material-symbols-rounded { color: var(--success); }
+  .case-bear .case-hd .material-symbols-rounded { color: var(--md-sys-color-error); }
+  .case-hd .ttl { font-size: 15px; font-weight: 500; letter-spacing: .1px; color: var(--md-sys-color-on-surface); }
+  .case-hd .ct { margin-left: auto; font-size: 12px; font-weight: 500; width: 22px; height: 22px; border-radius: 999px; display: grid; place-items: center;
+                 background: var(--md-sys-color-surface-container-high); color: var(--md-sys-color-on-surface-variant); }
+  .case-list { list-style: none; }
+  .case-list li { display: flex; gap: 12px; padding: 13px 0; font-size: 13.5px; line-height: 20px; letter-spacing: .2px;
+                  color: var(--md-sys-color-on-surface); border-top: 1px solid var(--md-sys-color-surface-container-high); }
+  .case-list li:first-child { border-top: none; }
+  .case-list li .material-symbols-rounded { flex: none; font-size: 18px; margin-top: 1px; }
+  .case-bull li .material-symbols-rounded { color: var(--success); }
+  .case-bear li .material-symbols-rounded { color: var(--md-sys-color-error); }
+
+  /* ================= WHAT MUST BE TRUE (on background) ================= */
+  .mbt-note { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 18px; font-size: 13px; color: var(--md-sys-color-on-surface-variant); }
+  .mbt-note .material-symbols-rounded { font-size: 18px; color: var(--md-sys-color-primary); }
+  .mbt { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .mbt-item { position: relative; padding: 20px 20px 20px 22px; border-radius: 16px;
+              background: var(--md-sys-color-surface-container-low); border: 1px solid var(--md-sys-color-surface-container-highest); }
+  .mbt-n { width: 30px; height: 30px; border-radius: 999px; display: grid; place-items: center; margin-bottom: 12px;
+           font-size: 14px; font-weight: 500; background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
+  .mbt-item p { font-size: 13.5px; line-height: 20px; letter-spacing: .2px; color: var(--md-sys-color-on-surface); }
+
+  /* ================= DILIGENCE TRACKER (elevated — the action surface) ================= */
+  .tracker { border-radius: 24px; padding: 28px 30px 30px; background: var(--md-sys-color-surface-container);
+             box-shadow: var(--md-elev-2); border: 1px solid var(--md-sys-color-surface-container-highest); }
+  .dg-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 28px; flex-wrap: wrap; margin-bottom: 26px; }
+  .dg-title { font-size: 24px; line-height: 30px; font-weight: 500; letter-spacing: -.3px; color: var(--md-sys-color-on-surface); margin-top: 6px; }
+  .dg-title b { color: var(--md-sys-color-error); font-weight: 700; }
+  .dg-sub { margin-top: 6px; font-size: 13.5px; line-height: 19px; color: var(--md-sys-color-on-surface-variant); max-width: 440px; }
+  .dg-progress { flex: none; width: 260px; text-align: right; }
+  .dg-count { font-size: 13px; color: var(--md-sys-color-on-surface-variant); }
+  .dg-count b { font-size: 22px; font-weight: 500; color: var(--md-sys-color-on-surface); }
+  .dg-bar { position: relative; height: 8px; border-radius: 999px; margin: 8px 0 9px; overflow: hidden;
+            background: var(--md-sys-color-surface-container-highest); }
+  .dg-bar span { position: absolute; left: 0; top: 0; height: 100%; border-radius: 999px; background: var(--success); transition: width .35s cubic-bezier(.2,0,0,1); }
+  .dg-remain { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--md-sys-color-on-surface-variant); }
+  .dg-remain .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--md-sys-color-error); }
+  .dg-remain b { color: var(--md-sys-color-error); font-weight: 500; }
+  .dg-remain.clear .dot { background: var(--success); } .dg-remain.clear b { color: var(--success); }
+
+  .dg-group { margin-top: 20px; }
+  .dg-glabel { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+  .sev-chip { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 11px; border-radius: 8px; font-size: 11.5px; font-weight: 500; letter-spacing: .4px; }
+  .sev-chip.err { background: var(--md-sys-color-error-container); color: var(--md-sys-color-on-error-container); }
+  .sev-chip.warn { background: var(--warning-container); color: var(--on-warning-container); }
+  .sev-chip.info { background: var(--md-sys-color-surface-container-highest); color: var(--md-sys-color-on-surface-variant); }
+  .dg-gcount { font-size: 12px; font-weight: 500; color: var(--md-sys-color-on-surface); }
+  .dg-gnote { font-size: 12.5px; color: var(--md-sys-color-on-surface-variant); }
+
+  .dg-item { display: flex; align-items: flex-start; gap: 15px; padding: 15px 16px; margin-top: 8px; border-radius: 14px;
+             background: var(--md-sys-color-surface-container-low); border: 1px solid transparent; position: relative;
+             transition: background .18s, border-color .18s; }
+  .dg-item::before { content: ""; position: absolute; left: 0; top: 12px; bottom: 12px; width: 3px; border-radius: 3px; opacity: .9; }
+  .dg-item[data-sev="err"]::before { background: var(--md-sys-color-error); }
+  .dg-item[data-sev="warn"]::before { background: var(--warning); }
+  .dg-item[data-sev="info"]::before { background: var(--md-sys-color-outline); }
+  .dg-item:hover { background: var(--md-sys-color-surface-container-high); }
+  .dg-check { flex: none; width: 24px; height: 24px; margin-top: 1px; border-radius: 7px; cursor: pointer; padding: 0;
+              display: grid; place-items: center; background: transparent; border: 2px solid var(--md-sys-color-outline);
+              color: transparent; transition: background .15s, border-color .15s, color .15s; }
+  .dg-check .material-symbols-rounded { font-size: 17px; font-variation-settings: 'wght' 600; }
+  .dg-item[data-sev="err"] .dg-check { border-color: var(--md-sys-color-error); }
+  .dg-item[data-sev="warn"] .dg-check { border-color: var(--warning); }
+  .dg-check:hover { background: rgba(255,255,255,0.05); }
+  .dg-body { flex: 1; min-width: 0; }
+  .dg-itop { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .dg-ititle { font-size: 15px; font-weight: 500; letter-spacing: .1px; color: var(--md-sys-color-on-surface); }
+  .dg-inote { margin-top: 4px; font-size: 13px; line-height: 19px; letter-spacing: .2px; color: var(--md-sys-color-on-surface-variant); }
+  /* resolved state */
+  .dg-item.done { background: var(--md-sys-color-surface-container-low); }
+  .dg-item.done::before { opacity: .3; }
+  .dg-item.done .dg-check { background: var(--success); border-color: var(--success); color: var(--on-success); }
+  .dg-item.done .dg-ititle { color: var(--md-sys-color-on-surface-variant); text-decoration: line-through; text-decoration-color: var(--md-sys-color-outline); }
+  .dg-item.done .dg-inote { opacity: .6; }
+  .dg-item.done .sev-chip { opacity: .5; }
+
+  /* ================= SIGN-OFF (on background) ================= */
+  .signoff { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding: 18px 22px; border-radius: 16px;
+             background: rgba(8,68,47,0.35); border: 1px solid rgba(111,219,180,0.22); }
+  .signoff .so-ic { flex: none; width: 40px; height: 40px; border-radius: 999px; display: grid; place-items: center;
+                    background: var(--success-container); color: var(--on-success-container); }
+  .signoff .so-ic .material-symbols-rounded { font-size: 22px; font-variation-settings: 'FILL' 1; }
+  .so-body { flex: 1; min-width: 240px; }
+  .so-body .so-line { font-size: 14px; color: var(--md-sys-color-on-surface); }
+  .so-body .so-line b { font-weight: 500; }
+  .so-body .so-line .who { color: var(--success); font-weight: 500; }
+  .so-note { margin-top: 3px; font-size: 13px; font-style: italic; color: var(--md-sys-color-on-surface-variant); }
+  .so-btn { flex: none; height: 40px; padding: 0 20px; border-radius: 999px; border: 1px solid var(--md-sys-color-outline);
+            background: transparent; color: var(--md-sys-color-primary); font-family: 'Roboto', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; }
+  .so-btn:hover { background: rgba(208,188,255,0.08); }
+
+  .textlink { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; color: var(--md-sys-color-primary); cursor: pointer; }
+  .textlink .material-symbols-rounded { font-size: 18px; }
+
+  @media (max-width: 1000px) {
+    .hero-main { grid-template-columns: 1fr; gap: 30px; justify-items: start; }
+    .read { grid-template-columns: 1fr; gap: 20px; }
+    .mbt { grid-template-columns: 1fr; }
+    .case { grid-template-columns: 1fr; gap: 28px; }
+    .case-col { padding: 0; } .case-col:first-child { border-right: none; }
+    .bar-row { grid-template-columns: 1fr; gap: 8px; }
+    .bar-val { justify-content: flex-start; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ================= CONTEXT HEADER ================= -->
+  <header class="ctx">
+    <div class="ctx-id">
+      <span class="ctx-av">MG</span>
+      <div>
+        <div class="ctx-name">MoneyGym <span class="ctx-badge"><span class="material-symbols-rounded">check_circle</span> Verdict ready</span></div>
+        <div class="ctx-sub">Seed · Raising $20M on $60M pre · Behavioural-finance subscription</div>
+      </div>
+    </div>
+    <div class="ctx-meta"><span>Assessed just now</span><span class="dot"></span><span>Verdict &amp; investability</span></div>
+  </header>
+
+  <!-- ================= HERO BAND ================= -->
+  <section class="hero">
+    <div class="hero-main">
+      <div class="hero-rec">
+        <span class="overline">Recommendation</span>
+        <div class="rec-lede">
+          <span class="rec-ic"><span class="material-symbols-rounded">balance</span></span>
+          <span class="rec-word">Diligence further<small>Workable at a repriced entry — not a wire today</small></span>
+        </div>
+        <div class="rec-facts">
+          <div class="fact">
+            <div class="fl">Conviction</div>
+            <div class="fv">Medium <span class="seg"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span></div>
+          </div>
+          <div class="fact">
+            <div class="fl">The ask</div>
+            <div class="fv"><span class="money">$20M</span> on <span class="money">$60M</span> pre <span class="sub">· first of a ~$35M plan</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-score">
+        <div class="gauge">
+          <svg viewBox="0 0 200 200" aria-hidden="true">
+            <circle class="g-track" cx="100" cy="100" r="84" pathLength="100"/>
+            <circle class="g-pot"   cx="100" cy="100" r="84" pathLength="100" stroke-dasharray="76 100"/>
+            <circle class="g-now"   cx="100" cy="100" r="84" pathLength="100" stroke-dasharray="55 100"/>
+          </svg>
+          <div class="gauge-mid">
+            <span class="g-eyebrow">Investability</span>
+            <span class="g-score">55<span>/100</span></span>
+            <span class="g-pill">Promising</span>
+          </div>
+        </div>
+        <div class="g-pot-line"><span class="material-symbols-rounded">trending_up</span> Potential <b>76</b> <span class="g-plus">+21</span></div>
+      </div>
+    </div>
+
+    <div class="hero-foot">
+      <span class="rigor"><span class="material-symbols-rounded">verified</span> Confidence <b>High</b></span>
+      <span class="rigor"><b>18</b> documents</span>
+      <span class="rigor"><b>32</b> sources cited</span>
+      <span class="rigor"><b>35 / 35</b> signals rated</span>
+      <span class="rigor">Full data room · VSS v3</span>
+    </div>
+  </section>
+
+  <!-- ================= THESIS + KILL-RISK ================= -->
+  <section class="block read">
+    <div class="thesis">
+      <span class="overline">The thesis</span>
+      <p>A real, government-verified macro pain and a proven behavioural-change subscription playbook (“Noom for money”) attached to a <b>pre-product, zero-US-traction</b> company asking a <b>Series-A price ($60M pre)</b> for a seed-stage asset — in a category a profitable <b>Cleo</b> already occupies at scale.</p>
+    </div>
+    <aside class="killrisk">
+      <div class="kr-hd">
+        <span class="material-symbols-rounded">gpp_maybe</span>
+        <span class="kr-lbl">Biggest kill-risk</span>
+        <span class="kr-tag">Distribution</span>
+      </div>
+      <p>~4M Year-5 subscribers requires 70–130M US installs (3–6% of all US finance-app installs for five straight years) and CAC compressing to $30 in 25 months on an unproven 0.4–0.6 viral coefficient the deck itself calls “a hypothesis” — if organic underperforms, payback exceeds customer lifetime and $20M never reaches the milestone.</p>
+    </aside>
+  </section>
+
+  <!-- ================= INVESTABILITY PROFILE (bullet bars) ================= -->
+  <section class="block">
+    <div class="sec-hd row">
+      <div>
+        <span class="overline">Investability profile · 7 × 5</span>
+        <h2>Where the 55 comes from</h2>
+        <div class="hd-sub">Rated now vs. the potential if the priority gaps close — sorted strongest to weakest.</div>
+      </div>
+      <div class="legend">
+        <i><span class="sw now"></span> Rated now</i>
+        <i><span class="sw pot"></span> Potential</i>
+      </div>
+    </div>
+
+    <div class="bars">
+      <!-- product 4/5 strong, no upside -->
+      <div class="bar-row" data-band="strong">
+        <div class="bar-lead"><span class="bar-name">Product &amp; solution clarity</span><span class="bar-wt">15% weight</span></div>
+        <div class="bar-track"><div class="bar-ghost" style="width:80%"></div><div class="bar-fill" style="width:80%"></div></div>
+        <div class="bar-val"><span class="bar-num">4</span><span class="bar-den">/5</span></div>
+      </div>
+      <!-- financial 3.5/5 mixed, no upside -->
+      <div class="bar-row" data-band="mixed">
+        <div class="bar-lead"><span class="bar-name">Financial defensibility</span><span class="bar-wt">10% weight</span></div>
+        <div class="bar-track"><div class="bar-ghost" style="width:70%"></div><div class="bar-fill" style="width:70%"></div></div>
+        <div class="bar-val"><span class="bar-num">3.5</span><span class="bar-den">/5</span></div>
+      </div>
+      <!-- market 3/5 mixed, +1.5 upside -->
+      <div class="bar-row" data-band="mixed">
+        <div class="bar-lead"><span class="bar-name">Market opportunity</span><span class="bar-wt">20% weight</span></div>
+        <div class="bar-track"><div class="bar-ghost" style="width:90%"></div><div class="bar-fill" style="width:60%"></div><div class="bar-tick" style="left:90%"></div></div>
+        <div class="bar-val"><span class="bar-num">3</span><span class="bar-den">/5</span><span class="bar-delta"><span class="material-symbols-rounded">north_east</span>+1.5</span></div>
+      </div>
+      <!-- team 3/5 mixed, no upside -->
+      <div class="bar-row" data-band="mixed">
+        <div class="bar-lead"><span class="bar-name">Team &amp; founder-market fit</span><span class="bar-wt">25% weight · highest</span></div>
+        <div class="bar-track"><div class="bar-ghost" style="width:60%"></div><div class="bar-fill" style="width:60%"></div></div>
+        <div class="bar-val"><span class="bar-num">3</span><span class="bar-den">/5</span></div>
+      </div>
+      <!-- evidence 3/5 mixed, no upside -->
+      <div class="bar-row" data-band="mixed">
+        <div class="bar-lead"><span class="bar-name">Evidence integrity</span><span class="bar-wt">5% weight</span></div>
+        <div class="bar-track"><div class="bar-ghost" style="width:60%"></div><div class="bar-fill" style="width:60%"></div></div>
+        <div class="bar-val"><span class="bar-num">3</span><span class="bar-den">/5</span></div>
+      </div>
+      <!-- moat 1.5/5 gap, +3.0 upside -->
+      <div class="bar-row" data-band="gap">
+        <div class="bar-lead"><span class="bar-name">Technical / competitive moat</span><span class="bar-wt">15% weight</span></div>
+        <div class="bar-track"><div class="bar-ghost" style="width:90%"></div><div class="bar-fill" style="width:30%"></div><div class="bar-tick" style="left:90%"></div></div>
+        <div class="bar-val"><span class="bar-num">1.5</span><span class="bar-den">/5</span><span class="bar-delta"><span class="material-symbols-rounded">north_east</span>+3.0</span></div>
+      </div>
+      <!-- execution 0.5/5 gap, +3.0 upside -->
+      <div class="bar-row" data-band="gap">
+        <div class="bar-lead"><span class="bar-name">Execution &amp; traction</span><span class="bar-wt">10% weight</span></div>
+        <div class="bar-track"><div class="bar-ghost" style="width:70%"></div><div class="bar-fill" style="width:10%"></div><div class="bar-tick" style="left:70%"></div></div>
+        <div class="bar-val"><span class="bar-num">0.5</span><span class="bar-den">/5</span><span class="bar-delta"><span class="material-symbols-rounded">north_east</span>+3.0</span></div>
+      </div>
+    </div>
+
+    <div class="bars-foot">
+      <div class="split">
+        <i><span class="d s"></span> <b>1</b> strong</i>
+        <i><span class="d m"></span> <b>4</b> mixed</i>
+        <i><span class="d g"></span> <b>2</b> gaps</i>
+      </div>
+      <div class="recap">A concentrated profile — closing moat &amp; execution lifts <b>55</b> to <span class="up">76 (+21)</span>. <span class="textlink">See how the score is calculated <span class="material-symbols-rounded">arrow_forward</span></span></div>
+    </div>
+  </section>
+
+  <!-- ================= CASE BOTH WAYS ================= -->
+  <section class="block">
+    <div class="sec-hd">
+      <span class="overline">The read, both ways</span>
+      <h2>The case to invest — and to pass</h2>
+    </div>
+    <div class="case">
+      <div class="case-col case-bull">
+        <div class="case-hd"><span class="material-symbols-rounded">trending_up</span><span class="ttl">The case to invest</span><span class="ct">5</span></div>
+        <ul class="case-list">
+          <li><span class="material-symbols-rounded">check_circle</span><span>Real, government-verified macro pain: $17.9T US household debt, $1.21T card balances, 57%+ living paycheck-to-paycheck — and a genuine consumer voice the deck captures well.</span></li>
+          <li><span class="material-symbols-rounded">check_circle</span><span>The behavioural-change subscription playbook is proven in adjacent verticals (Noom, Duolingo); even at honest sizing (~$1.5–2.5B TAM) the market is large enough to build a meaningful company.</span></li>
+          <li><span class="material-symbols-rounded">check_circle</span><span>Clean, non-lending coaching positioning sits in regulatory cold territory — a structural edge over Cleo’s $17M FTC settlement, Tally’s collapse, and Brigit/Dave enforcement.</span></li>
+          <li><span class="material-symbols-rounded">check_circle</span><span>Experienced, verified FS founder (Jonathan Corner) plus strong NEDs (Siobhan MacDermott, ex-Vice Chair BofA; Gideon Hyde, Market Gravity→Deloitte), and a data room that discloses several key risks openly.</span></li>
+          <li><span class="material-symbols-rounded">check_circle</span><span>If the deterministic four-engine ML edge is actually built, it is a credible answer to Cleo’s LLM-only approach — and the behavioural-data moat would compound with every user.</span></li>
+        </ul>
+      </div>
+      <div class="case-col case-bear">
+        <div class="case-hd"><span class="material-symbols-rounded">trending_down</span><span class="ttl">The case to pass</span><span class="ct">5</span></div>
+        <ul class="case-list">
+          <li><span class="material-symbols-rounded">cancel</span><span>The “unclaimed category” is already owned at scale by a net-profitable Cleo (~7M users, ~1.1M paying US subs, $280M+ ARR) the deck never mentions.</span></li>
+          <li><span class="material-symbols-rounded">cancel</span><span>The moat is explicitly unbuilt — “a Series-A-funded build” in the founder’s own words — and no ML/data leader is on the team; that is the first hire the round is meant to fund.</span></li>
+          <li><span class="material-symbols-rounded">cancel</span><span>The entire traction story is a dissolved predecessor: ilumoni / Monely Ltd (liquidation 2023, dissolved Aug 2024, ~£1.63M raised, never past 10k users); two of three co-founders are unverifiable in its filings.</span></li>
+          <li><span class="material-symbols-rounded">cancel</span><span>The financial model contradicts itself — cash trough +$4.25M vs −$1.94M, break-even M24/M32/M35, trial-to-paid 20% (deck) vs 35% (model) — and leans on a CFPB §1033 tailwind that is legally enjoined.</span></li>
+          <li><span class="material-symbols-rounded">cancel</span><span>$60M pre is Rich — ~3.75× the median seed pre and above the median Series A pre — anchored on EXIT comps (Truebill $1.275B, Noom $3.7B), not any comparable entry-stage round.</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= WHAT MUST BE TRUE ================= -->
+  <section class="block">
+    <div class="sec-hd">
+      <span class="overline">The hinges</span>
+      <h2>For the thesis to hold, three things must be true</h2>
+    </div>
+    <div class="mbt-note"><span class="material-symbols-rounded">link</span> Each hinge maps to a blocker below — this is what diligence has to confirm before a wire.</div>
+    <div class="mbt">
+      <div class="mbt-item"><div class="mbt-n">1</div><p>The UK ilumoni signals transfer to a US subscription model — without the loans-marketplace revenue loop that likely drove the celebrated £148→£13 CAC compression.</p></div>
+      <div class="mbt-item"><div class="mbt-n">2</div><p>Trial-to-paid holds near the model’s 35% — the deck’s own 20% sits at the level the founder’s sensitivity analysis says breaks the model.</p></div>
+      <div class="mbt-item"><div class="mbt-n">3</div><p>The four-engine ML moat actually gets built and out-performs a live, net-profitable Cleo — led by an ML head not yet hired.</p></div>
+    </div>
+  </section>
+
+  <!-- ================= DILIGENCE TRACKER ================= -->
+  <section class="block tracker" id="tracker">
+    <div class="dg-head">
+      <div>
+        <span class="overline">Pre-wire diligence</span>
+        <h2 class="dg-title"><b>3 blockers</b> before you wire</h2>
+        <p class="dg-sub">Nine checks stand between this verdict and a term sheet. The three blockers must clear before any capital moves.</p>
+      </div>
+      <div class="dg-progress">
+        <div class="dg-count"><b id="dgDone">0</b> <span>/ 9 resolved</span></div>
+        <div class="dg-bar"><span id="dgFill" style="width:0%"></span></div>
+        <div class="dg-remain" id="dgRemain"><span class="dot"></span><b id="dgBlk">3</b> blockers outstanding</div>
+      </div>
+    </div>
+
+    <!-- Blockers -->
+    <div class="dg-group">
+      <div class="dg-glabel"><span class="sev-chip err">Blocker</span><span class="dg-gcount">3</span><span class="dg-gnote">Resolve before any capital moves</span></div>
+      <div class="dg-item" data-sev="err" data-blocker="1">
+        <button class="dg-check" aria-label="Mark resolved"><span class="material-symbols-rounded">check</span></button>
+        <div class="dg-body"><div class="dg-itop"><span class="dg-ititle">Reprice the round</span></div>
+          <p class="dg-inote">$60M pre is Series-A pricing on a seed-stage asset; comps and three valuation methods cap defensible value at $20–35M pre. No wire at $60M pre.</p></div>
+      </div>
+      <div class="dg-item" data-sev="err" data-blocker="1">
+        <button class="dg-check" aria-label="Mark resolved"><span class="material-symbols-rounded">check</span></button>
+        <div class="dg-body"><div class="dg-itop"><span class="dg-ititle">Reconcile the financial model</span></div>
+          <p class="dg-inote">One version shows +$4.25M cash trough, another −$1.94M; break-even is stated as M24, M32 and M35; trial-to-paid is 20% (deck) vs 35% (model). Establish that $20M actually funds to the milestones.</p></div>
+      </div>
+      <div class="dg-item" data-sev="err" data-blocker="1">
+        <button class="dg-check" aria-label="Mark resolved"><span class="material-symbols-rounded">check</span></button>
+        <div class="dg-body"><div class="dg-itop"><span class="dg-ititle">Verify the ilumoni track record + co-founder roles</span></div>
+          <p class="dg-inote">The whole traction case rests on Monely Ltd (dissolved 2024); confirm Lancaster’s and Goudge’s formal roles (absent from Companies House) and obtain raw, population-weighted PoC metrics.</p></div>
+      </div>
+    </div>
+
+    <!-- Key -->
+    <div class="dg-group">
+      <div class="dg-glabel"><span class="sev-chip warn">Key</span><span class="dg-gcount">3</span><span class="dg-gnote">Answer during diligence</span></div>
+      <div class="dg-item" data-sev="warn">
+        <button class="dg-check" aria-label="Mark resolved"><span class="material-symbols-rounded">check</span></button>
+        <div class="dg-body"><div class="dg-itop"><span class="dg-ititle">Get a credible Cleo-differentiation answer</span></div>
+          <p class="dg-inote">Cleo (~7M users, $280M+ ARR, net-profitable) already occupies the “AI money coach” category the deck omits; without a defensible distinction the core thesis is exposed.</p></div>
+      </div>
+      <div class="dg-item" data-sev="warn">
+        <button class="dg-check" aria-label="Mark resolved"><span class="material-symbols-rounded">check</span></button>
+        <div class="dg-body"><div class="dg-itop"><span class="dg-ititle">Secure a named ML / data lead</span></div>
+          <p class="dg-inote">The four-engine moat is unbuilt and no current team member is verified to build it; the build is the differentiation.</p></div>
+      </div>
+      <div class="dg-item" data-sev="warn">
+        <button class="dg-check" aria-label="Mark resolved"><span class="material-symbols-rounded">check</span></button>
+        <div class="dg-body"><div class="dg-itop"><span class="dg-ititle">Pressure-test CAC compression + distribution</span></div>
+          <p class="dg-inote">Independent validation that a 0.4–0.6 viral coefficient and 70% organic mix are achievable in the US within 25 months; the deck calls it “a hypothesis, not a guarantee.”</p></div>
+      </div>
+    </div>
+
+    <!-- Standard -->
+    <div class="dg-group">
+      <div class="dg-glabel"><span class="sev-chip info">Standard</span><span class="dg-gcount">3</span><span class="dg-gnote">Confirm before close</span></div>
+      <div class="dg-item" data-sev="info">
+        <button class="dg-check" aria-label="Mark resolved"><span class="material-symbols-rounded">check</span></button>
+        <div class="dg-body"><div class="dg-itop"><span class="dg-ititle">Confirm gross-margin treatment of app-store fees</span></div>
+          <p class="dg-inote">If 15–30% platform fees are not in COGS, the 79% gross margin and 6:1 LTV/CAC are overstated.</p></div>
+      </div>
+      <div class="dg-item" data-sev="info">
+        <button class="dg-check" aria-label="Mark resolved"><span class="material-symbols-rounded">check</span></button>
+        <div class="dg-body"><div class="dg-itop"><span class="dg-ititle">Correct the §1033 framing</span></div>
+          <p class="dg-inote">The open-banking rule is legally enjoined as of mid-2026; the macro-debt tailwind stands without it, but the deck must not present it as live.</p></div>
+      </div>
+      <div class="dg-item" data-sev="info">
+        <button class="dg-check" aria-label="Mark resolved"><span class="material-symbols-rounded">check</span></button>
+        <div class="dg-body"><div class="dg-itop"><span class="dg-ititle">Confirm the definitive raise amount</span></div>
+          <p class="dg-inote">Both “$20M” and “$22M” appear in the data room; runway at $20M may be shorter than presented.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SIGN-OFF ================= -->
+  <section class="block signoff">
+    <span class="so-ic"><span class="material-symbols-rounded">task_alt</span></span>
+    <div class="so-body">
+      <div class="so-line"><b>Reviewed &amp; signed off</b> by <span class="who">Alex Rivera</span> · 4 Jul 2026</div>
+      <div class="so-note">“Endorse further diligence — reprice toward $25–30M pre with a milestone tranche; do not wire at $60M.”</div>
+    </div>
+    <button class="so-btn">Update sign-off</button>
+  </section>
+
+</div>
+
+<script>
+  // Diligence tracker — check off items, update progress + blockers-outstanding.
+  (function () {
+    const items = [...document.querySelectorAll('.dg-item')];
+    const total = items.length;
+    const dgDone = document.getElementById('dgDone');
+    const dgFill = document.getElementById('dgFill');
+    const dgBlk = document.getElementById('dgBlk');
+    const dgRemain = document.getElementById('dgRemain');
+    function refresh() {
+      const done = items.filter(i => i.classList.contains('done'));
+      const blkLeft = items.filter(i => i.dataset.blocker && !i.classList.contains('done')).length;
+      dgDone.textContent = done.length;
+      dgFill.style.width = (done.length / total * 100) + '%';
+      dgBlk.textContent = blkLeft;
+      if (blkLeft === 0) {
+        dgRemain.classList.add('clear');
+        dgRemain.innerHTML = '<span class="dot"></span><b>All blockers cleared</b> — you may proceed';
+      } else {
+        dgRemain.classList.remove('clear');
+        dgRemain.innerHTML = '<span class="dot"></span><b>' + blkLeft + '</b> blocker' + (blkLeft > 1 ? 's' : '') + ' outstanding';
+      }
+    }
+    items.forEach(item => {
+      item.querySelector('.dg-check').addEventListener('click', () => {
+        item.classList.toggle('done');
+        item.querySelector('.dg-check').setAttribute('aria-checked', item.classList.contains('done'));
+        refresh();
+      });
+    });
+    refresh();
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+/* ============================================================
+   Level transitions — native Chromium cross-document View Transitions.
+   Linked ONLY by the 4 live pages (portfolio / queue / assess / research-detail),
+   NEVER by the catalog / specimen (they render many mastheads → duplicate
+   view-transition-names would abort the transition). Degrades cleanly to
+   instant navigation where the API is unsupported (Safari/Firefox).
+   ============================================================ */
+@view-transition { navigation: auto; }
+
+/* named shell regions — byte-identical markup across pages, so VT auto-matches them */
+.m3-drawer  { view-transition-name: shell-drawer; }
+.shell-body { view-transition-name: shell-content; }
+
+/* the drawer is the stability anchor — it holds dead still (still inside the Portfolio branch).
+   The masthead + orienting label ride the root cross-fade — no bespoke breadcrumb motion. */
+::view-transition-group(shell-drawer) { animation: none; }
+
+/* one motion family with the shell: emphasized easing, ~300ms (matches drawer/aux/grid) */
+::view-transition-group(*) { animation-duration: 300ms; animation-timing-function: cubic-bezier(0.2, 0, 0, 1); }
+
+/* content: PIN the group (no table↔tabs scale-squish) and slide+fade only the snapshots,
+   direction-aware — drilling deeper enters from below, going back enters from above */
+::view-transition-group(shell-content) { animation: none; }
+::view-transition-old(shell-content) { animation: vt-out 200ms cubic-bezier(0.2, 0, 0, 1) both; }
+::view-transition-new(shell-content) { animation: vt-in 240ms cubic-bezier(0.2, 0, 0, 1) 60ms both; }
+@keyframes vt-out { to   { opacity: 0; transform: translateY(-8px); } }
+@keyframes vt-in  { from { opacity: 0; transform: translateY(12px); } }
+:root[data-nav-dir="back"] ::view-transition-old(shell-content) { animation-name: vt-out-back; }
+:root[data-nav-dir="back"] ::view-transition-new(shell-content) { animation-name: vt-in-back; }
+@keyframes vt-out-back { to   { opacity: 0; transform: translateY(8px); } }
+@keyframes vt-in-back  { from { opacity: 0; transform: translateY(-12px); } }
+
+/* accessibility: reduced-motion swaps instantly (snapshots still cut, but no tween) */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}

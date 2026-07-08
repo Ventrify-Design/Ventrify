@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Assessment · Signal dashboard · MoneyGym</title>
+<meta name="description" content="MoneyGym Seed assessment — signal-dashboard concept: hero score, dot-plot investability, the case both ways, diligence status board.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../theme.css">
+<style>
+/* ============================================================
+   Signal dashboard — data-forward Assessment content.
+   Most content sits DIRECTLY on the surface; only the two
+   "collection" blocks (the case both ways, the diligence board)
+   earn a card. New layout only — tokens come from theme.css.
+   ============================================================ */
+
+.canvas {
+  min-height: 100vh;
+  background: var(--md-sys-color-surface);
+  /* soft violet aura behind the hero for depth — data-forward, not decorative */
+  background-image:
+    radial-gradient(1100px 460px at 22% -6%, rgba(208,188,255,0.10), transparent 70%),
+    radial-gradient(900px 420px at 96% 2%, rgba(111,219,180,0.05), transparent 68%);
+  padding: 34px clamp(24px, 4vw, 64px) 120px;
+}
+:root.light .canvas {
+  background-image:
+    radial-gradient(1100px 460px at 22% -6%, rgba(103,80,164,0.07), transparent 70%),
+    radial-gradient(900px 420px at 96% 2%, rgba(28,107,76,0.045), transparent 68%);
+}
+.wrap { max-width: 1240px; margin: 0 auto; }
+
+/* section rhythm: full-bleed bands separated by hairlines, not cards */
+.band { padding: 40px 0; border-top: 1px solid var(--md-sys-color-surface-container-highest); }
+.band.first { border-top: none; padding-top: 22px; }
+.eyebrow { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+.eyebrow .rule { flex: 1; height: 1px; background: var(--md-sys-color-surface-container-highest); }
+.eyebrow .cnt { color: var(--md-sys-color-on-surface-variant); font-weight: 500; letter-spacing: .5px; font-size: 11px; }
+
+/* ---------- context header ---------- */
+.ctx { display: flex; align-items: center; gap: 16px; }
+.ctx-av { width: 46px; height: 46px; border-radius: 13px; flex: none; display: grid; place-items: center;
+  background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container);
+  font-weight: 500; font-size: 16px; letter-spacing: .5px; }
+.ctx-name { font-size: 20px; font-weight: 500; letter-spacing: .1px; display: flex; align-items: center; gap: 10px; }
+.ctx-name .st { font-size: 11px; font-weight: 500; letter-spacing: .5px; text-transform: uppercase; padding: 3px 9px; border-radius: 999px;
+  background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
+.ctx-sub { color: var(--md-sys-color-on-surface-variant); font-size: 13px; margin-top: 3px; }
+.ctx-spacer { flex: 1; }
+
+/* ---------- HERO: score gauge + signal strip ---------- */
+.hero { display: grid; grid-template-columns: auto 1fr; gap: clamp(32px, 5vw, 72px); align-items: center; }
+
+.gauge { position: relative; width: 260px; height: 260px; flex: none; justify-self: center; }
+.gauge svg { width: 260px; height: 260px; display: block; }
+.gauge .arc { fill: none; stroke-linecap: round; }
+.gauge .g-track { stroke: var(--md-sys-color-surface-container-highest); }
+.gauge .g-pot { stroke: var(--success); opacity: .42; }
+.gauge .g-now { stroke: var(--md-sys-color-primary); filter: drop-shadow(0 0 10px rgba(208,188,255,0.35)); }
+:root.light .gauge .g-now { filter: none; }
+.gauge-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.g-num { font-size: 104px; line-height: .84; font-weight: 300; letter-spacing: -.05em; color: var(--md-sys-color-on-surface); }
+.g-den { font-size: 15px; letter-spacing: .5px; color: var(--md-sys-color-on-surface-variant); margin-top: 8px; }
+.g-cap { display: flex; align-items: center; gap: 10px; justify-content: center; margin-top: 14px; }
+.g-band { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 13px; border-radius: 999px;
+  background: var(--warning-container); color: var(--on-warning-container); font-size: 12px; font-weight: 500; letter-spacing: .3px; }
+.g-band .material-symbols-rounded { font-size: 17px; }
+.g-delta { font-size: 13px; color: var(--md-sys-color-on-surface-variant); }
+.g-delta b { color: var(--success); font-weight: 500; }
+
+.signals { min-width: 0; }
+.rec-block { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-bottom: 26px; }
+.rec-big { display: inline-flex; align-items: center; gap: 11px; height: 52px; padding: 0 26px 0 22px; border-radius: 999px;
+  background: var(--warning); color: var(--on-warning); font-size: 21px; font-weight: 500; letter-spacing: .1px; flex: none;
+  box-shadow: 0 6px 22px rgba(247,192,103,0.18); }
+:root.light .rec-big { box-shadow: 0 6px 20px rgba(122,89,0,0.16); }
+.rec-big .material-symbols-rounded { font-size: 26px; }
+.rec-note { color: var(--md-sys-color-on-surface-variant); font-size: 14px; line-height: 1.45; max-width: 340px; }
+.rec-note b { color: var(--md-sys-color-on-surface); font-weight: 500; }
+
+.sig-strip { display: grid; grid-template-columns: repeat(4, 1fr); }
+.sig { padding: 4px 24px; border-left: 1px solid var(--md-sys-color-surface-container-highest); }
+.sig:first-child { padding-left: 0; border-left: none; }
+.sig .lab { font-size: 11px; font-weight: 500; letter-spacing: .6px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); }
+.sig .val { font-size: 30px; font-weight: 400; letter-spacing: -.01em; color: var(--md-sys-color-on-surface); margin-top: 8px; line-height: 1; }
+.sig .val.warn-ink { color: var(--warning); }
+.sig .sub { font-size: 12.5px; color: var(--md-sys-color-on-surface-variant); margin-top: 8px; line-height: 1.35; }
+.sig .seg { margin-top: 12px; }
+
+/* ---------- THE CRUX: thesis + kill-risk + must-be-true, as prose ---------- */
+.thesis-lead { font-size: 21px; line-height: 1.5; font-weight: 300; color: var(--md-sys-color-on-surface); max-width: 78ch; letter-spacing: .1px; }
+.thesis-lead b { font-weight: 500; }
+.crux { display: grid; grid-template-columns: 1fr 1fr; gap: 44px; margin-top: 36px; }
+@media (max-width: 960px){ .crux { grid-template-columns: 1fr; gap: 32px; } }
+.crux-h { font-size: 11px; font-weight: 500; letter-spacing: .6px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+.crux-h .material-symbols-rounded { font-size: 18px; }
+.crux-h.risk { color: var(--md-sys-color-error); }
+.crux-h.hold { color: var(--success); }
+.risk-prose { border-left: 3px solid var(--md-sys-color-error); padding-left: 18px; font-size: 15px; line-height: 1.6; color: var(--md-sys-color-on-surface); }
+.risk-prose b { color: var(--md-sys-color-error); font-weight: 500; }
+.mbt { display: flex; flex-direction: column; gap: 16px; }
+.mbt-item { display: flex; gap: 14px; align-items: flex-start; font-size: 14.5px; line-height: 1.55; color: var(--md-sys-color-on-surface); }
+.mbt-n { width: 26px; height: 26px; border-radius: 999px; flex: none; display: grid; place-items: center; margin-top: 1px;
+  background: var(--success-container); color: var(--on-success-container); font-size: 13px; font-weight: 500; }
+
+/* ---------- DOT-PLOT (radar alternative) ---------- */
+.dp-legend { display: flex; align-items: center; gap: 22px; margin-bottom: 18px; font-size: 12.5px; color: var(--md-sys-color-on-surface-variant); }
+.dp-legend .k { display: inline-flex; align-items: center; gap: 8px; }
+.dp-legend .dot-s { width: 12px; height: 12px; border-radius: 999px; background: var(--md-sys-color-primary); }
+.dp-legend .dot-g { width: 13px; height: 13px; border-radius: 999px; border: 2px solid var(--success); background: transparent; box-sizing: border-box; }
+
+.dotplot { display: flex; flex-direction: column; }
+.dp-row { display: grid; grid-template-columns: 236px 1fr 116px; align-items: center; gap: 22px; height: 52px; }
+.dp-row + .dp-row { border-top: 1px solid color-mix(in srgb, var(--md-sys-color-surface-container-highest) 55%, transparent); }
+.dp-lab { text-align: right; min-width: 0; }
+.dp-lab .nm { font-size: 13.5px; color: var(--md-sys-color-on-surface); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dp-lab .wt { font-size: 11px; color: var(--md-sys-color-on-surface-variant); letter-spacing: .4px; margin-top: 2px; }
+
+.dp-track { position: relative; height: 100%; }
+.dp-base { position: absolute; left: 0; right: 0; top: 50%; height: 2px; transform: translateY(-50%); border-radius: 2px;
+  background: var(--md-sys-color-surface-container-highest); }
+.dp-grid { position: absolute; top: 12px; bottom: 12px; width: 1px; background: color-mix(in srgb, var(--md-sys-color-surface-container-highest) 60%, transparent); }
+.dp-connect { position: absolute; top: 50%; height: 3px; transform: translateY(-50%); border-radius: 2px;
+  background: linear-gradient(90deg, transparent, var(--success)); opacity: .5; }
+.dp-now { position: absolute; top: 50%; width: 16px; height: 16px; border-radius: 999px; transform: translate(-50%,-50%); z-index: 2;
+  box-shadow: 0 0 0 4px var(--md-sys-color-surface); }
+.dp-now.strong { background: var(--success); }
+.dp-now.mixed  { background: var(--md-sys-color-primary); }
+.dp-now.gap    { background: var(--md-sys-color-error); }
+.dp-pot { position: absolute; top: 50%; width: 15px; height: 15px; border-radius: 999px; transform: translate(-50%,-50%); z-index: 1;
+  border: 2px solid var(--success); background: var(--md-sys-color-surface); box-sizing: border-box; }
+
+.dp-val { display: flex; align-items: baseline; justify-content: flex-end; gap: 9px; }
+.dp-score { font-size: 22px; font-weight: 400; color: var(--md-sys-color-on-surface); letter-spacing: -.01em; }
+.dp-score .den { font-size: 12px; color: var(--md-sys-color-on-surface-variant); }
+.dp-lift { font-size: 12px; font-weight: 500; color: var(--success); white-space: nowrap; }
+.dp-lift.flat { color: var(--md-sys-color-on-surface-variant); }
+.dp-foot { display: flex; align-items: center; gap: 18px; margin-top: 22px; font-size: 13px; color: var(--md-sys-color-on-surface-variant); flex-wrap: wrap; }
+.dp-foot .split b { font-weight: 500; }
+.dp-foot .split .s { color: var(--success); } .dp-foot .split .m { color: var(--md-sys-color-primary); } .dp-foot .split .g { color: var(--md-sys-color-error); }
+.dp-foot .lift-note { margin-left: auto; }
+.dp-foot .lift-note b { color: var(--success); font-weight: 500; }
+
+/* ---------- CARDS (the two that earn it) ---------- */
+.card { background: var(--md-sys-color-surface-container); border-radius: var(--md-sys-shape-corner-xl); padding: 30px 32px;
+  box-shadow: var(--md-elev-1); }
+.card-eyebrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 22px; }
+.card-eyebrow .t { font-size: 11px; font-weight: 500; letter-spacing: .6px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); }
+
+/* case both ways */
+.case { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+@media (max-width: 900px){ .case { grid-template-columns: 1fr; } }
+.case-col { padding: 0 30px; }
+.case-col:first-child { padding-left: 0; border-right: 1px solid var(--md-sys-color-surface-container-highest); }
+.case-col:last-child { padding-right: 0; }
+.case-h { display: flex; align-items: center; gap: 9px; margin-bottom: 18px; font-size: 13px; font-weight: 500; letter-spacing: .3px; }
+.case-h .material-symbols-rounded { font-size: 20px; }
+.case-h.bull { color: var(--success); } .case-h.bear { color: var(--md-sys-color-error); }
+.case-h .n { margin-left: auto; font-size: 11px; letter-spacing: .5px; color: var(--md-sys-color-on-surface-variant); font-weight: 500; }
+.case-list { display: flex; flex-direction: column; gap: 16px; }
+.case-item { display: flex; gap: 12px; align-items: flex-start; font-size: 14px; line-height: 1.55; color: var(--md-sys-color-on-surface); }
+.case-item .material-symbols-rounded { font-size: 19px; flex: none; margin-top: 1px; }
+.case-item.bull .material-symbols-rounded { color: var(--success); }
+.case-item.bear .material-symbols-rounded { color: var(--md-sys-color-error); }
+
+/* diligence status board */
+.dil-banner { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-radius: var(--md-sys-shape-corner-md);
+  background: var(--md-sys-color-error-container); color: var(--md-sys-color-on-error-container); font-size: 14.5px; font-weight: 500; margin-bottom: 24px; }
+.dil-banner .material-symbols-rounded { font-size: 22px; flex: none; }
+.dil-board { display: grid; grid-template-columns: repeat(3, 1fr) 1.5fr; gap: 14px; margin-bottom: 30px; }
+@media (max-width: 900px){ .dil-board { grid-template-columns: 1fr 1fr; } }
+.dil-tile { border-radius: var(--md-sys-shape-corner-md); padding: 16px 18px; background: var(--md-sys-color-surface-container-high); position: relative; overflow: hidden; }
+.dil-tile::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
+.dil-tile.err::before { background: var(--md-sys-color-error); } .dil-tile.warn::before { background: var(--warning); } .dil-tile.info::before { background: var(--md-sys-color-primary); }
+.dil-tile .n { font-size: 34px; font-weight: 400; line-height: 1; letter-spacing: -.02em; }
+.dil-tile.err .n { color: var(--md-sys-color-error); } .dil-tile.warn .n { color: var(--warning); } .dil-tile.info .n { color: var(--md-sys-color-primary); }
+.dil-tile .tl { font-size: 13px; font-weight: 500; margin-top: 10px; color: var(--md-sys-color-on-surface); }
+.dil-tile .sb { font-size: 11.5px; color: var(--md-sys-color-on-surface-variant); margin-top: 3px; }
+.dil-prog { background: var(--md-sys-color-surface-container-high); border-radius: var(--md-sys-shape-corner-md); padding: 16px 18px; display: flex; flex-direction: column; justify-content: center; }
+.dil-prog .row { display: flex; align-items: baseline; justify-content: space-between; }
+.dil-prog .big { font-size: 22px; font-weight: 400; color: var(--md-sys-color-on-surface); }
+.dil-prog .big small { font-size: 13px; color: var(--md-sys-color-on-surface-variant); }
+.dil-prog .st { font-size: 11.5px; color: var(--md-sys-color-on-surface-variant); }
+.dil-segs { display: flex; gap: 4px; margin-top: 12px; }
+.dil-segs i { flex: 1; height: 7px; border-radius: 2px; background: var(--md-sys-color-surface-container-highest); }
+
+.dil-group + .dil-group { margin-top: 26px; }
+.dil-gh { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; font-size: 12px; font-weight: 500; letter-spacing: .4px; text-transform: uppercase; }
+.dil-gh .material-symbols-rounded { font-size: 18px; }
+.dil-gh.err { color: var(--md-sys-color-error); } .dil-gh.warn { color: var(--warning); } .dil-gh.info { color: var(--md-sys-color-on-surface-variant); }
+.dil-gh .gc { margin-left: auto; color: var(--md-sys-color-on-surface-variant); font-weight: 500; }
+.dil-item { display: flex; gap: 14px; align-items: flex-start; padding: 15px 14px; border-radius: 12px; position: relative; transition: background .15s; }
+.dil-item:hover { background: var(--md-sys-color-surface-container-high); }
+.dil-check { flex: none; margin-top: 1px; color: var(--md-sys-color-outline); }
+.dil-check .material-symbols-rounded { font-size: 22px; display: block; }
+.dil-item.err .dil-check { color: var(--md-sys-color-error); }
+.dil-body { flex: 1; min-width: 0; }
+.dil-title { font-size: 15px; font-weight: 500; color: var(--md-sys-color-on-surface); }
+.dil-note { font-size: 13px; line-height: 1.5; color: var(--md-sys-color-on-surface-variant); margin-top: 4px; }
+.dil-tag { flex: none; font-size: 10.5px; font-weight: 500; letter-spacing: .5px; text-transform: uppercase; padding: 4px 10px; border-radius: 999px; align-self: flex-start; margin-top: 1px; }
+.dil-tag.err { background: var(--md-sys-color-error-container); color: var(--md-sys-color-on-error-container); }
+.dil-tag.warn { background: var(--warning-container); color: var(--on-warning-container); }
+.dil-tag.info { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
+
+/* ---------- sign-off ---------- */
+.signoff { display: flex; align-items: center; gap: 16px; margin-top: 40px; padding: 18px 22px; border-radius: var(--md-sys-shape-corner-lg);
+  background: var(--success-container); color: var(--on-success-container); }
+.signoff .material-symbols-rounded { font-size: 24px; flex: none; }
+.signoff .who b { font-weight: 500; }
+.signoff .note { font-style: italic; opacity: .92; margin-top: 3px; font-size: 13.5px; }
+.signoff .spacer { flex: 1; }
+.signoff .when { font-size: 12px; opacity: .8; white-space: nowrap; }
+
+@media (max-width: 1024px){
+  .hero { grid-template-columns: 1fr; gap: 36px; }
+  .sig-strip { grid-template-columns: 1fr 1fr; gap: 20px 0; }
+  .sig { padding: 4px 20px; } .sig:nth-child(3){ border-left: none; padding-left: 0; }
+  .dp-row { grid-template-columns: 150px 1fr 92px; gap: 14px; }
+}
+</style>
+</head>
+<body>
+<div class="canvas">
+<div class="wrap">
+
+  <!-- ============ CONTEXT HEADER (slim) ============ -->
+  <div class="band first">
+    <div class="ctx">
+      <span class="ctx-av">MG</span>
+      <div>
+        <div class="ctx-name">MoneyGym <span class="st">Seed</span></div>
+        <div class="ctx-sub">Behavioural-finance subscription · Raising $20M on $60M pre · Assessed just now</div>
+      </div>
+      <span class="ctx-spacer"></span>
+      <span class="status ok"><span class="material-symbols-rounded">check_circle</span> Verdict ready</span>
+    </div>
+  </div>
+
+  <!-- ============ HERO: score + signals ============ -->
+  <div class="band">
+    <div class="hero">
+      <div class="gauge">
+        <svg viewBox="0 0 260 260" aria-label="Investability score 55 of 100, potential 76">
+          <!-- 270° gauge, gap at bottom (rotate 135°); pathLength 100 so dash = % of full circle -->
+          <g transform="rotate(135 130 130)">
+            <circle class="arc g-track" cx="130" cy="130" r="108" stroke-width="16" pathLength="100" stroke-dasharray="75 25"/>
+            <circle class="arc g-pot"   cx="130" cy="130" r="108" stroke-width="11" pathLength="100" stroke-dasharray="57 43"/>
+            <circle class="arc g-now"   cx="130" cy="130" r="108" stroke-width="16" pathLength="100" stroke-dasharray="41.25 58.75"/>
+          </g>
+        </svg>
+        <div class="gauge-center">
+          <div class="g-num">55</div>
+          <div class="g-den">/ 100 · VSS</div>
+        </div>
+      </div>
+
+      <div class="signals">
+        <div class="rec-block">
+          <span class="rec-big"><span class="material-symbols-rounded">balance</span> Diligence further</span>
+          <span class="rec-note"><b>Promising, priced wrong.</b> Endorse further diligence — reprice toward $25–30M pre with a milestone tranche. Do not wire at $60M.</span>
+        </div>
+
+        <div class="g-cap" style="justify-content:flex-start;margin:0 0 24px;">
+          <span class="g-band"><span class="material-symbols-rounded">trending_flat</span> Promising</span>
+          <span class="g-delta">Now <b style="color:var(--md-sys-color-on-surface)">55</b> → Potential <b>76</b> &nbsp;(+21 headroom)</span>
+        </div>
+
+        <div class="sig-strip">
+          <div class="sig">
+            <div class="lab">Conviction</div>
+            <div class="val">Medium</div>
+            <span class="seg"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span>
+          </div>
+          <div class="sig">
+            <div class="lab">The ask</div>
+            <div class="val">$20M</div>
+            <div class="sub">on $60M pre · first of a ~$35M plan</div>
+          </div>
+          <div class="sig">
+            <div class="lab">Valuation</div>
+            <div class="val warn-ink">Rich</div>
+            <div class="sub">reprice → $15–35M pre defensible</div>
+          </div>
+          <div class="sig">
+            <div class="lab">Confidence</div>
+            <div class="val">High</div>
+            <div class="sub">35 / 35 signals · 18 docs · 32 sources</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ THE CRUX: thesis + kill-risk + must-be-true ============ -->
+  <div class="band">
+    <div class="eyebrow"><span class="overline">The thesis</span><span class="rule"></span></div>
+    <p class="thesis-lead">A real, government-verified macro pain and a proven behavioural-change subscription playbook (“Noom for money”) attached to a <b>pre-product, zero-US-traction company asking a Series-A price</b> ($60M pre) for a seed-stage asset — in a category a profitable Cleo already occupies at scale.</p>
+
+    <div class="crux">
+      <div>
+        <div class="crux-h risk"><span class="material-symbols-rounded">bolt</span> Biggest kill-risk · Distribution</div>
+        <p class="risk-prose">~4M Year-5 subscribers requires <b>70–130M US installs</b> (3–6% of all US finance-app installs for five straight years) and CAC compressing to $30 in 25 months on an unproven 0.4–0.6 viral coefficient the deck itself calls “a hypothesis” — if organic underperforms, payback exceeds customer lifetime and <b>$20M never reaches the milestone.</b></p>
+      </div>
+      <div>
+        <div class="crux-h hold"><span class="material-symbols-rounded">rule</span> For the thesis to hold, these must be true</div>
+        <div class="mbt">
+          <div class="mbt-item"><span class="mbt-n">1</span><span>The UK ilumoni signals transfer to a US subscription model — without the loans-marketplace revenue loop that likely drove the celebrated £148→£13 CAC compression.</span></div>
+          <div class="mbt-item"><span class="mbt-n">2</span><span>Trial-to-paid holds near the model’s 35% — the deck’s own 20% sits at the level the founder’s sensitivity analysis says breaks the model.</span></div>
+          <div class="mbt-item"><span class="mbt-n">3</span><span>The four-engine ML moat actually gets built and out-performs a live, net-profitable Cleo — led by an ML head not yet hired.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ INVESTABILITY DOT-PLOT (radar alternative) ============ -->
+  <div class="band">
+    <div class="eyebrow"><span class="overline">Investability profile</span><span class="cnt">7 SIGNALS × 5 · SORTED BY STRENGTH</span><span class="rule"></span></div>
+    <div class="dp-legend">
+      <span class="k"><span class="dot-s"></span> Now — rated score</span>
+      <span class="k"><span class="dot-g"></span> Potential — with gaps closed</span>
+      <span class="k" style="margin-left:auto">Track: 0 &nbsp;→&nbsp; 5</span>
+    </div>
+
+    <div class="dotplot" id="dotplot"></div>
+
+    <div class="dp-foot">
+      <span class="split"><b class="s">1 strong</b> · <b class="m">4 mixed</b> · <b class="g">2 gaps</b> — a concentrated profile</span>
+      <span class="lift-note">Closing Moat + Execution lifts the score <b>55 → 76 (+21)</b></span>
+    </div>
+  </div>
+
+  <!-- ============ THE CASE BOTH WAYS (card) ============ -->
+  <div class="band">
+    <div class="eyebrow"><span class="overline">The case both ways</span><span class="rule"></span></div>
+    <div class="card">
+      <div class="case">
+        <div class="case-col">
+          <div class="case-h bull"><span class="material-symbols-rounded">trending_up</span> The case to invest <span class="n">BULL · 5</span></div>
+          <div class="case-list" id="bull"></div>
+        </div>
+        <div class="case-col">
+          <div class="case-h bear"><span class="material-symbols-rounded">trending_down</span> The case to pass <span class="n">BEAR · 5</span></div>
+          <div class="case-list" id="bear"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ DILIGENCE STATUS BOARD (card) ============ -->
+  <div class="band">
+    <div class="eyebrow"><span class="overline">Diligence checklist</span><span class="cnt">9 OPEN · BEFORE YOU WIRE</span><span class="rule"></span></div>
+    <div class="card">
+      <div class="dil-banner"><span class="material-symbols-rounded">gavel</span> 3 blockers must clear before any wire — no wire at $60M pre.</div>
+
+      <div class="dil-board">
+        <div class="dil-tile err"><div class="n">3</div><div class="tl">Blockers</div><div class="sb">Do not wire until cleared</div></div>
+        <div class="dil-tile warn"><div class="n">3</div><div class="tl">Key</div><div class="sb">Thesis-exposing</div></div>
+        <div class="dil-tile info"><div class="n">3</div><div class="tl">Standard</div><div class="sb">Confirm & correct</div></div>
+        <div class="dil-prog">
+          <div class="row"><span class="big">0<small> / 9 cleared</small></span><span class="st">Not started</span></div>
+          <div class="dil-segs"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        </div>
+      </div>
+
+      <div id="dilgroups"></div>
+    </div>
+
+    <!-- sign-off -->
+    <div class="signoff">
+      <span class="material-symbols-rounded">task_alt</span>
+      <div>
+        <div class="who">Reviewed &amp; signed off by <b>Alex Rivera</b></div>
+        <div class="note">“Endorse further diligence — reprice toward $25–30M pre with a milestone tranche; do not wire at $60M.”</div>
+      </div>
+      <span class="spacer"></span>
+      <span class="when">4 Jul 2026</span>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+/* ---- real MoneyGym data (mirrors data.js: ASSESSMENT + SCORE) ---- */
+const CATS = [
+  { label: 'Product & solution clarity', wt: 15, now: 4.0,  pot: 4.0, band: 'strong' },
+  { label: 'Financial defensibility',    wt: 10, now: 3.5,  pot: 3.5, band: 'mixed'  },
+  { label: 'Market opportunity',         wt: 20, now: 3.0,  pot: 4.5, band: 'mixed'  },
+  { label: 'Team & founder-market fit',  wt: 25, now: 3.0,  pot: 3.0, band: 'mixed'  },
+  { label: 'Evidence integrity',         wt: 5,  now: 3.0,  pot: 3.0, band: 'mixed'  },
+  { label: 'Technical / competitive moat', wt: 15, now: 1.5, pot: 4.5, band: 'gap'   },
+  { label: 'Execution & traction',       wt: 10, now: 0.5,  pot: 3.5, band: 'gap'    }
+];
+const BULL = [
+  'Real, government-verified macro pain: $17.9T US household debt, $1.21T card balances, 57%+ living paycheck-to-paycheck — and a genuine consumer voice the deck captures well.',
+  'The behavioural-change subscription playbook is proven in adjacent verticals (Noom, Duolingo); even at honest sizing (~$1.5–2.5B TAM) the market is large enough to build a meaningful company.',
+  'Clean, non-lending coaching positioning sits in regulatory cold territory — a structural edge over Cleo’s $17M FTC settlement, Tally’s collapse, and Brigit/Dave enforcement.',
+  'Experienced, verified FS founder (Jonathan Corner) plus strong NEDs (Siobhan MacDermott, ex-Vice Chair BofA; Gideon Hyde, Market Gravity→Deloitte), and a data room that discloses several key risks openly.',
+  'If the deterministic four-engine ML edge is actually built, it is a credible answer to Cleo’s LLM-only approach — and the behavioural-data moat would compound with every user.'
+];
+const BEAR = [
+  'The “unclaimed category” is already owned at scale by a net-profitable Cleo (~7M users, ~1.1M paying US subs, $280M+ ARR) the deck never mentions.',
+  'The moat is explicitly unbuilt — “a Series-A-funded build” in the founder’s own words — and no ML/data leader is on the team; that is the first hire the round is meant to fund.',
+  'The entire traction story is a dissolved predecessor: ilumoni / Monely Ltd (liquidation 2023, dissolved Aug 2024, ~£1.63M raised, never past 10k users); two of three co-founders are unverifiable in its filings.',
+  'The financial model contradicts itself — cash trough +$4.25M vs −$1.94M, break-even M24/M32/M35, trial-to-paid 20% (deck) vs 35% (model) — and leans on a CFPB §1033 tailwind that is legally enjoined.',
+  '$60M pre is Rich — ~3.75× the median seed pre and above the median Series A pre — anchored on EXIT comps (Truebill $1.275B, Noom $3.7B), not any comparable entry-stage round.'
+];
+const DIL = [
+  { kind:'err', tag:'Blocker', title:'Reprice the round', note:'$60M pre is Series-A pricing on a seed-stage asset; comps and three valuation methods cap defensible value at $20–35M pre. No wire at $60M pre.' },
+  { kind:'err', tag:'Blocker', title:'Reconcile the financial model', note:'One version shows +$4.25M cash trough, another −$1.94M; break-even is stated as M24, M32 and M35; trial-to-paid is 20% (deck) vs 35% (model). Establish that $20M actually funds to the milestones.' },
+  { kind:'err', tag:'Blocker', title:'Verify the ilumoni track record + co-founder roles', note:'The whole traction case rests on Monely Ltd (dissolved 2024); confirm Lancaster’s and Goudge’s formal roles (absent from Companies House) and obtain raw, population-weighted PoC metrics.' },
+  { kind:'warn', tag:'Key', title:'Get a credible Cleo-differentiation answer', note:'Cleo (~7M users, $280M+ ARR, net-profitable) already occupies the “AI money coach” category the deck omits; without a defensible distinction the core thesis is exposed.' },
+  { kind:'warn', tag:'Key', title:'Secure a named ML / data lead', note:'The four-engine moat is unbuilt and no current team member is verified to build it; the build is the differentiation.' },
+  { kind:'warn', tag:'Key', title:'Pressure-test CAC compression + distribution', note:'Independent validation that a 0.4–0.6 viral coefficient and 70% organic mix are achievable in the US within 25 months; the deck calls it “a hypothesis, not a guarantee.”' },
+  { kind:'info', tag:'Standard', title:'Confirm gross-margin treatment of app-store fees', note:'If 15–30% platform fees are not in COGS, the 79% gross margin and 6:1 LTV/CAC are overstated.' },
+  { kind:'info', tag:'Standard', title:'Correct the §1033 framing', note:'The open-banking rule is legally enjoined as of mid-2026; the macro-debt tailwind stands without it, but the deck must not present it as live.' },
+  { kind:'info', tag:'Standard', title:'Confirm the definitive raise amount', note:'Both “$20M” and “$22M” appear in the data room; runway at $20M may be shorter than presented.' }
+];
+
+/* ---- dot-plot render ---- */
+const pct = v => (v / 5 * 100);
+document.getElementById('dotplot').innerHTML = CATS.map(c => {
+  const grids = [1,2,3,4].map(g => `<span class="dp-grid" style="left:${pct(g)}%"></span>`).join('');
+  const lift = c.pot > c.now
+    ? `<span class="dp-lift">▲ ${c.pot.toFixed(1)}</span>`
+    : `<span class="dp-lift flat">maxed</span>`;
+  const connect = c.pot > c.now
+    ? `<span class="dp-connect" style="left:${pct(c.now)}%;width:${pct(c.pot)-pct(c.now)}%"></span>`
+    : '';
+  const potDot = c.pot > c.now ? `<span class="dp-pot" style="left:${pct(c.pot)}%"></span>` : '';
+  return `<div class="dp-row">
+    <div class="dp-lab"><div class="nm">${c.label}</div><div class="wt">${c.wt}% weight</div></div>
+    <div class="dp-track">
+      <span class="dp-base"></span>${grids}
+      ${connect}${potDot}
+      <span class="dp-now ${c.band}" style="left:${pct(c.now)}%"></span>
+    </div>
+    <div class="dp-val"><span class="dp-score">${c.now.toFixed(1)}<span class="den"> /5</span></span>${lift}</div>
+  </div>`;
+}).join('');
+
+/* ---- case both ways ---- */
+document.getElementById('bull').innerHTML = BULL.map(t => `<div class="case-item bull"><span class="material-symbols-rounded">check_circle</span><span>${t}</span></div>`).join('');
+document.getElementById('bear').innerHTML = BEAR.map(t => `<div class="case-item bear"><span class="material-symbols-rounded">cancel</span><span>${t}</span></div>`).join('');
+
+/* ---- diligence groups ---- */
+const GH = {
+  err:  { cls:'err',  icon:'block',           label:'Blockers · do not wire' },
+  warn: { cls:'warn', icon:'priority_high',   label:'Key · thesis-exposing' },
+  info: { cls:'info', icon:'fact_check',      label:'Standard · confirm & correct' }
+};
+document.getElementById('dilgroups').innerHTML = ['err','warn','info'].map(k => {
+  const items = DIL.filter(d => d.kind === k);
+  const h = GH[k];
+  return `<div class="dil-group">
+    <div class="dil-gh ${h.cls}"><span class="material-symbols-rounded">${h.icon}</span>${h.label}<span class="gc">${items.length}</span></div>
+    ${items.map(d => `<div class="dil-item ${d.kind}">
+      <span class="dil-check"><span class="material-symbols-rounded">radio_button_unchecked</span></span>
+      <div class="dil-body"><div class="dil-title">${d.title}</div><div class="dil-note">${d.note}</div></div>
+      <span class="dil-tag ${d.kind}">${d.tag}</span>
+    </div>`).join('')}
+  </div>`;
+}).join('');
+</script>
+</body>
+</html>

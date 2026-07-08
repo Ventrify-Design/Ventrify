@@ -1,0 +1,539 @@
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assessment · Decision canvas · MoneyGym</title>
+<meta name="description" content="Decision-canvas redesign of the MoneyGym Seed assessment — verdict, hero score, now-vs-potential and the before-you-wire checklist.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../theme.css">
+<style>
+/* ============================================================
+   Decision canvas — reimagined Assessment content.
+   Most content sits DIRECTLY on the surface; cards are reserved for
+   the three things that earn emphasis: the answer, the kill-risk,
+   and the blockers. Custom classes are dc-* so nothing collides with
+   theme.css component rules.
+   ============================================================ */
+
+body { background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface); }
+.material-symbols-rounded { line-height: 1; }
+
+.dc-page { max-width: 1160px; margin: 0 auto; padding: 0 clamp(20px, 4vw, 56px) 120px; }
+
+/* ---- shared type helpers ---- */
+.dc-eyebrow { display: inline-flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 600; letter-spacing: 1.4px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); }
+.dc-eyebrow::before { content: ""; width: 16px; height: 2px; border-radius: 2px; background: currentColor; opacity: .55; }
+.dc-eyebrow.teal { color: var(--success); }
+.dc-eyebrow.amber { color: var(--warning); }
+.dc-eyebrow.red { color: var(--md-sys-color-error); }
+.dc-h2 { font-size: clamp(21px, 2.4vw, 27px); font-weight: 400; letter-spacing: -0.2px; margin: 12px 0 0; }
+.dc-lead { color: var(--md-sys-color-on-surface-variant); }
+
+/* ---- slim context topbar ---- */
+.dc-topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 26px 0 20px; margin-bottom: 30px; border-bottom: 1px solid var(--md-sys-color-surface-container-high); flex-wrap: wrap; }
+.dc-ctx { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.dc-av { flex: none; width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; font-weight: 700; font-size: 15px; letter-spacing: .5px; background: linear-gradient(150deg, var(--md-sys-color-primary-container), var(--md-sys-color-secondary-container)); color: var(--md-sys-color-on-primary-container); box-shadow: var(--md-elev-1); }
+.dc-ctx-name { font-size: 17px; font-weight: 500; display: flex; align-items: center; gap: 10px; }
+.dc-ctx-tag { font-size: 11px; font-weight: 600; letter-spacing: .5px; padding: 2px 8px; border-radius: 6px; background: var(--md-sys-color-surface-container-high); color: var(--md-sys-color-on-surface-variant); }
+.dc-ctx-sub { font-size: 13px; color: var(--md-sys-color-on-surface-variant); margin-top: 3px; }
+.dc-ctx-right { display: flex; align-items: center; gap: 16px; }
+.dc-ctx-when { font-size: 12.5px; color: var(--md-sys-color-on-surface-variant); }
+.dc-pill { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border-radius: 8px; font-size: 12px; font-weight: 600; letter-spacing: .3px; background: var(--success-container); color: var(--on-success-container); }
+.dc-pill .material-symbols-rounded { font-size: 17px; }
+
+/* ---- section rhythm ---- */
+.dc-section { margin-top: 56px; }
+.dc-sec-head { margin-bottom: 26px; max-width: 720px; }
+.dc-sec-head .dc-h2 + .dc-lead { margin-top: 10px; font-size: 15px; line-height: 1.55; }
+
+/* ============================================================
+   1 · THE ANSWER — the one hero card (verdict + hero score)
+   ============================================================ */
+.dc-hero { position: relative; display: grid; grid-template-columns: 1fr auto; gap: clamp(28px, 4vw, 60px); align-items: center;
+  background: linear-gradient(158deg, var(--md-sys-color-surface-container-low), var(--md-sys-color-surface-container));
+  border-radius: 28px; padding: clamp(28px, 3.4vw, 44px) clamp(28px, 3.6vw, 48px);
+  box-shadow: var(--md-elev-3); overflow: hidden; }
+.dc-hero::before { content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none;
+  background: linear-gradient(150deg, rgba(208,188,255,.35), rgba(208,188,255,0) 40%, rgba(111,219,180,.18));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+.dc-hero::after { content: ""; position: absolute; width: 420px; height: 420px; right: -120px; top: -160px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(208,188,255,.10), transparent 70%); pointer-events: none; }
+
+.dc-verdict { position: relative; min-width: 0; }
+.dc-rec { display: flex; align-items: flex-start; gap: 16px; margin-top: 16px; }
+.dc-rec-badge { flex: none; width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; background: var(--warning-container); color: var(--on-warning-container); box-shadow: inset 0 0 0 1px rgba(247,192,103,.25); }
+.dc-rec-badge .material-symbols-rounded { font-size: 28px; }
+.dc-rec-word { font-size: clamp(30px, 3.6vw, 40px); font-weight: 500; letter-spacing: -0.5px; line-height: 1.05; }
+.dc-rec-sub { margin-top: 8px; font-size: 14.5px; line-height: 1.5; color: var(--md-sys-color-on-surface-variant); max-width: 46ch; }
+
+.dc-facts { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
+.dc-fact { flex: 1 1 150px; min-width: 140px; padding: 13px 15px; border-radius: 14px; background: rgba(0,0,0,.16); border: 1px solid var(--md-sys-color-surface-container-high); }
+.dc-fact .k { display: block; font-size: 11px; font-weight: 600; letter-spacing: .8px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); margin-bottom: 7px; }
+.dc-fact .v { font-size: 15px; font-weight: 500; display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+.dc-fact .v small { font-size: 12px; font-weight: 400; color: var(--md-sys-color-on-surface-variant); width: 100%; }
+.dc-fact .v.warn { color: var(--warning); }
+.dc-seg { display: inline-flex; gap: 3px; }
+.dc-seg i { width: 16px; height: 6px; border-radius: 3px; background: var(--md-sys-color-surface-container-highest); }
+.dc-seg i.on { background: var(--md-sys-color-primary); }
+
+/* the hero score gauge */
+.dc-gauge { position: relative; width: 246px; height: 246px; flex: none; display: grid; place-items: center; }
+.dc-gauge svg { width: 246px; height: 246px; display: block; }
+.dc-gauge-glow { position: absolute; width: 150px; height: 150px; border-radius: 50%; background: radial-gradient(circle, rgba(208,188,255,.16), transparent 68%); }
+.dc-gauge-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.dc-score { font-size: 82px; font-weight: 900; line-height: .9; letter-spacing: -2px; color: var(--md-sys-color-on-surface); }
+.dc-score sup { font-size: 22px; font-weight: 500; color: var(--md-sys-color-on-surface-variant); vertical-align: super; margin-left: 2px; }
+.dc-band { margin-top: 8px; font-size: 11.5px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; padding: 4px 12px; border-radius: 999px; background: var(--warning-container); color: var(--on-warning-container); }
+.dc-gauge-foot { margin-top: 10px; display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--md-sys-color-on-surface-variant); white-space: nowrap; }
+.dc-gauge-foot b { color: var(--success); font-weight: 700; }
+.dc-gauge-foot .up { font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px; background: var(--success-container); color: var(--on-success-container); }
+
+/* ---- thesis: sits directly on the background ---- */
+.dc-thesis { margin-top: 40px; display: grid; grid-template-columns: auto 1fr; gap: 20px; align-items: start; }
+.dc-thesis .bar { width: 3px; align-self: stretch; border-radius: 3px; background: linear-gradient(var(--md-sys-color-primary), var(--success)); opacity: .7; }
+.dc-thesis p { font-size: 18px; line-height: 1.62; font-weight: 300; color: var(--md-sys-color-on-surface); margin: 0; max-width: 78ch; }
+.dc-thesis p b { font-weight: 600; }
+.dc-thesis .eyebrow-inline { font-size: 11px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); display: block; margin-bottom: 10px; }
+
+/* ============================================================
+   2 · THE CASE, BOTH WAYS — on the background, split by a hairline
+   ============================================================ */
+.dc-case { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(28px, 4vw, 56px); }
+.dc-case-col { position: relative; }
+.dc-case-col.bear::before { content: ""; position: absolute; left: calc(-1 * clamp(14px, 2vw, 28px)); top: 4px; bottom: 4px; width: 1px; background: var(--md-sys-color-surface-container-high); }
+.dc-case-h { display: flex; align-items: center; gap: 9px; font-size: 13px; font-weight: 600; letter-spacing: .3px; margin-bottom: 18px; }
+.dc-case-h .material-symbols-rounded { font-size: 20px; }
+.dc-case-col.bull .dc-case-h { color: var(--success); }
+.dc-case-col.bear .dc-case-h { color: var(--warning); }
+.dc-case-list { list-style: none; display: flex; flex-direction: column; gap: 15px; }
+.dc-case-list li { display: grid; grid-template-columns: 22px 1fr; gap: 12px; font-size: 14.5px; line-height: 1.55; color: var(--md-sys-color-on-surface); }
+.dc-case-list li .ic { width: 22px; height: 22px; border-radius: 999px; display: grid; place-items: center; margin-top: 1px; }
+.dc-case-list li .ic .material-symbols-rounded { font-size: 15px; }
+.dc-case-col.bull .ic { background: var(--success-container); color: var(--on-success-container); }
+.dc-case-col.bear .ic { background: var(--md-sys-color-error-container); color: var(--md-sys-color-on-error-container); }
+.dc-case-list li b { font-weight: 600; }
+
+/* ============================================================
+   3 · WHAT MUST BE TRUE + THE KILL-RISK (accent callouts)
+   ============================================================ */
+.dc-mbt-grid { display: grid; grid-template-columns: 1.35fr 1fr; gap: clamp(28px, 3.6vw, 52px); align-items: start; }
+.dc-mbt-list { list-style: none; counter-reset: mbt; display: flex; flex-direction: column; gap: 4px; margin-top: 22px; }
+.dc-mbt-list li { display: grid; grid-template-columns: 30px 1fr; gap: 16px; padding: 16px 0; align-items: start; border-top: 1px solid var(--md-sys-color-surface-container-high); font-size: 14.5px; line-height: 1.55; }
+.dc-mbt-list li:first-child { border-top: none; }
+.dc-mbt-list li::before { counter-increment: mbt; content: counter(mbt); width: 30px; height: 30px; border-radius: 999px; display: grid; place-items: center; font-size: 13px; font-weight: 700; background: var(--md-sys-color-surface-container-high); color: var(--success); box-shadow: inset 0 0 0 1px rgba(111,219,180,.3); }
+.dc-mbt-list li em { font-style: normal; font-weight: 600; }
+
+/* the kill-risk earns a card */
+.dc-kill { position: relative; border-radius: 20px; padding: 26px 26px 26px 30px; overflow: hidden;
+  background: linear-gradient(155deg, rgba(147,0,10,.28), var(--md-sys-color-surface-container-low));
+  box-shadow: var(--md-elev-2); }
+.dc-kill::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--md-sys-color-error); }
+.dc-kill-head { display: flex; align-items: center; gap: 9px; font-size: 12px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--md-sys-color-error); }
+.dc-kill-head .material-symbols-rounded { font-size: 20px; }
+.dc-kill-label { font-size: 26px; font-weight: 500; letter-spacing: -0.3px; margin: 12px 0 12px; }
+.dc-kill p { margin: 0; font-size: 14px; line-height: 1.62; color: var(--md-sys-color-on-surface); }
+.dc-kill p b { color: var(--md-sys-color-error); }
+
+/* ============================================================
+   4 · NOW vs POTENTIAL — the delta viz (replaces the radar)
+   ============================================================ */
+.dc-legend { display: flex; align-items: center; gap: 22px; margin-bottom: 22px; font-size: 12.5px; color: var(--md-sys-color-on-surface-variant); flex-wrap: wrap; }
+.dc-legend span { display: inline-flex; align-items: center; gap: 8px; }
+.dc-legend .sw { width: 22px; height: 9px; border-radius: 3px; }
+.dc-legend .sw.now { background: var(--md-sys-color-primary); }
+.dc-legend .sw.gap { background: repeating-linear-gradient(115deg, var(--success) 0 4px, transparent 4px 8px); box-shadow: inset 0 0 0 1px var(--success); }
+.dc-legend .scale { margin-left: auto; letter-spacing: .3px; }
+
+.dc-delta-group + .dc-delta-group { margin-top: 30px; }
+.dc-group-label { display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 600; letter-spacing: .6px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); margin-bottom: 6px; }
+.dc-group-label .tag { font-size: 11px; letter-spacing: .4px; padding: 2px 9px; border-radius: 999px; }
+.dc-group-label.levers .tag { background: var(--success-container); color: var(--on-success-container); }
+.dc-group-label.ceiling .tag { background: var(--md-sys-color-surface-container-high); color: var(--md-sys-color-on-surface-variant); }
+
+.dc-bar-row { display: grid; grid-template-columns: 224px 1fr 118px; align-items: center; gap: 22px; padding: 15px 0; border-top: 1px solid var(--md-sys-color-surface-container-high); }
+.dc-bar-row:first-of-type { border-top: none; }
+.dc-bar-label .nm { display: block; font-size: 14.5px; font-weight: 500; }
+.dc-bar-label .wt { display: block; font-size: 11.5px; color: var(--md-sys-color-on-surface-variant); margin-top: 3px; }
+.dc-bar-track { position: relative; height: 14px; border-radius: 999px; background: var(--md-sys-color-surface-container); overflow: hidden;
+  background-image: repeating-linear-gradient(90deg, transparent 0, transparent calc(20% - 1px), var(--md-sys-color-surface-container-high) calc(20% - 1px), var(--md-sys-color-surface-container-high) 20%); }
+.dc-bar-now { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 999px; background: linear-gradient(90deg, var(--md-sys-color-primary), color-mix(in srgb, var(--md-sys-color-primary) 78%, white)); z-index: 2; }
+.dc-bar-gap { position: absolute; top: 0; bottom: 0; z-index: 1; border-radius: 0 999px 999px 0;
+  background: repeating-linear-gradient(115deg, rgba(111,219,180,.55) 0 5px, rgba(111,219,180,.12) 5px 10px);
+  box-shadow: inset 0 0 0 1px rgba(111,219,180,.45); }
+.dc-bar-tick { position: absolute; top: -3px; bottom: -3px; width: 2px; border-radius: 2px; background: var(--success); z-index: 3; }
+.dc-bar-val { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
+.dc-bar-val .rated { font-size: 22px; font-weight: 500; letter-spacing: -0.5px; }
+.dc-bar-val .rated small { font-size: 12px; font-weight: 400; color: var(--md-sys-color-on-surface-variant); }
+.dc-delta { display: inline-flex; align-items: center; gap: 3px; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+.dc-delta.up { background: var(--success-container); color: var(--on-success-container); }
+.dc-delta.max { background: transparent; color: var(--md-sys-color-on-surface-variant); font-weight: 500; }
+.dc-delta.max .material-symbols-rounded { font-size: 15px; color: var(--success); }
+.dc-delta .material-symbols-rounded { font-size: 14px; }
+.dc-ceiling .dc-bar-now { opacity: .5; background: var(--md-sys-color-primary); }
+.dc-ceiling .dc-bar-label .nm { color: var(--md-sys-color-on-surface-variant); }
+
+/* ============================================================
+   5 · BEFORE YOU WIRE — the diligence checklist
+   ============================================================ */
+.dc-progress { display: flex; align-items: center; gap: 20px; margin-bottom: 28px; flex-wrap: wrap; }
+.dc-progress-n { display: flex; align-items: baseline; gap: 6px; }
+.dc-progress-n b { font-size: 30px; font-weight: 700; letter-spacing: -1px; }
+.dc-progress-n span { font-size: 14px; color: var(--md-sys-color-on-surface-variant); }
+.dc-pips { display: flex; gap: 5px; }
+.dc-pips i { width: 30px; height: 8px; border-radius: 999px; background: transparent; box-shadow: inset 0 0 0 1.5px var(--md-sys-color-surface-container-highest); }
+.dc-pips i.b { box-shadow: inset 0 0 0 1.5px var(--md-sys-color-error); }
+.dc-pips i.k { box-shadow: inset 0 0 0 1.5px var(--warning); }
+.dc-split { margin-left: auto; font-size: 13px; color: var(--md-sys-color-on-surface-variant); }
+.dc-split b.b { color: var(--md-sys-color-error); }
+.dc-split b.k { color: var(--warning); }
+
+.dc-dgroup-label { display: flex; align-items: center; gap: 10px; margin: 26px 0 12px; font-size: 12px; font-weight: 600; letter-spacing: .6px; text-transform: uppercase; }
+.dc-dgroup-label.b { color: var(--md-sys-color-error); }
+.dc-dgroup-label.k { color: var(--warning); }
+.dc-dgroup-label.s { color: var(--md-sys-color-on-surface-variant); }
+.dc-dgroup-label .ct { width: 20px; height: 20px; border-radius: 999px; display: grid; place-items: center; font-size: 11px; font-weight: 700; background: currentColor; }
+.dc-dgroup-label .ct b { color: var(--md-sys-color-surface); }
+
+/* blockers earn elevated cards; key/standard are flat rows on the background */
+.dc-dlist { display: flex; flex-direction: column; }
+.dc-dlist.cards { gap: 12px; }
+.dc-ditem { display: grid; grid-template-columns: 26px 1fr auto; gap: 16px; align-items: start; }
+.dc-dlist.cards .dc-ditem { padding: 18px 20px; border-radius: 16px; background: var(--md-sys-color-surface-container-low); box-shadow: var(--md-elev-1); position: relative; overflow: hidden; }
+.dc-dlist.rows .dc-ditem { padding: 16px 4px; border-top: 1px solid var(--md-sys-color-surface-container-high); }
+.dc-dlist.rows .dc-ditem:first-child { border-top: none; }
+.dc-ditem { display: grid; grid-template-columns: 24px 1fr auto; gap: 16px; align-items: start; }
+.dc-dlist.cards .dc-ditem::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--md-sys-color-error); }
+.dc-checkbox { width: 22px; height: 22px; border-radius: 999px; display: grid; place-items: center; margin-top: 1px; flex: none; }
+.dc-checkbox .material-symbols-rounded { font-size: 22px; color: var(--md-sys-color-outline); }
+.dc-dbody { min-width: 0; }
+.dc-dtop { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 5px; }
+.dc-dtitle { font-size: 15.5px; font-weight: 500; }
+.dc-sev { font-size: 10.5px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; padding: 2px 8px; border-radius: 6px; }
+.dc-sev.b { background: var(--md-sys-color-error-container); color: var(--md-sys-color-on-error-container); }
+.dc-sev.k { background: var(--warning-container); color: var(--on-warning-container); }
+.dc-sev.s { background: var(--md-sys-color-surface-container-high); color: var(--md-sys-color-on-surface-variant); }
+.dc-dnote { font-size: 13.5px; line-height: 1.55; color: var(--md-sys-color-on-surface-variant); }
+.dc-dgate { flex: none; align-self: center; font-size: 12px; font-weight: 500; color: var(--md-sys-color-on-surface-variant); display: inline-flex; align-items: center; gap: 5px; }
+.dc-dgate .material-symbols-rounded { font-size: 16px; }
+
+/* ============================================================
+   6 · SIGN-OFF — slim endorsement bar
+   ============================================================ */
+.dc-signoff { margin-top: 52px; display: flex; align-items: center; gap: 18px; padding: 20px 24px; border-radius: 18px;
+  background: linear-gradient(150deg, var(--success-container), var(--md-sys-color-surface-container-low)); box-shadow: var(--md-elev-1); }
+.dc-signoff > .material-symbols-rounded { font-size: 30px; color: var(--success); flex: none; }
+.dc-signoff .so-body { flex: 1; min-width: 0; }
+.dc-signoff .so-head { font-size: 15px; font-weight: 500; }
+.dc-signoff .so-head b { color: var(--success); }
+.dc-signoff .so-note { font-size: 13.5px; font-style: italic; line-height: 1.5; color: var(--md-sys-color-on-surface-variant); margin-top: 4px; }
+.dc-signoff .so-btn { flex: none; height: 40px; padding: 0 22px; border-radius: 999px; border: 1px solid var(--md-sys-color-outline); background: transparent; color: var(--md-sys-color-primary); font-family: inherit; font-size: 14px; font-weight: 500; cursor: pointer; }
+.dc-signoff .so-btn:hover { background: rgba(208,188,255,.08); }
+
+/* ---- responsive ---- */
+@media (max-width: 900px) {
+  .dc-hero { grid-template-columns: 1fr; }
+  .dc-gauge { margin: 0 auto; }
+  .dc-case, .dc-mbt-grid { grid-template-columns: 1fr; }
+  .dc-case-col.bear::before { display: none; }
+  .dc-bar-row { grid-template-columns: 1fr auto; grid-template-areas: "label val" "bar bar"; row-gap: 12px; }
+  .dc-bar-label { grid-area: label; } .dc-bar-val { grid-area: val; } .dc-bar-track { grid-area: bar; }
+}
+</style>
+
+<div class="dc-page">
+
+  <!-- ============ slim context header ============ -->
+  <header class="dc-topbar">
+    <div class="dc-ctx">
+      <span class="dc-av">MG</span>
+      <div>
+        <div class="dc-ctx-name">MoneyGym <span class="dc-ctx-tag">SEED</span></div>
+        <div class="dc-ctx-sub">Behavioural-finance subscription · Raising $20M on $60M pre</div>
+      </div>
+    </div>
+    <div class="dc-ctx-right">
+      <span class="dc-pill"><span class="material-symbols-rounded">check_circle</span> Verdict ready</span>
+      <span class="dc-ctx-when">Full data room · 18 docs · assessed just now</span>
+    </div>
+  </header>
+
+  <!-- ============ 1 · THE ANSWER ============ -->
+  <section class="dc-hero">
+    <div class="dc-verdict">
+      <span class="dc-eyebrow">The call</span>
+      <div class="dc-rec">
+        <span class="dc-rec-badge"><span class="material-symbols-rounded">balance</span></span>
+        <div>
+          <div class="dc-rec-word">Diligence further</div>
+          <div class="dc-rec-sub">A real macro pain and a proven playbook — priced like a Series A on a pre-product seed. Workable, but not at this cheque.</div>
+        </div>
+      </div>
+      <div class="dc-facts">
+        <div class="dc-fact">
+          <span class="k">Conviction</span>
+          <span class="v">Medium <span class="dc-seg"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span></span>
+        </div>
+        <div class="dc-fact">
+          <span class="k">The ask</span>
+          <span class="v">$20M on $60M pre <small>first of a ~$35M plan</small></span>
+        </div>
+        <div class="dc-fact">
+          <span class="k">Valuation</span>
+          <span class="v warn">Rich — reprice <small>3 methods converge on $15–35M pre</small></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dc-gauge">
+      <div class="dc-gauge-glow"></div>
+      <svg viewBox="0 0 246 246" aria-label="Investability score 55 of 100, potential 76">
+        <g transform="rotate(-90 123 123)" fill="none" stroke-linecap="round">
+          <!-- track -->
+          <circle cx="123" cy="123" r="103" stroke="var(--md-sys-color-surface-container-high)" stroke-width="18"/>
+          <!-- potential 76% (headroom, translucent teal filling the groove) -->
+          <circle cx="123" cy="123" r="103" stroke="var(--success)" stroke-width="18" stroke-opacity="0.42"
+                  stroke-dasharray="491.8 647.2"/>
+          <!-- now 55% (violet) -->
+          <circle cx="123" cy="123" r="103" stroke="var(--md-sys-color-primary)" stroke-width="18"
+                  stroke-dasharray="356.0 647.2"/>
+        </g>
+        <!-- potential marker at 76% -->
+        <circle cx="20.6" cy="116.5" r="6" fill="var(--success)" stroke="var(--md-sys-color-surface-container-low)" stroke-width="2.5"/>
+      </svg>
+      <div class="dc-gauge-center">
+        <div class="dc-score">55<sup>/100</sup></div>
+        <div class="dc-band">Promising</div>
+        <div class="dc-gauge-foot">Potential <b>76</b><span class="up">+21</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- thesis, directly on the background -->
+  <div class="dc-thesis">
+    <div class="bar"></div>
+    <div>
+      <span class="eyebrow-inline">The thesis in one line</span>
+      <p>A real, government-verified macro pain and a proven behavioural-change subscription playbook (<b>“Noom for money”</b>) attached to a pre-product, zero-US-traction company asking a <b>Series-A price ($60M pre)</b> for a seed-stage asset — in a category a profitable <b>Cleo</b> already occupies at scale.</p>
+    </div>
+  </div>
+
+  <!-- ============ 2 · THE CASE, BOTH WAYS ============ -->
+  <section class="dc-section">
+    <div class="dc-sec-head">
+      <span class="dc-eyebrow">The case, both ways</span>
+      <h2 class="dc-h2">Why you’d lean in — and why you’d hold</h2>
+    </div>
+    <div class="dc-case">
+      <div class="dc-case-col bull">
+        <div class="dc-case-h"><span class="material-symbols-rounded">trending_up</span> Reasons to lean in</div>
+        <ul class="dc-case-list">
+          <li><span class="ic"><span class="material-symbols-rounded">check</span></span><span>Real, government-verified macro pain: <b>$17.9T</b> US household debt, <b>$1.21T</b> card balances, <b>57%+</b> living paycheck-to-paycheck — and a genuine consumer voice the deck captures well.</span></li>
+          <li><span class="ic"><span class="material-symbols-rounded">check</span></span><span>The behavioural-change subscription playbook is proven in adjacent verticals (Noom, Duolingo); even at honest sizing (~$1.5–2.5B TAM) the market is large enough to build a meaningful company.</span></li>
+          <li><span class="ic"><span class="material-symbols-rounded">check</span></span><span>Clean, non-lending coaching positioning sits in regulatory cold territory — a structural edge over Cleo’s $17M FTC settlement, Tally’s collapse, and Brigit/Dave enforcement.</span></li>
+          <li><span class="ic"><span class="material-symbols-rounded">check</span></span><span>Experienced, verified FS founder (Jonathan Corner) plus strong NEDs (Siobhan MacDermott, ex-Vice Chair BofA; Gideon Hyde, Market Gravity→Deloitte), and a data room that discloses several key risks openly.</span></li>
+          <li><span class="ic"><span class="material-symbols-rounded">check</span></span><span>If the deterministic four-engine ML edge is actually built, it is a credible answer to Cleo’s LLM-only approach — and the behavioural-data moat would compound with every user.</span></li>
+        </ul>
+      </div>
+      <div class="dc-case-col bear">
+        <div class="dc-case-h"><span class="material-symbols-rounded">trending_down</span> Reasons to hold</div>
+        <ul class="dc-case-list">
+          <li><span class="ic"><span class="material-symbols-rounded">priority_high</span></span><span>The “unclaimed category” is already owned at scale by a net-profitable <b>Cleo</b> (~7M users, ~1.1M paying US subs, $280M+ ARR) the deck never mentions.</span></li>
+          <li><span class="ic"><span class="material-symbols-rounded">priority_high</span></span><span>The moat is explicitly unbuilt — “a Series-A-funded build” in the founder’s own words — and no ML/data leader is on the team; that is the first hire the round is meant to fund.</span></li>
+          <li><span class="ic"><span class="material-symbols-rounded">priority_high</span></span><span>The entire traction story is a dissolved predecessor: ilumoni / Monely Ltd (liquidation 2023, dissolved Aug 2024, ~£1.63M raised, never past 10k users); two of three co-founders are unverifiable in its filings.</span></li>
+          <li><span class="ic"><span class="material-symbols-rounded">priority_high</span></span><span>The financial model contradicts itself — cash trough +$4.25M vs −$1.94M, break-even M24/M32/M35, trial-to-paid 20% (deck) vs 35% (model) — and leans on a CFPB §1033 tailwind that is legally enjoined.</span></li>
+          <li><span class="ic"><span class="material-symbols-rounded">priority_high</span></span><span><b>$60M pre is Rich</b> — ~3.75× the median seed pre and above the median Series A pre — anchored on EXIT comps (Truebill $1.275B, Noom $3.7B), not any comparable entry-stage round.</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 3 · WHAT MUST BE TRUE + KILL-RISK ============ -->
+  <section class="dc-section dc-mbt-grid">
+    <div>
+      <span class="dc-eyebrow teal">What must be true</span>
+      <h2 class="dc-h2">Three things the whole thesis rests on</h2>
+      <ol class="dc-mbt-list">
+        <li><span>The UK ilumoni signals <em>transfer to a US subscription model</em> — without the loans-marketplace revenue loop that likely drove the celebrated £148→£13 CAC compression.</span></li>
+        <li><span>Trial-to-paid holds near the model’s <em>35%</em> — the deck’s own 20% sits at the level the founder’s sensitivity analysis says breaks the model.</span></li>
+        <li><span>The four-engine ML moat <em>actually gets built</em> and out-performs a live, net-profitable Cleo — led by an ML head not yet hired.</span></li>
+      </ol>
+    </div>
+    <aside class="dc-kill">
+      <div class="dc-kill-head"><span class="material-symbols-rounded">crisis_alert</span> The one that kills it</div>
+      <div class="dc-kill-label">Distribution</div>
+      <p>~4M Year-5 subscribers requires <b>70–130M US installs</b> (3–6% of all US finance-app installs for five straight years) and CAC compressing to $30 in 25 months on an unproven 0.4–0.6 viral coefficient the deck itself calls “a hypothesis” — if organic underperforms, payback exceeds customer lifetime and <b>$20M never reaches the milestone.</b></p>
+    </aside>
+  </section>
+
+  <!-- ============ 4 · NOW vs POTENTIAL (delta viz) ============ -->
+  <section class="dc-section">
+    <div class="dc-sec-head">
+      <span class="dc-eyebrow">Now vs potential</span>
+      <h2 class="dc-h2">Where the score can move</h2>
+      <p class="dc-lead">Three open gaps carry the entire upside — closing them lifts MoneyGym from <b style="color:var(--md-sys-color-on-surface)">55</b> to <b style="color:var(--success)">~76</b>. Four categories already sit at their current ceiling.</p>
+    </div>
+
+    <div class="dc-legend">
+      <span><span class="sw now"></span> Rated now</span>
+      <span><span class="sw gap"></span> Gap to potential</span>
+      <span class="scale">Scale · 0 – 5 per category</span>
+    </div>
+
+    <div class="dc-delta-group">
+      <div class="dc-group-label levers">The levers <span class="tag">close these to move the score</span></div>
+
+      <div class="dc-bar-row">
+        <div class="dc-bar-label"><span class="nm">Technical / competitive moat</span><span class="wt">15% weight · biggest lever</span></div>
+        <div class="dc-bar-track"><div class="dc-bar-now" style="width:30%"></div><div class="dc-bar-gap" style="left:30%;width:60%"></div><div class="dc-bar-tick" style="left:90%"></div></div>
+        <div class="dc-bar-val"><span class="rated">1.5<small>/5</small></span><span class="dc-delta up"><span class="material-symbols-rounded">north</span>+3.0</span></div>
+      </div>
+
+      <div class="dc-bar-row">
+        <div class="dc-bar-label"><span class="nm">Execution &amp; traction</span><span class="wt">10% weight · thinnest today</span></div>
+        <div class="dc-bar-track"><div class="dc-bar-now" style="width:10%"></div><div class="dc-bar-gap" style="left:10%;width:60%"></div><div class="dc-bar-tick" style="left:70%"></div></div>
+        <div class="dc-bar-val"><span class="rated">0.5<small>/5</small></span><span class="dc-delta up"><span class="material-symbols-rounded">north</span>+3.0</span></div>
+      </div>
+
+      <div class="dc-bar-row">
+        <div class="dc-bar-label"><span class="nm">Market opportunity</span><span class="wt">20% weight · heaviest weight</span></div>
+        <div class="dc-bar-track"><div class="dc-bar-now" style="width:60%"></div><div class="dc-bar-gap" style="left:60%;width:30%"></div><div class="dc-bar-tick" style="left:90%"></div></div>
+        <div class="dc-bar-val"><span class="rated">3.0<small>/5</small></span><span class="dc-delta up"><span class="material-symbols-rounded">north</span>+1.5</span></div>
+      </div>
+    </div>
+
+    <div class="dc-delta-group">
+      <div class="dc-group-label ceiling">At their ceiling <span class="tag">no headroom from further diligence</span></div>
+
+      <div class="dc-bar-row dc-ceiling">
+        <div class="dc-bar-label"><span class="nm">Product &amp; solution clarity</span><span class="wt">15% weight · strongest</span></div>
+        <div class="dc-bar-track"><div class="dc-bar-now" style="width:80%"></div></div>
+        <div class="dc-bar-val"><span class="rated">4.0<small>/5</small></span><span class="dc-delta max"><span class="material-symbols-rounded">check_circle</span>Maxed</span></div>
+      </div>
+
+      <div class="dc-bar-row dc-ceiling">
+        <div class="dc-bar-label"><span class="nm">Financial defensibility</span><span class="wt">10% weight</span></div>
+        <div class="dc-bar-track"><div class="dc-bar-now" style="width:70%"></div></div>
+        <div class="dc-bar-val"><span class="rated">3.5<small>/5</small></span><span class="dc-delta max"><span class="material-symbols-rounded">check_circle</span>Maxed</span></div>
+      </div>
+
+      <div class="dc-bar-row dc-ceiling">
+        <div class="dc-bar-label"><span class="nm">Team &amp; founder-market fit</span><span class="wt">25% weight · heaviest weight</span></div>
+        <div class="dc-bar-track"><div class="dc-bar-now" style="width:60%"></div></div>
+        <div class="dc-bar-val"><span class="rated">3.0<small>/5</small></span><span class="dc-delta max"><span class="material-symbols-rounded">check_circle</span>Maxed</span></div>
+      </div>
+
+      <div class="dc-bar-row dc-ceiling">
+        <div class="dc-bar-label"><span class="nm">Evidence integrity</span><span class="wt">5% weight</span></div>
+        <div class="dc-bar-track"><div class="dc-bar-now" style="width:60%"></div></div>
+        <div class="dc-bar-val"><span class="rated">3.0<small>/5</small></span><span class="dc-delta max"><span class="material-symbols-rounded">check_circle</span>Maxed</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 5 · BEFORE YOU WIRE ============ -->
+  <section class="dc-section">
+    <div class="dc-sec-head">
+      <span class="dc-eyebrow amber">Before you wire</span>
+      <h2 class="dc-h2">Nine items to clear before a cheque</h2>
+    </div>
+
+    <div class="dc-progress">
+      <div class="dc-progress-n"><b>0</b><span>of 9 cleared</span></div>
+      <div class="dc-pips">
+        <i class="b"></i><i class="b"></i><i class="b"></i>
+        <i class="k"></i><i class="k"></i><i class="k"></i>
+        <i></i><i></i><i></i>
+      </div>
+      <div class="dc-split"><b class="b">3 blockers</b> · <b class="k">3 key</b> · 3 standard</div>
+    </div>
+
+    <div class="dc-dgroup-label b"><span class="ct"><b>3</b></span> Blockers · do not wire until resolved</div>
+    <div class="dc-dlist cards">
+      <div class="dc-ditem">
+        <span class="dc-checkbox"><span class="material-symbols-rounded">radio_button_unchecked</span></span>
+        <div class="dc-dbody">
+          <div class="dc-dtop"><span class="dc-dtitle">Reprice the round</span><span class="dc-sev b">Blocker</span></div>
+          <div class="dc-dnote">$60M pre is Series-A pricing on a seed-stage asset; comps and three valuation methods cap defensible value at $20–35M pre. No wire at $60M pre.</div>
+        </div>
+        <span class="dc-dgate"><span class="material-symbols-rounded">block</span>Blocks cheque</span>
+      </div>
+      <div class="dc-ditem">
+        <span class="dc-checkbox"><span class="material-symbols-rounded">radio_button_unchecked</span></span>
+        <div class="dc-dbody">
+          <div class="dc-dtop"><span class="dc-dtitle">Reconcile the financial model</span><span class="dc-sev b">Blocker</span></div>
+          <div class="dc-dnote">One version shows +$4.25M cash trough, another −$1.94M; break-even is stated as M24, M32 and M35; trial-to-paid is 20% (deck) vs 35% (model). Establish that $20M actually funds to the milestones.</div>
+        </div>
+        <span class="dc-dgate"><span class="material-symbols-rounded">block</span>Blocks cheque</span>
+      </div>
+      <div class="dc-ditem">
+        <span class="dc-checkbox"><span class="material-symbols-rounded">radio_button_unchecked</span></span>
+        <div class="dc-dbody">
+          <div class="dc-dtop"><span class="dc-dtitle">Verify the ilumoni track record + co-founder roles</span><span class="dc-sev b">Blocker</span></div>
+          <div class="dc-dnote">The whole traction case rests on Monely Ltd (dissolved 2024); confirm Lancaster’s and Goudge’s formal roles (absent from Companies House) and obtain raw, population-weighted PoC metrics.</div>
+        </div>
+        <span class="dc-dgate"><span class="material-symbols-rounded">block</span>Blocks cheque</span>
+      </div>
+    </div>
+
+    <div class="dc-dgroup-label k"><span class="ct"><b>3</b></span> Key · needed to build conviction</div>
+    <div class="dc-dlist rows">
+      <div class="dc-ditem">
+        <span class="dc-checkbox"><span class="material-symbols-rounded">radio_button_unchecked</span></span>
+        <div class="dc-dbody">
+          <div class="dc-dtop"><span class="dc-dtitle">Get a credible Cleo-differentiation answer</span><span class="dc-sev k">Key</span></div>
+          <div class="dc-dnote">Cleo (~7M users, $280M+ ARR, net-profitable) already occupies the “AI money coach” category the deck omits; without a defensible distinction the core thesis is exposed.</div>
+        </div>
+      </div>
+      <div class="dc-ditem">
+        <span class="dc-checkbox"><span class="material-symbols-rounded">radio_button_unchecked</span></span>
+        <div class="dc-dbody">
+          <div class="dc-dtop"><span class="dc-dtitle">Secure a named ML / data lead</span><span class="dc-sev k">Key</span></div>
+          <div class="dc-dnote">The four-engine moat is unbuilt and no current team member is verified to build it; the build is the differentiation.</div>
+        </div>
+      </div>
+      <div class="dc-ditem">
+        <span class="dc-checkbox"><span class="material-symbols-rounded">radio_button_unchecked</span></span>
+        <div class="dc-dbody">
+          <div class="dc-dtop"><span class="dc-dtitle">Pressure-test CAC compression + distribution</span><span class="dc-sev k">Key</span></div>
+          <div class="dc-dnote">Independent validation that a 0.4–0.6 viral coefficient and 70% organic mix are achievable in the US within 25 months; the deck calls it “a hypothesis, not a guarantee.”</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dc-dgroup-label s"><span class="ct" style="background:var(--md-sys-color-surface-container-highest)"><b style="color:var(--md-sys-color-on-surface)">3</b></span> Standard · confirm during paperwork</div>
+    <div class="dc-dlist rows">
+      <div class="dc-ditem">
+        <span class="dc-checkbox"><span class="material-symbols-rounded">radio_button_unchecked</span></span>
+        <div class="dc-dbody">
+          <div class="dc-dtop"><span class="dc-dtitle">Confirm gross-margin treatment of app-store fees</span><span class="dc-sev s">Standard</span></div>
+          <div class="dc-dnote">If 15–30% platform fees are not in COGS, the 79% gross margin and 6:1 LTV/CAC are overstated.</div>
+        </div>
+      </div>
+      <div class="dc-ditem">
+        <span class="dc-checkbox"><span class="material-symbols-rounded">radio_button_unchecked</span></span>
+        <div class="dc-dbody">
+          <div class="dc-dtop"><span class="dc-dtitle">Correct the §1033 framing</span><span class="dc-sev s">Standard</span></div>
+          <div class="dc-dnote">The open-banking rule is legally enjoined as of mid-2026; the macro-debt tailwind stands without it, but the deck must not present it as live.</div>
+        </div>
+      </div>
+      <div class="dc-ditem">
+        <span class="dc-checkbox"><span class="material-symbols-rounded">radio_button_unchecked</span></span>
+        <div class="dc-dbody">
+          <div class="dc-dtop"><span class="dc-dtitle">Confirm the definitive raise amount</span><span class="dc-sev s">Standard</span></div>
+          <div class="dc-dnote">Both “$20M” and “$22M” appear in the data room; runway at $20M may be shorter than presented.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 6 · SIGN-OFF ============ -->
+  <footer class="dc-signoff">
+    <span class="material-symbols-rounded">task_alt</span>
+    <div class="so-body">
+      <div class="so-head">Endorsed for further diligence by <b>Alex Rivera</b> · 4 Jul 2026</div>
+      <div class="so-note">“Endorse further diligence — reprice toward $25–30M pre with a milestone tranche; do not wire at $60M.”</div>
+    </div>
+    <button class="so-btn">Update</button>
+  </footer>
+
+</div>

@@ -1,0 +1,3 @@
+/* SHIM — real stylesheet lives at ventrify-os/shared/m3/assess-editorial.css (deploying single source).
+   Edit shared/m3/assess-editorial.css, never this file. */
+@import '../../shared/m3/assess-editorial.css';

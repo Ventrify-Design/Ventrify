@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Portfolio · Ventrify OS</title>
+<meta name="description" content="Every venture running on your Ventrify OS workspace — status, progress and assessment at a glance.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" rel="stylesheet">
+<script>try{if(localStorage.getItem("ventrify-theme")==="light")document.documentElement.classList.add("light")}catch(e){}</script>
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="ds.css">
+<link rel="stylesheet" href="assess-editorial.css">
+<link rel="stylesheet" href="transitions.css">
+</head>
+<body>
+<div id="app"></div>
+<script type="module">
+  import * as DS from './ds.js';
+  import { ENGAGEMENTS } from './data.js';
+  import { resolveActions } from '../../shared/actions.js';
+  const acts = resolveActions({ page: 'portfolio' });
+
+  // ONE page proves empty → 1 → many. ?state=empty|one|many overrides the data slice for the DS specimen.
+  const stateParam = new URLSearchParams(location.search).get('state');
+  let rows = ENGAGEMENTS;
+  if (stateParam === 'empty') rows = [];
+  else if (stateParam === 'one') rows = ENGAGEMENTS.slice(0, 1);   // the running Lumen Health row — just after a wizard launch
+  const n = rows.length, empty = n === 0, lean = n >= 1 && n < 3;  // 1–2 rows: no hollow stat grid / filter over one row
+
+  // the masthead primary is ACTION_MODEL.portfolio.primary (new_engagement), display-labelled — opens the wizard in the aux overlay
+  const newAssessment = { ...acts.primary, label: 'New assessment', onclick: 'window.openNewAssessment&&window.openNewAssessment()' };
+
+  // computed stat row — derived from the current slice, never a frozen literal
+  const inFlight = r => r.runState && ['queued', 'running', 'partial'].includes(r.runState.status);
+  const stats = [
+    { n: String(n), l: 'Active engagements' },
+    { n: String(rows.filter(inFlight).length), l: 'Assessments in flight' },
+    { n: String(rows.filter(r => r.rec).length), l: 'Verdicts ready' },
+    { n: String(rows.filter(r => r.runState && r.runState.status === 'idle').length), l: 'Awaiting a deck' }
+  ];
+
+  const FILTERS = ['All', 'On track', 'Needs attention', 'Stuck', 'Assessment'];
+  const emptyFilter = `<div class="m3-card" style="text-align:center;padding:48px 24px"><div class="title-l">No engagements match</div><div class="body-m variant" style="margin-top:6px">Try a different filter or clear the search.</div></div>`;
+  // bridge nudge for a deck-less row — the run is gated on a pitch deck (dispatch-run.js)
+  const idle = rows.find(r => r.runState && r.runState.status === 'idle');
+  const bridge = idle ? `<div class="callout warn" style="margin-bottom:16px"><span class="material-symbols-rounded">upload_file</span><div><b>Upload the deck to run ${idle.name}.</b> The assessment can’t start until a pitch deck is added.</div></div>` : '';
+
+  const body = empty
+    ? DS.portfolioEmpty()
+    : lean
+      ? `${bridge}<div id="eng-host">${DS.engagementTable(rows)}</div>`
+      : `<div class="grid-4">${stats.map(DS.statCard).join('')}</div>${bridge}${DS.filterBar(FILTERS, 'Search ventures or founders')}<div id="eng-host">${DS.engagementTable(rows)}</div>`;
+
+  document.getElementById('app').outerHTML = DS.pageShell({
+    active: 'portfolio',
+    aux: {}, rail: empty ? [] : acts.rail, railOverflow: acts.overflow,   // empty portfolio has nothing to be auxiliary to
+    badges: empty ? { queue: 0 } : undefined,                             // a fresh tenant shows no false queue count
+    masthead: DS.masthead({
+      breadcrumb: false,
+      eyebrow: 'Portfolio',
+      headline: empty ? 'Your deal room, ready to go' : 'All engagements',
+      headlineMeta: empty ? '' : `· ${n} active`,
+      subheading: empty
+        ? 'No assessments yet — set up your first one and it starts researching straight away.'
+        : 'Every venture on your workspace — open one for the full assessment and timeline.',
+      actions: [newAssessment]
+    }),
+    body
+  });
+  DS.initShell();
+  DS.initAssessmentWizard();   // wires window.openNewAssessment() → the aux-overlay wizard
+
+  // ---- client-side filter (only in the many state) ----
+  if (!empty && !lean) {
+    let activeFilter = 'All', query = '';
+    const host = document.getElementById('eng-host');
+    const apply = () => {
+      const q = query.trim().toLowerCase();
+      const r = rows.filter(e => (activeFilter === 'All' || e.status.label === activeFilter) && (!q || `${e.name} ${e.sub}`.toLowerCase().includes(q)));
+      host.innerHTML = r.length ? DS.engagementTable(r) : emptyFilter;
+    };
+    const chips = [...document.querySelectorAll('.m3-chip')];
+    chips.forEach(c => c.addEventListener('click', () => { chips.forEach(x => x.classList.toggle('selected', x === c)); activeFilter = c.textContent.trim(); apply(); }));
+    const search = document.querySelector('.search');
+    if (search) search.addEventListener('input', e => { query = e.target.value; apply(); });
+  }
+</script>
+</body>
+</html>

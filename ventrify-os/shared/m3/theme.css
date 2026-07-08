@@ -1,0 +1,413 @@
+/* ============================================================
+   Ventrify OS — Material 3 exploration
+   Real M3 tokens (dark scheme, violet primary — M3's native seed) +
+   Material Symbols + Roboto. Surfaces use M3 tonal container tiers;
+   interaction via state layers; shape/elevation per M3 spec.
+   Custom roles added for the product: success (invest), warning (consider).
+   ============================================================ */
+
+:root {
+  color-scheme: dark;
+
+  /* ---- M3 dark color roles (violet baseline scheme) ---- */
+  --md-sys-color-primary: #D0BCFF;
+  --md-sys-color-on-primary: #381E72;
+  --md-sys-color-primary-container: #4F378B;
+  --md-sys-color-on-primary-container: #EADDFF;
+  --md-sys-color-secondary: #CCC2DC;
+  --md-sys-color-on-secondary: #332D41;
+  --md-sys-color-secondary-container: #4A4458;
+  --md-sys-color-on-secondary-container: #E8DEF8;
+  --md-sys-color-tertiary: #EFB8C8;
+  --md-sys-color-on-tertiary: #492532;
+  --md-sys-color-tertiary-container: #633B48;
+  --md-sys-color-on-tertiary-container: #FFD8E4;
+  --md-sys-color-error: #FFB4AB;
+  --md-sys-color-on-error: #690005;
+  --md-sys-color-error-container: #93000A;
+  --md-sys-color-on-error-container: #FFDAD6;
+
+  --md-sys-color-surface: #141218;
+  --md-sys-color-on-surface: #E6E0E9;
+  --md-sys-color-on-surface-variant: #CAC4D0;
+  --md-sys-color-surface-container-lowest: #0F0D13;
+  --md-sys-color-surface-container-low: #1D1B20;
+  --md-sys-color-surface-container: #211F26;
+  --md-sys-color-surface-container-high: #2B2930;
+  --md-sys-color-surface-container-highest: #36343B;
+  --md-sys-color-surface-bright: #3B383E;
+  --md-sys-color-outline: #938F99;
+  --md-sys-color-outline-variant: #49454F;
+  --md-sys-color-inverse-surface: #E6E0E9;
+  --md-sys-color-inverse-on-surface: #322F35;
+
+  /* product-specific semantic roles (M3-style container pairs) */
+  --success: #6FDBB4;  --on-success: #003828;  --success-container: #08442F;  --on-success-container: #8FF8CE;
+  --warning: #F7C067;  --on-warning: #402D00;  --warning-container: #5B4300;  --on-warning-container: #FFDEA8;
+
+  /* shape scale */
+  --md-sys-shape-corner-sm: 8px;
+  --md-sys-shape-corner-md: 12px;
+  --md-sys-shape-corner-lg: 16px;
+  --md-sys-shape-corner-xl: 28px;
+  --md-sys-shape-corner-full: 999px;
+
+  /* elevation (M3 dark uses shadow + a surface-tint) */
+  --md-elev-1: 0 1px 2px rgba(0,0,0,0.30), 0 1px 3px 1px rgba(0,0,0,0.15);
+  --md-elev-2: 0 1px 2px rgba(0,0,0,0.30), 0 2px 6px 2px rgba(0,0,0,0.15);
+  --md-elev-3: 0 4px 8px 3px rgba(0,0,0,0.15), 0 1px 3px rgba(0,0,0,0.30);
+
+  /* semantic shadow roles — theme-aware (light overrides these in :root.light) */
+  --shadow-panel:   -10px 0 30px rgba(0,0,0,0.30);                              /* aux right side-sheet */
+  --shadow-mh-min:  0 8px 26px rgba(0,0,0,0.32);                                /* minified sticky masthead */
+  --shadow-bar:     0 -2px 12px rgba(0,0,0,0.28);                               /* mobile bottom utility bar */
+  --shadow-drawer:  1px 0 4px rgba(0,0,0,0.20), 4px 0 16px rgba(0,0,0,0.12);    /* persistent side-nav depth (subtlest tier) */
+  --shadow-rail:    -6px 0 20px rgba(0,0,0,0.24);                               /* right utility rail — mirrors the drawer, casts left, keyline-free */
+
+  --md-sys-motion-emphasized: cubic-bezier(0.2, 0, 0, 1);
+  --md-sys-motion-standard: cubic-bezier(0.2, 0, 0, 1);
+
+  /* wire @material/web components to the scheme + Roboto */
+  --md-ref-typeface-brand: 'Roboto', sans-serif;
+  --md-ref-typeface-plain: 'Roboto', sans-serif;
+  --md-filled-button-container-shape: 999px;
+  --md-outlined-button-container-shape: 999px;
+
+  /* masthead band — subtle violet tint, distinct from the neutral nav */
+  --masthead-bg: #231F2E;
+  --masthead-border: rgba(208,188,255,0.14);
+  --masthead-shadow: 0 6px 20px rgba(0,0,0,0.26);
+
+  --nav-w: 260px;
+}
+
+/* ============ LIGHT SCHEME (M3 baseline light, violet primary) ============ */
+:root.light {
+  color-scheme: light;
+  --md-sys-color-primary: #6750A4;
+  --md-sys-color-on-primary: #FFFFFF;
+  --md-sys-color-primary-container: #EADDFF;
+  --md-sys-color-on-primary-container: #21005D;
+  --md-sys-color-secondary: #625B71;
+  --md-sys-color-on-secondary: #FFFFFF;
+  --md-sys-color-secondary-container: #E8DEF8;
+  --md-sys-color-on-secondary-container: #1D192B;
+  --md-sys-color-tertiary: #7D5260;
+  --md-sys-color-on-tertiary: #FFFFFF;
+  --md-sys-color-tertiary-container: #FFD8E4;
+  --md-sys-color-on-tertiary-container: #31111D;
+  --md-sys-color-error: #B3261E;
+  --md-sys-color-on-error: #FFFFFF;
+  --md-sys-color-error-container: #F9DEDC;
+  --md-sys-color-on-error-container: #410E0B;
+
+  --md-sys-color-surface: #F2ECF6;          /* EXPERIMENT: bg = the tint (was the card colour) */
+  --md-sys-color-on-surface: #1D1B20;
+  --md-sys-color-on-surface-variant: #49454F;
+  --md-sys-color-surface-container-lowest: #FFFFFF;
+  --md-sys-color-surface-container-low: #F9F5FC;   /* drawer/aux: lifted toward white, a clean nav surface distinct from the tinted bg */
+  --md-sys-color-surface-container: #FCF8FE;   /* EXPERIMENT: card = near-white (was the bg) → cards lighter than bg */
+  --md-sys-color-surface-container-high: #ECE6F0;
+  --md-sys-color-surface-container-highest: #E6E0E9;
+  --md-sys-color-surface-bright: #FCF8FE;
+  --md-sys-color-outline: #79747E;
+  --md-sys-color-outline-variant: #CAC4D0;
+  --md-sys-color-inverse-surface: #322F35;
+  --md-sys-color-inverse-on-surface: #F5EFF7;
+
+  /* product roles — darkened for legibility on light surfaces */
+  --success: #1C6B4C;  --on-success: #FFFFFF;  --success-container: #A9F2CE;  --on-success-container: #00210F;
+  --warning: #7A5900;  --on-warning: #FFFFFF;  --warning-container: #FFDEA6;  --on-warning-container: #261900;
+
+  /* masthead — light violet tint */
+  --masthead-bg: #E8DFF4;   /* deeper light-violet band — distinct from the (now tinted) content bg */
+  --masthead-border: rgba(103,80,164,0.16);
+  --masthead-shadow: 0 3px 14px rgba(42,34,58,0.08);   /* violet ink — matches the shadow family below */
+
+  /* shadows — softened for near-white surfaces, inked in a heavily-desaturated deep-violet
+     (rgba(42,34,58)) so they read as the tinted surfaces' own self-shadow, not a cold grey smudge */
+  --md-elev-1: 0 1px 2px rgba(42,34,58,0.08), 0 1px 3px 1px rgba(42,34,58,0.05);
+  --md-elev-2: 0 1px 2px rgba(42,34,58,0.09), 0 2px 8px 2px rgba(42,34,58,0.06);
+  --md-elev-3: 0 4px 12px 3px rgba(42,34,58,0.08), 0 1px 3px rgba(42,34,58,0.10);
+  --shadow-panel:   -1px 0 4px rgba(42,34,58,0.06), -16px 0 44px rgba(42,34,58,0.11);
+  --shadow-mh-min:  0 2px 6px rgba(42,34,58,0.06), 0 8px 28px rgba(42,34,58,0.10);
+  --shadow-bar:     0 -1px 3px rgba(42,34,58,0.05), 0 -8px 24px rgba(42,34,58,0.09);
+  --shadow-drawer:  6px 0 20px rgba(42,34,58,0.08);   /* soft rightward spread only — no tight contact layer (that read as a keyline stroke) */
+  --shadow-rail:    -6px 0 20px rgba(42,34,58,0.08);  /* mirrors the drawer, casts left — keyline-free */
+}
+
+/* Scoped reset — never strip padding from the @material/web custom elements
+   (a blanket `* { padding:0 }` overrides each component's shadow :host inset,
+   collapsing md-*-button labels edge-to-edge). */
+*, *::before, *::after { box-sizing: border-box; }
+body, h1, h2, h3, h4, h5, h6, p, figure, ul, ol, dl, blockquote { margin: 0; }
+ul, ol { padding: 0; }
+body {
+  background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface);
+  font-family: 'Roboto', system-ui, sans-serif; font-size: 14px; line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; text-decoration: none; }
+.material-symbols-rounded { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; user-select: none; }
+
+/* ---- M3 type scale ---- */
+.display-s { font-size: 36px; line-height: 44px; font-weight: 400; letter-spacing: 0; }
+.headline-m { font-size: 28px; line-height: 36px; font-weight: 400; }
+.headline-s { font-size: 24px; line-height: 32px; font-weight: 400; }
+.title-l { font-size: 22px; line-height: 28px; font-weight: 400; }
+.title-m { font-size: 16px; line-height: 24px; font-weight: 500; letter-spacing: 0.15px; }
+.title-s { font-size: 14px; line-height: 20px; font-weight: 500; letter-spacing: 0.1px; }
+.body-l { font-size: 16px; line-height: 24px; letter-spacing: 0.5px; }
+.body-m { font-size: 14px; line-height: 20px; letter-spacing: 0.25px; }
+.body-s { font-size: 12px; line-height: 16px; letter-spacing: 0.4px; }
+.label-l { font-size: 14px; line-height: 20px; font-weight: 500; letter-spacing: 0.1px; }
+.label-m { font-size: 12px; line-height: 16px; font-weight: 500; letter-spacing: 0.5px; }
+.label-s { font-size: 11px; line-height: 16px; font-weight: 500; letter-spacing: 0.5px; }
+.variant { color: var(--md-sys-color-on-surface-variant); }
+.overline { font-size: 11px; line-height: 16px; font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); }
+
+/* ---- App shell: navigation drawer + content ---- */
+.m3-app { display: grid; grid-template-columns: var(--nav-w) 1fr var(--aux-w, 0px) var(--rail-w, 0px); min-height: 100vh; position: relative; --aux-panel-w: clamp(320px, 30vw, 440px); }
+/* Pages mount with .app-scroll: height-bound the app so .shell-main scrolls INTERNALLY and the
+   sticky masthead can minify (without this the app grows with content and scroll falls to window). */
+.m3-app.app-scroll { height: 100dvh; min-height: 0; overflow: clip; }   /* clip the off-canvas aux (translateX 100%) so it can't extend the horizontal scroll — clip doesn't create a scroll container, so sticky drawer/masthead are unaffected */
+
+.m3-drawer {
+  position: sticky; top: 0; height: 100vh; padding: 12px; overflow-y: auto;
+  background: var(--md-sys-color-surface-container-low);
+  display: flex; flex-direction: column; gap: 2px;
+  box-shadow: var(--shadow-drawer); z-index: 2;   /* depth: lifts the persistent side-nav off the content canvas */
+}
+.drawer-brand { display: flex; align-items: center; gap: 12px; padding: 16px 16px 20px; }
+.drawer-brand .logo { flex: none; width: 34px; height: 34px; border-radius: 10px; background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); display: grid; place-items: center; }
+.drawer-brand .wm { font-weight: 500; font-size: 16px; letter-spacing: .01em; }
+.drawer-brand .wm small { color: var(--md-sys-color-on-surface-variant); font-weight: 400; }
+.drawer-section { padding: 16px 16px 8px; }
+.nav-item {
+  display: flex; align-items: center; gap: 12px; height: 56px; padding: 0 16px;
+  border-radius: var(--md-sys-shape-corner-full); color: var(--md-sys-color-on-surface-variant);
+  cursor: pointer; position: relative; overflow: hidden; transition: background .2s var(--md-sys-motion-standard);
+  font-size: 14px; font-weight: 500; letter-spacing: 0.1px;
+}
+.nav-item .material-symbols-rounded { font-size: 24px; flex: none; }
+.nav-item::before { content: ""; position: absolute; inset: 0; background: currentColor; opacity: 0; transition: opacity .2s; }
+.nav-item:hover::before { opacity: 0.08; }
+.nav-item.active { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
+.nav-item.active .material-symbols-rounded { font-variation-settings: 'FILL' 1; }
+.nav-badge { margin-left: auto; font-size: 11px; font-weight: 500; letter-spacing: .5px; }
+.drawer-foot { margin-top: auto; display: flex; align-items: center; gap: 12px; padding: 14px 16px; }
+.drawer-foot .av { flex: none; width: 36px; height: 36px; border-radius: 999px; background: var(--md-sys-color-tertiary-container); color: var(--md-sys-color-on-tertiary-container); display: grid; place-items: center; font-weight: 500; font-size: 14px; }
+.drawer-foot .nm { font-size: 14px; font-weight: 500; }
+.drawer-foot .nm small { display: block; color: var(--md-sys-color-on-surface-variant); font-weight: 400; font-size: 12px; }
+
+.m3-main { min-width: 0; padding: 28px clamp(22px, 3.6vw, 52px) 96px; }
+.m3-appbar { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; min-height: 64px; margin-bottom: 12px; flex-wrap: wrap; }
+
+/* ---- Cards (M3 has no card component — compose surfaces) ---- */
+/* Resting card = surface-container so every card lifts off the #141218 surface
+   at one consistent elevation tier (no stepping down below the fold). */
+.m3-card { background: var(--md-sys-color-surface-container); border-radius: var(--md-sys-shape-corner-lg); padding: 24px; }
+.m3-card.filled { background: var(--md-sys-color-surface-container); }
+.m3-card.outlined { background: transparent; border: 1px solid var(--md-sys-color-outline-variant); }
+.m3-card.elevated { background: var(--md-sys-color-surface-container-low); box-shadow: var(--md-elev-1); }
+.m3-card.tonal { background: var(--md-sys-color-surface-container-high); }
+.card-hd { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+
+/* ---- Chips (fallback styling; real md-* used where possible) ---- */
+.chip { display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--md-sys-color-outline); color: var(--md-sys-color-on-surface-variant); font-size: 14px; font-weight: 500; cursor: pointer; background: transparent; }
+.chip.selected { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); border-color: transparent; }
+.chip .material-symbols-rounded { font-size: 18px; }
+
+/* status "assist chip" pills */
+.status { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 8px; font-size: 12px; font-weight: 500; letter-spacing: .5px; }
+.status .material-symbols-rounded { font-size: 18px; }
+.status.ok { background: var(--success-container); color: var(--on-success-container); }
+.status.warn { background: var(--warning-container); color: var(--on-warning-container); }
+.status.err { background: var(--md-sys-color-error-container); color: var(--md-sys-color-on-error-container); }
+.status.info { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
+
+/* recommendation "filled" emphasis */
+.rec { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 20px; border-radius: 999px; font-size: 14px; font-weight: 500; letter-spacing: .1px; }
+.rec .material-symbols-rounded { font-size: 20px; }
+.rec.invest { background: var(--success); color: var(--on-success); }
+.rec.consider { background: var(--warning); color: var(--on-warning); }
+.rec.pass { background: var(--md-sys-color-error); color: var(--md-sys-color-on-error); }
+
+/* ---- Linear progress track (when not using md-linear-progress) ---- */
+.track { height: 8px; border-radius: 999px; background: var(--md-sys-color-surface-container-highest); overflow: hidden; }
+.track > span { display: block; height: 100%; border-radius: 999px; background: var(--md-sys-color-primary); }
+.track.thin { height: 4px; }
+
+/* segmented conviction */
+.seg { display: inline-flex; gap: 4px; }
+.seg i { width: 20px; height: 6px; border-radius: 3px; background: var(--md-sys-color-surface-container-highest); }
+.seg i.on { background: var(--success); }
+
+/* ---- Tabs (secondary/primary) ---- */
+.m3-tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--md-sys-color-surface-container-highest); margin-bottom: 16px; overflow-x: auto; }
+.m3-tab { padding: 14px 16px; font-size: 14px; font-weight: 500; letter-spacing: .1px; color: var(--md-sys-color-on-surface-variant); white-space: nowrap; cursor: pointer; position: relative; }
+.m3-tab.active { color: var(--md-sys-color-primary); }
+.m3-tab.active::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: 0; height: 3px; border-radius: 3px 3px 0 0; background: var(--md-sys-color-primary); }
+
+/* ---- List items ---- */
+.list-item { display: flex; align-items: center; gap: 16px; min-height: 56px; padding: 8px 4px; border-top: 1px solid var(--md-sys-color-surface-container-highest); }
+.list-item:first-child { border-top: none; }
+.li-lead { width: 40px; height: 40px; border-radius: 999px; display: grid; place-items: center; background: var(--md-sys-color-surface-container-high); color: var(--md-sys-color-primary); flex: none; font-weight: 500; }
+.li-body { flex: 1; min-width: 0; }
+.li-head { font-size: 16px; line-height: 24px; letter-spacing: 0.15px; font-weight: 500; }
+.li-supporting { font-size: 14px; line-height: 20px; letter-spacing: 0.25px; color: var(--md-sys-color-on-surface-variant); }
+.li-trail { text-align: right; }
+
+/* ---- Buttons (fallback if md-* not hydrated) ---- */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 24px; border-radius: 999px; font-size: 14px; font-weight: 500; letter-spacing: .1px; cursor: pointer; border: none; }
+.btn .material-symbols-rounded { font-size: 18px; }
+.btn.filled { background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); }
+.btn.tonal { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
+.btn.outlined { background: transparent; border: 1px solid var(--md-sys-color-outline); color: var(--md-sys-color-primary); }
+.btn.text { background: transparent; color: var(--md-sys-color-primary); padding: 0 12px; }
+.btn.sm { height: 34px; padding: 0 16px; font-size: 13px; }
+.fab { display: inline-flex; align-items: center; gap: 10px; height: 56px; padding: 0 20px; border-radius: 16px; background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); box-shadow: var(--md-elev-2); font-size: 15px; font-weight: 500; cursor: pointer; }
+
+/* utility */
+/* Low-emphasis inline banner: neutral tonal surface + a colour-coded leading
+   icon/label (M3 pattern) — NOT a full-chroma container fill, so it never
+   out-shouts the verdict. */
+.callout { display: flex; gap: 12px; align-items: flex-start; border-radius: var(--md-sys-shape-corner-md); padding: 16px; font-size: 14px; line-height: 1.45; background: var(--md-sys-color-surface-container-high); color: var(--md-sys-color-on-surface); }
+.callout .material-symbols-rounded { flex: none; font-size: 20px; margin-top: 1px; }
+.callout.err .material-symbols-rounded { color: var(--md-sys-color-error); }
+.callout.err b { color: var(--md-sys-color-error); }
+.callout.ok .material-symbols-rounded, .callout.ok b { color: var(--success); }
+md-divider { margin: 16px 0; --md-divider-color: var(--md-sys-color-surface-container-highest); }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 20px; }
+.bento { display: grid; grid-template-columns: 1.5fr 1fr; gap: 20px; align-items: start; }
+.stack { display: flex; flex-direction: column; gap: 16px; }
+/* full-width stacked sections — the scalable layout for variable content */
+.sections { display: flex; flex-direction: column; gap: 24px; }
+.sections > section { margin: 0 !important; }
+.divider { height: 1px; background: var(--md-sys-color-surface-container-highest); border: none; margin: 16px 0; }
+
+@media (max-width: 1080px){ .bento{ grid-template-columns:1fr; } .grid-4{ grid-template-columns:repeat(2,1fr);} }
+/* NOTE: the compact/mobile (≤840px) shell overrides live at the END of this file, after all
+   the component base rules (.m3-drawer/.m3-utilrail/.m3-aux/.urail-item), so they win the cascade. */
+@media (prefers-reduced-motion: reduce) { .m3-drawer, .m3-scrim, .m3-aux, .m3-app { transition: none; } }
+
+/* ---- @material/web component overrides (sit inside our cards) ---- */
+md-list, md-list-item { --md-list-container-color: transparent; --md-list-item-container-color: transparent; }
+md-tabs { --md-tabs-container-color: transparent; --md-primary-tab-container-color: transparent; }
+/* the masthead already provides the bottom keyline — drop md-tabs' own divider */
+.masthead md-tabs::part(divider) { display: none; }
+md-linear-progress { --md-linear-progress-track-color: var(--md-sys-color-surface-container-highest); --md-linear-progress-track-height: 8px; --md-linear-progress-active-indicator-height: 8px; width: 100%; }
+md-outlined-button, md-filled-button, md-text-button, md-filled-tonal-button { --md-outlined-button-container-height: 40px; }
+
+/* ---- Collapsible navigation: drawer <-> rail ---- */
+.nav-toggle { align-self: flex-start; width: 40px; height: 40px; margin: 4px 4px 4px 8px; border: none; border-radius: 999px; background: transparent; color: var(--md-sys-color-on-surface-variant); cursor: pointer; display: grid; place-items: center; position: relative; }
+.nav-toggle .material-symbols-rounded { font-size: 24px; }
+.nav-toggle::before { content: ""; position: absolute; inset: 0; border-radius: 999px; background: currentColor; opacity: 0; transition: opacity .2s; }
+.nav-toggle:hover::before { opacity: 0.08; }
+
+/* Collapse to an 80px rail. Icons keep their exact x-position — no re-centering,
+   only the labels are removed — so nothing shuffles. 80px is deliberate: a nav item
+   (24px icon + 16px padding each side = 56px content track) lands its icon dead-centre,
+   at the same x it sits when expanded. Also re-asserts grid so no generic .rail can flip it. */
+.m3-app.rail { --nav-w: 80px; display: grid; grid-template-columns: var(--nav-w) 1fr var(--aux-w, 0px) var(--rail-w, 0px); gap: 0; }
+/* keep the section headers' HEIGHT (fade text only) so nav items don't shift up when collapsing */
+.m3-app.rail .drawer-section { opacity: 0; pointer-events: none; }
+.m3-app.rail .nav-label,
+.m3-app.rail .nav-badge,
+.m3-app.rail .drawer-brand .wm,
+.m3-app.rail .drawer-foot .nm { opacity: 0; }
+
+/* Motion: smoothly animate the column width; fade the labels; clip anything overflowing the narrowing rail. */
+.m3-app { transition: grid-template-columns 340ms var(--md-sys-motion-emphasized); }
+.m3-drawer { overflow-x: hidden; }
+.nav-item { overflow: hidden; }
+.nav-label, .drawer-brand .wm, .drawer-foot .nm, .nav-badge, .drawer-section { white-space: nowrap; }
+.nav-label, .nav-badge, .drawer-brand .wm, .drawer-foot .nm, .drawer-section { transition: opacity 150ms var(--md-sys-motion-standard); }
+
+/* ---- Functional tab panels ---- */
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ---- Theme toggle (light / dark) in the drawer ---- */
+.theme-toggle { display: flex; gap: 4px; padding: 4px; margin: auto 12px 8px; border-radius: 999px; background: var(--md-sys-color-surface-container-high); }
+.drawer-foot { margin-top: 0 !important; }
+.theme-toggle button { flex: 1; height: 34px; border: none; border-radius: 999px; background: transparent; color: var(--md-sys-color-on-surface-variant); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-family: 'Roboto',sans-serif; font-size: 12px; font-weight: 500; letter-spacing: .3px; transition: background .2s; }
+.theme-toggle button .material-symbols-rounded { font-size: 18px; }
+.theme-toggle button.on { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
+.m3-app.rail .theme-toggle { flex-direction: column; width: 48px; margin: auto auto 8px; padding: 4px; }
+.m3-app.rail .theme-toggle button { font-size: 0; }
+.m3-app.rail .theme-toggle button .material-symbols-rounded { font-size: 20px; }
+
+/* ---- Auxiliary panel (right side sheet) + how the shell reacts ----
+   push  = .aux-push  → grid reserves a right column, content narrows (no scrim)
+   modal = .aux-modal → panel floats over a scrim, content unchanged
+   both slide the panel in via transform; the grid width animates via .m3-app's transition */
+.m3-aux { position: absolute; top: 0; right: var(--rail-w, 0px); height: 100%; width: var(--aux-panel-w); max-width: 100%; background: var(--md-sys-color-surface-container-low); box-shadow: var(--shadow-panel); transform: translateX(100%); transition: transform .34s var(--md-sys-motion-emphasized); z-index: 9; display: flex; flex-direction: column; }
+.m3-app.aux-open .m3-aux { transform: none; }
+.m3-app.aux-push { --aux-w: var(--aux-panel-w); }
+.m3-scrim { position: absolute; inset: 0; background: rgba(0,0,0,0.42); opacity: 0; pointer-events: none; transition: opacity .3s var(--md-sys-motion-standard); z-index: 8; }
+.m3-app.aux-modal.aux-open .m3-scrim { opacity: 1; pointer-events: auto; }
+/* below 900px there's no room to push — fall back to overlay */
+@media (max-width: 900px){ .m3-app.aux-push { --aux-w: 0; } .m3-app.aux-push.aux-open .m3-scrim { opacity: 1; pointer-events: auto; } }
+@media (max-width: 560px){ .m3-app { --aux-panel-w: 100vw; } }
+@media (prefers-reduced-motion: reduce){ .m3-aux { transition: none; } }
+
+/* ---- Utility rail (right icon rail) — persistent tooling; opens the aux panel ---- */
+.m3-app.has-utilrail { --rail-w: 72px; }
+.m3-utilrail { grid-column: 4; background: var(--md-sys-color-surface-container-low); box-shadow: var(--shadow-rail); display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 0; z-index: 10; }
+.urail-item { width: 46px; height: 46px; border-radius: 13px; border: none; background: transparent; color: var(--md-sys-color-on-surface-variant); cursor: pointer; display: grid; place-items: center; position: relative; transition: background .15s; }
+.urail-spacer { flex: 1 1 auto; }   /* pushes the meta cluster (view settings · help) + overflow kebab to the foot */
+.urail-item:hover { background: var(--md-sys-color-surface-container-high); }
+.urail-item.on { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
+.urail-item.on .material-symbols-rounded { font-variation-settings: 'FILL' 1; }
+.urail-item .material-symbols-rounded { font-size: 24px; }
+
+/* ============ Masthead hamburger + compact/mobile (≤840px) shell overrides ============
+   Placed at the END so these win over the component base rules above. Keep .m3-app free of
+   transform/filter/will-change — the fixed z-ladder (bottom bar 20 < scrim 40 < drawer/aux 50)
+   assumes .m3-app establishes no stacking context. */
+.mh-nav { display: none; place-items: center; width: 48px; height: 48px; flex: none; margin: -4px 8px -4px -4px; border: none; border-radius: 999px; background: transparent; color: var(--md-sys-color-on-surface); cursor: pointer; position: relative; }
+.mh-nav::before { content: ""; position: absolute; inset: 0; border-radius: 999px; background: currentColor; opacity: 0; transition: opacity .2s; }
+.mh-nav:hover::before { opacity: 0.08; }
+.mh-nav .material-symbols-rounded { font-size: 24px; }
+body.overlay-lock { overflow: hidden; }
+
+@media (max-width: 840px){
+  :root { --nav-w: 0; }
+  .m3-app, .m3-app.rail { grid-template-columns: 1fr; --nav-w: 0; }   /* neutralise .rail so it can't re-add a nav column */
+  .grid-2 { grid-template-columns: 1fr; }
+  .m3-main { padding: 16px; }
+
+  /* main nav → modal navigation drawer: leaves the grid, slides in from the left (aux-panel motion) */
+  .m3-drawer { display: flex; position: fixed; top: 0; left: 0; bottom: 0; height: 100dvh; width: min(320px, 86vw); overflow-y: auto; z-index: 50; visibility: hidden; transform: translateX(-100%); transition: transform .34s var(--md-sys-motion-emphasized), visibility 0s .34s; box-shadow: var(--md-elev-3); border-radius: 0 16px 16px 0; }
+  .m3-app.nav-open .m3-drawer { transform: none; visibility: visible; transition: transform .34s var(--md-sys-motion-emphasized); }
+
+  /* one shared scrim — shown for EITHER open overlay (nav or aux) */
+  .m3-scrim { position: fixed; inset: 0; z-index: 40; }
+  .m3-app.nav-open .m3-scrim { opacity: 1; pointer-events: auto; }
+
+  /* aux panel → full-screen fixed sheet (keeps its slide + width rules) */
+  .m3-aux { position: fixed; z-index: 50; }
+
+  /* utility rail → fixed bottom app bar (same element, re-laid-out) */
+  .m3-app.has-utilrail { --rail-w: 0px; }
+  .m3-utilrail { position: fixed; inset: auto 0 0 0; grid-column: auto; flex-direction: row; justify-content: space-evenly; align-items: center; gap: 4px; height: calc(64px + env(safe-area-inset-bottom)); padding: 0 8px env(safe-area-inset-bottom); border-left: none; border-top: 1px solid var(--md-sys-color-outline-variant); background: var(--md-sys-color-surface-container); box-shadow: var(--shadow-bar); z-index: 20; }
+  .urail-item { width: 56px; height: 56px; }
+  .urail-spacer { display: none; }   /* bottom bar is a row → no vertical spacer */
+  .m3-app.has-utilrail .shell-body { padding-bottom: calc(64px + env(safe-area-inset-bottom) + 16px); }
+
+  /* masthead shows the hamburger; the breadcrumb path hides (drawer nav replaces it), the L1 tag stays.
+     The hero (headline) already sits BELOW the bar, so a long title can't crowd the buttons. */
+  .mh-nav { display: grid; }
+  .masthead .mh-orient:not([data-depth="1"]) { display: none; }
+  /* keep the primary action only so the bar fits a 390px phone; secondaries yield */
+  .masthead .mh-actions > :not(:first-child) { display: none; }
+
+  /* scroll-lock (both scroll models) + touch targets */
+  .m3-app.nav-open .shell-main, .m3-app.aux-open .shell-main { overflow: hidden; }
+  .theme-toggle button { min-height: 44px; }
+  .aux-close { min-width: 44px; min-height: 44px; }
+  .m3-aux .aux-foot { padding-bottom: calc(14px + env(safe-area-inset-bottom)); }
+}
+@media (prefers-reduced-motion: reduce) { .m3-drawer, .m3-scrim, .m3-aux, .m3-app { transition: none; } }

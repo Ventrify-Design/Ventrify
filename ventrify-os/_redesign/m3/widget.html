@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Widget · Ventrify OS Design System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" rel="stylesheet">
+<script>try{if(localStorage.getItem("ventrify-theme")==="light")document.documentElement.classList.add("light")}catch(e){}</script>
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="ds.css">
+<link rel="stylesheet" href="assess-editorial.css">
+<style>
+  .ds-shell { display: grid; grid-template-columns: 244px 1fr; min-height: 100vh; }
+  .ds-side { position: sticky; top: 0; height: 100vh; padding: 18px 12px; background: var(--md-sys-color-surface-container-low); display: flex; flex-direction: column; gap: 1px; overflow-y: auto; }
+  .ds-side .brand { display: flex; align-items: center; gap: 11px; padding: 8px 12px; font-weight: 600; font-size: 15px; }
+  .ds-side .brand .logo { width: 30px; height: 30px; border-radius: 9px; background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); display: grid; place-items: center; }
+  .ds-side .brand small { display: block; font-size: 11px; font-weight: 400; color: var(--md-sys-color-on-surface-variant); }
+  .ds-back { display: flex; align-items: center; gap: 8px; padding: 9px 14px; margin: 4px 0 6px; border-radius: 999px; color: var(--md-sys-color-on-surface-variant); font-size: 13px; font-weight: 500; }
+  .ds-back:hover { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
+  .ds-back .material-symbols-rounded { font-size: 18px; }
+  .nav-grp { font-size: 10.5px; font-weight: 500; letter-spacing: .6px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); padding: 14px 14px 6px; }
+  .ds-side a.itm { display: block; padding: 8px 14px; border-radius: 999px; color: var(--md-sys-color-on-surface-variant); font-size: 13.5px; font-weight: 500; }
+  .ds-side a.itm.on, .ds-side a.itm:hover { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
+  .ds-main { padding: 30px clamp(20px,4vw,56px) 120px; max-width: 1080px; min-width: 0; }
+  .ds-eyebrow { font-size: 12px; font-weight: 500; letter-spacing: .6px; text-transform: uppercase; color: var(--md-sys-color-primary); }
+  .ds-h { font-size: 34px; font-weight: 400; margin: 6px 0 8px; letter-spacing: -0.25px; }
+  .ds-sig { font-family: 'Roboto Mono', monospace; font-size: 13px; color: var(--md-sys-color-on-surface-variant); background: var(--md-sys-color-surface-container-high); display: inline-block; padding: 4px 10px; border-radius: 8px; }
+  .ds-blurb { color: var(--md-sys-color-on-surface); margin: 16px 0 26px; max-width: 720px; line-height: 1.6; font-size: 16px; }
+  .ds-h2 { font-size: 22px; font-weight: 400; margin: 52px 0 6px; padding-top: 8px; border-top: 1px solid var(--md-sys-color-surface-container-highest); }
+  .ds-h2 .material-symbols-rounded { font-size: 22px; vertical-align: -4px; color: var(--md-sys-color-primary); margin-right: 6px; }
+  .ds-note { color: var(--md-sys-color-on-surface-variant); font-size: 14px; line-height: 1.55; margin: 4px 0 18px; max-width: 720px; }
+  code { font-family: 'Roboto Mono', monospace; font-size: 0.85em; background: var(--md-sys-color-surface-container-high); padding: 1px 6px; border-radius: 6px; }
+
+  .prop-tbl { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .prop-tbl th { text-align: left; font-size: 11px; font-weight: 500; letter-spacing: .5px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); padding: 10px 12px; border-bottom: 1px solid var(--md-sys-color-surface-container-highest); }
+  .prop-tbl td { padding: 12px; border-bottom: 1px solid var(--md-sys-color-surface-container-highest); vertical-align: top; }
+  .prop-tbl td.k { font-family: 'Roboto Mono', monospace; font-size: 12.5px; color: var(--md-sys-color-primary); white-space: nowrap; }
+  .prop-tbl td.ty { font-family: 'Roboto Mono', monospace; font-size: 12px; color: var(--md-sys-color-on-surface-variant); white-space: nowrap; }
+
+  .adapt { width: 100%; border-collapse: separate; border-spacing: 0; }
+  .adapt th, .adapt td { text-align: left; padding: 14px 16px; vertical-align: top; border-bottom: 1px solid var(--md-sys-color-surface-container-highest); }
+  .adapt thead th { font-size: 12px; font-weight: 500; }
+  .adapt thead .dev { display: flex; align-items: center; gap: 8px; }
+  .adapt thead .dev .material-symbols-rounded { font-size: 20px; color: var(--md-sys-color-primary); }
+  .adapt thead .dev small { display: block; font-family: 'Roboto Mono', monospace; font-weight: 400; color: var(--md-sys-color-on-surface-variant); font-size: 11px; }
+  .adapt td.rl { font-size: 11px; font-weight: 500; letter-spacing: .5px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); white-space: nowrap; width: 90px; }
+  .adapt td { font-size: 13.5px; line-height: 1.5; color: var(--md-sys-color-on-surface); }
+  .adapt-wrap { border: 1px solid var(--md-sys-color-outline-variant); border-radius: 14px; overflow: hidden; }
+  .adapt tr:last-child td { border-bottom: none; }
+
+  .badge { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 11px; border-radius: 8px; font-size: 12px; font-weight: 500; }
+  .badge.proposed { background: var(--warning-container); color: var(--on-warning-container); }
+  .badge.implemented { background: var(--success-container); color: var(--on-success-container); }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .vchip { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 10px; background: var(--md-sys-color-surface-container); font-size: 13px; }
+  .vchip b { font-weight: 500; } .vchip .vn { color: var(--md-sys-color-on-surface-variant); }
+  .used a { display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 14px; border-radius: 999px; background: var(--md-sys-color-surface-container); color: var(--md-sys-color-on-surface); font-size: 13px; font-weight: 500; }
+  .used a:hover { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
+  .used a .material-symbols-rounded { font-size: 17px; color: var(--md-sys-color-primary); }
+
+  .empty { display: flex; gap: 14px; align-items: flex-start; border: 1px dashed var(--md-sys-color-outline-variant); border-radius: 14px; padding: 20px; color: var(--md-sys-color-on-surface-variant); font-size: 14px; line-height: 1.55; }
+  .empty .material-symbols-rounded { color: var(--warning); flex: none; }
+
+  .prevnext { display: flex; justify-content: space-between; gap: 12px; margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--md-sys-color-surface-container-highest); }
+  .prevnext a { display: flex; flex-direction: column; gap: 2px; padding: 12px 16px; border-radius: 12px; background: var(--md-sys-color-surface-container); max-width: 46%; }
+  .prevnext a:hover { background: var(--md-sys-color-secondary-container); }
+  .prevnext a small { font-size: 11px; color: var(--md-sys-color-on-surface-variant); }
+  .prevnext a b { font-weight: 500; font-size: 14px; }
+  .prevnext a.nx { text-align: right; margin-left: auto; }
+
+  /* instances */
+  .inst-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px,1fr)); gap: 14px; }
+  .inst-card { text-align: left; border: 1px solid var(--md-sys-color-outline-variant); border-radius: 14px; background: var(--md-sys-color-surface-container); padding: 16px 18px; cursor: pointer; display: flex; flex-direction: column; gap: 6px; font-family: 'Roboto', sans-serif; transition: border-color .15s, transform .15s; }
+  .inst-card:hover { border-color: var(--md-sys-color-primary); transform: translateY(-2px); }
+  .inst-t { display: flex; align-items: center; gap: 8px; font-weight: 500; font-size: 15px; color: var(--md-sys-color-on-surface); }
+  .inst-t .material-symbols-rounded { font-size: 16px; color: var(--md-sys-color-primary); margin-left: auto; }
+  .inst-n { font-size: 13px; color: var(--md-sys-color-on-surface-variant); line-height: 1.45; }
+  /* configurator */
+  .cfg-bar { display: flex; flex-wrap: wrap; gap: 22px; padding: 16px 18px; border: 1px solid var(--md-sys-color-outline-variant); border-radius: 14px; margin-bottom: 18px; }
+  .cfg-dim { display: flex; flex-direction: column; gap: 8px; }
+  .cfg-l { font-size: 11px; font-weight: 500; letter-spacing: .5px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); }
+  .cfg-bar .seg-group { display: inline-flex; gap: 2px; background: var(--md-sys-color-surface-container-high); border-radius: 999px; padding: 3px; }
+  .cfg-bar .seg-group button { border: none; background: transparent; color: var(--md-sys-color-on-surface-variant); height: 32px; padding: 0 14px; border-radius: 999px; font-family: 'Roboto', sans-serif; font-size: 12.5px; font-weight: 500; cursor: pointer; }
+  .cfg-bar .seg-group button.on { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
+  .cfg-sel-wrap { position: relative; display: inline-flex; align-items: center; }
+  .cfg-sel-wrap .material-symbols-rounded { position: absolute; right: 10px; font-size: 18px; color: var(--md-sys-color-on-surface-variant); pointer-events: none; }
+  .cfg-sel { appearance: none; -webkit-appearance: none; height: 38px; min-width: 172px; padding: 0 34px 0 14px; border-radius: 10px; border: 1px solid var(--md-sys-color-outline-variant); background: var(--md-sys-color-surface-container-high); color: var(--md-sys-color-on-surface); font-family: 'Roboto', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; }
+  .cfg-sel:hover { border-color: var(--md-sys-color-primary); }
+  .cfg-sel:focus-visible { outline: 2px solid var(--md-sys-color-primary); outline-offset: 1px; }
+
+  @media (max-width: 900px){ .ds-shell { grid-template-columns: 1fr; } .ds-side { display: none; } .adapt-wrap { overflow-x: auto; } .adapt { min-width: 640px; } }
+</style>
+</head>
+<body>
+<div class="ds-shell">
+  <aside class="ds-side">
+    <div class="brand"><span class="logo"><span class="material-symbols-rounded" style="font-size:18px">bolt</span></span><span>Ventrify OS<small>Design system</small></span></div>
+    <a class="ds-back" href="design-system.html"><span class="material-symbols-rounded">arrow_back</span> Design system</a>
+    <nav id="side-nav"></nav>
+    <div class="theme-toggle" style="margin-top:auto"><button data-set="light"><span class="material-symbols-rounded">light_mode</span> Light</button><button data-set="dark" class="on"><span class="material-symbols-rounded">dark_mode</span> Dark</button></div>
+  </aside>
+
+  <main class="ds-main" id="main"><p class="ds-note">Loading…</p></main>
+</div>
+
+<script type="module">
+  import * as DS from './ds.js';
+  import { mountHarness } from './harness.js';
+  import { CATALOG, GROUPS, byGroup, sourceFor } from './registry.js';
+
+  const ids = Object.keys(CATALOG);
+  const id = new URLSearchParams(location.search).get('w') || ids[0];
+  const e = CATALOG[id];
+
+  // ---- side nav (whole catalog, grouped) ----
+  document.getElementById('side-nav').innerHTML = GROUPS.map(g => {
+    const items = byGroup(g);
+    if (!items.length) return '';
+    return `<div class="nav-grp">${g}</div>` + items.map(it =>
+      `<a class="itm ${it.id === id ? 'on' : ''}" href="widget.html?w=${it.id}">${it.title}</a>`).join('');
+  }).join('');
+
+  const main = document.getElementById('main');
+  if (!e) {
+    main.innerHTML = `<p class="ds-note">No catalog entry for <code>${id}</code>.</p>`;
+  } else {
+    document.title = e.title + ' · Ventrify OS Design System';
+    const devHead = (icon, name, w) => `<div class="dev"><span class="material-symbols-rounded">${icon}</span><div>${name}<small>${w}px</small></div></div>`;
+    const props = (e.props && e.props.length)
+      ? `<table class="prop-tbl"><thead><tr><th>Field</th><th>Type</th><th>Note</th></tr></thead><tbody>${e.props.map(p => `<tr><td class="k">${p.name}</td><td class="ty">${p.type || ''}</td><td>${p.note || ''}</td></tr>`).join('')}</tbody></table>`
+      : `<p class="ds-note">No structured data — static markup.</p>`;
+
+    let adaptive;
+    if (e.adaptive) {
+      const st = e.adaptive.status || 'proposed';
+      adaptive = `<div style="display:flex;align-items:center;gap:12px;margin:2px 0 14px"><span class="badge ${st}"><span class="material-symbols-rounded" style="font-size:16px">${st === 'implemented' ? 'check_circle' : 'draw'}</span>${st === 'implemented' ? 'Implemented' : 'Proposed rules'}</span><span class="ds-note" style="margin:0">How this widget re-flows its <b>layout</b> and re-tailors its <b>content</b> by device.</span></div>
+      <div class="adapt-wrap"><table class="adapt">
+        <thead><tr><th></th><th>${devHead('smartphone', 'Phone', 390)}</th><th>${devHead('tablet', 'Tablet', 768)}</th><th>${devHead('desktop_windows', 'Desktop', 1280)}</th></tr></thead>
+        <tbody>
+          <tr><td class="rl">Layout</td><td>${e.adaptive.layout.mobile}</td><td>${e.adaptive.layout.tablet}</td><td>${e.adaptive.layout.desktop}</td></tr>
+          <tr><td class="rl">Content</td><td>${e.adaptive.content.mobile}</td><td>${e.adaptive.content.tablet}</td><td>${e.adaptive.content.desktop}</td></tr>
+        </tbody></table></div>`;
+    } else {
+      adaptive = `<div class="empty"><span class="material-symbols-rounded">pending</span><div><b style="color:var(--md-sys-color-on-surface)">Adaptive rules not yet designed.</b> This widget currently renders one layout at every width. Its phone / tablet / desktop rules — layout <em>and</em> what content to show — are queued for the holistic design pass (UX · UI · IA · copy).</div></div>`;
+    }
+
+    const variants = (e.variants && e.variants.length)
+      ? `<div class="chips">${e.variants.map(v => `<span class="vchip"><b>${v.label}</b><span class="vn">— ${v.note}</span></span>`).join('')}</div>`
+      : `<p class="ds-note">No variants.</p>`;
+
+    const used = (e.usedIn && e.usedIn.length)
+      ? `<div class="used chips">${e.usedIn.map(t => `<a href="templates.html#templates"><span class="material-symbols-rounded">web</span>${t}</a>`).join('')}</div>` : '';
+
+    const i = ids.indexOf(id);
+    const prev = ids[i - 1], next = ids[i + 1];
+    const pn = `<div class="prevnext">
+      ${prev ? `<a href="widget.html?w=${prev}"><small>← Previous</small><b>${CATALOG[prev].title}</b></a>` : '<span></span>'}
+      ${next ? `<a class="nx" href="widget.html?w=${next}"><small>Next →</small><b>${CATALOG[next].title}</b></a>` : ''}
+    </div>`;
+
+    const instancesBlock = (e.instances && e.instances.length) ? `
+      <h2 class="ds-h2"><span class="material-symbols-rounded">dashboard</span>Instances</h2>
+      <p class="ds-note">Each instance is a distinct state of this component — no controls, just that state. Click to open it on its own in a new window.</p>
+      <div class="inst-grid">${e.instances.map(inst => `<button class="inst-card" data-i="${inst.key}"><span class="inst-t">${inst.label}<span class="material-symbols-rounded">open_in_new</span></span><span class="inst-n">${inst.note || ''}</span></button>`).join('')}</div>` : '';
+    const cfgDim = dim => dim.control === 'select'
+      ? `<div class="cfg-dim"><span class="cfg-l">${dim.label}</span><div class="cfg-sel-wrap"><select class="cfg-sel" data-key="${dim.key}">${dim.options.map((o, oi) => `<option value="${o.v}"${oi === 0 ? ' selected' : ''}>${o.l}</option>`).join('')}</select><span class="material-symbols-rounded">expand_more</span></div></div>`
+      : `<div class="cfg-dim"><span class="cfg-l">${dim.label}</span><div class="seg-group">${dim.options.map((o, oi) => `<button data-key="${dim.key}" data-val="${o.v}"${oi === 0 ? ' class="on"' : ''}>${o.l}</button>`).join('')}</div></div>`;
+    const cfgBlock = (e.configurator && e.configurator.length) ? `
+      <h2 class="ds-h2"><span class="material-symbols-rounded">tune</span>Compose &amp; test</h2>
+      <p class="ds-note">Pick an option for each dimension — the preview updates live, and “New window” opens that exact composition.</p>
+      <div class="cfg-bar">${e.configurator.map(cfgDim).join('')}</div>` : '';
+
+    main.innerHTML = `
+      <div class="ds-eyebrow">${e.level}${e.domain ? ' · ' + e.domain : ''}</div>
+      <h1 class="ds-h">${e.title}</h1>
+      <span class="ds-sig">${e.sig}</span>
+      <p class="ds-blurb">${e.blurb}</p>
+
+      ${cfgBlock}
+      <h2 class="ds-h2"><span class="material-symbols-rounded">devices</span>Live preview · test across devices</h2>
+      <p class="ds-note">Real iframe at a real width — media queries fire. Switch device, type a custom width, or pop it into its own window.</p>
+      <div id="harness"></div>
+
+      ${instancesBlock}
+      <h2 class="ds-h2"><span class="material-symbols-rounded">data_object</span>Data contract</h2>
+      <p class="ds-note">This widget is a pure function of its data — <code>${e.sig}</code>. Change the data and the render follows.</p>
+      ${props}
+
+      <h2 class="ds-h2"><span class="material-symbols-rounded">devices</span>Adaptive behaviour</h2>
+      ${adaptive}
+
+      <h2 class="ds-h2"><span class="material-symbols-rounded">tune</span>Variants &amp; states</h2>
+      ${variants}
+
+      ${used ? `<h2 class="ds-h2"><span class="material-symbols-rounded">web</span>Used in</h2>${used}` : ''}
+
+      ${pn}`;
+
+    const harness = mountHarness(document.getElementById('harness'), sourceFor(id), { height: e.pad ? 560 : 620, start: 'fit' });
+
+    // instances → open that clean state in a new window
+    document.querySelectorAll('.inst-card').forEach(c => c.addEventListener('click', () =>
+      window.open(`specimen.html?id=${id}&i=${c.dataset.i}`, '_blank', 'width=1360,height=840,noopener,resizable,scrollbars')));
+
+    // configurator → compose the template; drive the live preview + the open button
+    const cfgBar = document.querySelector('.cfg-bar');
+    if (cfgBar && e.configurator) {
+      const state = {};
+      e.configurator.forEach(d => state[d.key] = d.options[0].v);
+      const buildUrl = () => { const p = new URLSearchParams({ id }); Object.entries(state).forEach(([k, v]) => { if (v) p.set(k, v); }); return `specimen.html?${p.toString()}`; };
+      cfgBar.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+        const key = b.dataset.key;
+        state[key] = b.dataset.val;
+        cfgBar.querySelectorAll(`button[data-key="${key}"]`).forEach(x => x.classList.toggle('on', x === b));
+        harness.setUrl(buildUrl());
+      }));
+      cfgBar.querySelectorAll('select.cfg-sel').forEach(sel => sel.addEventListener('change', () => {
+        state[sel.dataset.key] = sel.value;
+        harness.setUrl(buildUrl());
+      }));
+    }
+  }
+
+  DS.initShell();
+</script>
+</body>
+</html>

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Market sizing — MoneyGym · Ventrify OS</title>
+<meta name="description" content="L3 deep research — a bottom-up rebuild of MoneyGym's market sizing. The $110B TAM is a 44–73× category error.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" rel="stylesheet">
+<script>try{if(localStorage.getItem("ventrify-theme")==="light")document.documentElement.classList.add("light")}catch(e){}</script>
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="ds.css">
+<link rel="stylesheet" href="transitions.css">
+</head>
+<body>
+<div id="app"></div>
+<script type="module">
+  import * as DS from './ds.js';
+  import { resolveActions } from '../../shared/actions.js';
+  const acts = resolveActions({ page: 'research' });
+
+  const SOURCES = [
+    { title: 'MoneyGym pitch deck v0.1a, slide 4 (Forbes 2022 / CNBC 2022 citations)', dom: 'Ventrify data room', quote: 'TAM $110B · SAM $13B · SOM $315–331M (4M subscribers at $99 ARPU by Year 5).' },
+    { title: 'Statista / BCG — US fintech revenue by vertical, 2024', dom: 'statista.com', quote: 'Aggregate US fintech revenue across payments, lending, investing and insurance distribution.' },
+    { title: 'US Census Bureau — Population estimates, Jul 2024', dom: 'census.gov', quote: '~267M US adults aged 18+.' },
+    { title: 'FINRA Foundation — National Financial Capability Study 2024', dom: 'finrafoundation.org', quote: '57% report negative financial stress; a theoretical problem pool of 120–140M.' },
+    { title: 'Noom / Duolingo — reported free-to-paid conversion benchmarks', dom: 'investor filings', quote: 'Adjacent behavioural-change categories convert 6–10% of the interested pool to paid.' },
+    { title: 'RevenueCat — State of Subscription Apps 2024', dom: 'revenuecat.com', quote: 'A $331M Year-5 SOM implies capturing 17–33% of the corrected SAM.' },
+    { title: 'MoneyGym conversion funnel + financial model (05-*)', dom: 'Ventrify data room', quote: '4M paying subs needs 70–130M US installs at the deck’s own 15% trial / 20% trial-to-paid.' },
+    { title: 'Carta — State of Private Markets, Q3 2025', dom: 'carta.com', quote: 'Seed-stage valuation and round-size benchmarks.' },
+  ];
+  const SECTIONS = [
+    { id: 'overview', label: 'Overview' },
+    { id: 'claim', label: "The deck's claim" },
+    { id: 'tam', label: 'TAM — rebuilt' },
+    { id: 'som', label: 'SOM & distribution' },
+    { id: 'flags', label: 'Red flags' },
+    { id: 'support', label: 'What it supports' },
+    { id: 'sources', label: 'Sources' },
+  ];
+  const cite = n => `<span class="cite" data-cite="${n}">${n}</span>`;
+
+  const article = `<article class="article">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      ${DS.statusPill({ kind: 'err', label: 'TAM overstated 44–73×', icon: 'warning' })}
+    </div>
+    <div class="art-meta" style="margin-top:12px"><span class="material-symbols-rounded" style="font-size:18px">schedule</span> Generated just now<span>·</span>8 sources<span>·</span>~3,100 words<span>·</span>by <b style="color:var(--md-sys-color-on-surface)">market-analyst</b> agent</div>
+    <div class="art-body">
+      <h2 id="overview">Overview</h2>
+      <p class="lead">MoneyGym's category is genuinely large and investable — but the deck's headline TAM is a category error, and correcting it changes the investment story.</p>
+      <p>The pitch (v0.1a, slide 4) claims <b>TAM $110B · SAM $13B · SOM $315–331M</b> (4M subscribers at $99 ARPU by Year 5).${cite(1)} Rebuilt from first principles for a $99/year coaching subscription, the honest numbers are roughly an order of magnitude smaller — still large enough to back, but nowhere near what's presented.</p>
+
+      <h2 id="claim">The deck's claim, and how it was derived</h2>
+      <p>The $110B is bootstrapped from 2022 Forbes/CNBC estimates of consumer spending on fintech — payments, lending, investing, insurance distribution — none of which a coaching subscription can capture.${cite(1)}${cite(2)} It is broadly consistent with Statista/BCG totals for <em>all</em> US fintech revenue. That is a category error: counting the whole industry as the addressable pool for one $99 product.</p>
+      <table class="dtbl"><thead><tr><th>Level</th><th>Deck</th><th>Rebuilt</th><th>Overstatement</th></tr></thead><tbody>
+        <tr><td>TAM</td><td>$110B</td><td class="good">$1.5–2.5B</td><td class="bad">44–73×</td></tr>
+        <tr><td>SAM</td><td>$13B</td><td class="good">$1.0–2.0B</td><td class="bad">~7–13×</td></tr>
+        <tr><td>SOM (Yr 5)</td><td>$315–331M</td><td class="good">$100–200M</td><td class="bad">~1.7–3×</td></tr>
+      </tbody></table>
+
+      <h2 id="tam">TAM — rebuilt bottom-up</h2>
+      <p>The true TAM is the maximum annual subscription revenue if every US adult who would plausibly pay for behavioural-change financial coaching subscribed at $99/year — excluding payments, brokerage, lending spread and banking fee income.</p>
+      <ul>
+        <li><span class="material-symbols-rounded">check_circle</span><div><b>Baseline.</b> US Census (Jul 2024): ~267M adults 18+.${cite(3)}</div></li>
+        <li><span class="material-symbols-rounded">check_circle</span><div><b>Financially stressed &amp; open to paid help.</b> FINRA 2024 + NFCC: 57% report negative financial stress; a theoretical problem pool of 120–140M.${cite(4)}</div></li>
+        <li><span class="material-symbols-rounded">check_circle</span><div><b>Paid-conversion precedent.</b> Noom and Duolingo convert 6–10% of the interested pool to paid — landing TAM at <b>$1.5–2.5B</b>.${cite(5)}</div></li>
+      </ul>
+      ${DS.keyFigures([
+        { v: '$1.5–2.5B', l: 'TAM · behavioural-coaching subscription' },
+        { v: '$1.0–2.0B', l: 'SAM · 100M pool × 10–15% × $99' },
+        { v: '$100–200M', l: 'SOM · 1–2M subs, Yr-5 base case' },
+      ])}
+
+      <h2 id="som">SOM &amp; the distribution check</h2>
+      <p>The deck's 4M-subscriber SOM ($331M) implies capturing <b>17–33% of the corrected SAM</b> — category dominance, not the "conservative ~2.5% penetration" it claims.${cite(6)} The reachability check is where it breaks: 4M paying subs at the deck's own 15% trial and 20% trial-to-paid requires <b>70–130M US installs</b> — 3–6% of <em>all</em> US finance-app installs, for five straight years — on an unproven 0.4–0.6 viral coefficient.${cite(7)}</p>
+
+      <h2 id="flags">Red flags</h2>
+      <div class="callout err" style="margin-bottom:14px;"><span class="material-symbols-rounded">error</span><div><b>Category-error TAM.</b> The $110B counts all US fintech revenue; the honest, first-principles pool for a $99 coaching subscription is 44–73× smaller.${cite(1)}</div></div>
+      <div class="callout" style="background:var(--warning-container);color:var(--on-warning-container)"><span class="material-symbols-rounded">help</span><div><b>"Conservative" SOM isn't.</b> A $331M Year-5 SOM is 17–33% of the corrected SAM — an aggressive dominance assumption dressed as a floor.${cite(6)}</div></div>
+
+      <h2 id="support">What the numbers actually support</h2>
+      <p>At corrected scale MoneyGym is still a backable market: a $1.5–2.5B TAM comfortably supports a venture-scale outcome, and the behavioural-subscription model is proven next door. The question isn't "is the market big enough" — it's whether MoneyGym can win a credible slice against an entrenched, profitable Cleo, which is where the moat and distribution diligence take over.</p>
+
+      <h2 id="sources">Sources</h2>
+      ${DS.sourceList(SOURCES)}
+    </div>
+  </article>`;
+
+  const rail = `<aside class="reading-rail">
+    <div class="m3-card" style="padding:16px;">
+      <div class="overline" style="margin-bottom:8px;">On this page</div>
+      ${DS.tocRail(SECTIONS)}
+    </div>
+    <div class="m3-card" style="padding:16px;">
+      <div class="overline" style="margin-bottom:10px;">Feeds into the verdict</div>
+      <div class="body-m" style="line-height:1.5;">Scores <b>Market opportunity 3/5</b> — large but overstated. Feeds the <b>distribution</b> kill-risk and the <b>reprice</b> blocker.</div>
+      <button class="m3-btn text trail" style="margin-top:8px" onclick="location.href='assess.html#research'"><span class="material-symbols-rounded">arrow_forward</span>Back to verdict</button>
+    </div>
+  </aside>`;
+
+  document.getElementById('app').outerHTML = DS.pageShell({
+    active: 'portfolio',
+    aux: {}, auxMode: 'push', rail: acts.rail, railOverflow: acts.overflow,
+    masthead: DS.masthead({
+      breadcrumb: { label: 'MoneyGym', href: 'assess.html#research' },
+      crumbTail: 'Research',
+      headline: 'Market sizing',
+      status: { kind: 'info', label: 'L3 · Deep research' },
+      subheading: 'Bottom-up TAM rebuild — the $110B claim is a 44–73× category error.',
+      actions: acts.primary ? [acts.primary] : []
+    }),
+    body: `<div class="research-layout">${article}${rail}</div>`
+  });
+  DS.initShell();
+
+  // citation [n] → aux source peek (real content, never placeholder)
+  document.querySelectorAll('[data-cite]').forEach(c => c.addEventListener('click', () => {
+    const s = SOURCES[+c.dataset.cite - 1]; if (!s) return;
+    window.openAux({
+      mode: 'push', title: `Source ${c.dataset.cite}`, subtitle: 'Citation',
+      body: `<div class="title-m" style="margin-bottom:6px">${s.title}</div><div class="body-s variant" style="margin-bottom:14px">${s.dom}</div><p class="body-m" style="font-style:italic">“${s.quote}”</p>`,
+      footer: `<button class="m3-btn outlined" onclick="closeAux()">Close</button>`
+    });
+  }));
+
+  // scroll-spy: highlight the in-view section in the TOC (initShell doesn't cover this)
+  const links = [...document.querySelectorAll('.toc a')];
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { const id = '#' + e.target.id; links.forEach(a => a.classList.toggle('on', a.getAttribute('href') === id)); } });
+  }, { root: document.querySelector('.shell-main'), rootMargin: '-96px 0px -70% 0px' });
+  document.querySelectorAll('.art-body h2[id]').forEach(h => io.observe(h));
+</script>
+</body>
+</html>

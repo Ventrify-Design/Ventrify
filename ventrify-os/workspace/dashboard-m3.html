@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Portfolio · new UI preview — Ventrify OS</title>
+<meta name="description" content="Preview of the Material-3 operator portfolio, rendered from the live workspace data.">
+<script>try{if(localStorage.getItem("ventrify-theme")==="light")document.documentElement.classList.add("light")}catch(e){}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../shared/m3/theme.css">
+<link rel="stylesheet" href="../shared/m3/ds.css">
+<link rel="stylesheet" href="../shared/m3/transitions.css">
+<link rel="stylesheet" href="../shared/m3/workspace-chrome.css">
+</head>
+<body>
+<div id="app"></div>
+<script src="sample-data.js"></script>
+<script src="agents.js"></script>
+<script type="module" src="app.js"></script>
+<script type="module">
+  // Stage 2 M3 migration — flagged, side-by-side preview of the operator PORTFOLIO on live
+  // workspace data. Same reads as dashboard.html (no pipeline change), rendered in the M3 shell.
+  // dashboard.html is untouched; revert = delete this file.
+  import * as DS from '../shared/m3/ds.js';
+  import { adaptProgram } from '../shared/m3/workspace-adapter.js';
+  import { portfolioGrid, workspaceEmpty, planGateBanner } from '../shared/m3/workspace-cards.js';
+  import { wsNavConfig, wsBrandConfig, wsAccountConfig, mountOrgSwitcherM3 } from './workspace-m3.js';
+
+  await window.WORKSPACE_READY;
+  const W = window.WORKSPACE;
+  const A = window.WORKSPACE_AGENTS;
+  const { org, helpers } = W;
+  // ?demo=empty previews the first-run empty state on a populated workspace (inert by default).
+  const _p = new URLSearchParams(location.search);
+  const programs = _p.get('demo') === 'empty' ? [] : W.programs;
+
+  // ---- plan gating (mirrors dashboard.html) ----
+  const Plan = window.VentrifyPlan;
+  const plan = W.plan;
+  const ALLOWED_TYPES = Plan ? Plan.allowedTypes(plan) : ['engagement'];
+  const ASSESS_ONLY = ALLOWED_TYPES.length === 1 && ALLOWED_TYPES[0] === 'assessment';
+  const NEW_LABEL = ASSESS_ONLY ? 'New assessment' : 'New engagement';
+  const canCreateAny = Plan ? ALLOWED_TYPES.some(t => Plan.canCreate(plan, programs, t).allowed) : true;
+
+  // ---- aggregates (mirrors dashboard.html) ----
+  const useLive = (W.demoMode || 'off') === 'off';
+  const totalPrograms = programs.length;
+  const inFlight = programs.filter(p => p.phase < 5 && p.phase > 0).length;
+  const cardsAwaiting = programs.reduce((acc, p) => acc + ((p.cards && p.cards.awaitingFounder) || 0), 0);
+  const portfolioCompleteness = A ? A.computePortfolioCompleteness(programs) : { pct: 0, items: 0, of: 0 };
+  const ctx = { helpers, A, useLive, currentOperatorId: W.currentOperatorId };
+
+  // ---- shared chrome ----
+  const chrome = { nav: wsNavConfig(), brand: wsBrandConfig(), account: wsAccountConfig() };
+  const newAction = { variant: 'filled', icon: 'add', label: NEW_LABEL, onclick: "location.href='new-engagement.html'" };
+  // reversible escape: fall back to the classic portfolio (sticky per browser via the workspace.m3 flag)
+  const classicAction = { variant: 'text', icon: 'swap_horiz', label: 'Classic view', onclick: "try{localStorage.setItem('workspace.m3','off')}catch(e){}location.href='dashboard.html'" };
+
+  function mount(masthead, body) {
+    document.getElementById('app').outerHTML = DS.pageShell({ active: 'portfolio', ...chrome, masthead, body });
+    DS.initShell();
+    mountOrgSwitcherM3();
+  }
+
+  // ---- empty state ----
+  if (totalPrograms === 0) {
+    mount(
+      DS.masthead({ eyebrow: 'Portfolio', headline: `Welcome to ${org && org.name ? org.name : 'your workspace'}`, subheading: ASSESS_ONLY ? 'No assessments yet — run your first one.' : 'No engagements yet — create your first one.', actions: [...(canCreateAny ? [newAction] : []), classicAction] }),
+      `<div class="brief">${workspaceEmpty({ assessOnly: ASSESS_ONLY, orgName: (org && org.name) || 'your Workspace', canCreate: canCreateAny })}</div>`
+    );
+    throw new Error('halt-render');
+  }
+
+  // ---- populated: stats + filter machine + grid (filter logic copied VERBATIM from dashboard.html) ----
+  const hasAssessments = programs.some(p => p.engagementType === 'assessment');
+  function recBucket(p) {
+    if (p.engagementType !== 'assessment') return null;
+    const r = String((p.assessment && p.assessment.recommendation) || '').toLowerCase();
+    if (!r) return null;
+    if (r.startsWith('invest') || r.includes('back')) return 'invest';
+    if (r.startsWith('pass') || r.includes('decline')) return 'pass';
+    return 'consider';
+  }
+  let view = { health: 'all', rec: 'all', sort: 'recent', q: '' };
+  try { const s = JSON.parse(localStorage.getItem('workspace.dashView') || 'null'); if (s) view = { ...view, health: s.health || 'all', rec: s.rec || 'all', sort: s.sort || 'recent' }; } catch (e) {}
+
+  const pill = (label, dim, key, active) => `<button class="m3-chip${active === key ? ' active' : ''}" data-${dim}="${key}">${label}</button>`;
+  function filterBarHTML() {
+    const healthPills = [['all', 'All'], ['on-track', 'On track'], ['attention', 'Needs attention'], ['stuck', 'Stuck'], ['mine', 'Assigned to me']].map(([k, l]) => pill(l, 'health', k, view.health)).join('');
+    const recPills = [['all', 'All'], ['invest', 'Invest'], ['consider', 'Consider'], ['pass', 'Pass']].map(([k, l]) => pill(l, 'rec', k, view.rec)).join('');
+    const sortSel = hasAssessments ? `<select id="dash-sort" class="ws-sort" aria-label="Sort">
+        <option value="recent">Recently active</option>
+        <option value="scoreDesc">Score: high → low</option>
+        <option value="scoreAsc">Score: low → high</option>
+      </select>` : '';
+    const search = `<label class="m3-search" style="max-width:280px"><span class="material-symbols-rounded">search</span><input type="search" id="dash-search" placeholder="Search ${ASSESS_ONLY ? 'ventures' : 'ventures or founders'}…"></label>`;
+    const subRow = (!ASSESS_ONLY && hasAssessments) ? `<div class="ws-filter-sub"><span class="ws-filter-sublabel">Recommendation</span>${recPills}</div>` : '';
+    return `<div class="ws-filterbar">${ASSESS_ONLY ? recPills : healthPills}<div class="ws-filter-spacer"></div>${sortSel}${search}</div>${subRow}`;
+  }
+  function applyView() {
+    let list = programs.map((p, i) => ({ p, i }));
+    if (view.health !== 'all') list = list.filter(({ p }) => view.health === 'mine' ? p.assignedOperator === W.currentOperatorId : p.health === view.health);
+    if (view.rec !== 'all') list = list.filter(({ p }) => recBucket(p) === view.rec);
+    const q = view.q.trim().toLowerCase();
+    if (q) list = list.filter(({ p }) => [p.name, p.founderName, p.industry, p.stage].filter(Boolean).some(s => String(s).toLowerCase().includes(q)));
+    const score = p => (p.investability && p.investability.pct != null) ? p.investability.pct : null;
+    if (view.sort === 'scoreDesc') list.sort((a, b) => ((score(b.p) ?? -1) - (score(a.p) ?? -1)) || (a.i - b.i));
+    else if (view.sort === 'scoreAsc') list.sort((a, b) => ((score(a.p) ?? 1e9) - (score(b.p) ?? 1e9)) || (a.i - b.i));
+    else list.sort((a, b) => a.i - b.i);
+    return list.map(({ p }) => p);
+  }
+  function renderGrid() {
+    const host = document.getElementById('ws-grid-host');
+    if (!host) return;
+    host.innerHTML = portfolioGrid(applyView().map(p => adaptProgram(p, ctx)), `No matching ${ASSESS_ONLY ? 'assessments' : 'engagements'}. Adjust the filters.`);
+    try { localStorage.setItem('workspace.dashView', JSON.stringify({ health: view.health, rec: view.rec, sort: view.sort })); } catch (e) {}
+  }
+
+  const stats = [
+    { n: String(totalPrograms), l: 'Active programs' },
+    { n: String(inFlight), l: 'In flight · Phase 1–4' },
+    { n: String(cardsAwaiting), l: 'Cards awaiting founder' },
+    { n: portfolioCompleteness.pct + '%', l: 'Portfolio completeness', sub: `${portfolioCompleteness.items || 0}/${portfolioCompleteness.of || 0} expected outputs` },
+  ];
+  const body = `<div class="brief">
+    ${canCreateAny ? '' : planGateBanner(NEW_LABEL)}
+    <div class="ws-stats">${stats.map(DS.statCard).join('')}</div>
+    ${filterBarHTML()}
+    <div id="ws-grid-host"></div>
+  </div>`;
+
+  mount(
+    DS.masthead({ eyebrow: 'Portfolio', headline: `All engagements · ${totalPrograms} active`, subheading: 'Every venture on your workspace — open one for the full hub view and timeline.', actions: [...(canCreateAny ? [newAction] : []), classicAction] }),
+    body
+  );
+  renderGrid();
+
+  // wire the filter controls (delegated, mirrors dashboard.html)
+  document.addEventListener('click', (e) => {
+    const hp = e.target.closest('[data-health]');
+    const rp = e.target.closest('[data-rec]');
+    if (hp) { view.health = hp.dataset.health; document.querySelectorAll('[data-health]').forEach(b => b.classList.toggle('active', b === hp)); renderGrid(); }
+    else if (rp) { view.rec = rp.dataset.rec; document.querySelectorAll('[data-rec]').forEach(b => b.classList.toggle('active', b === rp)); renderGrid(); }
+  });
+  const sortEl = document.getElementById('dash-sort');
+  if (sortEl) { sortEl.value = view.sort; sortEl.addEventListener('change', () => { view.sort = sortEl.value; renderGrid(); }); }
+  const searchEl = document.getElementById('dash-search');
+  if (searchEl) searchEl.addEventListener('input', () => { view.q = searchEl.value; renderGrid(); });
+</script>
+</body>
+</html>

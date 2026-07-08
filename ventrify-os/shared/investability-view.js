@@ -47,7 +47,9 @@ const CAT_DESC = {
   execution: 'What has the team actually shipped, and at what cadence?',
   evidence: 'Does every material claim survive an LP fact-check?',
 };
-const SUB_Q = {
+// Exported so other surfaces (e.g. the M3 design-system assess page's category
+// drill-down) reuse the SAME canonical questions — one source, no drift.
+export const SUB_Q = {
   market_size: 'Is TAM >$1B with realistic penetration potential?',
   market_growth: 'Is the market growing strongly (CAGR >20% = 1pt, 10–20% = 0.5pt)?',
   why_now: 'Is there a credible Why Now — a named regulatory, technological, or cultural inflection?',

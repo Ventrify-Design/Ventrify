@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Action queue · new UI preview — Ventrify OS</title>
+<meta name="description" content="Preview of the Material-3 operator action queue, rendered from the live workspace data.">
+<script>try{if(localStorage.getItem("ventrify-theme")==="light")document.documentElement.classList.add("light")}catch(e){}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../shared/m3/theme.css">
+<link rel="stylesheet" href="../shared/m3/ds.css">
+<link rel="stylesheet" href="../shared/m3/transitions.css">
+<link rel="stylesheet" href="../shared/m3/workspace-chrome.css">
+</head>
+<body>
+<div id="app"></div>
+<script src="sample-data.js"></script>
+<script src="agents.js"></script>
+<script type="module" src="app.js"></script>
+<script type="module">
+  // Stage 2 M3 migration — flagged preview of the operator ACTION QUEUE on live data.
+  // Same reads as queue.html (no pipeline change). queue.html is untouched; revert = delete this file.
+  import * as DS from '../shared/m3/ds.js';
+  import { adaptQueue, groupQueue } from '../shared/m3/workspace-adapter.js';
+  import { queueBoardWS } from '../shared/m3/workspace-cards.js';
+  import { wsNavConfig, wsBrandConfig, wsAccountConfig, mountOrgSwitcherM3 } from './workspace-m3.js';
+
+  await window.WORKSPACE_READY;
+  const W = window.WORKSPACE;
+  const A = window.WORKSPACE_AGENTS;
+  const { actions, helpers, programs } = W;
+
+  // demo↔live split (mirrors queue.html)
+  const useLive = (W.demoMode || 'off') === 'off';
+  const liveQueue = A ? A.computeActionQueue(programs, W.currentOperatorId) : [];
+  const displayActions = useLive ? liveQueue : actions;
+
+  const grouped = groupQueue(adaptQueue(displayActions, { helpers }));
+  const body = `<div class="brief">${queueBoardWS(grouped)}</div>`;
+  // reversible escape: fall back to the classic queue (sticky per browser via the workspace.m3 flag)
+  const classicAction = { variant: 'text', icon: 'swap_horiz', label: 'Classic view', onclick: "try{localStorage.setItem('workspace.m3','off')}catch(e){}location.href='queue.html'" };
+
+  document.getElementById('app').outerHTML = DS.pageShell({
+    active: 'queue', nav: wsNavConfig(), brand: wsBrandConfig(), account: wsAccountConfig(),
+    masthead: DS.masthead({
+      eyebrow: 'Action queue', headline: 'Your work this week',
+      subheading: 'Everything the platform needs from you, across every engagement — prioritised by urgency.' + (useLive ? '' : ' · sample data'),
+      actions: [classicAction],
+    }),
+    body,
+  });
+  DS.initShell();
+  mountOrgSwitcherM3();
+</script>
+</body>
+</html>

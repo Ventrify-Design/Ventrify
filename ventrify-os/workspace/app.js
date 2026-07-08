@@ -240,6 +240,9 @@ function shellTopbarConfig() {
   return {
     lockup: [osItem, partnerItem],
     utility: [
+      // shown only to an operator who opted out of the M3 UI — a one-click way back to the new default
+      ...((() => { try { return localStorage.getItem('workspace.m3') === 'off'; } catch (e) { return false; } })()
+        ? [{ label: '&#10024; New UI', href: 'dashboard-m3.html', onclick: "try{localStorage.setItem('workspace.m3','on')}catch(e){}" }] : []),
       { label: 'Sign out', href: '#', onclick: 'event.preventDefault(); window.__signOut();' },
     ],
     avatar: { initials: opAvatar ? opAvatar.avatar : '?', bg: opAvatar ? opAvatar.avatarColor : '#999', title: opAvatar ? opAvatar.name : 'No operator' },
@@ -352,6 +355,12 @@ function queueBadgeCount() {
 // Left side-nav config for the shared shell — Operate + Manage sections.
 function shellNavConfig() {
   const W = window.WORKSPACE;
+  // Material-3 portfolio + queue are the DEFAULT. Set localStorage 'workspace.m3' = 'off' to fall
+  // back to the classic pages (the M3 pages' "Classic view" link does exactly that). One-line global
+  // revert: change the default below to === 'on'.
+  let m3; try { m3 = localStorage.getItem('workspace.m3') !== 'off'; } catch (e) { m3 = true; }
+  const portfolioHref = m3 ? 'dashboard-m3.html' : 'dashboard.html';
+  const queueHref = m3 ? 'queue-m3.html' : 'queue.html';
   const showAdmin = W.isSuperAdmin || (W.org && W.helpers.currentOperator() && String(W.org.ownerEmail || '').toLowerCase() === String((W.helpers.currentOperator() || {}).email || '').toLowerCase());
   const manage = [
     { href: 'team.html', icon: '&#x25CB;', label: 'Team', badge: W.operators.length, active: active === 'team' },
@@ -360,8 +369,8 @@ function shellNavConfig() {
   if (showAdmin) manage.push({ href: 'admin.html', icon: '&#x2699;', label: W.isSuperAdmin ? 'Platform admin' : 'Operators', active: active === 'admin' });
   return [
     { section: 'Operate', links: [
-      { href: 'dashboard.html', icon: '&#x25A4;', label: 'Portfolio', badge: W.programs.length, active: active === 'dashboard' },
-      { href: 'queue.html', icon: '&#x25C6;', label: 'Action queue', badge: queueBadgeCount(), active: active === 'queue' },
+      { href: portfolioHref, icon: '&#x25A4;', label: 'Portfolio', badge: W.programs.length, active: active === 'dashboard' },
+      { href: queueHref, icon: '&#x25C6;', label: 'Action queue', badge: queueBadgeCount(), active: active === 'queue' },
     ]},
     { section: 'Manage', links: manage },
   ];
@@ -427,8 +436,9 @@ window.renderShell = function(mainContentHTML) {
 window.__switchOrg = function(orgId) {
   try { localStorage.setItem('workspace.activeOrg', orgId); } catch (e) {}
   // Land on the new org's portfolio (the current page may reference an
-  // engagement that doesn't exist in the org being switched to).
-  window.location.href = 'dashboard.html';
+  // engagement that doesn't exist in the org being switched to) — honouring the M3 default.
+  let m3; try { m3 = localStorage.getItem('workspace.m3') !== 'off'; } catch (e) { m3 = true; }
+  window.location.href = m3 ? 'dashboard-m3.html' : 'dashboard.html';
 };
 function mountOrgSwitcher() {
   const W = window.WORKSPACE;
