@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Team — Ventrify OS</title>
+<script>try{if(localStorage.getItem("ventrify-theme")==="light")document.documentElement.classList.add("light")}catch(e){}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../shared/m3/theme.css">
+<link rel="stylesheet" href="../shared/m3/ds.css">
+<link rel="stylesheet" href="../shared/m3/transitions.css">
+<link rel="stylesheet" href="../shared/m3/workspace-chrome.css">
+</head>
+<body>
+<div id="app"></div>
+<script src="sample-data.js"></script>
+<script src="agents.js"></script>
+<script type="module" src="app.js"></script>
+<script type="module">
+  import * as DS from '../shared/m3/ds.js';
+  import { wsNavConfig, wsBrandConfig, wsAccountConfig, mountOrgSwitcherM3 } from './workspace-m3.js';
+
+  await window.WORKSPACE_READY;
+  const W = window.WORKSPACE;
+  const { operators, org, helpers } = W;
+  const isLive = W.mode === 'live';
+  const orgName = (org && org.name) || 'your workspace';
+  const me = (helpers.currentOperator && helpers.currentOperator()) || {};
+  const ownerEmail = String((org && org.ownerEmail) || '').toLowerCase();
+  const canManage = !isLive || !!W.isSuperAdmin || (ownerEmail !== '' && String(me.email || '').toLowerCase() === ownerEmail);
+  const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const ERR = { already_operator: 'That email is already an operator.', last_operator: 'You can’t remove the last operator.', bad_email: 'Enter a valid email address.', forbidden: 'Only the workspace owner can manage the team.', not_an_operator: 'That person isn’t an operator.', cannot_remove_owner: 'The workspace owner can’t be removed.' };
+
+  // ---- /api/manage-operator (VERBATIM from team.html) ----
+  async function apiOperator(action, email) {
+    const { auth } = await import('../firebase/firebase.js');
+    const idToken = auth.currentUser ? await auth.currentUser.getIdToken() : null;
+    const resp = await fetch('/api/manage-operator', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken, orgId: org.id, action, email }) });
+    const d = await resp.json().catch(() => ({}));
+    if (!resp.ok) throw new Error(ERR[d.error] || d.error || ('HTTP ' + resp.status));
+    return d;
+  }
+  window.__inviteOperator = () => {
+    window.openAux({
+      mode: 'push', title: 'Invite operator', subtitle: 'Grant Workspace access',
+      body: `<div style="padding:4px 2px">
+        <div class="body-m" style="color:var(--md-sys-color-on-surface-variant);margin-bottom:12px">They get a one-click sign-in link to this same workspace.</div>
+        <label class="m3-search" style="max-width:none"><span class="material-symbols-rounded">mail</span><input id="inv-email" type="email" autocomplete="off" placeholder="teammate@email.com"></label>
+        <div style="display:flex;justify-content:flex-end;margin-top:14px"><button class="m3-btn filled" onclick="window.__addOperator()">Send invite</button></div>
+      </div>`
+    });
+    setTimeout(() => { const i = document.getElementById('inv-email'); if (i) { i.focus(); i.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); window.__addOperator(); } }); } }, 60);
+  };
+  window.__addOperator = async () => {
+    const email = ((document.getElementById('inv-email') || {}).value || '').trim().toLowerCase();
+    if (!email) { window.__toast('Enter an email address.', true); return; }
+    try {
+      if (isLive) { const d = await apiOperator('add', email); window.__toast(d.emailSent ? `Invite sent to ${email}` : `${email} added.`); }
+      else { const list = W.storage.readJSON('workspace.operators', []); list.push({ id: email, email, name: email.split('@')[0], role: 'Operator', avatar: email.slice(0, 2).toUpperCase(), avatarColor: (org && org.primaryColor) || '#0036FF' }); W.storage.writeJSON('workspace.operators', list); window.__toast(`${email} added`); }
+      setTimeout(() => location.reload(), 900);
+    } catch (e) { window.__toast(String(e.message || e), true); }
+  };
+  window.__removeOperator = async (email) => {
+    if (!(await window.__confirm({ title: 'Remove operator?', message: `${email} loses Workspace access immediately.`, confirmLabel: 'Remove', danger: true }))) return;
+    try {
+      if (isLive) await apiOperator('remove', email);
+      else W.storage.writeJSON('workspace.operators', W.storage.readJSON('workspace.operators', []).filter(o => (o.email || '').toLowerCase() !== email));
+      window.__toast(`${email} removed`); setTimeout(() => location.reload(), 700);
+    } catch (e) { window.__toast(String(e.message || e), true); }
+  };
+
+  function operatorCard(op) {
+    const assigned = helpers.programsForOperator(op.id);
+    const names = assigned.map(p => esc(p.name)).join(' · ') || '<span class="variant">No engagements assigned</span>';
+    const canRemove = canManage && isLive && !op.isCurrentUser && String(op.email || '').toLowerCase() !== ownerEmail && operators.length > 1;
+    return `<div class="m3-card pc">
+      <div class="pc-head">
+        <div class="pc-identity"><div class="pc-avatar" style="background:${esc(op.avatarColor) || 'var(--md-sys-color-primary)'}">${esc(op.avatar)}</div>
+          <div><div class="pc-name">${esc(op.name)}${op.isCurrentUser ? ' <span class="status ok" style="height:20px;padding:0 8px;font-size:11px">You</span>' : ''}</div><div class="pc-founder">${esc(op.email)}</div></div></div>
+        ${canRemove ? `<button class="m3-btn text" style="color:var(--md-sys-color-error)" onclick="window.__removeOperator('${esc(op.email)}')">Remove</button>` : ''}
+      </div>
+      <div class="pc-meta"><span class="status info">${esc(op.role)}</span></div>
+      <div><div class="overline" style="margin-bottom:6px">Assigned · ${assigned.length}</div><div class="body-m variant">${names}</div></div>
+    </div>`;
+  }
+
+  const body = `<div class="brief">
+    <div class="ws-stats" style="grid-template-columns:repeat(1,minmax(0,320px))">${DS.statCard({ n: String(operators.length), l: 'Active operators', sub: 'with workspace access' })}</div>
+    ${operators.length ? `<div class="ws-grid">${operators.map(operatorCard).join('')}</div>` : `<div class="m3-card" style="text-align:center;padding:40px;color:var(--md-sys-color-on-surface-variant)">No operators yet.</div>`}
+  </div>`;
+
+  document.getElementById('app').outerHTML = DS.pageShell({
+    active: 'team', nav: wsNavConfig(), brand: wsBrandConfig(), account: wsAccountConfig(),
+    masthead: DS.masthead({ eyebrow: 'Team', headline: `Operators on ${orgName}`, subheading: 'Everyone with Workspace access for your organisation.', actions: canManage ? [{ variant: 'filled', icon: 'person_add', label: 'Invite operator', onclick: 'window.__inviteOperator()' }] : [] }),
+    body
+  });
+  DS.initShell();
+  mountOrgSwitcherM3();
+</script>
+</body>
+</html>
