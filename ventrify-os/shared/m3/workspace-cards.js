@@ -113,7 +113,7 @@ export function workspaceEmpty({ assessOnly = false, orgName = 'your Workspace',
     ? `<button class="m3-btn filled" style="margin-top:20px" onclick="window.openNewAssessment&&window.openNewAssessment()"><span class="material-symbols-rounded">add</span>${assessOnly ? 'Start your first assessment' : 'Start your first engagement'}</button>`
     : `<div style="margin-top:20px">${planGateBanner(assessOnly ? 'New assessment' : 'New engagement')}</div>`;
   const explorers = [
-    ['tune', 'Refine your brand', 'Edit your organisation name, primary colour, or logo before your first engagement goes live.', 'settings.html', 'Open settings →', ''],
+    ['tune', 'Refine your brand', 'Edit your organisation name, primary colour, or logo before your first engagement goes live.', 'settings-m3.html', 'Open settings →', ''],
     ['dashboard', 'How the Workspace works', 'Three surfaces, three audiences. The marketing tour explains how operators, founders, and investors connect.', '../the-workspace.html', 'Read the tour →', ' target="_blank"'],
     ['groups', 'Meet the 47 agents', 'The fleet behind every engagement — substrate keystones, Build-First 8, and the full domain breakdown.', '../agents.html', 'Explore the fleet →', ' target="_blank"'],
   ].map(([ic, t, p, href, cta2, attr]) => `<a class="m3-card ws-explorer" href="${href}"${attr}>
@@ -161,7 +161,7 @@ export function queueBoardWS(grouped) {
       <div class="overline" style="color:var(--md-sys-color-primary);margin-bottom:8px">Queue clear</div>
       <div class="title-l" style="margin-bottom:6px">Nothing for you to do.</div>
       <p class="body-m" style="color:var(--md-sys-color-on-surface-variant);max-width:480px;margin:0 auto 20px">New work surfaces here when an agent completes a run, a founder responds, or a gate is ready to sign.</p>
-      <a href="new-engagement.html" class="m3-btn filled"><span class="material-symbols-rounded">add</span>New engagement</a>
+      <button class="m3-btn filled" onclick="window.openNewAssessment&&window.openNewAssessment()"><span class="material-symbols-rounded">add</span>New assessment</button>
     </div>`;
   }
   return Q_SECTIONS.map(([key, label, sub]) => {

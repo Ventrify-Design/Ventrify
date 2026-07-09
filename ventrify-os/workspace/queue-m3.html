@@ -41,7 +41,7 @@
   const body = `<div class="brief">${queueBoardWS(grouped)}</div>`;
 
   document.getElementById('app').outerHTML = DS.pageShell({
-    active: 'queue', nav: wsNavConfig(), brand: wsBrandConfig(), account: wsAccountConfig(),
+    active: 'queue', aux: {}, nav: wsNavConfig(), brand: wsBrandConfig(), account: wsAccountConfig(),
     masthead: DS.masthead({
       eyebrow: 'Action queue', headline: 'Your work this week',
       subheading: 'Everything the platform needs from you, across every engagement — prioritised by urgency.' + (useLive ? '' : ' · sample data'),
