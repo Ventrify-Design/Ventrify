@@ -99,12 +99,13 @@
   function capUsage(type, label) { if (!Plan.orgCan(plan, type)) return ''; const used = Plan.usageFor(programs, type); const lim = Plan.limitFor(plan, type); return row(label, lim == null ? `${used} · unlimited` : `${used} of ${lim}`); }
   const orgCard = `<div class="m3-card" style="padding:22px"><div class="title-l" style="margin-bottom:10px">Organisation</div>${row('Slug', esc(org.slug || '—'))}${row('Created', org.createdAt ? new Date(org.createdAt).toLocaleDateString() : '—')}${row('Custom domain', '<span class="variant">Enterprise only</span>')}</div>`;
   const planCard = `<div class="m3-card" style="padding:22px"><div class="title-l" style="margin-bottom:10px">Plan &amp; usage</div>${row('Plan', Plan.planLabel(plan))}${capUsage('assessment', 'Assessments')}${capUsage('build', 'MVP builds')}${row('Operators', String(operators.length))}<div style="margin-top:14px;display:flex;gap:8px"><a class="m3-btn text" href="../pricing.html" target="_blank">View pricing</a><button class="m3-btn filled" onclick="window.__requestUpgrade&&window.__requestUpgrade()">Request upgrade</button></div></div>`;
+  const appearanceCard = `<div class="m3-card" style="padding:22px"><div class="title-l" style="margin-bottom:6px">Appearance</div><div class="body-m variant" style="margin-bottom:14px">Choose how the Workspace looks on this device. Applies instantly.</div>${DS.themeToggle()}</div>`;
   const dangerCard = `<div class="m3-card" style="padding:22px;border:1px solid color-mix(in srgb, var(--md-sys-color-error) 30%, transparent)"><div class="title-l" style="margin-bottom:6px">Danger zone</div><div class="body-m variant" style="margin-bottom:14px">Wipes every locally-stored value and returns to first-run setup.</div><button class="m3-btn outlined" style="color:var(--md-sys-color-error);border-color:color-mix(in srgb, var(--md-sys-color-error) 40%, transparent)" onclick="window.__resetWorkspace&&window.__resetWorkspace()">Clear all workspace data</button></div>`;
 
   document.getElementById('app').outerHTML = DS.pageShell({
     active: 'settings', nav: wsNavConfig(), brand: wsBrandConfig(), account: wsAccountConfig(),
     masthead: DS.masthead({ eyebrow: 'Settings', headline: 'Workspace settings', subheading: `Organisation, brand kit and licence for ${esc(org.name)}.` }),
-    body: `<div class="brief"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px">${brandCard}${orgCard}${planCard}${dangerCard}</div></div>`
+    body: `<div class="brief"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px">${brandCard}${orgCard}${planCard}${appearanceCard}${dangerCard}</div></div>`
   });
   DS.initShell(); mountOrgSwitcherM3();
 

@@ -89,7 +89,6 @@ export function drawer(active = 'portfolio', opts = {}) {
     <button class="nav-toggle" onclick="__navButton&&__navButton()" aria-label="Collapse navigation"><span class="material-symbols-rounded">menu</span></button>
     ${brandHtml}
     ${out}
-    ${themeToggle()}
     ${footHtml}
   </nav>`;
 }
@@ -166,7 +165,6 @@ export function drawerPlaceholder() {
     ${item(true)}${item()}${item()}
     <div class="drawer-section overline">Section</div>
     ${item()}${item()}
-    ${themeToggle()}
     <div class="drawer-foot"><span class="av">A</span><span class="nm">Account name<small>Role</small></span></div>
   </nav>`;
 }
