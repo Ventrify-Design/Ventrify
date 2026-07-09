@@ -42,7 +42,7 @@
   ];
 
   const FILTERS = ['All', 'On track', 'Needs attention', 'Stuck', 'Assessment'];
-  const emptyFilter = `<div class="m3-card" style="text-align:center;padding:48px 24px"><div class="title-l">No engagements match</div><div class="body-m variant" style="margin-top:6px">Try a different filter or clear the search.</div></div>`;
+  const emptyFilter = DS.noteCard({ center: true, text: `<div class="title-l">No engagements match</div><div class="body-m variant" style="margin-top:6px">Try a different filter or clear the search.</div>` });
   // bridge nudge for a deck-less row — the run is gated on a pitch deck (dispatch-run.js)
   const idle = rows.find(r => r.runState && r.runState.status === 'idle');
   const bridge = idle ? `<div class="callout warn" style="margin-bottom:16px"><span class="material-symbols-rounded">upload_file</span><div><b>Upload the deck to run ${idle.name}.</b> The assessment can’t start until a pitch deck is added.</div></div>` : '';

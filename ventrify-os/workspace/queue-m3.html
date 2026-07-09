@@ -23,8 +23,7 @@
   // Stage 2 M3 migration — flagged preview of the operator ACTION QUEUE on live data.
   // Same reads as queue.html (no pipeline change). queue.html is untouched; revert = delete this file.
   import * as DS from '../shared/m3/ds.js';
-  import { adaptQueue, groupQueue } from '../shared/m3/workspace-adapter.js';
-  import { queueBoardWS } from '../shared/m3/workspace-cards.js';
+  import { adaptQueue } from '../shared/m3/workspace-adapter.js';
   import { wsNavConfig, wsBrandConfig, wsAccountConfig, mountOrgSwitcherM3 } from './workspace-m3.js';
 
   await window.WORKSPACE_READY;
@@ -37,8 +36,13 @@
   const liveQueue = A ? A.computeActionQueue(programs, W.currentOperatorId) : [];
   const displayActions = useLive ? liveQueue : actions;
 
-  const grouped = groupQueue(adaptQueue(displayActions, { helpers }));
-  const body = `<div class="brief">${queueBoardWS(grouped)}</div>`;
+  // adaptQueue already tags each item high|med|low — DS.queueBoard groups by urgency itself (single source).
+  const items = adaptQueue(displayActions, { helpers });
+  const body = `<div class="brief">${DS.queueBoard(items, {
+    emptyTitle: 'Nothing for you to do.',
+    emptyText: 'New work surfaces here when an agent completes a run, a founder responds, or a gate is ready to sign.',
+    emptyCta: { icon: 'add', label: 'New assessment', onclick: 'window.openNewAssessment&&window.openNewAssessment()' },
+  })}</div>`;
 
   document.getElementById('app').outerHTML = DS.pageShell({
     active: 'queue', aux: {}, nav: wsNavConfig(), brand: wsBrandConfig(), account: wsAccountConfig(),

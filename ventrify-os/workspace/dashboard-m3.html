@@ -84,18 +84,19 @@
   let view = { health: 'all', rec: 'all', sort: 'recent', q: '' };
   try { const s = JSON.parse(localStorage.getItem('workspace.dashView') || 'null'); if (s) view = { ...view, health: s.health || 'all', rec: s.rec || 'all', sort: s.sort || 'recent' }; } catch (e) {}
 
-  const pill = (label, dim, key, active) => `<button class="m3-chip${active === key ? ' active' : ''}" data-${dim}="${key}">${label}</button>`;
+  // the filter bar is now single-sourced through DS.filterBar (config form); the delegated click handler
+  // below reads data-health / data-rec and toggles .selected — same state machine, DS-owned markup.
+  const healthChips = [['all', 'All'], ['on-track', 'On track'], ['attention', 'Needs attention'], ['stuck', 'Stuck'], ['mine', 'Assigned to me']].map(([k, l]) => ({ k, l }));
+  const recChips = [['all', 'All'], ['invest', 'Invest'], ['consider', 'Consider'], ['pass', 'Pass']].map(([k, l]) => ({ k, l }));
   function filterBarHTML() {
-    const healthPills = [['all', 'All'], ['on-track', 'On track'], ['attention', 'Needs attention'], ['stuck', 'Stuck'], ['mine', 'Assigned to me']].map(([k, l]) => pill(l, 'health', k, view.health)).join('');
-    const recPills = [['all', 'All'], ['invest', 'Invest'], ['consider', 'Consider'], ['pass', 'Pass']].map(([k, l]) => pill(l, 'rec', k, view.rec)).join('');
-    const sortSel = hasAssessments ? `<select id="dash-sort" class="ws-sort" aria-label="Sort">
-        <option value="recent">Recently active</option>
-        <option value="scoreDesc">Score: high → low</option>
-        <option value="scoreAsc">Score: low → high</option>
-      </select>` : '';
-    const search = `<label class="m3-search" style="max-width:280px"><span class="material-symbols-rounded">search</span><input type="search" id="dash-search" placeholder="Search ${ASSESS_ONLY ? 'ventures' : 'ventures or founders'}…"></label>`;
-    const subRow = (!ASSESS_ONLY && hasAssessments) ? `<div class="ws-filter-sub"><span class="ws-filter-sublabel">Recommendation</span>${recPills}</div>` : '';
-    return `<div class="ws-filterbar">${ASSESS_ONLY ? recPills : healthPills}<div class="ws-filter-spacer"></div>${sortSel}${search}</div>${subRow}`;
+    const groups = ASSESS_ONLY
+      ? [{ dim: 'rec', chips: recChips, active: view.rec }]
+      : [{ dim: 'health', chips: healthChips, active: view.health }, ...(hasAssessments ? [{ dim: 'rec', label: 'Recommendation', chips: recChips, active: view.rec }] : [])];
+    return DS.filterBar({
+      groups,
+      sort: hasAssessments ? { id: 'dash-sort', value: view.sort, options: [{ v: 'recent', l: 'Recently active' }, { v: 'scoreDesc', l: 'Score: high → low' }, { v: 'scoreAsc', l: 'Score: low → high' }] } : undefined,
+      search: { id: 'dash-search', placeholder: `Search ${ASSESS_ONLY ? 'ventures' : 'ventures or founders'}…` },
+    });
   }
   function applyView() {
     let list = programs.map((p, i) => ({ p, i }));
@@ -115,7 +116,7 @@
     const list = applyView();
     host.innerHTML = list.length
       ? DS.engagementTable(list.map(p => adaptEngagementRow(p, ctx)))   // the DS portfolio component (single source)
-      : `<div class="m3-card" style="text-align:center;padding:40px 24px;color:var(--md-sys-color-on-surface-variant)">No matching ${ASSESS_ONLY ? 'assessments' : 'engagements'}. Adjust the filters.</div>`;
+      : DS.noteCard({ center: true, text: `No matching ${ASSESS_ONLY ? 'assessments' : 'engagements'}. Adjust the filters.` });
     try { localStorage.setItem('workspace.dashView', JSON.stringify({ health: view.health, rec: view.rec, sort: view.sort })); } catch (e) {}
   }
 
@@ -146,8 +147,8 @@
   document.addEventListener('click', (e) => {
     const hp = e.target.closest('[data-health]');
     const rp = e.target.closest('[data-rec]');
-    if (hp) { view.health = hp.dataset.health; document.querySelectorAll('[data-health]').forEach(b => b.classList.toggle('active', b === hp)); renderGrid(); }
-    else if (rp) { view.rec = rp.dataset.rec; document.querySelectorAll('[data-rec]').forEach(b => b.classList.toggle('active', b === rp)); renderGrid(); }
+    if (hp) { view.health = hp.dataset.health; document.querySelectorAll('[data-health]').forEach(b => b.classList.toggle('selected', b === hp)); renderGrid(); }
+    else if (rp) { view.rec = rp.dataset.rec; document.querySelectorAll('[data-rec]').forEach(b => b.classList.toggle('selected', b === rp)); renderGrid(); }
   });
   const sortEl = document.getElementById('dash-sort');
   if (sortEl) { sortEl.value = view.sort; sortEl.addEventListener('change', () => { view.sort = sortEl.value; renderGrid(); }); }

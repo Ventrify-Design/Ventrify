@@ -73,13 +73,8 @@
 @media (max-width: 900px) { .ws-stats { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 520px) { .ws-stats { grid-template-columns: 1fr; } }
 
-/* ---------- filter bar ---------- */
-.ws-filterbar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
-.ws-filterbar .m3-chip.active { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); border-color: transparent; }
-.ws-filter-spacer { flex: 1 1 40px; }
-.ws-sort { height: 38px; padding: 0 32px 0 14px; border-radius: 10px; border: 1px solid var(--md-sys-color-outline-variant); background: var(--md-sys-color-surface-container-lowest); color: var(--md-sys-color-on-surface); font: inherit; font-size: 13.5px; cursor: pointer; appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--md-sys-color-on-surface-variant) 50%), linear-gradient(135deg, var(--md-sys-color-on-surface-variant) 50%, transparent 50%); background-position: calc(100% - 16px) center, calc(100% - 11px) center; background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; }
-.ws-filter-sub { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: -8px 0 20px; }
-.ws-filter-sublabel { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; font-weight: 600; color: var(--md-sys-color-on-surface-variant); margin-right: 4px; }
+/* filter-bar styles (.ws-filterbar / .ws-sort / .ws-filter-sub …) moved to ds.css — the toolbar is now
+   rendered by DS.filterBar (config form) and its selected chip uses the canonical .m3-chip.selected. */
 
 /* ---------- empty state ---------- */
 .ws-empty-hero { display: grid; grid-template-columns: 1.1fr 1fr; gap: 28px; padding: 32px; margin-bottom: 24px; }

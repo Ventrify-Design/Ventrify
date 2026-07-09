@@ -183,10 +183,3 @@ export function adaptQueue(actions = [], ctx = {}) {
     };
   });
 }
-
-// grouped { high, med, low } for queueBoardWS
-export function groupQueue(items = []) {
-  const g = { high: [], med: [], low: [] };
-  items.forEach(it => { (g[it.urgency] || g.low).push(it); });
-  return g;
-}

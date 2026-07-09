@@ -440,7 +440,7 @@ const SAMPLE_ACTIONS = [
     title: 'Gate 2.5 ready to close on Quill',
     detail: 'All 7 Financials Hub cards resolved · L3 rebuilt · founder has signed off. Confirm scope and unlock Phase 3.',
     age: '1 hour ago',
-    cta: 'Review &amp; close gate'
+    cta: 'Review & close gate'
   },
   {
     id: 'act-02',

@@ -20,6 +20,7 @@
 <script type="module" src="app.js"></script>
 <script type="module">
   import * as DS from '../shared/m3/ds.js';
+  import { personCard } from '../shared/m3/workspace-cards.js';
   import { wsNavConfig, wsBrandConfig, wsAccountConfig, mountOrgSwitcherM3 } from './workspace-m3.js';
 
   await window.WORKSPACE_READY;
@@ -75,15 +76,13 @@
     const assigned = helpers.programsForOperator(op.id);
     const names = assigned.map(p => esc(p.name)).join(' · ') || '<span class="variant">No engagements assigned</span>';
     const canRemove = canManage && isLive && !op.isCurrentUser && String(op.email || '').toLowerCase() !== ownerEmail && operators.length > 1;
-    return `<div class="m3-card pc">
-      <div class="pc-head">
-        <div class="pc-identity"><div class="pc-avatar" style="background:${esc(op.avatarColor) || 'var(--md-sys-color-primary)'}">${esc(op.avatar)}</div>
-          <div><div class="pc-name">${esc(op.name)}${op.isCurrentUser ? ' ' + DS.statusPill({ kind: 'ok', label: 'You' }) : ''}</div><div class="pc-founder">${esc(op.email)}</div></div></div>
-        ${canRemove ? `<button class="m3-btn text" style="color:var(--md-sys-color-error)" onclick="window.__removeOperator('${esc(op.email)}')">Remove</button>` : ''}
-      </div>
-      <div class="pc-meta">${DS.statusPill({ kind: 'info', label: op.role })}</div>
-      <div><div class="overline" style="margin-bottom:6px">Assigned · ${assigned.length}</div><div class="body-m variant">${names}</div></div>
-    </div>`;
+    return personCard({
+      avatar: op.avatar, avatarColor: op.avatarColor, name: op.name, sub: op.email,
+      badge: op.isCurrentUser ? DS.statusPill({ kind: 'ok', label: 'You' }) : '',
+      pill: DS.statusPill({ kind: 'info', label: op.role }),
+      action: canRemove ? `<button class="m3-btn text" style="color:var(--md-sys-color-error)" onclick="window.__removeOperator('${esc(op.email)}')">Remove</button>` : '',
+      aside: `<div><div class="overline" style="margin-bottom:6px">Assigned · ${assigned.length}</div><div class="body-m variant">${names}</div></div>`,
+    });
   }
 
   const body = `<div class="brief">

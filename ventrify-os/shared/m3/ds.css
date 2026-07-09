@@ -301,3 +301,18 @@ md-outlined-text-field { --md-outlined-text-field-container-shape: 999px; --md-o
 .field-sel { appearance: none; -webkit-appearance: none; padding-right: 42px; cursor: pointer; }
 .field-chev { position: absolute; right: 13px; top: 50%; transform: translateY(-50%); pointer-events: none; font-size: 22px; color: var(--md-sys-color-on-surface-variant); }
 .field-hint { display: block; font-size: 11.5px; color: var(--md-sys-color-on-surface-variant); margin-top: 6px; }
+
+/* ---- filter bar (DS.filterBar config form) — primary chip row + optional labelled sub-rows + sort + search.
+   Moved here from workspace-chrome.css so DS.filterBar is fully self-styled on any page that loads ds.css. ---- */
+.ws-filterbar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+.ws-filter-spacer { flex: 1 1 40px; }
+.ws-sort { height: 38px; padding: 0 32px 0 14px; border-radius: 10px; border: 1px solid var(--md-sys-color-outline-variant); background: var(--md-sys-color-surface-container-lowest); color: var(--md-sys-color-on-surface); font: inherit; font-size: 13.5px; cursor: pointer; appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--md-sys-color-on-surface-variant) 50%), linear-gradient(135deg, var(--md-sys-color-on-surface-variant) 50%, transparent 50%); background-position: calc(100% - 16px) center, calc(100% - 11px) center; background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; }
+.ws-filter-sub { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: -8px 0 20px; }
+.ws-filter-sublabel { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; font-weight: 600; color: var(--md-sys-color-on-surface-variant); margin-right: 4px; }
+
+/* ---- note card (DS.noteCard) — inline icon + text + action(s), or a centered empty-state message ---- */
+.note-card { display: flex; align-items: center; gap: 14px; margin-top: 16px; padding: 18px; }
+.note-ic { color: var(--md-sys-color-primary); flex: none; }
+.note-bd { flex: 1; min-width: 0; }
+.note-act { display: flex; gap: 8px; flex: none; }
+.note-card.center { display: block; text-align: center; padding: 40px 24px; margin-top: 0; color: var(--md-sys-color-on-surface-variant); }

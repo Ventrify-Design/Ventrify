@@ -9,9 +9,9 @@
 
 import { statusPill, _esc as esc } from './ds.js';   // ONE real HTML escaper — founder-controlled names/theses/queue text hit innerHTML sinks
 
-// NOTE: the rich portfolio card path (engagementCard/assessmentCard/portfolioCard/portfolioGrid) was
-// removed — the live portfolio now renders through DS.engagementTable (single source). This file keeps
-// only the surfaces with no DS equivalent yet: the plan-gate banner, the empty state, and the queue board.
+// NOTE: the portfolio cards and the queue board were removed — the live portfolio renders through
+// DS.engagementTable and the queue through DS.queueBoard (single source). This file now keeps only the
+// two surfaces with no DS equivalent yet: the plan-gate banner and the first-run empty state.
 
 // ---- plan-gate banner (limit reached) ----
 export function planGateBanner(label = 'New engagement') {
@@ -19,6 +19,22 @@ export function planGateBanner(label = 'New engagement') {
     <span class="material-symbols-rounded">lock</span>
     <div style="flex:1"><b>Plan limit reached.</b> <span style="color:var(--md-sys-color-on-surface-variant)">You've used your ${esc(label).toLowerCase().replace(/^new /, '')} allowance for this plan.</span></div>
     <button class="ws-plangate-cta" onclick="window.__requestUpgrade&&window.__requestUpgrade()">Request an upgrade →</button>
+  </div>`;
+}
+
+// ---- person / operator card ----
+// personCard — the single source for the team roster card: avatar + name (+ optional badge) + sub, an
+// optional meta pill row, a trailing action, and an optional aside. badge/pill/action/aside are trusted
+// HTML (statusPill/button markup); name/sub/avatar are escaped here.
+export function personCard({ avatar, avatarColor, name, sub, badge = '', pill = '', action = '', aside = '' } = {}) {
+  return `<div class="m3-card pc">
+    <div class="pc-head">
+      <div class="pc-identity"><div class="pc-avatar" style="background:${esc(avatarColor) || 'var(--md-sys-color-primary)'}">${esc(avatar)}</div>
+        <div><div class="pc-name">${esc(name)}${badge ? ' ' + badge : ''}</div><div class="pc-founder">${esc(sub)}</div></div></div>
+      ${action}
+    </div>
+    ${pill ? `<div class="pc-meta">${pill}</div>` : ''}
+    ${aside}
   </div>`;
 }
 
@@ -66,47 +82,5 @@ export function workspaceEmpty({ assessOnly = false, orgName = 'your Workspace',
     <div class="ws-explorers">${explorers}</div>`;
 }
 
-// ---- queue ----
-function queueItemWS(it) {
-  return `<div class="m3-card ws-qitem ${it.urgency === 'high' ? 'high' : ''}">
-    <span class="ws-qicon"><span class="material-symbols-rounded">${esc(it.icon)}</span></span>
-    <div>
-      <div class="ws-qtitle">${esc(it.title)}</div>
-      <div class="ws-qdetail">${esc(it.detail)}</div>
-      <div class="ws-qmeta"><span class="k">${esc(it.typeLabel)}</span>${it.programName ? `<span>·</span><span>${esc(it.programName)}</span>` : ''}<span>·</span><span>${esc(it.age)}</span></div>
-    </div>
-    <div class="ws-qitem-cta">
-      <a class="m3-btn filled" href="${esc(it.href)}">${esc(it.cta)}</a>
-      <a class="ws-qopen" href="${esc(it.href2)}">Open engagement →</a>
-    </div>
-  </div>`;
-}
-
-const Q_SECTIONS = [
-  ['high', 'High urgency', 'Blocking a gate or a founder. Address first.'],
-  ['med', 'Medium urgency', 'Should be cleared this week.'],
-  ['low', 'Low urgency', 'Awareness items. No immediate action required.'],
-];
-
-export function queueBoardWS(grouped) {
-  const total = (grouped.high.length + grouped.med.length + grouped.low.length);
-  if (!total) {
-    return `<div class="m3-card" style="text-align:center;padding:48px 24px">
-      <div class="overline" style="color:var(--md-sys-color-primary);margin-bottom:8px">Queue clear</div>
-      <div class="title-l" style="margin-bottom:6px">Nothing for you to do.</div>
-      <p class="body-m" style="color:var(--md-sys-color-on-surface-variant);max-width:480px;margin:0 auto 20px">New work surfaces here when an agent completes a run, a founder responds, or a gate is ready to sign.</p>
-      <button class="m3-btn filled" onclick="window.openNewAssessment&&window.openNewAssessment()"><span class="material-symbols-rounded">add</span>New assessment</button>
-    </div>`;
-  }
-  return Q_SECTIONS.map(([key, label, sub]) => {
-    const items = grouped[key];
-    if (!items.length) return '';
-    return `<div class="ws-qsection">
-      <div class="ws-qsection-head">
-        <div class="ws-qsection-title">${label} <span class="n">· ${items.length}</span></div>
-        <div class="ws-qsection-sub">${sub}</div>
-      </div>
-      <div class="ws-qlist">${items.map(queueItemWS).join('')}</div>
-    </div>`;
-  }).join('');
-}
+// NOTE: the queue board (queueBoardWS/queueItemWS/Q_SECTIONS) was removed — the live queue now renders
+// through DS.queueBoard (queueItem extended to carry cta/href/href2 + typeLabel·programName·age meta).

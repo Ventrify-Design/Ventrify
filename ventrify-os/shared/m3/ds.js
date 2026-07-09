@@ -1249,9 +1249,23 @@ export function tocRail(sections = [], active = 0) {
   return `<nav class="toc">${sections.map((s, i) => `<a class="${i === active ? 'on' : ''}" href="#${esc(s.id)}">${esc(s.label)}</a>`).join('')}</nav>`;
 }
 
-// ---- portfolio toolbar (filter chips + search) ----
-export function filterBar(chips = [], placeholder = 'Search') {
-  return `<div class="filters">${chips.map((c, i) => `<button class="m3-chip${i === 0 ? ' selected' : ''}">${esc(c)}</button>`).join('')}<label class="m3-search"><span class="material-symbols-rounded">search</span><input type="search" class="search" placeholder="${esc(placeholder)}"></label></div>`;
+// ---- portfolio / queue toolbar (filter chips + optional sub-row + sort + search) ----
+// Two forms, both single-sourced here:
+//  • legacy:  filterBar(['All','On track',…], placeholder)  → a simple chip row + search (reference pages)
+//  • config:  filterBar({ groups:[{dim,label?,chips:[{k,l}],active}], sort?:{id,options:[{v,l}],value}, search?:{id,placeholder} })
+//     groups[0] is the primary chip row; groups[1..] render as labelled sub-rows. Each chip carries
+//     data-<dim>="<k>" and .selected on the active key, so a page's delegated handlers stay unchanged.
+export function filterBar(config = [], placeholder = 'Search') {
+  const searchEl = (s = {}) => `<label class="m3-search"${s.max ? ` style="max-width:${s.max}"` : ''}><span class="material-symbols-rounded">search</span><input type="search"${s.id ? ` id="${esc(s.id)}"` : ' class="search"'} placeholder="${esc(s.placeholder || placeholder)}"></label>`;
+  if (Array.isArray(config)) {
+    return `<div class="filters">${config.map((c, i) => `<button class="m3-chip${i === 0 ? ' selected' : ''}">${esc(c)}</button>`).join('')}${searchEl({ placeholder })}</div>`;
+  }
+  const { groups = [], sort, search } = config;
+  const chipRow = g => (g.chips || []).map(c => `<button class="m3-chip${c.k === g.active ? ' selected' : ''}" data-${esc(g.dim)}="${esc(c.k)}">${esc(c.l)}</button>`).join('');
+  const sortSel = sort ? `<select${sort.id ? ` id="${esc(sort.id)}"` : ''} class="ws-sort" aria-label="Sort">${(sort.options || []).map(o => `<option value="${esc(o.v)}"${o.v === sort.value ? ' selected' : ''}>${esc(o.l)}</option>`).join('')}</select>` : '';
+  const bar = `<div class="ws-filterbar">${groups[0] ? chipRow(groups[0]) : ''}<div class="ws-filter-spacer"></div>${sortSel}${search ? searchEl({ ...search, max: search.max || '280px' }) : ''}</div>`;
+  const subs = groups.slice(1).map(g => `<div class="ws-filter-sub">${g.label ? `<span class="ws-filter-sublabel">${esc(g.label)}</span>` : ''}${chipRow(g)}</div>`).join('');
+  return bar + subs;
 }
 
 // ---- portfolio table ----
@@ -1472,18 +1486,40 @@ export function runBanner(runState = {}) {
   </div>`;
 }
 
+// noteCard — MOLECULE. A compact inline card: leading icon + text + optional trailing action(s). The single
+// source for the workspace's status/prompt notes ("deck ready — run it", "needs attention"). `center:true`
+// renders a centered empty-state message (icon/actions omitted) — the shared "no matching results" surface.
+// `text`/`actions` are trusted HTML (developer strings), so they are not escaped here.
+export function noteCard(opts = {}) {
+  const { icon, iconColor, text = '', actions = '', center = false } = opts;
+  if (center) return `<div class="m3-card note-card center">${text}</div>`;
+  return `<div class="m3-card note-card">${icon ? `<span class="note-ic material-symbols-rounded"${iconColor ? ` style="color:${iconColor}"` : ''}>${esc(icon)}</span>` : ''}<div class="note-bd body-m">${text}</div>${actions ? `<div class="note-act">${actions}</div>` : ''}</div>`;
+}
+
 // ---- queue ----
 const UMETA = { high: { title: 'High urgency', ct: '3', sub: 'Blocking a gate or a founder. Address first.' }, med: { title: 'Medium urgency', ct: '2', sub: 'Should be cleared this week.' }, low: { title: 'Low urgency', ct: '2', sub: 'Awareness items. No immediate action required.' } };
+// queueItem — accepts BOTH the reference shape {icon,title,desc,meta,action,action2} and the live workspace
+// shape {icon,title,detail,typeLabel,programName,age,cta,href,href2}. A primary/secondary render as links when
+// an href is given (live navigation), else buttons (reference placeholders). Meta is an explicit string or
+// composed from typeLabel · programName · age.
 export function queueItem(item) {
-  const btn = item.urgency === 'high' ? `<button class="m3-btn filled">${esc(item.action)}</button>` : `<button class="m3-btn outlined">${esc(item.action)}</button>`;
-  return `<div class="m3-card filled qitem ${item.urgency}"><div class="q-ic"><span class="material-symbols-rounded">${item.icon}</span></div>
-    <div class="q-body"><div class="title-m">${esc(item.title)}</div><div class="body-m variant">${esc(item.desc)}</div><div class="q-meta">${esc(item.meta)}</div></div>
-    <div class="q-act">${btn}<button class="m3-btn text">${esc(item.action2 || 'Open engagement')}</button></div></div>`;
+  const label = item.cta || item.action || 'Open';
+  const kind = item.urgency === 'high' ? 'filled' : 'outlined';
+  const primary = item.href ? `<a class="m3-btn ${kind}" href="${esc(item.href)}">${esc(label)}</a>` : `<button class="m3-btn ${kind}">${esc(label)}</button>`;
+  const secLabel = item.action2 || 'Open engagement';
+  const secondary = item.href2 ? `<a class="m3-btn text" href="${esc(item.href2)}">${esc(secLabel)}</a>` : `<button class="m3-btn text">${esc(secLabel)}</button>`;
+  const body = item.desc || item.detail || '';
+  const meta = item.meta != null ? esc(item.meta) : [item.typeLabel, item.programName, item.age].filter(Boolean).map(esc).join(' · ');
+  return `<div class="m3-card filled qitem ${item.urgency}"><div class="q-ic"><span class="material-symbols-rounded">${esc(item.icon)}</span></div>
+    <div class="q-body"><div class="title-m">${esc(item.title)}</div><div class="body-m variant">${esc(body)}</div><div class="q-meta">${meta}</div></div>
+    <div class="q-act">${primary}${secondary}</div></div>`;
 }
 export function queueGroupHead(urgency, items) { const m = UMETA[urgency]; const ct = items ? items.length : m.ct; return `<div class="group-head"><span class="title-l">${m.title}</span><span class="variant">· ${ct}</span></div><div class="group-sub">${m.sub}</div>`; }
-// queueBoard — the whole Action-queue body: urgency groups (counts derived from the data).
-export function queueBoard(items = []) {
-  const allClear = `<div class="m3-card" style="text-align:center;padding:40px"><div class="title-l">You're all caught up</div><div class="body-m variant" style="margin-top:6px">Nothing needs you right now.</div></div>`;
+// queueBoard — the whole Action-queue body: urgency groups (counts derived from the data). opts.emptyCta =
+// {label, icon, onclick} adds a call-to-action to the all-clear card; opts.emptyTitle/emptyText override its copy.
+export function queueBoard(items = [], opts = {}) {
+  const cta = opts.emptyCta ? `<div style="margin-top:20px"><button class="m3-btn filled" onclick="${opts.emptyCta.onclick || ''}">${opts.emptyCta.icon ? `<span class="material-symbols-rounded">${esc(opts.emptyCta.icon)}</span>` : ''}${esc(opts.emptyCta.label)}</button></div>` : '';
+  const allClear = `<div class="m3-card" style="text-align:center;padding:40px 24px"><div class="title-l">${esc(opts.emptyTitle || "You're all caught up")}</div><div class="body-m variant" style="margin-top:6px;max-width:480px;margin-left:auto;margin-right:auto">${esc(opts.emptyText || 'Nothing needs you right now.')}</div>${cta}</div>`;
   const groups = ['high', 'med', 'low'].map(u => {
     const g = items.filter(i => i.urgency === u);
     if (!g.length) return '';
