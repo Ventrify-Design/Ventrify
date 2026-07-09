@@ -7,7 +7,7 @@
 // NO app.js edits, no pipeline touch. Pure read + present.
 // ============================================================
 
-import { _esc as esc, formField } from '../shared/m3/ds.js';   // ONE real HTML escaper + the single-source form-field molecule
+import { _esc as esc, formField, STAGES } from '../shared/m3/ds.js';   // ONE real HTML escaper + the single-source form-field molecule + the shared stage list
 function initials(name) {
   return String(name || '').trim().split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || 'V';
 }
@@ -33,7 +33,7 @@ export function openNewAssessment() {
       ${formField({ label: 'Assessor', id: 'na-op', options: opList })}
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
         ${formField({ label: 'Website', id: 'na-site', optional: true, type: 'url', placeholder: 'acme.com' })}
-        ${formField({ label: 'Stage', id: 'na-stage', optional: true, placeholder: 'Seed' })}
+        ${formField({ label: 'Stage', id: 'na-stage', placeholder: 'Select stage', options: STAGES })}
       </div>
       <div style="display:flex;justify-content:flex-end;margin-top:4px"><button class="m3-btn filled" onclick="window.__wsCreateAssessment()"><span class="material-symbols-rounded">add</span>Create assessment</button></div>
       ${canBuild ? `<div class="body-s" style="color:var(--md-sys-color-on-surface-variant);margin-top:2px;border-top:1px solid var(--md-sys-color-outline-variant);padding-top:12px">Need a full build engagement (founder + hubs)? <a href="new-engagement.html" style="color:var(--md-sys-color-primary)">Use the full wizard →</a></div>` : ''}
@@ -49,6 +49,7 @@ window.__wsCreateAssessment = async () => {
   const operator = (document.getElementById('na-op') || {}).value || '';
   const website = ((document.getElementById('na-site') || {}).value || '').trim();
   const stage = ((document.getElementById('na-stage') || {}).value || '').trim();
+  if (!stage) { window.__toast('Select the venture stage.', true); return; }
   const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').slice(0, 40) || 'venture';
   const programId = 'prg-' + slug + '-' + Math.random().toString(36).slice(2, 6);
   const newProgram = {

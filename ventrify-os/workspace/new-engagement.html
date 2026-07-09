@@ -16,6 +16,7 @@
   <script src="agents.js"></script>
   <script type="module" src="app.js"></script>
   <script type="module">
+    import { STAGES } from '../shared/m3/ds.js';   // single-source the funding-stage options
     await window.WORKSPACE_READY;
     const W = window.WORKSPACE;
     const { operators, helpers, org } = W;
@@ -148,7 +149,7 @@
             <div class="wiz-field">
               <label class="wiz-label">Stage <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
               <select class="wiz-select" id="f-stage">
-                ${['', 'Pre-seed', 'Seed', 'Series A', 'Series B+', 'Growth'].map(s => `<option value="${s}" ${s === (state.basics.stage || '') ? 'selected' : ''}>${s || 'Select stage…'}</option>`).join('')}
+                ${['', ...STAGES].map(s => `<option value="${s}" ${s === (state.basics.stage || '') ? 'selected' : ''}>${s || 'Select stage…'}</option>`).join('')}
               </select>
             </div>` : ''}
             <div class="wiz-field">

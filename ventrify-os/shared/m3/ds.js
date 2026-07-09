@@ -1530,6 +1530,10 @@ export function deckDropzone(file, opts = {}) {
   </button>`;
 }
 
+// STAGES — the single source of truth for a venture's funding stage. Used by the assessment create panel
+// (mandatory dropdown), the DS assessment wizard, and the classic build wizard — so the options never drift.
+export const STAGES = ['Pre-seed', 'Seed', 'Series A', 'Series B', 'Series C', 'Growth'];
+
 // formField — MOLECULE. The reusable workspace form field — a label + an outlined control (input by default,
 // or a native <select> dropdown when `options` is passed). Plain HTML (NOT md-outlined-text-field, which mis-sizes
 // in a narrow side-sheet) → reliable at any width, themeable, and the single field pattern for forms across the
@@ -1556,7 +1560,7 @@ export function assessmentWizard(state = {}) {
       <div class="sec-head"><span class="eyebrow accent">Step 1 · Assessment basics</span><span class="t">Name the venture</span></div>
       <div class="wiz-fields">
         ${formField({ label: 'Venture name', value: nm, placeholder: 'e.g. MoneyGym', attr: ' data-field="name"' })}
-        <div class="wiz-two">${formField({ label: 'Website', optional: true, type: 'url', placeholder: 'https://…' })}${formField({ label: 'Stage', optional: true, placeholder: 'Select stage', options: ['Pre-seed', 'Seed', 'Series A', 'Series B', 'Series C', 'Growth'], value: state.stage || '' })}</div>
+        <div class="wiz-two">${formField({ label: 'Website', optional: true, type: 'url', placeholder: 'https://…' })}${formField({ label: 'Stage', optional: true, placeholder: 'Select stage', options: STAGES, value: state.stage || '' })}</div>
         ${formField({ label: 'Assigned assessor', options: ['Alex Rivera', 'Jordan Lee', 'Sam Okafor'], value: 'Alex Rivera' })}
       </div>
     </div>`;
