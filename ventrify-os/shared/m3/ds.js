@@ -478,28 +478,30 @@ export function profileLockup(opts = {}) {
 // scoreLockup's grow-up bar — reprice DOWN into a band. Fronts the Market tab. Explicit numeric opts only.
 export function valuationLockup(opts = {}) {
   const {
-    label = 'Valuation verdict', multiple = '1.0', multipleSuffix = '× median',
+    label = 'Valuation verdict', multiple = null, multipleSuffix = '× median',
     band = 'Fairly priced', tone = 'good', bandIcon,
-    asked = 0, defensibleLo = 0, defensibleHi = 0, scaleMax,
+    asked = 0, defensibleLo = null, defensibleHi = null, scaleMax,
     captionLo = 'Defensible', captionHi = 'Asked', askedNote = 'pre'
   } = opts;
   const icon = bandIcon || VAL_ICON[tone] || 'check_circle';
-  const max = scaleMax || (Math.max(asked, defensibleHi) * 1.15) || 1;
+  const lo = Number(defensibleLo) || 0, hi = Number(defensibleHi) || 0;
+  const hasBand = lo > 0 || hi > 0;   // a real reprice band was parsed — otherwise omit (don't render "$0–0M")
+  const max = scaleMax || (Math.max(asked, hi) * 1.15) || 1;
   const pc = v => Math.max(0, Math.min(100, v / max * 100));
-  const bandL = pc(defensibleLo), bandW = pc(defensibleHi) - pc(defensibleLo);
-  const overW = Math.max(0, pc(asked) - pc(defensibleHi));
+  const bandL = pc(lo), bandW = pc(hi) - pc(lo);
+  const overW = Math.max(0, pc(asked) - pc(hi));
   return `<div class="valuation-lockup">
     <span class="eyebrow accent">${esc(label)}</span>
-    <div class="lockup-num">${esc(String(multiple))}<small>${esc(multipleSuffix)}</small></div>
+    ${multiple != null ? `<div class="lockup-num">${esc(String(multiple))}<small>${esc(multipleSuffix)}</small></div>` : ''}
     ${band ? `<span class="lockup-band ${tone}"><span class="material-symbols-rounded">${icon}</span> ${esc(band)}</span>` : ''}
-    <div class="valuation-bar">
+    ${hasBand ? `<div class="valuation-bar">
       <div class="track">
         <span class="band" style="left:${bandL}%;width:${bandW}%"></span>
-        ${overW > 0 ? `<span class="over" style="left:${pc(defensibleHi)}%;width:${overW}%"></span>` : ''}
+        ${overW > 0 ? `<span class="over" style="left:${pc(hi)}%;width:${overW}%"></span>` : ''}
         <span class="tick" style="left:${pc(asked)}%"></span>
       </div>
-      <div class="lockup-cap"><span>${esc(captionLo)} <b>$${esc(String(defensibleLo))}–${esc(String(defensibleHi))}M</b></span><span class="over-lab">${esc(captionHi)} <b>$${esc(String(asked))}M</b>${askedNote ? ` ${esc(askedNote)}` : ''}</span></div>
-    </div>
+      <div class="lockup-cap"><span>${esc(captionLo)} <b>$${esc(String(lo))}–${esc(String(hi))}M</b></span><span class="over-lab">${esc(captionHi)} <b>$${esc(String(asked))}M</b>${askedNote ? ` ${esc(askedNote)}` : ''}</span></div>
+    </div>` : ''}
   </div>`;
 }
 
@@ -783,7 +785,9 @@ export function diligenceEditorial(a) {
       : nBlock > 0 ? `${blk} stand between this and a wire.`
         : `No blockers — ${total} check${total !== 1 ? 's' : ''} before the call.`;
   const headlineEm = total === 0 ? '' : blockersDone ? 'cleared to proceed' : nBlock > 0 ? blk : '';
-  const gateOpen = total === 0 || blockersDone;
+  // the wire gate is a BLOCKER gate: with no blockers (only key/standard checks to work in diligence) it is
+  // open — otherwise the "No blockers" hero would contradict a "Do not wire" chip.
+  const gateOpen = total === 0 || nBlock === 0 || blockersDone;
   const hero = sectionHero({
     left: statementLockup({
       eyebrow: 'Pre-wire diligence', eyebrowIcon: 'fact_check',
@@ -795,7 +799,7 @@ export function diligenceEditorial(a) {
     }),
     right: progressLockup({
       label: 'Pre-wire clearance', done: cleared, total,
-      status: total === 0 ? 'Nothing to clear' : blockersDone ? 'Cleared to proceed' : 'Do not wire',
+      status: total === 0 ? 'Nothing to clear' : nBlock === 0 ? 'No blockers — proceed' : blockersDone ? 'Cleared to proceed' : 'Do not wire',
       statusIcon: gateOpen ? 'lock_open' : 'lock',
       tone: gateOpen ? 'good' : 'bad',
       segments: items.map(d => ({ kind: d.kind, done: !!d.done })),
@@ -880,7 +884,7 @@ export function marketHero(a = {}) {
     eyebrow: h.eyebrow, eyebrowIcon: h.eyebrowIcon, headline: h.headline, headlineEm: h.headlineEm, facts: h.facts,
     right: valuationLockup({
       label: 'Valuation verdict', multiple: v.multiple, multipleSuffix: v.multipleSuffix,
-      band: v.verdict, tone: 'bad', asked: v.asked, defensibleLo: v.defensibleLo, defensibleHi: v.defensibleHi, scaleMax: v.scaleMax
+      band: v.verdict, tone: v.tone || 'mid', asked: v.asked, defensibleLo: v.defensibleLo, defensibleHi: v.defensibleHi, scaleMax: v.scaleMax
     }),
     thesis: h.thesis
   });
@@ -976,8 +980,11 @@ export function dealValuation(v, rounds = []) {
       tag: /truebill/i.test(c.name) ? 'the deck’s real comp' : /carta/i.test(c.name) ? '3.75× median' : ''
     };
   }).sort((a, b) => rank(a.stage) - rank(b.stage));
+  const vtone = v.tone || 'mid';
+  const eb = vtone === 'good' ? 'good' : vtone === 'bad' ? 'bad' : 'accent';
+  const vicon = vtone === 'bad' ? 'warning' : 'check_circle';
   return `<section class="sec">
-    <div class="sec-head" style="align-items:center"><span class="eyebrow bad">The reprice</span>${v.verdict ? `<span class="lockup-band bad" style="margin-top:0"><span class="material-symbols-rounded">warning</span> ${esc(v.verdict)}</span>` : ''}<span class="meta">3 methods → one band</span></div>
+    <div class="sec-head" style="align-items:center"><span class="eyebrow ${eb}">The reprice</span>${v.verdict ? `<span class="lockup-band ${vtone}" style="margin-top:0"><span class="material-symbols-rounded">${vicon}</span> ${esc(v.verdict)}</span>` : ''}<span class="meta">3 methods → one band</span></div>
     <p class="lead"><span class="drop">${esc(v.bodyDrop || 'Priced')}</span> ${esc(v.bodyLead || v.note)}</p>
     ${compScan(rows)}
   </section>`;
@@ -1088,15 +1095,9 @@ export const exitReturns = e => `<section class="m3-card"><div class="card-hd">$
 
 // teamMemo — the whole Team tab as one editorial .brief: hero → roster → gaps → exit.
 export function teamMemo(a) {
-  return `<div class="brief">
-    ${teamHero(a)}
-    <hr class="rule">
-    ${founderRoster(a.team, 'openPeek')}
-    <hr class="rule">
-    ${teamGaps(a.team)}
-    <hr class="rule">
-    ${exitLedger(a.exit)}
-  </div>`;
+  // filter/join like marketMemo/researchMemo — a self-omitting section (no gaps / no exit) never leaves a dangling rule
+  const secs = [teamHero(a), founderRoster(a.team, 'openPeek'), teamGaps(a.team), exitLedger(a.exit)].filter(Boolean);
+  return `<div class="brief">${secs.join('\n    <hr class="rule">\n    ')}</div>`;
 }
 
 export function diligenceChecklist(items) {
@@ -1195,6 +1196,41 @@ export function researchMemo(a, s) {
     ${secs.join('\n    <hr class="rule">\n    ')}
     <div class="see-research" style="padding-top:2px"><button class="m3-btn text" onclick="window.openSources&&window.openSources()"><span class="material-symbols-rounded">source</span>Source documents &amp; re-run — in Sources</button></div>
   </div>`;
+}
+
+// mdInline / mdToHtml — a SMALL markdown→HTML renderer for the deep-research drill (openPeek). Not a full
+// CommonMark impl — just what the runner emits: headings, **bold**/*italic*/`code`, [links], - / 1. lists,
+// > quotes, and paragraphs. Everything is escaped first, so it is safe on founder/agent-authored bodies.
+function mdInline(s) {
+  return esc(s)
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/(^|[^*])\*([^*]+)\*/g, '$1<em>$2</em>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+}
+export function mdToHtml(md) {
+  const lines = String(md || '').replace(/\r/g, '').split('\n');
+  const out = []; let list = null, para = [];
+  const flushPara = () => { if (para.length) { out.push(`<p class="body-m">${mdInline(para.join(' '))}</p>`); para = []; } };
+  const flushList = () => { if (list) { out.push(`<${list.tag} class="md-list">${list.items.map(i => `<li>${mdInline(i)}</li>`).join('')}</${list.tag}>`); list = null; } };
+  for (const raw of lines) {
+    const t = raw.trim(); let m;
+    if (!t) { flushPara(); flushList(); continue; }
+    if ((m = t.match(/^(#{1,4})\s+(.*)$/))) { flushPara(); flushList(); out.push(`<div class="md-h md-h${Math.min(3, m[1].length)}">${mdInline(m[2])}</div>`); continue; }
+    if (/^>\s?/.test(t)) { flushPara(); flushList(); out.push(`<blockquote class="md-q">${mdInline(t.replace(/^>\s?/, ''))}</blockquote>`); continue; }
+    if ((m = t.match(/^[-*+]\s+(.*)$/))) { flushPara(); if (!list || list.tag !== 'ul') { flushList(); list = { tag: 'ul', items: [] }; } list.items.push(m[1]); continue; }
+    if ((m = t.match(/^\d+[.)]\s+(.*)$/))) { flushPara(); if (!list || list.tag !== 'ol') { flushList(); list = { tag: 'ol', items: [] }; } list.items.push(m[1]); continue; }
+    if (/^\|/.test(t) || /^[-:|\s]{3,}$/.test(t)) { continue; }   // skip pipe tables / separators (rare)
+    flushList(); para.push(t);
+  }
+  flushPara(); flushList();
+  return out.join('\n');
+}
+// researchPeek — ORGANISM. The deep-research drill panel for openAux(): the full workstream doc rendered
+// from its markdown body (falls back to the one-line finding on a forming run that has no body yet).
+export function researchPeek(r = {}) {
+  const body = r && r.body ? mdToHtml(r.body) : `<p class="body-m">${esc((r && r.note) || 'This workstream has not been generated yet.')}</p>`;
+  return { title: (r && r.title) || 'Deep research', subtitle: `${esc((r && r.tag) || 'L3')} · Deep research`, body: `<div class="md-doc">${body}</div>` };
 }
 
 // ---- Sources rail panel — the engagement's inputs + lifecycle + re-run (opened from the utility rail) ----
@@ -1616,6 +1652,11 @@ export function initShell() {
   document.querySelectorAll('.m3-utilrail').forEach(rail => {
     const tools = [...rail.querySelectorAll('.urail-item')];
     tools.forEach(btn => btn.addEventListener('click', () => {
+      const tool = btn.dataset.tool || '';
+      // a page can bind a rail tool to a DIRECT handler via window.RAIL_ACTIONS[tool] — it owns the
+      // interaction (fires an action or opens its own aux panel), e.g. a download or a share flow.
+      const action = window.RAIL_ACTIONS && window.RAIL_ACTIONS[tool];
+      if (typeof action === 'function') { tools.forEach(b => b.classList.remove('on')); action(); return; }
       const wasOn = btn.classList.contains('on');
       tools.forEach(b => b.classList.remove('on'));
       if (wasOn) { window.closeAux(); return; }

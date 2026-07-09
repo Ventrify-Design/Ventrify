@@ -333,7 +333,7 @@ const SAMPLE_PROGRAMS = [
       }
     },
     investabilitySnapshot: {
-      composite: 18, maxPossible: 27, pct: 67, band: 'feedback', bandLabel: 'Promising — named gaps to close before partner meeting',
+      composite: 67, maxPossible: 100, pct: 67, band: 'feedback', bandLabel: 'Promising — named gaps to close before partner meeting',
       ratedCount: 27, pendingCount: 8,
       categories: [
         { key: 'market', label: 'Market Opportunity', sum: 4, max: 5, rated: 5, pending: 0, band: 'green', subs: [

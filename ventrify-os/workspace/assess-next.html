@@ -182,12 +182,13 @@
 
   // ── masthead actions (≤3, ≤1 filled) ──
   function mastheadActions(st) {
-    const A_MORE = { variant: 'text', icon: 'more_vert', label: 'Manage', onclick: 'window.__eaMore()' };
-    if (!st.hasDeck) return [{ variant: 'filled', icon: 'upload_file', label: 'Upload deck', onclick: "window.__eaUpload('pitch')" }, A_MORE];
-    if (st.active) return st.hasVerdict ? [{ variant: 'filled', icon: 'download', label: 'Deal memo', onclick: 'window.__eaDownload()' }, { variant: 'text', icon: 'share', label: 'Share', onclick: 'window.__eaShare()' }, A_MORE] : [A_MORE];
-    if (st.hasVerdict) return [{ variant: 'filled', icon: 'download', label: 'Deal memo', onclick: 'window.__eaDownload()' }, { variant: 'text', icon: 'share', label: 'Share', onclick: 'window.__eaShare()' }, A_MORE];
-    if (st.recoverable) return [{ variant: 'filled', icon: 'restore', label: 'Republish', onclick: 'window.__eaRepublish()' }, { variant: 'text', icon: 'restart_alt', label: 'Re-run', onclick: 'window.__eaRun()' }, A_MORE];
-    return [{ variant: 'filled', icon: 'play_arrow', label: 'Run assessment', onclick: 'window.__eaRun()' }, A_MORE];   // idle + deck
+    // Deal memo / Share / Manage now live in the utility rail (window.RAIL_ACTIONS). The masthead keeps
+    // ONLY the primary workflow CTA for the current state.
+    if (!st.hasDeck) return [{ variant: 'filled', icon: 'upload_file', label: 'Upload deck', onclick: "window.__eaUpload('pitch')" }];
+    if (st.active) return [];                                                     // assessing — controls live in the rail
+    if (st.hasVerdict) return [];                                                 // verdict ready — deal memo/share/manage are in the rail
+    if (st.recoverable) return [{ variant: 'filled', icon: 'restore', label: 'Republish', onclick: 'window.__eaRepublish()' }, { variant: 'text', icon: 'restart_alt', label: 'Re-run', onclick: 'window.__eaRun()' }];
+    return [{ variant: 'filled', icon: 'play_arrow', label: 'Run assessment', onclick: 'window.__eaRun()' }];   // idle + deck
   }
   function statusPill(st) {
     if (st.hasVerdict) return A.status;
@@ -251,8 +252,20 @@
   }
 
   window.openInvest = (key) => { const d = DS.categoryDetail(S, key); window.openAux({ mode: 'push', title: d.title, subtitle: d.subtitle, body: d.body }); };
-  window.openPeek = () => {};
+  // deep-research drill — research workstream rows + the "read the full …" market/team buttons all call this.
+  window.openPeek = (kind, i) => {
+    if (kind === 'research') return window.openAux({ mode: 'push', ...DS.researchPeek((A.research || [])[i]) });
+    if (kind === 'benchmark') return window.openAux({ mode: 'push', title: 'Competitive teardown', subtitle: 'L3 · Deep research', body: `<div class="md-doc">${DS.mdToHtml((A.benchmark && (A.benchmark.note || A.benchmark.lead)) || 'The competitive teardown has not been generated yet.')}</div>` });
+    if (kind === 'team') return window.openAux({ mode: 'push', title: 'Founder diligence', subtitle: 'L3 · Deep research', body: `<div class="md-doc">${DS.mdToHtml((A.team && A.team.summary) || 'The founder diligence has not been generated yet.')}</div>` });
+  };
   window.RAIL_PANELS = { sources: () => DS.sourcesPanel(A) };
+  // Deal memo / Share / Manage moved off the masthead → the utility rail. deal_memo downloads the PDF,
+  // share opens the shareable-link flow, and the rail's overflow kebab (__more) opens the Manage menu.
+  window.RAIL_ACTIONS = {
+    deal_memo: () => stateBits().hasVerdict ? window.__eaDownload() : window.__toast('The deal memo is ready once the assessment has a verdict.'),
+    share: () => stateBits().hasVerdict ? window.__eaShare() : window.__toast('You can share the memo once the assessment has a verdict.'),
+    __more: () => window.__eaMore(),
+  };
   window.openSources = () => window.openAux({ mode: 'push', ...DS.sourcesPanel(A) });
   window.addDocuments = () => window.__eaUpload('dataroom');
   window.rerunAssessment = () => window.__eaRun();

@@ -316,3 +316,14 @@ md-outlined-text-field { --md-outlined-text-field-container-shape: 999px; --md-o
 .note-bd { flex: 1; min-width: 0; }
 .note-act { display: flex; gap: 8px; flex: none; }
 .note-card.center { display: block; text-align: center; padding: 40px 24px; margin-top: 0; color: var(--md-sys-color-on-surface-variant); }
+
+/* ---- deep-research markdown doc (DS.researchPeek / mdToHtml — rendered in the aux peek panel) ---- */
+.md-doc { display: flex; flex-direction: column; gap: 10px; }
+.md-doc .body-m { margin: 0; line-height: 1.6; }
+.md-h { font-weight: 600; letter-spacing: -.01em; color: var(--md-sys-color-on-surface); margin-top: 6px; }
+.md-h1 { font-size: 18px; } .md-h2 { font-size: 16px; } .md-h3 { font-size: 14px; }
+.md-list { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+.md-list li { font-size: 14px; line-height: 1.55; color: var(--md-sys-color-on-surface-variant); }
+.md-q { margin: 4px 0; padding: 8px 14px; border-left: 3px solid var(--md-sys-color-primary); background: var(--md-sys-color-surface-container); border-radius: 0 8px 8px 0; font-size: 14px; color: var(--md-sys-color-on-surface-variant); }
+.md-doc code { font-family: ui-monospace, monospace; font-size: 12.5px; background: var(--md-sys-color-surface-container-highest); padding: 1px 5px; border-radius: 5px; }
+.md-doc a { color: var(--md-sys-color-primary); }
