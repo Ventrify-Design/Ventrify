@@ -27,9 +27,13 @@
   .eyebrow.good { color: var(--success); }
   .eyebrow.warn { color: var(--warning); }
   .eyebrow.bad  { color: var(--md-sys-color-error); }
-  .sec-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 26px; }
-  .sec-head .t { font-size: 22px; line-height: 28px; font-weight: 500; letter-spacing: .1px; }
-  .sec-head .meta { margin-left: auto; font-size: 12px; color: var(--md-sys-color-on-surface-variant); letter-spacing: .3px; }
+  /* stacked: the eyebrow tag sits top-left, the optional .meta tag top-right on the SAME row, and the title
+     (.t) drops directly beneath the eyebrow. A 2-col grid so the existing DOM order (eyebrow, .t, .meta) works
+     with explicit placement — no markup change. */
+  .sec-head { display: grid; grid-template-columns: 1fr auto; align-items: baseline; column-gap: 14px; row-gap: 6px; margin-bottom: 26px; }
+  .sec-head .eyebrow { grid-column: 1; grid-row: 1; }
+  .sec-head .meta { grid-column: 2; grid-row: 1; justify-self: end; font-size: 12px; color: var(--md-sys-color-on-surface-variant); letter-spacing: .3px; }
+  .sec-head .t { grid-column: 1 / -1; grid-row: 2; font-size: 22px; line-height: 28px; font-weight: 500; letter-spacing: .1px; }
 
   /* ---- slim context header (standalone mockup only; the shell uses the masthead) ---- */
   .ctx { display: flex; align-items: center; gap: 14px; }
@@ -541,10 +545,10 @@
     .cd-figures { grid-template-columns: repeat(2, 1fr); }
   }
   @media (max-width: 640px) {
-    /* stack the section head so the legend/meta doesn't crowd a squeezed, wrapping title */
-    .sec-head { flex-wrap: wrap; row-gap: 6px; }
-    .sec-head .t { flex-basis: 100%; }
-    .sec-head .meta { margin-left: 0; flex-basis: 100%; }
+    /* the base grid already stacks the title; on a squeezed row drop the .meta tag below the title so a
+       long eyebrow + meta never collide */
+    .sec-head { grid-template-columns: 1fr; }
+    .sec-head .meta { grid-column: 1; grid-row: 3; justify-self: start; }
     /* metric rows on mobile: name + value + drill; the bar collapses (radar carries the visual, values carry the numbers) */
     .mrow { grid-template-columns: 1fr auto 18px; gap: 14px; }
     .mrow.funnel, .mrow.research { grid-template-columns: 1fr auto 18px; }
