@@ -12,6 +12,74 @@ function initials(name) {
   return String(name || '').trim().split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || 'V';
 }
 
+// ---- New assessment (M3 create) — opens an aux form, creates via /api/create-engagement (VERBATIM
+// from new-engagement.html), then lands on the interactive assess-next detail to upload + run.
+// Build engagements (founder + hubs) keep the full classic wizard. Exposed as window.openNewAssessment. ----
+const HUB_IDS = ['research', 'vision', 'strategy', 'financials', 'marketing', 'video', 'blog'];
+export function openNewAssessment() {
+  const W = window.WORKSPACE || {};
+  const operators = W.operators || [];
+  const Plan = window.VentrifyPlan, plan = W.plan;
+  if (Plan && !Plan.canCreate(plan, W.programs || [], 'assessment').allowed) {
+    window.openAux({ mode: 'overlay', title: 'Plan limit reached', subtitle: 'New assessment', body: `<div style="padding:4px 2px"><div class="body-m" style="color:var(--md-sys-color-on-surface-variant)">You’ve used your assessment allowance for this plan.</div><div style="margin-top:14px"><button class="m3-btn filled" onclick="window.__requestUpgrade&&window.__requestUpgrade()">Request an upgrade</button></div></div>` });
+    return;
+  }
+  const canBuild = Plan ? Plan.allowedTypes(plan).includes('build') : false;
+  const opts = operators.length ? operators.map(o => `<option value="${esc(o.id)}">${esc(o.name)} · ${esc(o.role)}</option>`).join('') : '<option value="">No operators</option>';
+  window.openAux({
+    mode: 'overlay', title: 'New assessment', subtitle: 'Assess a venture from its deck',
+    body: `<div style="display:flex;flex-direction:column;gap:16px;padding:4px 2px">
+      <div><div class="overline" style="margin-bottom:6px">Venture name</div><input id="na-name" class="field-in" placeholder="e.g. Verdana Bio" autocomplete="off" style="width:100%;box-sizing:border-box"></div>
+      <div><div class="overline" style="margin-bottom:6px">Assessor</div><select id="na-op" class="field-sel" style="width:100%;box-sizing:border-box">${opts}</select></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div><div class="overline" style="margin-bottom:6px">Website · optional</div><input id="na-site" class="field-in" placeholder="acme.com" style="width:100%;box-sizing:border-box"></div>
+        <div><div class="overline" style="margin-bottom:6px">Stage · optional</div><input id="na-stage" class="field-in" placeholder="Seed" style="width:100%;box-sizing:border-box"></div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:4px"><button class="m3-btn filled" onclick="window.__wsCreateAssessment()"><span class="material-symbols-rounded">add</span>Create assessment</button></div>
+      ${canBuild ? `<div class="body-s" style="color:var(--md-sys-color-on-surface-variant);margin-top:2px;border-top:1px solid var(--md-sys-color-outline-variant);padding-top:12px">Need a full build engagement (founder + hubs)? <a href="new-engagement.html" style="color:var(--md-sys-color-primary)">Use the full wizard →</a></div>` : ''}
+    </div>`
+  });
+  setTimeout(() => { const i = document.getElementById('na-name'); if (i) { i.focus(); i.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); window.__wsCreateAssessment(); } }); } }, 60);
+}
+window.openNewAssessment = openNewAssessment;
+window.__wsCreateAssessment = async () => {
+  const W = window.WORKSPACE || {}, org = W.org || {};
+  const name = ((document.getElementById('na-name') || {}).value || '').trim();
+  if (!name) { window.__toast('Enter a venture name.', true); return; }
+  const operator = (document.getElementById('na-op') || {}).value || '';
+  const website = ((document.getElementById('na-site') || {}).value || '').trim();
+  const stage = ((document.getElementById('na-stage') || {}).value || '').trim();
+  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').slice(0, 40) || 'venture';
+  const programId = 'prg-' + slug + '-' + Math.random().toString(36).slice(2, 6);
+  const newProgram = {
+    id: programId, slug, engagementType: 'assessment',
+    website: website || null, stage: stage || null, name,
+    founderName: '', founderEmail: '', founderAvatar: name.slice(0, 2).toUpperCase() || 'VV',
+    founderAvatarColor: org.primaryColor || '#0036FF',
+    industry: null, venturePitch: null, briefSubmitted: false, phase: 0,
+    gateStatus: 'Awaiting deck upload',
+    startDate: new Date().toISOString().slice(0, 10), daysActive: 0,
+    lastActivity: 'just now', lastActivityDetail: 'Assessment created — awaiting deck',
+    assignedOperator: operator, organisationSlug: org.slug || null, health: 'on-track',
+    cards: { drafted: 0, awaitingFounder: 0, resolved: 0, awaitingL3Rebuild: 0 },
+    hubs: HUB_IDS.reduce((a, h) => { a[h] = { status: 'disabled' }; return a; }, {}),
+    mvpDemoModeReady: false, brand: null, createdAt: new Date().toISOString()
+  };
+  try {
+    if (W.mode === 'live') {
+      const { auth } = await import('../firebase/firebase.js');
+      const idToken = await auth.currentUser.getIdToken();
+      const resp = await fetch('/api/create-engagement', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken, engagement: newProgram }) });
+      const out = await resp.json().catch(() => ({}));
+      if (!resp.ok) { throw new Error(out.reason === 'limit' ? 'Your plan has no allowance left for another assessment.' : out.reason === 'capability' ? 'Your plan doesn’t include assessments.' : (out.error || ('HTTP ' + resp.status))); }
+    } else {
+      try { const stored = JSON.parse(localStorage.getItem('workspace.programs') || '[]'); stored.unshift(newProgram); localStorage.setItem('workspace.programs', JSON.stringify(stored)); } catch (e) {}
+    }
+    window.closeOverlay && window.closeOverlay();
+    location.href = 'assess-next.html?id=' + encodeURIComponent(programId);
+  } catch (e) { window.__toast('Could not create the assessment: ' + ((e && e.message) || e), true); }
+};
+
 // nav DATA (mirrors app.js shellNavConfig): Operate + Manage, live badges, conditional admin.
 // `active` = 'portfolio' | 'queue' | ... . Portfolio/Queue point at the -m3 siblings (this stage);
 // the rest point at the classic pages (not yet migrated).

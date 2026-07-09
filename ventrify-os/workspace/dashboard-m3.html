@@ -54,10 +54,10 @@
 
   // ---- shared chrome ----
   const chrome = { nav: wsNavConfig(), brand: wsBrandConfig(), account: wsAccountConfig() };
-  const newAction = { variant: 'filled', icon: 'add', label: NEW_LABEL, onclick: "location.href='new-engagement.html'" };
+  const newAction = { variant: 'filled', icon: 'add', label: NEW_LABEL, onclick: 'window.openNewAssessment&&window.openNewAssessment()' };
 
   function mount(masthead, body) {
-    document.getElementById('app').outerHTML = DS.pageShell({ active: 'portfolio', ...chrome, masthead, body });
+    document.getElementById('app').outerHTML = DS.pageShell({ active: 'portfolio', aux: {}, ...chrome, masthead, body });
     DS.initShell();
     mountOrgSwitcherM3();
   }

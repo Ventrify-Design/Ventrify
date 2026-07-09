@@ -110,7 +110,7 @@ export function workspaceEmpty({ assessOnly = false, orgName = 'your Workspace',
   const steps = (assessOnly ? assessSteps : buildSteps)
     .map(([tag, t, p]) => `<div class="ws-step"><div class="ws-step-tag">${tag}</div><div class="ws-step-title">${t}</div><p>${p}</p></div>`).join('');
   const cta = canCreate
-    ? `<a href="new-engagement.html" class="m3-btn filled" style="margin-top:20px"><span class="material-symbols-rounded">add</span>${assessOnly ? 'Start your first assessment' : 'Start your first engagement'}</a>`
+    ? `<button class="m3-btn filled" style="margin-top:20px" onclick="window.openNewAssessment&&window.openNewAssessment()"><span class="material-symbols-rounded">add</span>${assessOnly ? 'Start your first assessment' : 'Start your first engagement'}</button>`
     : `<div style="margin-top:20px">${planGateBanner(assessOnly ? 'New assessment' : 'New engagement')}</div>`;
   const explorers = [
     ['tune', 'Refine your brand', 'Edit your organisation name, primary colour, or logo before your first engagement goes live.', 'settings.html', 'Open settings →', ''],
