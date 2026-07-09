@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Settings — Ventrify OS</title>
+<script>try{if(localStorage.getItem("ventrify-theme")==="light")document.documentElement.classList.add("light")}catch(e){}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../shared/m3/theme.css">
+<link rel="stylesheet" href="../shared/m3/ds.css">
+<link rel="stylesheet" href="../shared/m3/transitions.css">
+<link rel="stylesheet" href="../shared/m3/workspace-chrome.css">
+</head>
+<body>
+<div id="app"></div>
+<script src="sample-data.js"></script>
+<script src="agents.js"></script>
+<script type="module" src="app.js"></script>
+<script type="module">
+  import * as DS from '../shared/m3/ds.js';
+  import { wsNavConfig, wsBrandConfig, wsAccountConfig, mountOrgSwitcherM3 } from './workspace-m3.js';
+
+  await window.WORKSPACE_READY;
+  const W = window.WORKSPACE;
+  const { org, operators, programs, storage } = W;
+  const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const initialsOf = s => { const parts = (s || '').trim().split(/\s+/); return (((parts[0] || '?')[0] || '?') + (parts.length > 1 ? (parts[parts.length - 1][0] || '') : '')).toUpperCase().slice(0, 2); };
+
+  if (!org) {
+    document.getElementById('app').outerHTML = DS.pageShell({ active: 'settings', nav: wsNavConfig(), brand: wsBrandConfig(), account: wsAccountConfig(), masthead: DS.masthead({ eyebrow: 'Settings', headline: 'No organisation configured' }), body: `<div class="brief"><div class="m3-card" style="text-align:center;padding:48px">Contact your administrator for Workspace access.</div></div>` });
+    DS.initShell(); mountOrgSwitcherM3(); throw new Error('halt-render');
+  }
+
+  // ---- persist a brand patch (VERBATIM /api/update-org from settings.html) ----
+  async function persistPatch(patch) {
+    if (W.mode === 'live') {
+      const { auth } = await import('../firebase/firebase.js');
+      const idToken = auth.currentUser ? await auth.currentUser.getIdToken() : null;
+      const resp = await fetch('/api/update-org', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken, orgId: org.id, patch }) });
+      const d = await resp.json().catch(() => ({}));
+      if (!resp.ok) throw new Error(d.error === 'logo_too_large' ? 'That logo is too large — use an image under ~300KB or an SVG.' : (d.error || ('HTTP ' + resp.status)));
+    } else { storage.writeJSON('workspace.organisation', { ...org, ...patch }); }
+  }
+  // repaint the M3 drawer brand live (not the legacy topbar) + save
+  function applyBrandM3(patch) {
+    const logo = document.querySelector('.drawer-brand .logo');
+    const nameEl = document.querySelector('.drawer-brand .wm-name');
+    if (logo && patch.primaryColor) logo.style.background = patch.primaryColor;
+    if (nameEl && patch.name !== undefined) nameEl.textContent = patch.name;
+    if (logo && patch.logoUrl !== undefined) logo.innerHTML = patch.logoUrl ? `<img src="${esc(patch.logoUrl)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">` : `<span style="font-size:13px;font-weight:700;color:#fff">${esc(initialsOf(org.name))}</span>`;
+  }
+  function saveOrgPatch(patch) {
+    Object.assign(org, patch); applyBrandM3(patch);
+    persistPatch(patch).then(() => window.__toast('Saved')).catch(e => window.__toast(String(e.message || e), true));
+  }
+  function readDataUrl(file) { return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result)); r.onerror = () => rej(new Error('read failed')); r.readAsDataURL(file); }); }
+  async function processLogo(file) {
+    if (file.type === 'image/svg+xml') return readDataUrl(file);
+    const src = await readDataUrl(file);
+    const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('not an image')); i.src = src; });
+    const scale = Math.min(1, 256 / Math.max(img.width, img.height));
+    const w = Math.max(1, Math.round(img.width * scale)), h = Math.max(1, Math.round(img.height * scale));
+    const c = document.createElement('canvas'); c.width = w; c.height = h; c.getContext('2d').drawImage(img, 0, 0, w, h);
+    return c.toDataURL('image/png');
+  }
+  window.__removeLogo = async () => {
+    if (!(await window.__confirm({ title: 'Remove the logo?', message: 'The Workspace falls back to your initials.', confirmLabel: 'Remove', danger: true }))) return;
+    try { Object.assign(org, { logoUrl: null }); applyBrandM3({ logoUrl: null }); await persistPatch({ logoUrl: null }); location.reload(); }
+    catch (e) { window.__toast(String((e && e.message) || e), true); }
+  };
+
+  const SW = ['#0036FF', '#7A3FFF', '#00B8A0', '#FF3F7A', '#FF7A3F', '#141414'];
+  const cur = (org.primaryColor || '#0036FF').toUpperCase();
+  const brandCard = `<div class="m3-card" style="padding:22px">
+    <div class="title-l" style="margin-bottom:4px">Brand kit</div>
+    <div class="body-m variant" style="margin-bottom:18px">Your name, colour and logo render across the Workspace and every Studio in your org. Changes apply live and save instantly.</div>
+    <div style="margin-bottom:18px"><div class="overline" style="margin-bottom:6px">Organisation name</div><input id="b-name" class="field-in" value="${esc(org.name || '')}" style="width:100%;box-sizing:border-box;max-width:360px"></div>
+    <div style="margin-bottom:18px"><div class="overline" style="margin-bottom:8px">Primary colour</div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        ${SW.map(c => `<span class="b-swatch" data-color="${c}" style="width:32px;height:32px;border-radius:9px;cursor:pointer;background:${c};box-shadow:0 0 0 2px ${c.toUpperCase() === cur ? 'var(--md-sys-color-on-surface)' : 'transparent'}"></span>`).join('')}
+        <span style="display:inline-flex;align-items:center;gap:6px;margin-left:6px"><input type="color" id="b-pick" value="${cur}" style="width:34px;height:34px;border:none;background:none;cursor:pointer"><input type="text" id="b-hex" value="${cur}" maxlength="7" class="field-in" style="width:96px"></span>
+      </div>
+    </div>
+    <div><div class="overline" style="margin-bottom:8px">Logo</div>
+      <div style="display:flex;align-items:center;gap:14px;padding:14px;border:1px dashed var(--md-sys-color-outline-variant);border-radius:12px;max-width:420px">
+        <div id="b-logo" style="width:48px;height:48px;border-radius:11px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:${esc(org.primaryColor || 'var(--md-sys-color-primary)')};color:#fff;font-weight:700">${org.logoUrl ? `<img src="${esc(org.logoUrl)}" alt="" style="width:100%;height:100%;object-fit:cover">` : `<span>${esc(initialsOf(org.name))}</span>`}</div>
+        <div style="flex:1"><div class="body-m" style="font-weight:500">${org.logoUrl ? 'Replace logo' : 'Upload a logo'}</div><div class="body-s variant">PNG or SVG. Square works best.</div></div>
+        <span style="display:flex;gap:6px"><button class="m3-btn text" onclick="document.getElementById('b-logo-input').click()">Upload</button>${org.logoUrl ? `<button class="m3-btn text" style="color:var(--md-sys-color-error)" onclick="window.__removeLogo()">Remove</button>` : ''}</span>
+        <input type="file" id="b-logo-input" accept="image/png,image/svg+xml,image/jpeg" hidden>
+      </div>
+    </div>
+  </div>`;
+
+  const Plan = window.VentrifyPlan, plan = W.plan;
+  const presetDef = (Plan.PLAN_PRESETS[plan.preset] || {});
+  const row = (l, v) => `<div style="display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--md-sys-color-outline-variant)"><span class="body-m variant">${l}</span><span class="body-m">${v}</span></div>`;
+  function capUsage(type, label) { if (!Plan.orgCan(plan, type)) return ''; const used = Plan.usageFor(programs, type); const lim = Plan.limitFor(plan, type); return row(label, lim == null ? `${used} · unlimited` : `${used} of ${lim}`); }
+  const orgCard = `<div class="m3-card" style="padding:22px"><div class="title-l" style="margin-bottom:10px">Organisation</div>${row('Slug', esc(org.slug || '—'))}${row('Created', org.createdAt ? new Date(org.createdAt).toLocaleDateString() : '—')}${row('Custom domain', '<span class="variant">Enterprise only</span>')}</div>`;
+  const planCard = `<div class="m3-card" style="padding:22px"><div class="title-l" style="margin-bottom:10px">Plan &amp; usage</div>${row('Plan', Plan.planLabel(plan))}${capUsage('assessment', 'Assessments')}${capUsage('build', 'MVP builds')}${row('Operators', String(operators.length))}<div style="margin-top:14px;display:flex;gap:8px"><a class="m3-btn text" href="../pricing.html" target="_blank">View pricing</a><button class="m3-btn filled" onclick="window.__requestUpgrade&&window.__requestUpgrade()">Request upgrade</button></div></div>`;
+  const dangerCard = `<div class="m3-card" style="padding:22px;border:1px solid color-mix(in srgb, var(--md-sys-color-error) 30%, transparent)"><div class="title-l" style="margin-bottom:6px">Danger zone</div><div class="body-m variant" style="margin-bottom:14px">Wipes every locally-stored value and returns to first-run setup.</div><button class="m3-btn outlined" style="color:var(--md-sys-color-error);border-color:color-mix(in srgb, var(--md-sys-color-error) 40%, transparent)" onclick="window.__resetWorkspace&&window.__resetWorkspace()">Clear all workspace data</button></div>`;
+
+  document.getElementById('app').outerHTML = DS.pageShell({
+    active: 'settings', nav: wsNavConfig(), brand: wsBrandConfig(), account: wsAccountConfig(),
+    masthead: DS.masthead({ eyebrow: 'Settings', headline: 'Workspace settings', subheading: `Organisation, brand kit and licence for ${esc(org.name)}.` }),
+    body: `<div class="brief"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px">${brandCard}${orgCard}${planCard}${dangerCard}</div></div>`
+  });
+  DS.initShell(); mountOrgSwitcherM3();
+
+  // ---- bindings ----
+  const nameInput = document.getElementById('b-name');
+  if (nameInput) nameInput.addEventListener('blur', () => { const n = nameInput.value.trim(); if (n && n !== org.name) saveOrgPatch({ name: n }); });
+  function applyColor(hex) {
+    if (!/^#[0-9a-fA-F]{6}$/.test(hex)) return; const up = hex.toUpperCase();
+    saveOrgPatch({ primaryColor: up });
+    document.getElementById('b-pick').value = up; document.getElementById('b-hex').value = up;
+    document.querySelectorAll('.b-swatch').forEach(s => s.style.boxShadow = `0 0 0 2px ${s.dataset.color.toUpperCase() === up ? 'var(--md-sys-color-on-surface)' : 'transparent'}`);
+    const lg = document.getElementById('b-logo'); if (lg && !org.logoUrl) lg.style.background = up;
+  }
+  document.querySelectorAll('.b-swatch').forEach(s => s.addEventListener('click', () => applyColor(s.dataset.color)));
+  document.getElementById('b-pick')?.addEventListener('input', e => applyColor(e.target.value));
+  document.getElementById('b-hex')?.addEventListener('change', e => applyColor(e.target.value));
+  document.getElementById('b-logo-input')?.addEventListener('change', async e => {
+    const file = e.target.files[0]; if (!file) return;
+    try { const dataUrl = await processLogo(file); Object.assign(org, { logoUrl: dataUrl }); applyBrandM3({ logoUrl: dataUrl }); await persistPatch({ logoUrl: dataUrl }); location.reload(); }
+    catch (err) { window.__toast(String((err && err.message) || err), true); }
+  });
+</script>
+</body>
+</html>

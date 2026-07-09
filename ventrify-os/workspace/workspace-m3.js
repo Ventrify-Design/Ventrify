@@ -99,12 +99,12 @@ export function wsNavConfig() {
     { key: 'portfolio', icon: 'dashboard', label: 'Portfolio', section: 'Operate', href: 'dashboard-m3.html', badge: programs.length ? String(programs.length) : '' },
     { key: 'queue', icon: 'checklist', label: 'Action queue', section: 'Operate', href: 'queue-m3.html', badge: queueCount ? String(queueCount) : '' },
     { key: 'team', icon: 'group', label: 'Team', section: 'Manage', href: 'team-m3.html', badge: operators.length ? String(operators.length) : '' },
-    { key: 'settings', icon: 'settings', label: 'Settings', section: 'Manage', href: 'settings.html' },
+    { key: 'settings', icon: 'settings', label: 'Settings', section: 'Manage', href: 'settings-m3.html' },
   ];
   // case-insensitive owner match (mirrors app.js shellNavConfig — emails are case-insensitive)
   const isOwner = op && org.ownerEmail && String(op.email || '').toLowerCase() === String(org.ownerEmail || '').toLowerCase();
   if (W.isSuperAdmin || isOwner) {
-    nav.push({ key: 'admin', icon: 'shield_person', label: W.isSuperAdmin ? 'Platform admin' : 'Operators', section: 'Manage', href: 'admin.html' });
+    nav.push({ key: 'admin', icon: 'shield_person', label: W.isSuperAdmin ? 'Platform admin' : 'Operators', section: 'Manage', href: 'admin-m3.html' });
   }
   return nav;
 }
