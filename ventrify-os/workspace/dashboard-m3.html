@@ -55,8 +55,6 @@
   // ---- shared chrome ----
   const chrome = { nav: wsNavConfig(), brand: wsBrandConfig(), account: wsAccountConfig() };
   const newAction = { variant: 'filled', icon: 'add', label: NEW_LABEL, onclick: "location.href='new-engagement.html'" };
-  // reversible escape: fall back to the classic portfolio (sticky per browser via the workspace.m3 flag)
-  const classicAction = { variant: 'text', icon: 'swap_horiz', label: 'Classic view', onclick: "try{localStorage.setItem('workspace.m3','off')}catch(e){}location.href='dashboard.html'" };
 
   function mount(masthead, body) {
     document.getElementById('app').outerHTML = DS.pageShell({ active: 'portfolio', ...chrome, masthead, body });
@@ -67,7 +65,7 @@
   // ---- empty state ----
   if (totalPrograms === 0) {
     mount(
-      DS.masthead({ eyebrow: 'Portfolio', headline: `Welcome to ${org && org.name ? org.name : 'your workspace'}`, subheading: ASSESS_ONLY ? 'No assessments yet — run your first one.' : 'No engagements yet — create your first one.', actions: [...(canCreateAny ? [newAction] : []), classicAction] }),
+      DS.masthead({ eyebrow: 'Portfolio', headline: `Welcome to ${org && org.name ? org.name : 'your workspace'}`, subheading: ASSESS_ONLY ? 'No assessments yet — run your first one.' : 'No engagements yet — create your first one.', actions: canCreateAny ? [newAction] : [] }),
       `<div class="brief">${workspaceEmpty({ assessOnly: ASSESS_ONLY, orgName: (org && org.name) || 'your Workspace', canCreate: canCreateAny })}</div>`
     );
     throw new Error('halt-render');
@@ -132,7 +130,7 @@
   </div>`;
 
   mount(
-    DS.masthead({ eyebrow: 'Portfolio', headline: `All engagements · ${totalPrograms} active`, subheading: 'Every venture on your workspace — open one for the full hub view and timeline.', actions: [...(canCreateAny ? [newAction] : []), classicAction] }),
+    DS.masthead({ eyebrow: 'Portfolio', headline: `All engagements · ${totalPrograms} active`, subheading: 'Every venture on your workspace — open one for the full hub view and timeline.', actions: canCreateAny ? [newAction] : [] }),
     body
   );
   renderGrid();

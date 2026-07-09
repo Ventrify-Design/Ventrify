@@ -43,9 +43,7 @@
     import { FIREBASE_ENABLED } from '/firebase/config.js';
     import { sendMagicLink, completeMagicLinkIfPresent } from '/firebase/auth.js';
 
-    // Material-3 workspace is the default landing; 'workspace.m3'='off' falls back to the classic portfolio.
-    const DASH  = ((() => { try { return localStorage.getItem('workspace.m3') !== 'off'; } catch (e) { return true; } })())
-      ? '/workspace/dashboard-m3.html' : '/workspace/dashboard.html';
+    const DASH  = '/workspace/dashboard-m3.html';   // Material-3 is the only workspace UI
     const form  = document.getElementById('login-form');
     const email = document.getElementById('login-email');
     const btn   = document.getElementById('login-btn');

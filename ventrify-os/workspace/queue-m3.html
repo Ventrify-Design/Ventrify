@@ -39,15 +39,12 @@
 
   const grouped = groupQueue(adaptQueue(displayActions, { helpers }));
   const body = `<div class="brief">${queueBoardWS(grouped)}</div>`;
-  // reversible escape: fall back to the classic queue (sticky per browser via the workspace.m3 flag)
-  const classicAction = { variant: 'text', icon: 'swap_horiz', label: 'Classic view', onclick: "try{localStorage.setItem('workspace.m3','off')}catch(e){}location.href='queue.html'" };
 
   document.getElementById('app').outerHTML = DS.pageShell({
     active: 'queue', nav: wsNavConfig(), brand: wsBrandConfig(), account: wsAccountConfig(),
     masthead: DS.masthead({
       eyebrow: 'Action queue', headline: 'Your work this week',
       subheading: 'Everything the platform needs from you, across every engagement — prioritised by urgency.' + (useLive ? '' : ' · sample data'),
-      actions: [classicAction],
     }),
     body,
   });
