@@ -76,6 +76,12 @@
 /* filter-bar styles (.ws-filterbar / .ws-sort / .ws-filter-sub …) moved to ds.css — the toolbar is now
    rendered by DS.filterBar (config form) and its selected chip uses the canonical .m3-chip.selected. */
 
+/* ---------- filter-status reconciliation line (portfolio: "Showing N of M · Clear filters") ---------- */
+.ws-filter-status { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; margin: -6px 0 18px; font-size: 13px; color: var(--md-sys-color-on-surface-variant); }
+.ws-filter-status b { color: var(--md-sys-color-on-surface); font-weight: 600; }
+.ws-clear-filters { border: none; background: none; padding: 0; color: var(--md-sys-color-primary); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; }
+.ws-clear-filters:hover { text-decoration: underline; }
+
 /* ---------- empty state ---------- */
 .ws-empty-hero { display: grid; grid-template-columns: 1.1fr 1fr; gap: 28px; padding: 32px; margin-bottom: 24px; }
 @media (max-width: 840px) { .ws-empty-hero { grid-template-columns: 1fr; } }

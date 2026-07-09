@@ -115,11 +115,27 @@
     const host = document.getElementById('ws-grid-host');
     if (!host) return;
     const list = applyView();
-    host.innerHTML = list.length
+    // the hero counts the WHOLE book; when a (persisted) filter narrows the table below the total, say so
+    // and offer a one-click clear — otherwise "6 on the book / 2 in the table" reads as ventures gone missing.
+    const noun = ASSESS_ONLY ? 'assessment' : 'venture';
+    const filtered = list.length < programs.length;
+    const statusLine = filtered
+      ? `<div class="ws-filter-status">Showing <b>${list.length}</b> of ${programs.length} ${noun}${programs.length === 1 ? '' : 's'} · <button class="ws-clear-filters" onclick="window.__clearDashFilters()">Clear filters</button></div>`
+      : '';
+    host.innerHTML = statusLine + (list.length
       ? DS.engagementTable(list.map(p => adaptEngagementRow(p, ctx)))   // the DS portfolio component (single source)
-      : DS.noteCard({ center: true, text: `No matching ${ASSESS_ONLY ? 'assessments' : 'engagements'}. Adjust the filters.` });
+      : DS.noteCard({ center: true, text: `No matching ${noun}s under the current filter.` }));
     try { localStorage.setItem('workspace.dashView', JSON.stringify({ health: view.health, rec: view.rec, sort: view.sort })); } catch (e) {}
   }
+  // reset every filter dimension back to "all" + sync the chips/search, then re-render (reveals anything a
+  // saved filter was hiding — e.g. assessments that don't match a Recommendation/Assigned-to-me chip).
+  window.__clearDashFilters = () => {
+    view.health = 'all'; view.rec = 'all'; view.q = '';
+    document.querySelectorAll('[data-health]').forEach(b => b.classList.toggle('selected', b.dataset.health === 'all'));
+    document.querySelectorAll('[data-rec]').forEach(b => b.classList.toggle('selected', b.dataset.rec === 'all'));
+    const s = document.getElementById('dash-search'); if (s) s.value = '';
+    renderGrid();
+  };
 
   // the flat stat row is replaced by the editorial portfolio hero — DS.portfolioHero owns the derived numbers now
   const body = `<div class="brief">
