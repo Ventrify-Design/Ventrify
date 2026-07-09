@@ -9,75 +9,9 @@
 
 import { statusPill, _esc as esc } from './ds.js';   // ONE real HTML escaper — founder-controlled names/theses/queue text hit innerHTML sinks
 
-const metaRow = arr => `<div class="pc-meta">${(arr || []).map(m => `<span>${esc(m)}</span>`).join('<span class="sep"></span>')}</div>`;
-const REASON_ICON = { stuck: 'warning', attention: 'priority_high', 'on-track': 'trending_up' };
-const SCORE_COLOR = { ok: 'var(--success, #00A368)', warn: 'var(--warning, #C77700)', err: 'var(--md-sys-color-error)' };
-
-// ---- portfolio: a build-style engagement card ----
-function engagementCard(r) {
-  // hover tooltips carry the parity the compact card can't show inline: all top-3 health reasons + the raw composite/max
-  const reasonsTitle = (r.health.reasons || []).slice(0, 3).map(x => '• ' + x.text).join('\n');
-  const health = statusPill({ kind: r.health.kind, label: r.health.label, title: reasonsTitle || undefined });
-  const inv = r.inv ? statusPill({ kind: r.inv.kind, label: `${r.inv.pct}% inv`, title: `Investability ${r.inv.composite}/${r.inv.max}` }) : '';
-  const reason = (r.health.reasons && r.health.reasons[0] && r.health.level !== 'on-track')
-    ? `<div class="pc-reason ${r.health.level}"><span class="material-symbols-rounded">${REASON_ICON[r.health.level] || 'info'}</span><span>${esc(r.health.reasons[0].text)}</span></div>` : '';
-  const body = r.awaiting
-    ? `<div class="pc-awaiting"><b>Awaiting brief from ${esc(r.awaiting.founderName)}.</b> Studio invite sent. No cards drafted until the brief is signed.</div>`
-    : (r.stats ? `<div class="pc-stats">${r.stats.map(s => `<div class="pc-stat"><div class="v">${esc(s.v)}</div><div class="l">${esc(s.l)}</div></div>`).join('')}</div>` : '');
-  const run = r.runState ? `<div class="pc-run">${statusPill(r.runState)}</div>` : '';
-  return `<a class="m3-card pc" href="${esc(r.href)}">
-    <div class="pc-head">
-      <div class="pc-identity">
-        <div class="pc-avatar" style="background:${esc(r.avatar.color) || 'var(--md-sys-color-primary)'}">${esc(r.avatar.initials)}</div>
-        <div><div class="pc-name">${esc(r.name)}</div><div class="pc-founder">${esc(r.sub)}</div></div>
-      </div>
-      <div class="pc-badges">${health}${inv}</div>
-    </div>
-    <div>
-      <div class="pc-phase">${esc(r.phaseLabel)}</div>
-      ${r.gateStatus ? `<div class="pc-gate">${esc(r.gateStatus)}</div>` : ''}
-      <div class="m3-prog"><span style="width:${Number(r.progress) || 0}%"></span></div>
-    </div>
-    ${metaRow(r.meta)}
-    ${reason}
-    ${run}
-    ${body}
-  </a>`;
-}
-
-// ---- portfolio: an investor-assessment card (verdict-led) ----
-function assessmentCard(r) {
-  // colour the score number by band (parity with the classic card); the .band sub-span keeps its neutral colour
-  const scoreCol = r.score && r.score.kind ? SCORE_COLOR[r.score.kind] : '';
-  const score = r.score
-    ? `<span class="pc-score"${scoreCol ? ` style="color:${scoreCol}"` : ''}>${esc(r.score.pct)}%<span class="band"> · ${esc(r.score.conviction ? r.score.conviction + ' conviction' : r.score.band)}</span></span>` : '';
-  const run = r.runState ? `<div class="pc-run">${statusPill(r.runState)}</div>` : '';
-  return `<a class="m3-card pc" href="${esc(r.href)}">
-    <div class="pc-head">
-      <div class="pc-identity">
-        <div class="pc-avatar" style="background:${esc(r.avatar.color) || 'var(--md-sys-color-tertiary, #00B8A0)'}">${esc(r.avatar.initials)}</div>
-        <div><div class="pc-name">${esc(r.name)}</div><div class="pc-founder">${esc(r.sub)}</div></div>
-      </div>
-      ${statusPill({ kind: 'info', label: 'Assessment' })}
-    </div>
-    <div class="pc-verdict"><span class="pc-rec ${esc(r.rec.kind)}">${esc(r.rec.label)}</span>${score}</div>
-    ${r.thesis ? `<div class="pc-thesis">${esc(r.thesis)}</div>` : ''}
-    ${run}
-    ${metaRow(r.meta)}
-  </a>`;
-}
-
-export function portfolioCard(r) {
-  return r.kind === 'assessment' ? assessmentCard(r) : engagementCard(r);
-}
-
-// grid of rows; `emptyFilterLabel` shown when the filtered list is empty
-export function portfolioGrid(rows, emptyFilterLabel = 'No matching engagements. Adjust the filters.') {
-  if (!rows || !rows.length) {
-    return `<div class="m3-card" style="grid-column:1/-1;text-align:center;padding:40px 24px;color:var(--md-sys-color-on-surface-variant)">${esc(emptyFilterLabel)}</div>`;
-  }
-  return `<div class="ws-grid">${rows.map(portfolioCard).join('')}</div>`;
-}
+// NOTE: the rich portfolio card path (engagementCard/assessmentCard/portfolioCard/portfolioGrid) was
+// removed — the live portfolio now renders through DS.engagementTable (single source). This file keeps
+// only the surfaces with no DS equivalent yet: the plan-gate banner, the empty state, and the queue board.
 
 // ---- plan-gate banner (limit reached) ----
 export function planGateBanner(label = 'New engagement') {

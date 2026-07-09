@@ -22,6 +22,59 @@ const cap = s => s ? s[0].toUpperCase() + s.slice(1) : s;
 const firstSentence = s => { const t = String(s || '').trim(); const m = t.match(/^(.*?[.!?])(\s|$)/); return m ? m[1] : t; };
 const parseMoney = s => { const m = String(s || '').match(/([\d.]+)\s*([bmk])?/i); if (!m) return 0; let n = parseFloat(m[1]); const u = (m[2] || '').toLowerCase(); if (u === 'b') n *= 1e3; else if (u === 'k') n /= 1e3; return n; };  // → millions
 
+// strip inline markdown so a finding reads as clean prose (no **bold**, `code`, [text](url) leaking into the UI)
+const stripMd = s => String(s || '')
+  .replace(/`([^`]*)`/g, '$1')
+  .replace(/\*\*([^*]+)\*\*/g, '$1')
+  .replace(/__([^_]+)__/g, '$1')
+  .replace(/\*([^*]+)\*/g, '$1')
+  .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+  .replace(/\s+/g, ' ')
+  .trim();
+// researchSummary — a bounded one-line finding from a raw markdown doc. firstSentence() DUMPS THE WHOLE
+// BODY when the first post-heading line has no .!? (metadata / table / list — true of nearly every real
+// runner doc), so research rows MUST use this: skip the non-prose scaffolding (front-matter, headings,
+// blockquotes, tables, metadata labels), strip inline markdown, take the first sentence, hard-cap length.
+const META_KEYS = /^(project|date|to|from|analyst|author|prepared by|prepared|subject|re|status|version|classification|client|company|venture|owner|title)$/;
+const researchSummary = (raw, cap = 160) => {
+  const lines = String(raw || '').replace(/\r/g, '').split('\n');
+  let inYaml = false;
+  for (let ln of lines) {
+    let t = ln.trim();
+    if (!t) continue;
+    if (t === '---') { inYaml = !inYaml; continue; }        // YAML front-matter fence
+    if (inYaml) continue;
+    if (/^#{1,6}\s/.test(t)) continue;                      // heading
+    if (/^>/.test(t)) continue;                             // blockquote
+    if (/^\|/.test(t)) continue;                            // table row
+    if (/^[-=_:|\s]{3,}$/.test(t)) continue;                // hr / table separator
+    t = t.replace(/^([-*+]|\d+[.)])\s+/, '');               // unwrap a leading list bullet
+    const meta = t.match(/^(?:\*\*|__)?\s*([A-Za-z][A-Za-z /]{1,24}):(?:\*\*|__)?\s+(.+)$/);
+    if (meta) { if (META_KEYS.test(meta[1].toLowerCase().trim())) continue; t = meta[2]; }  // drop meta label, keep content-label value
+    const clean = stripMd(t);
+    if (clean.length < 12) continue;                        // too short to be a finding
+    const m = clean.match(/^(.*?[.!?])(\s|$)/);
+    const s = m ? m[1] : clean;
+    return s.length > cap ? s.slice(0, cap - 1).trimEnd() + '…' : s;
+  }
+  return '';
+};
+// per-workstream marker — derive tone(p|s|w) + icon from the doc so the index reads as differentiated
+// workstreams, not N identical purple 'article' rows. Feeds the DS RTONE/RCOL tonal system (ds.js).
+const researchMarker = (d) => {
+  const n = `${d.name || ''} ${d.hub || ''} ${d.title || ''}`.toLowerCase();
+  if (/market|tam|sizing|demand/.test(n)) return { tone: 's', icon: 'query_stats' };
+  if (/compet|benchmark|landscape|rival/.test(n)) return { tone: 'w', icon: 'swords' };
+  if (/team|founder|people/.test(n)) return { tone: 'p', icon: 'groups' };
+  if (/financ|unit[- ]?econ|revenue|model/.test(n)) return { tone: 's', icon: 'payments' };
+  if (/risk|red[- ]?flag/.test(n)) return { tone: 'w', icon: 'warning' };
+  if (/product|tech|moat|defensib/.test(n)) return { tone: 'p', icon: 'category' };
+  return { tone: 'p', icon: 'article' };
+};
+const capLevel = lv => { const m = String(lv || '').match(/L[123]/i); return m ? m[0].toUpperCase() : 'L3'; };
+// a deal-memo / verdict doc is an OUTPUT, not a research workstream — keep it out of the index (it lives in the data room)
+const isMemoDoc = d => /deal[- ]?memo|verdict|recommendation/i.test(`${d.name || ''} ${d.title || ''}`);
+
 // diligence priority (free text) → severity, matching the runner's DIL_NORM spread
 function dilKind(priority = '') {
   const p = String(priority).toLowerCase();
@@ -170,11 +223,15 @@ export function adaptEngagement(p = {}) {
     return { kind, tag: DIL_TAG[kind], title: split ? split[1].trim() : d.item, note: split ? split[2].trim() : '', done: false };
   });
 
-  // research index + data room from hubDocs
-  const RTONE = { verdict: 'p', money: 'p', market: 's', competition: 'w', team: 'p' };
-  const research = (p.hubDocs || []).filter(d => d.hub === 'research' || d.hub === 'assessment').sort((x, y) => (x.order || 0) - (y.order || 0)).map(d => ({
-    icon: 'article', tone: 'p', title: d.title || d.name, note: firstSentence(String(d.body || d.markdown || '').replace(/^#+\s.*\n+/, '')), tag: d.level || 'L3', tagKind: 'info'
-  }));
+  // research index from hubDocs — clean bounded finding + differentiated marker per workstream; the
+  // deal-memo (an output) is excluded so the count + semantics stay honest (it lives in the data room).
+  const research = (p.hubDocs || [])
+    .filter(d => (d.hub === 'research' || d.hub === 'assessment') && !isMemoDoc(d))
+    .sort((x, y) => (x.order || 0) - (y.order || 0))
+    .map(d => {
+      const mk = researchMarker(d);
+      return { icon: mk.icon, tone: mk.tone, title: d.title || d.name, note: researchSummary(String(d.body || d.markdown || '')), tag: capLevel(d.level), tagKind: /L3/i.test(d.level || 'L3') ? 'info' : 'warn' };
+    });
   const dataRoom = [
     p.pitchDoc && { icon: 'slideshow', title: p.pitchDoc.name, note: 'Founder upload · pitch deck', action: 'download', kind: 'upload', status: 'read' },
     { icon: 'description', title: 'Deal memo', note: 'Full write-up · exported PDF', tag: 'L1', action: 'tag', kind: 'generated' },

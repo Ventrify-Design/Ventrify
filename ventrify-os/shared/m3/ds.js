@@ -510,14 +510,16 @@ export function valuationLockup(opts = {}) {
 // dominant numeral, not a row of equals. Fronts the Research tab.
 export function coverageLockup(opts = {}) {
   const {
-    label = 'Evidence base', rated = 35, total = 35, ratedLabel = 'signals rated',
+    label = 'Evidence base', rated = 35, total = 35, ratedLabel = 'signals rated', numeral,
     confidence = 'High', tone = 'good', confidenceIcon,
     facts = [{ v: '18', k: 'documents' }, { v: '32', k: 'sources cited' }, { v: '7', k: 'workstreams' }]
   } = opts;
   const icon = confidenceIcon || COV_ICON[tone] || 'verified';
+  // `numeral` overrides the big rated/total figure — e.g. a forming snapshot that has no rated signals yet
+  const numHtml = numeral != null ? numeral : `${esc(String(rated))}<small>/${esc(String(total))} ${esc(ratedLabel)}</small>`;
   return `<div class="coverage-lockup">
     <span class="eyebrow accent">${esc(label)}</span>
-    <div class="lockup-num">${esc(String(rated))}<small>/${esc(String(total))} ${esc(ratedLabel)}</small></div>
+    <div class="lockup-num">${numHtml}</div>
     ${confidence ? `<span class="lockup-band ${tone}"><span class="material-symbols-rounded">${icon}</span> ${esc(confidence)} confidence</span>` : ''}
     ${facts.length ? `<div class="lockup-prov">${facts.map(f => `<span class="unit"><b>${esc(f.v)}</b> ${esc(f.k)}</span>`).join('')}</div>` : ''}
   </div>`;
@@ -910,15 +912,18 @@ export function researchHero(a = {}, s = {}) {
   const h = (a.heroes && a.heroes.research) || {}, cats = s.categories || [], cf = a.confidence || {};
   const total = cats.reduce((n, c) => n + (c.subs ? c.subs.length : 0), 0);
   const rated = cats.reduce((n, c) => n + (c.subs ? c.subs.filter(x => x.score != null).length : 0), 0);
-  const tone = /high/i.test(cf.level) ? 'good' : /med/i.test(cf.level) ? 'mid' : 'bad';
+  const wsCount = (a.research || []).length;
+  const tone = total === 0 ? 'mid' : /high/i.test(cf.level) ? 'good' : /med/i.test(cf.level) ? 'mid' : 'bad';
+  // a forming/absent snapshot has no rated signals — show "Forming", not a giant "0/0"
+  const formingNumeral = total === 0 ? `<span class="lockup-forming">Forming</span>` : undefined;
   return sectionHero({
     eyebrow: h.eyebrow, eyebrowIcon: h.eyebrowIcon, headline: h.headline, headlineEm: h.headlineEm, facts: h.facts,
     right: coverageLockup({
-      label: 'Evidence base', rated, total, ratedLabel: 'signals rated', confidence: cf.level, tone,
+      label: 'Evidence base', rated, total, ratedLabel: 'signals rated', numeral: formingNumeral, confidence: cf.level, tone,
       facts: [
-        { v: String(cf.documents ?? ''), k: 'documents' },
-        { v: String(cf.sources ?? ''), k: 'sources cited' },
-        { v: String((a.research || []).length), k: 'workstreams' }
+        { v: cf.documents ? String(cf.documents) : '', k: 'documents' },
+        { v: cf.sources ? String(cf.sources) : '', k: 'sources cited' },
+        { v: wsCount ? String(wsCount) : '', k: 'workstreams' }   // never print "0 workstreams"
       ].filter(f => f.v)
     }),
     thesis: h.thesis
@@ -1120,8 +1125,8 @@ export function dataRoom(docs) {
 export function researchRow(r, i, onOpen = '') {
   const act = onOpen ? ` role="button" tabindex="0" onclick="${onOpen}('research',${i})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();${onOpen}('research',${i})}"` : '';
   return `<div class="mrow research${onOpen ? ' drill' : ''}"${act}>
-    <div class="mrow-lab"><span class="rlead" style="background:${RTONE[r.tone]}"><span class="material-symbols-rounded" style="color:${RCOL[r.tone]}">${r.icon}</span></span><div><div class="mrow-nm">${esc(r.title)}</div><div class="mrow-sub">${esc(r.note)}</div></div></div>
-    <div class="mrow-val"><span class="status ${r.tagKind || 'info'}">${esc(r.tag)}</span></div>
+    <div class="mrow-lab"><span class="rlead" style="background:${RTONE[r.tone] || RTONE.p}"><span class="material-symbols-rounded" style="color:${RCOL[r.tone] || RCOL.p}">${esc(r.icon || 'article')}</span></span><div class="mrow-txt"><div class="mrow-nm">${esc(r.title)}</div>${r.note ? `<div class="mrow-sub">${esc(r.note)}</div>` : ''}</div></div>
+    <div class="mrow-val">${r.tag ? `<span class="status ${r.tagKind || 'info'}">${esc(r.tag)}</span>` : ''}</div>
     ${onOpen ? '<span class="material-symbols-rounded mrow-chev">chevron_right</span>' : '<span class="mrow-chev"></span>'}
   </div>`;
 }
@@ -1129,8 +1134,9 @@ export function researchRow(r, i, onOpen = '') {
 // researchIndex — ORGANISM. The editorial evidence index (replaces the researchList card): discrete
 // hairline-separated researchRow rows on the background so the "which workstream, how deep, what failed" scan survives.
 export function researchIndex(items = [], onOpen = '') {
+  if (!items || !items.length) return '';   // self-omit when no workstreams yet (mirrors evidenceIntegrity) — no dangling header
   return `<section class="sec">
-    <div class="sec-head"><span class="eyebrow accent">The workstreams</span><span class="t">Every claim, rebuilt from source</span><span class="meta">${items.length} workstreams</span></div>
+    <div class="sec-head"><span class="eyebrow accent">The workstreams</span><span class="t">Every claim, rebuilt from source</span><span class="meta">${items.length} workstream${items.length === 1 ? '' : 's'}</span></div>
     <div class="profile">${items.map((r, i) => researchRow(r, i, onOpen)).join('')}</div>
   </section>`;
 }
@@ -1179,14 +1185,16 @@ export function confidenceReconciliation(a, s) {
 // researchMemo — the whole Research tab: hero → workstream index → evidence integrity → confidence coda.
 // The data-room card moved to the Sources rail panel; a light pointer keeps the path to the files.
 export function researchMemo(a, s) {
-  const ev = evidenceIntegrity(a, s);
+  // assemble present sections, then join with rules — an absent section (empty index, no evidence
+  // category) never leaves a dangling header or doubled hairline. Mirrors marketMemo's filter/join.
+  const secs = [
+    researchHero(a, s),
+    researchIndex(a.research, 'openPeek'),
+    evidenceIntegrity(a, s),
+    confidenceReconciliation(a, s),
+  ].filter(Boolean);
   return `<div class="brief">
-    ${researchHero(a, s)}
-    <hr class="rule">
-    ${researchIndex(a.research, 'openPeek')}
-    ${ev ? `<hr class="rule">${ev}` : ''}
-    <hr class="rule">
-    ${confidenceReconciliation(a, s)}
+    ${secs.join('\n    <hr class="rule">\n    ')}
     <div class="see-research" style="padding-top:2px"><button class="m3-btn text" onclick="window.openSources&&window.openSources()"><span class="material-symbols-rounded">source</span>Source documents &amp; re-run — in Sources</button></div>
   </div>`;
 }

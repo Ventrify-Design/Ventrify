@@ -7,7 +7,7 @@
 // NO app.js edits, no pipeline touch. Pure read + present.
 // ============================================================
 
-import { _esc as esc } from '../shared/m3/ds.js';   // ONE real HTML escaper (org names into the switcher panel)
+import { _esc as esc, formField } from '../shared/m3/ds.js';   // ONE real HTML escaper + the single-source form-field molecule
 function initials(name) {
   return String(name || '').trim().split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || 'V';
 }
@@ -25,15 +25,15 @@ export function openNewAssessment() {
     return;
   }
   const canBuild = Plan ? Plan.allowedTypes(plan).includes('build') : false;
-  const opts = operators.length ? operators.map(o => `<option value="${esc(o.id)}">${esc(o.name)} · ${esc(o.role)}</option>`).join('') : '<option value="">No operators</option>';
+  const opList = operators.length ? operators.map(o => ({ v: o.id, l: `${o.name} · ${o.role}` })) : [{ v: '', l: 'No operators' }];
   window.openAux({
     mode: 'overlay', title: 'New assessment', subtitle: 'Assess a venture from its deck',
     body: `<div style="display:flex;flex-direction:column;gap:16px;padding:4px 2px">
-      <div><div class="overline" style="margin-bottom:6px">Venture name</div><input id="na-name" class="field-in" placeholder="e.g. Verdana Bio" autocomplete="off" style="width:100%;box-sizing:border-box"></div>
-      <div><div class="overline" style="margin-bottom:6px">Assessor</div><select id="na-op" class="field-sel" style="width:100%;box-sizing:border-box">${opts}</select></div>
+      ${formField({ label: 'Venture name', id: 'na-name', placeholder: 'e.g. Verdana Bio', attr: ' autocomplete="off"' })}
+      ${formField({ label: 'Assessor', id: 'na-op', options: opList })}
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <div><div class="overline" style="margin-bottom:6px">Website · optional</div><input id="na-site" class="field-in" placeholder="acme.com" style="width:100%;box-sizing:border-box"></div>
-        <div><div class="overline" style="margin-bottom:6px">Stage · optional</div><input id="na-stage" class="field-in" placeholder="Seed" style="width:100%;box-sizing:border-box"></div>
+        ${formField({ label: 'Website', id: 'na-site', optional: true, type: 'url', placeholder: 'acme.com' })}
+        ${formField({ label: 'Stage', id: 'na-stage', optional: true, placeholder: 'Seed' })}
       </div>
       <div style="display:flex;justify-content:flex-end;margin-top:4px"><button class="m3-btn filled" onclick="window.__wsCreateAssessment()"><span class="material-symbols-rounded">add</span>Create assessment</button></div>
       ${canBuild ? `<div class="body-s" style="color:var(--md-sys-color-on-surface-variant);margin-top:2px;border-top:1px solid var(--md-sys-color-outline-variant);padding-top:12px">Need a full build engagement (founder + hubs)? <a href="new-engagement.html" style="color:var(--md-sys-color-primary)">Use the full wizard →</a></div>` : ''}

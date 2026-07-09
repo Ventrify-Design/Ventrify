@@ -76,6 +76,8 @@
   /* the big display numeral with a small suffix, and the tone chip — the editorial "big/small" treatment */
   .lockup-num { margin-top: 14px; font-size: clamp(96px, 11vw, 150px); line-height: .82; font-weight: 500; letter-spacing: -4px; color: var(--md-sys-color-on-surface); display: flex; align-items: flex-start; gap: 6px; }
   .lockup-num small { font-size: 28px; font-weight: 400; letter-spacing: 0; color: var(--md-sys-color-on-surface-variant); margin-top: 12px; }
+  /* forming/absent snapshot — a calm word, not a huge "0/0" */
+  .lockup-num .lockup-forming { font-size: clamp(30px, 4.4vw, 48px); letter-spacing: -1px; color: var(--md-sys-color-on-surface-variant); }
   .lockup-band { margin-top: 16px; display: inline-flex; align-items: center; gap: 7px; height: 30px; padding: 0 13px; border-radius: 8px; font-size: 13px; font-weight: 500; letter-spacing: .3px; }
   .lockup-band .material-symbols-rounded { font-size: 17px; }
   .lockup-band.good { background: var(--success-container); color: var(--on-success-container); }
@@ -248,19 +250,8 @@
   .wiz-fields { display: flex; flex-direction: column; gap: 16px; margin-top: 20px; }
   .wiz-two { display: flex; gap: 16px; }
   .wiz-two .field { flex: 1; min-width: 0; }
-  /* ============ FORM FIELD (formField) — the reusable workspace field: outlined input / select ============ */
-  /* plain HTML, reliable at any width (md-outlined-text-field mis-sizes in a narrow side-sheet). */
-  .field { display: block; }
-  .field-lab { display: flex; align-items: baseline; gap: 8px; font-size: 12.5px; font-weight: 500; letter-spacing: .1px; color: var(--md-sys-color-on-surface); margin-bottom: 8px; }
-  .field-opt { font-size: 10.5px; font-weight: 500; letter-spacing: .6px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); }
-  .field-in { width: 100%; box-sizing: border-box; height: 50px; padding: 0 15px; border-radius: 10px; border: 1.5px solid var(--md-sys-color-outline-variant); background: var(--md-sys-color-surface-container-lowest); color: var(--md-sys-color-on-surface); font: inherit; font-size: 15px; transition: border-color .12s ease, box-shadow .12s ease; }
-  .field-in::placeholder { color: var(--md-sys-color-on-surface-variant); }
-  .field-in:hover { border-color: var(--md-sys-color-outline); }
-  .field-in:focus { outline: none; border-color: var(--md-sys-color-primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--md-sys-color-primary) 16%, transparent); }
-  .field-ctl { position: relative; }
-  .field-sel { appearance: none; -webkit-appearance: none; padding-right: 42px; cursor: pointer; }
-  .field-chev { position: absolute; right: 13px; top: 50%; transform: translateY(-50%); pointer-events: none; font-size: 22px; color: var(--md-sys-color-on-surface-variant); }
-  .field-hint { display: block; font-size: 11.5px; color: var(--md-sys-color-on-surface-variant); margin-top: 6px; }
+  /* NOTE: the .field / .field-in / .field-sel formField styles moved to ds.css (a core DS control used on
+     every workspace form, not just this assess sheet). This file keeps only assess-specific field layout. */
   .wiz-review { display: flex; flex-direction: column; gap: 4px; margin-top: 20px; }
   .wiz-review .fact { display: flex; justify-content: space-between; gap: 20px; padding: 11px 0; border-top: 1px solid var(--md-sys-color-outline-variant); }
   .wiz-review .fact:first-child { border-top: none; }
@@ -337,7 +328,8 @@
   .mrow-dot.strong { background: var(--success); }
   .mrow-dot.mixed { background: var(--md-sys-color-on-surface-variant); }
   .mrow-dot.gap { background: var(--md-sys-color-error); }
-  .mrow-sub { font-size: 11px; color: var(--md-sys-color-on-surface-variant); margin-top: 3px; letter-spacing: .2px; }
+  /* clamp to 2 lines so no note (even a bug-length one) can ever balloon a row — belt-and-suspenders with the adapter's bounded summary */
+  .mrow-sub { font-size: 11px; color: var(--md-sys-color-on-surface-variant); margin-top: 3px; letter-spacing: .2px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
   .mrow-bar { position: relative; height: 10px; border-radius: 999px; background: var(--md-sys-color-surface-container-highest); }
   .mrow-bar .pot { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 999px; background: color-mix(in srgb, var(--md-sys-color-primary) 22%, transparent); }
   .mrow-bar .now { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 999px; background: var(--md-sys-color-primary); }
@@ -357,6 +349,9 @@
   .mrow.funnel { grid-template-columns: minmax(150px, 1.3fr) 1fr auto 18px; }
   .mrow.research { grid-template-columns: minmax(180px, 1.7fr) auto 18px; }
   .mrow.research .mrow-lab { display: flex; align-items: center; gap: 13px; }
+  /* the title/note column must be able to shrink + wrap long slug/URL tokens instead of overflowing into the tag column */
+  .mrow.research .mrow-txt { min-width: 0; }
+  .mrow.research .mrow-nm { overflow-wrap: anywhere; }
   .mrow.research .rlead { width: 34px; height: 34px; border-radius: 10px; }
   .mrow.research .rlead .material-symbols-rounded { font-size: 18px; }
   .mrow.research .mrow-val { text-align: right; }

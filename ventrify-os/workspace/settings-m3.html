@@ -76,7 +76,7 @@
   const brandCard = `<div class="m3-card" style="padding:22px">
     <div class="title-l" style="margin-bottom:4px">Brand kit</div>
     <div class="body-m variant" style="margin-bottom:18px">Your name, colour and logo render across the Workspace and every Studio in your org. Changes apply live and save instantly.</div>
-    <div style="margin-bottom:18px"><div class="overline" style="margin-bottom:6px">Organisation name</div><input id="b-name" class="field-in" value="${esc(org.name || '')}" style="width:100%;box-sizing:border-box;max-width:360px"></div>
+    <div style="margin-bottom:18px;max-width:360px">${DS.formField({ label: 'Organisation name', id: 'b-name', value: org.name || '' })}</div>
     <div style="margin-bottom:18px"><div class="overline" style="margin-bottom:8px">Primary colour</div>
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
         ${SW.map(c => `<span class="b-swatch" data-color="${c}" style="width:32px;height:32px;border-radius:9px;cursor:pointer;background:${c};box-shadow:0 0 0 2px ${c.toUpperCase() === cur ? 'var(--md-sys-color-on-surface)' : 'transparent'}"></span>`).join('')}

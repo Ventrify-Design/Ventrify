@@ -287,3 +287,17 @@ md-outlined-text-field { --md-outlined-text-field-container-shape: 999px; --md-o
 .m3-switch::after { content: ""; position: absolute; top: 50%; left: 6px; width: 16px; height: 16px; border-radius: 50%; background: var(--md-sys-color-outline); transform: translateY(-50%); transition: left .15s ease, width .15s ease, height .15s ease, background .15s ease; }
 .m3-switch.on { background: var(--md-sys-color-primary); border-color: var(--md-sys-color-primary); }
 .m3-switch.on::after { left: 26px; width: 22px; height: 22px; background: var(--md-sys-color-on-primary); }
+
+/* ---- form field (formField molecule) — label + outlined input / native select. Lives HERE (not the
+   assess-only editorial sheet) because formField is a core DS control used on every workspace form. ---- */
+.field { display: block; }
+.field-lab { display: flex; align-items: baseline; gap: 8px; font-size: 12.5px; font-weight: 500; letter-spacing: .1px; color: var(--md-sys-color-on-surface); margin-bottom: 8px; }
+.field-opt { font-size: 10.5px; font-weight: 500; letter-spacing: .6px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); }
+.field-in { width: 100%; box-sizing: border-box; height: 50px; padding: 0 15px; border-radius: 10px; border: 1.5px solid var(--md-sys-color-outline-variant); background: var(--md-sys-color-surface-container-lowest); color: var(--md-sys-color-on-surface); font: inherit; font-size: 15px; transition: border-color .12s ease, box-shadow .12s ease; }
+.field-in::placeholder { color: var(--md-sys-color-on-surface-variant); }
+.field-in:hover { border-color: var(--md-sys-color-outline); }
+.field-in:focus { outline: none; border-color: var(--md-sys-color-primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--md-sys-color-primary) 16%, transparent); }
+.field-ctl { position: relative; }
+.field-sel { appearance: none; -webkit-appearance: none; padding-right: 42px; cursor: pointer; }
+.field-chev { position: absolute; right: 13px; top: 50%; transform: translateY(-50%); pointer-events: none; font-size: 22px; color: var(--md-sys-color-on-surface-variant); }
+.field-hint { display: block; font-size: 11.5px; color: var(--md-sys-color-on-surface-variant); margin-top: 6px; }

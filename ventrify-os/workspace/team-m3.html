@@ -47,7 +47,7 @@
       mode: 'push', title: 'Invite operator', subtitle: 'Grant Workspace access',
       body: `<div style="padding:4px 2px">
         <div class="body-m" style="color:var(--md-sys-color-on-surface-variant);margin-bottom:12px">They get a one-click sign-in link to this same workspace.</div>
-        <label class="m3-search" style="max-width:none"><span class="material-symbols-rounded">mail</span><input id="inv-email" type="email" autocomplete="off" placeholder="teammate@email.com"></label>
+        ${DS.formField({ label: 'Invite email', id: 'inv-email', type: 'email', placeholder: 'teammate@email.com', attr: ' autocomplete="off"' })}
         <div style="display:flex;justify-content:flex-end;margin-top:14px"><button class="m3-btn filled" onclick="window.__addOperator()">Send invite</button></div>
       </div>`
     });
@@ -78,10 +78,10 @@
     return `<div class="m3-card pc">
       <div class="pc-head">
         <div class="pc-identity"><div class="pc-avatar" style="background:${esc(op.avatarColor) || 'var(--md-sys-color-primary)'}">${esc(op.avatar)}</div>
-          <div><div class="pc-name">${esc(op.name)}${op.isCurrentUser ? ' <span class="status ok" style="height:20px;padding:0 8px;font-size:11px">You</span>' : ''}</div><div class="pc-founder">${esc(op.email)}</div></div></div>
+          <div><div class="pc-name">${esc(op.name)}${op.isCurrentUser ? ' ' + DS.statusPill({ kind: 'ok', label: 'You' }) : ''}</div><div class="pc-founder">${esc(op.email)}</div></div></div>
         ${canRemove ? `<button class="m3-btn text" style="color:var(--md-sys-color-error)" onclick="window.__removeOperator('${esc(op.email)}')">Remove</button>` : ''}
       </div>
-      <div class="pc-meta"><span class="status info">${esc(op.role)}</span></div>
+      <div class="pc-meta">${DS.statusPill({ kind: 'info', label: op.role })}</div>
       <div><div class="overline" style="margin-bottom:6px">Assigned · ${assigned.length}</div><div class="body-m variant">${names}</div></div>
     </div>`;
   }
