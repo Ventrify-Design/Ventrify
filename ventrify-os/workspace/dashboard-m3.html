@@ -24,8 +24,8 @@
   // workspace data. Same reads as dashboard.html (no pipeline change), rendered in the M3 shell.
   // dashboard.html is untouched; revert = delete this file.
   import * as DS from '../shared/m3/ds.js';
-  import { adaptProgram } from '../shared/m3/workspace-adapter.js';
-  import { portfolioGrid, workspaceEmpty, planGateBanner } from '../shared/m3/workspace-cards.js';
+  import { adaptEngagementRow } from '../shared/m3/workspace-adapter.js';
+  import { workspaceEmpty, planGateBanner } from '../shared/m3/workspace-cards.js';
   import { wsNavConfig, wsBrandConfig, wsAccountConfig, mountOrgSwitcherM3 } from './workspace-m3.js';
 
   await window.WORKSPACE_READY;
@@ -112,15 +112,22 @@
   function renderGrid() {
     const host = document.getElementById('ws-grid-host');
     if (!host) return;
-    host.innerHTML = portfolioGrid(applyView().map(p => adaptProgram(p, ctx)), `No matching ${ASSESS_ONLY ? 'assessments' : 'engagements'}. Adjust the filters.`);
+    const list = applyView();
+    host.innerHTML = list.length
+      ? DS.engagementTable(list.map(p => adaptEngagementRow(p, ctx)))   // the DS portfolio component (single source)
+      : `<div class="m3-card" style="text-align:center;padding:40px 24px;color:var(--md-sys-color-on-surface-variant)">No matching ${ASSESS_ONLY ? 'assessments' : 'engagements'}. Adjust the filters.</div>`;
     try { localStorage.setItem('workspace.dashView', JSON.stringify({ health: view.health, rec: view.rec, sort: view.sort })); } catch (e) {}
   }
 
+  // stats aligned to the DS portfolio.html example
+  const inFlightN = programs.filter(p => p.runState && ['queued', 'running', 'partial'].includes(p.runState.status)).length;
+  const verdictsN = programs.filter(p => p.assessment && p.assessment.recommendation).length;
+  const awaitingDeckN = programs.filter(p => p.engagementType === 'assessment' && !p.pitchDoc).length;
   const stats = [
-    { n: String(totalPrograms), l: 'Active programs' },
-    { n: String(inFlight), l: 'In flight · Phase 1–4' },
-    { n: String(cardsAwaiting), l: 'Cards awaiting founder' },
-    { n: portfolioCompleteness.pct + '%', l: 'Portfolio completeness', sub: `${portfolioCompleteness.items || 0}/${portfolioCompleteness.of || 0} expected outputs` },
+    { n: String(totalPrograms), l: 'Active engagements' },
+    { n: String(inFlightN), l: 'Assessments in flight' },
+    { n: String(verdictsN), l: 'Verdicts ready' },
+    { n: String(awaitingDeckN), l: 'Awaiting a deck' },
   ];
   const body = `<div class="brief">
     ${canCreateAny ? '' : planGateBanner(NEW_LABEL)}

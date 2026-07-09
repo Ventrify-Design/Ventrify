@@ -1264,7 +1264,7 @@ export function engagementTable(rows) {
     const rs = r.runState && r.runState.status;
     if (rs && rs !== 'done' && RUN_PILL[rs]) return `<td>${statusPill(RUN_PILL[rs])}${(rs === 'running' || rs === 'partial') ? ' <span class="et-score" style="color:var(--md-sys-color-on-surface-variant)">0</span><span class="variant">/100 · forming</span>' : ''}</td>`;
     return r.rec
-      ? `<td>${recPill(r.rec.kind === 'consider' ? 'consider' : 'invest', r.rec.label, r.rec.icon, ' style="height:28px;padding:0 12px;font-size:12px"')} <span class="et-score">${r.rec.score}</span><span class="variant">/100</span></td>`
+      ? `<td>${recPill(r.rec.kind || 'invest', r.rec.label, r.rec.icon, ' style="height:28px;padding:0 12px;font-size:12px"')} <span class="et-score">${r.rec.score}</span><span class="variant">/100</span></td>`
       : `<td><div class="et-prog"><div class="m3-prog"><span style="width:calc(${r.progress} * 100%)${r.danger ? ';background:var(--md-sys-color-error)' : ''}"></span></div><span class="pct">${Math.round(r.progress * 100)}%</span></div></td>`;
   };
   const go = r => { const h = r.href || 'assess.html'; return ` tabindex="0" role="link" onclick="__drill(this,'${h}')" onkeydown="if(event.key==='Enter'){__drill(this,'${h}')}"`; };

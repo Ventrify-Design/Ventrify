@@ -107,6 +107,51 @@ export function adaptPortfolio(programs = [], ctx = {}) {
   return programs.map(p => adaptProgram(p, ctx));
 }
 
+// ---- ONE program → a DS engagementTable ROW (the design-system portfolio component) ----
+// row = { i, avatar(AVAC key t|p|s), name, sub, stage, status(pill), runState, rec, progress, danger, when, href }
+const REC_ICON = { invest: 'trending_up', consider: 'balance', pass: 'block' };
+export function adaptEngagementRow(p, ctx = {}) {
+  const { helpers, A, useLive } = ctx;
+  const isAssess = p.engagementType === 'assessment';
+  const i = p.founderAvatar || (p.name || 'V').slice(0, 2).toUpperCase();
+  // varied but deterministic M3 container colour (t/p/s) — the DS uses tokens, not raw org hex
+  const avatar = ['t', 'p', 's'][[...(p.name || '')].reduce((a, c) => a + c.charCodeAt(0), 0) % 3];
+  const when = p.lastActivity || '1h ago';
+  const rsStatus = p.runState && p.runState.status;
+  const runState = (rsStatus && rsStatus !== 'done') ? { status: rsStatus } : null;
+  const href = `${isAssess ? 'assess-next.html' : 'program.html'}?id=${encodeURIComponent(p.id)}`;
+
+  if (isAssess) {
+    const a = p.assessment || {};
+    const inv = p.investability || p.investabilityScore;
+    const hasVerdict = !!a.recommendation;
+    const hasDeck = !!p.pitchDoc;
+    const bucket = recBucket(a.recommendation);
+    const rec = (hasVerdict && inv) ? { kind: bucket || 'consider', label: a.recommendation, icon: REC_ICON[bucket] || 'balance', score: String(inv.pct != null ? inv.pct : '—') } : null;
+    // no verdict + not running + no deck → surface an "Awaiting deck" signal (idle run-state)
+    const rowRun = runState || ((!hasVerdict && !hasDeck) ? { status: 'idle' } : null);
+    const status = (hasVerdict || hasDeck) ? { kind: 'ok', label: 'Assessment', icon: 'fact_check' } : { kind: 'n', label: 'Draft', icon: 'edit_note' };
+    return {
+      i, avatar, name: p.name, sub: [p.industry, p.stage].filter(Boolean).join(' · ') || 'Assessment',
+      stage: `${p.stage || 'Seed'} · Assessment`, status, runState: rowRun, rec,
+      progress: (!rec && !rowRun) ? 0 : undefined, when, href,
+    };
+  }
+
+  // build engagement — health status + phase-progress bar
+  const computed = (useLive && A) ? A.computeEngagementHealth(p) : null;
+  const level = computed ? computed.level : (p.health || 'on-track');
+  const h = HEALTH[level] || HEALTH['on-track'];
+  return {
+    i, avatar, name: p.name, sub: [p.founderName, p.industry].filter(Boolean).join(' · '),
+    stage: helpers ? helpers.phaseLabel(p.phase) : ('Phase ' + p.phase),
+    status: { kind: h.kind, label: h.label, icon: h.icon },
+    runState: null, rec: null,
+    progress: (helpers ? helpers.phaseProgressPct(p.phase) : 0) / 100, danger: level === 'stuck',
+    when, href,
+  };
+}
+
 // ---- queue actions → normalized items ----
 const Q_ICON = {
   'gate-ready': 'task_alt', 'cards-to-review': 'edit_note', 'stuck-program': 'warning',
