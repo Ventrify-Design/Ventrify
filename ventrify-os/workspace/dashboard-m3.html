@@ -11,6 +11,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" rel="stylesheet">
 <link rel="stylesheet" href="../shared/m3/theme.css">
 <link rel="stylesheet" href="../shared/m3/ds.css">
+<link rel="stylesheet" href="../shared/m3/assess-editorial.css">
 <link rel="stylesheet" href="../shared/m3/transitions.css">
 <link rel="stylesheet" href="../shared/m3/workspace-chrome.css">
 </head>
@@ -120,25 +121,16 @@
     try { localStorage.setItem('workspace.dashView', JSON.stringify({ health: view.health, rec: view.rec, sort: view.sort })); } catch (e) {}
   }
 
-  // stats aligned to the DS portfolio.html example
-  const inFlightN = programs.filter(p => p.runState && ['queued', 'running', 'partial'].includes(p.runState.status)).length;
-  const verdictsN = programs.filter(p => p.assessment && p.assessment.recommendation).length;
-  const awaitingDeckN = programs.filter(p => p.engagementType === 'assessment' && !p.pitchDoc).length;
-  const stats = [
-    { n: String(totalPrograms), l: 'Active engagements' },
-    { n: String(inFlightN), l: 'Assessments in flight' },
-    { n: String(verdictsN), l: 'Verdicts ready' },
-    { n: String(awaitingDeckN), l: 'Awaiting a deck' },
-  ];
+  // the flat stat row is replaced by the editorial portfolio hero — DS.portfolioHero owns the derived numbers now
   const body = `<div class="brief">
     ${canCreateAny ? '' : planGateBanner(NEW_LABEL)}
-    <div class="ws-stats">${stats.map(DS.statCard).join('')}</div>
+    ${DS.portfolioHero(programs, {})}
     ${filterBarHTML()}
     <div id="ws-grid-host"></div>
   </div>`;
 
   mount(
-    DS.masthead({ eyebrow: 'Portfolio', headline: `All engagements · ${totalPrograms} active`, subheading: 'Every venture on your workspace — open one for the full hub view and timeline.', actions: canCreateAny ? [newAction] : [] }),
+    DS.masthead({ eyebrow: 'Portfolio', headline: (org && org.name) ? org.name : 'Portfolio', actions: canCreateAny ? [newAction] : [] }),
     body
   );
   renderGrid();

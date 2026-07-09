@@ -10,13 +10,14 @@
    ============================================================ */
 
   .brief {
+    width: 100%;                 /* fill the (column-flex) container so auto margins don't content-size it to a wide table */
     max-width: 1120px;
     margin: 0 auto;
     padding: 34px clamp(24px, 4.4vw, 64px) 120px;
   }
   /* inside the app shell the frame already provides the gutters — trim the brief's own padding.
      (scoped to .shell-main so the standalone mockup, which has no shell, keeps its full padding) */
-  .shell-main .brief { padding: 8px clamp(4px, 2vw, 28px) 96px; }
+  .shell-main .brief { padding: 8px clamp(4px, 2vw, 28px) 96px; min-width: 0; }   /* a flex item in .shell-body — without this it sizes to its widest child (a wide table) and overflows narrow screens */
 
   /* ---- rhythm: sections breathe on the background, hairline rules between ---- */
   .rule { height: 1px; background: var(--md-sys-color-outline-variant); border: none; opacity: .5; margin: 0; }
@@ -141,6 +142,7 @@
 
   /* ============ COVERAGE LOCKUP — big completeness numeral · confidence chip · demoted provenance row === */
   .coverage-lockup { text-align: left; }
+  .book-lockup { text-align: left; }
   .lockup-prov { margin-top: 20px; display: flex; flex-wrap: wrap; gap: 6px 14px; }
   .lockup-prov .unit { position: relative; font-size: 12.5px; color: var(--md-sys-color-on-surface-variant); }
   .lockup-prov .unit b { font-size: 16px; font-weight: 500; color: var(--md-sys-color-on-surface); font-variant-numeric: tabular-nums; margin-right: 5px; }

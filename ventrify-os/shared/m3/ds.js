@@ -525,6 +525,45 @@ export function coverageLockup(opts = {}) {
   </div>`;
 }
 
+// bookLockup — MOLECULE. profileLockup's sibling for a whole PORTFOLIO read as a verdict: a positive-anchored
+// on-plan numeral + a derived verdict band + the health mix as split chips + a weighted strip (one pip per
+// venture up to pipMax, then a weighted 3-tone strip so 40 ventures never render 40 hairlines) + profileLockup's
+// now→potential cap where +delta is exactly the ventures needing the operator. Everything derives from
+// health{onTrack,attention,stuck}; every override is optional. Fronts the Portfolio screen.
+export function bookLockup(opts = {}) {
+  const {
+    label = 'Health of the book', onPlan, total, health,
+    verdict, verdictTone, verdictIcon = 'monitoring',
+    split, segments, now, potential, capNow = 'Running clean', capPot = 'At plan',
+    pipMax = 12, figures = [],
+  } = opts;
+  const h = health || {}, onT = h.onTrack || 0, att = h.attention || 0, stk = h.stuck || 0;
+  const tot = total != null ? total : (onT + att + stk);
+  const plan = onPlan != null ? onPlan : onT;
+  let vb = verdict, vt = verdictTone;
+  if (vb == null) {
+    if (tot === 0) { vb = 'Nothing on the book yet'; vt = 'mid'; }
+    else if (stk > 0) { vb = stk === 1 ? 'Holding — one stuck' : `Holding — ${stk} stuck`; vt = 'mid'; }   // headline stays mid; the strip carries the red
+    else if (att > 0) { vb = 'Needs attention'; vt = 'mid'; }
+    else { vb = 'On plan'; vt = 'good'; }
+  }
+  const sp = split || [{ tone: 'good', count: onT, label: 'on track' }, { tone: 'mid', count: att, label: 'attention' }, { tone: 'bad', count: stk, label: 'stuck' }];
+  let sg = segments;
+  if (!sg) sg = (tot > 0 && tot <= pipMax)
+    ? [...Array(onT).fill('good'), ...Array(att).fill('mid'), ...Array(stk).fill('bad')].map(t => ({ tone: t, w: 1 }))   // one pip per venture (good→mid→bad)
+    : [{ tone: 'good', w: onT }, { tone: 'mid', w: att }, { tone: 'bad', w: stk }].filter(x => x.w);                     // weighted 3-tone, scales to 40
+  const nw = now != null ? now : plan, pt = potential != null ? potential : tot, delta = pt - nw;
+  return `<div class="book-lockup">
+    <span class="eyebrow accent">${esc(label)}</span>
+    <div class="lockup-num">${esc(String(plan))}<small>/${esc(String(tot))} on plan</small></div>
+    ${vb ? `<span class="lockup-band ${vt}"><span class="material-symbols-rounded">${verdictIcon}</span> ${esc(vb)}</span>` : ''}
+    <div class="profile-split">${sp.filter(x => x.count).map(x => `<span class="lockup-band ${x.tone}"><b>${esc(String(x.count))}</b> ${esc(x.label)}</span>`).join('')}</div>
+    <div class="profile-strip">${sg.map(x => `<span class="seg ${x.tone}" style="flex:${x.w || 1} 1 0"></span>`).join('')}</div>
+    <div class="lockup-cap"><span>${esc(capNow)} <b>${esc(String(nw))}</b></span><span>${esc(capPot)} <b>${esc(String(pt))}</b>${delta > 0 ? ` <span class="up">+${delta}</span>` : ''}</span></div>
+    ${figures.length ? `<div class="lockup-prov">${figures.map(f => `<span class="unit"><b>${esc(String(f.v))}</b> ${esc(f.k)}</span>`).join('')}</div>` : ''}
+  </div>`;
+}
+
 // statementLockup — MOLECULE. An eyebrow-marked headline with supporting facts — the "what" half of a
 // sectionHero (the verdict on the assess page). Extractable + previewable on its own, symmetric with
 // scoreLockup. Generic + defaults; eyebrow icon and facts are optional.
@@ -564,6 +603,85 @@ export function sectionHero(opts = {}) {
       <div class="divide"></div>
       <div class="right">${rightHtml}</div>
     </section>${thesis ? `<p class="lead"><span class="drop">${esc(thesisLabel)}</span> ${esc(thesis)}</p>` : ''}`;
+}
+
+// ---- portfolio hero (the editorial section-hero for the Portfolio screen — same organism as the assess tabs) ----
+// portfolioMetrics — the ONE place the portfolio numbers are computed (single-source; replaces the old inline stats).
+function portfolioMetrics(programs = []) {
+  const nm = p => p.name || 'a venture';
+  const total = programs.length;
+  const onTrack = programs.filter(p => p.health === 'on-track').length;
+  const attention = programs.filter(p => p.health === 'attention').length;
+  const stuck = programs.filter(p => p.health === 'stuck').length;
+  const builds = programs.filter(p => p.engagementType !== 'assessment').length;
+  const assessments = total - builds;
+  const verdicts = programs.filter(p => p.assessment && p.assessment.recommendation);
+  const worst = programs.find(p => p.health === 'stuck') || programs.find(p => p.health === 'attention') || null;
+  const ready = verdicts[0] || null;
+  return {
+    total, onTrack, attention, stuck, builds, assessments,
+    needsYou: attention + stuck, verdictsReady: verdicts.length,
+    worstName: worst ? nm(worst) : null,
+    readyName: ready ? nm(ready) : null, readyRec: ready ? ready.assessment.recommendation : null,
+  };
+}
+// bookHeadline — the editorial headline as a pure fn of the metrics; `em` is always a verbatim substring of
+// `headline` (statementLockup emphasises it). Reads across empty / 1 / 7 / 40-venture books; the em always
+// points at the single highest-severity fact so even a rough book leads with "N running clean", not a crisis.
+function bookHeadline(m) {
+  const { total, onTrack, stuck, attention, verdictsReady, worstName } = m;
+  const word = n => NUMWORD[n] ?? String(n);
+  const cap = w => String(w).charAt(0).toUpperCase() + String(w).slice(1);
+  if (total === 0) return { headline: 'Nothing on the book yet — add your first engagement to begin.', em: null };
+  if (total === 1) {
+    if (stuck) return { headline: 'The one venture on the book is stuck cold.', em: 'stuck cold' };
+    if (attention) return { headline: 'The one venture on the book needs a nudge.', em: 'needs a nudge' };
+    if (verdictsReady) return { headline: 'One venture on the book — its verdict is ready to read.', em: 'ready to read' };
+    return { headline: 'One venture on the book, building to plan.', em: null };
+  }
+  const subject = `${cap(word(total))} ventures on the book`;
+  const clean = onTrack === total ? 'all running clean' : onTrack > 0 ? `${word(onTrack)} running clean` : 'none running clean yet';
+  let em = null, headline;
+  if (stuck > 0) { em = worstName ? `${worstName} is stuck` : (stuck === 1 ? 'one is stuck' : `${stuck} are stuck`); headline = `${subject} — ${clean}, and ${em}.`; }
+  else if (attention > 0) { em = attention === 1 ? 'one needs a nudge' : `${attention} need a nudge`; headline = `${subject} — ${clean}, and ${em}.`; }
+  else if (verdictsReady) { em = verdictsReady === 1 ? 'one verdict to read' : `${verdictsReady} verdicts to read`; headline = `${subject} — ${clean}, and ${em}.`; }
+  else { headline = `${subject}, ${clean}.`; }
+  return { headline, em };
+}
+// bookFacts — the LEFT statement's fact chips; every number named to a real venture so the hero is auditable.
+// `v` is rendered raw by statementLockup, so venture names/recommendations (user data) are esc()'d here.
+function bookFacts(m) {
+  const f = [{ k: 'The book', v: `${m.total} active <small>${m.builds} build · ${m.assessments} assess</small>` }];
+  f.push(m.needsYou > 0
+    ? { k: 'Needs you', v: `${m.needsYou} of ${m.total} <small>${[m.stuck ? `${m.stuck} stuck` : null, m.attention ? `${m.attention} attention` : null].filter(Boolean).join(' · ')}</small>` }
+    : { k: 'Health', v: `${m.onTrack} of ${m.total} <small>on track</small>` });
+  if (m.verdictsReady > 0) f.push({ k: 'Verdict ready', v: `${esc(m.readyName)}${m.readyRec ? ` <small>${esc(m.readyRec)}</small>` : ''}` });
+  return f;
+}
+// bookThesis — the derived .lead/.drop coda. Returned RAW (sectionHero esc()'s the thesis).
+function bookThesis(m) {
+  if (m.stuck > 0) return `A small, deliberate book — most of it running to plan, with one clear call this week: unblock ${m.worstName}${m.verdictsReady ? ` and rule on ${m.readyName}` : ''}.`;
+  if (m.attention > 0) return `The book is on plan bar ${m.needsYou === 1 ? 'a single venture' : `${m.needsYou} ventures`} that want a nudge — steady ${m.worstName || 'them'} and it's a clean sheet.`;
+  return `The whole book is running to plan — ${m.total} venture${m.total === 1 ? '' : 's'}, nothing outstanding.`;
+}
+// portfolioHero — ORGANISM. The Portfolio screen's editorial section-hero: a statementLockup that reads the book
+// in one auditable sentence (LEFT) beside bookLockup (RIGHT), closed by a derived thesis coda. Same organism the
+// assessment tabs use, re-pointed from a single verdict to the whole book.
+export function portfolioHero(programs = [], ctx = {}) {
+  const m = portfolioMetrics(programs);
+  const eyebrow = ctx.orgName ? ctx.orgName : 'Your book';
+  if (m.total === 0) {
+    return sectionHero({
+      left: statementLockup({ eyebrow, eyebrowIcon: 'account_balance', headline: 'Nothing on the book yet — add your first engagement to begin.', headlineEm: null, facts: [] }),
+      right: '', thesis: '',
+    });
+  }
+  const { headline, em } = bookHeadline(m);
+  return sectionHero({
+    left: statementLockup({ eyebrow, eyebrowIcon: 'account_balance', headline, headlineEm: em, facts: bookFacts(m) }),
+    right: bookLockup({ total: m.total, onPlan: m.onTrack, health: { onTrack: m.onTrack, attention: m.attention, stuck: m.stuck } }),
+    thesisLabel: 'The read.', thesis: bookThesis(m),
+  });
 }
 
 // metricRow — the ONE shared row for the Investability tab. Both the composition table AND the
