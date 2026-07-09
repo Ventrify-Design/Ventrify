@@ -49,7 +49,8 @@ const RUN = {
 export function adaptProgram(p, ctx = {}) {
   const { helpers, A, useLive } = ctx;
   const isAssess = p.engagementType === 'assessment';
-  const href = `program.html?id=${encodeURIComponent(p.id)}`;
+  // assessment engagements open the fully-interactive M3 detail; builds still open the classic detail
+  const href = `${isAssess ? 'assess-next.html' : 'program.html'}?id=${encodeURIComponent(p.id)}`;
   const avatar = { initials: p.founderAvatar || (p.name || 'V').slice(0, 2).toUpperCase(), color: p.founderAvatarColor || '' };
   const runState = p.runState ? (RUN[p.runState.status] || null) : null;
 

@@ -3,160 +3,281 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Assessment · new UI preview — Ventrify OS</title>
-<meta name="description" content="Preview of the Material-3 editorial assessment UI, rendered from the live engagement data.">
+<title>Assessment — Ventrify OS</title>
+<meta name="description" content="The Material-3 operator assessment detail, on live engagement data.">
 <script>try{if(localStorage.getItem("ventrify-theme")==="light")document.documentElement.classList.add("light")}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" rel="stylesheet">
-<!-- the M3 render layer now lives at ../shared/m3/ (a DEPLOYING location) -->
 <link rel="stylesheet" href="../shared/m3/theme.css">
 <link rel="stylesheet" href="../shared/m3/ds.css">
 <link rel="stylesheet" href="../shared/m3/assess-editorial.css">
 <link rel="stylesheet" href="../shared/m3/transitions.css">
+<link rel="stylesheet" href="../shared/m3/workspace-chrome.css">
 </head>
 <body>
 <div id="app"></div>
-<!-- SAME bootstrap as program.html: sample fixtures (demo) + agents + the auth/org loader. -->
+<input type="file" id="ea-file" hidden>
 <script src="sample-data.js"></script>
 <script src="agents.js"></script>
 <script type="module" src="app.js"></script>
 <script type="module">
-  // ── Stage 1 of the M3 migration: a FLAGGED, side-by-side preview. It reads the exact same
-  // live engagement data as program.html (no pipeline change), maps it through the READ-ONLY
-  // adapter, and renders the M3 editorial UI. program.html is untouched; revert = delete this file.
+  // The M3 assessment DETAIL — a full operator surface (not a preview): it reads the same live
+  // engagement data as program.html AND drives the same run/dispatch/ingest/memo pipeline, via the
+  // shared engagement-actions.js module (every /api call is verbatim). No pipeline reimplementation.
   import * as DS from '../shared/m3/ds.js';
   import { adaptEngagement } from '../shared/m3/adapter.js';
   import { resolveActions } from '../shared/actions.js';
-
-  // The live workspace's routes differ from the DS workshop's — supply real destinations for the drawer.
-  const WS_NAV = [
-    { key: 'portfolio', icon: 'dashboard', label: 'Portfolio', section: 'Operate', href: 'dashboard.html' },
-    { key: 'queue', icon: 'checklist', label: 'Action queue', section: 'Operate', href: 'queue.html' },
-    { key: 'team', icon: 'group', label: 'Team', section: 'Manage', href: 'team.html' },
-    { key: 'settings', icon: 'settings', label: 'Settings', section: 'Manage', href: 'settings.html' }
-  ];
+  import { wsNavConfig, wsBrandConfig, wsAccountConfig, mountOrgSwitcherM3 } from './workspace-m3.js';
+  import * as EA from './engagement-actions.js';
+  import { dealMemoHTML } from './memo-view.js';
 
   await window.WORKSPACE_READY;
   const W = window.WORKSPACE;
-  const allPrograms = W.programs || [];
   const params = new URLSearchParams(location.search);
-  const fallback = allPrograms[0] || null;
-  const id = params.get('id') || (fallback && fallback.id);
-  const p = allPrograms.find(x => x.id === id) || fallback;
+  const allPrograms = W.programs || [];
+  const id = params.get('id') || (allPrograms[0] || {}).id;
+  let p = allPrograms.find(x => x.id === id) || allPrograms[0] || null;
+  const live = W.mode === 'live';
+  const acts = resolveActions({ page: 'assess' });
 
-  // Guard: nothing to show
   if (!p) {
     document.getElementById('app').outerHTML = DS.pageShell({
-      active: 'portfolio', nav: WS_NAV,
+      active: 'portfolio', nav: wsNavConfig(), brand: wsBrandConfig(), account: wsAccountConfig(),
       masthead: DS.masthead({ eyebrow: 'Assessment', headline: 'No engagement loaded', subheading: 'There is no engagement at this URL yet.' }),
-      body: `<div class="brief"><div class="m3-card" style="text-align:center;padding:48px 24px"><div class="title-l">No engagement loaded</div><div class="body-m variant" style="margin-top:6px">Open one from your <a href="dashboard.html">portfolio</a>.</div></div></div>`
+      body: `<div class="brief"><div class="m3-card" style="text-align:center;padding:48px 24px"><div class="title-l">No engagement loaded</div><div class="body-m variant" style="margin-top:6px">Open one from your <a href="dashboard-m3.html">portfolio</a>.</div></div></div>`
     });
-    DS.initShell();
+    DS.initShell(); mountOrgSwitcherM3();
     throw new Error('halt-render');
   }
 
-  // ── Live data — IDENTICAL reads to program.html. Demo/local mode uses the fixtures already on p. ──
-  const live = W.mode === 'live';
-  let invSnapshot = p.investabilitySnapshot || null, provCards = p.provCards || [], hubDocs = p.hubDocs || [];
-  if (live) {
+  // ── mutable live data (refreshed after actions / on subscription tick) ──
+  let invSnapshot = null, provCards = [], hubDocs = [], A = null, S = null;
+  async function loadData() {
+    invSnapshot = p.investabilitySnapshot || null; provCards = p.provCards || []; hubDocs = p.hubDocs || [];
+    if (live) {
+      try {
+        const data = await import('../firebase/data.js');
+        const snaps = await data.listInvestabilitySnapshots(p.id); invSnapshot = snaps.length ? snaps[snaps.length - 1] : invSnapshot;
+        provCards = await data.listCardsForEngagement(p.id);
+        hubDocs = await data.listHubDocs(p.id);
+      } catch (e) { console.warn('live assessment data load failed', e); }
+    }
+    ({ A, S } = adaptEngagement({ ...p, investabilitySnapshot: invSnapshot, provCards, hubDocs }));
+  }
+
+  // ── run / deck state (?sim= keeps the inert preview override) ──
+  function stateBits() {
+    const sim = params.get('sim');
+    const rs = { ...(p.runState || {}) };
+    let fNoVerdict = false, fNoDeck = false, fNoSnap = false;
+    if (sim) {
+      if (sim === 'nodeck') { rs.status = 'idle'; fNoDeck = fNoVerdict = fNoSnap = true; }
+      else if (sim === 'idle') { rs.status = 'idle'; fNoVerdict = fNoSnap = true; }
+      else if (sim === 'queued') { rs.status = 'queued'; fNoVerdict = fNoSnap = true; }
+      else { rs.status = sim; if (['running', 'partial'].includes(sim)) fNoVerdict = true; }
+    }
+    const status = rs.status || (A.recommendation ? 'done' : 'idle');
+    return {
+      rs, status,
+      active: ['queued', 'running', 'partial'].includes(status),
+      flagged: ['needs-attention', 'limit-paused', 'error'].includes(status),
+      recoverable: ['needs-attention', 'error', 'limit-paused'].includes(status),
+      hasVerdict: !!A.recommendation && !fNoVerdict,
+      hasDeck: !!p.pitchDoc && !fNoDeck,
+      snap: fNoSnap ? null : invSnapshot,
+      signed: !!p.assessmentSignoff,
+    };
+  }
+
+  // ── ACTIONS (wired to the shared pipeline module) ──
+  const fileInput = document.getElementById('ea-file');
+  window.__eaUpload = (docType) => {
+    fileInput.dataset.docType = docType;
+    fileInput.accept = docType === 'pitch' ? '.pdf,.docx' : '.pdf,.docx,.xlsx,.xls,.xlsm,.txt,.md,.csv,.zip';
+    fileInput.multiple = docType !== 'pitch';
+    fileInput.click();
+  };
+  fileInput.onchange = async () => {
+    const files = [...(fileInput.files || [])]; const docType = fileInput.dataset.docType; fileInput.value = '';
+    if (!files.length) return;
+    window.__toast('Uploading…');
     try {
-      const data = await import('../firebase/data.js');
-      const snaps = await data.listInvestabilitySnapshots(p.id); invSnapshot = snaps.length ? snaps[snaps.length - 1] : invSnapshot;
-      provCards = await data.listCardsForEngagement(p.id);
-      hubDocs = await data.listHubDocs(p.id);
-    } catch (e) { console.warn('live assessment data load failed', e); }
+      const { ingested, skipped } = await EA.ingestDocs({ engagementId: p.id, files, docType, onProgress: m => window.__toast(m) });
+      if (skipped.length) window.__toast(`Couldn’t ingest ${skipped.length}: ${skipped.map(s => s.name).join(', ')}`, true);
+      else window.__toast(docType === 'pitch' ? 'Pitch deck added.' : `Ingested ${ingested} document${ingested === 1 ? '' : 's'}.`);
+      setTimeout(() => location.reload(), skipped.length ? 1600 : 700);
+    } catch (e) { window.__toast('Upload failed: ' + ((e && e.message) || e), true); }
+  };
+  const busy = b => { const btn = document.querySelector('.mh-actions .m3-btn.filled'); if (btn) { btn.disabled = b; btn.style.opacity = b ? '0.6' : ''; } };
+  window.__eaRun = async () => { if (await EA.dispatchRun({ engagementId: p.id, phase: 'assess', onBusy: busy })) { window.__toast('Assessment queued — this runs in the cloud.'); if (!live) setTimeout(() => location.reload(), 800); } };
+  window.__eaRepublish = async () => { if (await EA.republish({ engagementId: p.id, onBusy: busy })) { window.__toast('Recovering your saved results…'); if (!live) setTimeout(() => location.reload(), 800); } };
+  window.__eaDownload = () => EA.downloadMemo({ p, snap: invSnapshot, org: W.org });
+  window.__eaDelete = async () => {
+    if (!(await window.__confirm({ title: `Delete “${p.name}” permanently?`, message: 'This removes the assessment and all its data. This cannot be undone.', confirmLabel: 'Delete', danger: true }))) return;
+    try { await EA.deleteEngagement({ engagementId: p.id }); location.href = 'dashboard-m3.html'; }
+    catch (e) { window.__toast('Could not delete: ' + ((e && (e.code || e.message)) || e), true); }
+  };
+  window.__eaSignoff = () => {
+    const cur = p.assessmentSignoff;
+    window.openAux({
+      mode: 'push', title: cur ? 'Update sign-off' : 'Sign off & endorse', subtitle: 'Operator endorsement',
+      body: `<div style="padding:4px 2px">
+        <div class="body-m" style="color:var(--md-sys-color-on-surface-variant);margin-bottom:12px">Your name and today’s date appear on the assessment and any shared memo, marking it reviewed.</div>
+        <textarea id="ea-so-note" class="field-in" rows="4" placeholder="Optional — your take for the IC." style="width:100%;box-sizing:border-box;resize:vertical">${cur && cur.note ? cur.note.replace(/</g, '&lt;') : ''}</textarea>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+          ${cur ? `<button class="m3-btn text" onclick="window.__eaRevokeSignoff()">Revoke</button>` : ''}
+          <button class="m3-btn filled" onclick="window.__eaDoSignoff()">${cur ? 'Update' : 'Sign off'}</button>
+        </div></div>`
+    });
+  };
+  window.__eaDoSignoff = async () => {
+    const note = (document.getElementById('ea-so-note') || {}).value || '';
+    try { const so = await EA.signOff({ engagementId: p.id, note: note.trim() || null }); p.assessmentSignoff = so; window.closeAux && window.closeAux(); window.__toast('Signed off — your endorsement now appears on the memo.'); refresh(); }
+    catch (e) { window.__toast('Could not sign off: ' + ((e && (e.code || e.message)) || e), true); }
+  };
+  window.__eaRevokeSignoff = async () => {
+    try { await EA.revokeSignoff({ engagementId: p.id }); p.assessmentSignoff = null; window.closeAux && window.closeAux(); window.__toast('Sign-off revoked.'); refresh(); }
+    catch (e) { window.__toast('Could not revoke: ' + ((e && (e.code || e.message)) || e), true); }
+  };
+  window.__eaShare = async () => {
+    window.__toast('Preparing the share link…');
+    try {
+      const html = dealMemoHTML(p, invSnapshot, W.org, { shared: true });
+      const me = (W.helpers && W.helpers.currentOperator && W.helpers.currentOperator()) || {};
+      const pct = invSnapshot && invSnapshot.pct != null ? invSnapshot.pct : null;
+      const d = await EA.shareMemo({ engagementId: p.id, html, meta: { name: p.name, pct } });
+      p.shareLink = { token: d.token, by: me.email || null, at: new Date().toISOString(), pct };
+      const url = d.url || (location.origin + '/m/' + d.token);
+      window.openAux({
+        mode: 'push', title: 'Shareable memo link', subtitle: 'Read-only · no login',
+        body: `<div style="padding:4px 2px">
+          <div class="body-m" style="color:var(--md-sys-color-on-surface-variant);margin-bottom:12px">Anyone with this link sees a read-only copy of the deal memo. Re-share after a re-run by hitting Share again — the link stays the same.</div>
+          <label class="m3-search" style="max-width:none"><input id="ea-sh-url" readonly value="${String(url).replace(/"/g, '&quot;')}"></label>
+          <div style="display:flex;gap:8px;justify-content:space-between;margin-top:14px">
+            <button class="m3-btn text" onclick="window.__eaRevokeShare()" style="color:var(--md-sys-color-error)">Revoke link</button>
+            <span style="display:flex;gap:8px"><a class="m3-btn text" href="${String(url).replace(/"/g, '&quot;')}" target="_blank" rel="noopener">Open</a><button class="m3-btn filled" onclick="window.__eaCopyShare()">Copy</button></span>
+          </div></div>`
+      });
+    } catch (e) { window.__toast('Could not create the share link: ' + ((e && (e.code || e.message)) || e), true); }
+  };
+  window.__eaCopyShare = () => { const i = document.getElementById('ea-sh-url'); if (i) { navigator.clipboard && navigator.clipboard.writeText(i.value); window.__toast('Link copied.'); } };
+  window.__eaRevokeShare = async () => {
+    try { await EA.revokeShare({ engagementId: p.id }); p.shareLink = null; window.closeAux && window.closeAux(); window.__toast('Share link revoked.'); }
+    catch (e) { window.__toast('Could not revoke: ' + ((e && (e.code || e.message)) || e), true); }
+  };
+  // "More" — the management overflow (delete + re-run + republish + sign-off) as an aux panel.
+  window.__eaMore = () => {
+    const st = stateBits();
+    const item = (icon, label, onclick, danger) => `<button class="m3-btn text" style="justify-content:flex-start;width:100%;${danger ? 'color:var(--md-sys-color-error)' : ''}" onclick="window.closeAux&&window.closeAux();${onclick}"><span class="material-symbols-rounded">${icon}</span>${label}</button>`;
+    const rows = [
+      st.hasVerdict ? item('verified', st.signed ? 'Update sign-off' : 'Sign off & endorse', 'window.__eaSignoff()') : '',
+      (st.hasDeck && !st.active) ? item('restart_alt', st.hasVerdict ? 'Re-run assessment' : 'Run assessment', 'window.__eaRun()') : '',
+      st.recoverable ? item('restore', 'Republish saved results', 'window.__eaRepublish()') : '',
+      st.hasDeck ? item('upload_file', 'Add data-room documents', "window.__eaUpload('dataroom')") : '',
+      item('delete', 'Delete engagement', 'window.__eaDelete()', true),
+    ].filter(Boolean).join('');
+    window.openAux({ mode: 'push', title: 'Manage', subtitle: p.name, body: `<div style="display:flex;flex-direction:column;gap:4px;padding:4px 2px">${rows}</div>` });
+  };
+
+  // ── masthead actions (≤3, ≤1 filled) ──
+  function mastheadActions(st) {
+    const A_MORE = { variant: 'text', icon: 'more_vert', label: 'Manage', onclick: 'window.__eaMore()' };
+    if (!st.hasDeck) return [{ variant: 'filled', icon: 'upload_file', label: 'Upload deck', onclick: "window.__eaUpload('pitch')" }, A_MORE];
+    if (st.active) return st.hasVerdict ? [{ variant: 'filled', icon: 'download', label: 'Deal memo', onclick: 'window.__eaDownload()' }, { variant: 'text', icon: 'share', label: 'Share', onclick: 'window.__eaShare()' }, A_MORE] : [A_MORE];
+    if (st.hasVerdict) return [{ variant: 'filled', icon: 'download', label: 'Deal memo', onclick: 'window.__eaDownload()' }, { variant: 'text', icon: 'share', label: 'Share', onclick: 'window.__eaShare()' }, A_MORE];
+    if (st.recoverable) return [{ variant: 'filled', icon: 'restore', label: 'Republish', onclick: 'window.__eaRepublish()' }, { variant: 'text', icon: 'restart_alt', label: 'Re-run', onclick: 'window.__eaRun()' }, A_MORE];
+    return [{ variant: 'filled', icon: 'play_arrow', label: 'Run assessment', onclick: 'window.__eaRun()' }, A_MORE];   // idle + deck
+  }
+  function statusPill(st) {
+    if (st.hasVerdict) return A.status;
+    if (st.active) return { kind: 'n', label: 'Assessing…', icon: 'autorenew' };
+    if (st.flagged) return { kind: 'n', label: 'Needs attention', icon: 'warning' };
+    return { kind: 'n', label: st.hasDeck ? 'Ready to run' : 'Awaiting deck', icon: 'pending' };
   }
 
-  // ── Adapt (read-only) → the M3 ASSESSMENT + SCORE shapes ──
-  const pForAdapter = { ...p, investabilitySnapshot: invSnapshot, provCards, hubDocs };
-  const { A, S } = adaptEngagement(pForAdapter);
-
-  const acts = resolveActions({ page: 'assess' });
-  const classicHref = `program.html?id=${encodeURIComponent(p.id)}`;
-  // Bridge back to the classic page — the preview is read-only; runs, uploads and recovery live there.
-  const classicAction = { variant: 'text', icon: 'arrow_back', label: 'Classic view', onclick: `location.href='${classicHref}'` };
-
-  // ── Run / lifecycle state — mirrors program.html's assess run-state machine. ──
-  // ?sim=<status> is an INERT preview override (queued|running|partial|needs-attention|
-  // limit-paused|error|idle|nodeck) so any run state is previewable on demo data.
-  const sim = params.get('sim');
-  const rs = { ...(p.runState || {}) };
-  let forceNoVerdict = false, forceNoDeck = false, forceNoSnap = false;
-  if (sim) {
-    if (sim === 'nodeck') { rs.status = 'idle'; forceNoDeck = forceNoVerdict = forceNoSnap = true; }
-    else if (sim === 'idle') { rs.status = 'idle'; forceNoVerdict = forceNoSnap = true; }
-    else if (sim === 'queued') { rs.status = 'queued'; forceNoVerdict = forceNoSnap = true; }
-    else { rs.status = sim; if (['running', 'partial'].includes(sim)) forceNoVerdict = true; }
-  }
-  const snapForDisplay = forceNoSnap ? null : invSnapshot;   // a not-yet-run engagement has no snapshot to show
-  const status = rs.status || (A.recommendation ? 'done' : 'idle');
-  const active = ['queued', 'running', 'partial'].includes(status);
-  const flagged = ['needs-attention', 'limit-paused', 'error'].includes(status);
-  const hasVerdict = !!A.recommendation && !forceNoVerdict;
-  const hasDeck = !!p.pitchDoc && !forceNoDeck;
-
-  // Where to go to act — every control (run / upload / recover) lives on the classic page.
-  function bridgeNote() {
-    let msg, icon = 'bolt', warn = false;
-    if (!hasDeck) { msg = 'No pitch deck yet — the assessment can’t run without one. Upload it on the classic view.'; icon = 'upload_file'; warn = true; }
-    else if (active) { msg = 'This assessment is running. Live progress and the full controls are on the classic view.'; icon = 'autorenew'; }
-    else if (flagged) { msg = 'This run needs attention — recover or re-run it from the classic view.'; icon = 'warning'; warn = true; }
-    else { msg = 'Ready to run — start the assessment from the classic view.'; icon = 'play_arrow'; }
-    return `<div class="m3-card" style="display:flex;align-items:center;gap:14px;margin-top:16px;padding:16px 18px">
-      <span class="material-symbols-rounded" style="color:var(--md-sys-color-${warn ? 'error' : 'primary'})">${icon}</span>
-      <div style="flex:1" class="body-m">${msg}</div>
-      <a class="m3-btn text trail" href="${classicHref}" style="flex:none"><span class="material-symbols-rounded">chevron_right</span>Classic view</a>
-    </div>`;
-  }
-
-  // The "not scored yet" view — run banner (only for a genuine run state; idle/not-run has none,
-  // so it never shows a misleading "Queued") + bridge + a forming score (if one exists) + the lifecycle.
-  function statusView() {
-    const banner = (active || flagged) ? DS.runBanner(rs) : '';
-    const forming = snapForDisplay ? `<hr class="rule"><div class="overline" style="margin-bottom:12px">The score, forming</div>${DS.investabilityComposition(S, 'openInvest')}` : '';
+  // ── body ──
+  function statusBody(st) {
+    const banner = (st.active || st.flagged) ? DS.runBanner(st.rs) : '';
+    let note = '';
+    if (!st.hasDeck) note = `<div class="m3-card" style="display:flex;align-items:center;gap:14px;margin-top:16px;padding:18px"><span class="material-symbols-rounded" style="color:var(--md-sys-color-primary)">upload_file</span><div style="flex:1" class="body-m">Upload a pitch deck to run the assessment — it underpins the ask and the thesis.</div><button class="m3-btn filled" onclick="window.__eaUpload('pitch')"><span class="material-symbols-rounded">upload_file</span>Upload deck</button></div>`;
+    else if (!st.active && !st.flagged) note = `<div class="m3-card" style="display:flex;align-items:center;gap:14px;margin-top:16px;padding:18px"><span class="material-symbols-rounded" style="color:var(--md-sys-color-primary)">play_arrow</span><div style="flex:1" class="body-m">Deck ready. Run the assessment — the agents research, score and draft the verdict.</div><button class="m3-btn filled" onclick="window.__eaRun()"><span class="material-symbols-rounded">play_arrow</span>Run assessment</button></div>`;
+    else if (st.flagged) note = `<div class="m3-card" style="display:flex;align-items:center;gap:14px;margin-top:16px;padding:18px"><span class="material-symbols-rounded" style="color:var(--warning,#C77700)">warning</span><div style="flex:1" class="body-m">The run needs attention — your results are saved. Republish to re-apply them, or re-run.</div><span style="display:flex;gap:8px"><button class="m3-btn filled" onclick="window.__eaRepublish()">Republish</button><button class="m3-btn text" onclick="window.__eaRun()">Re-run</button></span></div>`;
+    const forming = st.snap ? `<hr class="rule"><div class="overline" style="margin-bottom:12px">The score, forming</div>${DS.investabilityComposition(S, 'openInvest')}` : '';
     const life = `<hr class="rule"><div class="overline" style="margin-bottom:12px">Assessment lifecycle</div>${DS.lifecycleStrip(A.lifecycle)}`;
-    return `<div class="brief">${banner}${bridgeNote()}${forming}${life}</div>`;
+    return `<div class="brief"><div id="ea-status">${banner}</div>${note}${forming}${life}</div>`;
   }
-
-  let body, tabs = false;
-  if (hasVerdict) {
-    // Verdict exists → the full editorial view. A re-run in flight / a flagged state leads with a slim banner.
-    const slim = (active || flagged) ? `<div class="brief" style="padding-bottom:0;margin-bottom:4px">${DS.runBanner(rs)}</div>` : '';
-    tabs = ['Verdict', 'Investability', 'Market', 'Team', 'Diligence', 'Research'];
-    body = `
+  function verdictTabs(st) {
+    const slim = (st.active || st.flagged) ? `<div class="brief" style="padding-bottom:0;margin-bottom:4px" id="ea-status">${DS.runBanner(st.rs)}</div>` : '<span id="ea-status"></span>';
+    return `
       <div class="tab-panel active">${slim}${DS.verdictMemo(A, S)}</div>
       <div class="tab-panel"><div class="brief">${DS.investabilityHero(S, A)}<hr class="rule">${DS.investabilityComposition(S, 'openInvest')}<hr class="rule">${DS.strengthProfile(S, 'openInvest')}</div></div>
       <div class="tab-panel">${DS.marketMemo(A)}</div>
       <div class="tab-panel">${DS.teamMemo(A)}</div>
       <div class="tab-panel">${DS.diligenceEditorial(A)}</div>
       <div class="tab-panel">${DS.researchMemo(A, S)}</div>`;
-  } else {
-    // No verdict yet → the run / forming status view (no editorial tabs).
-    body = `<div class="tab-panel active">${statusView()}</div>`;
   }
 
-  const statusPill = hasVerdict ? A.status
-    : (active ? { kind: 'n', label: 'Assessing…', icon: 'autorenew' }
-      : flagged ? { kind: 'n', label: 'Needs attention', icon: 'warning' }
-        : { kind: 'n', label: hasDeck ? 'Ready to run' : 'Awaiting deck', icon: 'pending' });
+  // ── paint: mount once; refresh reloads on the verdict transition, else swaps masthead + body in place ──
+  let mounted = false, lastVerdict = null;
+  function paint() {
+    const st = stateBits();
+    const tabs = st.hasVerdict ? ['Verdict', 'Investability', 'Market', 'Team', 'Diligence', 'Research'] : false;
+    const bodyHtml = st.hasVerdict ? verdictTabs(st) : `<div class="tab-panel active">${statusBody(st)}</div>`;
+    const mh = DS.masthead({
+      breadcrumb: { label: 'Portfolio', href: 'dashboard-m3.html' }, crumbTail: A.name, avatar: A.initials,
+      headline: A.name, status: statusPill(st), subheading: A.stageLine, compact: A.name,
+      actions: mastheadActions(st), tabs, activeTab: 0
+    });
+    if (!mounted) {
+      document.getElementById('app').outerHTML = DS.pageShell({
+        active: 'portfolio', nav: wsNavConfig(), brand: wsBrandConfig(), account: wsAccountConfig(),
+        aux: {}, rail: acts.rail, railOverflow: acts.overflow, masthead: mh, body: bodyHtml
+      });
+      DS.initShell(); mountOrgSwitcherM3(); mounted = true;
+    } else {
+      const main = document.querySelector('.shell-main');
+      const oldMh = main.querySelector('.masthead'); if (oldMh) oldMh.outerHTML = mh;
+      const sb = main.querySelector('.shell-body'); if (sb) sb.innerHTML = bodyHtml;
+    }
+    if (tabs) DS.initTabs({ names: ['verdict', 'investability', 'market', 'team', 'diligence', 'research'] });
+    lastVerdict = st.hasVerdict;
+  }
+  async function refresh() {
+    await loadData();
+    // a verdict appearing/disappearing changes the masthead tab structure — a clean reload beats surgical DOM
+    if (mounted && stateBits().hasVerdict !== lastVerdict) { location.reload(); return; }
+    paint();
+  }
 
-  document.getElementById('app').outerHTML = DS.pageShell({
-    active: 'portfolio', nav: WS_NAV, aux: {}, rail: acts.rail, railOverflow: acts.overflow,
-    masthead: DS.masthead({
-      breadcrumb: { label: 'Portfolio', href: 'dashboard.html' }, crumbTail: A.name, avatar: A.initials,
-      headline: A.name, status: statusPill, subheading: A.stageLine, compact: A.name,
-      actions: [classicAction],
-      tabs, activeTab: 0
-    }),
-    body
-  });
-  DS.initShell();
-  if (tabs) DS.initTabs({ names: ['verdict', 'investability', 'market', 'team', 'diligence', 'research'] });
   window.openInvest = (key) => { const d = DS.categoryDetail(S, key); window.openAux({ mode: 'push', title: d.title, subtitle: d.subtitle, body: d.body }); };
   window.openPeek = () => {};
   window.RAIL_PANELS = { sources: () => DS.sourcesPanel(A) };
   window.openSources = () => window.openAux({ mode: 'push', ...DS.sourcesPanel(A) });
+  window.addDocuments = () => window.__eaUpload('dataroom');
+  window.rerunAssessment = () => window.__eaRun();
+
+  await loadData();
+  paint();
+
+  // ── live: reflect run progress without a full reload (targeted #ea-status), reload once when the verdict lands ──
+  if (live) {
+    try {
+      const data = await import('../firebase/data.js');
+      if (data.watchEngagement) {
+        data.watchEngagement(p.id, (eng) => {
+          if (!eng) return;
+          const hadVerdict = !!(p.assessment && p.assessment.recommendation);
+          Object.assign(p, eng);
+          const hasVerdict = !!(p.assessment && p.assessment.recommendation);
+          if (hasVerdict !== hadVerdict) { location.reload(); return; }   // structural change → clean reload
+          const st = stateBits();
+          const el = document.getElementById('ea-status');   // in-place run-banner refresh (no listener churn)
+          if (el) el.innerHTML = (st.active || st.flagged) ? DS.runBanner(st.rs) : '';
+        });
+      }
+    } catch (e) { console.warn('watchEngagement unavailable', e); }
+  }
 </script>
 </body>
 </html>

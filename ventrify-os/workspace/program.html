@@ -1424,10 +1424,7 @@
 
     function assessMainHTML() {
       return `
-        <div style="margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;">
-          <a href="dashboard.html" class="text-small dim" style="font-size:0.85rem;">&larr; All engagements</a>
-          <a href="assess-next.html?id=${encodeURIComponent(p.id)}" class="text-small" style="font-size:0.8rem;color:var(--brand,#6E3AFA);font-weight:600;display:inline-flex;align-items:center;gap:0.35rem;text-decoration:none;" title="Preview the new Material-3 assessment UI">&#10024; Preview new UI &rarr;</a>
-        </div>
+        <div style="margin-bottom:1rem;"><a href="dashboard-m3.html" class="text-small dim" style="font-size:0.85rem;">&larr; All engagements</a></div>
         <div class="program-detail-head">
           <div class="program-detail-identity">
             <div class="avatar avatar-lg" style="background:${p.founderAvatarColor || '#0036FF'};width:56px;height:56px;font-size:1.05rem;">${escBrief((p.name || 'V').slice(0, 2).toUpperCase())}</div>
