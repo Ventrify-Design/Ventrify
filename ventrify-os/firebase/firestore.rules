@@ -54,12 +54,12 @@ service cloud.firestore {
       // Update is open to founder/operator EXCEPT the server-managed integrity fields:
       //   • assessmentSignoff — the operator endorsement that rides into the shared memo;
       //   • shareLink        — the public share-link pointer.
-      // These are set ONLY by the Admin SDK (/api/sign-off, /api/share-memo), which
-      // bypasses these rules. Blocking them here stops a founder from forging a
-      // senior-partner sign-off (or a share link) via a hand-crafted SDK write.
+      // These are set ONLY by the Admin SDK (/api/memo), which bypasses these rules.
+      // Blocking them here stops a founder from forging a senior-partner sign-off, a
+      // share link, or an operator decision (confirm/decline) via a hand-crafted SDK write.
       allow update: if signedIn()
         && (userEmail() == resource.data.founderEmail || isOperatorOf(resource.data.orgId))
-        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['assessmentSignoff', 'shareLink']);
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['assessmentSignoff', 'shareLink', 'assessmentDecision']);
       // Creation is intentionally NOT allowed from the client. It goes through
       // /api/create-engagement (Admin SDK), which enforces the org's licence
       // capabilities + quota server-side — so the one-off / licence limits

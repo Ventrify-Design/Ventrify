@@ -146,6 +146,28 @@ export async function revokeSignoff({ engagementId } = {}) {
   if (!resp.ok) { const d = await resp.json().catch(() => ({})); throw new Error(d.detail || d.error || ('Revoke failed (' + resp.status + ')')); }
 }
 
+// ---- operator decision — confirm / decline the assessed deal (VERBATIM /api/memo action:decide|revoke-decision) ----
+export async function decide({ engagementId, decision, note = null } = {}) {
+  const token = await idToken();
+  if (!token) throw new Error('Please sign in again.');
+  const resp = await fetch('/api/memo', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ idToken: token, engagementId, action: 'decide', decision, note })
+  });
+  const d = await resp.json().catch(() => ({}));
+  if (!resp.ok) throw new Error(d.detail || d.error || ('Decision failed (' + resp.status + ')'));
+  return d.decision || null;
+}
+export async function revokeDecision({ engagementId } = {}) {
+  const token = await idToken();
+  if (!token) throw new Error('Please sign in again.');
+  const resp = await fetch('/api/memo', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ idToken: token, engagementId, action: 'revoke-decision' })
+  });
+  if (!resp.ok) { const d = await resp.json().catch(() => ({})); throw new Error(d.detail || d.error || ('Revoke failed (' + resp.status + ')')); }
+}
+
 // ---- shareable memo link (VERBATIM /api/memo action:share|revoke-share) ----
 // The caller builds the memo html via memo-view.dealMemoHTML(p, snap, org, {shared:true}) and passes it.
 export async function shareMemo({ engagementId, html, meta } = {}) {

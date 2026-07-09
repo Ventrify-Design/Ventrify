@@ -130,7 +130,14 @@ export function adaptEngagementRow(p, ctx = {}) {
     const rec = (hasVerdict && inv) ? { kind: bucket || 'consider', label: a.recommendation, icon: REC_ICON[bucket] || 'balance', score: String(inv.pct != null ? inv.pct : '—') } : null;
     // no verdict + not running + no deck → surface an "Awaiting deck" signal (idle run-state)
     const rowRun = runState || ((!hasVerdict && !hasDeck) ? { status: 'idle' } : null);
-    const status = (hasVerdict || hasDeck) ? { kind: 'ok', label: 'Assessment', icon: 'fact_check' } : { kind: 'n', label: 'Draft', icon: 'edit_note' };
+    // Status column carries the OPERATOR'S decision (confirm/decline) on top of the AI rec, which stays in the
+    // Progress/signal column. Green is reserved for a real Confirm; a declined deal is a clean neutral outcome.
+    const dec = p.assessmentDecision;
+    const status = !hasVerdict
+      ? (hasDeck ? { kind: 'n', label: 'In assessment', icon: 'fact_check' } : { kind: 'n', label: 'Draft', icon: 'edit_note' })
+      : (dec && dec.decision === 'confirmed') ? { kind: 'ok', label: 'Confirmed', icon: 'check_circle', title: dec.by ? 'Confirmed by ' + dec.by : undefined }
+      : (dec && dec.decision === 'declined') ? { kind: 'n', label: 'Declined', icon: 'do_not_disturb_on', title: dec.by ? 'Declined by ' + dec.by : undefined }
+      : { kind: 'info', label: 'Ready to decide', icon: 'rate_review' };
     return {
       i, avatar, name: p.name, sub: [p.industry, p.stage].filter(Boolean).join(' · ') || 'Assessment',
       stage: `${p.stage || 'Seed'} · Assessment`, status, runState: rowRun, rec,

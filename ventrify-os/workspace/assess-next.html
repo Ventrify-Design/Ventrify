@@ -140,6 +140,48 @@
     try { await EA.revokeSignoff({ engagementId: p.id }); p.assessmentSignoff = null; window.closeAux && window.closeAux(); window.__toast('Sign-off revoked.'); refresh(); }
     catch (e) { window.__toast('Could not revoke: ' + ((e && (e.code || e.message)) || e), true); }
   };
+
+  // ── operator decision: Confirm / Decline the assessed deal (distinct from sign-off) ──
+  window.__eaDecide = async (verdict, note = null) => {
+    const msg = verdict === 'confirmed' ? 'Confirmed — recorded on the deal.' : 'Declined — recorded on the deal.';
+    if (!live) {   // demo: optimistic in-memory (ephemeral), mirroring __eaDoSignoff — no /api server behind the demo
+      const me = (W.helpers && W.helpers.currentOperator && W.helpers.currentOperator()) || {};
+      p.assessmentDecision = { decision: verdict, by: me.name || me.email || 'You', byEmail: me.email || null, at: new Date().toISOString(), note: note || null };
+      window.closeAux && window.closeAux(); window.__toast(msg); refresh(); return;
+    }
+    try { const dec = await EA.decide({ engagementId: p.id, decision: verdict, note }); p.assessmentDecision = dec; window.closeAux && window.closeAux(); window.__toast(msg); refresh(); }
+    catch (e) { window.__toast('Could not record the decision: ' + ((e && (e.code || e.message)) || e), true); }
+  };
+  // Decline routes through a small aux with an OPTIONAL reason + a misclick guard (mirrors __eaSignoff's panel)
+  window.__eaDecideAsk = (verdict) => {
+    window.openAux({
+      mode: 'push', title: 'Decline deal', subtitle: p.name,
+      body: `<div style="padding:4px 2px">
+        <div class="body-m" style="color:var(--md-sys-color-on-surface-variant);margin-bottom:12px">You're passing on this deal. Your name and today's date are recorded on the engagement.</div>
+        <textarea id="ea-dec-note" class="field-in" rows="4" placeholder="Optional — why you're passing." style="width:100%;box-sizing:border-box;resize:vertical"></textarea>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+          <button class="m3-btn text" onclick="window.closeAux&&window.closeAux()">Cancel</button>
+          <button class="m3-btn filled" onclick="window.__eaDecide('declined', (document.getElementById('ea-dec-note')||{}).value || null)"><span class="material-symbols-rounded">do_not_disturb_on</span>Decline deal</button>
+        </div></div>`
+    });
+  };
+  window.__eaChangeDecision = () => {
+    const dec = p.assessmentDecision || {};
+    window.openAux({
+      mode: 'push', title: 'Change decision', subtitle: p.name,
+      body: `<div style="display:flex;flex-direction:column;gap:6px;padding:4px 2px">
+        <div class="body-m" style="color:var(--md-sys-color-on-surface-variant);margin-bottom:6px">Current: <b>${dec.decision === 'confirmed' ? 'Confirmed' : dec.decision === 'declined' ? 'Declined' : '—'}</b>${dec.by ? ' · ' + DS._esc(dec.by) : ''}</div>
+        <button class="m3-btn text" style="justify-content:flex-start" onclick="window.closeAux&&window.closeAux();window.__eaDecide('confirmed')"><span class="material-symbols-rounded">check_circle</span>Confirm</button>
+        <button class="m3-btn text" style="justify-content:flex-start" onclick="window.closeAux&&window.closeAux();window.__eaDecideAsk('declined')"><span class="material-symbols-rounded">do_not_disturb_on</span>Decline</button>
+        <button class="m3-btn text" style="justify-content:flex-start;color:var(--md-sys-color-error)" onclick="window.__eaClearDecision()"><span class="material-symbols-rounded">undo</span>Clear decision</button>
+      </div>`
+    });
+  };
+  window.__eaClearDecision = async () => {
+    if (!live) { p.assessmentDecision = null; window.closeAux && window.closeAux(); window.__toast('Decision cleared.'); refresh(); return; }
+    try { await EA.revokeDecision({ engagementId: p.id }); p.assessmentDecision = null; window.closeAux && window.closeAux(); window.__toast('Decision cleared.'); refresh(); }
+    catch (e) { window.__toast('Could not clear the decision: ' + ((e && (e.code || e.message)) || e), true); }
+  };
   window.__eaShare = async () => {
     window.__toast('Preparing the share link…');
     try {
@@ -186,12 +228,24 @@
     // ONLY the primary workflow CTA for the current state.
     if (!st.hasDeck) return [{ variant: 'filled', icon: 'upload_file', label: 'Upload deck', onclick: "window.__eaUpload('pitch')" }];
     if (st.active) return [];                                                     // assessing — controls live in the rail
-    if (st.hasVerdict) return [];                                                 // verdict ready — deal memo/share/manage are in the rail
+    if (st.hasVerdict) {                                                          // verdict ready — the operator confirms or declines the deal
+      const dec = p.assessmentDecision;
+      if (!dec) return [
+        { variant: 'filled', icon: 'check_circle', label: 'Confirm', onclick: "window.__eaDecide('confirmed')" },
+        { variant: 'outlined', icon: 'do_not_disturb_on', label: 'Decline', onclick: "window.__eaDecideAsk('declined')" },
+      ];
+      return [{ variant: 'text', icon: 'edit', label: 'Change decision', onclick: 'window.__eaChangeDecision()' }];   // decided — the state shows in the pill
+    }
     if (st.recoverable) return [{ variant: 'filled', icon: 'restore', label: 'Republish', onclick: 'window.__eaRepublish()' }, { variant: 'text', icon: 'restart_alt', label: 'Re-run', onclick: 'window.__eaRun()' }];
     return [{ variant: 'filled', icon: 'play_arrow', label: 'Run assessment', onclick: 'window.__eaRun()' }];   // idle + deck
   }
   function statusPill(st) {
-    if (st.hasVerdict) return A.status;
+    if (st.hasVerdict) {
+      const dec = p.assessmentDecision;
+      if (dec && dec.decision === 'confirmed') return { kind: 'ok', label: 'Confirmed', icon: 'check_circle' };
+      if (dec && dec.decision === 'declined') return { kind: 'n', label: 'Declined', icon: 'do_not_disturb_on' };
+      return A.status;   // AI recommendation (Invest/Consider/Pass) — awaiting the operator's call
+    }
     if (st.active) return { kind: 'n', label: 'Assessing…', icon: 'autorenew' };
     if (st.flagged) return { kind: 'n', label: 'Needs attention', icon: 'warning' };
     return { kind: 'n', label: st.hasDeck ? 'Ready to run' : 'Awaiting deck', icon: 'pending' };

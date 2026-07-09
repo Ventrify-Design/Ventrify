@@ -95,7 +95,7 @@ module.exports = async (req, res) => {
     const action = String(body.action || '');
     if (!idToken) { res.status(401).json({ error: 'no_token' }); return; }
     if (!engagementId) { res.status(400).json({ error: 'engagement_required' }); return; }
-    const ACTIONS = ['share', 'revoke-share', 'sign', 'revoke-sign'];
+    const ACTIONS = ['share', 'revoke-share', 'sign', 'revoke-sign', 'decide', 'revoke-decision'];
     if (!ACTIONS.includes(action)) { res.status(400).json({ error: 'bad_action' }); return; }
 
     ensureAdmin();
@@ -141,6 +141,32 @@ module.exports = async (req, res) => {
       if (pct != null) signoff.pct = pct;
       await engRef.update({ assessmentSignoff: signoff, updatedAt: FieldValue.serverTimestamp() });
       res.status(200).json({ ok: true, signoff });
+      return;
+    }
+
+    // ---- operator decision (confirm / decline the assessed deal) — a distinct, two-sided verdict, separate
+    //      from sign-off (endorse-only). Identity is stamped from the VERIFIED token, never client input. ----
+    if (action === 'revoke-decision') {
+      await engRef.update({ assessmentDecision: null, updatedAt: FieldValue.serverTimestamp() });
+      res.status(200).json({ ok: true, revoked: true });
+      return;
+    }
+    if (action === 'decide') {
+      const verdict = String(body.decision || '').toLowerCase();
+      if (verdict !== 'confirmed' && verdict !== 'declined') { res.status(400).json({ error: 'bad_decision' }); return; }
+      const note = body.note != null ? String(body.note).slice(0, 2000).trim() : '';
+      const score = engData.investability || engData.investabilityScore || null;
+      const pct = score && score.pct != null ? score.pct : null;
+      const decision = {
+        decision: verdict,
+        by: (decoded.name && String(decoded.name).trim()) || caller,
+        byEmail: caller,
+        at: new Date().toISOString(),
+        note: note || null,
+      };
+      if (pct != null) decision.pct = pct;
+      await engRef.update({ assessmentDecision: decision, updatedAt: FieldValue.serverTimestamp() });
+      res.status(200).json({ ok: true, decision });
       return;
     }
 
