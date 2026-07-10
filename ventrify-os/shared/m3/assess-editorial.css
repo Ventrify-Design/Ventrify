@@ -304,6 +304,11 @@
 
   /* ---- thesis lead paragraph — editorial, wide, breathing on the bg ---- */
   .lead { font-size: 18px; line-height: 1.62; color: var(--md-sys-color-on-surface); max-width: 74ch; margin-top: 34px; font-weight: 300; }
+  /* The thesis .lead trails a section hero as a loose sibling, then an <hr class="rule">, then the next
+     .sec (padding-top 48px). Without this the lead hugs the rule (0px above) while the content sits 48px
+     below it — visibly lopsided. Match the .sec padding so the hero-to-rule gap equals rule-to-content.
+     Adjacency-scoped so it only affects a lead that follows a hero (not the confidence-coda lead). */
+  .section-hero + .lead { margin-bottom: 48px; }
   .lead b { font-weight: 500; }
   .lead .drop { color: var(--md-sys-color-primary); font-weight: 500; }
 

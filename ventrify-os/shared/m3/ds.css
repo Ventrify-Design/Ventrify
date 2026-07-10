@@ -192,10 +192,12 @@ md-outlined-text-field { --md-outlined-text-field-container-shape: 999px; --md-o
 
 /* provenanceStrip + the reading index's group headers (the rejected 'research room' page is gone;
    these molecules live on inside the assessment's Research tab) */
-.prov-strip { display: grid; grid-template-columns: repeat(3,1fr); gap: 2px; padding: 12px 4px; border-radius: 14px; background: var(--md-sys-color-surface-container); flex: none; }
-.prov-c { text-align: center; }
-.prov-v { font-size: 19px; line-height: 24px; color: var(--md-sys-color-on-surface); }
-.prov-l { font-size: 10px; letter-spacing: .5px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); margin-top: 2px; }
+/* provenanceStrip — three editorial stat lockups spread across, no card. Big numeral + small uppercase
+   label, matching the assessment's hero numerals (.lockup-num) at a secondary scale. */
+.prov-strip { display: grid; grid-template-columns: repeat(3,1fr); gap: 28px; padding: 8px 0 6px; flex: none; }
+.prov-c { text-align: left; min-width: 0; }
+.prov-v { font-size: clamp(40px, 4.6vw, 56px); line-height: .95; font-weight: 500; letter-spacing: -1.8px; color: var(--md-sys-color-on-surface); font-variant-numeric: tabular-nums; }
+.prov-l { font-size: 11px; letter-spacing: .8px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); margin-top: 10px; }
 .ri-group + .ri-group { margin-top: 18px; }
 .ri-gh { font-size: 11px; letter-spacing: .6px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); padding: 0 10px 8px; }
 

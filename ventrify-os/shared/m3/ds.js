@@ -778,7 +778,7 @@ export function investabilityComposition(s, onDrill = '') {
       onDrill
     })).join('');
   const foot = metricRow({ label: 'Investability score', value: `${s.composite}`, valueMuted: ' / 100', foot: true });
-  return `<section class="sec" style="padding-top:8px">
+  return `<section class="sec">
     <div class="sec-head"><span class="eyebrow accent">Composition</span><span class="t">How the ${s.composite} composes</span><span class="meta">7 × 5 · weighted 0–100</span></div>
     <div class="compose">
       <div class="radar-wrap">${radar(s, { max: 340 })}
@@ -953,7 +953,7 @@ export function diligenceEditorial(a) {
     return `<div class="dil-group"><div class="gh"><span class="lab ${k}">${lab}</span><span class="note">${note}</span></div>${gi.map(d => { no++; return `<div class="ditem${rowCls(k)}${d.done ? ' done' : ''}"><span class="no">${no}</span><span class="box"></span><div class="bd"><div class="tt">${esc(d.title)}</div><div class="ds">${esc(d.note)}</div></div></div>`; }).join('')}</div>`;
   }).join('');
   const checklist = total === 0 ? '' : `<hr class="rule">
-    <section class="sec" style="padding-top:8px"><div class="dil">${groups}</div></section>`;
+    <section class="sec"><div class="dil">${groups}</div></section>`;
 
   return `<div class="brief">${hero}${checklist}</div>`;
 }
