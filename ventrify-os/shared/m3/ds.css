@@ -194,7 +194,7 @@ md-outlined-text-field { --md-outlined-text-field-container-shape: 999px; --md-o
    these molecules live on inside the assessment's Research tab) */
 /* provenanceStrip — three editorial stat lockups spread across, no card. Big numeral + small uppercase
    label, matching the assessment's hero numerals (.lockup-num) at a secondary scale. */
-.prov-strip { display: grid; grid-template-columns: repeat(3,1fr); gap: 28px; padding: 8px 0 6px; flex: none; }
+.prov-strip { display: grid; grid-template-columns: repeat(3,1fr); gap: 28px; padding: 8px 0 0; margin-bottom: 34px; flex: none; }
 .prov-c { text-align: left; min-width: 0; }
 .prov-v { font-size: clamp(40px, 4.6vw, 56px); line-height: .95; font-weight: 500; letter-spacing: -1.8px; color: var(--md-sys-color-on-surface); font-variant-numeric: tabular-nums; }
 .prov-l { font-size: 11px; letter-spacing: .8px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); margin-top: 10px; }
