@@ -101,13 +101,17 @@ s = await state();
 ok('deeper: Back steps up ONE level (still open)', s.drillOpen && /Workstream five/.test(s.title), `title=${s.title}`);
 
 // ─────────── Esc closes ───────────
+// The real hit-tested clicks on ws-4/ws-5 above auto-scroll those rows into view, so the parked 200 has
+// legitimately moved by now. The product guarantee under test is that CLOSING doesn't jump the scroll —
+// so capture it right before Esc and assert it's unchanged after (immune to row-height/geometry changes).
+const preEscScroll = await p.evaluate(() => document.querySelector('.shell-main').scrollTop);
 await p.keyboard.press('Escape');
 await wait(700);
 s = await state();
 ok('Esc: closes the drill', !s.drillOpen);
 ok('Esc: primary un-narrowed', !s.compact);
 ok('Esc: nav restored (was expanded)', !s.rail);
-ok('Esc: primary scroll preserved (200)', s.mainScroll === 200, `mainScroll=${s.mainScroll}`);
+ok('Esc: closing preserves the primary scroll', s.mainScroll === preEscScroll, `before=${preEscScroll} after=${s.mainScroll}`);
 const focusBack = await p.evaluate(() => !!(document.activeElement && document.activeElement.dataset && document.activeElement.dataset.drill));
 ok('Esc: focus restored to the trigger row', focusBack);
 

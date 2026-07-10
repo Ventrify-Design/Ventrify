@@ -2328,7 +2328,9 @@ export function initShell() {
     if (primary) { primary.removeAttribute('inert'); primary.removeAttribute('aria-hidden'); }
     if (!app.classList.contains('nav-open') && !app.classList.contains('aux-open')) document.body.classList.remove('overlay-lock');
     drillTrail = [];
-    if (drillReturn && drillReturn.focus) drillReturn.focus();
+    // preventScroll: restoring focus to the trigger row must NOT scroll it into view — that would
+    // defeat the primary's scroll preservation (the row often sits under the sticky masthead).
+    if (drillReturn && drillReturn.focus) drillReturn.focus({ preventScroll: true });
     drillReturn = null;
     announce('Closed.');
 
