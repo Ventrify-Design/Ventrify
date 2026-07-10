@@ -417,20 +417,20 @@
   .cd-note { margin: 4px 0 0; font-size: 13.5px; line-height: 1.5; color: var(--md-sys-color-on-surface-variant); }
   .cd-note b { color: var(--md-sys-color-on-surface); }
   /* 3 · the five signals + 4 · levers — shared row shape (chip + body + trailing) */
-  .cd-sig, .cd-lever { display: grid; grid-template-columns: 24px 1fr auto; gap: 12px; align-items: start; padding: 12px 0; border-top: 1px solid var(--md-sys-color-outline-variant); }
+  .cd-sig, .cd-lever { display: grid; grid-template-columns: 28px 1fr auto; gap: 14px; align-items: start; padding: 16px 0; border-top: 1px solid var(--md-sys-color-outline-variant); }
   .cd-sig:first-of-type, .cd-lever:first-of-type { border-top: none; }
   .cd-sig.na { opacity: .6; }
-  .cd-chip { width: 24px; height: 24px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .cd-chip { width: 28px; height: 28px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
   .cd-chip.g { color: var(--success); background: var(--success-container); }
   .cd-chip.y { color: var(--on-warning-container); background: var(--warning-container); }
   .cd-chip.r { color: var(--md-sys-color-on-error-container); background: var(--md-sys-color-error-container); }
   .cd-chip.n { color: var(--md-sys-color-on-surface-variant); background: var(--md-sys-color-surface-container-highest); }
   .cd-sig .bd, .cd-lever .bd { min-width: 0; }
-  .cd-sig .q, .cd-lever .q { font-size: 14px; font-weight: 500; line-height: 1.35; color: var(--md-sys-color-on-surface); }
-  .cd-sig .nt, .cd-lever .nt { font-size: 12.5px; line-height: 1.5; color: var(--md-sys-color-on-surface-variant); margin-top: 4px; }
+  .cd-sig .q, .cd-lever .q { font-size: 18px; font-weight: 500; line-height: 1.35; color: var(--md-sys-color-on-surface); }
+  .cd-sig .nt, .cd-lever .nt { font-size: 14px; line-height: 1.5; color: var(--md-sys-color-on-surface-variant); margin-top: 5px; }
   .cd-sig .nt.muted { font-style: italic; opacity: .85; }
-  .cd-ev { align-self: center; font-size: 11px; padding: 3px 8px; border-radius: 999px; background: var(--md-sys-color-surface-container-highest); color: var(--md-sys-color-on-surface-variant); max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .cd-liftv { align-self: center; font-size: 12px; font-weight: 600; color: var(--success); font-variant-numeric: tabular-nums; }
+  .cd-ev { align-self: center; font-size: 12px; padding: 4px 9px; border-radius: 999px; background: var(--md-sys-color-surface-container-highest); color: var(--md-sys-color-on-surface-variant); max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cd-liftv { align-self: center; font-size: 13px; font-weight: 600; color: var(--success); font-variant-numeric: tabular-nums; }
   .cd-foot { margin: 12px 0 0; font-size: 12.5px; color: var(--md-sys-color-on-surface-variant); }
   .cd-foot b { color: var(--md-sys-color-on-surface); font-weight: 600; }
   /* 5 · contribution & standing */
