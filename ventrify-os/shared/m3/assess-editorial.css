@@ -153,7 +153,7 @@
   .compscan-row { display: grid; grid-template-columns: 1fr auto; gap: 4px 24px; padding: 16px 0; border-top: 1px solid var(--md-sys-color-outline-variant); align-items: baseline; }
   .compscan-row:first-of-type { border-top: none; }
   .compscan-row.anchor { border-left: 2px solid var(--md-sys-color-primary); padding-left: 18px; margin-left: -20px; }
-  .compscan-nm { font-size: var(--row-title); font-weight: 500; letter-spacing: .1px; }
+  .compscan-nm { font-size: var(--row-title-lg); font-weight: 500; letter-spacing: .1px; }
   .compscan-nm .tag { margin-left: 10px; font-size: var(--row-eyebrow); font-weight: 600; letter-spacing: .8px; text-transform: uppercase; color: var(--md-sys-color-primary); }
   .compscan-meta { font-size: var(--row-cap); color: var(--md-sys-color-on-surface-variant); margin-top: 2px; }
   .compscan-fig { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -166,9 +166,9 @@
   .frow:first-of-type { border-top: none; }
   .frow .mono { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; font-size: 13px; font-weight: 600; flex: none; }
   .frow-bd { min-width: 0; }
-  .frow-nm { font-size: var(--row-title); font-weight: 500; letter-spacing: .1px; }
+  .frow-nm { font-size: var(--row-title-lg); font-weight: 500; letter-spacing: .1px; }
   .frow-role { font-size: var(--row-cap); color: var(--md-sys-color-on-surface-variant); margin-top: 1px; }
-  .frow-bg { font-size: var(--row-sub); line-height: 1.5; color: var(--md-sys-color-on-surface-variant); margin-top: 7px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .frow-bg { font-size: var(--row-sub-lg); line-height: 1.5; color: var(--md-sys-color-on-surface-variant); margin-top: 7px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .frow-sig { font-size: var(--row-eyebrow); font-weight: 600; letter-spacing: .8px; text-transform: uppercase; white-space: nowrap; padding-top: 3px; }
   .frow-sig.positive { color: var(--success); }
   .frow-sig.neutral { color: var(--warning); }
@@ -532,8 +532,8 @@
   .ditem .box { width: 20px; height: 20px; border-radius: 6px; border: 2px solid var(--bx, var(--md-sys-color-outline)); margin-top: 1px; }
   .ditem.err .box { border-color: var(--md-sys-color-error); }
   .ditem.warn .box { border-color: var(--warning); }
-  .ditem .bd .tt { font-size: var(--row-title); font-weight: 500; letter-spacing: .1px; }
-  .ditem .bd .ds { font-size: var(--row-sub); line-height: 1.5; color: var(--md-sys-color-on-surface-variant); margin-top: 4px; }
+  .ditem .bd .tt { font-size: var(--row-title-lg); font-weight: 500; letter-spacing: .1px; }
+  .ditem .bd .ds { font-size: var(--row-sub-lg); line-height: 1.5; color: var(--md-sys-color-on-surface-variant); margin-top: 4px; }
   /* cleared row — checked box + struck title so "N / M cleared" is reflected in the body */
   .ditem.done .box { background: var(--md-sys-color-primary); border-color: var(--md-sys-color-primary); position: relative; }
   .ditem.done .box::after { content: "check"; font-family: 'Material Symbols Rounded'; font-size: 15px; color: var(--md-sys-color-on-primary); position: absolute; inset: 0; display: grid; place-items: center; }
