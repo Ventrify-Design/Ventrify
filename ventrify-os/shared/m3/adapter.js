@@ -269,6 +269,28 @@ export function adaptEngagement(p = {}) {
       const full = String(d.body || d.markdown || '');
       return { icon: mk.icon, tone: mk.tone, title: d.title || d.name, note: researchSummary(full), tag: capLevel(d.level), tagKind: /L3/i.test(d.level || 'L3') ? 'info' : 'warn', body: full, level: capLevel(d.level), name: d.name };
     });
+  // ---- reading set: EVERY document that has a body. Nothing filtered, nothing hidden. ----
+  // `research` above is the count-bearing evidence index: it excludes the deal memo (an output, not a
+  // workstream) so the hero's "N workstreams" stays honest. But the READER must be able to open every
+  // document the run produced — the classic hub-view.js never dropped one. Three ways a doc was being
+  // silently lost, all fixed here:
+  //   1. isMemoDoc is /deal[- ]?memo|verdict|recommendation/i over name+title — it hides ANY workstream an
+  //      agent happens to title "Market verdict" or "Recommendation on unit economics". `reading` never applies it.
+  //   2. the hub test was exact + case-sensitive, so a runner emitting 'Research' or ' research' vanished,
+  //      as did every non-research hub (vision/strategy/financials/marketing) that a build engagement carries.
+  //   3. the `hub` field itself was never carried through, so downstream grouping had nothing to group on.
+  const normHub = h => String(h || '').trim().toLowerCase();
+  const reading = (p.hubDocs || [])
+    .filter(d => String(d.body || d.markdown || '').trim())      // a body is the only requirement
+    .sort((x, y) => (x.order || 0) - (y.order || 0))
+    .map(d => ({
+      hub: normHub(d.hub), name: d.name, title: d.title || d.name,
+      level: capLevel(d.level), tag: capLevel(d.level),
+      tagKind: /L3/i.test(d.level || 'L3') ? 'info' : 'warn',
+      order: d.order || 0,
+      body: String(d.body || d.markdown || ''),                  // FULL, untruncated
+    }));
+
   const dataRoom = [
     p.pitchDoc && { icon: 'slideshow', title: p.pitchDoc.name, note: 'Founder upload · pitch deck', action: 'download', kind: 'upload', status: 'read' },
     { icon: 'description', title: 'Deal memo', note: 'Full write-up · exported PDF', tag: 'L1', action: 'tag', kind: 'generated' },
@@ -303,7 +325,7 @@ export function adaptEngagement(p = {}) {
     confidence: conf,
     signoff: p.assessmentSignoff ? { by: p.assessmentSignoff.by, at: p.assessmentSignoff.at, note: p.assessmentSignoff.note } : null,
     bull: a.bull || [], bear: a.bear || [],
-    valuation, market, benchmark, rounds, team, diligence, research, dataRoom,
+    valuation, market, benchmark, rounds, team, diligence, research, reading, dataRoom,
     exit: a.exit ? { ...a.exit, acquirers: Array.isArray(a.exit.acquirers) ? a.exit.acquirers.join(', ') : a.exit.acquirers } : null,   // array → prose (ds.js renders a string)
     run_confidence: conf
   };

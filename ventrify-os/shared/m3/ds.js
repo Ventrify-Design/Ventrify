@@ -225,7 +225,7 @@ export function shellScaffold(cfg = {}) {
 // Mirrors shellScaffold's regions but takes real content. The `app-scroll` class height-bounds
 // .m3-app so .shell-main actually scrolls and the sticky masthead can minify. Call initShell()
 // after injecting this into the DOM.
-export function pageShell({ active = 'portfolio', masthead = '', body = '', aux = false, rail = false, railOverflow = [], auxMode = 'push', badges, nav, brand, account } = {}) {
+export function pageShell({ active = 'portfolio', masthead = '', body = '', aux = false, drill = false, rail = false, railOverflow = [], auxMode = 'push', badges, nav, brand, account } = {}) {
   const hasRail = Array.isArray(rail) ? rail.length > 0 : !!rail;
   const tools = [{ id: 'a', icon: 'build', label: 'Tool' }, { id: 'b', icon: 'insights', label: 'Tool' }, { id: 'c', icon: 'notifications', label: 'Tool' }];
   return `<div class="m3-app app-scroll${hasRail ? ' has-utilrail' : ''}" data-aux-mode="${auxMode}">
@@ -234,9 +234,27 @@ export function pageShell({ active = 'portfolio', masthead = '', body = '', aux 
       ${masthead}
       <div class="shell-body">${body}</div>
     </main>
+    ${drill ? drillSurface() : ''}
     ${aux ? auxPanel(aux === true ? {} : aux) : ''}
     ${hasRail ? utilRail(Array.isArray(rail) ? rail : tools, { overflow: railOverflow }) : ''}
   </div>`;
+}
+
+// ---- Drill surface (the "companion page") ----
+// Injected immediately AFTER <main> so DOM order matches visual order (WCAG 1.3.2 / 2.4.3) and so
+// document.querySelector('.shell-main') still resolves the primary page first. Empty and off-canvas
+// at rest: no masthead, no filled button, nothing for the conformance probes to trip over.
+// Content is written by window.openDrill(); see initShell().
+export function drillSurface() {
+  return `<section class="m3-drill" role="region" aria-hidden="true" tabindex="-1"></section>`;
+}
+
+// drillClose — ATOM. The drill's dismiss control: a large target in the top-right of its masthead.
+// Deliberately NOT a .m3-btn (so it can never be mistaken for the page's primary action, and the
+// conformance "≤1 filled in .mh-actions" rule is untouched) and deliberately NOT inside .mh-actions.
+// Dismissal is separate from orientation: the breadcrumb tells you where you are, this gets you out.
+export function drillClose() {
+  return `<button type="button" class="drill-close" aria-label="Close" title="Close (Esc)" onclick="window.closeDrill&&window.closeDrill()"><span class="material-symbols-rounded" aria-hidden="true">close</span></button>`;
 }
 
 // ---- Auxiliary panel (right side sheet) — drill-down / tooling ----
@@ -1302,11 +1320,15 @@ export function confidenceReconciliation(a, s) {
 // researchMemo — the whole Research tab: hero → workstream index → evidence integrity → confidence coda.
 // The data-room card moved to the Sources rail panel; a light pointer keeps the path to the files.
 export function researchMemo(a, s) {
+  // The index reads from `a.reading` — EVERY document with a body, including ones the count-bearing
+  // `a.research` set deliberately excludes (the deal memo). Nothing is hidden from the reader.
+  // Falls back to `a.research` for any caller that hasn't been given a reading set.
+  const room = researchRoom(a.reading && a.reading.length ? a.reading : (a.research || []));
   // assemble present sections, then join with rules — an absent section (empty index, no evidence
   // category) never leaves a dangling header or doubled hairline. Mirrors marketMemo's filter/join.
   const secs = [
     researchHero(a, s),
-    researchIndex(a.research, 'openPeek'),
+    researchReadingIndex(room),
     evidenceIntegrity(a, s),
     confidenceReconciliation(a, s),
   ].filter(Boolean);
@@ -1395,10 +1417,408 @@ export function keyFigures(figs = []) {
   return `<div class="keyfig">${figs.map(f => `<div class="k"><div class="v">${esc(f.v)}</div><div class="l">${esc(f.l)}</div></div>`).join('')}</div>`;
 }
 export function sourceList(sources = []) {
-  return sources.map((s, i) => `<div class="src"><span class="n">${i + 1}</span><div><a href="${esc(s.href || '#')}">${esc(s.title)}</a><div class="dom">${esc(s.dom || '')}</div></div></div>`).join('');
+  // an external citation opens in a new tab; an internal/absent href stays put
+  return sources.map((s, i) => {
+    const ext = /^https?:/i.test(s.href || '');
+    return `<div class="src"><span class="n">${i + 1}</span><div><a href="${esc(s.href || '#')}"${ext ? ' target="_blank" rel="noopener noreferrer"' : ''}>${esc(s.title)}</a><div class="dom">${esc(s.dom || '')}</div></div></div>`;
+  }).join('');
 }
 export function tocRail(sections = [], active = 0) {
   return `<nav class="toc">${sections.map((s, i) => `<a class="${i === active ? 'on' : ''}" href="#${esc(s.id)}">${esc(s.label)}</a>`).join('')}</nav>`;
+}
+
+// ============================================================
+// DEEP RESEARCH — the reading room
+//
+// The aux peek renders research through mdToHtml(), a hand-rolled subset parser that silently DROPS
+// every pipe table, every `---` rule, all fenced code and every semantic heading. The agents emit all
+// four. This block is the full-page replacement: a real GFM render plus the classic reading affordances
+// (canonical titles, group taxonomy, key finding, read time, source/section counts, provenance, TOC).
+//
+// The taxonomy + metrics are PORTED, deliberately, from the classic shared/hub-view.js — a LOCKED file
+// that is never imported. Titles are SENTENCE-CASED here to match M3; the classic used Title Case.
+// ============================================================
+
+export const RESEARCH_GROUPS = [
+  { key: 'verdict', label: 'The verdict' },
+  { key: 'market', label: 'The market' },
+  { key: 'competition', label: 'The competition' },
+  { key: 'team', label: 'The team' },
+  { key: 'money', label: 'The money' },
+  { key: 'further', label: 'Further reading' },
+];
+const RG_INDEX = Object.fromEntries(RESEARCH_GROUPS.map((g, i) => [g.key, i]));
+const RG_LABEL = Object.fromEntries(RESEARCH_GROUPS.map(g => [g.key, g.label]));
+// classic line-glyph name → the Material Symbol that carries the same meaning
+const RG_GLYPH = { shield: 'shield', stamp: 'approval', scale: 'balance', expand: 'query_stats', trend: 'trending_up', globe: 'public', bars: 'bar_chart', target: 'ads_click', people: 'badge', calc: 'calculate', coins: 'payments', doc: 'description' };
+const RG_TONE = { verdict: 'p', market: 'p', competition: 'w', team: 's', money: 'p', further: 'n' };
+
+const RESEARCH_CANON = [
+  { test: t => /claim/.test(t) && /(pressure|validat)/.test(t), title: 'Claims pressure test', group: 'verdict', glyph: 'shield', desc: 'Every founder claim independently verified, flagged, or refuted.' },
+  { test: t => /deal memo|investment committee/.test(t), title: 'Deal memo', group: 'verdict', glyph: 'stamp', desc: 'The investment recommendation, terms, and the headline call.' },
+  { test: t => /investment analysis/.test(t), title: 'Investment analysis', group: 'verdict', glyph: 'scale', desc: 'The full thesis — upside, downside, and the path to a return.' },
+  { test: t => /market sizing/.test(t), title: 'Market sizing', group: 'market', glyph: 'expand', desc: 'TAM / SAM / SOM, built bottom-up and sanity-checked.' },
+  { test: t => /demand|traction/.test(t), title: 'Demand & traction', group: 'market', glyph: 'trend', desc: 'Evidence of real pull — pipeline, customers, signals.' },
+  { test: t => /market/.test(t), title: 'Market analysis', group: 'market', glyph: 'globe', desc: 'The opportunity, the dynamics, and where this venture sits.' },
+  { test: t => /benchmark/.test(t), title: 'Competitive benchmark', group: 'competition', glyph: 'bars', desc: 'Head-to-head scoring against the field on the metrics that matter.' },
+  { test: t => /competitor|competitive/.test(t), title: 'Competitor analysis', group: 'competition', glyph: 'target', desc: 'Who else is in the race, and how they’re positioned.' },
+  { test: t => /team|diligence/.test(t), title: 'Team diligence', group: 'team', glyph: 'people', desc: 'Track record, gaps, and references on the founding team.' },
+  { test: t => /unit economics/.test(t), title: 'Unit economics', group: 'money', glyph: 'calc', desc: 'Cost-to-serve, margins, and the model’s underlying math.' },
+  { test: t => /comparable|funding round/.test(t), title: 'Comparable funding rounds', group: 'money', glyph: 'coins', desc: 'What similar companies raised, at what valuations, and when.' },
+];
+
+export const researchSlug = s => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'doc';
+
+// keyFinding — the first real sentence of the body: skips headings, rules, tables, front-matter
+// key/value lines and the agent's own preamble. Ported verbatim in behaviour from the classic.
+function keyFinding(body) {
+  const paras = String(body || '').replace(/\r/g, '').split(/\n\s*\n/).map(p => p.replace(/\n/g, ' ').trim());
+  for (let p of paras) {
+    if (!p || /^[-=*#>|_]/.test(p)) continue;
+    if (/^\*{0,2}(prepared|deal|stage|sector|geography|recommendation|analyst|date|research date|company|ask|prepared for|to|from|re)\b/i.test(p)) continue;
+    if (/^[A-Z][\w .&()\/-]{0,40}:\s/.test(p) && p.length < 130) continue;
+    if (/^(i |i'|i now|let me|both files|here is|here'|this (document|analysis|file|report)|note:)/i.test(p)) continue;
+    p = p.replace(/\*\*/g, '').replace(/^_+|_+$/g, '').replace(/\s+/g, ' ').trim();
+    if (p.length < 28) continue;
+    const sentence = (p.match(/^.*?[.!?](\s|$)/) || [p])[0].trim();
+    return sentence.length > 170 ? sentence.slice(0, 167).replace(/\s+\S*$/, '') + '…' : sentence;
+  }
+  return '';
+}
+
+const wordCount = b => (String(b || '').trim().match(/\S+/g) || []).length;
+const sectionCount = b => (String(b || '').match(/^#{2,3}\s+/gm) || []).length;
+const readTime = w => w >= 600 ? `${Math.ceil(w / 220)} min read` : `${w} words`;
+
+// The "## Sources" section, sliced out at the next heading. (JS has no \Z, so we cut on a split
+// rather than a lookahead — a Sources section is almost always the LAST one in an agent's doc.)
+function sourceBlock(body) {
+  const m = String(body || '').match(/^#{2,3}[ \t]+sources?\b[^\n]*\n([\s\S]*)/im);
+  return m ? m[1].split(/^#{1,3}[ \t]/m)[0] : '';
+}
+// The classic counted bare URLs, which reads 0 on a plain-text source list. Take whichever
+// of {bare URLs, bullets under a "## Sources" heading} is larger.
+function sourceCount(b) {
+  const urls = (String(b || '').match(/\bhttps?:\/\//g) || []).length;
+  const bullets = (sourceBlock(b).match(/^\s*(?:[-*+]|\d+[.)])\s+\S/gm) || []).length;
+  return Math.max(urls, bullets);
+}
+
+// researchSources — parse the doc's own "## Sources" section into sourceList() rows.
+export function researchSources(body) {
+  const block = sourceBlock(body);
+  if (!block) return [];
+  return (block.match(/^\s*(?:[-*+]|\d+[.)])\s+.+$/gm) || []).map(raw => {
+    const line = raw.replace(/^\s*(?:[-*+]|\d+[.)])\s+/, '').trim();
+    const link = line.match(/\[([^\]]+)\]\((https?:[^)\s]+)\)/);
+    const bare = line.match(/(https?:\/\/[^\s)]+)/);
+    const href = link ? link[2] : (bare ? bare[1] : '');
+    let title = (link ? line.replace(link[0], link[1]) : line.replace(/\s*[—–]?\s*https?:\/\/\S+/, ''))
+      .replace(/\*\*/g, '').replace(/[—–]\s*$/, '').trim();
+    let dom = '';
+    if (href) { try { dom = new URL(href).hostname.replace(/^www\./, ''); } catch (e) { dom = ''; } }
+    else {
+      // "Title — Provenance". Split on a SPACED em/en dash only: a bare hyphen lives inside words
+      // ("free-to-paid") and inside filenames ("05-*"), and splitting there mangles both halves.
+      const parts = title.split(/\s+[—–]\s+/);
+      if (parts.length > 1) { dom = parts.pop().trim(); title = parts.join(' — ').trim(); }
+    }
+    return { title: title || line, dom, href };
+  }).filter(s => s.title);
+}
+
+// researchClassify — one raw research doc → the canonical reading-room entry. Never drops an
+// unknown doc: it falls back to the doc's own title + hub, so a new agent workstream still renders.
+export function researchClassify(doc = {}) {
+  const raw = String(doc.title || doc.name || '');
+  const t = raw.toLowerCase();
+  const hit = RESEARCH_CANON.find(c => c.test(t));
+  let title, group, glyph, desc;
+  if (hit) { ({ title, group, glyph, desc } = hit); }
+  else {
+    const clean = raw.replace(/\s+[—–]\s+.*$/, '').replace(/\b(inc|llc|ltd|corp)\b\.?/gi, '').trim() || raw;
+    title = /[a-z]/.test(clean) ? clean : clean.replace(/\b\w/g, c => c.toUpperCase()).replace(/\B\w/g, c => c.toLowerCase());
+    group = RG_INDEX[doc.hub] != null ? doc.hub : 'further';
+    glyph = 'doc'; desc = '';
+  }
+  const body = String(doc.body || doc.markdown || '');
+  const words = wordCount(body);
+  return {
+    slug: doc.slug || researchSlug(title),
+    name: doc.name || '',
+    title, group, groupLabel: RG_LABEL[group], desc, body,
+    icon: RG_GLYPH[glyph] || 'description',
+    tone: doc.tone || RG_TONE[group] || 'n',
+    tag: doc.tag || 'L3', tagKind: doc.tagKind || 'info',
+    finding: keyFinding(body) || doc.note || desc,
+    words, readTime: readTime(words),
+    sources: sourceCount(body), sections: sectionCount(body),
+    agent: doc.agent || '', generated: doc.generated || '',
+  };
+}
+
+// researchRoom — classify + order a whole research[] array, then bucket it into its groups.
+export function researchRoom(docs = []) {
+  const all = docs.map(researchClassify)
+    .map((d, i) => ({ d, i }))
+    .sort((a, b) => (RG_INDEX[a.d.group] - RG_INDEX[b.d.group]) || (a.i - b.i))
+    .map(x => x.d);
+  // Two docs can classify to the SAME canonical title (market-analysis.md + opportunities.md → "Market
+  // analysis"), so their slugs collide — and a collided slug means one document is unreachable by key,
+  // deep-link and pager. Dedupe. (Mirrors the classic hub-view.js.)
+  const taken = new Set();
+  all.forEach(d => { let s = d.slug, n = 2; while (taken.has(s)) s = `${d.slug}-${n++}`; taken.add(s); d.slug = s; });
+  const groups = RESEARCH_GROUPS
+    .map(g => ({ ...g, docs: all.filter(d => d.group === g.key) }))
+    .filter(g => g.docs.length);
+  const totals = all.reduce((a, d) => ({ docs: a.docs + 1, words: a.words + d.words, sources: a.sources + d.sources }), { docs: 0, words: 0, sources: 0 });
+  return { all, groups, totals };
+}
+
+// ---- reading-room molecules ----
+
+const kfmt = n => n >= 1000 ? (Math.round(n / 100) / 10).toFixed(1).replace(/\.0$/, '') + 'K' : String(n);
+
+// provenanceStrip — ATOM. What the run actually produced, above the workstream index.
+export function provenanceStrip({ docs = 0, words = 0, sources = 0 } = {}) {
+  const cell = (v, l) => `<div class="prov-c"><div class="prov-v">${esc(v)}</div><div class="prov-l">${esc(l)}</div></div>`;
+  return `<div class="prov-strip">${cell(docs, docs === 1 ? 'workstream' : 'workstreams')}${cell(kfmt(words), 'words')}${cell(sources, 'sources')}</div>`;
+}
+
+// researchRoomIndex — ORGANISM. The sticky left rail: every workstream, grouped, with its key finding.
+// ---- the reading index: the Research tab's grouped list of every document ----
+// Rows carry an INLINE onclick, deliberately, not [data-drill]: [data-drill] is bound once inside
+// initShell(), but assess-next.html's paint() swaps .shell-body.innerHTML on every refresh/tick, which
+// would leave rebuilt rows dead. A window global survives every re-render.
+export function researchReadingIndex(room) {
+  if (!room || !room.all.length) return '';
+  const open = slug => `window.openResearchDrill&&window.openResearchDrill('${esc(slug)}')`;
+  const row = d => {
+    const meta = [d.readTime, d.sources ? `${d.sources} source${d.sources === 1 ? '' : 's'}` : '', d.sections ? `${d.sections} sections` : ''].filter(Boolean).join(' · ');
+    return `<div class="mrow research drill" role="button" tabindex="0"
+        onclick="${open(d.slug)}"
+        onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();${open(d.slug)}}">
+      <div class="mrow-lab">
+        <span class="rlead" style="background:${RTONE[d.tone] || RTONE.p}"><span class="material-symbols-rounded" style="color:${RCOL[d.tone] || RCOL.p}">${esc(d.icon)}</span></span>
+        <div class="mrow-txt">
+          <div class="mrow-nm">${esc(d.title)}</div>
+          ${d.finding ? `<div class="mrow-sub">${esc(d.finding)}</div>` : ''}
+          ${meta ? `<div class="mrow-meta">${esc(meta)}</div>` : ''}
+        </div>
+      </div>
+      <div class="mrow-val">${d.tag ? `<span class="status ${d.tagKind || 'info'}">${esc(d.tag)}</span>` : ''}</div>
+      <span class="material-symbols-rounded mrow-chev">chevron_right</span>
+    </div>`;
+  };
+  return `<section class="sec">
+    <div class="sec-head"><span class="eyebrow accent">The workstreams</span><span class="t">Every claim, rebuilt from source</span><span class="meta">${room.totals.docs} document${room.totals.docs === 1 ? '' : 's'}</span></div>
+    ${provenanceStrip(room.totals)}
+    ${room.groups.map(g => `<div class="ri-group"><div class="ri-gh">${esc(g.label)}</div><div class="profile">${g.docs.map(row).join('')}</div></div>`).join('')}
+  </section>`;
+}
+
+// ---- ONE research document as a drill page ----
+// neighbours follow the READING order (group-sorted), never the raw array index
+export function researchNeighbours(room, doc) {
+  const i = room.all.findIndex(d => d.slug === doc.slug);
+  return { prev: room.all[i - 1], next: room.all[i + 1] };
+}
+
+export function researchSkeleton() { return `<div class="art-skeleton">${'<i></i>'.repeat(9)}</div>`; }
+
+// drillPager — prev/next as LATERAL swaps (replaceState → browsing N docs leaves ONE back entry).
+export function drillPager(doc, room) {
+  const nb = researchNeighbours(room, doc);
+  const side = (d, dir) => d
+    ? `<button type="button" class="pager-side ${dir}" onclick="window.openResearchDrill&&window.openResearchDrill('${esc(d.slug)}')">
+        <span class="material-symbols-rounded">${dir === 'prev' ? 'arrow_back' : 'arrow_forward'}</span>
+        <span class="pager-bd"><span class="pager-l">${dir === 'prev' ? 'Previous' : 'Next'}</span><span class="pager-t">${esc(d.title)}</span></span>
+      </button>` : '<span></span>';
+  return `<div class="doc-pager">${side(nb.prev, 'prev')}${side(nb.next, 'next')}</div>`;
+}
+
+// scroll-spy for the drill's inline TOC (the drill has no reading rail — it is one column)
+export function wireDrillSpy() {
+  const root = document.querySelector('.m3-drill .drill-scroll');
+  const links = [...document.querySelectorAll('.m3-drill .drill-toc .toc a')];
+  if (!root || !links.length) return;
+  if (root.__spy) root.__spy.disconnect();
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (!e.isIntersecting) return;
+      const id = '#' + e.target.id;
+      links.forEach(a => a.classList.toggle('on', a.getAttribute('href') === id));
+    });
+  }, { root, rootMargin: '-96px 0px -70% 0px' });
+  document.querySelectorAll('.m3-drill .art-body h2[id]').forEach(h => io.observe(h));
+  root.__spy = io;
+}
+
+// fillResearchDrill — PHASE 2. openDrill() calls render() synchronously and assigns innerHTML, so the real
+// GFM parse (async: marked is lazy-imported) cannot happen there. We paint a skeleton, then patch it in
+// place on the next frame. Guarded by data-fill="<slug>" + a re-query after the await, so a fast lateral
+// swap can never have a stale document's HTML land in the new page.
+export async function fillResearchDrill(doc, room) {
+  const sel = `.m3-drill .art-body[data-fill="${doc.slug}"]`;
+  if (!document.querySelector(sel)) return;
+  const { html, sections } = await renderArticle(doc.body);
+  const art = document.querySelector(sel);
+  if (!art) return;                       // a faster swap already replaced the surface
+  art.innerHTML = html;
+  art.removeAttribute('data-fill');
+
+  const h2 = sections.filter(s => s.level === 2);
+  const toc = document.querySelector('.m3-drill [data-toc]');
+  if (toc && h2.length >= 2) toc.innerHTML = `<div class="drill-toc-inner"><div class="drill-toc-lab">On this page</div>${tocRail(h2)}</div>`;
+
+  const pager = document.querySelector('.m3-drill [data-pager]');
+  if (pager) pager.innerHTML = drillPager(doc, room);
+  wireDrillSpy();
+}
+
+// researchDrillBody — the SYNCHRONOUS scaffold openDrill needs, which schedules its own async fill.
+// This hook is common to all three open paths (row click, ?drill= cold link, popstate) because every one
+// of them resolves through DRILL_PAGES[key]() → render().
+export function researchDrillBody(doc, room) {
+  if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => fillResearchDrill(doc, room));
+  return `${articleMeta(doc)}
+    <div class="drill-toc" data-toc></div>
+    <div class="art-body art-prose" data-fill="${esc(doc.slug)}">${researchSkeleton()}</div>
+    <div data-pager></div>`;
+}
+
+// researchDrillOpts — the full openDrill() opts for ONE document. No filled action (the ≤1-primary rule).
+export function researchDrillOpts(doc, room) {
+  const isLevel = /^L\d$/i.test(doc.tag || '');
+  return {
+    key: doc.slug,
+    title: doc.title,                 // canonical, from researchClassify
+    subtitle: doc.groupLabel,         // short — the read bar lives in the body, where it can't be clipped
+    status: { kind: doc.tagKind || 'info', label: isLevel ? `${doc.tag} · Deep research` : doc.tag, icon: isLevel ? '' : 'warning' },
+    parentLabel: 'Research',
+    actions: [],
+    render: () => researchDrillBody(doc, room),
+  };
+}
+
+// feedsCard — MOLECULE. How this workstream lands in the verdict, at the foot of the article.
+export function feedsCard({ text = '', href = '', label = 'Back to verdict' } = {}) {
+  if (!text) return '';
+  return `<aside class="feeds-card">
+    <span class="material-symbols-rounded">conversion_path</span>
+    <div>
+      <div class="feeds-ttl">Feeds into the verdict</div>
+      <div class="feeds-txt">${text}</div>
+      ${href ? `<button class="m3-btn text trail" onclick="location.href='${esc(href)}'"><span class="material-symbols-rounded">arrow_forward</span>${esc(label)}</button>` : ''}
+    </div>
+  </aside>`;
+}
+
+// articleMeta — ATOM. The read bar under the article title. Falsy fields are dropped, never rendered as "—".
+export function articleMeta({ readTime = '', sources = 0, sections = 0, agent = '', generated = '' } = {}) {
+  const bits = [
+    generated ? esc(generated) : '',
+    readTime ? esc(readTime) : '',
+    sources ? `${sources} source${sources === 1 ? '' : 's'}` : '',
+    sections ? `${sections} section${sections === 1 ? '' : 's'}` : '',
+    agent ? `by <b>${esc(agent)}</b> agent` : '',
+  ].filter(Boolean);
+  return `<div class="art-meta"><span class="material-symbols-rounded" style="font-size:18px">schedule</span>${bits.join('<span>·</span>')}</div>`;
+}
+
+// docPager — MOLECULE. Prev/next through the ordered workstreams, so the room reads like a document.
+export function docPager({ prev, next } = {}) {
+  const side = (d, dir) => d ? `<a class="pager-side ${dir}" href="#research/${esc(d.slug)}">
+      <span class="material-symbols-rounded">${dir === 'prev' ? 'arrow_back' : 'arrow_forward'}</span>
+      <span class="pager-bd"><span class="pager-l">${dir === 'prev' ? 'Previous' : 'Next'}</span><span class="pager-t">${esc(d.title)}</span></span>
+    </a>` : '<span></span>';
+  return `<div class="doc-pager">${side(prev, 'prev')}${side(next, 'next')}</div>`;
+}
+
+// ---- renderArticle — REAL GFM ----
+// mdToHtml() cannot be patched into correctness: its regression is architectural (no block grammar,
+// so no tables, rules, fenced code or nested lists). The classic solved this by lazy-loading marked;
+// so do we. Output is scrubbed against an allowlist before it is ever inserted.
+
+// marked's GFM strikethrough reads a lone `~7M users` as an open strike and crosses out the rest of the
+// paragraph. Escape single tildes ("approximately"), preserve intentional `~~strikethrough~~`.
+// URLs are isolated alongside code spans/fences: a `~` inside a source URL (a real thing — S3 keys, some
+// academic hosts) must NOT be escaped to `\~`, which would corrupt the href.
+function escapeApproxTildes(md) {
+  return String(md).split(/(```[\s\S]*?```|`[^`]*`|https?:\/\/[^\s)]+)/g).map((seg, i) =>
+    i % 2 === 1 ? seg   // code span / fence / URL — leave tildes untouched
+      : seg.replace(/~+/g, run => run.length === 1 ? '\\~' : run)
+  ).join('');
+}
+
+let _marked = null;
+async function loadMarked() {
+  if (_marked === null) {
+    try {
+      const m = await import('https://cdn.jsdelivr.net/npm/marked@12/lib/marked.esm.js');
+      _marked = m.marked || m.default || false;
+    } catch (e) { _marked = false; }
+  }
+  return _marked;
+}
+
+const DROP_TAGS = new Set(['SCRIPT', 'STYLE', 'IFRAME', 'OBJECT', 'EMBED', 'LINK', 'META', 'BASE', 'FORM']);
+const BAD_URL = /^\s*(javascript|vbscript)\s*:/i;
+function scrub(root) {
+  root.querySelectorAll('*').forEach(el => {
+    if (DROP_TAGS.has(el.tagName)) { el.remove(); return; }
+    [...el.attributes].forEach(a => {
+      const n = a.name.toLowerCase();
+      if (n.startsWith('on')) el.removeAttribute(a.name);
+      else if ((n === 'href' || n === 'src' || n === 'xlink:href') && BAD_URL.test(a.value)) el.removeAttribute(a.name);
+      else if (n === 'src' && /^\s*data:/i.test(a.value) && !/^\s*data:image\//i.test(a.value)) el.removeAttribute(a.name);
+    });
+  });
+}
+
+// renderArticle(md) → { html, sections } — sections drive tocRail() and the scroll-spy.
+export async function renderArticle(md) {
+  const src = String(md || '').trim();
+  if (!src) return { html: '<p class="body-m variant">This workstream has not been generated yet.</p>', sections: [] };
+  const marked = await loadMarked();
+  if (!marked) {
+    // Never blank the page: show the raw markdown, escaped and wrapped, and let the reader read it.
+    return { html: `<pre class="art-raw">${esc(src)}</pre>`, sections: [] };
+  }
+  let raw;
+  try { raw = marked.parse ? marked.parse(escapeApproxTildes(src)) : marked(escapeApproxTildes(src)); }
+  catch (e) { return { html: `<pre class="art-raw">${esc(src)}</pre>`, sections: [] }; }
+
+  const root = document.createElement('div');
+  root.innerHTML = raw;
+  scrub(root);
+
+  // headings → stable, deduped ids; h2/h3 become the TOC (an h1 is the doc's own title, not a section)
+  // loop until unique: a counter alone collides when the document itself contains a literal "…-2" heading,
+  // which would point two TOC entries at the same anchor
+  const sections = [], used = new Set();
+  root.querySelectorAll('h1, h2, h3').forEach(h => {
+    const base = researchSlug(h.textContent);
+    let id = base, n = 2;
+    while (used.has(id)) id = `${base}-${n++}`;
+    used.add(id); h.id = id;
+    if (h.tagName !== 'H1') sections.push({ id, label: h.textContent.trim(), level: +h.tagName[1] });
+  });
+  // tables + code blocks scroll inside their own box — the page body never scrolls sideways
+  root.querySelectorAll('table').forEach(t => {
+    t.classList.add('dtbl');
+    const wrap = document.createElement('div'); wrap.className = 'tbl-wrap';
+    t.parentNode.insertBefore(wrap, t); wrap.appendChild(t);
+  });
+  root.querySelectorAll('img').forEach(i => { i.setAttribute('loading', 'lazy'); if (!i.alt) i.alt = ''; });
+  root.querySelectorAll('a[href]').forEach(a => {
+    if (/^https?:/i.test(a.getAttribute('href'))) { a.target = '_blank'; a.rel = 'noopener noreferrer'; }
+  });
+  root.querySelectorAll('ul, ol').forEach(l => {
+    if (l.querySelector(':scope > li > input[type=checkbox]')) l.classList.add('task-list');
+  });
+  root.querySelectorAll('input[type=checkbox]').forEach(c => { c.disabled = true; });
+  return { html: root.innerHTML, sections };
 }
 
 // ---- portfolio / queue toolbar (filter chips + optional sub-row + sort + search) ----
@@ -1684,6 +2104,33 @@ export function queueBoard(items = [], opts = {}) {
   return groups.length ? groups.join('') : allClear;
 }
 
+// wireMinify — bind ONE masthead to its nearest scroll ancestor. Idempotent (safe to call again on a
+// masthead created after initShell, e.g. the drill's). Drives --mh-p 0→1 as content scrolls under it.
+function wireMinify(mh) {
+  if (!mh || mh.__mhWired) return;
+  mh.__mhWired = true;
+  let sc = mh.parentElement;
+  while (sc && sc !== document.body && sc !== document.documentElement) { const oy = getComputedStyle(sc).overflowY; if (oy === 'auto' || oy === 'scroll') break; sc = sc.parentElement; }
+  const target = (sc && sc !== document.body && sc !== document.documentElement) ? sc : window;
+  const top = () => target === window ? window.scrollY : target.scrollTop;
+  const DIST = 96; let raf = 0;
+  const apply = () => { raf = 0; const p = Math.min(1, Math.max(0, top() / DIST)); mh.style.setProperty('--mh-p', p.toFixed(3)); mh.classList.toggle('minified', p > 0.5); };
+  const onScroll = () => { if (!raf) raf = requestAnimationFrame(apply); };
+  target.addEventListener('scroll', onScroll, { passive: true });
+  apply();
+}
+
+// ---- drill state (module scope — one drill surface exists, ever) ----
+let drillReturn = null;    // the element that opened it, for focus restore
+let drillWasRail = false;  // was the nav already collapsed before we drilled?
+let drillTrail = [];       // breadcrumb/history trail of keys
+let drillCloseTimer = 0;
+let liveRegion = null;
+function announce(msg) {
+  if (!liveRegion) return;
+  requestAnimationFrame(() => { liveRegion.textContent = msg; });
+}
+
 // ---- theme toggle wiring (call once per page after render) ----
 export function initShell() {
   window.__toggleRail = () => document.querySelector('.m3-app') && document.querySelector('.m3-app').classList.toggle('rail');
@@ -1724,23 +2171,16 @@ export function initShell() {
   document.querySelectorAll('.theme-toggle button').forEach(b => b.addEventListener('click', () => set(b.dataset.set)));
   set(document.documentElement.classList.contains('light') ? 'light' : 'dark');
 
-  // masthead: scroll-linked minify — drives --mh-p (0→1) continuously as content scrolls under it
-  document.querySelectorAll('.masthead').forEach(mh => {
-    let sc = mh.parentElement;
-    while (sc && sc !== document.body && sc !== document.documentElement) { const oy = getComputedStyle(sc).overflowY; if (oy === 'auto' || oy === 'scroll') break; sc = sc.parentElement; }
-    const target = (sc && sc !== document.body && sc !== document.documentElement) ? sc : window;
-    const top = () => target === window ? window.scrollY : target.scrollTop;
-    const DIST = 96; let raf = 0;
-    const apply = () => { raf = 0; const p = Math.min(1, Math.max(0, top() / DIST)); mh.style.setProperty('--mh-p', p.toFixed(3)); mh.classList.toggle('minified', p > 0.5); };
-    const onScroll = () => { if (!raf) raf = requestAnimationFrame(apply); };
-    target.addEventListener('scroll', onScroll, { passive: true });
-    apply();
-  });
+  // masthead: scroll-linked minify — drives --mh-p (0→1) continuously as content scrolls under it.
+  // Idempotent + reusable: the drill's masthead is created after initShell, so openDrill() calls it too.
+  document.querySelectorAll('.masthead').forEach(wireMinify);
 
   // ---- auxiliary panel API ----
   window.openAux = (opts = {}) => {
     const app = document.querySelector('.m3-app'); if (!app) return;
     window.closeNav && window.closeNav();
+    // With a drill open there is no room to push a third column — a peek must float over it.
+    if (app.classList.contains('drill-open')) opts = { ...opts, mode: 'overlay' };
     const set = (s, v, html) => { const el = app.querySelector(s); if (el) { if (html) el.innerHTML = v; else el.textContent = v; } };
     set('.aux-title', opts.title || 'Details');
     set('.aux-sub', opts.subtitle || '');
@@ -1758,10 +2198,201 @@ export function initShell() {
     const app = document.querySelector('.m3-app'); if (!app) return;
     app.classList.remove('aux-open', 'aux-push', 'aux-modal');
     app.querySelectorAll('.urail-item.on').forEach(b => b.classList.remove('on'));
-    if (!app.classList.contains('nav-open')) document.body.classList.remove('overlay-lock');
+    if (!app.classList.contains('nav-open') && !app.classList.contains('drill-open')) document.body.classList.remove('overlay-lock');
     if (lastFocused && lastFocused.focus) { lastFocused.focus(); lastFocused = null; }
   };
+
+  // ============================================================
+  // DRILL — the companion page. window.openDrill() / window.closeDrill()
+  //
+  // opts = { key, title, subtitle, status, parentLabel, actions[], body|render(), source, deeper }
+  // A page declares its drillable content in window.DRILL_PAGES = { key: opts | () => opts }, and
+  // marks triggers with [data-drill="key"]. Everything else is handled here.
+  // ============================================================
+  const mqSplit = window.matchMedia('(max-width: 1080px)');   // ≤1080 → the drill covers instead of splits
+
+  // one persistent live region, created once (announcements fire under reduced motion too)
+  liveRegion = document.createElement('div');
+  liveRegion.setAttribute('aria-live', 'polite');
+  liveRegion.className = 'sr-only';
+  document.body.appendChild(liveRegion);
+
+  // Split (>1080): both pages live, NOT modal — Tab flows between them, that's the feature.
+  // Full-bleed (≤1080): the drill covers the primary, so it becomes a real modal dialog.
+  const syncDrillModal = () => {
+    const app = app0(); if (!app || !app.classList.contains('drill-open')) return;
+    const surf = app.querySelector('.m3-drill'); const primary = app.querySelector('.shell-main');
+    if (!surf || !primary) return;
+    primary.classList.add('is-compact');
+    if (mqSplit.matches) {
+      surf.setAttribute('role', 'dialog'); surf.setAttribute('aria-modal', 'true');
+      primary.setAttribute('inert', ''); primary.setAttribute('aria-hidden', 'true');
+      document.body.classList.add('overlay-lock');
+    } else {
+      surf.setAttribute('role', 'region'); surf.removeAttribute('aria-modal');
+      primary.removeAttribute('inert'); primary.removeAttribute('aria-hidden');
+      if (!app.classList.contains('nav-open') && !app.classList.contains('aux-open')) document.body.classList.remove('overlay-lock');
+    }
+  };
+
+  window.openDrill = (opts = {}) => {
+    const app = app0(); if (!app) return null;
+    clearTimeout(drillCloseTimer);
+    const first = !app.classList.contains('drill-open');
+    if (first) {
+      window.closeAux && window.closeAux();          // a page supersedes a detail sheet
+      drillReturn = opts.source || document.activeElement;
+      drillWasRail = app.classList.contains('rail'); // remember the nav state we came in with
+      drillTrail = [];
+    }
+    let surf = app.querySelector('.m3-drill');
+    if (!surf) {                                     // lazily inject, in DOM order, right after <main>
+      const m = app.querySelector('.shell-main'); if (!m) return null;
+      const t = document.createElement('div'); t.innerHTML = drillSurface();
+      surf = t.firstElementChild; m.insertAdjacentElement('afterend', surf);
+    }
+    surf.style.width = '';   // drop any px width frozen by an in-flight close (re-open before teardown)
+
+    const html = typeof opts.render === 'function' ? opts.render() : (opts.body || '');
+    // a REAL masthead with its own scroll-linked minify. The breadcrumb carries no href: inside a drill
+    // it is ORIENTATION ("you are here, at this depth"), not navigation — dismissal is the ✕.
+    const mh = masthead({
+      breadcrumb: { label: opts.parentLabel || 'Back' },
+      crumbTail: opts.title, headline: opts.title, compact: opts.title,
+      subheading: opts.subtitle || '', status: opts.status, actions: opts.actions || [],
+    });
+    surf.innerHTML = `<div class="drill-scroll">${mh}<div class="drill-body">${html}</div></div>`;
+    surf.setAttribute('aria-label', opts.title || 'Detail');
+    surf.setAttribute('aria-hidden', 'false');
+    surf.querySelector('.drill-scroll').scrollTop = 0;
+    // orientLabel() renders a back-arrow whenever the trail has depth. A drill doesn't navigate back
+    // via its crumb, so drop the node entirely — hiding it would leave a dead <a> in the a11y tree.
+    const backArrow = surf.querySelector('.orient-back');
+    if (backArrow) backArrow.remove();
+    // the dismiss control lives in the masthead bar, outside .mh-actions
+    const bar = surf.querySelector('.mh-bar');
+    if (bar) bar.insertAdjacentHTML('beforeend', drillClose());
+    wireMinify(surf.querySelector('.masthead'));
+
+    app.classList.add('rail', 'drill-open');         // nav → rail + open the gutter, one frame
+    syncDrillModal();
+
+    // history: push on first-open and on deeper; replace on a lateral sibling swap, so browsing
+    // seven cards leaves ONE back entry, not seven.
+    const trail = opts.__trail ? opts.__trail
+      : first ? [opts.key]
+      : opts.deeper ? drillTrail.concat(opts.key)
+      : drillTrail.slice(0, -1).concat(opts.key);
+    drillTrail = trail;
+    if (!opts.__trail) {
+      const url = new URL(location.href); url.searchParams.set('drill', trail.join('/'));
+      if (opts.restore) {
+        // cold deep-link: synthesise an un-drilled entry BEHIND us, so browser Back closes the
+        // drill onto the page instead of navigating away from the app entirely.
+        const clean = new URL(location.href); clean.searchParams.delete('drill');
+        history.replaceState({ v: 'drill', trail: [] }, '', clean);
+        history.pushState({ v: 'drill', trail }, '', url);
+      } else if (first || opts.deeper) history.pushState({ v: 'drill', trail }, '', url);
+      else history.replaceState({ v: 'drill', trail }, '', url);
+    }
+
+    const h = surf.querySelector('.mh-hero .headline-m') || surf;
+    if (h) { if (h !== surf) h.tabIndex = -1; h.focus({ preventScroll: true }); }
+    announce((first ? 'Opened detail: ' : 'Now viewing: ') + (opts.title || '') + '. Press Escape to go back.');
+    return surf;
+  };
+
+  // Every close path — back arrow, breadcrumb, Esc, browser Back — funnels through history.back()
+  // so they can never disagree about state.
+  window.closeDrill = ({ fromPop = false } = {}) => {
+    const app = app0(); if (!app || !app.classList.contains('drill-open')) return;
+    // DISMISS means dismiss: from a tertiary page the ✕ (and Esc) exit the drill entirely rather than
+    // stepping up one level. Unwind every entry this drill pushed, so the popstate reconciler lands on
+    // the un-drilled page. Browser Back keeps its own semantics — it steps up exactly one level.
+    if (!fromPop) { history.go(-Math.max(1, drillTrail.length)); return; }
+    const surf = app.querySelector('.m3-drill');
+    const primary = app.querySelector('.shell-main');
+
+    // The drill's width is calc(100% - var(--nav-w) - ...). Restoring the nav in the same frame would
+    // therefore snap it 180px narrower mid-slide. Freeze the width in px for the duration of the
+    // teardown so the nav, the primary's width and the primary's content can all animate TOGETHER —
+    // one gesture back, not a page transition followed by a nav transition.
+    if (surf) surf.style.width = surf.getBoundingClientRect().width + 'px';
+
+    app.classList.remove('drill-open');
+    if (!drillWasRail) app.classList.remove('rail');
+    if (primary) primary.classList.remove('is-compact');
+
+    if (surf) surf.setAttribute('aria-hidden', 'true');
+    // un-inert BEFORE restoring focus, or focus lands on <body>
+    if (primary) { primary.removeAttribute('inert'); primary.removeAttribute('aria-hidden'); }
+    if (!app.classList.contains('nav-open') && !app.classList.contains('aux-open')) document.body.classList.remove('overlay-lock');
+    drillTrail = [];
+    if (drillReturn && drillReturn.focus) drillReturn.focus();
+    drillReturn = null;
+    announce('Closed.');
+
+    drillCloseTimer = setTimeout(() => {
+      if (app.classList.contains('drill-open')) return;
+      if (surf) { surf.style.width = ''; surf.innerHTML = ''; }
+    }, 380);
+  };
+
+  // Esc closes the TOPMOST surface: nav → aux → drill (aux is forced over the drill, so it goes first)
+  window.closeOverlay = () => {
+    const app = app0();
+    if (app && app.classList.contains('nav-open')) return window.closeNav();
+    if (app && app.classList.contains('aux-open')) return window.closeAux();
+    if (app && app.classList.contains('drill-open')) return window.closeDrill();
+  };
   document.addEventListener('keydown', e => { if (e.key === 'Escape') window.closeOverlay(); });
+
+  // focus trap — only while the drill is a modal cover (≤1080). Above that, escaping to the primary
+  // is the intended behaviour, so no trap.
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Tab') return;
+    const app = app0(); if (!app || !app.classList.contains('drill-open') || !mqSplit.matches) return;
+    const surf = app.querySelector('.m3-drill'); if (!surf) return;
+    const f = [...surf.querySelectorAll('a[href],button:not([disabled]),input,select,textarea,[tabindex]:not([tabindex="-1"])')].filter(el => el.offsetParent !== null);
+    if (!f.length) { e.preventDefault(); surf.focus(); return; }
+    const first = f[0], last = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
+
+  // [data-drill="key"] — the generic trigger (mirrors [data-aux-card])
+  const drillOpts = key => { const s = window.DRILL_PAGES && window.DRILL_PAGES[key]; return typeof s === 'function' ? s() : s; };
+  document.querySelectorAll('[data-drill]').forEach(el => {
+    if (!el.hasAttribute('role')) el.setAttribute('role', 'link');
+    if (!el.hasAttribute('tabindex')) el.tabIndex = 0;
+    const go = () => { const o = drillOpts(el.dataset.drill); if (o) window.openDrill({ key: el.dataset.drill, source: el, ...o }); };
+    el.addEventListener('click', go);
+    el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+  });
+
+  // browser Back / Forward reconciles the drill
+  window.addEventListener('popstate', e => {
+    const app = app0(); if (!app) return;
+    const want = (e.state && e.state.v === 'drill' && Array.isArray(e.state.trail)) ? e.state.trail : [];
+    if (!want.length) { if (app.classList.contains('drill-open')) window.closeDrill({ fromPop: true }); return; }
+    const leaf = want[want.length - 1]; const o = drillOpts(leaf);
+    if (o) window.openDrill({ key: leaf, __trail: want, ...o });
+  });
+
+  // keep the drill coherent across the 1080 and 840 boundaries while it is open
+  [mqSplit, mqCompact].forEach(mq => mq.addEventListener('change', () => {
+    const app = app0(); if (!app || !app.classList.contains('drill-open')) return;
+    if (!mqCompact.matches) app.classList.add('rail');   // re-assert the rail above the mobile breakpoint
+    syncDrillModal();
+  }));
+
+  // cold deep-link: ?drill=<key>. Deferred a frame so a page can assign DRILL_PAGES after initShell().
+  requestAnimationFrame(() => {
+    const k = new URLSearchParams(location.search).get('drill');
+    if (!k) return;
+    const leaf = k.split('/').pop(); const o = drillOpts(leaf);
+    if (o) window.openDrill({ key: leaf, restore: true, ...o });
+  });
 
   // ---- aux trigger cards: any [data-aux-card] (re)opens the panel in its shell's mode ----
   document.querySelectorAll('[data-aux-card]').forEach(c => {

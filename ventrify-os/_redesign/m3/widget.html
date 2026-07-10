@@ -198,7 +198,9 @@
 
       ${pn}`;
 
-    const harness = mountHarness(document.getElementById('harness'), sourceFor(id), { height: e.pad ? 560 : 620, start: 'fit' });
+    // an entry can force its opening preset — e.g. the drill's split layout only exists above 1080px,
+    // so `fit` would open it in its full-bleed cover state and hide the very thing it documents
+    const harness = mountHarness(document.getElementById('harness'), sourceFor(id), { height: e.pad ? 560 : 620, start: e.harnessStart || 'fit' });
 
     // instances → open that clean state in a new window
     document.querySelectorAll('.inst-card').forEach(c => c.addEventListener('click', () =>

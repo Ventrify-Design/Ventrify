@@ -5,6 +5,387 @@
 // from this, so a data-shape change is felt everywhere at once.
 // ============================================================
 
+// ---- Deep-research bodies (real MoneyGym content, as the runner's agents emit it: GFM markdown).
+// These exercise every block the old mdToHtml() silently dropped — pipe tables, `---` rules, fenced
+// code, nested + task lists, and `~` used as "approximately". If the reading room renders these
+// faithfully it will render anything the agents produce. ----
+const RB = {};
+
+RB.marketSizing = `MoneyGym's category is genuinely large and investable — but the deck's headline TAM is a category error, and correcting it changes the investment story.
+
+## The deck's claim, and how it was derived
+
+The pitch (v0.1a, slide 4) claims **TAM $110B · SAM $13B · SOM $315–331M** — 4M subscribers at $99 ARPU by Year 5. The $110B is bootstrapped from 2022 Forbes/CNBC estimates of consumer spending on fintech: payments, lending, investing and insurance distribution. None of those revenue pools is addressable by a $99/year coaching subscription.
+
+It is broadly consistent with Statista/BCG totals for *all* US fintech revenue. That is the error — counting an entire industry as the addressable pool for one product.
+
+| Level | Deck | Rebuilt bottom-up | Overstatement |
+| --- | --- | --- | --- |
+| TAM | $110B | $1.5–2.5B | 44–73× |
+| SAM | $13B | $1.0–2.0B | ~7–13× |
+| SOM (Year 5) | $315–331M | $100–200M | ~1.7–3× |
+
+---
+
+## TAM — rebuilt bottom-up
+
+The true TAM is the maximum annual subscription revenue if every US adult who would plausibly pay for behavioural-change financial coaching subscribed at $99/year — excluding payments, brokerage, lending spread and banking fee income.
+
+- **Baseline.** US Census (Jul 2024): ~267M adults aged 18+.
+- **Financially stressed and open to paid help.** FINRA's 2024 National Financial Capability Study puts 57% in negative financial stress — a theoretical problem pool of 120–140M.
+  - Of those, the share that has *ever* paid for financial guidance is far smaller.
+  - Adjacent behavioural-change categories are the only honest comparator.
+- **Paid-conversion precedent.** Noom and Duolingo convert 6–10% of the interested pool to paid.
+
+Applying that band to the stressed pool at $99 ARPU lands TAM at **$1.5–2.5B**. Still large enough to back a venture-scale outcome. Nowhere near $110B.
+
+## SOM and the distribution check
+
+The deck's 4M-subscriber SOM ($331M) implies capturing **17–33% of the corrected SAM** — category dominance, not the "conservative ~2.5% penetration" it claims.
+
+The reachability check is where it breaks. Four million paying subscribers, at the deck's *own* 15% trial rate and 20% trial-to-paid, requires **70–130M US installs** — 3–6% of all US finance-app installs, sustained for five straight years, on an unproven 0.4–0.6 viral coefficient.
+
+> A $331M Year-5 SOM is 17–33% of the corrected SAM — an aggressive dominance assumption dressed up as a floor.
+
+## Red flags
+
+1. **Category-error TAM.** The $110B counts all US fintech revenue; the first-principles pool for a $99 coaching subscription is 44–73× smaller.
+2. **"Conservative" SOM isn't.** See the distribution check above.
+3. **No bottom-up model in the data room.** The TAM/SAM/SOM slide cites two press articles and no build-up.
+
+## What the numbers actually support
+
+At corrected scale MoneyGym is still a backable market: a $1.5–2.5B TAM comfortably supports a venture-scale outcome, and the behavioural-subscription model is proven next door. The question is not "is the market big enough" — it is whether MoneyGym can win a credible slice against an entrenched, profitable Cleo. That is where the moat and distribution diligence take over.
+
+## Sources & references
+
+1. MoneyGym pitch deck v0.1a, slide 4 — Ventrify data room
+2. [Statista — US fintech revenue by vertical, 2024](https://www.statista.com/markets/414/topic/1032/fintech/)
+3. [US Census Bureau — Population estimates, Jul 2024](https://www.census.gov/quickfacts/fact/table/US/PST045224)
+4. [FINRA Foundation — National Financial Capability Study 2024](https://finrafoundation.org/knowledge-we-gain-share/nfcs)
+5. Noom / Duolingo — reported free-to-paid conversion benchmarks (investor filings)
+6. [RevenueCat — State of Subscription Apps 2024](https://www.revenuecat.com/state-of-subscription-apps/)
+7. MoneyGym conversion funnel + financial model (05-*) — Ventrify data room
+8. [Carta — State of Private Markets, Q3 2025](https://carta.com/data/state-of-private-markets-q3-2025/)`;
+
+RB.competitiveBenchmark = `The deck presents an unclaimed category. It is not unclaimed — Cleo owns it, at ~7M users and $280M+ ARR, and is never mentioned once in the pitch.
+
+## The field
+
+Ten competitors were scored head-to-head on the five metrics that decide this category. Scores are 1–5; **bold** marks the category leader on that axis.
+
+| Company | Users | ARR | Coaching depth | Regulatory exposure | Score |
+| --- | ---: | ---: | ---: | --- | ---: |
+| Cleo | ~7.0M | $280M+ | 4 | High — FTC $17M settlement | **4.4** |
+| Dave | ~10.0M | $260M | 2 | High — DOJ/FTC action | 3.1 |
+| Brigit | ~4.0M | $110M | 2 | High — FTC $18M settlement | 2.8 |
+| Empower | ~3.5M | $95M | 3 | Medium | 2.7 |
+| Albert | ~2.0M | $90M | 3 | Medium | 2.6 |
+| Copilot | ~0.3M | $18M | 3 | Low | 2.4 |
+| Monarch | ~0.2M | $15M | 4 | Low | 2.4 |
+| Origin | ~0.1M | $9M | 4 | Low | 2.2 |
+| Tally *(shut down 2024)* | — | — | 2 | High | — |
+| **MoneyGym** | 0 | $0 | **5** | **Low — non-lending** | 1.9 |
+
+---
+
+## Where MoneyGym actually wins
+
+Two axes, and only two — but they are the two that compound.
+
+- **Coaching depth (5/5).** Every incumbent bolts coaching onto a lending or cash-advance product. Coaching is the wedge, not the business.
+- **Regulatory temperature (low).** This is the finding the deck under-sells.
+  - Cleo — FTC, $17M, deceptive cash-advance marketing.
+  - Dave — DOJ and FTC action over tipping and express fees.
+  - Brigit — FTC, $18M, subscription and advance practices.
+  - Tally — shut down entirely in 2024.
+  - MoneyGym takes no lending spread, charges no advance fee, and holds no balances. It has nothing for those regulators to reach.
+
+The enforcement wave has hit *every* profitable player in this category, and it has hit them on the lending mechanic — not the coaching one.
+
+## The distribution problem
+
+Category economics are set by CAC, and CAC in consumer finance is set by whoever is willing to buy the install. Cleo, Dave and Empower are all buying. A rough model of the position MoneyGym enters at:
+
+\`\`\`
+blended_cac   = paid_cac × (1 − viral_share) + 0 × viral_share
+payback_months = blended_cac / (arpu_monthly × gross_margin)
+
+# MoneyGym, deck assumptions
+paid_cac       = $13.00      # claimed, post-ilumoni
+viral_share    = 0.45        # implied by k = 0.4–0.6
+arpu_monthly   = $8.25       # $99 / 12
+gross_margin   = 0.72        # after app-store fees
+→ payback = 1.2 months       # not credible for a cold-start consumer app
+\`\`\`
+
+The \`$13.00\` figure is carried over from ilumoni, a *dissolved* predecessor with a different product, a UK audience and a loans-marketplace acquisition motive. It cannot be assumed forward. At a realistic $45–70 blended CAC, payback moves to **7–12 months** — survivable, but it changes the raise.
+
+## Diligence still open
+
+- [x] Score the field on the five decision metrics
+- [x] Verify Cleo's user, ARR and profitability claims against filings
+- [x] Confirm the enforcement actions against Cleo, Dave, Brigit and Tally
+- [ ] Obtain MoneyGym's actual paid-channel test data (none in the data room)
+- [ ] Pressure-test the 0.4–0.6 viral coefficient against a real cohort
+
+## Sources & references
+
+1. [Cleo — company profile and reported metrics](https://web.meetcleo.com/)
+2. [FTC v. Cleo AI — $17M settlement, 2025](https://www.ftc.gov/news-events/news/press-releases)
+3. [FTC v. Brigit — $18M settlement](https://www.ftc.gov/news-events/news/press-releases)
+4. [Dave Inc — SEC filings](https://www.sec.gov/edgar/search/)
+5. [RevenueCat — State of Subscription Apps 2024](https://www.revenuecat.com/state-of-subscription-apps/)
+6. MoneyGym financial model + sensitivity workbook — Ventrify data room
+7. Founder letter and ilumoni retrospective — Ventrify data room`;
+
+RB.teamDiligence = `Two of the three co-founders named in the deck cannot be verified against any Companies House filing for the predecessor company they are credited with building.
+
+## What was checked
+
+Every founder claim in the deck and the founder letter was matched against UK Companies House filings for **Monely Ltd** (trading as ilumoni), the predecessor MoneyGym's traction is drawn from.
+
+| Claim | Source | Verdict |
+| --- | --- | --- |
+| Three co-founders built ilumoni | Deck, slide 11 | **Unverified** — only 1 of 3 appears on any filing |
+| £1.63M raised | Founder letter | Verified — SH01 filings, 2021–2023 |
+| "Acquired talent from Monzo, Revolut" | Deck, slide 11 | Partially verified — 1 of 2 confirmed on LinkedIn |
+| CEO previously exited a fintech | Deck, slide 11 | **Refuted** — the company entered members' voluntary liquidation |
+
+---
+
+## The predecessor
+
+ilumoni / Monely Ltd entered **members' voluntary liquidation in 2023** and was dissolved in **August 2024**. It raised ~£1.63M, never passed 10,000 users, and operated a loans-marketplace model that MoneyGym has since dropped entirely.
+
+An MVL is a solvent wind-down, not an insolvency — the founders returned capital rather than losing it, which is materially better than the alternative. But it is not an exit, and the deck presents it as one.
+
+## What this means for the raise
+
+- The CEO has genuinely operated a regulated UK fintech, raised institutional money, and wound it down cleanly. That is real, relevant experience.
+- The *team* as presented does not exist yet. Two of three named co-founders have no filing record on the company that supplies all of MoneyGym's traction narrative.
+- No US operating experience anywhere on the team, for a product whose entire market thesis is US consumer.
+
+> Recommendation: request the cap table and the employment contracts before term-sheet. If the two unverified co-founders are prospective rather than committed, the round is a solo-founder round and should be priced as one.
+
+## Sources & references
+
+1. [Companies House — Monely Ltd filing history](https://find-and-update.company-information.service.gov.uk/)
+2. Founder letter and ilumoni retrospective — Ventrify data room
+3. MoneyGym pitch deck v0.1a, slide 11 — Ventrify data room
+4. LinkedIn profile verification, accessed at assessment date`;
+
+RB.claimsPressureTest = `Twelve load-bearing claims were pressure-tested against primary sources; three fail outright and four require correction before the deck is shown to another investor.
+
+## Method
+
+Every quantitative or competitive claim in the deck, the founder letter and the model was extracted, traced to its source, and independently verified. A claim **fails** when the primary source contradicts it, not when it is merely optimistic.
+
+| # | Claim | Verdict | Evidence |
+| ---: | --- | --- | --- |
+| 1 | TAM is $110B | **Fail** | Counts all US fintech revenue; bottom-up rebuild → $1.5–2.5B |
+| 2 | "First AI money coach" | **Fail** | Cleo has used the exact phrase since 2019 |
+| 3 | CAC compressed £148 → £13 | **Fail** | ilumoni-era, different product, dissolved entity |
+| 4 | §1033 open banking is a tailwind | Correct | Rule is legally enjoined as of mid-2026 |
+| 5 | 35% trial-to-paid | Correct | Model uses 20% elsewhere; both figures appear |
+| 6 | Raising $20M | Correct | Deck says $20M, model says $22M |
+| 7 | Category is unclaimed | Correct | Cleo: ~7M users, $280M+ ARR, net-profitable |
+| 8 | Non-lending = regulatory-cold | **Verified** | Enforcement has tracked the lending mechanic |
+| 9 | $99 ARPU is defensible | **Verified** | WTP research supports a $95–144 band |
+| 10 | Gross margin 72% | **Verified** | Consistent with app-store fee structure |
+| 11 | Viral coefficient 0.4–0.6 | Unproven | No cohort data in the data room |
+| 12 | Year-5 exit at $2.3B | Unproven | Implies 9× the corrected SOM |
+
+---
+
+## The three that matter
+
+### 1. The category is not unclaimed
+
+Cleo is at approximately **7M users, ~1.1M paying US subscribers, $280M+ ARR** and is net-profitable. It markets itself as the "first AI money coach". It does not appear anywhere in the deck. This is the single most consequential omission in the data room.
+
+### 2. Traction belongs to a dissolved company
+
+The £148 → £13 CAC compression — the deck's strongest proof point — was achieved by **ilumoni**, a loans-marketplace product, in the UK, by a company that was dissolved in August 2024. The acquisition motive, the geography and the product are all different. The number cannot be carried forward.
+
+### 3. The §1033 tailwind is legally enjoined
+
+The open-banking rule the deck leans on is enjoined as of mid-2026. The macro debt-stress tailwind stands on its own without it — but the deck must not present §1033 as live.
+
+## What survives
+
+The regulatory-cold positioning is real and structurally valuable. The willingness-to-pay band is verified. The gross margin holds. Corrected, this is still an investable thesis — it is just a different one from the thesis on the slides.
+
+## Sources & references
+
+1. MoneyGym pitch deck v0.1a — Ventrify data room
+2. [Cleo — reported metrics and positioning](https://web.meetcleo.com/)
+3. [Companies House — Monely Ltd filing history](https://find-and-update.company-information.service.gov.uk/)
+4. [CFPB §1033 Personal Financial Data Rights rule — status](https://www.consumerfinance.gov/rules-policy/final-rules/)
+5. MoneyGym unit economics + sensitivity workbook — Ventrify data room
+6. Founder letter and ilumoni retrospective — Ventrify data room`;
+
+RB.investmentAnalysis = `Three independent valuation methods converge on a $15–35M pre-money band, against an ask that implies materially more.
+
+## The methods
+
+| Method | Input | Output (pre-money) |
+| --- | --- | --- |
+| Comparable rounds | Seed fintech, pre-revenue, UK/US | $18–30M |
+| Scorecard | VSS 67/100, solo-founder adjusted | $15–28M |
+| Risk-factor summation | 12 factors, 3 material negatives | $20–35M |
+
+**Converged band: $15–35M pre.** The deck's implied ask sits above the top of that range on a pre-revenue, single-verified-founder basis.
+
+---
+
+## The bull case
+
+If the regulatory-cold positioning holds and coaching depth converts, MoneyGym is the only clean operator in a category where every profitable incumbent is carrying enforcement risk. Cleo's $280M ARR proves the willingness to pay; the FTC settlement proves the mechanic that produced it is fragile.
+
+- A $1.5–2.5B corrected TAM supports a $200–400M outcome at 10–20% share.
+- At a $25M entry, that is a **8–16×** gross return before dilution.
+
+## The bear case
+
+- Cleo is profitable, entrenched, and can add non-lending coaching in a quarter.
+- The CAC number that underwrites the whole model belongs to a dissolved company.
+- Two of three co-founders are unverified. This may be a solo-founder round.
+- Distribution has no proven channel and no cohort data.
+
+## Path to a return
+
+The company does not need the deck's $2.3B exit to return a seed fund. It needs to reach $15–20M ARR on honest CAC and sell to an incumbent that needs a regulatory-clean coaching layer. That is a $200–400M outcome and it is reachable from the corrected numbers.
+
+> The recommendation is not "pass". It is **reprice, and re-underwrite the team**.
+
+## Sources & references
+
+1. [Carta — State of Private Markets, Q3 2025](https://carta.com/data/state-of-private-markets-q3-2025/)
+2. [PitchBook — seed-stage fintech valuations, 2025](https://pitchbook.com/news/reports)
+3. MoneyGym financial model + sensitivity workbook — Ventrify data room
+4. Ventrify VSS rubric v3 — internal
+5. Comparable round set (n=14) — Ventrify data room`;
+
+RB.unitEconomics = `The model contains a $6.19M contradiction: the same Year-5 scenario shows +$4.25M of EBITDA on one sheet and −$1.94M on another.
+
+## The contradiction
+
+Both figures are produced by the same workbook, from the same subscriber count, and differ only in whether app-store fees are applied before or after the coaching-cost allocation.
+
+\`\`\`
+Sheet "Summary"     Sheet "Sensitivity"
+─────────────────   ───────────────────
+revenue    $39.6M   revenue    $39.6M
+cogs      −$11.1M   cogs      −$11.1M
+app store       —   app store  −$6.19M   ← applied here only
+opex      −$24.2M   opex      −$24.2M
+─────────────────   ───────────────────
+ebitda     +$4.25M  ebitda     −$1.94M
+\`\`\`
+
+The \`app store\` line is the whole delta. Apple and Google take 15–30% of consumer subscription revenue, and MoneyGym is an app-first product with no web-checkout path described anywhere in the data room. The Sensitivity sheet is the correct one.
+
+---
+
+## Corrected unit economics
+
+| Metric | Deck | Corrected | Note |
+| --- | ---: | ---: | --- |
+| ARPU (annual) | $99 | $99 | Verified against WTP band |
+| Gross margin | 72% | **58–64%** | After 15–30% store fee |
+| Blended CAC | $13 | **$45–70** | ilumoni figure not carryable |
+| Payback | 1.2 mo | **7–12 mo** | Survivable, not exceptional |
+| LTV/CAC (3-yr) | 15.2× | **2.4–3.6×** | Above the 3× bar at the optimistic end |
+
+At corrected inputs the business still clears the standard venture bar — LTV/CAC above 3× at the good end of the band — but it clears it *narrowly*, and it clears it only if the viral coefficient is real.
+
+## What would change the answer
+
+1. A web-checkout path, recovering 15–30 points of gross margin.
+2. Any real paid-channel cohort data. There is none in the data room.
+3. Evidence the 0.4–0.6 viral coefficient survives contact with a US audience.
+
+## Sources & references
+
+1. MoneyGym unit economics + sensitivity workbook — Ventrify data room
+2. [RevenueCat — State of Subscription Apps 2024](https://www.revenuecat.com/state-of-subscription-apps/)
+3. [Apple App Store — commission structure](https://developer.apple.com/app-store/small-business-program/)
+4. MoneyGym conversion funnel model (05-*) — Ventrify data room`;
+
+RB.dealMemo = `MoneyGym is a reprice, not a pass: the thesis survives correction, but neither the numbers nor the team survive as presented.
+
+**Prepared for:** Investment Committee
+**Recommendation:** Invest — conditional on reprice and team verification
+**Conviction:** Medium
+
+---
+
+## The call
+
+Back it at **$15–35M pre**, conditional on (a) a corrected deck, (b) written verification of the two unnamed co-founders, and (c) one real paid-channel cohort. Walk if any of the three fails.
+
+| Condition | Owner | Before |
+| --- | --- | --- |
+| Corrected TAM/SAM/SOM slide | Founder | Term sheet |
+| Companies House verification of co-founders | Us | Term sheet |
+| One paid-channel cohort (n≥500) | Founder | Close |
+
+## Three things that must be true
+
+1. **The regulatory-cold position is durable.** Every profitable incumbent carries enforcement risk on the lending mechanic. MoneyGym takes no spread, charges no advance fee, holds no balances.
+2. **Coaching depth converts.** Cleo proves willingness to pay; nobody has proven that coaching *alone* retains.
+3. **The founder can hire the team he doesn't have.** Today this is a solo-founder round wearing a three-founder slide.
+
+## The anti-thesis
+
+> Cleo is profitable, entrenched, and could ship non-lending coaching in a quarter. If it does, MoneyGym's only structural edge evaporates and we are left backing a cold-start consumer app with no distribution and a CAC number borrowed from a dissolved company.
+
+We are not paid to ignore that. We are paid to price it.
+
+## Sources & references
+
+1. MoneyGym pitch deck v0.1a — Ventrify data room
+2. Claims pressure test, Market sizing, Team diligence — this assessment
+3. [Companies House — Monely Ltd filing history](https://find-and-update.company-information.service.gov.uk/)
+4. [Carta — State of Private Markets, Q3 2025](https://carta.com/data/state-of-private-markets-q3-2025/)`;
+
+RB.demandTraction = `Willingness to pay is real and verified at $95–144 a year — but MoneyGym-specific US demand is currently zero, and there is no cohort in the data room to argue otherwise.
+
+## Willingness to pay
+
+Independent research across three adjacent categories supports the $99 price point comfortably.
+
+- **Financial coaching (human).** $150–400/yr for periodic sessions.
+- **Behavioural subscription apps.** Noom at ~$209/yr, Duolingo Super at ~$84/yr.
+- **Budgeting tools.** YNAB at $109/yr, Monarch at $99/yr, Copilot at $95/yr.
+
+The verified band is **$95–144**. MoneyGym's $99 sits at the bottom of it, which is the right place for a cold-start product.
+
+## Traction, honestly stated
+
+| Signal | Status |
+| --- | --- |
+| US users | 0 |
+| Paying subscribers | 0 |
+| Waitlist | Not disclosed |
+| Paid-channel tests | None in data room |
+| Predecessor (ilumoni, UK) | <10k users, dissolved Aug 2024 |
+
+---
+
+There is no US demand signal. That is not disqualifying at pre-seed — but the deck presents the ilumoni figures as if they were MoneyGym's, and they are not: different product, different country, different acquisition motive, dissolved entity.
+
+> What exists is a verified price point and a proven adjacent category. What does not exist is a single MoneyGym customer.
+
+## Sources & references
+
+1. [YNAB pricing](https://www.ynab.com/pricing)
+2. [Monarch Money pricing](https://www.monarchmoney.com/pricing)
+3. [Noom — reported subscription pricing](https://www.noom.com/)
+4. Founder letter and ilumoni retrospective — Ventrify data room
+5. MoneyGym conversion funnel model (05-*) — Ventrify data room`;
+
 // ---- The assessment (real MoneyGym content) ----
 export const ASSESSMENT = {
   id: 'prg-moneygym',
@@ -187,13 +568,13 @@ export const ASSESSMENT = {
     { icon: 'check_circle', color: 'success', title: 'The regulatory-cold positioning is real', note: 'Clean, non-lending coaching avoids the enforcement that has hit Cleo (FTC $17M), Tally, Brigit and Dave — a genuine structural edge.' }
   ],
   research: [
-    { icon: 'query_stats', tone: 'p', title: 'Market sizing', note: 'Bottom-up TAM rebuild — the $110B claim is a 44–73× category error · 8 sources', tag: 'L3' },
-    { icon: 'table_chart', tone: 'p', title: 'Competitive benchmark', note: '10 competitors mapped; Cleo occupies the category at ~7M users, $280M+ ARR · 14 sources', tag: 'L3' },
-    { icon: 'badge', tone: 's', title: 'Team & founder diligence', note: 'Companies House verification; 2 of 3 co-founders unverifiable against ilumoni filings', tag: 'L3' },
-    { icon: 'science', tone: 'w', title: 'Claims validation', note: 'Deck claims pressure-tested — CAC compression, 35% trial-to-paid, §1033 tailwind · 12 findings', tag: '3 fail', tagKind: 'warn' },
-    { icon: 'payments', tone: 'p', title: 'Investment analysis & returns', note: 'Three valuation methods converge on $15–35M pre; exit math vs the deck’s $2.3B claim', tag: 'L2' },
-    { icon: 'calculate', tone: 'p', title: 'Unit economics', note: 'LTV/CAC, gross margin with app-store fees, the model’s internal contradictions · 6 sources', tag: 'L2' },
-    { icon: 'groups', tone: 'p', title: 'Demand & traction', note: 'Verified $95–144 WTP band; MoneyGym-specific US demand is zero', tag: 'L2' }
+    { icon: 'query_stats', tone: 'p', title: 'Market sizing', note: 'Bottom-up TAM rebuild — the $110B claim is a 44–73× category error · 8 sources', tag: 'L3', body: RB.marketSizing, agent: 'market-analyst', generated: 'Generated 2 days ago' },
+    { icon: 'table_chart', tone: 'p', title: 'Competitive benchmark', note: '10 competitors mapped; Cleo occupies the category at ~7M users, $280M+ ARR · 14 sources', tag: 'L3', body: RB.competitiveBenchmark, agent: 'competitor-analyst', generated: 'Generated 2 days ago' },
+    { icon: 'badge', tone: 's', title: 'Team & founder diligence', note: 'Companies House verification; 2 of 3 co-founders unverifiable against ilumoni filings', tag: 'L3', body: RB.teamDiligence, agent: 'diligence-agent', generated: 'Generated 2 days ago' },
+    { icon: 'science', tone: 'w', title: 'Claims validation', note: 'Deck claims pressure-tested — CAC compression, 35% trial-to-paid, §1033 tailwind · 12 findings', tag: '3 fail', tagKind: 'warn', body: RB.claimsPressureTest, agent: 'claims-validator', generated: 'Generated 2 days ago' },
+    { icon: 'payments', tone: 'p', title: 'Investment analysis & returns', note: 'Three valuation methods converge on $15–35M pre; exit math vs the deck’s $2.3B claim', tag: 'L2', body: RB.investmentAnalysis, agent: 'investment-analyst', generated: 'Generated 1 day ago' },
+    { icon: 'calculate', tone: 'p', title: 'Unit economics', note: 'LTV/CAC, gross margin with app-store fees, the model’s internal contradictions · 6 sources', tag: 'L2', body: RB.unitEconomics, agent: 'financial-modeler', generated: 'Generated 1 day ago' },
+    { icon: 'groups', tone: 'p', title: 'Demand & traction', note: 'Verified $95–144 WTP band; MoneyGym-specific US demand is zero', tag: 'L2', body: RB.demandTraction, agent: 'demand-analyst', generated: 'Generated 1 day ago' }
   ],
   dataRoom: [
     { icon: 'description', title: 'Deal memo', note: 'Full write-up · exported PDF', tag: 'L1', action: 'tag', kind: 'generated' },
@@ -203,6 +584,27 @@ export const ASSESSMENT = {
     { icon: 'folder_zip', title: 'Data room export', note: 'All 18 sources + research · .zip', action: 'download', kind: 'dataroom' }
   ]
 };
+
+// ---- reading[] — EXACTLY what shared/m3/adapter.js now emits: every hubDoc that has a body, unfiltered.
+// It is a SUPERSET of research[]: it also carries the deal memo, which research[] excludes so the hero's
+// "N workstreams" count stays honest, but which the reader must still be able to open in full (the classic
+// hub-view.js always rendered it). Grouping, canonical titles, glyphs and key findings are derived from the
+// body + title by DS.researchClassify — never hard-coded here. ----
+const READING = [
+  ['research', 'market-sizing', 'Market sizing', 'L3', RB.marketSizing],
+  ['research', 'competitive-benchmark', 'Competitive benchmark', 'L3', RB.competitiveBenchmark],
+  ['research', 'team-diligence', 'Team & founder diligence', 'L3', RB.teamDiligence],
+  ['research', 'claims-validation', 'Claims validation', 'L3', RB.claimsPressureTest],
+  ['research', 'investment-analysis', 'Investment analysis & returns', 'L2', RB.investmentAnalysis],
+  ['research', 'unit-economics', 'Unit economics', 'L2', RB.unitEconomics],
+  ['research', 'demand-and-traction', 'Demand & traction', 'L2', RB.demandTraction],
+  ['assessment', 'deal-memo', 'MoneyGym — Investment Committee Memo', 'L1', RB.dealMemo],
+];
+ASSESSMENT.reading = READING.map(([hub, name, title, level, body], i) => ({
+  hub, name, title, level, tag: level,
+  tagKind: /L3/i.test(level) ? 'info' : 'warn',
+  order: i, body,
+}));
 
 // ---- Investability (VSS) score — weighted 0–100 ----
 export const SCORE = {

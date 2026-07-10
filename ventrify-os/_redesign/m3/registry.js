@@ -131,10 +131,14 @@ export const CATALOG = {
   },
   divider: {
     level: 'atom', group: 'Atoms', title: 'Divider', sig: '.m3-divider',
-    blurb: 'The separator atom between sections of a card.',
+    blurb: 'The separator atom between sections of a card. RULE: a divider is always STRAIGHT, edge to edge. Never draw one as a `border-top`/`border-bottom` on a box that also carries a `border-radius` — the border traces the corner and the hairline curls up at both ends. When the host needs a radius (a hover background, a highlight pill), draw the divider as an absolutely-positioned 1px pseudo-element instead, so its geometry is independent of the corner shape. See `.mrow` (metricRow) and `.tbl td`.',
     maxw: 420, pad: true,
     html: () => `<div style="max-width:360px"><div class="body-m variant">Above</div><hr class="m3-divider"><div class="body-m variant">Below</div></div>`,
-    props: [], variants: [], usedIn: ['Assessment'], adaptive: noAdapt
+    props: [
+      { name: 'geometry', type: 'straight', note: 'never follows a host radius' },
+      { name: 'on a rounded host', type: '::before / ::after', note: 'position:absolute · height:1px · left:0 right:0' },
+    ],
+    variants: [], usedIn: ['Assessment', 'metricRow', 'researchRow', 'benchmarkTable'], adaptive: noAdapt
   },
 
   /* ═══════════════ MOLECULES ═══════════════ */
@@ -746,6 +750,28 @@ export const CATALOG = {
     props: [{ name: 'navigation drawer', type: 'organism', note: 'persistent · left' }, { name: 'masthead', type: 'organism', note: 'persistent · top' }, { name: 'auxiliary panel', type: 'organism', note: 'push / overlay' }, { name: 'utility rail', type: 'organism', note: 'optional · right' }, { name: 'content slot', type: 'region', note: 'a Page fills this' }],
     variants: [{ label: 'Drawer / rail / mobile', note: 'expanded ↔ 88px rail ↔ (planned) mobile overlay' }, { label: 'Masthead content', note: 'venture header + tabs (subject) vs page title (list)' }], usedIn: ['every page'],
     adaptive: { status: 'proposed', layout: { mobile: 'Drawer → hamburger overlay; single-column content; header actions collapse.', tablet: 'Rail + fluid content.', desktop: 'Drawer + content.' }, content: { mobile: 'Content region owns what shows — see each organism’s rules.', tablet: '—', desktop: '—' } }
+  },
+
+  drillPage: {
+    level: 'template', group: 'Templates', domain: 'Shell', title: 'Drill-down (companion page)', sig: 'openDrill({key,title,render,actions})',
+    src: 'drill.html', harnessStart: 'desktop',   // ← the split only exists above 1080px; `fit` would show the full-bleed cover
+    blurb: 'A SECOND page opens beside the current one — the nav snaps to its rail, the page narrows into a live, still-interactive master index (.is-compact), and a full companion page slides into a reserved grid track. You never navigate away. Deliberately unlike the auxiliary panel: page surface, hairline seam, its own minifying masthead, role=region not dialog. Dismissal and orientation are separate jobs: a large ✕ top-right gets you out (of every level at once), while the breadcrumb only tells you where you are. Below 1080px it becomes a full-bleed modal cover. Depth is semantic — it swaps, it never stacks a third column.',
+    maxw: null, pad: false, html: null,
+    props: [
+      { name: 'grid', type: '5 tracks', note: '[nav][primary][drill][aux][rail] · --drill-w is 0px at rest' },
+      { name: 'primary', type: '.is-compact', note: 'live index · tables de-tabularise · ~360px' },
+      { name: 'trigger', type: '[data-drill="key"]', note: 'resolved from window.DRILL_PAGES' },
+      { name: 'dismiss', type: 'drillClose() ✕', note: 'Esc + ✕ exit all levels; browser Back steps up one' },
+      { name: 'deep link', type: '?drill=<key>', note: 'browser Back closes, never navigates away' },
+      { name: 'a11y', type: 'region → dialog', note: 'non-modal split; inert + focus-trap when it covers' },
+    ],
+    variants: [
+      { label: 'Split (>1080px)', note: 'both pages live — click another row to swap in place' },
+      { label: 'Full-bleed (≤1080px)', note: 'the drill covers; primary goes inert; the ✕ replaces the hamburger' },
+      { label: 'Deeper', note: 'a link inside the drill swaps to a tertiary page; the breadcrumb grows, the geometry does not' },
+    ],
+    usedIn: ['deep research (planned)'],
+    adaptive: { status: 'built', layout: { mobile: 'Full-bleed modal cover; back arrow in the drill masthead; primary inert.', tablet: 'Full-bleed cover (≤1080px).', desktop: 'Split — 80px rail + ~360px compact primary + the companion page.' }, content: { mobile: 'Drill bodies are authored single-column — there are no container queries inside a drill.', tablet: '—', desktop: '—' } }
   },
 
   /* ═══════════════ PAGES ═══════════════ */

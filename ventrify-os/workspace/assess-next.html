@@ -287,7 +287,7 @@
     if (!mounted) {
       document.getElementById('app').outerHTML = DS.pageShell({
         active: 'portfolio', nav: wsNavConfig(), brand: wsBrandConfig(), account: wsAccountConfig(),
-        aux: {}, rail: acts.rail, railOverflow: acts.overflow, masthead: mh, body: bodyHtml
+        aux: {}, drill: true, rail: acts.rail, railOverflow: acts.overflow, masthead: mh, body: bodyHtml
       });
       DS.initShell(); mountOrgSwitcherM3(); mounted = true;
     } else {
@@ -296,9 +296,28 @@
       const sb = main.querySelector('.shell-body'); if (sb) sb.innerHTML = bodyHtml;
     }
     if (tabs) DS.initTabs({ names: ['verdict', 'investability', 'market', 'team', 'diligence', 'research'] });
+    wireResearchDrill();   // paint() swaps .shell-body — rebuild the reading room + DRILL_PAGES every time
     lastVerdict = st.hasVerdict;
   }
+
+  // ---- deep research: every document opens as its own full DRILL PAGE ----
+  // A.reading is the UNFILTERED set — every hubDoc that has a body, including the deal memo, which the
+  // count-bearing A.research deliberately excludes. Nothing the run produced is hidden from the reader.
+  // Keys are the deduped canonical slugs, so ?drill=<slug> deep-links stay stable across re-runs.
+  function wireResearchDrill() {
+    const room = DS.researchRoom((A.reading && A.reading.length) ? A.reading : (A.research || []));
+    window.__room = room;
+    window.DRILL_PAGES = {};
+    room.all.forEach(d => { window.DRILL_PAGES[d.slug] = () => DS.researchDrillOpts(d, room); });
+  }
+  window.openResearchDrill = slug => {
+    const o = window.DRILL_PAGES && window.DRILL_PAGES[slug];
+    if (o) window.openDrill({ key: slug, source: document.activeElement, ...o() });
+  };
+
   async function refresh() {
+    // a re-render detaches the row that opened the drill — close it first so focus can't strand
+    if (document.querySelector('.m3-app.drill-open')) window.closeDrill && window.closeDrill({ fromPop: true });
     await loadData();
     // a verdict appearing/disappearing changes the masthead tab structure — a clean reload beats surgical DOM
     if (mounted && stateBits().hasVerdict !== lastVerdict) { location.reload(); return; }
@@ -306,11 +325,16 @@
   }
 
   window.openInvest = (key) => { const d = DS.categoryDetail(S, key); window.openAux({ mode: 'push', title: d.title, subtitle: d.subtitle, body: d.body }); };
-  // deep-research drill — research workstream rows + the "read the full …" market/team buttons all call this.
+  // "Read the full competitive teardown / founder diligence" now open the FULL document as a drill page,
+  // rendered through renderArticle (real GFM). They previously showed a one-line summary through mdToHtml,
+  // which silently deleted every table, rule, code block and heading.
+  const findDoc = re => ((window.__room && window.__room.all) || []).find(d => re.test(d.slug) || re.test(d.title.toLowerCase()));
   window.openPeek = (kind, i) => {
-    if (kind === 'research') return window.openAux({ mode: 'push', ...DS.researchPeek((A.research || [])[i]) });
-    if (kind === 'benchmark') return window.openAux({ mode: 'push', title: 'Competitive teardown', subtitle: 'L3 · Deep research', body: `<div class="md-doc">${DS.mdToHtml((A.benchmark && (A.benchmark.note || A.benchmark.lead)) || 'The competitive teardown has not been generated yet.')}</div>` });
-    if (kind === 'team') return window.openAux({ mode: 'push', title: 'Founder diligence', subtitle: 'L3 · Deep research', body: `<div class="md-doc">${DS.mdToHtml((A.team && A.team.summary) || 'The founder diligence has not been generated yet.')}</div>` });
+    const room = window.__room;
+    if (kind === 'research') { const d = room && room.all[i]; return d ? window.openResearchDrill(d.slug) : undefined; }
+    const d = kind === 'benchmark' ? findDoc(/benchmark|competitor|competitive/) : findDoc(/team|diligence/);
+    if (d) return window.openResearchDrill(d.slug);
+    window.__toast && window.__toast(kind === 'benchmark' ? 'The competitive teardown has not been generated yet.' : 'The founder diligence has not been generated yet.');
   };
   window.RAIL_PANELS = { sources: () => DS.sourcesPanel(A) };
   // Deal memo / Share / Manage moved off the masthead → the utility rail. deal_memo downloads the PDF,

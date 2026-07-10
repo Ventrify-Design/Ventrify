@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Drill-down page — UI shell pattern · Ventrify OS</title>
+<meta name="description" content="Shell pattern: a secondary page opens beside the current one — the nav collapses, the page narrows into a live index, and a full companion page slides in. You never leave the screen.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" rel="stylesheet">
+<script>try{if(localStorage.getItem("ventrify-theme")==="light")document.documentElement.classList.add("light")}catch(e){}</script>
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="ds.css">
+<link rel="stylesheet" href="assess-editorial.css">
+<link rel="stylesheet" href="transitions.css">
+</head>
+<body>
+<div id="app"></div>
+<script type="module">
+  // ============================================================
+  // UI SHELL PATTERN — the drill-down ("companion page").
+  //
+  // Activating a secondary page:
+  //   1. the side nav snaps to its collapsed rail
+  //   2. the current page narrows to a LIVE, interactive master index (.is-compact)
+  //   3. a full second page slides into a new grid track — its own masthead, its own scroller
+  // You never navigate away. It is NOT the aux panel: page surface, hairline seam, no drawer shadow.
+  //
+  // ≤1080px there is no room to split, so the drill becomes a full-bleed modal cover.
+  //
+  // PLACEHOLDER CONTENT ONLY — this page exists to get the MECHANISM right. Real content
+  // (the deep-research documents) gets wired into openDrill() once the pattern is signed off.
+  // ============================================================
+  import * as DS from './ds.js';
+
+  const WORKSTREAMS = [
+    { k: 'ws-1', icon: 'query_stats', tone: 'p', title: 'Workstream one', note: 'Placeholder summary line for the first secondary page.', tag: 'L3' },
+    { k: 'ws-2', icon: 'table_chart', tone: 'p', title: 'Workstream two', note: 'Placeholder summary line — this one carries a deeper link.', tag: 'L3' },
+    { k: 'ws-3', icon: 'badge', tone: 's', title: 'Workstream three', note: 'Placeholder summary line for the third secondary page.', tag: 'L3' },
+    { k: 'ws-4', icon: 'science', tone: 'w', title: 'Workstream four', note: 'Placeholder summary line for the fourth secondary page.', tag: 'Flagged', tagKind: 'warn' },
+    { k: 'ws-5', icon: 'payments', tone: 'p', title: 'Workstream five', note: 'Placeholder summary line for the fifth secondary page.', tag: 'L2' },
+    { k: 'ws-6', icon: 'calculate', tone: 'p', title: 'Workstream six', note: 'Placeholder summary line for the sixth secondary page.', tag: 'L2' },
+    { k: 'ws-7', icon: 'groups', tone: 'p', title: 'Workstream seven', note: 'Placeholder summary line for the seventh secondary page.', tag: 'L2' },
+  ];
+
+  const line = w => `<div class="sk line" style="width:${w}"></div>`;
+  const para = () => `<div style="display:flex;flex-direction:column;gap:9px;margin:0 0 22px">${line('100%')}${line('97%')}${line('99%')}${line('84%')}</div>`;
+
+  // one placeholder secondary PAGE body — single-column by rule (a drill has no container-query safety net)
+  const drillBody = w => `
+    <p class="body-m variant" style="margin-top:0">Placeholder body for <b>${w.title}</b>. This is a full secondary page — it has its own masthead, its own scroll container, and its own back affordance. The page behind it stays live.</p>
+    ${para()}
+    <div class="m3-card" style="padding:18px;margin:0 0 22px">
+      <div class="overline" style="margin-bottom:10px">Placeholder block</div>
+      <div class="keyfig">
+        ${[0,0,0].map(() => `<div class="k"><div class="sk line" style="width:58%;height:22px"></div><div class="sk line" style="width:84%;margin-top:9px"></div></div>`).join('')}
+      </div>
+    </div>
+    ${para()}
+    <div class="overline" style="margin-bottom:10px">Go one level deeper</div>
+    <p class="body-m variant" style="margin-top:0">A link inside a secondary page can open a <b>tertiary</b> page. The surface does not stack a third column — it swaps in place and the breadcrumb grows. Browser <b>Back</b> steps up exactly one level; the <b>✕</b> dismisses every level at once.</p>
+    <button class="m3-btn outlined" data-deeper="${w.k}"><span class="material-symbols-rounded">arrow_forward</span>Open a deeper page</button>
+    ${para()}
+    ${para()}`;
+
+  // window.DRILL_PAGES — every drillable key the shell can resolve, by [data-drill] or ?drill=<key>
+  window.DRILL_PAGES = {};
+  WORKSTREAMS.forEach(w => {
+    window.DRILL_PAGES[w.k] = () => ({
+      title: w.title, subtitle: 'Secondary page · placeholder', parentLabel: 'Primary page',
+      status: { kind: w.tagKind || 'info', label: w.tag },
+      render: () => drillBody(w),
+      actions: [{ variant: 'text', icon: 'download', label: 'Export' }],
+    });
+  });
+  window.DRILL_PAGES['deeper'] = () => ({
+    title: 'Tertiary page', subtitle: 'One level deeper · placeholder', parentLabel: 'Secondary page',
+    status: { kind: 'info', label: 'Depth 2' },
+    render: () => `<p class="body-m variant" style="margin-top:0">A tertiary page. Note the breadcrumb above, and that the geometry has not changed — depth is <b>semantic</b>, never a third column. Press <b>Esc</b> or browser <b>Back</b> to step up one level.</p>${para()}${para()}`,
+  });
+
+  // the primary page's own body: the master index (its rows are the drill triggers) + a wide table.
+  // This is researchRow()'s exact structure (.mrow-lab / .mrow-val / .mrow-chev) so the demo exercises
+  // the REAL row component and its .is-compact treatment, not a lookalike.
+  const RTONE = { p: 'rgba(208,188,255,0.14)', s: 'rgba(111,219,180,0.14)', w: 'rgba(247,192,103,0.14)' };
+  const RCOL = { p: 'var(--md-sys-color-primary)', s: 'var(--success)', w: 'var(--warning)' };
+  const indexRows = WORKSTREAMS.map(w => `
+    <div class="mrow research drill" data-drill="${w.k}">
+      <div class="mrow-lab">
+        <span class="rlead" style="background:${RTONE[w.tone]}"><span class="material-symbols-rounded" style="color:${RCOL[w.tone]}">${w.icon}</span></span>
+        <div class="mrow-txt"><div class="mrow-nm">${w.title}</div><div class="mrow-sub">${w.note}</div></div>
+      </div>
+      <div class="mrow-val"><span class="status ${w.tagKind || 'info'}">${w.tag}</span></div>
+      <span class="material-symbols-rounded mrow-chev">chevron_right</span>
+    </div>`).join('');
+
+  // a deliberately WIDE table, so you can watch .is-compact de-tabularise it when the drill opens
+  const tableRows = [
+    ['Placeholder venture one', 'Series A', 'On track', '72%', '2h ago'],
+    ['Placeholder venture two', 'Seed', 'Needs attention', '48%', '1d ago'],
+    ['Placeholder venture three', 'Pre-seed', 'On track', '91%', '3d ago'],
+    ['Placeholder venture four', 'Series B', 'Stuck', '30%', '1w ago'],
+  ].map(r => `<tr>
+      <td data-th="Venture">${r[0]}</td><td data-th="Stage">${r[1]}</td>
+      <td data-th="Status">${r[2]}</td><td data-th="Progress">${r[3]}</td><td data-th="Updated">${r[4]}</td>
+    </tr>`).join('');
+
+  const body = `<div class="brief">
+    <section class="sec">
+      <div class="sec-head">
+        <span class="eyebrow accent">The mechanism</span>
+        <span class="t">Click a row — the shell drills without leaving the page</span>
+        <span class="meta">${WORKSTREAMS.length} rows</span>
+      </div>
+      <p class="body-m variant" style="margin:-14px 0 20px">The nav collapses to its rail, this page narrows into a live index, and a secondary page slides in beside it. This column stays <b>interactive</b> — click another row to swap the page in place. The <b>✕</b> (top right) or <b>Esc</b> dismisses the drill entirely; browser <b>Back</b> steps up one level.</p>
+      <div class="profile">${indexRows}</div>
+    </section>
+    <hr class="rule">
+    <section class="sec">
+      <div class="sec-head">
+        <span class="eyebrow accent">Compact mode</span>
+        <span class="t">A wide table survives the narrowing</span>
+      </div>
+      <p class="body-m variant" style="margin:-14px 0 20px">The design system has no container queries, so a narrowed column fires no breakpoint. Instead the primary enters an explicit <code>.is-compact</code> state: this table de-tabularises into stacked <em>label · value</em> rows rather than clipping or scrolling sideways.</p>
+      <div class="table-wrap">
+        <table class="eng-table">
+          <thead><tr><th>Venture</th><th>Stage</th><th>Status</th><th>Progress</th><th>Updated</th></tr></thead>
+          <tbody>${tableRows}</tbody>
+        </table>
+      </div>
+    </section>
+  </div>`;
+
+  document.getElementById('app').outerHTML = DS.pageShell({
+    active: 'portfolio',
+    drill: true,                       // ← reserve the drill surface in the shell
+    aux: {}, auxMode: 'push',
+    rail: [{ id: 'notes', icon: 'sticky_note_2', label: 'Notes' }, { id: 'help', icon: 'help', label: 'Help', meta: true }],
+    masthead: DS.masthead({
+      breadcrumb: { label: 'Portfolio', href: '#' },
+      crumbTail: 'Primary page',
+      headline: 'Primary page',
+      status: { kind: 'info', label: 'Shell pattern' },
+      subheading: 'A drill-down opens a secondary page beside this one — the nav collapses, this page narrows, and you never leave the screen.',
+      actions: [{ variant: 'filled', icon: 'open_in_new', label: 'Open workstream 3', onclick: "window.openDrill({key:'ws-3',...window.DRILL_PAGES['ws-3']()})" }],
+    }),
+    body,
+  });
+  DS.initShell();
+
+  // a link INSIDE a drill body opens a deeper page (delegated — the drill body is re-rendered on every open)
+  document.addEventListener('click', e => {
+    if (!e.target.closest('[data-deeper]')) return;
+    window.openDrill({ key: 'deeper', deeper: true, ...window.DRILL_PAGES['deeper']() });
+  });
+
+  // rail tools keep working while drilled — openAux is forced to overlay mode over the drill
+  window.RAIL_PANELS = {
+    notes: { title: 'Notes', subtitle: 'Placeholder tool', body: DS.railPanel('notes', 'Notes') },
+    help: { title: 'Help', subtitle: 'Placeholder tool', body: DS.railPanel('help', 'Help') },
+  };
+</script>
+</body>
+</html>

@@ -4,7 +4,7 @@ import puppeteer from '/Users/antonywhenman/Desktop/Ventrify/node_modules/puppet
 // (workspace/, import ../shared/m3/ds.js — served from project root, need a FIREBASE_ENABLED=false
 // demo build or app.js redirects to login). Both mount the SAME shell so both take the same gate.
 const GROUPS = [
-  { base: 'http://localhost:3200/_redesign/m3', pages: ['portfolio.html', 'portfolio.html?state=empty', 'queue.html', 'research-detail.html', 'assess.html', 'assess-setup.html'] },
+  { base: 'http://localhost:3200/_redesign/m3', pages: ['portfolio.html', 'portfolio.html?state=empty', 'queue.html', 'research-detail.html', 'drill.html', 'assess.html', 'assess-setup.html'] },
   { base: 'http://localhost:3200/workspace', pages: ['dashboard-m3.html', 'queue-m3.html'] },
 ];
 const browser = await puppeteer.launch({
@@ -39,6 +39,19 @@ async function check(base, file) {
     onePrimary: document.querySelectorAll('.mh-actions .m3-btn.filled').length <= 1,
     // no horizontal overflow (catches the off-canvas aux / rail extending the scroll width)
     noHOverflow: document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1,
+    // dividers are STRAIGHT: a one-sided border on a rounded box traces the corner and curls at the
+    // ends. Draw the hairline as an absolutely-positioned pseudo-element instead (see the divider atom).
+    straightDividers: (() => {
+      const px = v => parseFloat(v) || 0;
+      for (const el of document.querySelectorAll('*')) {
+        const c = getComputedStyle(el);
+        const r = Math.max(px(c.borderTopLeftRadius), px(c.borderTopRightRadius), px(c.borderBottomLeftRadius), px(c.borderBottomRightRadius));
+        if (r <= 0) continue;
+        const t = px(c.borderTopWidth), b = px(c.borderBottomWidth), l = px(c.borderLeftWidth), rt = px(c.borderRightWidth);
+        if ((t > 0 || b > 0) && l === 0 && rt === 0 && !(t > 0 && b > 0)) return false;   // radius + one-sided border
+      }
+      return true;
+    })(),
     // headline must be the SAME size + weight at rest and minified (hero headline === compact title)
     headlineConsistent: (() => {
       const h = document.querySelector('.mh-hero .headline-m'), c = document.querySelector('.mh-compact');
@@ -81,6 +94,7 @@ async function check(base, file) {
       'masthead minifies on scroll': minify,
       '≤1 primary (filled) in masthead': dom.onePrimary,
       'no horizontal overflow': dom.noHOverflow,
+      'dividers straight (no radius + 1-sided border)': dom.straightDividers,
       'headline consistent (rest = minified)': dom.headlineConsistent,
       'hamburger visible @390': mobile.hamburgerVisible,
       'hamburger opens nav @390': mobile.hamburgerOpensNav,

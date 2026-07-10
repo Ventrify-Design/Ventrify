@@ -100,8 +100,14 @@
 /* ---- tables (deal, benchmark) ---- */
 .tbl { width: 100%; border-collapse: collapse; font-size: 14px; }
 .tbl th { text-align: left; font-size: 11px; font-weight: 500; letter-spacing: .5px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); padding: 12px; border-bottom: 1px solid var(--md-sys-color-surface-container-highest); white-space: nowrap; }
-.tbl td { padding: 14px 12px; border-bottom: 1px solid var(--md-sys-color-surface-container-highest); vertical-align: top; }
+/* HAIRLINE RULE (see .mrow in assess-editorial.css): the highlighted `.me` row rounds its end cells
+   into a pill, and a border-bottom would follow that radius and curl. Draw the row divider as a
+   straight 1px pseudo-element so the pill's corners never bend it. */
+.tbl td { position: relative; padding: 14px 12px; vertical-align: top; }
+.tbl td::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: var(--md-sys-color-surface-container-highest); pointer-events: none; }
 .tbl tr.me td { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
+/* the highlighted row IS its own separator — a hairline drawn across the pill just dirties it */
+.tbl tr.me td::after { content: none; }
 .tbl tr.me td:first-child { border-radius: 8px 0 0 8px; } .tbl tr.me td:last-child { border-radius: 0 8px 8px 0; }
 .val-tbl td { padding: 10px 12px; font-size: 13px; }
 .see-research { margin-top: 8px; }
@@ -183,6 +189,97 @@ md-outlined-text-field { --md-outlined-text-field-container-shape: 999px; --md-o
 /* top offset clears the sticky masthead now that scroll happens inside .shell-main */
 .reading-rail { position: sticky; top: 88px; display: flex; flex-direction: column; gap: 16px; }
 @media (max-width: 1000px){ .research-layout { grid-template-columns: 1fr; } .reading-rail { position: static; } }
+
+/* provenanceStrip + the reading index's group headers (the rejected 'research room' page is gone;
+   these molecules live on inside the assessment's Research tab) */
+.prov-strip { display: grid; grid-template-columns: repeat(3,1fr); gap: 2px; padding: 12px 4px; border-radius: 14px; background: var(--md-sys-color-surface-container); flex: none; }
+.prov-c { text-align: center; }
+.prov-v { font-size: 19px; line-height: 24px; color: var(--md-sys-color-on-surface); }
+.prov-l { font-size: 10px; letter-spacing: .5px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); margin-top: 2px; }
+.ri-group + .ri-group { margin-top: 18px; }
+.ri-gh { font-size: 11px; letter-spacing: .6px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); padding: 0 10px 8px; }
+
+.art-title { font-size: 30px; line-height: 38px; font-weight: 400; margin: 12px 0 10px; letter-spacing: -.2px; }
+.art-raw { white-space: pre-wrap; font-size: 13px; line-height: 1.6; padding: 16px; border-radius: 12px; background: var(--md-sys-color-surface-container); overflow-x: auto; }
+.art-skeleton { display: flex; flex-direction: column; gap: 12px; padding-top: 28px; }
+.art-skeleton i { display: block; height: 14px; border-radius: 7px; background: var(--md-sys-color-surface-container-high); animation: art-pulse 1.4s ease-in-out infinite; }
+.art-skeleton i:nth-child(3n) { width: 72%; }
+.art-skeleton i:nth-child(4n) { width: 88%; }
+@keyframes art-pulse { 0%,100% { opacity: .5 } 50% { opacity: 1 } }
+@media (prefers-reduced-motion: reduce){ .art-skeleton i { animation: none } }
+
+/* Real GFM output. The hand-authored .art-body rules above style an icon list; markdown emits plain
+   <li>, so .art-prose (two classes → wins) restores document semantics: bullets, tables, rules, code. */
+.art-body.art-prose h1 { font-size: 26px; line-height: 34px; font-weight: 500; margin: 34px 0 12px; scroll-margin-top: 96px; }
+.art-body.art-prose h3 { font-size: 17px; line-height: 24px; font-weight: 500; margin: 26px 0 10px; scroll-margin-top: 96px; }
+.art-body.art-prose h4 { font-size: 14px; line-height: 20px; font-weight: 500; letter-spacing: .3px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); margin: 22px 0 8px; }
+.art-body.art-prose h1:first-child, .art-body.art-prose h3:first-child { margin-top: 28px; }
+/* the agents open every doc with the key finding — give it the editorial lead treatment for free */
+.art-body.art-prose > p:first-child { font-size: 18px; line-height: 1.6; color: var(--md-sys-color-on-surface); margin-top: 20px; }
+.art-body.art-prose ul, .art-body.art-prose ol { display: block; margin: 0 0 16px; padding-left: 22px; list-style: disc; }
+.art-body.art-prose ol { list-style: decimal; }
+.art-body.art-prose li { display: list-item; font-size: 16px; line-height: 1.6; margin-bottom: 6px; }
+.art-body.art-prose li::marker { color: var(--md-sys-color-on-surface-variant); }
+.art-body.art-prose li > ul, .art-body.art-prose li > ol { margin: 6px 0 0; }
+.art-body.art-prose ul ul { list-style: circle; }
+.art-body.art-prose .task-list { list-style: none; padding-left: 2px; }
+.art-body.art-prose .task-list li input { margin-right: 8px; accent-color: var(--md-sys-color-primary); }
+/* A wide agent table scrolls inside its own box so the page never does. It is drawn as an explicit
+   bounded container: a table clipped by a visible edge reads as "this scrolls", where a table clipped
+   by nothing reads as broken. (A background scroll-shadow can't work — background layers paint behind
+   the cells, so they can never fade the text, and a black shadow is invisible on the dark surface.) */
+.art-body.art-prose .tbl-wrap {
+  overflow-x: auto; margin: 4px 0 18px; -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--md-sys-color-surface-container-highest); border-radius: 12px;
+  scrollbar-width: thin;
+}
+.art-body.art-prose .tbl-wrap .dtbl { margin: 0; min-width: 480px; }
+.art-body.art-prose .tbl-wrap .dtbl th:first-child, .art-body.art-prose .tbl-wrap .dtbl td:first-child { padding-left: 14px; }
+.art-body.art-prose .tbl-wrap .dtbl th:last-child, .art-body.art-prose .tbl-wrap .dtbl td:last-child { padding-right: 14px; }
+.art-body.art-prose .tbl-wrap .dtbl tbody tr:last-child td { border-bottom: none; }
+.art-body.art-prose .dtbl td:first-child { color: var(--md-sys-color-on-surface); }
+.art-body.art-prose hr { border: 0; height: 1px; background: var(--md-sys-color-surface-container-highest); margin: 34px 0; }
+.art-body.art-prose blockquote { margin: 0 0 16px; padding: 2px 0 2px 16px; border-left: 3px solid var(--md-sys-color-primary); color: var(--md-sys-color-on-surface-variant); }
+.art-body.art-prose blockquote p:last-child { margin-bottom: 0; }
+.art-body.art-prose code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .88em; padding: 2px 5px; border-radius: 5px; background: var(--md-sys-color-surface-container-high); }
+.art-body.art-prose pre { overflow-x: auto; padding: 14px 16px; border-radius: 12px; background: var(--md-sys-color-surface-container); margin: 0 0 18px; -webkit-overflow-scrolling: touch; }
+.art-body.art-prose pre code { padding: 0; background: none; font-size: 13px; line-height: 1.6; }
+.art-body.art-prose img { max-width: 100%; height: auto; border-radius: 12px; margin: 4px 0 18px; }
+/* a bare source URL is one unbreakable token — in a 628px drill it would push the whole page sideways */
+.art-body.art-prose a { color: var(--md-sys-color-primary); overflow-wrap: anywhere; }
+.art-body.art-prose p, .art-body.art-prose li { overflow-wrap: break-word; }
+.art-body.art-prose strong { font-weight: 500; color: var(--md-sys-color-on-surface); }
+.art-body.art-prose > *:last-child { margin-bottom: 0; }
+
+/* feedsCard — how this workstream lands in the verdict. Sits at the foot of the article, where a
+   reader has earned it, rather than in a rail they scroll past. */
+.feeds-card { display: flex; gap: 14px; align-items: flex-start; margin-top: 36px; padding: 18px 20px; border-radius: 16px; background: var(--md-sys-color-surface-container); border-left: 3px solid var(--md-sys-color-primary); }
+.feeds-card > .material-symbols-rounded { color: var(--md-sys-color-primary); flex: none; }
+.feeds-ttl { font-size: 11px; letter-spacing: .6px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); margin-bottom: 6px; }
+.feeds-txt { font-size: 15px; line-height: 1.55; }
+.feeds-card .m3-btn { margin-top: 8px; margin-left: -12px; }
+
+.doc-pager { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--md-sys-color-surface-container-highest); }
+/* the pager renders as <button> inside a drill (a lateral swap, not a link) and as <a> in the room */
+.pager-side { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 14px; background: var(--md-sys-color-surface-container); text-decoration: none; color: inherit; min-width: 0; font: inherit; text-align: left; border: 0; cursor: pointer; }
+.pager-side:hover { background: var(--md-sys-color-surface-container-high); }
+.pager-side.next { flex-direction: row-reverse; text-align: right; }
+.pager-side .material-symbols-rounded { font-size: 20px; color: var(--md-sys-color-on-surface-variant); flex: none; }
+.pager-bd { display: block; min-width: 0; }
+.pager-l { display: block; font-size: 11px; letter-spacing: .5px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); }
+.pager-t { display: block; font-size: 14px; color: var(--md-sys-color-on-surface); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+
+@media (max-width: 1000px){
+  /* the index moves above the article and becomes a bounded switcher — a full-height contents
+     page would push the article a screen and a half down on every navigation. */
+}
+@media (max-width: 640px){
+  .keyfig { grid-template-columns: 1fr; }
+  .art-title { font-size: 25px; line-height: 32px; }
+  .doc-pager { grid-template-columns: 1fr; }
+  .pager-side.next { flex-direction: row; text-align: left; }
+  .feeds-card { padding: 16px; }
+}
 
 /* ---- auxiliary panel content (header / body / footer) ---- */
 .aux-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 20px 20px 14px; border-bottom: 1px solid var(--md-sys-color-surface-container-highest); flex: none; }

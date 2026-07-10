@@ -166,8 +166,15 @@ a { color: inherit; text-decoration: none; }
 .variant { color: var(--md-sys-color-on-surface-variant); }
 .overline { font-size: 11px; line-height: 16px; font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); }
 
-/* ---- App shell: navigation drawer + content ---- */
-.m3-app { display: grid; grid-template-columns: var(--nav-w) 1fr var(--aux-w, 0px) var(--rail-w, 0px); min-height: 100vh; position: relative; --aux-panel-w: clamp(320px, 30vw, 440px); }
+/* visually hidden, still announced — the drill's aria-live region */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0; }
+
+/* ---- App shell: navigation drawer + content ----
+   FIVE tracks: [nav][primary][drill][aux][rail]. The drill track is 0px at rest and there is no
+   column-gap, so a page that never drills sums byte-identically to the old four-track shell.
+   minmax(0,1fr) on the primary is load-bearing: it lets the track shrink below its children's
+   min-content when the drill opens, so a wide table can never force page-level h-overflow. */
+.m3-app { display: grid; grid-template-columns: var(--nav-w) minmax(0, 1fr) var(--drill-w, 0px) var(--aux-w, 0px) var(--rail-w, 0px); min-height: 100vh; position: relative; --aux-panel-w: clamp(320px, 30vw, 440px); --drill-w: 0px; --compact-w: clamp(300px, 26vw, 360px); }
 /* Pages mount with .app-scroll: height-bound the app so .shell-main scrolls INTERNALLY and the
    sticky masthead can minify (without this the app grows with content and scroll falls to window). */
 .m3-app.app-scroll { height: 100dvh; min-height: 0; overflow: clip; }   /* clip the off-canvas aux (translateX 100%) so it can't extend the horizontal scroll — clip doesn't create a scroll container, so sticky drawer/masthead are unaffected */
@@ -310,7 +317,7 @@ md-outlined-button, md-filled-button, md-text-button, md-filled-tonal-button { -
    only the labels are removed — so nothing shuffles. 80px is deliberate: a nav item
    (24px icon + 16px padding each side = 56px content track) lands its icon dead-centre,
    at the same x it sits when expanded. Also re-asserts grid so no generic .rail can flip it. */
-.m3-app.rail { --nav-w: 80px; display: grid; grid-template-columns: var(--nav-w) 1fr var(--aux-w, 0px) var(--rail-w, 0px); gap: 0; }
+.m3-app.rail { --nav-w: 80px; display: grid; grid-template-columns: var(--nav-w) minmax(0, 1fr) var(--drill-w, 0px) var(--aux-w, 0px) var(--rail-w, 0px); gap: 0; }
 /* keep the section headers' HEIGHT (fade text only) so nav items don't shift up when collapsing */
 .m3-app.rail .drawer-section { opacity: 0; pointer-events: none; }
 .m3-app.rail .nav-label,
@@ -349,9 +356,165 @@ md-outlined-button, md-filled-button, md-text-button, md-filled-tonal-button { -
 @media (max-width: 560px){ .m3-app { --aux-panel-w: 100vw; } }
 @media (prefers-reduced-motion: reduce){ .m3-aux { transition: none; } }
 
+/* ============================================================
+   DRILL SURFACE — the "companion page" (.m3-drill)
+   A SECONDARY PAGE, not a sheet. Opening one collapses the nav to its rail, narrows the primary
+   into a live compact master index (.is-compact), and slides a full second page into a reserved
+   grid track — you never leave the screen.
+   Deliberately unlike .m3-aux: page-canvas surface (not surface-container-low), a hairline seam
+   (not a drawer shadow), its own real minifying masthead with a back arrow, role=region (not dialog).
+   z-index 6 < .m3-scrim 8 < .m3-aux 9 — so a citation peek can still float OVER an open drill.
+   ============================================================ */
+/* --drill-w is a calc() LENGTH, never 1fr: grid-template-columns only interpolates length→length,
+   which is the same class of transition .aux-push already ships. A 1fr track would step, not glide. */
+.m3-app.drill-open { --drill-w: calc(100% - var(--nav-w) - var(--compact-w) - var(--aux-w, 0px) - var(--rail-w, 0px)); }
+.m3-drill {
+  position: absolute; top: 0; height: 100%;
+  right: calc(var(--rail-w, 0px) + var(--aux-w, 0px));
+  /* the ELEMENT's width is the open geometry at all times — deliberately NOT var(--drill-w).
+     If it tracked the grid var it would snap to 0px the instant .drill-open is removed and the
+     slide-out would never render. Only the GRID TRACK animates 0 → this width. */
+  width: calc(100% - var(--nav-w) - var(--compact-w) - var(--aux-w, 0px) - var(--rail-w, 0px));
+  max-width: 100%;
+  background: var(--md-sys-color-surface);
+  border-left: 1px solid var(--md-sys-color-outline-variant);
+  transform: translateX(100%); visibility: hidden; z-index: 6;
+  transition: transform .34s var(--md-sys-motion-emphasized), visibility 0s .34s;
+  display: flex; flex-direction: column;
+}
+.m3-app.drill-open .m3-drill { transform: none; visibility: visible; transition: transform .34s var(--md-sys-motion-emphasized); }
+/* the drill's OWN scroll container — deliberately NOT .shell-main, so querySelector('.shell-main')
+   still resolves the primary page first (the conformance gate depends on that) */
+.drill-scroll { flex: 1; min-height: 0; overflow-y: auto; overflow-anchor: none; display: flex; flex-direction: column; }
+.drill-body { padding: 24px clamp(22px, 3.6vw, 52px) 72px; }
+.drill-body > .brief { margin: 0; }
+/* the drill is ONE column — the classic's right-hand contents rail becomes an inline block at the top */
+.drill-body .drill-toc:empty { display: none; }
+.drill-body .drill-toc-inner { margin: 18px 0 26px; padding: 12px 4px; border-radius: 14px; background: var(--md-sys-color-surface-container); }
+.drill-body .drill-toc-lab { font-size: 11px; letter-spacing: .5px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); padding: 0 12px 6px; }
+.drill-body .art-meta { margin-top: 4px; }
+@media (max-width: 640px){ .drill-body .doc-pager { grid-template-columns: 1fr; } }
+/* A drill has no navigation drawer of its own to open, and it does not navigate back via its crumb —
+   the ✕ is the way out. Keep the breadcrumb visible at every width as pure ORIENTATION.
+   Without the second rule the ≤840 block (.masthead .mh-orient:not([data-depth="1"]){display:none})
+   hides it; [data-depth] lifts specificity to (0,4,0) so it wins. */
+.m3-drill .mh-nav { display: none; }
+.m3-drill .masthead .mh-orient[data-depth] { display: inline-flex; }
+.m3-drill .orient-seg.link { cursor: default; }
+
+/* The bar now holds three children (lead · actions · ✕). Without these, .m3-appbar's
+   `justify-content: space-between` strands the actions in the MIDDLE, and its `flex-wrap: wrap`
+   drops the ✕ onto a second row at narrow widths. Pin the ✕ top-right, let the crumb truncate. */
+.m3-drill .mh-bar { flex-wrap: nowrap; }
+.m3-drill .mh-lead { min-width: 0; overflow: hidden; }
+/* .mh-orient ships `flex: none`, so under pressure it overflows and .mh-lead clips it mid-word.
+   Let it shrink; then each segment can ellipsise properly. */
+.m3-drill .mh-orient { flex: 0 1 auto; min-width: 0; overflow: hidden; }
+.m3-drill .orient-seg { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.m3-drill .mh-actions { margin-left: auto; flex: none; }
+/* on mobile the trailing crumb just repeats the headline directly below it — keep the PARENT, which
+   is the only part carrying information the page doesn't already show */
+@media (max-width: 640px){
+  .m3-drill .mh-orient .orient-seg.current,
+  .m3-drill .mh-orient .orient-sep { display: none; }
+}
+
+/* drillClose — the dismiss control. Big, top-right, tonal; survives the masthead's minify.
+   Sits in .mh-bar OUTSIDE .mh-actions, so it is never confused with the page's own actions. */
+.drill-close {
+  display: grid; place-items: center; flex: none;
+  width: 44px; height: 44px; margin-left: 8px;
+  border: none; border-radius: 999px; cursor: pointer;
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface);
+  transition: background .14s var(--md-sys-motion-standard), transform .14s var(--md-sys-motion-standard);
+}
+.drill-close:hover { background: var(--md-sys-color-surface-container-highest); }
+.drill-close:active { transform: scale(.93); }
+.drill-close:focus-visible { outline: 2px solid var(--md-sys-color-primary); outline-offset: 2px; }
+.drill-close .material-symbols-rounded { font-size: 24px; }
+@media (prefers-reduced-motion: reduce){ .drill-close { transition: none; } }
+@media (max-width: 640px){ .drill-close { width: 40px; height: 40px; } }
+@media (prefers-reduced-motion: reduce){ .m3-drill { transition: none; } }
+
+/* ---- .is-compact — the narrowed primary, keyed on a CLASS not the viewport ----
+   The DS has no container queries, so a 360px column at a 1440px viewport fires no breakpoint.
+   Rather than port 27 media queries, we author ONE narrow presentation of the page. The primary
+   stays live and interactive: it is the master index that drives the drill. */
+/* The page gutters are viewport-keyed (clamp(...,3.6vw,...)), so inside a 360px column they stay at
+   their 1440px size: .shell-body 51.84px + .brief 28px per side would leave ~160px of content.
+   Compact collapses the inner gutters and keeps ONE outer gutter. */
+.shell-main.is-compact { padding-left: 16px; padding-right: 16px; }
+.shell-main.is-compact .shell-body { padding-left: 0; padding-right: 0; }
+.shell-main.is-compact .brief { padding-left: 0; padding-right: 0; }
+/* wide tables can't live at 300–360px → de-tabularise to stacked rows (never h-scroll: block layout
+   means scrollWidth can't grow, so the no-horizontal-overflow guarantee holds) */
+.shell-main.is-compact .table-wrap { overflow-x: visible; }
+.shell-main.is-compact .eng-table,
+.shell-main.is-compact .eng-table tbody,
+.shell-main.is-compact .eng-table tr,
+.shell-main.is-compact .eng-table td { display: block; width: auto; }
+.shell-main.is-compact .eng-table thead { display: none; }
+.shell-main.is-compact .eng-table tr { padding: 12px 8px; border-bottom: 1px solid var(--md-sys-color-surface-container-highest); }
+.shell-main.is-compact .eng-table td { padding: 3px 0; border: none; white-space: normal; }
+.shell-main.is-compact .eng-table td[data-th]::before { content: attr(data-th) " · "; color: var(--md-sys-color-on-surface-variant); font-size: 12px; }
+/* editorial lockups + content grids → single column at ANY viewport */
+.shell-main.is-compact .section-hero { grid-template-columns: 1fr; }
+.shell-main.is-compact .section-hero .divide { display: none; }
+.shell-main.is-compact .section-hero .left { padding-right: 0; }
+.shell-main.is-compact .section-hero .right { padding-left: 0; padding-top: 28px; }
+.shell-main.is-compact .grid-4,
+.shell-main.is-compact .grid-2,
+.shell-main.is-compact .bento,
+.shell-main.is-compact .cols,
+.shell-main.is-compact .keyfig { grid-template-columns: 1fr; }
+/* .shell-main.is-compact is (0,3,0) — it must outrank .mrow.research (0,2,0) whatever the source order */
+.shell-main.is-compact .mrow,
+.shell-main.is-compact .mrow.research { grid-template-columns: minmax(0,1fr) 18px; grid-template-areas: "lab chev" "bar chev" "val chev"; gap: 4px 10px; align-items: center; }
+.shell-main.is-compact .mrow-lab { grid-area: lab; }
+.shell-main.is-compact .mrow-bar { grid-area: bar; }
+.shell-main.is-compact .mrow-val { grid-area: val; text-align: left; justify-content: flex-start; }
+.shell-main.is-compact .mrow-chev { grid-area: chev; align-self: center; }
+/* .mrow.research .mrow-val{text-align:right} is (0,3,0) and loads later — outrank it, and indent the
+   pill to the text column (rlead 34px + 13px gap) so it reads as part of the row, not a stray chip */
+.shell-main.is-compact .mrow.research .mrow-val { text-align: left; padding-left: 47px; margin-top: 2px; }
+
+/* the drill's headline is focused programmatically on open (it is the accessible name). Suppress the
+   ring for that case only — a real keyboard focus still shows :focus-visible. */
+.m3-drill [tabindex="-1"]:focus:not(:focus-visible) { outline: none; }
+/* the compact masthead keeps at most its primary action (mirrors the ≤840 rule, class-keyed) and
+   drops its subheading — at 360px it wraps past the masthead's fixed hero height and gets clipped */
+.shell-main.is-compact .masthead .mh-actions > :not(:first-child) { display: none; }
+.shell-main.is-compact .masthead .mh-sub { display: none; }
+.shell-main.is-compact .sec-head { grid-template-columns: 1fr; }
+.shell-main.is-compact .sec-head .meta { grid-column: 1; grid-row: 3; justify-self: start; }
+
+/* ≤1080px there is no room for two comfortable columns → the drill covers the primary.
+   The primary un-narrows behind it (state preserved) and JS applies modal semantics. */
+@media (max-width: 1080px){
+  .m3-app.drill-open { --drill-w: 0px; }
+  .m3-drill { position: fixed; inset: 0; width: auto; right: 0; max-width: none; border-left: none; z-index: 30; }
+  /* the drill is now a fixed cover at z-30 — lift the aux + its scrim above it so a citation peek
+     opened FROM the drill still floats on top rather than behind it.
+     Scoped to .aux-open: the CLOSED aux is parked at translateX(100%) with its right edge inset by
+     the rail width, so a 72px sliver of it sits inside the app box and is normally masked by the
+     utility rail (z-10). Lifting it unconditionally would paint that sliver over the drill. */
+  .m3-app.drill-open.aux-open .m3-scrim { z-index: 35; }
+  .m3-app.drill-open.aux-open .m3-aux { z-index: 40; }
+  .shell-main.is-compact { padding-left: clamp(22px, 3.6vw, 52px); padding-right: clamp(22px, 3.6vw, 52px); }
+  /* revert the compact presentation — the primary is covered, not narrowed */
+  .shell-main.is-compact .eng-table,
+  .shell-main.is-compact .eng-table tbody,
+  .shell-main.is-compact .eng-table tr,
+  .shell-main.is-compact .eng-table td { display: revert; }
+  .shell-main.is-compact .eng-table thead { display: revert; }
+  .shell-main.is-compact .eng-table td[data-th]::before { content: none; }
+}
+@media (max-width: 640px){ .drill-body { padding: 16px 16px 72px; } }
+
 /* ---- Utility rail (right icon rail) — persistent tooling; opens the aux panel ---- */
 .m3-app.has-utilrail { --rail-w: 72px; }
-.m3-utilrail { grid-column: 4; background: var(--md-sys-color-surface-container-low); box-shadow: var(--shadow-rail); display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 0; z-index: 10; }
+.m3-utilrail { grid-column: 5; background: var(--md-sys-color-surface-container-low); box-shadow: var(--shadow-rail); display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 0; z-index: 10; }
 .urail-item { width: 46px; height: 46px; border-radius: 13px; border: none; background: transparent; color: var(--md-sys-color-on-surface-variant); cursor: pointer; display: grid; place-items: center; position: relative; transition: background .15s; }
 .urail-spacer { flex: 1 1 auto; }   /* pushes the meta cluster (view settings · help) + overflow kebab to the foot */
 .urail-item:hover { background: var(--md-sys-color-surface-container-high); }

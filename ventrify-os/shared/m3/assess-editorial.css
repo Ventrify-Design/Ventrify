@@ -322,8 +322,14 @@
   .profile-foot .split .g { color: var(--md-sys-color-error); }
 
   /* ============ metricRow — the ONE shared row (strength profile + composition table) ============ */
-  .mrow { display: grid; grid-template-columns: minmax(180px, 1.6fr) 1fr 96px 18px; gap: 20px; align-items: center; padding: 14px 12px; border-top: 1px solid var(--md-sys-color-outline-variant); }
-  .mrow:first-of-type { border-top: none; }
+  /* HAIRLINE RULE: a `border` on a rounded box traces the corner radius, so the divider curls up at
+     both ends. .mrow.drill needs a radius for its hover/focus background — so the divider is drawn as
+     an absolutely-positioned 1px pseudo-element instead, whose geometry is independent of the corner
+     shape. Straight, edge to edge, at every radius. (Same technique on .tbl td in ds.css.)
+     It must be position:absolute — a static ::before would become a grid item and take a cell. */
+  .mrow { position: relative; display: grid; grid-template-columns: minmax(180px, 1.6fr) 1fr 96px 18px; gap: 20px; align-items: center; padding: 14px 12px; }
+  .mrow::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: var(--md-sys-color-outline-variant); pointer-events: none; }
+  .mrow:first-of-type::before { content: none; }
   .mrow.drill { cursor: pointer; border-radius: 12px; transition: background .12s ease; }
   .mrow.drill:hover, .mrow.drill:focus-visible { background: var(--md-sys-color-surface-container); outline: none; }
   .mrow.drill:hover .mrow-chev, .mrow.drill:focus-visible .mrow-chev { color: var(--md-sys-color-primary); }
@@ -336,6 +342,8 @@
   .mrow-dot.gap { background: var(--md-sys-color-error); }
   /* clamp to 2 lines so no note (even a bug-length one) can ever balloon a row — belt-and-suspenders with the adapter's bounded summary */
   .mrow-sub { font-size: 11px; color: var(--md-sys-color-on-surface-variant); margin-top: 3px; letter-spacing: .2px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+  /* readTime · N sources · N sections — the classic index carried these; they are how a reader chooses */
+  .mrow-meta { font-size: 11px; color: var(--md-sys-color-on-surface-variant); margin-top: 4px; letter-spacing: .2px; font-variant-numeric: tabular-nums; }
   .mrow-bar { position: relative; height: 10px; border-radius: 999px; background: var(--md-sys-color-surface-container-highest); }
   .mrow-bar .pot { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 999px; background: color-mix(in srgb, var(--md-sys-color-primary) 22%, transparent); }
   .mrow-bar .now { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 999px; background: var(--md-sys-color-primary); }

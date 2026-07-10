@@ -37,7 +37,7 @@
 
   document.getElementById('app').outerHTML = DS.pageShell({
     active: 'portfolio',
-    aux: {}, auxMode: 'push', rail: acts.rail, railOverflow: acts.overflow,
+    aux: {}, auxMode: 'push', drill: true, rail: acts.rail, railOverflow: acts.overflow,
     masthead: DS.masthead({
       breadcrumb: { label: 'Portfolio', href: 'portfolio.html' },
       crumbTail: A.name,
@@ -62,14 +62,24 @@
     window.openAux({ mode: 'push', title: d.title, subtitle: d.subtitle, body: d.body });
   };
 
-  // aux drill-down peeks — research rows + benchmark/team "read the full…" (real content, never placeholder)
-  const peekFooter = `<button class="m3-btn filled" style="flex:1" onclick="location.href='research-detail.html'"><span class="material-symbols-rounded">open_in_full</span>Open full page</button>`;
+  // ---- deep research: every document opens as its own DRILL PAGE, rendered in full ----
+  // The reading room is rebuilt from A.reading (every doc with a body — nothing filtered). Keys are the
+  // deduped canonical slugs, so ?drill=<slug> deep-links and the pager stay stable across re-runs.
+  const room = DS.researchRoom(A.reading && A.reading.length ? A.reading : A.research);
+  window.__room = room;
+  window.DRILL_PAGES = window.DRILL_PAGES || {};
+  room.all.forEach(d => { window.DRILL_PAGES[d.slug] = () => DS.researchDrillOpts(d, room); });
+  window.openResearchDrill = slug => {
+    const o = window.DRILL_PAGES[slug];
+    if (o) window.openDrill({ key: slug, source: document.activeElement, ...o() });
+  };
+
+  // "Read the full competitive teardown / founder diligence" now open the FULL document, not a one-liner.
+  const findDoc = re => room.all.find(d => re.test(d.slug) || re.test(d.title.toLowerCase()));
   window.openPeek = (kind, i) => {
-    let title = '', inner = '';
-    if (kind === 'research') { const r = A.research[i]; title = r.title; inner = `<span class="status ${r.tagKind || 'info'}" style="align-self:flex-start">${r.tag}</span><p class="body-m">${r.note}</p>`; }
-    else if (kind === 'benchmark') { title = 'Competitive benchmark'; inner = `<p class="body-m">${A.benchmark.note}</p>`; }
-    else if (kind === 'team') { title = 'Team & founder diligence'; inner = `<p class="body-m">${A.team.peek || A.team.summary}</p>`; }
-    window.openAux({ mode: 'push', title, subtitle: 'L3 · Deep research', body: inner, footer: peekFooter });
+    if (kind === 'research') { const d = room.all[i]; return d && window.openResearchDrill(d.slug); }
+    const d = kind === 'benchmark' ? findDoc(/benchmark|competitor|competitive/) : findDoc(/team|diligence/);
+    if (d) return window.openResearchDrill(d.slug);
   };
 
   // ---- Sources rail panel — the engagement's inputs + lifecycle + re-run (the "Sources" utility) ----
