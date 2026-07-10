@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>List-row inventory — every row component · Ventrify OS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="ds.css">
+<link rel="stylesheet" href="assess-editorial.css">
+<link rel="stylesheet" href="../../shared/m3/workspace-chrome.css">
+<link rel="stylesheet" href="transitions.css">
+<style>
+  body { background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface); font-family: 'Roboto', sans-serif; margin: 0; }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 48px 28px 120px; }
+  .hd { margin-bottom: 8px; font-size: 30px; font-weight: 500; letter-spacing: -.3px; }
+  .sub { color: var(--md-sys-color-on-surface-variant); font-size: 15px; margin-bottom: 40px; max-width: 70ch; line-height: 1.5; }
+  .count { display: inline-block; background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); border-radius: 999px; padding: 2px 12px; font-size: 13px; font-weight: 500; margin-left: 8px; vertical-align: middle; }
+  .panel { border: 1px solid var(--md-sys-color-outline-variant); border-radius: 18px; margin-bottom: 22px; overflow: hidden; background: var(--md-sys-color-surface); }
+  .panel-hd { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; padding: 16px 22px; background: var(--md-sys-color-surface-container-low); border-bottom: 1px solid var(--md-sys-color-outline-variant); }
+  .p-idx { font-size: 12px; color: var(--md-sys-color-on-surface-variant); font-variant-numeric: tabular-nums; width: 22px; flex: none; }
+  .p-name { font-size: 16px; font-weight: 500; }
+  .p-cls { font-family: 'Roboto Mono', monospace; font-size: 12.5px; color: var(--md-sys-color-primary); background: var(--md-sys-color-surface-container-high); padding: 2px 8px; border-radius: 6px; }
+  .p-meta { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 4px 20px; margin-top: 4px; font-size: 12px; color: var(--md-sys-color-on-surface-variant); }
+  .p-meta b { color: var(--md-sys-color-on-surface); font-weight: 500; }
+  .p-meta code { font-family: 'Roboto Mono', monospace; font-size: 11.5px; }
+  .p-body { padding: 18px 22px 22px; }
+  .p-err { color: var(--md-sys-color-error); font-family: 'Roboto Mono', monospace; font-size: 12px; white-space: pre-wrap; }
+  /* the assessment rows expect the .brief reading surface — give it here so scoped rules apply */
+  .render.brief { padding: 0; max-width: none; }
+  hr.divider { border: 0; border-top: 1px solid var(--md-sys-color-outline-variant); margin: 40px 0 26px; }
+  .grp { font-size: 12px; letter-spacing: .8px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); margin: 34px 0 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hd">List-row inventory <span class="count" id="count">…</span></div>
+  <div class="sub">Every repeated list-item row component in the M3 workspace, rendered live from the design system (<code>ds.js</code> + the shared CSS). Each panel shows the component's class, its heading / sub-line font sizes, and where it renders today. This is the raw material for unifying them into one component with variations.</div>
+  <div id="stage"></div>
+</div>
+<script type="module">
+  import * as DS from './ds.js';
+  import { ASSESSMENT, SCORE, ENGAGEMENTS, STATS, QUEUE } from './data.js';
+  // dynamic so a hiccup in this workspace-only module can't abort the other 20 rows
+  let WC = {};
+  try { WC = await import('../../shared/m3/workspace-cards.js'); } catch (e) { console.warn('workspace-cards import failed:', e.message); }
+
+  const CATALOG = [
+    { group: 'Assessment — editorial rows' },
+    { name: 'Metric row', cls: '.mrow', heading: '.mrow-nm 18px/500', sub: '.mrow-sub 14px · .mrow-val .v 20px', usedIn: 'Investability (strength profile + composition), Market (funnel)', ex: `DS.metricRow({key:'moat',label:'Technical / competitive moat',dot:'gap',sub:'15% weight · gap',bar:{now:0.3,pot:0.9,tick:true},value:'1.5',sub2:{text:'→ 4.5',tone:'up'},onDrill:'openInvest'})` },
+    { name: 'Research / reading-index row', cls: '.mrow.research', heading: '.mrow-nm 18px/500', sub: '.mrow-sub 14px · .mrow-meta 12px', usedIn: 'Research tab document list', ex: `'<div class="profile">'+DS.researchRow(ASSESSMENT.research[0],0,'openPeek')+DS.researchRow(ASSESSMENT.research[3],3,'openPeek')+'</div>'` },
+    { name: 'Signal row (5 VSS sub-signals)', cls: '.cd-sig', heading: '.cd-sig .q 18px/500', sub: '.cd-sig .nt 14px · .cd-chip 28px', usedIn: 'Evidence integrity (Research) + Investability category drill', ex: `DS.signalRows(SCORE.categories.find(c=>c.key==='team').subs)` },
+    { name: 'Lever row (what would lift it)', cls: '.cd-lever', heading: '.cd-lever .q 18px/500', sub: '.cd-lever .nt 14px · .cd-liftv 13px', usedIn: 'Investability category drill — "What would lift it"', ex: `DS.categoryDetail(SCORE,'moat').body` },
+    { name: 'Contribution & standing row', cls: '.cd-srow', heading: '.cd-srow 13px', sub: '.cd-srow b 13px/500', usedIn: 'Investability category drill — "Contribution & standing"', ex: `DS.categoryDetail(SCORE,'market').body` },
+    { name: 'Founder roster row', cls: '.frow', heading: '.frow-nm 15px/500', sub: '.frow-role 12px · .frow-bg 12.5px', usedIn: 'Team tab — cap table', ex: `DS.founderRoster(ASSESSMENT.team,'openPeek')` },
+    { name: 'Must-be-true / missing-seat row', cls: '.must', heading: '.must p 15px/1.55', sub: '.must .idx 26px/300', usedIn: 'Verdict ("What must be true") + Team ("What the team is missing")', ex: `DS.conditionsKill(ASSESSMENT)` },
+    { name: 'Case point row (bull / bear)', cls: '.cpt', heading: '.cpt p 14px/1.52', sub: '.cpt .mk icon 19px', usedIn: 'Verdict — "The case, argued both ways"', ex: `DS.caseEditorial(ASSESSMENT)` },
+    { name: 'Diligence checklist item', cls: '.ditem', heading: '.ditem .tt 15px/500', sub: '.ditem .ds 13px', usedIn: 'Diligence tab checklist', ex: `DS.diligenceEditorial(ASSESSMENT)` },
+    { name: 'Comparable-scan row', cls: '.compscan-row', heading: '.compscan-nm 15px/500', sub: '.compscan-meta 12px · .compscan-fig b 15px', usedIn: 'Market tab — "The reprice"', ex: `DS.dealValuation(ASSESSMENT.valuation, ASSESSMENT.rounds)` },
+    { name: 'Lifecycle step', cls: '.lifecycle-step', heading: '.lc-lab 14px/500', sub: '.lc-at 11.5px · .lc-meta 12px', usedIn: 'Sources rail panel — assessment playback', ex: `DS.lifecycleStrip(ASSESSMENT.lifecycle)` },
+    { name: 'Source document row', cls: '.src-row', heading: '.src-nm 13.5px/500', sub: '.src-note 11.5px', usedIn: 'Sources rail panel + wizard deck dropzone', ex: `'<div class="src-docs">'+DS.srcRow(ASSESSMENT.dataRoom[1])+DS.srcRow(ASSESSMENT.dataRoom[2])+'</div>'` },
+    { name: 'Research citation row', cls: '.src', heading: '.src link 14px', sub: '.src .dom 13px', usedIn: 'Research drill page — citation list', ex: `DS.sourceList([{title:'Companies House — Monely Ltd filing history',href:'https://find-and-update.company-information.service.gov.uk/',dom:'gov.uk'},{title:'Carta — State of Private Markets Q3 2025',href:'https://carta.com',dom:'carta.com'}])` },
+
+
+    { group: 'Workspace — portfolio / queue / people rows' },
+    { name: 'Portfolio engagement / deal table row', cls: '.eng-table tr', heading: '.et-name 15px/500', sub: '.et-sub 12px · .et-stage 14px', usedIn: 'Portfolio table, deal pipeline, assess-setup', ex: `DS.engagementTable([ENGAGEMENTS[8], ENGAGEMENTS[3], ENGAGEMENTS[0]])` },
+    { name: 'Queue action-item row', cls: '.qitem', heading: '.title-m 16px/500', sub: '.body-m 14px · .q-meta 11px', usedIn: 'Action queue', ex: `DS.queueItem(QUEUE[0])` },
+    { name: 'Inline note / prompt row', cls: '.note-card', heading: '.note-bd 14px', sub: '(single line / centred empty-state)', usedIn: 'Portfolio prompts + empty state, assess-next nudges', ex: `DS.noteCard({icon:'play_arrow', text:'<b>Deck ready</b> — run the assessment; the agents research, score and draft the verdict.', actions:'<button class="m3-btn filled">Run assessment</button>'})` },
+    { name: 'Person / operator roster row-card', cls: '.pc', heading: '.pc-name 15.5px/600', sub: '.pc-founder 12.5px · .pc-meta 11.5px', usedIn: 'Team (operators) — team-m3.html', ex: `WC.personCard({avatar:'JC', avatarColor:'var(--md-sys-color-primary)', name:'Jonathan Corner — CEO / Founder', sub:'jonathan@moneygym.io', badge: DS.statusPill({kind:'ok',label:'You'}), pill: DS.statusPill({kind:'info',label:'Admin'})})` },
+  ];
+
+  const stage = document.getElementById('stage');
+  const scope = { DS, WC, ASSESSMENT, SCORE, ENGAGEMENTS, STATS, QUEUE };
+  const run = ex => new Function(...Object.keys(scope), 'return (' + ex + ')')(...Object.values(scope));
+
+  let n = 0, ok = 0;
+  const html = CATALOG.map(item => {
+    if (item.group) return `<div class="grp">${item.group}</div>`;
+    n++;
+    let render = '', err = '';
+    try { render = String(run(item.ex) ?? ''); if (render.trim()) ok++; else err = '(rendered empty)'; }
+    catch (e) { err = 'render error: ' + e.message; }
+    return `<div class="panel">
+      <div class="panel-hd">
+        <span class="p-idx">${n}</span>
+        <span class="p-name">${item.name}</span>
+        <span class="p-cls">${item.cls}</span>
+        <div class="p-meta">
+          <span><b>heading</b> <code>${item.heading}</code></span>
+          <span><b>sub</b> <code>${item.sub}</code></span>
+          <span><b>used in</b> ${item.usedIn}</span>
+        </div>
+      </div>
+      <div class="p-body">${err ? `<div class="p-err">${err}\n${item.ex}</div>` : `<div class="render brief">${render}</div>`}</div>
+    </div>`;
+  }).join('');
+  stage.innerHTML = html;
+  document.getElementById('count').textContent = `${ok}/${n} rendered`;
+  // inert any interactivity in the showcase
+  stage.querySelectorAll('[onclick]').forEach(el => el.removeAttribute('onclick'));
+</script>
+</body>
+</html>

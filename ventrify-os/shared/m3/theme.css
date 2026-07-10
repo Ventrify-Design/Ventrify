@@ -9,6 +9,19 @@
 :root {
   color-scheme: dark;
 
+  /* ── ROW TYPE RAMP ── the one type scale every list-row opts into (unified or not), so row
+     font sizing changes in ONE place. Two density tiers: -lg = reading (wide tabs + aux drill),
+     bare = compact (roster / table / cards / timeline). Caption/eyebrow/time/delta/clause are
+     density-invariant. See the row-unification plan. */
+  --row-title-lg: 18px; --row-title: 15px; --row-title-weight: 500;   /* headline, weight 500 */
+  --row-prose-lg: 15px; --row-prose: 14px;                            /* paragraph body (must/cpt), weight 400 */
+  --row-sub-lg: 14px;   --row-sub: 12.5px;                            /* secondary line */
+  --row-cap: 12px;      --row-eyebrow: 11px;   --row-time: 13px;      /* tertiary · UPPERCASE label · inline time */
+  --row-val-lg: 20px;   --row-val: 15px;       --row-delta: 13px; --row-val-weight: 600;   /* value · small value · delta */
+  --row-clause: 13px;                                                 /* full-bleed contextual line */
+  --row-lead-dot: 10px; --row-lead-chip: 28px; --row-lead-numeral: 26px; --row-lead-glyph: 20px;
+  --row-lead-tile-sm: 34px; --row-lead-tile: 40px; --row-lead-tile-lg: 44px;
+
   /* ---- M3 dark color roles (violet baseline scheme) ---- */
   --md-sys-color-primary: #D0BCFF;
   --md-sys-color-on-primary: #381E72;

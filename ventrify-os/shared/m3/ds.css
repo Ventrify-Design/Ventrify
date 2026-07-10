@@ -79,10 +79,6 @@
 .good .mi { color: var(--success); } .bad .mi { color: var(--md-sys-color-error); }
 
 /* ---- investability scorecard ---- */
-.vss { display: flex; align-items: center; gap: 12px; padding: 9px 0; }
-.vss .nm { flex: 1.2; font-size: 12px; line-height: 16px; letter-spacing: 0.4px; color: var(--md-sys-color-on-surface-variant); }
-.vss .num { width: 30px; text-align: right; font-size: 12px; color: var(--md-sys-color-on-surface-variant); }
-.vss md-linear-progress { flex: 1; }
 .heat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .heat-card { border-left: 3px solid var(--md-sys-color-error); background: var(--md-sys-color-surface-container-high); border-radius: 10px; padding: 14px 16px; }
 .heat-card.y { border-left-color: var(--warning); }
@@ -92,10 +88,6 @@
 .heat-card.y .lift { color: var(--warning); background: rgba(247,192,103,0.14); }
 .heat-card .slug { font-size: 15px; font-weight: 500; margin: 6px 0 4px; }
 .heat-card .note { font-size: 13px; color: var(--md-sys-color-on-surface-variant); font-style: italic; line-height: 1.45; }
-.fixes-l { display: flex; flex-direction: column; gap: 9px; margin: 12px 0; }
-.fixes-l .f { display: flex; align-items: center; gap: 10px; font-size: 14px; }
-.fixes-l .dot { width: 8px; height: 8px; border-radius: 999px; flex: none; background: var(--md-sys-color-error); }
-.fixes-l .fl { margin-left: auto; font-size: 12px; font-weight: 500; color: var(--md-sys-color-on-surface-variant); }
 
 /* ---- tables (deal, benchmark) ---- */
 .tbl { width: 100%; border-collapse: collapse; font-size: 14px; }
@@ -128,20 +120,20 @@
 md-outlined-text-field { --md-outlined-text-field-container-shape: 999px; --md-outlined-text-field-top-space:8px; --md-outlined-text-field-bottom-space:8px; }
 .table-wrap { padding: 0; overflow-x: auto; }
 .eng-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-.eng-table th { text-align: left; font-size: 11px; font-weight: 500; letter-spacing: .5px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); padding: 14px 20px; border-bottom: 1px solid var(--md-sys-color-surface-container-highest); white-space: nowrap; }
+.eng-table th { text-align: left; font-size: var(--row-eyebrow); font-weight: 500; letter-spacing: .5px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); padding: 14px 20px; border-bottom: 1px solid var(--md-sys-color-surface-container-highest); white-space: nowrap; }
 .eng-table td { padding: 16px 20px; border-bottom: 1px solid var(--md-sys-color-surface-container-highest); vertical-align: middle; }
 .eng-table tbody tr { cursor: pointer; transition: background .15s; }
 .eng-table tbody tr:hover td { background: var(--md-sys-color-surface-container-high); }
 .eng-table tbody tr:last-child td { border-bottom: none; }
 .et-v { display: flex; align-items: center; gap: 14px; }
 .et-av { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; font-weight: 500; font-size: 14px; flex: none; }
-.et-name { font-size: 15px; font-weight: 500; line-height: 20px; }
-.et-sub { font-size: 12px; line-height: 16px; letter-spacing:.4px; color: var(--md-sys-color-on-surface-variant); }
+.et-name { font-size: var(--row-title); font-weight: 500; line-height: 20px; }
+.et-sub { font-size: var(--row-sub); line-height: 16px; letter-spacing:.4px; color: var(--md-sys-color-on-surface-variant); }
 .et-stage { color: var(--md-sys-color-on-surface-variant); white-space: nowrap; }
 .et-prog { display: flex; align-items: center; gap: 10px; min-width: 150px; }
 .et-prog md-linear-progress { flex: 1; }
-.et-prog .pct { font-size: 12px; color: var(--md-sys-color-on-surface-variant); width: 34px; text-align: right; }
-.et-when { color: var(--md-sys-color-on-surface-variant); white-space: nowrap; font-size: 13px; }
+.et-prog .pct { font-size: var(--row-cap); color: var(--md-sys-color-on-surface-variant); width: 34px; text-align: right; }
+.et-when { color: var(--md-sys-color-on-surface-variant); white-space: nowrap; font-size: var(--row-time); }
 .et-score { font-weight: 500; }
 
 /* ---- action queue ---- */
@@ -154,7 +146,7 @@ md-outlined-text-field { --md-outlined-text-field-container-shape: 999px; --md-o
 .qitem.med .q-ic { background: var(--warning-container); color: var(--on-warning-container); }
 .qitem.low .q-ic { background: var(--success-container); color: var(--on-success-container); }
 .q-body { flex: 1; min-width: 0; }
-.q-meta { font-size: 11px; line-height:16px; font-weight: 500; letter-spacing:.5px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); margin-top: 8px; }
+.q-meta { font-size: var(--row-eyebrow); line-height:16px; font-weight: 500; letter-spacing:.5px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); margin-top: 8px; }
 .q-act { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex: none; }
 @media (max-width:720px){ .qitem{flex-wrap:wrap} .q-act{flex-direction:row;width:100%;justify-content:space-between} }
 
@@ -364,15 +356,6 @@ md-outlined-text-field { --md-outlined-text-field-container-shape: 999px; --md-o
 .m3-chip .material-symbols-rounded { font-size: 17px; }
 
 /* ---- list (m3-list / m3-li) — start · body(headline+support) · end ---- */
-.m3-list { display: flex; flex-direction: column; }
-.m3-li { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 16px; padding: 12px 4px; min-height: 56px; border-radius: 10px; }
-.m3-li.button { cursor: pointer; transition: background .12s ease; }
-.m3-li.button:hover { background: color-mix(in srgb, var(--md-sys-color-on-surface) 5%, transparent); }
-.m3-li-start { display: flex; align-items: center; }
-.m3-li-body { min-width: 0; }
-.m3-li-headline { font-size: 14.5px; font-weight: 500; color: var(--md-sys-color-on-surface); line-height: 1.35; }
-.m3-li-support { font-size: 12.5px; color: var(--md-sys-color-on-surface-variant); line-height: 1.4; margin-top: 2px; }
-.m3-li-end { display: flex; align-items: center; gap: 8px; color: var(--md-sys-color-on-surface-variant); text-align: right; }
 
 /* ---- search field (filterBar) ---- */
 .m3-search { position: relative; flex: 1; min-width: 180px; }

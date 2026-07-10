@@ -525,32 +525,6 @@ export const CATALOG = {
     variants: [{ label: 'Signed off vs not', note: 'the sign-off callout renders only when present' }], usedIn: ['Assessment'],
     adaptive: { status: 'proposed', layout: { mobile: 'Verdict-pill / score split stacks; score becomes a full-width band above the thesis.', tablet: 'Two-column header; body full width.', desktop: 'Two-column header.' }, content: { mobile: 'Thesis clamps to 3 lines (read more); must-be-trues stay; sign-off note collapses.', tablet: 'Full thesis + note.', desktop: 'Everything.' } }
   },
-  investabilityMini: {
-    level: 'organism', group: 'Organisms', domain: 'Assessment', title: 'Investability (mini)', sig: 'investabilityMini(score)',
-    blurb: 'The bento summary of the score — now-vs-potential radar + per-category bars.',
-    maxw: 440, pad: true,
-    html: () => DS.investabilityMini(SCORE),
-    props: [{ name: 'score.composite / potential', type: 'number' }, { name: 'score.categories', type: '[{label,frac,pot,num}]' }],
-    variants: [{ label: 'With onFull', note: '“Full scorecard” link when a handler is passed' }], usedIn: ['Assessment'],
-    adaptive: { status: 'proposed', layout: { mobile: 'Radar scales down; bars full width beneath.', tablet: 'As desktop.', desktop: 'Radar + bars stacked.' }, content: { mobile: 'Radar + top 3 weakest; rest behind the full link.', tablet: 'All 7.', desktop: 'All 7.' } }
-  },
-  investabilityScorecard: {
-    level: 'organism', group: 'Organisms', domain: 'Assessment', title: 'Investability scorecard', sig: 'investabilityScorecard(score)',
-    blurb: 'The full weighted 0–100 breakdown: how the score is calculated, the now-vs-potential radar, and the ranked fixes heatmap.',
-    maxw: null, pad: true,
-    html: () => DS.investabilityScorecard(SCORE),
-    props: [{ name: 'score.contributions', type: '[[cat,weight,rated,contrib,gap]]' }, { name: 'score.categories', type: '[{key,frac,pot}]' }, { name: 'score.fixes / heatmap', type: 'array' }, { name: 'score.potential', type: 'number' }],
-    variants: [{ label: 'Bands', note: 'Strong ≥0.80 · Mixed 0.50–0.79 · Gap <0.50' }], usedIn: ['Assessment'],
-    adaptive: { status: 'proposed', layout: { mobile: 'Each section single-column; contributions table scrolls; radar above legend/fixes.', tablet: 'Radar + fixes side-by-side; table full width.', desktop: 'Two-column .cols per section.' }, content: { mobile: 'Table shows Category + Contribution (weight/rated on toggle); top 3 fixes.', tablet: 'Full table; top 6.', desktop: 'Full table; top 6.' } }
-  },
-  caseBothWays: {
-    level: 'organism', group: 'Organisms', domain: 'Assessment', title: 'Case both ways', sig: 'caseBothWays(a)',
-    blurb: 'The bull and bear cases side by side — invest vs pass, as two mirrored lists.',
-    maxw: null, pad: true,
-    html: () => DS.caseBothWays(A),
-    props: [{ name: 'a.bull', type: 'string[]' }, { name: 'a.bear', type: 'string[]' }], variants: [], usedIn: ['Assessment'],
-    adaptive: { status: 'proposed', layout: { mobile: 'Columns stack; invest first.', tablet: 'Side by side.', desktop: 'Side by side.' }, content: { mobile: 'All points kept; each clamps to 3 lines.', tablet: 'Full.', desktop: 'Full.' } }
-  },
   marketSizing: {
     level: 'organism', group: 'Organisms', domain: 'Assessment', title: 'Market sizing', sig: 'marketSizing(m)',
     blurb: 'Editorial (no card): a corrected-scale lead + the TAM/SAM/SOM funnel as three metricRow bars + the SOM-dominance callout. De-duped against the hero (the 44–73× lives there).',
@@ -592,14 +566,6 @@ export const CATALOG = {
     variants: [{ label: 'Composes', note: 'marketHero · marketSizing · dealValuation · benchmarkTable' }], usedIn: ['Assessment'],
     adaptive: { status: 'built', layout: { mobile: 'Single column; matrix scrolls.', tablet: 'Full.', desktop: 'Full.' }, content: { mobile: 'Full.', tablet: 'Full.', desktop: 'Full.' } }
   },
-  teamDiligence: {
-    level: 'organism', group: 'Organisms', domain: 'Assessment', title: 'Team diligence (legacy card)', sig: 'teamDiligence(team)',
-    blurb: 'Legacy card — retired from assess.html; the roster now renders editorial via founderRoster. Founders + board with a verification signal each, plus the team gaps.',
-    maxw: null, pad: true,
-    html: () => DS.teamDiligence(A.team),
-    props: [{ name: 'team.summary', type: 'string' }, { name: 'team.members', type: '[{name,bg,signal}]' }, { name: 'team.gaps', type: 'string[]' }], variants: [{ label: 'signal', note: 'positive / flag / neutral' }], usedIn: ['Assessment'],
-    adaptive: { status: 'proposed', layout: { mobile: 'Signal chip drops below the name.', tablet: 'Chip inline.', desktop: 'Chip inline trailing.' }, content: { mobile: 'Bio clamps to 2 lines.', tablet: '3 lines.', desktop: 'Full.' } }
-  },
   founderRoster: {
     level: 'organism', group: 'Organisms', domain: 'Assessment', title: 'Founder roster', sig: 'founderRoster(team, onOpen)',
     blurb: 'The founder cast as signal-tinted editorial rows on the background (colour IS the verdict) — the detail behind teamHero. The scannable signal column survives as a tinted monogram + a trailing signal word, no card border.',
@@ -639,28 +605,6 @@ export const CATALOG = {
     maxw: 720, pad: true,
     html: () => DS.exitReturns(A.exit),
     props: [{ name: 'e.acquirers / path / returns', type: 'string' }], variants: [], usedIn: ['Assessment'], adaptive: noAdapt
-  },
-  diligenceChecklist: {
-    level: 'organism', group: 'Organisms', domain: 'Assessment', title: 'Diligence checklist', sig: 'diligenceChecklist(items)',
-    blurb: 'The pre-wire checklist — blockers, key items and standard confirmations, tagged by severity.',
-    maxw: null, pad: true,
-    html: () => DS.diligenceChecklist(A.diligence),
-    props: [{ name: 'item.kind', type: "'err'|'warn'|'info'" }, { name: 'item.tag / title / note', type: 'string' }], variants: [{ label: 'Blocker / Key / Standard', note: 'severities' }], usedIn: ['Assessment'], adaptive: noAdapt
-  },
-  keyFindings: {
-    level: 'organism', group: 'Organisms', domain: 'Assessment', title: 'Key findings', sig: 'keyFindings(findings)',
-    blurb: 'The handful of findings that most move the verdict, each with a status icon.',
-    maxw: null, pad: true,
-    html: () => DS.keyFindings(A.findings),
-    props: [{ name: 'finding.icon / color / title / note', type: 'string' }], variants: [], usedIn: ['Assessment'], adaptive: noAdapt
-  },
-  researchList: {
-    level: 'organism', group: 'Organisms', domain: 'Assessment', title: 'Deep research list (legacy card)', sig: 'researchList(items)',
-    blurb: 'Legacy card — retired from assess.html; the workstreams now render editorial via researchIndex/researchRow. Every research workstream behind the verdict, each openable into the drill-down.',
-    maxw: null, pad: true,
-    html: () => DS.researchList(A.research),
-    props: [{ name: 'item.title / note', type: 'string' }, { name: 'item.tone', type: "'p'|'s'|'w'" }, { name: 'item.tag / tagKind', type: 'string' }], variants: [{ label: 'tone', note: 'primary / success / warning' }], usedIn: ['Assessment'],
-    adaptive: { status: 'proposed', layout: { mobile: 'Trailing tag + chevron drop below the title.', tablet: 'Inline.', desktop: 'Inline.' }, content: { mobile: 'Note clamps to 2 lines.', tablet: 'Full.', desktop: 'Full.' } }
   },
   researchRow: {
     level: 'molecule', group: 'Molecules', domain: 'Assessment', title: 'Research row', sig: 'researchRow(r, i, onOpen)',
@@ -709,13 +653,6 @@ export const CATALOG = {
     maxw: 640, pad: true,
     html: () => DS.provLine(A.confidence),
     props: [{ name: 'c.level', type: 'string' }, { name: 'c.line', type: 'string' }], variants: [], usedIn: ['verdictSignoff', 'researchMemo'], adaptive: noAdapt
-  },
-  dataRoom: {
-    level: 'organism', group: 'Organisms', domain: 'Assessment', title: 'Data room', sig: 'dataRoom(docs)',
-    blurb: 'The source documents behind the assessment, downloadable, with the deal memo pinned. The Research tab\'s one earned card; cross-links to the Sources rail panel to manage + re-run.',
-    maxw: null, pad: true,
-    html: () => DS.dataRoom(A.dataRoom),
-    props: [{ name: 'doc.icon / title / note', type: 'string' }, { name: 'doc.action', type: "'tag'|'download'" }], variants: [], usedIn: ['Assessment'], adaptive: noAdapt
   },
   lifecycleStrip: {
     level: 'molecule', group: 'Molecules', domain: 'Assessment', title: 'Lifecycle strip', sig: 'lifecycleStrip(steps)',

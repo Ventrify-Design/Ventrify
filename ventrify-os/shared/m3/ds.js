@@ -341,64 +341,7 @@ export const signoff = s => `<div class="callout ok" style="margin-top:16px;alig
     <button class="m3-btn text">Update</button>
   </div>`;
 
-// ---- investability: mini (bento) + full scorecard ----
-export function investabilityMini(score, onFull = '') {
-  return `<div class="m3-card stack">
-    <div class="card-hd" style="margin-bottom:4px">${overline('Investability')}${overline('7 × 5 · VSS')}</div>
-    ${radar(score, { max: 340 })}
-    <div style="display:flex;justify-content:center;gap:16px;font-size:12px;margin-top:-4px;">
-      <span style="display:inline-flex;align-items:center;gap:6px;"><span style="width:12px;height:3px;background:var(--md-sys-color-primary);border-radius:2px;"></span>Now <b style="color:var(--md-sys-color-on-surface)">${score.composite}</b></span>
-      <span style="display:inline-flex;align-items:center;gap:6px;color:var(--md-sys-color-on-surface-variant)"><span style="width:12px;border-top:2px dashed var(--success);"></span>Potential <b style="color:var(--success)">~${score.potential}</b></span>
-    </div>
-    <div>${score.categories.map(c => `<div class="vss"><span class="nm">${esc(c.label)}</span><div class="m3-prog"><span style="width:calc(${c.frac} * 100%)"></span></div><span class="num">${c.num}</span></div>`).join('')}</div>
-    ${onFull ? `<button class="m3-btn text trail" onclick="${onFull}"><span class="material-symbols-rounded">arrow_forward</span>Full scorecard &amp; fixes</button>` : ''}
-  </div>`;
-}
-export function investabilityScorecard(score) {
-  const contribRows = score.contributions.map(r => `<tr><td>${esc(r[0])}</td><td>${r[1]}</td><td>${r[2]}</td><td style="text-align:right;${r[4] ? 'color:var(--md-sys-color-error)' : ''}">${r[3]}</td></tr>`).join('');
-  const fixes = score.fixes.map(f => `<div class="f"><span class="dot" style="background:var(--md-sys-color-${f.kind === 'err' ? 'error' : ''}${f.kind === 'warn' ? '' : ''});${f.kind === 'warn' ? 'background:var(--warning);' : ''}"></span><b>${esc(f.cat)}</b> — ${esc(f.detail)}<span class="fl">${f.lift}</span></div>`).join('');
-  const heat = score.heatmap.map(g => `<div class="heat-card"><div class="h"><span class="cat">${esc(g.cat)}</span><span class="lift">${g.lift}</span></div><div class="slug">${esc(g.slug)}</div><div class="note">&ldquo;${esc(g.note)}&rdquo;</div></div>`).join('');
-  const uplift = score.potential - score.composite;
-  return `<div class="sections">
-    <section class="m3-card"><div class="card-hd">${overline('How the score is calculated')}${overline('Weighted 0–100')}</div>
-      <div class="cols" style="align-items:center;gap:32px;">
-        <div style="text-align:center;">
-          <div class="score" style="font-size:72px;line-height:1;">${score.composite}<small style="font-size:26px;">/100</small></div>
-          <div style="margin-top:10px;">${statusPill({ kind: 'warn', label: score.band, icon: 'trending_flat' })}</div>
-          <div class="body-m variant" style="margin-top:12px;">Now <b style="color:var(--md-sys-color-on-surface)">${score.composite}</b> &rarr; Potential <b style="color:var(--success)">~${score.potential}</b> <span style="color:var(--success)">(+${uplift})</span></div>
-        </div>
-        <table class="tbl"><thead><tr><th>Category</th><th>Weight</th><th>Rated</th><th style="text-align:right">Contribution</th></tr></thead>
-          <tbody>${contribRows}</tbody>
-          <tfoot><tr><td style="font-weight:500">Investability score</td><td></td><td></td><td style="text-align:right;font-weight:500;color:var(--warning)">${score.composite} / 100</td></tr></tfoot></table>
-      </div>
-      <p class="body-s variant" style="margin-top:14px;">Contribution = (rated &divide; max) &times; weight. Bands: <b style="color:var(--success)">Strong</b> &ge;0.80 &middot; <b style="color:var(--warning)">Mixed</b> 0.50–0.79 &middot; <b style="color:var(--md-sys-color-error)">Gap</b> &lt;0.50. Unassessable signals are excluded, not scored zero.</p>
-    </section>
-    <section class="m3-card"><div class="card-hd">${overline('Category profile — now vs. potential')}</div>
-      <div class="cols" style="gap:36px;align-items:center;">
-        ${radar(score, { max: 360 })}
-        <div>
-          <div style="display:flex;gap:18px;font-size:13px;margin-bottom:12px;">
-            <span style="display:inline-flex;align-items:center;gap:6px;"><span style="width:14px;height:3px;background:var(--md-sys-color-primary);border-radius:2px;"></span>Now <b>${score.composite}</b></span>
-            <span style="display:inline-flex;align-items:center;gap:6px;color:var(--md-sys-color-on-surface-variant)"><span style="width:14px;border-top:2px dashed var(--success);"></span>Potential <b style="color:var(--success)">~${score.potential}</b></span>
-          </div>
-          <p class="body-l" style="margin:0 0 4px">Closing the priority gaps below would lift the score from <b>${score.composite}</b> to <b style="color:var(--success)">~${score.potential}</b> (+${uplift}). Strongest on <b>Product</b> and <b>Financial defensibility</b>; thinnest on <b>Execution</b> and <b>Technical moat</b> — a concentrated profile.</p>
-          <div class="fixes-l">${fixes}</div>
-          <div class="body-m" style="margin-top:8px;"><span style="color:var(--success)">1 strong</span> &middot; <span style="color:var(--warning)">4 mixed</span> &middot; <span style="color:var(--md-sys-color-error)">2 gaps</span></div>
-        </div>
-      </div>
-    </section>
-    <section class="m3-card"><div class="card-hd">${overline('Fixes to reach your potential · top 6')}${overline('Ranked by lift × weight')}</div>
-      <div class="heat-grid">${heat}</div>
-    </section>
-  </div>`;
-}
 
-// ---- case both ways ----
-export function caseBothWays(a) {
-  const col = (label, cls, items, mi) => `<div class="m3-card"><div class="card-hd"><span class="overline" style="color:var(--${cls})">The case to ${label}</span></div>
-    <div class="pts ${label === 'invest' ? 'good' : 'bad'}">${items.map(t => `<div class="row"><span class="material-symbols-rounded mi">${mi}</span> ${esc(t)}</div>`).join('')}</div></div>`;
-  return `<section class="cols">${col('invest', 'success', a.bull, 'check_circle')}${col('pass', 'md-sys-color-error', a.bear, 'cancel')}</section>`;
-}
 
 // ============================================================
 // EDITORIAL ASSESSMENT — the memo-style verdict layout (assess.html).
@@ -702,26 +645,79 @@ export function portfolioHero(programs = [], ctx = {}) {
   });
 }
 
-// metricRow — the ONE shared row for the Investability tab. Both the composition table AND the
-// strength profile compose this; only the bar payload + value strings differ per caller. Unifies
-// the drill affordance (chevron + hover + role=button + keyboard focus on every clickable row).
+// ============================================================
+// row() — THE one canonical list-row (see the row-unification plan). LEADING · BODY · [MID bar] ·
+// TRAILING (+ optional full-bleed CLAUSE). Every editorial/list row is a variant of this: a modifier
+// class picks the grid + which slots render + the density tier. The bespoke row fns (metricRow,
+// researchRow, signalRows, founderRoster, …) become thin wrappers that translate their args to row()
+// — so a change to row spacing/type/affordance happens in ONE place.
+//   variant: 'metric'|'funnel'|'research'|'signal'|'lever'|'roster'|'figure'|'doc'|'numbered'|'marker'|'check'|'citation'|'spec'
+//   lead:    { kind:'none'|'dot'|'chip'|'numeral'|'glyph'|'tile'|'avatar', ... } — the leading cell (per-variant DOM)
+//   title, sub, sub2, cap · bar:{now,pot,tick} (metric/funnel MID) · clause (full-bleed) ·
+//   trail:   { kind:'chevron'|'value'|'chip'|'word', value, valueMuted, delta:{text,tone}, ... }
+//   density: 'reading'|'compact' (defaulted per variant) · onDrill, key, foot, cls
+// ============================================================
+const ROW_COMPACT = new Set(['roster', 'figure', 'doc', 'numbered', 'marker', 'check', 'citation', 'spec']);
+// leading atoms — pure fns → the leading element. Two tone axes stay separate (verdict vs workstream-type).
+function leadDot(sev) { return sev ? `<span class="mrow-dot ${sev}"></span>` : ''; }
+function leadTile(icon, wtype) { return `<span class="rlead" style="background:${RTONE[wtype] || RTONE.p}"><span class="material-symbols-rounded" style="color:${RCOL[wtype] || RCOL.p}">${esc(icon || 'article')}</span></span>`; }
+// trailing atoms
+function trailValue(value, valueMuted, delta) {
+  return `<div class="mrow-val"><span class="v">${esc(value)}${valueMuted ? `<span class="out">${esc(valueMuted)}</span>` : ''}</span>${delta ? `<span class="s ${delta.tone === 'up' ? 'up' : 'flat'}">${esc(delta.text)}</span>` : ''}</div>`;
+}
+const rowChev = clickable => clickable ? '<span class="material-symbols-rounded mrow-chev">chevron_right</span>' : '<span class="mrow-chev"></span>';
+
+export function row(opts = {}) {
+  const { variant = 'metric', lead = {}, title = '', sub = '', bar, trail = {}, onDrill = '', key = '', foot = false, cls = '' } = opts;
+  const clickable = onDrill && !foot;
+  const density = opts.density || (ROW_COMPACT.has(variant) ? 'compact' : 'reading');
+  const act = clickable
+    ? ` role="button" tabindex="0" onclick="${onDrill}('${key}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();${onDrill}('${key}')}"`
+    : '';
+  const cl = ['mrow', variant, density === 'compact' && 'compact', clickable && 'drill', foot && 'foot', cls].filter(Boolean).join(' ');
+
+  // MID bar column (metric/funnel only)
+  let mid = '';
+  if (bar) {
+    const now = Math.max(0, Math.min(100, (bar.now || 0) * 100)).toFixed(1);
+    const pot = Math.max(0, Math.min(100, (bar.pot || 0) * 100)).toFixed(1);
+    const hasPot = bar.pot > (bar.now || 0) + 0.001;
+    mid = `<div class="mrow-bar">${hasPot ? `<div class="pot" style="width:${pot}%"></div>` : ''}${foot ? '' : `<div class="now" style="width:${now}%"></div>`}${hasPot && bar.tick ? `<div class="tick" style="left:${pot}%"></div>` : ''}</div>`;
+  }
+
+  // trailing cell
+  let tr = '';
+  if (trail.kind === 'value' || (variant === 'metric' || variant === 'funnel')) tr = trailValue(trail.value, trail.valueMuted, trail.delta);
+
+  // BODY assembly is per-variant: metric/funnel nest the dot inside .mrow-nm within .mrow-lab.
+  if (variant === 'metric' || variant === 'funnel') {
+    return `<div class="${cl}"${act}>
+    <div class="mrow-lab"><div class="mrow-nm">${leadDot(lead.sev)}${esc(title)}</div>${sub ? `<div class="mrow-sub">${esc(sub)}</div>` : ''}</div>
+    ${mid}${tr}${rowChev(clickable)}
+  </div>`;
+  }
+  // research: a leading tile beside a text stack, trailing chip + chevron
+  if (variant === 'research') {
+    return `<div class="${cl}"${act}>
+    <div class="mrow-lab">${leadTile(lead.icon, lead.wtype)}<div class="mrow-txt"><div class="mrow-nm">${esc(title)}</div>${sub ? `<div class="mrow-sub">${esc(sub)}</div>` : ''}${opts.cap ? `<div class="mrow-meta">${esc(opts.cap)}</div>` : ''}</div></div>
+    <div class="mrow-val">${trail.chip ? statusPill(trail.chip) : ''}</div>${rowChev(clickable)}
+  </div>`;
+  }
+  return `<div class="${cl}"${act}><div class="mrow-lab"><div class="mrow-nm">${esc(title)}</div>${sub ? `<div class="mrow-sub">${esc(sub)}</div>` : ''}</div>${rowChev(clickable)}</div>`;
+}
+
+// metricRow — thin wrapper over row() (public signature byte-identical, so strengthProfile /
+// investabilityComposition and the radar arithmetic are untouched). sub2 = the trailing delta.
 // opts: { key, label, sub, dot:'strong'|'mixed'|'gap'|null, bar:{now:0..1, pot:0..1, tick},
 //         value, valueMuted, sub2:{text, tone:'up'|'flat'}, onDrill, foot }
 export function metricRow(opts = {}) {
   const { key, label, sub, dot, bar = {}, value, valueMuted = '', sub2, onDrill = '', foot = false, cls = '' } = opts;
-  const clickable = onDrill && !foot;
-  const act = clickable
-    ? ` role="button" tabindex="0" onclick="${onDrill}('${key}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();${onDrill}('${key}')}"`
-    : '';
-  const now = Math.max(0, Math.min(100, (bar.now || 0) * 100)).toFixed(1);
-  const pot = Math.max(0, Math.min(100, (bar.pot || 0) * 100)).toFixed(1);
-  const hasPot = bar.pot > (bar.now || 0) + 0.001;
-  return `<div class="mrow${clickable ? ' drill' : ''}${foot ? ' foot' : ''}${cls ? ' ' + cls : ''}"${act}>
-    <div class="mrow-lab"><div class="mrow-nm">${dot ? `<span class="mrow-dot ${dot}"></span>` : ''}${esc(label)}</div>${sub ? `<div class="mrow-sub">${esc(sub)}</div>` : ''}</div>
-    <div class="mrow-bar">${hasPot ? `<div class="pot" style="width:${pot}%"></div>` : ''}${foot ? '' : `<div class="now" style="width:${now}%"></div>`}${hasPot && bar.tick ? `<div class="tick" style="left:${pot}%"></div>` : ''}</div>
-    <div class="mrow-val"><span class="v">${esc(value)}${valueMuted ? `<span class="out">${esc(valueMuted)}</span>` : ''}</span>${sub2 ? `<span class="s ${sub2.tone === 'up' ? 'up' : 'flat'}">${esc(sub2.text)}</span>` : ''}</div>
-    ${clickable ? '<span class="material-symbols-rounded mrow-chev">chevron_right</span>' : '<span class="mrow-chev"></span>'}
-  </div>`;
+  return row({
+    variant: (cls && /funnel/.test(cls)) ? 'funnel' : 'metric',
+    key, title: label, sub, lead: { kind: 'dot', sev: dot || null }, bar,
+    trail: { kind: 'value', value, valueMuted, delta: sub2 },
+    onDrill, foot, cls: cls.replace(/\bfunnel\b/, '').trim(),
+  });
 }
 
 // strength profile — the radar alternative. Ranked now-vs-potential bars (via metricRow), per category.
@@ -1087,10 +1083,6 @@ export function marketSizing(m) {
   </section>`;
 }
 
-// comparableRounds — legacy card (retired from assess.html; comps now render via compScan inside dealValuation).
-export function comparableRounds(rounds) {
-  return `<section class="m3-card"><div class="card-hd">${overline('Comparable rounds')}${overline(rounds.length + ' benchmarked')}</div><div class="m3-list">${rounds.map(r => `<div class="m3-li"${r.me ? ' style="background:var(--md-sys-color-primary-container)"' : ''}><div class="m3-li-start"><div class="li-lead" ${r.me ? 'style="background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary)"' : ''}>${esc(r.i)}</div></div><div class="m3-li-body"><div class="m3-li-headline">${esc(r.name)}${r.tag ? ` <span class="body-s">— ${esc(r.tag)}</span>` : ''}</div><div class="m3-li-support">${esc(r.meta)}</div></div><div class="m3-li-end"><div><b>${esc(r.amount)}</b><div class="body-s variant">${esc(r.val)}</div></div></div></div>`).join('')}</div></section>`;
-}
 
 // compScan — MOLECULE. An annotated-comparable ROW stack breathing on the background (no card): each row a
 // lead (name + stage) · an optional amount/val figure pair · a "what it tells us" clause; the primary comp
@@ -1159,16 +1151,6 @@ const SIGCOL = { positive: 's', flag: 'err', neutral: 'n' };
 const SIGCHIP = { positive: { kind: 'ok', label: 'Verified' }, flag: { kind: 'err', label: 'Flag' }, neutral: { kind: 'info', label: 'Neutral' } };
 const SIG_WORD = { positive: 'Verified', flag: 'Flag', neutral: 'To verify' };
 
-// teamDiligence — legacy card (retired from assess.html; the roster now renders via founderRoster).
-export function teamDiligence(team, onOpen = '') {
-  return `<section class="m3-card"><div class="card-hd">${overline('Team & founder diligence')}${statusPill({ kind: 'warn', label: 'Key gaps' })}</div>
-    <p class="body-m variant" style="margin:-8px 0 10px">${esc(team.summary)}</p>
-    <div class="m3-list">${team.members.map(m => `<div class="m3-li"><div class="m3-li-start"><div class="li-lead" style="${memberBg(m.signal)}">${esc(m.i)}</div></div><div class="m3-li-body"><div class="m3-li-headline">${esc(m.name)}</div><div class="m3-li-support">${esc(m.bg)}</div></div><div class="m3-li-end">${statusPill(SIGCHIP[m.signal])}</div></div>`).join('')}</div>
-    <hr class="m3-divider">
-    <div class="overline" style="color:var(--warning);margin-bottom:10px;">Team gaps</div>
-    <div class="pts bad" style="gap:10px;">${team.gaps.map(g => `<div class="row"><span class="material-symbols-rounded mi" style="color:var(--warning)">error</span> ${esc(g)}</div>`).join('')}</div>
-    <div class="see-research"><button class="m3-btn text trail" ${onOpen ? `onclick="${onOpen}('team')"` : ''}><span class="material-symbols-rounded">arrow_forward</span>Read the full founder diligence</button></div></section>`;
-}
 
 // founderRoster — ORGANISM. The founder cast as signal-tinted editorial rows on the background — the detail
 // behind teamHero's signal spread. The scannable signal column survives as a tinted monogram + a trailing
@@ -1236,24 +1218,10 @@ export function teamMemo(a) {
   return `<div class="brief">${secs.join('\n    <hr class="rule">\n    ')}</div>`;
 }
 
-export function diligenceChecklist(items) {
-  return `<section class="m3-card"><div class="card-hd">${overline('Diligence checklist')}${overline('3 blockers · before you wire')}</div><div class="m3-list">${items.map(d => `<div class="m3-li"><div class="m3-li-start"><span class="status ${d.kind}">${esc(d.tag)}</span></div><div class="m3-li-body"><div class="m3-li-headline">${esc(d.title)}</div><div class="m3-li-support">${esc(d.note)}</div></div></div>`).join('')}</div></section>`;
-}
-export function keyFindings(findings) {
-  return `<section class="m3-card"><div class="card-hd">${overline('Key findings')}${overline('From the research')}</div><div class="m3-list">${findings.map(f => `<div class="m3-li"><div class="m3-li-start"><span class="material-symbols-rounded" style="color:var(--${f.color === 'error' ? 'md-sys-color-error' : f.color})">${f.icon}</span></div><div class="m3-li-body"><div class="m3-li-headline">${esc(f.title)}</div><div class="m3-li-support">${esc(f.note)}</div></div></div>`).join('')}</div></section>`;
-}
 
 // ---- research + data room ----
 const RTONE = { p: 'rgba(208,188,255,0.14)', s: 'rgba(111,219,180,0.14)', w: 'rgba(247,192,103,0.14)' };
 const RCOL = { p: 'var(--md-sys-color-primary)', s: 'var(--success)', w: 'var(--warning)' };
-export function researchList(items, onOpen = '') {
-  return `<section class="m3-card"><div class="card-hd">${overline('Deep research')}${overline('Agent-generated · openable')}</div>
-    <p class="body-m variant" style="margin:-8px 0 8px">The long-form research behind the verdict — every workstream, fully sourced and traceable back to the evidence.</p>
-    <div class="m3-list">${items.map((r, i) => `<div class="m3-li button" ${onOpen ? `onclick="${onOpen}('research',${i})"` : ''}><div class="m3-li-start"><span class="rlead" style="background:${RTONE[r.tone]}"><span class="material-symbols-rounded" style="color:${RCOL[r.tone]}">${r.icon}</span></span></div><div class="m3-li-body"><div class="m3-li-headline">${esc(r.title)}</div><div class="m3-li-support">${esc(r.note)}</div></div><div class="m3-li-end rmeta"><span class="status ${r.tagKind || 'info'}">${esc(r.tag)}</span><span class="material-symbols-rounded variant">chevron_right</span></div></div>`).join('')}</div></section>`;
-}
-export function dataRoom(docs) {
-  return `<section class="m3-card"><div class="card-hd">${overline('Data room')}${overline('Source documents · 18')}</div><div class="m3-list">${docs.map(d => `<div class="m3-li button"><div class="m3-li-start"><span class="material-symbols-rounded" style="color:var(--md-sys-color-${d.action === 'tag' ? 'primary' : 'on-surface-variant'})">${d.icon}</span></div><div class="m3-li-body"><div class="m3-li-headline">${esc(d.title)}</div><div class="m3-li-support">${esc(d.note)}</div></div><div class="m3-li-end">${d.action === 'tag' ? `<span class="status info">${esc(d.tag)}</span>` : `<span class="material-symbols-rounded variant">download</span>`}</div></div>`).join('')}</div></section>`;
-}
 
 // researchRow — MOLECULE. One editorial evidence-index row, a bar-less sibling of metricRow drilling to the
 // aux peek: a tinted workstream marker + title + one-line finding · a depth/status chip · a drill chevron.
