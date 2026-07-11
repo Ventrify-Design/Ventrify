@@ -47,7 +47,7 @@ module.exports = async (req, res) => {
   if (req.method !== 'POST') { res.status(405).json({ error: 'method_not_allowed' }); return; }
   try {
     const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
-    const { idToken, engagement } = body;
+    const { idToken, engagement, orgId: reqOrgId } = body;
     if (!idToken) { res.status(401).json({ error: 'no_token' }); return; }
     if (!engagement || !engagement.id) { res.status(400).json({ error: 'engagement_required' }); return; }
 
@@ -57,11 +57,22 @@ module.exports = async (req, res) => {
     const db = admin.firestore();
     const FieldValue = admin.firestore.FieldValue;
 
-    // Resolve the caller's org (the org whose operatorEmails lists them) — first
-    // match, mirroring the client's findOperatorOrg. Non-operators are rejected.
-    const orgSnap = await db.collection('organisations').where('operatorEmails', 'array-contains', caller).limit(1).get();
-    if (orgSnap.empty) { res.status(403).json({ error: 'not_an_operator' }); return; }
-    const orgDoc = orgSnap.docs[0];
+    // Resolve the org this engagement belongs to. A multi-workspace operator must
+    // file it under the workspace they're ACTIVELY in — so honour the client's
+    // active orgId when supplied (never trusting it blind: the caller must be an
+    // operator of it). Fall back to the arbitrary first-match only for legacy
+    // clients that don't send one (single-workspace operators are unaffected).
+    let orgDoc;
+    if (reqOrgId) {
+      const snap = await db.collection('organisations').doc(String(reqOrgId)).get();
+      const emails = (snap.exists ? (snap.data().operatorEmails || []) : []).map(e => String(e).toLowerCase());
+      if (!snap.exists || !emails.includes(caller)) { res.status(403).json({ error: 'not_an_operator' }); return; }
+      orgDoc = snap;
+    } else {
+      const orgSnap = await db.collection('organisations').where('operatorEmails', 'array-contains', caller).limit(1).get();
+      if (orgSnap.empty) { res.status(403).json({ error: 'not_an_operator' }); return; }
+      orgDoc = orgSnap.docs[0];
+    }
     const org = orgDoc.data();
     const orgId = orgDoc.id;
 

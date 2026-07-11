@@ -70,7 +70,7 @@ window.__wsCreateAssessment = async () => {
     if (W.mode === 'live') {
       const { auth } = await import('../firebase/firebase.js');
       const idToken = await auth.currentUser.getIdToken();
-      const resp = await fetch('/api/create-engagement', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken, engagement: newProgram }) });
+      const resp = await fetch('/api/create-engagement', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken, orgId: org.id, engagement: newProgram }) });
       const out = await resp.json().catch(() => ({}));
       if (!resp.ok) { throw new Error(out.reason === 'limit' ? 'Your plan has no allowance left for another assessment.' : out.reason === 'capability' ? 'Your plan doesn’t include assessments.' : (out.error || ('HTTP ' + resp.status))); }
     } else {
