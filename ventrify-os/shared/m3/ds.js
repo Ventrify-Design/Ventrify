@@ -2299,7 +2299,12 @@ export function assessingMemo(a = {}, s = null, rs = {}) {
     thesisLabel: 'Coming back.',
     thesis: 'An investability score out of 100 across 35 signals, the case argued both ways, the pre-wire diligence checklist, and the research that underwrites every claim.',
   });
-  const forming = s
+  // ⚠ gate on REAL categories, not on `s` being truthy — a brand-new assessment has NO investability
+  // snapshot, so mapScore returns an object with an EMPTY categories array, and the composition then
+  // divides by Math.max(...[]) === -Infinity and paints NaN all over the table. Omit the section entirely
+  // rather than render a broken one.
+  const hasScaffold = !!(s && Array.isArray(s.categories) && s.categories.length);
+  const forming = hasScaffold
     ? `<hr class="rule">${investabilityComposition(s, 'openInvest', { title: 'The score, forming', eyebrow: 'Investability', meta: '0 of 35 signals rated — the run rates them at the end' })}`
     : '';
   const arc = (a.lifecycle && a.lifecycle.length)
