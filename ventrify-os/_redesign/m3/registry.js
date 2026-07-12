@@ -806,6 +806,12 @@ export const CATALOG = {
     maxw: null, pad: false, html: null,
     props: [{ name: 'template', type: 'pageShell (no rail)' }, { name: 'fills slot with', type: 'portfolioEmpty launchpad' }, { name: 'states', type: '?state=empty | one | many' }], variants: [], usedIn: [], adaptive: noAdapt
   },
+  assessRunningPage: {
+    level: 'page', group: 'Pages', domain: 'Workspace', title: 'Assessment · assessing', sig: 'assess-running.html', src: 'assess-running.html',
+    blurb: 'THE ASSESSING STATE — "the memo, before the ink lands." A run in flight is not a loading state: it is the assessment ITSELF, mid-formation. So this is the SAME editorial surface as the finished verdict (sectionHero → reading column → .sec/.rule rhythm), with the answer\'s placeholders sitting exactly where the answer will land — "Forming" in the score\'s own slot, the eleven workstreams as a numbered table of contents in the memo\'s .must voice, the evidence named, the 7×5 composition sitting empty, and the engagement arc as a DATED record. When the verdict arrives nothing MOVES; the placeholders resolve. No tabs (there is nothing yet to switch between). THE HONESTY RULE: the step NAMES are ours (a fixed plan the runner always follows); only the POSITION comes from rs.step. Determinate bar ONLY once the runner reports a step — never a fabricated %, never a fake ETA, never a fake finding. ?state= proves every honest state, not just the flattering one: running · silent (the agent has not reported — the MOST LIKELY first state) · queued · quiet · paused · error · republish.',
+    maxw: null, pad: false, html: null,
+    props: [{ name: 'body', type: 'assessingMemo(a, s, rs)' }, { name: 'masthead', type: 'no tabs · Stop (outlined) when canStopRun(rs)' }, { name: 'states', type: '?state=running|silent|queued|quiet|paused|error|republish' }], variants: [], usedIn: [], adaptive: noAdapt
+  },
   assessSetupPage: {
     level: 'page', group: 'Pages', domain: 'Workspace', title: 'New assessment (overlay)', sig: 'assess-setup.html', src: 'assess-setup.html',
     blurb: 'The new-assessment flow demonstrated in context — the populated portfolio with the assessment wizard opened in the AUXILIARY PANEL OVERLAY (a side sheet over the pipeline). Name → Upload deck (hard gate) → Confirm & run; launch stages the demo. The same overlay is reachable from every portfolio state via the masthead "New assessment" (and the empty-state CTA).',

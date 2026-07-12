@@ -434,6 +434,39 @@
   .must .idx { flex: none; font-size: 26px; font-weight: 300; line-height: 1; color: var(--md-sys-color-primary); font-variant-numeric: tabular-nums; width: 30px; }
   .must p { margin: 0; font-size: var(--row-prose-lg); line-height: 1.55; color: var(--md-sys-color-on-surface); }
 
+  /* ============ THE RUN PLAN (assessing screen) ============
+     The eleven workstreams render in the memo's OWN numbered voice — the same .must idiom the Verdict tab
+     uses for "what must be true". Three state modifiers, zero new CSS family. */
+  .must.run-step { align-items: flex-start; }
+  .must.run-step .bd { min-width: 0; flex: 1; }
+  .must.run-step.done .idx { color: var(--success); }
+  .must.run-step.live .idx { color: var(--md-sys-color-primary); font-weight: 400; }
+  .must.run-step.live p { font-weight: 500; }
+  .must.run-step.pending .idx { color: var(--md-sys-color-outline); }
+  .must.run-step.pending p { color: var(--md-sys-color-on-surface-variant); }
+  /* the artefact each step writes — a fact about the run, in the run's own file names */
+  .rs-out { margin-top: 5px; font-size: var(--row-cap); line-height: 1.45; color: var(--md-sys-color-on-surface-variant); font-family: 'Roboto Mono', monospace; }
+  /* the ONE place model-authored prose appears: the live step, quoted as the run's own words */
+  .rs-say { margin-top: 7px; font-size: var(--row-sub-lg); line-height: 1.5; color: var(--md-sys-color-primary); }
+  .rs-more { margin-top: 14px; font-size: var(--row-sub); line-height: 1.5; color: var(--md-sys-color-on-surface-variant); }
+  .rs-coda { color: var(--md-sys-color-on-surface-variant); }
+  .src-docs { margin-top: 2px; }
+
+  /* the score's EMPTY CHAIR — caption + provenance under the forming lockup */
+  .lockup-cap { display: flex; justify-content: space-between; gap: 12px; margin-top: 12px; font-size: var(--row-cap); color: var(--md-sys-color-on-surface-variant); font-variant-numeric: tabular-nums; }
+  .lockup-prov { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--md-sys-color-outline-variant); font-size: var(--row-sub); line-height: 1.5; color: var(--md-sys-color-on-surface-variant); }
+  .lockup-prov b { color: var(--md-sys-color-on-surface); font-weight: 500; font-variant-numeric: tabular-nums; }
+
+  /* ---- the engagement arc at EDITORIAL scale (the rail keeps its own density) ---- */
+  .lifecycle.lifecycle-lg .lifecycle-step { grid-template-columns: 36px 1fr; gap: 18px; padding-bottom: 26px; }
+  .lifecycle.lifecycle-lg .lifecycle-step:not(:last-child)::before { left: 17px; top: 34px; }
+  .lifecycle.lifecycle-lg .lc-dot { width: 36px; height: 36px; display: grid; place-items: center; }
+  .lifecycle.lifecycle-lg .lc-dot .material-symbols-rounded { font-size: 24px; }
+  .lifecycle.lifecycle-lg .lc-lab { font-size: var(--row-title-lg); font-weight: 500; display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .lifecycle.lifecycle-lg .lc-at { font-size: var(--row-cap); font-weight: 400; color: var(--md-sys-color-on-surface-variant); letter-spacing: .3px; }
+  .lifecycle.lifecycle-lg .lc-meta { font-size: var(--row-sub-lg); line-height: 1.5; margin-top: 3px; }
+
+
   .kill { border-radius: 20px; padding: 24px 26px 26px; background: color-mix(in srgb, var(--md-sys-color-error-container) 42%, var(--md-sys-color-surface-container-low)); border: 1px solid color-mix(in srgb, var(--md-sys-color-error) 30%, transparent); }
   .kill .kh { display: flex; align-items: center; gap: 10px; }
   .kill .kh .material-symbols-rounded { color: var(--md-sys-color-error); font-size: 22px; }

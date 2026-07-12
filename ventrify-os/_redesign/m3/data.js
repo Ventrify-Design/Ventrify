@@ -715,3 +715,71 @@ export const QUEUE = [
   { urgency: 'med', icon: 'search', title: 'ux-designer flagged 3 critical issues on Riverdraft beta', desc: 'Round 2 audit · 2 contrast failures, 1 nav UX issue. Must close before Phase 5 unlocks.', meta: 'QA flag · Riverdraft · 4 hours ago', action: 'Open audit report' },
   { urgency: 'low', icon: 'rocket_launch', title: 'New program kicked off · Caldera (Inez Okonkwo)', desc: 'Brief intake form opened by founder. Phase 0 in progress · welcome pack queued.', meta: 'New intake · Caldera · 20 min ago', action: 'Open program' }
 ];
+
+// ============================================================
+// THE ASSESSING SCREEN — a run IN FLIGHT. Additive: never mutate ASSESSMENT/SCORE (those are a FINISHED
+// verdict). Every honest state gets a fixture, not just the flattering one — an operator is most likely to
+// first land on `silent` (the agent has not reported a step yet), so that state must look COMPOSED.
+// ============================================================
+const MIN = 60000;
+const ago = m => new Date(Date.now() - m * MIN).toISOString();
+
+export const ASSESSMENT_RUNNING = {
+  id: 'prg-moneygym-score-1',
+  name: 'MoneyGym Score 1',
+  initials: 'MO',
+  stageLine: 'Pre-seed · Behavioural personal finance',
+  // what the agents are reading — the deck plus NAMED data-room docs (the Studio brief carries names; a
+  // workspace upload carries only a count, which is why the manifest reconciles the difference out loud).
+  inputs: {
+    deck: { name: 'MoneyGym — Pre-seed deck v3.pdf' },
+    total: 65,
+    docs: [
+      { name: 'MoneyGym — Financial model 2026-28.xlsx', chars: 48210 },
+      { name: 'Cap table — post-SAFE.xlsx', chars: 9140 },
+      { name: 'Founder agreement (signed).pdf', needsDeepRead: true },
+      { name: 'Cohort retention — Jan–Jun.csv', chars: 21870 },
+      { name: 'UK predecessor — traction memo.docx', chars: 33640 },
+      { name: 'Customer interviews (12).md', chars: 51200 },
+    ],
+  },
+  lifecycle: [
+    { label: 'Intake', at: '2 Jul', state: 'done', meta: 'MoneyGym Score 1 · assessment' },
+    { label: 'Documents received', at: '4 Jul', state: 'done', meta: '65 documents · deck + data room' },
+    { label: 'Assessment run', at: 'started 14:22', state: 'current', meta: 'Assess · v3 rubric · eleven workstreams' },
+    { label: 'Verdict ready', state: 'pending', meta: 'A score /100, the case both ways, the diligence list' },
+    { label: 'Operator sign-off', state: 'pending', meta: 'You endorse it before it can be shared' },
+    { label: 'Decision', state: 'pending', meta: 'Confirm or decline the deal' },
+  ],
+};
+
+// the seeded 0/35 scaffold — every category present, nothing rated. The composition table sits there EMPTY,
+// which is the whole point: the answer's furniture, waiting for the answer.
+export const SCORE_FORMING = {
+  composite: 0, potential: 0, band: 'Forming',
+  categories: SCORE.categories.map(c => ({
+    ...c, rated: '0', frac: 0, pot: 0, num: '0',
+    subs: (c.subs || []).map(s => ({ ...s, score: null, note: '' })),
+  })),
+};
+
+// ?state= — the seven states that must ALL be signed off, not just the pretty one.
+export const RUN_STATES = {
+  // never picked up yet: NO step/totalSteps/progress — a queued fixture carrying them would fabricate a %.
+  queued:    { status: 'queued', requestedAt: ago(1), label: 'Queued — dispatching the cloud runner…' },
+  // the healthy mid-run — THE HERO SHOT.
+  running:   { status: 'running', totalSteps: 11, step: 4, progress: 36, startedAt: ago(22),
+               label: 'Benchmarking against the four closest comparables…', githubRunId: 29177092529 },
+  // the agent never wrote _run-progress.json. Nothing enforces that it does → the MOST LIKELY first state.
+  silent:    { status: 'running', totalSteps: 8, step: 0, progress: 0, startedAt: ago(9), githubRunId: 29177092529 },
+  // a long, legitimate silence — a single max-effort step can run for tens of minutes. Must stay CALM.
+  quiet:     { status: 'running', totalSteps: 11, step: 6, progress: 55, startedAt: ago(38),
+               label: 'Writing the investment analysis…', githubRunId: 29177092529 },
+  paused:    { status: 'limit-paused', totalSteps: 11, step: 7, progress: 64, startedAt: ago(51),
+               label: 'Paused — usage limit. Resumes when the window resets.', githubRunId: 29177092529 },
+  error:     { status: 'error', totalSteps: 11, step: 5, startedAt: ago(74), stalledBy: 'watchdog',
+               error: 'The run stopped reporting. Nothing was published — re-run it; nothing is lost.' },
+  // republish REUSES runState with a 3-step plan — the likeliest regression, so it gets a state.
+  republish: { status: 'running', phase: 'republish', totalSteps: 3, step: 2, progress: 60, startedAt: ago(1),
+               label: 'Re-applying the score, verdict & research…', githubRunId: 29177092529 },
+};

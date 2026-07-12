@@ -759,7 +759,7 @@ export function strengthProfile(s, onDrill = '') {
 // contributions breakdown. Contribution = frac × weightPct (each category's share of the
 // 100 points); the bar shows points earned, the ghost the headroom to potential.
 // onDrill (optional): each row opens the per-category aux breakdown.
-export function investabilityComposition(s, onDrill = '') {
+export function investabilityComposition(s, onDrill = '', head = {}) {
   const delta = s.potential - s.composite;
   const maxW = Math.max(...s.categories.map(c => c.weightPct));   // bar scale = the heaviest category's ceiling
   const rows = s.categories
@@ -775,7 +775,7 @@ export function investabilityComposition(s, onDrill = '') {
     })).join('');
   const foot = metricRow({ label: 'Investability score', value: `${s.composite}`, valueMuted: ' / 100', foot: true });
   return `<section class="sec">
-    <div class="sec-head"><span class="eyebrow accent">Composition</span><span class="t">How the ${s.composite} composes</span><span class="meta">7 × 5 · weighted 0–100</span></div>
+    <div class="sec-head"><span class="eyebrow accent">${esc(head.eyebrow || 'Composition')}</span><span class="t">${esc(head.title || `How the ${s.composite} composes`)}</span><span class="meta">${esc(head.meta || '7 × 5 · weighted 0–100')}</span></div>
     <div class="compose">
       <div class="radar-wrap">${radar(s, { max: 340 })}
         <div class="radar-legend"><span class="key"><span class="sw-now"></span> Now <b>${s.composite}</b></span><span class="key"><span class="sw-pot dash"></span> Potential <b>${s.potential}</b> <span class="up">+${delta}</span></span></div>
@@ -1345,9 +1345,12 @@ export function researchPeek(r = {}) {
 
 // lifecycleStrip — MOLECULE. A compact vertical timeline of the assessment lifecycle. Each step
 // {label, at, meta, state:'done'|'current'|'pending'}; the connector fills green through the done steps.
-export function lifecycleStrip(steps = []) {
+export function lifecycleStrip(steps = [], opts = {}) {
   const ic = s => s === 'done' ? 'check' : s === 'current' ? 'radio_button_checked' : 'radio_button_unchecked';
-  return `<ol class="lifecycle">${steps.map(s => `<li class="lifecycle-step ${s.state || 'pending'}">
+  // scale:'editorial' lifts the strip out of rail density and into the reading column. The rail caller passes
+  // nothing and renders byte-identically — this is the smallest possible shared change.
+  const cls = opts.scale === 'editorial' ? 'lifecycle lifecycle-lg' : 'lifecycle';
+  return `<ol class="${cls}">${steps.map(s => `<li class="lifecycle-step ${s.state || 'pending'}">
     <span class="lc-dot"><span class="material-symbols-rounded">${ic(s.state)}</span></span>
     <div class="lc-bd"><div class="lc-lab">${esc(s.label)}${s.at ? `<span class="lc-at">${esc(s.at)}</span>` : ''}</div>${s.meta ? `<div class="lc-meta">${esc(s.meta)}</div>` : ''}</div>
   </li>`).join('')}</ol>`;
@@ -1849,7 +1852,7 @@ export function engagementTable(rows, opts = {}) {
 // .q-ic tinted tile). NOT lifecycleStrip (its done/current/pending states imply a live run — wrong for an explainer).
 const PRIMER_STEPS = [
   { icon: 'upload_file', title: 'Deck in', note: 'Upload the pitch deck and any financials. That’s all the assessment needs to start.' },
-  { icon: 'manage_search', title: 'Research', note: 'Seven workstreams rebuild every load-bearing claim from primary sources — filings, benchmarks, a ten-competitor teardown.' },
+  { icon: 'manage_search', title: 'Research', note: 'Eleven workstreams rebuild every load-bearing claim from primary sources — filings, benchmarks, a ten-competitor teardown.' },
   { icon: 'fact_check', title: 'Challenge', note: 'The deck’s headline claims get pressure-tested. What doesn’t survive is flagged, not taken on trust.' },
   { icon: 'insights', title: 'Score', note: 'A weighted 0–100 investability score across seven categories, with the headroom to a stronger number.' },
   { icon: 'balance', title: 'Verdict', note: 'A memo-style call — Invest, Diligence further, or Pass — ready for sign-off and a shareable link.' },
@@ -2062,8 +2065,12 @@ export function fmtElapsed(ms) {
 export function runStalled(rs) {
   const ms = runAge(rs); if (ms == null) return false;
   const s = (rs && rs.status) || '';
-  if (s === 'queued') return ms > 3 * 60000;                      // never picked up by the runner
-  if (s === 'running' || s === 'partial') return ms > 20 * 60000; // hung far past the window
+  // Thresholds are deliberately LATER than the server watchdog (queued 8m / active 30m of silence,
+  // sweep-stuck-runs.js) so the client never cries wolf before the server has actually acted. A real assess
+  // run has a 180-MINUTE budget and a single max-effort step can legitimately run for tens of minutes
+  // between writes — the old 20-minute trigger fired on healthy runs.
+  if (s === 'queued') return ms > 8 * 60000;                      // never picked up by the runner
+  if (s === 'running' || s === 'partial') return ms > 45 * 60000; // far past any plausible step
   return false;
 }
 
@@ -2084,7 +2091,7 @@ export function linearProgress(opts = {}) {
 // indeterminate one otherwise. Never fabricate a percentage (the classic page's 6%/14% stubs are not ported).
 const RUN_BANNER = {
   queued: { kind: 'info', icon: 'schedule', title: 'Queued', text: 'Dispatching the cloud runner — the assessment starts in a moment.', prog: true },
-  running: { kind: 'info', icon: 'autorenew', title: 'Assessing…', text: 'Seven workstreams are rebuilding the claims from source. This takes a few minutes.', prog: true },
+  running: { kind: 'info', icon: 'autorenew', title: 'Assessing…', text: 'Eleven workstreams are researching, scoring and drafting the verdict from source. This takes a while — you can close the tab.', prog: true },
   partial: { kind: 'info', icon: 'autorenew', title: 'Assessing…', text: 'Research in progress — the score is forming.', prog: true },
   'needs-attention': { kind: 'warn', icon: 'warning', title: 'Needs attention', text: 'The run finished and saved, but the verdict needs a second look. Republish when ready.' },
   'limit-paused': { kind: 'warn', icon: 'pause_circle', title: 'Paused · usage limit', text: 'Resume when your window resets — it picks up where it left off.' },
@@ -2115,6 +2122,172 @@ export function runBanner(rs = {}, opts = {}) {
       <div class="rb-act"><button class="m3-btn text" onclick="${opts.onRerun || 'window.rerunAssessment&&window.rerunAssessment()'}"><span class="material-symbols-rounded">restart_alt</span>Re-run assessment</button></div>` : ''}
     </div>
   </div>`;
+}
+
+// ============================================================
+// THE ASSESSING SCREEN — "the memo, before the ink lands".
+// A run in flight is not a loading state: it is the assessment ITSELF, caught mid-formation. So this screen
+// is the SAME editorial surface the finished verdict lives on (sectionHero → reading column → .sec/.rule
+// rhythm), with the answer's placeholders sitting exactly where the answer will land. Nothing here is a
+// status widget, and when the verdict arrives nothing MOVES — the placeholders simply resolve.
+//
+// THE HONESTY RULE, which the whole design rests on: the step NAMES are OURS (a fixed plan the runner always
+// follows); only the POSITION comes from rs.step. We never invent a percentage, an ETA, or a finding.
+// ============================================================
+
+// ASSESS_PLAN — the ELEVEN workstreams the runner actually executes, transcribed from the real orchestration
+// prompt (tools/cloud/prompts/assess-phase.md § "Orchestrate (write progress 1..11 … as you go)"). It is
+// IDENTICAL for every assess run — which is precisely why rendering the plan up-front is a statement of fact
+// rather than a guess, and why the operator can read the whole thing before it happens.
+export const ASSESS_PLAN = [
+  { n: 1, title: 'Produce the supporting deep research', out: 'research/ · market, competitors, demand & traction' },
+  { n: 2, title: 'Pressure-test the founder’s claims', out: 'assessment/claims-validation.md' },
+  { n: 3, title: 'Find the comparable rounds', out: 'assessment/comparables.md' },
+  { n: 4, title: 'Benchmark the competition', out: 'assessment/competitive-benchmark.md' },
+  { n: 5, title: 'Size the market — TAM / SAM / SOM', out: 'assessment/market-sizing.md' },
+  { n: 6, title: 'Diligence the founders', out: 'assessment/team-diligence.md' },
+  { n: 7, title: 'Write the investment analysis', out: 'assessment/investment-analysis.md' },
+  { n: 8, title: 'Curate the evidence cards', out: '5–7 L1 cards, each traced to a source' },
+  { n: 9, title: 'Draft the deal memo', out: 'assessment/deal-memo.md' },
+  { n: 10, title: 'Score investability across 35 signals', out: 'sentiment/_score.json' },
+  { n: 11, title: 'Say what would strengthen it', out: 'sentiment/_suggestions.json' },
+];
+// republish REUSES runState with its own 3-step shape — without this branch a seconds-long republish would
+// render as a fresh eleven-step assessment.
+export const REPUBLISH_PLAN = [
+  { n: 1, title: 'Recovering your saved results', out: 'from the last completed run' },
+  { n: 2, title: 'Re-applying the score, verdict & research', out: 'no AI cost' },
+  { n: 3, title: 'Live again', out: '' },
+];
+const runPlan = rs => (rs && rs.phase === 'republish') ? REPUBLISH_PLAN : ASSESS_PLAN;
+// clamp: rs.totalSteps is incoherent across a run (0 at queue → 8 at start → 11 once the agent reports), and
+// the runner forces step back to its constant at the end — so an unclamped counter visibly runs BACKWARDS.
+// The plan is the only trustworthy length.
+const runStep = rs => { const p = runPlan(rs); return Math.min(Math.max(Number(rs && rs.step) || 0, 0), p.length); };
+
+// canStopRun — the guard between the operator and a LYING Stop button. A run can only TRULY be stopped if we
+// can name its GitHub Actions run (rs.githubRunId, written by the runner) or it hasn't been picked up yet.
+// Until the runner reports its id this returns false and the control simply does not render: no dead button.
+export function canStopRun(rs = {}) { return !!rs.githubRunId || rs.status === 'queued'; }
+
+// formingLockup — MOLECULE. The score's EMPTY CHAIR: the word "Forming" sitting in the exact slot where
+// `72/100` will land. There is no score mid-run (the runner computes it ONCE, at the end), so we show a calm
+// word, never a growing number. Same lockup primitives as scoreLockup — it is a sibling, not a new family.
+const RUN_CHIP = (rs, step, total) => {
+  const s = rs.status;
+  if (s === 'queued') return { icon: 'schedule', tone: 'mid', label: 'Queued' };
+  if (s === 'limit-paused') return { icon: 'pause_circle', tone: 'mid', label: 'Paused · usage limit' };
+  if (s === 'needs-attention') return { icon: 'warning', tone: 'bad', label: 'Needs attention' };
+  if (s === 'error') return { icon: 'error', tone: 'bad', label: 'Run stopped reporting' };
+  return step > 0
+    ? { icon: 'autorenew', tone: 'mid', label: `Step ${step} of ${total}` }
+    : { icon: 'autorenew', tone: 'mid', label: 'Working' };
+};
+export function formingLockup(rs = {}, ctx = {}) {
+  const { signals = 35, docs = 0 } = ctx;
+  const plan = runPlan(rs), total = plan.length, step = runStep(rs);
+  // the bar: the runner's OWN progress, but ONLY once it has actually reported a step. `progress: 0` with
+  // `step: 0` means "nothing reported yet", NOT "0% done" — rendering that as a determinate empty bar reads
+  // as STUCK when the run is in fact working. No report → indeterminate. Never faked, never falsely still.
+  const pct = (step > 0 && typeof rs.progress === 'number' && (rs.totalSteps || 0) > 0) ? rs.progress : null;
+  const chip = RUN_CHIP(rs, step, total);
+  const elapsed = fmtElapsed(runAge(rs));
+  return `<div class="score-lockup forming-lockup">
+    <span class="eyebrow accent">Investability score</span>
+    <div class="lockup-num"><span class="lockup-forming">Forming</span></div>
+    <span class="lockup-band ${chip.tone}"><span class="material-symbols-rounded">${chip.icon}</span>${esc(chip.label)}</span>
+    ${linearProgress({ value: pct, style: 'margin-top:20px' })}
+    <div class="lockup-cap"><span>${step > 0 ? `Step ${step} of ${total}` : 'Not yet reported'}</span><span>${esc(elapsed || 'just started')}</span></div>
+    <div class="lockup-prov"><b>${total}</b> steps · <b>${signals}</b> signals to rate · <b>${docs}</b> document${docs === 1 ? '' : 's'} in evidence</div>
+  </div>`;
+}
+
+// runSequence — ORGANISM. The run plan as a NUMBERED EDITORIAL LIST, in the memo's own `.must` voice (the
+// idiom conditionsKill already uses for "what must be true"). The eleven workstreams are not events on a
+// timeline — they are CHAPTERS of a memo being written, a table of contents filling in. Reusing `.must` means
+// this costs a new CSS family of exactly ZERO, and the operator reads the plan in the assessment's own type.
+export function runSequence(rs = {}) {
+  const plan = runPlan(rs), step = runStep(rs);
+  const silent = step === 0;                          // the agent has not reported yet — light NOTHING
+  const rows = plan.map(p => {
+    const state = silent ? 'pending' : p.n < step ? 'done' : p.n === step ? 'live' : 'pending';
+    const live = state === 'live';
+    return `<div class="must run-step ${state}">
+      <span class="idx">${p.n}</span>
+      <div class="bd">
+        <p>${esc(p.title)}</p>
+        ${live && rs.label ? `<div class="rs-say">${esc(rs.label)}</div>` : (p.out ? `<div class="rs-out">${esc(p.out)}</div>` : '')}
+        ${live ? linearProgress({ indeterminate: true, style: 'margin-top:10px;max-width:220px' }) : ''}
+      </div>
+    </div>`;
+  }).join('');
+  // provenance, out loud: rs.step is the highest step the AGENT has CLAIMED — never verified completion.
+  const meta = silent
+    ? 'The runner has not reported a step yet — this is the plan it will follow'
+    : 'Self-reported by the run · verified at publish';
+  return `<section class="sec">
+    <div class="sec-head"><span class="eyebrow accent">The sequence</span><span class="t">How the verdict gets written</span><span class="meta">${esc(meta)}</span></div>
+    ${rows}
+  </section>`;
+}
+
+// inputManifest — ORGANISM. What the agents are actually reading, BY NAME. The most honest thing we can show
+// during a run is the evidence the operator just handed over — and it is the one surface that makes the
+// intervention loop real (see the wrong deck went in → Stop → replace it → Run). Capped at 8 named docs:
+// a 65-row manifest is a filing cabinet, not a memo.
+export function inputManifest(a = {}) {
+  const inp = a.inputs || {};
+  const docs = inp.docs || [];
+  const total = inp.total || docs.length || 0;
+  const shown = docs.slice(0, 8);
+  const rows = [
+    inp.deck ? srcRow({ icon: 'slideshow', title: inp.deck.name, note: 'Founder upload · the assessment runs from it', status: 'read' }) : '',
+    ...shown.map(d => srcRow({
+      icon: 'description', title: d.name,
+      note: d.needsDeepRead ? 'Scanned — read directly by the agent' : (d.chars ? `${Number(d.chars).toLocaleString()} characters extracted` : 'Data room'),
+      status: 'read',
+    })),
+  ].filter(Boolean).join('');
+  // the workspace ingest path records a COUNT but no names (only the Studio brief carries names) — so say so,
+  // rather than quietly under-reporting the evidence.
+  const unnamed = Math.max(0, total - shown.length);
+  const more = unnamed ? `<div class="rs-more">+${unnamed} more document${unnamed === 1 ? '' : 's'} ingested — uploaded in the workspace, so their names aren’t on the brief. The agents still read them.</div>` : '';
+  return `<section class="sec">
+    <div class="sec-head"><span class="eyebrow accent">Inputs</span><span class="t">What the agents are reading</span><span class="meta">${total} document${total === 1 ? '' : 's'} in evidence</span></div>
+    <div class="src-docs">${rows}</div>${more}
+  </section>`;
+}
+
+// assessingMemo — ORGANISM. The whole screen. The structural twin of verdictMemo: hero → the sequence → the
+// inputs → the score forming (when a scaffold exists) → the dated arc → one true sentence. Consumed by BOTH
+// the live assessment page and the DS example page, so there is exactly ONE definition of what an in-flight
+// assessment looks like.
+export function assessingMemo(a = {}, s = null, rs = {}) {
+  const docs = (a.inputs && a.inputs.total) || 0;
+  const hero = sectionHero({
+    left: statementLockup({
+      eyebrow: 'Under assessment', eyebrowIcon: 'hourglass_top',
+      headline: `A verdict on ${a.name} is being written.`, headlineEm: 'being written',
+      facts: [
+        { k: 'Venture', v: esc(a.stageLine || '—') },
+        { k: 'Evidence in', v: `${docs} document${docs === 1 ? '' : 's'}` },
+        { k: 'Running', v: esc(fmtElapsed(runAge(rs)) || 'just started') },
+      ],
+    }),
+    right: formingLockup(rs, { docs }),
+    thesisLabel: 'Coming back.',
+    thesis: 'An investability score out of 100 across 35 signals, the case argued both ways, the pre-wire diligence checklist, and the research that underwrites every claim.',
+  });
+  const forming = s
+    ? `<hr class="rule">${investabilityComposition(s, 'openInvest', { title: 'The score, forming', eyebrow: 'Investability', meta: '0 of 35 signals rated — the run rates them at the end' })}`
+    : '';
+  const arc = (a.lifecycle && a.lifecycle.length)
+    ? `<hr class="rule"><section class="sec">
+      <div class="sec-head"><span class="eyebrow accent">The engagement</span><span class="t">Where this sits</span><span class="meta">Intake → decision</span></div>
+      ${lifecycleStrip(a.lifecycle, { scale: 'editorial' })}
+    </section>` : '';
+  return `${hero}<hr class="rule">${runSequence(rs)}<hr class="rule">${inputManifest(a)}${forming}${arc}
+    <p class="lead rs-coda">You can close this tab. The run continues in the cloud, and we’ll email you the moment the verdict lands.</p>`;
 }
 
 // noteCard — MOLECULE. A compact inline card: leading icon + text + optional trailing action(s). The single
