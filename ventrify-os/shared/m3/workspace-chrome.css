@@ -163,3 +163,15 @@
 .settings-toast { position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 20px); z-index: 2100; display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; border-radius: 999px; background: var(--md-sys-color-inverse-surface, #E6E0E9); color: var(--md-sys-color-inverse-on-surface, #322F35); font-size: 13.5px; font-weight: 500; box-shadow: var(--md-elev-3); opacity: 0; pointer-events: none; transition: opacity .2s ease, transform .2s ease; }
 .settings-toast.show { opacity: 1; transform: translate(-50%, 0); }
 .settings-toast.hide { opacity: 0; transform: translate(-50%, 20px); }
+
+/* ============ NEW-ASSESSMENT CREATE PANEL ============
+   The create surface lives ENTIRELY in the aux panel: details → pitch deck → data room → create.
+   It never routes to a second page. Sections are separated by a rule so the two upload targets read
+   as their own steps rather than more form fields. */
+.na-form { display: flex; flex-direction: column; gap: 16px; padding: 4px 2px; }
+.na-two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.na-sec { display: flex; flex-direction: column; gap: 10px; padding-top: 16px; border-top: 1px solid var(--md-sys-color-outline-variant); }
+.na-lab { display: flex; align-items: baseline; gap: 8px; font-size: 13px; font-weight: 500; color: var(--md-sys-color-on-surface); }
+.na-hint { font-size: 11px; font-weight: 500; letter-spacing: .6px; text-transform: uppercase; color: var(--md-sys-color-primary); }
+.na-actions { display: flex; justify-content: flex-end; padding-top: 16px; border-top: 1px solid var(--md-sys-color-outline-variant); }
+@media (max-width: 640px) { .na-two { grid-template-columns: 1fr; } }

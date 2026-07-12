@@ -272,6 +272,9 @@
   .dd-sub { font-size: 12.5px; line-height: 1.5; color: var(--md-sys-color-on-surface-variant); max-width: 46ch; }
   .deckdrop.attached { flex-direction: row; align-items: center; gap: 12px; border-style: solid; border-color: var(--md-sys-color-outline-variant); padding: 10px 12px 10px 10px; cursor: default; }
   .deckdrop.attached .src-row { flex: 1; border-top: none; padding: 0; }
+  /* multi-file preset (the data room) — a stack of attached rows + an "add more" affordance */
+  .dd-stack { display: flex; flex-direction: column; gap: 8px; }
+  .dd-stack .dd-add { align-self: flex-start; }
   /* the wizard in the AUX OVERLAY — fill the panel (not the 640 route width), stack the two-up fields */
   .m3-aux .assess-wizard { max-width: none; margin: 0; }
   .m3-aux .wiz-two { flex-direction: column; }

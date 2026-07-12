@@ -752,9 +752,18 @@ export const CATALOG = {
     html: () => `<div class="brief" style="padding:22px 28px">${DS.wizardSteps(['Name', 'Deck', 'Confirm'], 1)}</div>`,
     props: [{ name: 'labels', type: 'string[]' }, { name: 'active', type: 'index' }], variants: [{ label: 'state', note: 'done / active / pending' }], usedIn: ['assessmentWizard'], adaptive: noAdapt
   },
+  docDropzone: {
+    level: 'molecule', group: 'Molecules', domain: 'Workspace', title: 'Document dropzone', sig: 'docDropzone(files, opts)',
+    blurb: 'THE file dropzone — one component, two presets. Empty = a dashed target; attached = the shared srcRow(s) so a file reads identically here and in the Sources panel. `single:true` is the pitch deck (one file + Replace); the default is multi (a stack + "Add more" + per-file Remove) for the data room. Both live in the New-assessment AUX PANEL, which is where an assessment is created start-to-finish — never a second page. Pass `status:\'\'` for staged files: they have NOT been read or stored yet, so they must not wear the Sources panel\'s Read/Stored chip.',
+    maxw: 560, pad: true,
+    html: () => `<div class="brief" style="padding:22px 28px;max-width:560px">${DS.docDropzone([], { icon: 'folder_open', prompt: 'Add data-room documents', sub: 'Financials, cap table, contracts, metrics — PDF, DOCX, XLSX, CSV, TXT, MD or ZIP.' })}<div style="height:16px"></div>${DS.docDropzone([{ title: 'cap-table.xlsx' }, { title: 'metrics-2025.csv' }], { status: '', note: 'Data room · uploads when you create', addLabel: 'Add more documents' })}</div>`,
+    props: [{ name: 'files', type: '[{title,note,icon}]' }, { name: 'opts', type: '{icon,prompt,sub,fileIcon,note,status,clearLabel,addLabel,single,onPick,onClear}' }],
+    variants: [{ label: 'Empty', note: 'dashed target' }, { label: 'single', note: 'pitch deck — one file + Replace' }, { label: 'multi', note: 'data room — stack + Add more' }],
+    usedIn: ['New-assessment panel (deck + data room)', 'deckDropzone'], adaptive: noAdapt
+  },
   deckDropzone: {
     level: 'molecule', group: 'Molecules', domain: 'Workspace', title: 'Deck dropzone', sig: 'deckDropzone(file, opts)',
-    blurb: 'The pitch-deck upload — the hard gate (an assessment can\'t run without a deck, per dispatch-run.js). Empty = a dashed dropzone; attached = the shared srcRow + a Replace button, so the deck reads identically here and in the Sources panel.',
+    blurb: 'The pitch-deck upload — the hard gate (an assessment can\'t run without a deck, per dispatch-run.js). Now the single-file PRESET of docDropzone (output byte-identical); reach for docDropzone directly for anything new.',
     maxw: 560, pad: true,
     html: () => `<div class="brief" style="padding:22px 28px;max-width:560px">${DS.deckDropzone()}<div style="height:16px"></div>${DS.deckDropzone({ title: 'MoneyGym — Seed pitch deck v0.1a.pdf', note: 'Pitch deck · ready to run' })}</div>`,
     props: [{ name: 'file', type: '{title,note} or null' }, { name: 'opts', type: '{onPick,onClear}' }], variants: [{ label: 'Empty', note: 'dashed dropzone' }, { label: 'Attached', note: 'srcRow + Replace' }], usedIn: ['assessmentWizard'], adaptive: noAdapt

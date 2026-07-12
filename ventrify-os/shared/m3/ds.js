@@ -1906,16 +1906,38 @@ export function wizardSteps(labels = ['Name', 'Deck', 'Confirm'], active = 0) {
   }).join('')}</ol>`;
 }
 
-// deckDropzone — MOLECULE. The pitch-deck upload (the hard gate — mirrors dispatch-run.js "an assessment cannot run
-// without a pitch deck"). Shows an attached file via the shared srcRow so it reads identically to the Sources panel.
-export function deckDropzone(file, opts = {}) {
-  if (file) return `<div class="deckdrop attached">${srcRow({ icon: 'slideshow', title: file.title, note: file.note || 'Pitch deck · ready to run', status: 'read' })}
-    <button class="m3-btn text" onclick="${opts.onClear || ''}"><span class="material-symbols-rounded">close</span>Replace</button></div>`;
-  return `<button class="deckdrop" onclick="${opts.onPick || ''}">
-    <span class="material-symbols-rounded dd-ic">upload_file</span>
-    <span class="dd-nm">Drop the pitch deck here</span>
-    <span class="dd-sub">PDF · the assessment runs from it. Optional: financial model, founder letter.</span>
+// docDropzone — MOLECULE. THE file dropzone: an empty dashed target, or the attached file(s) rendered
+// through the shared srcRow so they read identically to the Sources panel. Single-file (the pitch deck)
+// and multi-file (the data room) are the two presets of this ONE component — never fork it.
+// opts: { icon, prompt, sub, fileIcon, note, status, clearLabel, addLabel, single, onPick, onClear }
+//   onPick/onClear are handler NAMES. single → `onClear()`; multi → `onClear(i)` per attached file.
+export function docDropzone(files = [], opts = {}) {
+  const {
+    icon = 'upload_file', prompt = 'Drop files here', sub = '', fileIcon = 'description',
+    note = '', status = 'stored', clearLabel = 'Remove', addLabel = 'Add more',
+    single = false, onPick = '', onClear = '',
+  } = opts;
+  const list = (files || []).filter(Boolean);
+  if (!list.length) return `<button class="deckdrop" onclick="${onPick}">
+    <span class="material-symbols-rounded dd-ic">${esc(icon)}</span>
+    <span class="dd-nm">${esc(prompt)}</span>
+    <span class="dd-sub">${esc(sub)}</span>
   </button>`;
+  const row = (f, i) => `<div class="deckdrop attached">${srcRow({ icon: f.icon || fileIcon, title: f.title, note: f.note || note, status })}
+    <button class="m3-btn text" onclick="${onClear}${single ? '' : `(${i})`}"><span class="material-symbols-rounded">close</span>${esc(clearLabel)}</button></div>`;
+  if (single) return row(list[0], 0);
+  return `<div class="dd-stack">${list.map(row).join('')}<button class="m3-btn text dd-add" onclick="${onPick}"><span class="material-symbols-rounded">add</span>${esc(addLabel)}</button></div>`;
+}
+
+// deckDropzone — the single-file PITCH-DECK preset of docDropzone (the hard gate — mirrors dispatch-run.js
+// "an assessment cannot run without a pitch deck"). Output is byte-identical to the pre-unification component.
+export function deckDropzone(file, opts = {}) {
+  return docDropzone(file ? [{ icon: 'slideshow', title: file.title, note: file.note || 'Pitch deck · ready to run' }] : [], {
+    single: true, status: 'read', clearLabel: 'Replace',
+    icon: 'upload_file', prompt: 'Drop the pitch deck here',
+    sub: 'PDF · the assessment runs from it. Optional: financial model, founder letter.',
+    onPick: opts.onPick || '', onClear: opts.onClear || '',
+  });
 }
 
 // STAGES — the single source of truth for a venture's funding stage. Used by the assessment create panel
