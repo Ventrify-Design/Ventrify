@@ -144,6 +144,7 @@ window.__wsCreateAssessment = async () => {
   const website = ((document.getElementById('na-site') || {}).value || '').trim();
   const stage = ((document.getElementById('na-stage') || {}).value || '').trim();
   if (!stage) { window.__toast('Select the venture stage.', true); return; }
+  if (!founder) { window.__toast('Name the founder — the assessment diligences them by name.', true); return; }
   if (!NA.deck) { window.__toast('Attach the pitch deck — the assessment runs from it.', true); return; }
   const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').slice(0, 40) || 'venture';
   const programId = 'prg-' + slug + '-' + Math.random().toString(36).slice(2, 6);
