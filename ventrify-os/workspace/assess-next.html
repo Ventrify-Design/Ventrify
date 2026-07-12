@@ -283,7 +283,7 @@
     // A RUN IN FLIGHT gets the assessing MEMO — the same editorial surface the finished verdict lives on,
     // caught mid-formation. When the verdict lands nothing MOVES; the placeholders resolve. (The old screen
     // was a run banner bolted to a rail-density checklist in a 1120px reading column.)
-    if (st.active) return `<div class="brief" id="ea-status">${DS.assessingMemo(A, S, st.rs)}</div>`;
+    if (st.active) return `<div class="brief" id="ea-memo">${DS.assessingMemo(A, S, st.rs)}</div>`;
 
     // everything else (no deck / deck ready / flagged) keeps the note-card surface
     const banner = st.flagged ? DS.runBanner(st.rs) : '';
@@ -385,6 +385,17 @@
   window.addDocuments = () => window.__eaUpload('dataroom');
   window.rerunAssessment = () => window.__eaRun();
 
+  // ONE place that repaints the run surface in place. #ea-memo (the whole assessing memo) and #ea-status
+  // (a slim banner shown beside a verdict) are DIFFERENT surfaces — repainting the wrong one destroys the
+  // other. Never write runBanner into #ea-memo.
+  function repaintRun() {
+    const st = stateBits();
+    const memo = document.getElementById('ea-memo');
+    if (memo && st.active) { memo.innerHTML = DS.assessingMemo(A, S, st.rs); return; }
+    const el = document.getElementById('ea-status');
+    if (el) el.innerHTML = (st.active || st.flagged) ? DS.runBanner(st.rs) : '';
+  }
+
   // ── the run clock. The runner only writes to Firestore when its STEP changes (~11 pushes across a
   // multi-minute run), so between milestones there can be minutes of silence. Without a local tick the
   // elapsed counter freezes and a hung run looks alive forever — this is what makes the stall detector real.
@@ -394,10 +405,8 @@
     stopTicker();
     if (!stateBits().active) return;
     tick = setInterval(() => {
-      const st = stateBits();
-      if (!st.active) { stopTicker(); refresh(); return; }          // finished between pushes → full repaint
-      const el = document.getElementById('ea-status');
-      if (el) el.innerHTML = DS.runBanner(st.rs);
+      if (!stateBits().active) { stopTicker(); refresh(); return; }   // finished between pushes → full repaint
+      repaintRun();
     }, 30000);
   }
 
@@ -422,8 +431,7 @@
           // above, and the masthead still holds the empty `st.active → []` action set. Repaint the page so
           // Republish / Re-run actually appear instead of stranding the operator with a dead banner.
           if (wasActive && !st.active) { stopTicker(); refresh(); return; }
-          const el = document.getElementById('ea-status');   // in-place run-banner refresh (no listener churn)
-          if (el) el.innerHTML = (st.active || st.flagged) ? DS.runBanner(st.rs) : '';
+          repaintRun();                                      // in-place refresh (no listener churn)
           startTicker();
         });
       }
