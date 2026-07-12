@@ -39,6 +39,14 @@ async function check(base, file) {
     onePrimary: document.querySelectorAll('.mh-actions .m3-btn.filled').length <= 1,
     // no horizontal overflow (catches the off-canvas aux / rail extending the scroll width)
     noHOverflow: document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1,
+    // NO TRUNCATED HEADLINE, EVER. The hero headline is 44px display type in a 4-line clamp. Two ways it
+    // was being cut: (a) prose longer than the 12-word budget overflowed the clamp and lost words, and
+    // (b) line-height 1.08 made the box exactly N x line-height, so `overflow:hidden` shaved the last
+    // line's DESCENDERS (measured: 97px of content in a 95px box) — on EVERY headline. fitHeadline()
+    // enforces (a) at the render boundary and a padding-bottom fixes (b); this keeps them both fixed.
+    noClippedHeadline: [...document.querySelectorAll('.statement-lockup-headline')]
+      .filter(el => el.offsetParent && el.clientHeight > 0)
+      .every(el => el.scrollHeight <= el.clientHeight + 1),
     // dividers are STRAIGHT: a one-sided border on a rounded box traces the corner and curls at the
     // ends. Draw the hairline as an absolutely-positioned pseudo-element instead (see the divider atom).
     straightDividers: (() => {
@@ -94,6 +102,7 @@ async function check(base, file) {
       'masthead minifies on scroll': minify,
       '≤1 primary (filled) in masthead': dom.onePrimary,
       'no horizontal overflow': dom.noHOverflow,
+      'no truncated hero headline': dom.noClippedHeadline,
       'dividers straight (no radius + 1-sided border)': dom.straightDividers,
       'headline consistent (rest = minified)': dom.headlineConsistent,
       'hamburger visible @390': mobile.hamburgerVisible,

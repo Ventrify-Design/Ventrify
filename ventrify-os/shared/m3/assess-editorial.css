@@ -58,6 +58,11 @@
     font-size: clamp(30px, 3.3vw, 44px); line-height: 1.08; font-weight: 500; letter-spacing: -.6px;
     color: var(--md-sys-color-on-surface); margin: 14px 0 0;
     display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;
+    /* line-height 1.08 is TIGHT for 44px display type: the box is exactly N x line-height, so the last
+       line's DESCENDERS (g, y, p) overshoot it — and `overflow: hidden` was shaving them off. Measured:
+       content 97px inside a 95px box, on every headline that lands on a clean line boundary. The clamp
+       counts LINES, so padding cannot leak an extra one; it only gives the descenders room to exist. */
+    padding-bottom: 0.07em;
   }
   .statement-lockup-headline em { font-style: normal; color: var(--warning); }
   .statement-lockup-facts { display: flex; flex-wrap: wrap; gap: 10px 30px; margin-top: 26px; }

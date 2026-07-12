@@ -105,6 +105,22 @@ function deriveConfidence(p, snap, a) {
   return { level, documents: docs, sources, line };
 }
 
+// teamHeadline — a SHORT, authored team hero line built from structured facts, so it always fits the
+// 12-word headline budget and can never contradict the signal bar rendered beside it.
+function teamHeadline(t = {}) {
+  const members = t.members || [];
+  const n = members.length;
+  const verified = members.filter(m => m.signal === 'positive').length;
+  const flagged = members.filter(m => m.signal === 'flag').length;
+  const gap = (t.gaps && t.gaps[0]) ? String(t.gaps[0]).replace(/[*_`]/g, '').trim() : '';
+  // a copywritten line from the runner wins — it has read the diligence and can be sharper than a template
+  if (t.headline) return { headline: t.headline, headlineEm: t.headlineEm || '', headlineFallback: 'The team.' };
+  if (!n) return { headline: 'The team.', headlineEm: '', headlineFallback: 'The team.' };
+  if (flagged) return { headline: `${verified} of ${n} verified — ${flagged} still unproven.`, headlineEm: `${flagged} still unproven`, headlineFallback: 'The team.' };
+  if (verified === n) return { headline: `All ${n} verified — the team checks out.`, headlineEm: 'the team checks out', headlineFallback: 'The team.' };
+  return { headline: `${verified} of ${n} verified — the rest to confirm.`, headlineEm: 'the rest to confirm', headlineFallback: 'The team.' };
+}
+
 // ── SCORE (investability snapshot → M3 SCORE) ──
 const CAT_WEIGHTS = { market: 20, team: 25, product: 15, moat: 15, financial: 10, execution: 10, evidence: 5 };
 function shortOf(key, label) {
@@ -173,7 +189,12 @@ function deriveHeroes(a, S) {
     },
     team: {
       eyebrow: 'The team', eyebrowIcon: 'groups',
-      headline: firstSentence(t.summary) || 'The team.', headlineEm: '',
+      // ⚠ this used to be `firstSentence(t.summary)` — the model's team-diligence write-up piped raw into a
+      // 44px, 4-line-clamped slot, where it truncated mid-word. Every OTHER hero uses a short AUTHORED line
+      // built from structured facts ("A $2B market — the question is the entry"). Team now does too, so it
+      // fits by construction rather than by luck. The runner's copywritten hero line (heroes.team.headline,
+      // written to a 12-word budget) is preferred when present; this is the deterministic floor.
+      ...teamHeadline(t),
       facts: [{ k: 'Named', v: `${(t.members || []).length} <small>on the cap table</small>` }, (t.gaps && t.gaps[0]) && { k: 'Critical gap', v: esc(t.gaps[0]) }].filter(Boolean),
       thesis: t.summary || ''
     },

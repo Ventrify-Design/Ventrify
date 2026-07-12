@@ -539,6 +539,34 @@ export function bookLockup(opts = {}) {
 // statementLockup — MOLECULE. An eyebrow-marked headline with supporting facts — the "what" half of a
 // sectionHero (the verdict on the assess page). Extractable + previewable on its own, symmetric with
 // scoreLockup. Generic + defaults; eyebrow icon and facts are optional.
+// fitHeadline — THE GUARANTEE that a hero headline can never truncate.
+//
+// .statement-lockup-headline is clamp(30-44px) with `-webkit-line-clamp: 4`, and its own CSS comment states
+// the contract: "a short punchy clause (≤ ~12 words) — anything longer belongs in the thesis lead". Every
+// hero honoured that with a short AUTHORED line ("A $2B market — the question is the entry") except TEAM,
+// which piped the first sentence of the model's team-diligence write-up straight into a 44px slot. Arbitrary
+// model prose at 44px overflows four lines and gets silently clipped mid-word.
+//
+// A word budget in a copy brief is a REQUEST. This is the ENFORCEMENT: overlong copy is rejected here, at
+// the render boundary, so no upstream change — or no upstream agent having a bad day — can put a truncated
+// headline in front of an operator. It never cuts mid-clause and never emits a dangling ellipsis: it falls
+// back to the caller's short authored line instead, because a clean short sentence beats a severed long one.
+const HEADLINE_MAX_WORDS = 12;   // the copy contract, enforced
+export function fitHeadline(text, fallback = '', maxWords = HEADLINE_MAX_WORDS) {
+  const t = String(text || '').trim().replace(/\s+/g, ' ');
+  if (!t) return fallback;
+  // strip markdown the model leaks into prose (**bold**, `code`) — it renders as literal junk at 44px
+  const clean = t.replace(/[*_`]/g, '').trim();
+  const words = clean.split(' ').filter(Boolean);
+  if (words.length <= maxWords) return clean;
+  // Too long. Prefer the caller's authored fallback over a mutilated sentence — but if there is none, cut at
+  // the last sentence/clause boundary INSIDE the budget so what we show is still a complete thought.
+  if (fallback) return fallback;
+  const head = words.slice(0, maxWords).join(' ');
+  const cut = Math.max(head.lastIndexOf('. '), head.lastIndexOf(' — '), head.lastIndexOf('; '));
+  return (cut > 20 ? head.slice(0, cut + 1) : head).replace(/[,;:—-]\s*$/, '') + (cut > 20 ? '' : '.');
+}
+
 export function statementLockup(opts = {}) {
   const {
     eyebrow = 'The verdict', eyebrowIcon = 'balance',
@@ -546,7 +574,9 @@ export function statementLockup(opts = {}) {
     headlineEm = 'proceed to diligence',
     facts = [{ k: 'Conviction', v: `Medium ${convPips('Medium')}` }, { k: 'The ask', v: '$8M <small>on $32M pre · Seed</small>' }]
   } = opts;
-  const hl = headlineEm ? esc(headline).replace(esc(headlineEm), `<em>${esc(headlineEm)}</em>`) : esc(headline);
+  // enforced at the render boundary: no caller can put a truncating headline on screen (see fitHeadline)
+  const safe = fitHeadline(headline, opts.headlineFallback || '');
+  const hl = headlineEm && safe.includes(headlineEm) ? esc(safe).replace(esc(headlineEm), `<em>${esc(headlineEm)}</em>`) : esc(safe);
   const factsHtml = facts.map(f => `<div class="fact"><div class="k">${esc(f.k)}</div><div class="v">${f.v}</div></div>`).join('');
   return `<div class="statement-lockup">
     ${eyebrow ? `<span class="statement-lockup-eyebrow">${eyebrowIcon ? `<span class="material-symbols-rounded">${eyebrowIcon}</span> ` : ''}${esc(eyebrow)}</span>` : ''}
