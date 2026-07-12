@@ -426,3 +426,74 @@ md-outlined-text-field { --md-outlined-text-field-container-shape: 999px; --md-o
 .md-q { margin: 4px 0; padding: 8px 14px; border-left: 3px solid var(--md-sys-color-primary); background: var(--md-sys-color-surface-container); border-radius: 0 8px 8px 0; font-size: 14px; color: var(--md-sys-color-on-surface-variant); }
 .md-doc code { font-family: ui-monospace, monospace; font-size: 12.5px; background: var(--md-sys-color-surface-container-highest); padding: 1px 5px; border-radius: 5px; }
 .md-doc a { color: var(--md-sys-color-primary); }
+
+
+/* ============================================================
+   CORE COMPONENT CSS — moved here from assess-editorial.css.
+   srcRow, docDropzone/deckDropzone and runBanner are CORE components: they render on the portfolio, the
+   New-assessment panel and the DS catalog — not just the assessment page. Living in the assess-only sheet
+   meant design-system.html (which loads ONLY theme.css + ds.css) rendered them UNSTYLED, and any page that
+   did not happen to import assess-editorial.css got a broken dropzone.
+   ============================================================ */
+
+/* ---- source / document row (srcRow) — shared by the Sources panel and the dropzones ---- */
+/* document groups */
+.src-group { margin-bottom: 18px; }
+.src-group:last-child { margin-bottom: 0; }
+.src-gh { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: var(--md-sys-color-on-surface); margin-bottom: 4px; }
+.src-row { display: grid; grid-template-columns: 34px 1fr auto; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--md-sys-color-outline-variant); }
+.src-row:first-of-type { border-top: none; }
+.src-ic { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; background: var(--md-sys-color-surface-container-high); color: var(--md-sys-color-on-surface-variant); }
+.src-ic .material-symbols-rounded { font-size: 19px; }
+.src-bd { min-width: 0; }
+.src-nm { font-size: var(--row-title); font-weight: 500; line-height: 1.3; word-break: break-word; }
+.src-note { font-size: var(--row-sub); color: var(--md-sys-color-on-surface-variant); margin-top: 2px; line-height: 1.4; }
+.src-status { font-size: var(--row-eyebrow); font-weight: 600; letter-spacing: .4px; text-transform: uppercase; white-space: nowrap; padding: 3px 8px; border-radius: 7px; }
+.src-status.read { background: var(--success-container); color: var(--on-success-container); }
+.src-status.stored { background: var(--md-sys-color-surface-container-highest); color: var(--md-sys-color-on-surface-variant); }
+
+/* ---- file dropzone (docDropzone; deckDropzone is its single-file preset) ---- */
+/* deck dropzone */
+.deckdrop { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 7px; padding: 34px 24px; border-radius: 16px; border: 2px dashed var(--md-sys-color-outline); background: var(--md-sys-color-surface-container-low); cursor: pointer; text-align: center; color: inherit; font: inherit; }
+.deckdrop:hover { border-color: var(--md-sys-color-primary); background: var(--md-sys-color-surface-container); }
+.deckdrop .dd-ic { font-size: 34px; color: var(--md-sys-color-primary); }
+.dd-nm { font-size: 15px; font-weight: 600; }
+.dd-sub { font-size: 12.5px; line-height: 1.5; color: var(--md-sys-color-on-surface-variant); max-width: 46ch; }
+.deckdrop.attached { flex-direction: row; align-items: center; gap: 12px; border-style: solid; border-color: var(--md-sys-color-outline-variant); padding: 10px 12px 10px 10px; cursor: default; }
+.deckdrop.attached .src-row { flex: 1; border-top: none; padding: 0; }
+/* multi-file preset (the data room) — a stack of attached rows + an "add more" affordance */
+.dd-stack { display: flex; flex-direction: column; gap: 8px; }
+.dd-stack .dd-add { align-self: flex-start; }
+.m3-aux .deckdrop { padding: 26px 18px; }
+
+/* ---- run banner (runBanner) ---- */
+/* ============ RUN BANNER ============ */
+.run-banner { display: flex; gap: 14px; align-items: flex-start; padding: 16px 18px; border-radius: 16px; margin-bottom: 22px; background: var(--md-sys-color-surface-container); }
+.run-banner.info { background: color-mix(in srgb, var(--md-sys-color-primary) 9%, var(--md-sys-color-surface-container-low)); }
+.run-banner.warn { background: var(--warning-container); }
+.run-banner.err { background: var(--md-sys-color-error-container); }
+.run-banner.ok { background: var(--success-container); }
+.rb-ic { width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center; flex: none; background: var(--md-sys-color-surface); color: var(--md-sys-color-primary); }
+.run-banner.warn .rb-ic { color: var(--warning); }
+.run-banner.err .rb-ic { color: var(--md-sys-color-error); }
+.run-banner.ok .rb-ic { color: var(--success); }
+.rb-t { font-size: 14px; font-weight: 600; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.rb-x { font-size: 12.5px; line-height: 1.45; color: var(--md-sys-color-on-surface-variant); margin-top: 2px; }
+.rb-bd { flex: 1; min-width: 0; }
+/* step counter + elapsed — the honest run meta (rendered only when the pipeline has written real numbers) */
+.rb-meta { font-size: var(--row-cap); font-weight: 500; letter-spacing: .3px; color: var(--md-sys-color-on-surface-variant); font-variant-numeric: tabular-nums; }
+.rb-warn { font-size: 12.5px; line-height: 1.45; color: var(--warning); margin-top: 8px; }
+.run-banner.err .rb-warn { color: var(--md-sys-color-error); }
+.rb-act { margin-top: 6px; margin-left: -12px; }
+
+/* ---- .brief — THE reading-surface container (the centred content column). Shared by the portfolio, the
+   action queue and the assessment, so it belongs in the core layer, not the assess-only sheet. ---- */
+.brief {
+  width: 100%;                 /* fill the (column-flex) container so auto margins don't content-size it to a wide table */
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 34px clamp(24px, 4.4vw, 64px) 120px;
+}
+/* inside the app shell the frame already provides the gutters — trim the brief's own padding.
+   (scoped to .shell-main so the standalone mockup, which has no shell, keeps its full padding) */
+.shell-main .brief { padding: 8px clamp(4px, 2vw, 28px) 96px; min-width: 0; }   /* a flex item in .shell-body — without this it sizes to its widest child (a wide table) and overflows narrow screens */
