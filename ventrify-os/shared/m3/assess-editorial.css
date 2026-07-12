@@ -450,6 +450,19 @@
   .rs-say { margin-top: 7px; font-size: var(--row-sub-lg); line-height: 1.5; color: var(--md-sys-color-primary); }
   .rs-more { margin-top: 14px; font-size: var(--row-sub); line-height: 1.5; color: var(--md-sys-color-on-surface-variant); }
   .rs-coda { color: var(--md-sys-color-on-surface-variant); }
+
+  /* ---- documents that never made it in. Loud on purpose: silently missing evidence is the one failure
+     that can corrupt a verdict without anyone noticing. ---- */
+  .rs-missing { margin-top: 20px; border-radius: 16px; padding: 16px 18px; background: var(--md-sys-color-error-container); color: var(--md-sys-color-on-error-container); }
+  .rs-missing-h { display: flex; align-items: center; gap: 10px; font-size: var(--row-sub-lg); font-weight: 500; }
+  .rs-missing-h .material-symbols-rounded { font-size: 20px; color: var(--md-sys-color-error); }
+  .rs-missing-row { display: flex; align-items: center; gap: 12px; margin-top: 12px; padding-top: 12px; border-top: 1px solid color-mix(in srgb, var(--md-sys-color-on-error-container) 18%, transparent); }
+  .rs-missing-bd { flex: 1; min-width: 0; }
+  .rs-missing-row .nm { font-size: var(--row-title); font-weight: 500; word-break: break-word; }
+  .rs-missing-row .why { font-size: var(--row-sub); line-height: 1.45; opacity: .85; margin-top: 2px; }
+  .rs-missing-row .m3-btn.text { color: var(--md-sys-color-on-error-container); flex: none; }
+  .rs-missing-f { margin-top: 14px; font-size: var(--row-sub); line-height: 1.5; opacity: .85; }
+
   .src-docs { margin-top: 2px; }
 
   /* the score's EMPTY CHAIR — caption + provenance under the forming lockup */

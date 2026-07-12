@@ -806,6 +806,15 @@ export const CATALOG = {
     maxw: null, pad: false, html: null,
     props: [{ name: 'template', type: 'pageShell (no rail)' }, { name: 'fills slot with', type: 'portfolioEmpty launchpad' }, { name: 'states', type: '?state=empty | one | many' }], variants: [], usedIn: [], adaptive: noAdapt
   },
+  missingDocs: {
+    level: 'molecule', group: 'Molecules', domain: 'Workspace', title: 'Missing documents', sig: 'missingDocs(a)',
+    blurb: 'Documents the operator HANDED OVER that never made it in. This exists because a dropped document used to live and die in a transient TOAST — so you could run an assessment believing the agents had read your cap table when it never arrived, and the verdict would be reached without it. A dropped document is a DATA-INTEGRITY fact, not a notification: it is persisted on the engagement (EA.ingestDocs records it) and shown until dealt with — beside the very evidence list it is missing from, on every state of the assessment page, and MOST loudly once a verdict exists (because that verdict was reached without it). Re-adding the document clears it automatically; Dismiss is there for a file that genuinely does not belong.',
+    maxw: 620, pad: true,
+    html: () => `<div class="brief" style="padding:22px 28px;max-width:620px">${DS.missingDocs({ inputs: { skipped: [{ name: 'Cap table — post-SAFE.xlsx', reason: 'No readable text, and no original was stored. Re-upload the file so the original can be kept for a direct read.' }, { name: 'Board minutes 2025.pptx', reason: 'Unsupported file type.' }] } })}</div>`,
+    props: [{ name: 'a.inputs.skipped', type: '[{name, reason, at}]' }],
+    variants: [{ label: 'none', note: 'renders NOTHING when there is nothing to report' }, { label: 'one' }, { label: 'many' }],
+    usedIn: ['inputManifest', 'assess-next (every state)'], adaptive: noAdapt
+  },
   assessRunningPage: {
     level: 'page', group: 'Pages', domain: 'Workspace', title: 'Assessment · assessing', sig: 'assess-running.html', src: 'assess-running.html',
     blurb: 'THE ASSESSING STATE — "the memo, before the ink lands." A run in flight is not a loading state: it is the assessment ITSELF, mid-formation. So this is the SAME editorial surface as the finished verdict (sectionHero → reading column → .sec/.rule rhythm), with the answer\'s placeholders sitting exactly where the answer will land — "Forming" in the score\'s own slot, the eleven workstreams as a numbered table of contents in the memo\'s .must voice, the evidence named, the 7×5 composition sitting empty, and the engagement arc as a DATED record. When the verdict arrives nothing MOVES; the placeholders resolve. No tabs (there is nothing yet to switch between). THE HONESTY RULE: the step NAMES are ours (a fixed plan the runner always follows); only the POSITION comes from rs.step. Determinate bar ONLY once the runner reports a step — never a fabricated %, never a fake ETA, never a fake finding. ?state= proves every honest state, not just the flattering one: running · silent (the agent has not reported — the MOST LIKELY first state) · queued · quiet · paused · error · republish.',

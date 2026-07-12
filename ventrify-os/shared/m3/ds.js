@@ -2231,6 +2231,24 @@ export function runSequence(rs = {}) {
   </section>`;
 }
 
+// missingDocs — MOLECULE. Documents the operator HANDED OVER that never made it in. A dropped document used
+// to live and die in a transient toast — so you could run an assessment believing the agents had read your
+// cap table when it never arrived. That is a data-integrity fact, not a notification: it is persisted on the
+// engagement (EA.ingestDocs) and shown until it is dealt with. Re-adding the document clears it automatically.
+export function missingDocs(a = {}) {
+  const miss = (((a.inputs || {}).skipped) || []).filter(x => x && x.name);
+  if (!miss.length) return '';
+  const n = miss.length;
+  return `<div class="rs-missing">
+    <div class="rs-missing-h"><span class="material-symbols-rounded">error</span>${n} document${n === 1 ? '' : 's'} didn’t make it in — the agents have <b>not</b> read ${n === 1 ? 'it' : 'them'}</div>
+    ${miss.map(x => `<div class="rs-missing-row">
+      <div class="rs-missing-bd"><div class="nm">${esc(x.name)}</div><div class="why">${esc(x.reason || 'Could not be read')}</div></div>
+      <button class="m3-btn text" onclick="window.__eaDismissSkipped&&window.__eaDismissSkipped(this.dataset.n)" data-n="${esc(x.name)}">Dismiss</button>
+    </div>`).join('')}
+    <div class="rs-missing-f">Re-upload ${n === 1 ? 'it' : 'them'} via <b>Add data-room documents</b> — re-adding a document clears this automatically.</div>
+  </div>`;
+}
+
 // inputManifest — ORGANISM. What the agents are actually reading, BY NAME. The most honest thing we can show
 // during a run is the evidence the operator just handed over — and it is the one surface that makes the
 // intervention loop real (see the wrong deck went in → Stop → replace it → Run). Capped at 8 named docs:
@@ -2252,9 +2270,12 @@ export function inputManifest(a = {}) {
   // rather than quietly under-reporting the evidence.
   const unnamed = Math.max(0, total - shown.length);
   const more = unnamed ? `<div class="rs-more">+${unnamed} more document${unnamed === 1 ? '' : 's'} ingested — uploaded in the workspace, so their names aren’t on the brief. The agents still read them.</div>` : '';
+
+  const missing = missingDocs(a);
+
   return `<section class="sec">
     <div class="sec-head"><span class="eyebrow accent">Inputs</span><span class="t">What the agents are reading</span><span class="meta">${total} document${total === 1 ? '' : 's'} in evidence</span></div>
-    <div class="src-docs">${rows}</div>${more}
+    <div class="src-docs">${rows}</div>${more}${missing}
   </section>`;
 }
 

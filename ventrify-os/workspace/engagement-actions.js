@@ -104,6 +104,7 @@ export async function ingestDocs({ engagementId, files, docType, onProgress } = 
   const token = await idToken();
   const SUPPORTED = /\.(pdf|docx?|xlsx?|xlsm|txt|md|csv)$/i;
   let ingested = 0; const skipped = [];   // never silently dropped
+  const landed = [];                      // names that actually made it — these CLEAR any prior failure
 
   async function ingestOne(name, blob) {
     let payload;
@@ -125,7 +126,7 @@ export async function ingestDocs({ engagementId, files, docType, onProgress } = 
     const resp = await fetch('/api/ingest-docs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
     const d = await resp.json().catch(() => ({}));
     if (!resp.ok) throw new Error(d.detail || d.error || ('HTTP ' + resp.status));
-    ingested++;
+    ingested++; landed.push(name);
   }
 
   for (const file of files) {
@@ -144,7 +145,42 @@ export async function ingestDocs({ engagementId, files, docType, onProgress } = 
       skipped.push({ name: file.name, reason: (e && e.message) || String(e) });
     }
   }
+  await recordIngestOutcome({ engagementId, skipped, landed });
   return { ingested, skipped };
+}
+
+// recordIngestOutcome — a skipped document is a DATA-INTEGRITY fact, not a transient notification. Persisted
+// on the engagement so it survives the toast, the page, and the session, and can be surfaced next to the very
+// evidence list it is missing from. Re-uploading a document CLEARS its old failure automatically.
+// Client SDK: firestore.rules already lets an operator/founder update their engagement (only assessmentSignoff
+// / shareLink / assessmentDecision are server-only), so this needs no endpoint — and api/ is at the 12-fn cap.
+async function recordIngestOutcome({ engagementId, skipped, landed }) {
+  try {
+    const data = await import('../firebase/data.js');
+    const eng = await data.getEngagement(engagementId);
+    const prev = (eng && eng.ingestSkipped) || [];
+    // a name that has now landed is no longer missing
+    const kept = prev.filter(s => !landed.includes(s.name));
+    const at = new Date().toISOString();
+    const add = skipped.map(s => ({ name: String(s.name || '').slice(0, 200), reason: String(s.reason || 'Could not be read').slice(0, 300), at }));
+    const byName = new Map();
+    [...kept, ...add].forEach(s => byName.set(s.name, s));      // latest attempt wins
+    const next = [...byName.values()].slice(-30);
+    if (JSON.stringify(next) === JSON.stringify(prev)) return;  // nothing changed → no write
+    await data.updateEngagement(engagementId, { ingestSkipped: next });
+  } catch (e) {
+    console.warn('could not record the ingest outcome', e);     // never break an upload over its own bookkeeping
+  }
+}
+
+// clearSkippedDoc — the operator has dealt with it (re-added elsewhere, or it genuinely doesn't belong).
+export async function clearSkippedDoc({ engagementId, name = null } = {}) {
+  const data = await import('../firebase/data.js');
+  const eng = await data.getEngagement(engagementId);
+  const prev = (eng && eng.ingestSkipped) || [];
+  const next = name ? prev.filter(s => s.name !== name) : [];
+  await data.updateEngagement(engagementId, { ingestSkipped: next });
+  return next;
 }
 
 // ---- operator sign-off (VERBATIM /api/memo action:sign|revoke-sign) — server stamps the verified identity ----

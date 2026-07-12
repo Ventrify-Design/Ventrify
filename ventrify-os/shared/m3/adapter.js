@@ -311,6 +311,10 @@ export function adaptEngagement(p = {}) {
     deck: p.pitchDoc ? { name: p.pitchDoc.name, at: p.pitchDoc.at } : null,
     docs: briefDocs,
     total: p.founderDocCount || briefDocs.length || 0,
+    // documents the operator HANDED OVER but that never made it in. Persisted on the engagement, because a
+    // dropped document is a data-integrity fact — you must not be able to run an assessment believing the
+    // agents read your cap table when it never arrived.
+    skipped: p.ingestSkipped || [],
   };
 
   // dates make the arc a RECORD instead of a to-do list. `.lc-at` has existed in the CSS from the start and

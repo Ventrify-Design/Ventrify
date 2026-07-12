@@ -128,6 +128,11 @@
       await refresh();
     }
   };
+  // dismiss a missing document — the operator has dealt with it (re-added elsewhere, or it doesn't belong).
+  window.__eaDismissSkipped = async (name) => {
+    try { await EA.clearSkippedDoc({ engagementId: p.id, name }); await refresh(); }
+    catch (e) { window.__toast('Could not dismiss: ' + ((e && e.message) || e), true); }
+  };
   window.__eaRepublish = async () => { if (await EA.republish({ engagementId: p.id, onBusy: busy })) { window.__toast('Recovering your saved results…'); if (!live) setTimeout(() => location.reload(), 800); } };
   window.__eaDownload = () => EA.downloadMemo({ p, snap: invSnapshot, org: W.org });
   window.__eaDelete = async () => {
@@ -291,12 +296,12 @@
       <div class="sec-head"><span class="eyebrow accent">The engagement</span><span class="t">Where this sits</span><span class="meta">Intake → decision</span></div>
       ${DS.lifecycleStrip(A.lifecycle, { scale: 'editorial' })}
     </section>`;
-    return `<div class="brief"><div id="ea-status">${banner}</div>${note}${forming}${life}</div>`;
+    return `<div class="brief"><div id="ea-status">${banner}</div>${DS.missingDocs(A)}${note}${forming}${life}</div>`;
   }
   function verdictTabs(st) {
     const slim = (st.active || st.flagged) ? `<div class="brief" style="padding-bottom:0;margin-bottom:4px" id="ea-status">${DS.runBanner(st.rs)}</div>` : '<span id="ea-status"></span>';
     return `
-      <div class="tab-panel active">${slim}${DS.verdictMemo(A, S)}</div>
+      <div class="tab-panel active">${slim}${DS.missingDocs(A) ? `<div class="brief" style="padding-bottom:0">${DS.missingDocs(A)}</div>` : ''}${DS.verdictMemo(A, S)}</div>
       <div class="tab-panel"><div class="brief">${DS.investabilityHero(S, A)}<hr class="rule">${DS.investabilityComposition(S, 'openInvest')}<hr class="rule">${DS.strengthProfile(S, 'openInvest')}</div></div>
       <div class="tab-panel">${DS.marketMemo(A)}</div>
       <div class="tab-panel">${DS.teamMemo(A)}</div>
