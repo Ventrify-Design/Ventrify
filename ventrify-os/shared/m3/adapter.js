@@ -300,17 +300,66 @@ export function adaptEngagement(p = {}) {
   // lifecycle playback (from runState + signoff)
   const rs = p.runState || {};
   const done = s => ({ state: 'done', label: s });
+
+  // ---- the evidence the agents are reading (drives inputManifest on the assessing screen) ----
+  // Names only exist when the docs came through the Studio brief; a workspace upload records a COUNT but no
+  // names. We say so out loud in the manifest rather than quietly under-reporting the evidence.
+  const briefDocs = ((p.brief && p.brief.founderDocs) || []).map(d => ({
+    name: d.name, chars: d.chars, needsDeepRead: !!d.needsDeepRead,
+  }));
+  const inputs = {
+    deck: p.pitchDoc ? { name: p.pitchDoc.name, at: p.pitchDoc.at } : null,
+    docs: briefDocs,
+    total: p.founderDocCount || briefDocs.length || 0,
+  };
+
+  // dates make the arc a RECORD instead of a to-do list. `.lc-at` has existed in the CSS from the start and
+  // had never once rendered, because nothing ever set `at`.
+  // ⚠ these come in TWO shapes: an ISO string (runState.startedAt / pitchDoc.at, written by the runner) OR a
+  // Firestore Timestamp (createdAt / updatedAt, written with serverTimestamp). `new Date(Timestamp)` is an
+  // Invalid Date — so a naive parse would silently blank every date on real data. Mirrors the watchdog's toMs.
+  const asDate = v => {
+    if (v == null) return null;
+    if (typeof v.toDate === 'function') return v.toDate();
+    if (typeof v.toMillis === 'function') return new Date(v.toMillis());
+    if (typeof v === 'object' && typeof v.seconds === 'number') return new Date(v.seconds * 1000);
+    if (typeof v === 'object' && typeof v._seconds === 'number') return new Date(v._seconds * 1000);
+    const t = new Date(v);
+    return isNaN(t) ? null : t;
+  };
+  const D = v => { const t = asDate(v); return t ? t.toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : ''; };
+  const T = v => { const t = asDate(v); return t ? t.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) : ''; };
+  const runAt = rs.startedAt || rs.requestedAt;
+  const nDocs = inputs.total;
+  // ⚠ the old meta read "N files · 0 sources" for the ENTIRE run — provenance.sources only exists once the
+  // verdict publishes, so it advertised ZERO sources while eleven workstreams were busy citing them. Only
+  // mention sources once there actually ARE some.
+  const srcCount = (a.provenance || {}).sources || 0;
+  const docsMeta = [
+    nDocs ? `${nDocs} document${nDocs === 1 ? '' : 's'}` : 'No documents yet',
+    inputs.deck ? 'deck + data room' : '',
+    srcCount ? `${srcCount} sources cited` : '',
+  ].filter(Boolean).join(' · ');
+
   const lifecycle = [
-    { label: 'Intake', state: 'done', meta: `${p.name} · assessment` },
-    { label: 'Documents received', state: 'done', meta: `${p.founderDocCount || 0} files · ${(a.provenance || {}).sources || 0} sources` },
+    { label: 'Intake', at: D(p.createdAt || p.startDate), state: 'done', meta: `${p.name} · assessment` },
+    { label: 'Documents received', at: D((p.pitchDoc && p.pitchDoc.at) || p.createdAt), state: nDocs ? 'done' : 'pending', meta: docsMeta },
     // queued/partial are just as "in flight" as running — otherwise the strip says pending while the banner says Assessing
-    { label: 'Assessment run', state: a.recommendation ? 'done' : (['queued', 'running', 'partial'].includes(rs.status) ? 'current' : 'pending'), meta: 'Assess · v3 rubric' },
-    { label: 'Verdict ready', state: a.recommendation ? 'done' : 'pending', meta: a.recommendation ? `${a.recommendation} · ${S.composite} / 100` : '' },
-    { label: 'Operator sign-off', state: p.assessmentSignoff ? 'done' : (a.recommendation ? 'current' : 'pending'), meta: p.assessmentSignoff ? p.assessmentSignoff.by : '' },
-    { label: 'Decision', state: 'pending', meta: '' }
+    { label: 'Assessment run', at: runAt ? (a.recommendation ? D(runAt) : `started ${T(runAt)}`) : '',
+      state: a.recommendation ? 'done' : (['queued', 'running', 'partial'].includes(rs.status) ? 'current' : 'pending'),
+      meta: 'Assess · v3 rubric · eleven workstreams' },
+    { label: 'Verdict ready', at: a.recommendation ? D(rs.finishedAt) : '', state: a.recommendation ? 'done' : 'pending',
+      meta: a.recommendation ? `${a.recommendation} · ${S.composite} / 100` : 'A score /100, the case both ways, the diligence list' },
+    { label: 'Operator sign-off', at: p.assessmentSignoff ? D(p.assessmentSignoff.at) : '',
+      state: p.assessmentSignoff ? 'done' : (a.recommendation ? 'current' : 'pending'),
+      meta: p.assessmentSignoff ? p.assessmentSignoff.by : 'You endorse it before it can be shared' },
+    { label: 'Decision', at: p.assessmentDecision ? D(p.assessmentDecision.at) : '',
+      state: p.assessmentDecision ? 'done' : 'pending',
+      meta: p.assessmentDecision ? `${p.assessmentDecision.decision} · ${p.assessmentDecision.by || ''}` : 'Confirm or decline the deal' }
   ];
 
   const A = {
+    inputs,          // the evidence the agents are reading — drives inputManifest on the assessing screen
     id: p.id, name: p.name, initials: p.founderAvatar || initials(p.name),
     stageLine: [p.stage, p.venturePitch, p.lastActivity && `Assessed ${p.lastActivity}`].filter(Boolean).join(' · '),
     status: a.recommendation ? { kind: 'ok', label: 'Verdict ready', icon: 'check_circle' } : { kind: 'n', label: p.gateStatus || 'In progress', icon: 'pending' },

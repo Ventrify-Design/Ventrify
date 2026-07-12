@@ -53,6 +53,29 @@ export async function dispatchRun({ engagementId, phase = 'assess', onBusy } = {
 }
 
 // ---- re-apply a finished run's SAVED output, no AI cost (VERBATIM /api/dispatch-run phase:republish) ----
+// ---- STOP a run in flight (VERBATIM /api/dispatch-run with action:'cancel') ----
+// A TRUE stop: the endpoint cancels the actual GitHub Actions job and then clears runState. It is only
+// offered when the run has reported its job id (DS.canStopRun) — a stop that merely hides the spinner would
+// leave the orphaned run to finish, publish, and email "your assessment is ready".
+export async function stopRun({ engagementId, onBusy } = {}) {
+  const busy = onBusy || (() => {});
+  busy(true);
+  try {
+    const token = await idToken();
+    if (!token) throw new Error('Please sign in again.');
+    const resp = await fetch('/api/dispatch-run', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken: token, engagementId, action: 'cancel' })
+    });
+    if (!resp.ok) { const d = await resp.json().catch(() => ({})); throw new Error(d.detail || d.error || ('Stop rejected (' + resp.status + ')')); }
+    return true;
+  } catch (e) {
+    window.__toast('Could not stop the run: ' + ((e && (e.code || e.message)) || e), true);
+    busy(false);
+    return false;
+  }
+}
+
 export async function republish({ engagementId, onBusy } = {}) {
   const busy = onBusy || (() => {});
   busy(true);

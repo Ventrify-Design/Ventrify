@@ -109,8 +109,25 @@
       setTimeout(() => location.reload(), skipped.length ? 1600 : 700);
     } catch (e) { window.__toast('Upload failed: ' + ((e && e.message) || e), true); }
   };
-  const busy = b => { const btn = document.querySelector('.mh-actions .m3-btn.filled'); if (btn) { btn.disabled = b; btn.style.opacity = b ? '0.6' : ''; } };
+  // the masthead's primary is usually .filled, but while a run is live it is the OUTLINED Stop — so grab
+  // whichever button is actually there, or Stop would never disable while the cancel is in flight.
+  const busy = b => { const btn = document.querySelector('.mh-actions .m3-btn.filled') || document.querySelector('.mh-actions .m3-btn'); if (btn) { btn.disabled = b; btn.style.opacity = b ? '0.6' : ''; } };
   window.__eaRun = async () => { if (await EA.dispatchRun({ engagementId: p.id, phase: 'assess', onBusy: busy })) { window.__toast('Assessment queued — this runs in the cloud.'); if (!live) setTimeout(() => location.reload(), 800); } };
+  // STOP — a TRUE stop: cancels the actual GitHub Actions job, then clears runState so the page falls back
+  // to "Ready to run". Nothing is published until the very END of a run, so stopping genuinely saves nothing
+  // — say that plainly rather than implying partial results are kept.
+  window.__eaStop = async () => {
+    const ok = await window.__confirm({
+      title: 'Stop the assessment?',
+      message: 'Nothing has been published yet — the run only publishes at the very end — so stopping saves nothing, and you would need to run it again from the start.',
+      confirmLabel: 'Stop run', danger: true
+    });
+    if (!ok) return;
+    if (await EA.stopRun({ engagementId: p.id, onBusy: busy })) {
+      window.__toast('Run stopped.');
+      await refresh();
+    }
+  };
   window.__eaRepublish = async () => { if (await EA.republish({ engagementId: p.id, onBusy: busy })) { window.__toast('Recovering your saved results…'); if (!live) setTimeout(() => location.reload(), 800); } };
   window.__eaDownload = () => EA.downloadMemo({ p, snap: invSnapshot, org: W.org });
   window.__eaDelete = async () => {
@@ -216,6 +233,7 @@
       st.hasVerdict ? item('verified', st.signed ? 'Update sign-off' : 'Sign off & endorse', 'window.__eaSignoff()') : '',
       // a STALLED run must keep an escape hatch — otherwise a run that never got picked up is a dead end
       (st.hasDeck && (!st.active || DS.runStalled(st.rs))) ? item('restart_alt', (st.hasVerdict || st.active) ? 'Re-run assessment' : 'Run assessment', 'window.__eaRun()') : '',
+      (st.active && DS.canStopRun(st.rs)) ? item('stop_circle', 'Stop run', 'window.__eaStop()', true) : '',
       st.recoverable ? item('restore', 'Republish saved results', 'window.__eaRepublish()') : '',
       st.hasDeck ? item('upload_file', 'Add data-room documents', "window.__eaUpload('dataroom')") : '',
       item('delete', 'Delete engagement', 'window.__eaDelete()', true),
@@ -228,7 +246,10 @@
     // Deal memo / Share / Manage now live in the utility rail (window.RAIL_ACTIONS). The masthead keeps
     // ONLY the primary workflow CTA for the current state.
     if (!st.hasDeck) return [{ variant: 'filled', icon: 'upload_file', label: 'Upload deck', onclick: "window.__eaUpload('pitch')" }];
-    if (st.active) return [];                                                     // assessing — controls live in the rail
+    // assessing — the ONLY masthead control is Stop, and ONLY when the run has reported the GitHub job id
+    // (DS.canStopRun). A stop that can't actually kill the job would let the orphaned run finish, publish and
+    // email "your assessment is ready" — so we render nothing rather than lie.
+    if (st.active) return DS.canStopRun(st.rs) ? [{ variant: 'outlined', icon: 'stop_circle', label: 'Stop run', onclick: 'window.__eaStop()' }] : [];
     if (st.hasVerdict) {                                                          // verdict ready — the operator confirms or declines the deal
       const dec = p.assessmentDecision;
       if (!dec) return [
@@ -254,13 +275,22 @@
 
   // ── body ──
   function statusBody(st) {
-    const banner = (st.active || st.flagged) ? DS.runBanner(st.rs) : '';
+    // A RUN IN FLIGHT gets the assessing MEMO — the same editorial surface the finished verdict lives on,
+    // caught mid-formation. When the verdict lands nothing MOVES; the placeholders resolve. (The old screen
+    // was a run banner bolted to a rail-density checklist in a 1120px reading column.)
+    if (st.active) return `<div class="brief" id="ea-status">${DS.assessingMemo(A, S, st.rs)}</div>`;
+
+    // everything else (no deck / deck ready / flagged) keeps the note-card surface
+    const banner = st.flagged ? DS.runBanner(st.rs) : '';
     let note = '';
     if (!st.hasDeck) note = DS.noteCard({ icon: 'upload_file', text: 'Upload a pitch deck to run the assessment — it underpins the ask and the thesis.', actions: `<button class="m3-btn filled" onclick="window.__eaUpload('pitch')"><span class="material-symbols-rounded">upload_file</span>Upload deck</button>` });
-    else if (!st.active && !st.flagged) note = DS.noteCard({ icon: 'play_arrow', text: 'Deck ready. Run the assessment — the agents research, score and draft the verdict.', actions: `<button class="m3-btn filled" onclick="window.__eaRun()"><span class="material-symbols-rounded">play_arrow</span>Run assessment</button>` });
-    else if (st.flagged) note = DS.noteCard({ icon: 'warning', iconColor: 'var(--warning)', text: 'The run needs attention — your results are saved. Republish to re-apply them, or re-run.', actions: `<button class="m3-btn filled" onclick="window.__eaRepublish()">Republish</button><button class="m3-btn text" onclick="window.__eaRun()">Re-run</button>` });
-    const forming = st.snap ? `<hr class="rule"><div class="overline" style="margin-bottom:12px">The score, forming</div>${DS.investabilityComposition(S, 'openInvest')}` : '';
-    const life = `<hr class="rule"><div class="overline" style="margin-bottom:12px">Assessment lifecycle</div>${DS.lifecycleStrip(A.lifecycle)}`;
+    else if (!st.flagged) note = DS.noteCard({ icon: 'play_arrow', text: 'Deck ready. Run the assessment — the agents research, score and draft the verdict.', actions: `<button class="m3-btn filled" onclick="window.__eaRun()"><span class="material-symbols-rounded">play_arrow</span>Run assessment</button>` });
+    else note = DS.noteCard({ icon: 'warning', iconColor: 'var(--warning)', text: 'The run needs attention — your results are saved. Republish to re-apply them, or re-run.', actions: `<button class="m3-btn filled" onclick="window.__eaRepublish()">Republish</button><button class="m3-btn text" onclick="window.__eaRun()">Re-run</button>` });
+    const forming = st.snap ? `<hr class="rule">${DS.investabilityComposition(S, 'openInvest', { eyebrow: 'Investability', title: 'The score, forming', meta: 'The run rates all 35 signals at the end' })}` : '';
+    const life = `<hr class="rule"><section class="sec">
+      <div class="sec-head"><span class="eyebrow accent">The engagement</span><span class="t">Where this sits</span><span class="meta">Intake → decision</span></div>
+      ${DS.lifecycleStrip(A.lifecycle, { scale: 'editorial' })}
+    </section>`;
     return `<div class="brief"><div id="ea-status">${banner}</div>${note}${forming}${life}</div>`;
   }
   function verdictTabs(st) {

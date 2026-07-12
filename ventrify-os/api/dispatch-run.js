@@ -60,9 +60,54 @@ module.exports = async (req, res) => {
     const supers = ((cfgSnap.exists && cfgSnap.data().superAdminEmails) || []).map(e => String(e).toLowerCase());
     if (!ops.includes(caller) && !supers.includes(caller)) { res.status(403).json({ error: 'forbidden' }); return; }
 
+    const engData = engSnap.data();
+
+    // ── STOP A RUN — action:'cancel'. Folded in here rather than a new api/ file: Vercel is at the
+    //    12-FUNCTION CAP and a 13th breaks the whole deploy (api/memo.js multiplexes the same way).
+    //    ⚠ Branch on `action`, NEVER on `phase` — `phase` is piped straight into the workflow inputs below,
+    //    so `phase:'cancel'` would DISPATCH a garbage run instead of stopping one.
+    //    It sits AFTER the authz block on purpose, so a cancel inherits the same org-isolation guarantee.
+    if (String(body.action || '') === 'cancel') {
+      const rs = engData.runState || {};
+      const runId = rs.githubRunId;
+      // A TRUE stop, or none. Writing runState and abandoning the job would be WORSE than no stop: the
+      // orphaned Action still finishes, still publishes the verdict, still emails "your assessment is
+      // ready", and still holds the concurrency group so the re-run sits pending behind it.
+      if (!runId) {
+        res.status(409).json({ error: 'not_stoppable', detail: 'This run hasn’t reported its job id yet — give it a moment, then try again.' });
+        return;
+      }
+      const kill = await fetch(`https://api.github.com/repos/${repo}/actions/runs/${runId}/cancel`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${ghToken}`, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' },
+      });
+      // 202 = cancelling. 409 = already finished / not cancellable — a race between the operator's click and
+      // the runner's final write, which is EXPECTED, so treat it as success rather than shouting at them.
+      if (kill.status !== 202 && kill.status !== 409) {
+        const detail = await kill.text();
+        res.status(502).json({ error: 'cancel_failed', status: kill.status, detail: detail.slice(0, 300) });
+        return;
+      }
+      // The job is dead, so nothing will ever write a terminal state for it — a cancelled run is NOT a
+      // failed run, so the workflow's `if: failure()` mark-failed step never fires either. We must clear the
+      // spinner ourselves. Dot-paths (like the stuck-run watchdog) preserve step/totalSteps for the audit.
+      // 'idle' — NOT 'error': there is nothing to republish (a cancelled job dies before it publishes
+      // anything), so offering Republish would dead-end the operator. 'idle' needs zero new UI: the page
+      // falls straight back to "Ready to run".
+      await db.collection('engagements').doc(engagementId).update({
+        'runState.status': 'idle',
+        'runState.label': `Stopped by ${caller}`,
+        'runState.cancelledAt': new Date().toISOString(),
+        'runState.cancelledBy': caller,
+        'runState.finishedAt': new Date().toISOString(),
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+      res.status(200).json({ ok: true, cancelled: runId, alreadyFinished: kill.status === 409 });
+      return;
+    }
+
     // Gate: an assessment cannot run without a pitch deck — it underpins the ask
     // and the whole thesis. (The data room is supplementary evidence.)
-    const engData = engSnap.data();
     if (engData.engagementType === 'assessment' && phase === 'assess' && !engData.pitchDoc) {
       res.status(400).json({ error: 'pitch_required', detail: 'Add the pitch deck before running the assessment.' });
       return;
