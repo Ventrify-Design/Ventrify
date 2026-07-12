@@ -103,12 +103,22 @@ export async function ingestDocs({ engagementId, files, docType, onProgress } = 
   const prog = onProgress || (() => {});
   const token = await idToken();
   const SUPPORTED = /\.(pdf|docx?|xlsx?|xlsm|txt|md|csv)$/i;
+  // Office LOCK/TEMP stubs (~$Foo.docx) — 162-byte owner files Word leaves behind while a document is open.
+  // They ride along inside a zipped data room, and they are NOT evidence: they inflate the document count,
+  // they cannot be text-extracted, and the runner then reports them to the agents as "provided but
+  // UNAVAILABLE — pending manual review, NOT missing", which quietly pollutes the evidence picture.
+  // (Also catches macOS ._resource forks.)
+  const JUNK = /(^|\/)(~\$|\._)/;
+  // Vercel caps a serverless request body at ~4.5MB, and base64 INFLATES a file by 4/3 — so a 4MB PDF became
+  // a ~5.3MB payload and died with HTTP 413. Anything above this goes via Storage instead, which has no such
+  // limit. 3MB → ~4MB encoded, comfortably inside the cap even with the JSON envelope.
+  const INLINE_MAX = 3 * 1024 * 1024;
   let ingested = 0; const skipped = [];   // never silently dropped
   const landed = [];                      // names that actually made it — these CLEAR any prior failure
 
   async function ingestOne(name, blob) {
     let payload;
-    if (blob.size > 4 * 1024 * 1024) {
+    if (blob.size > INLINE_MAX) {
       // Large file → upload straight to Storage (bypasses the serverless body limit); the server extracts.
       prog('Uploading ' + name + '…');
       const ext = (name.split('.').pop() || 'bin').toLowerCase();
@@ -131,11 +141,12 @@ export async function ingestDocs({ engagementId, files, docType, onProgress } = 
 
   for (const file of files) {
     try {
+      if (JUNK.test(file.name)) continue;                 // an Office lock stub is not a document
       if (/\.zip$/i.test(file.name)) {
         prog('Opening ' + file.name + '…');
         const JSZip = (await import('https://cdn.jsdelivr.net/npm/jszip@3.10.1/+esm')).default;
         const zip = await JSZip.loadAsync(file);
-        const entries = Object.values(zip.files).filter(e => !e.dir && SUPPORTED.test(e.name) && !/(^|\/)(__MACOSX\/|\.)/.test(e.name));
+        const entries = Object.values(zip.files).filter(e => !e.dir && SUPPORTED.test(e.name) && !/(^|\/)(__MACOSX\/|\.)/.test(e.name) && !JUNK.test(e.name));
         if (!entries.length) { skipped.push({ name: file.name, reason: 'No readable documents found inside.' }); continue; }
         for (const entry of entries) { try { await ingestOne(entry.name, await entry.async('blob')); } catch (e) { skipped.push({ name: entry.name, reason: (e && e.message) || String(e) }); } }
       } else {
