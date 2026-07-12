@@ -107,6 +107,7 @@ export function openNewAssessment() {
     mode: 'overlay', title: 'New assessment', subtitle: 'Assess a venture from its deck',
     body: `<div class="na-form">
       ${formField({ label: 'Venture name', id: 'na-name', placeholder: 'e.g. Verdana Bio', attr: ' autocomplete="off"' })}
+      ${formField({ label: 'Founder', id: 'na-founder', placeholder: 'e.g. Jane Okafor', hint: 'Who the assessment is about — the agents diligence them by name', attr: ' autocomplete="off"' })}
       ${formField({ label: 'Assessor', id: 'na-op', options: opList })}
       <div class="na-two">
         ${formField({ label: 'Website', id: 'na-site', optional: true, type: 'url', placeholder: 'acme.com' })}
@@ -138,6 +139,7 @@ window.__wsCreateAssessment = async () => {
   const W = window.WORKSPACE || {}, org = W.org || {};
   const name = ((document.getElementById('na-name') || {}).value || '').trim();
   if (!name) { window.__toast('Enter a venture name.', true); return; }
+  const founder = ((document.getElementById('na-founder') || {}).value || '').trim();
   const operator = (document.getElementById('na-op') || {}).value || '';
   const website = ((document.getElementById('na-site') || {}).value || '').trim();
   const stage = ((document.getElementById('na-stage') || {}).value || '').trim();
@@ -148,7 +150,11 @@ window.__wsCreateAssessment = async () => {
   const newProgram = {
     id: programId, slug, engagementType: 'assessment',
     website: website || null, stage: stage || null, name,
-    founderName: '', founderEmail: '', founderAvatar: name.slice(0, 2).toUpperCase() || 'VV',
+    // the founder IDENTITY. Not cosmetic: the assessment diligences this person by name, and the runner's
+    // isolation gate uses it to tell "our own founder" from "another engagement's founder" — an engagement
+    // with no founder name fails that gate on its own evidence.
+    founderName: founder, founderEmail: '',
+    founderAvatar: (founder || name).split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || 'VV',
     founderAvatarColor: org.primaryColor || '#0036FF',
     industry: null, venturePitch: null, briefSubmitted: false, phase: 0,
     gateStatus: 'Ready to run',
