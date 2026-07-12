@@ -62,16 +62,27 @@ const NAV = [
 //   hardcoded foot with the real operator identity + a sign-out control (window.__signOut).
 // BOTH default to today's exact hardcoded output when absent, so the workshop + placeholder docs
 // are byte-identical.
+// `active` says which SECTION is lit — an assessment is a CHILD of Portfolio, so it lights the Portfolio
+// item. That is NOT the same as "you are already on that page". Suppressing the link whenever the item was
+// `active` therefore killed the nav on every child page (assessment, drill, research detail): the item was
+// highlighted AND dead, leaving the breadcrumb as the only way back. Go inert ONLY when the item's href is
+// the page you are actually on.
+const samePage = (href) => {
+  if (!href || typeof location === 'undefined') return false;
+  const norm = h => String(h || '').split(/[?#]/)[0].replace(/\.html$/, '');
+  return norm(href) === norm(location.pathname.split('/').pop());   // clean-URL safe (/workspace/dashboard-m3)
+};
 export function drawer(active = 'portfolio', opts = {}) {
   const badges = opts.badges || {};
   const items = Array.isArray(opts.nav) && opts.nav.length ? opts.nav : NAV;
   let out = '', sec = '';
   items.forEach(n => {
     if (n.section !== sec) { sec = n.section; out += `<div class="drawer-section overline">${sec}</div>`; }
-    const isActive = n.key === active;
+    const isActive = n.key === active;          // which SECTION is lit
+    const isHere = samePage(n.href);            // you are literally ON this page
     const badge = badges[n.key] != null ? badges[n.key] : n.badge;
-    const go = n.href && !isActive ? ` onclick="location.assign('${n.href}')"` : '';
-    out += `<div class="nav-item ${isActive ? 'active' : ''}" tabindex="0" role="link"${go}><span class="material-symbols-rounded">${n.icon}</span><span class="nav-label">${n.label}</span>${badge ? `<span class="nav-badge">${badge}</span>` : ''}</div>`;
+    const go = n.href && !isHere ? ` onclick="location.assign('${n.href}')"` : '';
+    out += `<div class="nav-item ${isActive ? 'active' : ''}${isHere ? ' here' : ''}" tabindex="0" role="link"${go}><span class="material-symbols-rounded">${n.icon}</span><span class="nav-label">${n.label}</span>${badge ? `<span class="nav-badge">${badge}</span>` : ''}</div>`;
   });
   const b = opts.brand;
   const canSwitch = b && Array.isArray(b.orgs) && b.orgs.length > 1;
