@@ -129,6 +129,23 @@ export const CATALOG = {
     html: () => `<div style="display:flex;gap:16px;align-items:center"><button class="m3-switch on" aria-pressed="true"></button><button class="m3-switch" aria-pressed="false"></button></div>`,
     props: [{ name: '.on', type: 'class' }], variants: [], usedIn: [], adaptive: noAdapt
   },
+  iconBtn: {
+    level: 'atom', group: 'Atoms', title: 'Icon button', sig: '.m3-icon-btn',
+    blurb: 'The icon-only affordance (.m3-btn is a fixed-height pill and cannot do this). A 40px circular transparent button — 44px on coarse pointers for the touch target. `.danger` tints it error-red for destructive row actions; it is deliberately QUIET (revealed on row hover/focus) because a destructive control on a row that NAVIGATES is easy to hit by accident. Used for delete on the portfolio row.',
+    maxw: 320, pad: true,
+    html: () => `<div style="display:flex;gap:12px;align-items:center"><button class="m3-icon-btn" aria-label="More"><span class="material-symbols-rounded">more_vert</span></button><button class="m3-icon-btn danger" aria-label="Delete"><span class="material-symbols-rounded">delete</span></button><button class="m3-icon-btn danger" disabled aria-label="Delete"><span class="material-symbols-rounded">delete</span></button></div>`,
+    props: [{ name: '.danger', type: 'class → error tone' }, { name: '[disabled]', type: 'opacity .38 + inert' }],
+    variants: [{ label: 'default' }, { label: 'danger' }, { label: 'disabled' }], usedIn: ['engagementTable (delete)'], adaptive: noAdapt
+  },
+  linearProgress: {
+    level: 'atom', group: 'Atoms', title: 'Linear progress', sig: 'linearProgress(opts)',
+    blurb: 'THE progress bar. `value` 0–100 → determinate; null/`indeterminate` → the sliding indeterminate bar. The .m3-prog CSS existed for a while with no render fn, so the markup got hand-inlined in several places — this is the single source. Rule: render a determinate bar ONLY when you have a real number. An indeterminate bar is honest about not knowing; a fabricated percentage is not.',
+    maxw: 420, pad: true,
+    html: () => `<div class="brief" style="padding:22px 28px;max-width:420px;display:flex;flex-direction:column;gap:16px">${DS.linearProgress({ value: 36 })}${DS.linearProgress({ value: 84 })}${DS.linearProgress({ indeterminate: true })}${DS.linearProgress({ value: 62, danger: true })}</div>`,
+    props: [{ name: 'value', type: '0–100 | null' }, { name: 'indeterminate', type: 'bool' }, { name: 'danger', type: 'bool → error fill' }],
+    variants: [{ label: 'determinate' }, { label: 'indeterminate', note: 'when the real number does not exist yet' }, { label: 'danger' }],
+    usedIn: ['runBanner', 'engagementTable', 'New-assessment panel'], adaptive: noAdapt
+  },
   divider: {
     level: 'atom', group: 'Atoms', title: 'Divider', sig: '.m3-divider',
     blurb: 'The separator atom between sections of a card. RULE: a divider is always STRAIGHT, edge to edge. Never draw one as a `border-top`/`border-bottom` on a box that also carries a `border-radius` — the border traces the corner and the hairline curls up at both ends. When the host needs a radius (a hover background, a highlight pill), draw the divider as an absolutely-positioned 1px pseudo-element instead, so its geometry is independent of the corner shape. See `.mrow` (metricRow) and `.tbl td`.',
@@ -304,7 +321,7 @@ export const CATALOG = {
     adaptive: { status: 'proposed', layout: { mobile: 'Rail collapses into a masthead action / bottom bar; panel is full-width overlay.', tablet: 'Rail kept; panel overlays.', desktop: 'Rail + push panel.' }, content: { mobile: 'Top tools only; rest behind “more”.', tablet: 'All tools.', desktop: 'All tools.' } }
   },
   engagementTable: {
-    level: 'organism', group: 'Organisms', domain: 'Portfolio', title: 'Engagement table', sig: 'engagementTable(rows)',
+    level: 'organism', group: 'Organisms', domain: 'Portfolio', title: 'Engagement table', sig: 'engagementTable(rows, opts)',
     blurb: 'The portfolio at a glance — one row per venture with stage, status, progress/signal and last activity. A row opens the Assessment.',
     maxw: null, pad: true,
     html: () => DS.engagementTable(ENGAGEMENTS),
@@ -777,10 +794,10 @@ export const CATALOG = {
     adaptive: { status: 'built', layout: { mobile: 'Single column; two-up fields stack.', tablet: 'Full.', desktop: 'Full.' }, content: { mobile: 'Full.', tablet: 'Full.', desktop: 'Full.' } }
   },
   runBanner: {
-    level: 'molecule', group: 'Molecules', domain: 'Workspace', title: 'Run banner', sig: 'runBanner(runState)',
-    blurb: 'The queued / running / needs-attention / limit-paused / error / done banner shown after "Create & run" (and above the forming score on the assess page). Ports the live run-banner state machine.',
+    level: 'molecule', group: 'Molecules', domain: 'Workspace', title: 'Run banner', sig: 'runBanner(runState, opts)',
+    blurb: 'The queued / running / needs-attention / limit-paused / error / done banner shown after "Run assessment" (and above the forming score on the assess page). PROGRESS IS HONEST: the runner writes step/totalSteps/progress to runState only once it is actually running — at "queued" totalSteps is 0 — so the bar is determinate ONLY with real numbers and indeterminate otherwise. Never fabricate a percentage. Also renders the step counter + elapsed time, rs.error, a republish-aware title (rs.phase), and — when the run has STALLED (queued >3min / running >20min) — a warning plus the only mid-run control that exists: Re-run. There is no Cancel anywhere in the pipeline, so none is offered.',
     maxw: 560, pad: true,
-    html: () => `<div class="brief" style="padding:22px 28px;max-width:560px">${DS.runBanner({ status: 'running' })}${DS.runBanner({ status: 'needs-attention' })}${DS.runBanner({ status: 'done' })}</div>`,
+    html: () => `<div class="brief" style="padding:22px 28px;max-width:560px">${DS.runBanner({ status: 'queued', requestedAt: new Date().toISOString() })}${DS.runBanner({ status: 'running', totalSteps: 11, step: 4, progress: 36, label: 'Section 4 · Market and timing…', startedAt: new Date(Date.now() - 6 * 60000).toISOString() })}${DS.runBanner({ status: 'queued', requestedAt: new Date(Date.now() - 5 * 60000).toISOString() })}${DS.runBanner({ status: 'needs-attention' })}${DS.runBanner({ status: 'done' })}</div>`,
     props: [{ name: 'runState', type: '{status, label}' }], variants: [{ label: 'status', note: 'queued/running/partial/needs-attention/limit-paused/error/done' }], usedIn: ['assess-setup.html', 'assess.html'], adaptive: noAdapt
   },
   portfolioEmptyPage: {

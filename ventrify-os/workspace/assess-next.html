@@ -214,7 +214,8 @@
     const item = (icon, label, onclick, danger) => `<button class="m3-btn text" style="justify-content:flex-start;width:100%;${danger ? 'color:var(--md-sys-color-error)' : ''}" onclick="window.closeAux&&window.closeAux();${onclick}"><span class="material-symbols-rounded">${icon}</span>${label}</button>`;
     const rows = [
       st.hasVerdict ? item('verified', st.signed ? 'Update sign-off' : 'Sign off & endorse', 'window.__eaSignoff()') : '',
-      (st.hasDeck && !st.active) ? item('restart_alt', st.hasVerdict ? 'Re-run assessment' : 'Run assessment', 'window.__eaRun()') : '',
+      // a STALLED run must keep an escape hatch — otherwise a run that never got picked up is a dead end
+      (st.hasDeck && (!st.active || DS.runStalled(st.rs))) ? item('restart_alt', (st.hasVerdict || st.active) ? 'Re-run assessment' : 'Run assessment', 'window.__eaRun()') : '',
       st.recoverable ? item('restore', 'Republish saved results', 'window.__eaRepublish()') : '',
       st.hasDeck ? item('upload_file', 'Add data-room documents', "window.__eaUpload('dataroom')") : '',
       item('delete', 'Delete engagement', 'window.__eaDelete()', true),
@@ -322,6 +323,7 @@
     // a verdict appearing/disappearing changes the masthead tab structure — a clean reload beats surgical DOM
     if (mounted && stateBits().hasVerdict !== lastVerdict) { location.reload(); return; }
     paint();
+    startTicker();   // a refresh may have landed us in (or out of) an active run
   }
 
   window.openInvest = (key) => { const d = DS.categoryDetail(S, key); window.openAux({ mode: 'push', title: d.title, subtitle: d.subtitle, body: d.body }); };
@@ -348,8 +350,25 @@
   window.addDocuments = () => window.__eaUpload('dataroom');
   window.rerunAssessment = () => window.__eaRun();
 
+  // ── the run clock. The runner only writes to Firestore when its STEP changes (~11 pushes across a
+  // multi-minute run), so between milestones there can be minutes of silence. Without a local tick the
+  // elapsed counter freezes and a hung run looks alive forever — this is what makes the stall detector real.
+  let tick = null;
+  function stopTicker() { if (tick) { clearInterval(tick); tick = null; } }
+  function startTicker() {
+    stopTicker();
+    if (!stateBits().active) return;
+    tick = setInterval(() => {
+      const st = stateBits();
+      if (!st.active) { stopTicker(); refresh(); return; }          // finished between pushes → full repaint
+      const el = document.getElementById('ea-status');
+      if (el) el.innerHTML = DS.runBanner(st.rs);
+    }, 30000);
+  }
+
   await loadData();
   paint();
+  startTicker();
 
   // ── live: reflect run progress without a full reload (targeted #ea-status), reload once when the verdict lands ──
   if (live) {
@@ -359,12 +378,18 @@
         data.watchEngagement(p.id, (eng) => {
           if (!eng) return;
           const hadVerdict = !!(p.assessment && p.assessment.recommendation);
+          const wasActive = stateBits().active;
           Object.assign(p, eng);
           const hasVerdict = !!(p.assessment && p.assessment.recommendation);
-          if (hasVerdict !== hadVerdict) { location.reload(); return; }   // structural change → clean reload
+          if (hasVerdict !== hadVerdict) { stopTicker(); location.reload(); return; }   // structural change → clean reload
           const st = stateBits();
+          // A run that ends WITHOUT a verdict (error / needs-attention / limit-paused) produces no reload
+          // above, and the masthead still holds the empty `st.active → []` action set. Repaint the page so
+          // Republish / Re-run actually appear instead of stranding the operator with a dead banner.
+          if (wasActive && !st.active) { stopTicker(); refresh(); return; }
           const el = document.getElementById('ea-status');   // in-place run-banner refresh (no listener churn)
           if (el) el.innerHTML = (st.active || st.flagged) ? DS.runBanner(st.rs) : '';
+          startTicker();
         });
       }
     } catch (e) { console.warn('watchEngagement unavailable', e); }

@@ -1820,19 +1820,27 @@ const RUN_PILL = {
   error: { kind: 'err', label: 'Run failed · re-run', icon: 'error' },
   idle: { kind: 'n', label: 'Awaiting deck', icon: 'upload_file' },
 };
-export function engagementTable(rows) {
+// engagementTable(rows, opts) — opts.onDelete (a global handler NAME) opts IN a trailing action column with a
+// quiet, hover/focus-revealed destructive icon button. OPT-IN on purpose: this table also renders on the DS
+// sample/spec pages, which must never grow live delete buttons. Omitted → renders exactly as before.
+export function engagementTable(rows, opts = {}) {
   const cell = r => {
     // in-flight / gated rows show a run-state pill (never shadows a done row, which falls through to rec/progress)
     const rs = r.runState && r.runState.status;
     if (rs && rs !== 'done' && RUN_PILL[rs]) return `<td>${statusPill(RUN_PILL[rs])}${(rs === 'running' || rs === 'partial') ? ' <span class="et-score" style="color:var(--md-sys-color-on-surface-variant)">0</span><span class="variant">/100 · forming</span>' : ''}</td>`;
     return r.rec
       ? `<td>${recPill(r.rec.kind || 'invest', r.rec.label, r.rec.icon, ' style="height:28px;padding:0 12px;font-size:12px"')} <span class="et-score">${r.rec.score}</span><span class="variant">/100</span></td>`
-      : `<td><div class="et-prog"><div class="m3-prog"><span style="width:calc(${r.progress} * 100%)${r.danger ? ';background:var(--md-sys-color-error)' : ''}"></span></div><span class="pct">${Math.round(r.progress * 100)}%</span></div></td>`;
+      : `<td><div class="et-prog">${linearProgress({ value: Math.round((r.progress || 0) * 100), danger: r.danger })}<span class="pct">${Math.round((r.progress || 0) * 100)}%</span></div></td>`;
   };
+  // The whole <tr> navigates, so the delete button MUST stop click AND keydown from bubbling — otherwise
+  // "delete" drills into the engagement instead of asking.
+  const del = r => (opts.onDelete && r.id)
+    ? `<td class="et-act"><button class="m3-icon-btn danger" data-id="${esc(r.id)}" aria-label="Delete ${esc(r.name)}" title="Delete" onclick="event.stopPropagation();${opts.onDelete}(this.dataset.id)" onkeydown="event.stopPropagation()"><span class="material-symbols-rounded">delete</span></button></td>`
+    : '';
   const go = r => { const h = r.href || 'assess.html'; return ` tabindex="0" role="link" onclick="__drill(this,'${h}')" onkeydown="if(event.key==='Enter'){__drill(this,'${h}')}"`; };
-  return `<div class="m3-card table-wrap"><table class="eng-table"><thead><tr><th>Venture</th><th>Stage</th><th>Status</th><th>Progress / signal</th><th>Last activity</th></tr></thead><tbody>${rows.map(r => `<tr${go(r)}>
+  return `<div class="m3-card table-wrap"><table class="eng-table"><thead><tr><th>Venture</th><th>Stage</th><th>Status</th><th>Progress / signal</th><th>Last activity</th>${opts.onDelete ? '<th class="et-act"><span class="sr-only">Actions</span></th>' : ''}</tr></thead><tbody>${rows.map(r => `<tr${go(r)}>
     <td><div class="et-v"><span class="et-av" style="background:${AVAC[r.avatar]}">${esc(r.i)}</span><div><div class="et-name">${esc(r.name)}</div><div class="et-sub">${esc(r.sub)}</div></div></div></td>
-    <td class="et-stage">${esc(r.stage)}</td><td>${statusPill(r.status)}</td>${cell(r)}<td class="et-when">${r.when || '1h ago'}</td></tr>`).join('')}</tbody></table></div>`;
+    <td class="et-stage">${esc(r.stage)}</td><td>${statusPill(r.status)}</td>${cell(r)}<td class="et-when">${r.when || '1h ago'}</td>${del(r)}</tr>`).join('')}</tbody></table></div>`;
 }
 
 // ============ PORTFOLIO EMPTY STATE (first-run launchpad) + ASSESSMENT WIZARD ============
@@ -1923,10 +1931,12 @@ export function docDropzone(files = [], opts = {}) {
     <span class="dd-nm">${esc(prompt)}</span>
     <span class="dd-sub">${esc(sub)}</span>
   </button>`;
-  const row = (f, i) => `<div class="deckdrop attached">${srcRow({ icon: f.icon || fileIcon, title: f.title, note: f.note || note, status })}
-    <button class="m3-btn text" onclick="${onClear}${single ? '' : `(${i})`}"><span class="material-symbols-rounded">close</span>${esc(clearLabel)}</button></div>`;
+  // a file may carry its OWN status/tag (e.g. 'Uploading…' / 'Failed' while the panel ingests) — falls back
+  // to the zone-level status, so existing callers are unchanged.
+  const row = (f, i) => `<div class="deckdrop attached${f.busy ? ' busy' : ''}">${srcRow({ icon: f.icon || fileIcon, title: f.title, note: f.note || note, status: f.status !== undefined ? f.status : status, tag: f.tag })}
+    ${opts.locked ? '' : `<button class="m3-btn text" onclick="${onClear}${single ? '' : `(${i})`}"><span class="material-symbols-rounded">close</span>${esc(clearLabel)}</button>`}</div>`;
   if (single) return row(list[0], 0);
-  return `<div class="dd-stack">${list.map(row).join('')}<button class="m3-btn text dd-add" onclick="${onPick}"><span class="material-symbols-rounded">add</span>${esc(addLabel)}</button></div>`;
+  return `<div class="dd-stack">${list.map(row).join('')}${opts.locked ? '' : `<button class="m3-btn text dd-add" onclick="${onPick}"><span class="material-symbols-rounded">add</span>${esc(addLabel)}</button>`}</div>`;
 }
 
 // deckDropzone — the single-file PITCH-DECK preset of docDropzone (the hard gate — mirrors dispatch-run.js
@@ -2033,10 +2043,47 @@ export function initAssessmentWizard(opts = {}) {
   };
 }
 
-// runBanner — MOLECULE. The queued/running/needs-attention/limit-paused/error/done banner shown after "Create & run"
-// (and above the forming scoreLockup on the assess page). Ports program.html's run-banner state machine.
+// ---- run timing helpers — ported VERBATIM from the classic program.html run-banner. Pure, no deps.
+// The runner only pushes to Firestore when `step` CHANGES (~11 writes across a multi-minute run), so a
+// client clock is the ONLY thing that keeps "elapsed" honest and can spot a run that never got picked up.
+export function runAge(rs) {
+  const t = rs && (rs.startedAt || rs.requestedAt);
+  if (!t) return null;
+  const ms = Date.now() - new Date(t).getTime();
+  return ms >= 0 ? ms : null;
+}
+export function fmtElapsed(ms) {
+  if (ms == null) return '';
+  const m = Math.floor(ms / 60000);
+  if (m < 1) return 'just started';
+  if (m < 60) return m + 'm elapsed';
+  return Math.floor(m / 60) + 'h ' + (m % 60) + 'm elapsed';
+}
+export function runStalled(rs) {
+  const ms = runAge(rs); if (ms == null) return false;
+  const s = (rs && rs.status) || '';
+  if (s === 'queued') return ms > 3 * 60000;                      // never picked up by the runner
+  if (s === 'running' || s === 'partial') return ms > 20 * 60000; // hung far past the window
+  return false;
+}
+
+// linearProgress — ATOM. THE progress bar (.m3-prog). `value` 0–100 → determinate; null/indeterminate → the
+// sliding indeterminate bar. Single source: never hand-inline this markup again.
+export function linearProgress(opts = {}) {
+  const { value = null, indeterminate = false, danger = false, style = '' } = opts;
+  const st = style ? ` style="${style}"` : '';
+  if (indeterminate || typeof value !== 'number') return `<div class="m3-prog indeterminate"${st}><span></span></div>`;
+  const v = Math.max(0, Math.min(100, value));
+  return `<div class="m3-prog"${st}><span style="width:${v}%${danger ? ';background:var(--md-sys-color-error)' : ''}"></span></div>`;
+}
+
+// runBanner — MOLECULE. The queued/running/needs-attention/limit-paused/error/done banner shown after "Run
+// assessment" (and above the forming scoreLockup on the assess page). Ports program.html's run-banner state machine.
+// PROGRESS IS HONEST: the runner writes step/totalSteps/progress to runState, but ONLY once it is actually running
+// — at 'queued' totalSteps is 0. So we render a determinate bar ONLY when we have real numbers, and an
+// indeterminate one otherwise. Never fabricate a percentage (the classic page's 6%/14% stubs are not ported).
 const RUN_BANNER = {
-  queued: { kind: 'info', icon: 'schedule', title: 'Queued', text: 'Dispatching the cloud runner — the assessment starts in a moment.' },
+  queued: { kind: 'info', icon: 'schedule', title: 'Queued', text: 'Dispatching the cloud runner — the assessment starts in a moment.', prog: true },
   running: { kind: 'info', icon: 'autorenew', title: 'Assessing…', text: 'Seven workstreams are rebuilding the claims from source. This takes a few minutes.', prog: true },
   partial: { kind: 'info', icon: 'autorenew', title: 'Assessing…', text: 'Research in progress — the score is forming.', prog: true },
   'needs-attention': { kind: 'warn', icon: 'warning', title: 'Needs attention', text: 'The run finished and saved, but the verdict needs a second look. Republish when ready.' },
@@ -2044,11 +2091,29 @@ const RUN_BANNER = {
   error: { kind: 'err', icon: 'error', title: 'Run failed', text: 'Something went wrong. Re-run the assessment — nothing is lost.' },
   done: { kind: 'ok', icon: 'task_alt', title: 'Verdict ready', text: 'The assessment is complete.' },
 };
-export function runBanner(runState = {}) {
-  const s = RUN_BANNER[runState.status] || RUN_BANNER.queued;
-  return `<div class="run-banner ${s.kind}">
-    <span class="rb-ic"><span class="material-symbols-rounded">${s.icon}</span></span>
-    <div class="rb-bd"><div class="rb-t">${esc(s.title)}</div><div class="rb-x">${esc(runState.label || s.text)}</div>${s.prog ? '<div class="m3-prog indeterminate" style="margin-top:8px"><span></span></div>' : ''}</div>
+export function runBanner(rs = {}, opts = {}) {
+  const s = RUN_BANNER[rs.status] || RUN_BANNER.queued;
+  const isRepub = rs.phase === 'republish';              // republish reuses runState (3 steps) — don't dress it as a fresh assessment
+  const total = rs.totalSteps || 0, step = rs.step || 0;
+  // ONE progress source, in order of truth. null → indeterminate.
+  const pct = (typeof rs.progress === 'number' && total > 0) ? rs.progress
+    : (total > 0 && step > 0) ? Math.round(step / total * 100)
+    : null;
+  const stalled = runStalled(rs);
+  const elapsed = fmtElapsed(runAge(rs));
+  const meta = [total > 0 && step > 0 ? `Step ${step} / ${total}` : '', elapsed].filter(Boolean).join(' · ');
+  const title = isRepub && s.prog ? 'Republishing…' : s.title;
+  const text = rs.label || (isRepub ? 'Recovering your saved results…' : s.text);
+  return `<div class="run-banner ${stalled ? 'warn' : s.kind}">
+    <span class="rb-ic"><span class="material-symbols-rounded">${stalled ? 'warning' : s.icon}</span></span>
+    <div class="rb-bd">
+      <div class="rb-t">${esc(title)}${meta ? `<span class="rb-meta">${esc(meta)}</span>` : ''}</div>
+      <div class="rb-x">${esc(text)}</div>
+      ${s.prog ? linearProgress({ value: pct, style: 'margin-top:10px' }) : ''}
+      ${rs.error ? `<div class="rb-warn">${esc(rs.error)}</div>` : ''}
+      ${stalled ? `<div class="rb-warn">This is taking longer than usual — the run may have stalled. You can re-run it; nothing is lost.</div>
+      <div class="rb-act"><button class="m3-btn text" onclick="${opts.onRerun || 'window.rerunAssessment&&window.rerunAssessment()'}"><span class="material-symbols-rounded">restart_alt</span>Re-run assessment</button></div>` : ''}
+    </div>
   </div>`;
 }
 

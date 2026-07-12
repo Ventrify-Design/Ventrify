@@ -303,7 +303,8 @@ export function adaptEngagement(p = {}) {
   const lifecycle = [
     { label: 'Intake', state: 'done', meta: `${p.name} · assessment` },
     { label: 'Documents received', state: 'done', meta: `${p.founderDocCount || 0} files · ${(a.provenance || {}).sources || 0} sources` },
-    { label: 'Assessment run', state: a.recommendation ? 'done' : (rs.status === 'running' ? 'current' : 'pending'), meta: 'Assess · v3 rubric' },
+    // queued/partial are just as "in flight" as running — otherwise the strip says pending while the banner says Assessing
+    { label: 'Assessment run', state: a.recommendation ? 'done' : (['queued', 'running', 'partial'].includes(rs.status) ? 'current' : 'pending'), meta: 'Assess · v3 rubric' },
     { label: 'Verdict ready', state: a.recommendation ? 'done' : 'pending', meta: a.recommendation ? `${a.recommendation} · ${S.composite} / 100` : '' },
     { label: 'Operator sign-off', state: p.assessmentSignoff ? 'done' : (a.recommendation ? 'current' : 'pending'), meta: p.assessmentSignoff ? p.assessmentSignoff.by : '' },
     { label: 'Decision', state: 'pending', meta: '' }

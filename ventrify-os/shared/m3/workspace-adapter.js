@@ -108,7 +108,7 @@ export function adaptPortfolio(programs = [], ctx = {}) {
 }
 
 // ---- ONE program → a DS engagementTable ROW (the design-system portfolio component) ----
-// row = { i, avatar(AVAC key t|p|s), name, sub, stage, status(pill), runState, rec, progress, danger, when, href }
+// row = { id, i, avatar(AVAC key t|p|s), name, sub, stage, status(pill), runState, rec, progress, danger, when, href }
 const REC_ICON = { invest: 'trending_up', consider: 'balance', pass: 'block' };
 export function adaptEngagementRow(p, ctx = {}) {
   const { helpers, A, useLive } = ctx;
@@ -139,6 +139,7 @@ export function adaptEngagementRow(p, ctx = {}) {
       : (dec && dec.decision === 'declined') ? { kind: 'n', label: 'Declined', icon: 'do_not_disturb_on', title: dec.by ? 'Declined by ' + dec.by : undefined }
       : { kind: 'info', label: 'Ready to decide', icon: 'rate_review' };
     return {
+      id: p.id,
       i, avatar, name: p.name, sub: [p.industry, p.stage].filter(Boolean).join(' · ') || 'Assessment',
       stage: `${p.stage || 'Seed'} · Assessment`, status, runState: rowRun, rec,
       progress: (!rec && !rowRun) ? 0 : undefined, when, href,
@@ -150,6 +151,7 @@ export function adaptEngagementRow(p, ctx = {}) {
   const level = computed ? computed.level : (p.health || 'on-track');
   const h = HEALTH[level] || HEALTH['on-track'];
   return {
+    id: p.id,
     i, avatar, name: p.name, sub: [p.founderName, p.industry].filter(Boolean).join(' · '),
     stage: helpers ? helpers.phaseLabel(p.phase) : ('Phase ' + p.phase),
     status: { kind: h.kind, label: h.label, icon: h.icon },

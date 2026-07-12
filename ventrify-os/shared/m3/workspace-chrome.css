@@ -173,5 +173,22 @@
 .na-sec { display: flex; flex-direction: column; gap: 10px; padding-top: 16px; border-top: 1px solid var(--md-sys-color-outline-variant); }
 .na-lab { display: flex; align-items: baseline; gap: 8px; font-size: 13px; font-weight: 500; color: var(--md-sys-color-on-surface); }
 .na-hint { font-size: 11px; font-weight: 500; letter-spacing: .6px; text-transform: uppercase; color: var(--md-sys-color-primary); }
-.na-actions { display: flex; justify-content: flex-end; padding-top: 16px; border-top: 1px solid var(--md-sys-color-outline-variant); }
-@media (max-width: 640px) { .na-two { grid-template-columns: 1fr; } }
+/* the CTA is disabled until a pitch deck is attached. A disabled .m3-btn has pointer-events:none, so it can
+   never explain WHY — the reason must live beside it, not on it. */
+.na-actions { display: flex; align-items: center; gap: 12px; padding-top: 16px; border-top: 1px solid var(--md-sys-color-outline-variant); }
+.na-gate { font-size: 12.5px; line-height: 1.4; color: var(--md-sys-color-on-surface-variant); }
+.na-gate[hidden] { display: none; }
+/* the CTA stays right-aligned whether or not the gate hint is beside it */
+.na-actions .m3-btn { margin-left: auto; }
+/* upload progress — shown only while the documents are actually being ingested */
+.na-prog { display: flex; flex-direction: column; gap: 7px; padding-top: 16px; border-top: 1px solid var(--md-sys-color-outline-variant); }
+.na-prog[hidden] { display: none; }
+.na-prog-x { font-size: 12.5px; color: var(--md-sys-color-on-surface-variant); }
+/* while uploading, the form is inert — you cannot change the inputs mid-flight */
+.na-form.busy .field-in, .na-form.busy .deckdrop { pointer-events: none; opacity: .55; }
+.deckdrop.attached.busy { border-color: var(--md-sys-color-primary); }
+@media (max-width: 640px) {
+  .na-two { grid-template-columns: 1fr; }
+  .na-actions { flex-direction: column; align-items: stretch; }
+  .na-actions .m3-btn { width: 100%; }
+}

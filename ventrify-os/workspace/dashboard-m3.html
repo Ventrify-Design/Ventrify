@@ -28,6 +28,7 @@
   import { adaptEngagementRow } from '../shared/m3/workspace-adapter.js';
   import { workspaceEmpty, planGateBanner } from '../shared/m3/workspace-cards.js';
   import { wsNavConfig, wsBrandConfig, wsAccountConfig, mountOrgSwitcherM3 } from './workspace-m3.js';
+  import * as EA from './engagement-actions.js';
 
   await window.WORKSPACE_READY;
   const W = window.WORKSPACE;
@@ -123,10 +124,39 @@
       ? `<div class="ws-filter-status">Showing <b>${list.length}</b> of ${programs.length} ${noun}${programs.length === 1 ? '' : 's'} · <button class="ws-clear-filters" onclick="window.__clearDashFilters()">Clear filters</button></div>`
       : '';
     host.innerHTML = statusLine + (list.length
-      ? DS.engagementTable(list.map(p => adaptEngagementRow(p, ctx)))   // the DS portfolio component (single source)
+      ? DS.engagementTable(list.map(p => adaptEngagementRow(p, ctx)), { onDelete: W.mode === 'live' ? 'window.__wsDeleteRow' : '' })   // the DS portfolio component (single source)
       : DS.noteCard({ center: true, text: `No matching ${noun}s under the current filter.` }));
     try { localStorage.setItem('workspace.dashView', JSON.stringify({ health: view.health, rec: view.rec, sort: view.sort })); } catch (e) {}
   }
+  // ---- delete an engagement from its portfolio row (LIVE only) ----
+  // Destructive + irreversible: deleteEngagementDeep removes the engagement AND its provocation cards, from
+  // BOTH the Workspace and the founder's Studio. Hence a confirm (window.__confirm focuses Cancel on danger,
+  // so a reflexive Enter can't fire it) and a quiet, hover-revealed affordance rather than a bare icon.
+  const renderHero = () => { const h = document.getElementById('ws-hero-host'); if (h) h.innerHTML = DS.portfolioHero(programs, {}); };
+  window.__wsDeleteRow = async (id) => {
+    const p = programs.find(x => x.id === id);
+    if (!p) return;
+    const isAssess = p.engagementType === 'assessment';
+    const ok = await window.__confirm({
+      title: `Delete “${p.name}” permanently?`,
+      message: isAssess
+        ? 'This removes the assessment and everything it produced — research, cards and the verdict. This cannot be undone.'
+        : `This removes it from the Workspace and ${p.founderName || 'the founder'}’s Studio, including all its provocation cards. This cannot be undone.`,
+      confirmLabel: 'Delete', danger: true,
+    });
+    if (!ok) return;
+    try {
+      await EA.deleteEngagement({ engagementId: id });
+      const i = programs.indexOf(p);
+      if (i > -1) programs.splice(i, 1);              // `programs` IS W.programs — one splice keeps every reader in sync
+      window.__toast(`“${p.name}” deleted.`);
+      if (!programs.length) { location.reload(); return; }   // last one gone → let the empty state take over
+      renderHero(); renderGrid();                     // the hero must re-count, or it keeps counting a deleted venture
+    } catch (e) {
+      window.__toast('Could not delete: ' + ((e && (e.code || e.message)) || e), true);
+    }
+  };
+
   // reset every filter dimension back to "all" + sync the chips/search, then re-render (reveals anything a
   // saved filter was hiding — e.g. assessments that don't match a Recommendation/Assigned-to-me chip).
   window.__clearDashFilters = () => {
@@ -140,7 +170,7 @@
   // the flat stat row is replaced by the editorial portfolio hero — DS.portfolioHero owns the derived numbers now
   const body = `<div class="brief">
     ${canCreateAny ? '' : planGateBanner(NEW_LABEL)}
-    ${DS.portfolioHero(programs, {})}
+    <div id="ws-hero-host">${DS.portfolioHero(programs, {})}</div>
     ${filterBarHTML()}
     <div id="ws-grid-host"></div>
   </div>`;

@@ -292,8 +292,14 @@
   .run-banner.warn .rb-ic { color: var(--warning); }
   .run-banner.err .rb-ic { color: var(--md-sys-color-error); }
   .run-banner.ok .rb-ic { color: var(--success); }
-  .rb-t { font-size: 14px; font-weight: 600; }
+  .rb-t { font-size: 14px; font-weight: 600; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
   .rb-x { font-size: 12.5px; line-height: 1.45; color: var(--md-sys-color-on-surface-variant); margin-top: 2px; }
+  .rb-bd { flex: 1; min-width: 0; }
+  /* step counter + elapsed — the honest run meta (rendered only when the pipeline has written real numbers) */
+  .rb-meta { font-size: var(--row-cap); font-weight: 500; letter-spacing: .3px; color: var(--md-sys-color-on-surface-variant); font-variant-numeric: tabular-nums; }
+  .rb-warn { font-size: 12.5px; line-height: 1.45; color: var(--warning); margin-top: 8px; }
+  .run-banner.err .rb-warn { color: var(--md-sys-color-error); }
+  .rb-act { margin-top: 6px; margin-left: -12px; }
 
   @media (max-width: 900px) {
     .primer { grid-template-columns: repeat(2, 1fr); }

@@ -131,9 +131,15 @@ md-outlined-text-field { --md-outlined-text-field-container-shape: 999px; --md-o
 .et-sub { font-size: var(--row-sub); line-height: 16px; letter-spacing:.4px; color: var(--md-sys-color-on-surface-variant); }
 .et-stage { color: var(--md-sys-color-on-surface-variant); white-space: nowrap; }
 .et-prog { display: flex; align-items: center; gap: 10px; min-width: 150px; }
-.et-prog md-linear-progress { flex: 1; }
+.et-prog .m3-prog { flex: 1; }
 .et-prog .pct { font-size: var(--row-cap); color: var(--md-sys-color-on-surface-variant); width: 34px; text-align: right; }
 .et-when { color: var(--md-sys-color-on-surface-variant); white-space: nowrap; font-size: var(--row-time); }
+/* trailing destructive action — quiet until the row is hovered/focused (always shown on touch) */
+.eng-table th.et-act, .eng-table td.et-act { width: 56px; padding-left: 0; padding-right: 12px; text-align: right; }
+.eng-table td.et-act .m3-icon-btn { opacity: 0; }
+.eng-table tbody tr:hover td.et-act .m3-icon-btn,
+.eng-table td.et-act .m3-icon-btn:focus-visible { opacity: 1; }
+@media (hover: none) { .eng-table td.et-act .m3-icon-btn { opacity: 1; } }
 .et-score { font-weight: 500; }
 
 /* ---- action queue ---- */
@@ -331,6 +337,17 @@ md-outlined-text-field { --md-outlined-text-field-container-shape: 999px; --md-o
 .m3-btn.tonal { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
 .m3-btn.tonal:hover { box-shadow: var(--md-elev-1); }
 .m3-btn.trail { flex-direction: row-reverse; }
+
+/* ---- icon button (m3-icon-btn) — the icon-only affordance the DS was missing. Used for the quiet,
+   destructive row action on the portfolio. Inherits the [disabled] rule below. ---- */
+.m3-icon-btn { display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: 999px; border: none; background: transparent; color: var(--md-sys-color-on-surface-variant); cursor: pointer; padding: 0; transition: background .12s ease, opacity .12s ease; }
+.m3-icon-btn .material-symbols-rounded { font-size: 20px; }
+.m3-icon-btn:hover { background: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, transparent); }
+.m3-icon-btn:focus-visible { outline: 2px solid var(--md-sys-color-primary); outline-offset: 2px; }
+.m3-icon-btn[disabled] { opacity: .38; pointer-events: none; }
+.m3-icon-btn.danger { color: var(--md-sys-color-error); }
+.m3-icon-btn.danger:hover { background: color-mix(in srgb, var(--md-sys-color-error) 10%, transparent); }
+@media (hover: none) { .m3-icon-btn { width: 44px; height: 44px; } }   /* 44px touch target */
 
 /* ---- tabs (m3-tabs / m3-tab) — primary tabs with an active underline ---- */
 .m3-tabs { display: flex; gap: 4px; align-items: stretch; }
