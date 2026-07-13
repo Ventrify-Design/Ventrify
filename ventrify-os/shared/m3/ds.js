@@ -2103,17 +2103,57 @@ export function fmtElapsed(ms) {
   if (m < 60) return m + 'm elapsed';
   return Math.floor(m / 60) + 'h ' + (m % 60) + 'm elapsed';
 }
-export function runStalled(rs) {
-  const ms = runAge(rs); if (ms == null) return false;
-  const s = (rs && rs.status) || '';
-  // Thresholds are deliberately LATER than the server watchdog (queued 8m / active 30m of silence,
-  // sweep-stuck-runs.js) so the client never cries wolf before the server has actually acted. A real assess
-  // run has a 180-MINUTE budget and a single max-effort step can legitimately run for tens of minutes
-  // between writes — the old 20-minute trigger fired on healthy runs.
-  if (s === 'queued') return ms > 8 * 60000;                      // never picked up by the runner
-  if (s === 'running' || s === 'partial') return ms > 45 * 60000; // far past any plausible step
-  return false;
+// The GitHub job's own timeout (run-phase.yml `timeout-minutes: 180`). Past this the job HAS been killed —
+// that is not an estimate, it is the contract. If nothing then updated Firestore, the run is an orphan and
+// would otherwise sit on screen saying "running" forever. That is the one case a stall signal must catch.
+export const RUN_BUDGET_MIN = 180;
+
+// SILENCE — how long since the runner last said anything. This is the honest health instrument.
+//
+// It replaces a total-age heuristic ("older than 45 minutes ⇒ probably stalled") that was simply the wrong
+// measurement: a run that has been going 100 minutes is not stalled, it is BUSY. Real assess runs take ~2
+// hours, so that rule fired on every healthy run and taught the operator to ignore the warning — which is
+// worse than having no warning at all.
+//
+// The runner now beats every 2 minutes for its whole life (runstate.js startHeartbeat), so silence is
+// finally meaningful: a live runner is never quiet for long, and a dead one is quiet forever.
+export function runSilence(rs) {
+  const t = rs && rs.beatAt;
+  if (!t) return null;                       // legacy run, pre-heartbeat — silence is UNKNOWABLE, not zero
+  const ms = Date.now() - new Date(t).getTime();
+  return ms >= 0 ? ms : null;
 }
+
+// WHY a run is dead, or null if it is alive. The banner needs the reason, because the honest sentence is
+// different in each case — and "this is taking longer than usual" is the one thing it is never allowed to
+// say now, since a 2-hour run IS usual.
+export function runStallReason(rs) {
+  const s = (rs && rs.status) || '';
+  if (s === 'queued') {
+    const a = runAge(rs);
+    return (a != null && a > 8 * 60000) ? 'never-picked-up' : null;
+  }
+  if (s !== 'running' && s !== 'partial') return null;
+
+  // 1. HARD CEILING. Past the job budget the process cannot still be alive — GitHub killed it. This is not
+  //    an estimate; it is the workflow's own timeout. Holds for runs that predate the heartbeat too.
+  const age = runAge(rs);
+  if (age != null && age > (RUN_BUDGET_MIN + 10) * 60000) return 'over-budget';
+
+  // 2. SILENCE. A live runner beats every 2 minutes. Fifteen minutes of nothing means the process is gone,
+  //    whatever phase it last claimed to be in.
+  const quiet = runSilence(rs);
+  if (quiet == null) return null;    // no heartbeat to read → we do NOT know → say nothing. Never cry wolf
+  return quiet > 15 * 60000 ? 'silent' : null;   //                    on a run we cannot actually measure.
+}
+
+export function runStalled(rs) { return runStallReason(rs) != null; }
+
+const STALL_COPY = {
+  'never-picked-up': 'No runner picked this up. Nothing has started, so nothing is lost — run it again.',
+  'over-budget': `The run passed its ${RUN_BUDGET_MIN}-minute limit and was stopped. Anything it finished was saved; re-run to complete it.`,
+  'silent': 'The runner has gone quiet — the process has stopped. Anything it finished was saved; re-run to complete it.',
+};
 
 // linearProgress — ATOM. THE progress bar (.m3-prog). `value` 0–100 → determinate; null/indeterminate → the
 // sliding indeterminate bar. Single source: never hand-inline this markup again.
@@ -2147,7 +2187,8 @@ export function runBanner(rs = {}, opts = {}) {
   const pct = (typeof rs.progress === 'number' && total > 0) ? rs.progress
     : (total > 0 && step > 0) ? Math.round(step / total * 100)
     : null;
-  const stalled = runStalled(rs);
+  const stallReason = runStallReason(rs);
+  const stalled = stallReason != null;
   const elapsed = fmtElapsed(runAge(rs));
   const meta = [total > 0 && step > 0 ? `Step ${step} / ${total}` : '', elapsed].filter(Boolean).join(' · ');
   const title = isRepub && s.prog ? 'Republishing…' : s.title;
@@ -2159,7 +2200,7 @@ export function runBanner(rs = {}, opts = {}) {
       <div class="rb-x">${esc(text)}</div>
       ${s.prog ? linearProgress({ value: pct, style: 'margin-top:10px' }) : ''}
       ${rs.error ? `<div class="rb-warn">${esc(rs.error)}</div>` : ''}
-      ${stalled ? `<div class="rb-warn">This is taking longer than usual — the run may have stalled. You can re-run it; nothing is lost.</div>
+      ${stalled ? `<div class="rb-warn">${esc(STALL_COPY[stallReason] || STALL_COPY.silent)}</div>
       <div class="rb-act"><button class="m3-btn text" onclick="${opts.onRerun || 'window.rerunAssessment&&window.rerunAssessment()'}"><span class="material-symbols-rounded">restart_alt</span>Re-run assessment</button></div>` : ''}
     </div>
   </div>`;
