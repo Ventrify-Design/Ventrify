@@ -15,6 +15,9 @@
 // until then the derivations below carry them. Nothing here is a hard dependency.
 // ============================================================
 
+import { VSS_RUBRIC } from '../vss-rubric.js';   // the 7 category labels — one source, never a local copy
+import { SUB_Q } from '../investability-view.js';
+
 const esc = s => String(s == null ? '' : s);
 const words = s => String(s || '').trim().split(/\s+/).filter(Boolean);
 const initials = s => words(s).slice(0, 2).map(w => w[0]).join('').toUpperCase() || '—';
@@ -207,6 +210,92 @@ function deriveHeroes(a, S) {
   };
 }
 
+// ── EVIDENCE GAPS + THE OPERATOR'S FILED RECORDS ────────────────────────────────────────────────────
+//
+// SOURCE OF TRUTH — engagement.assessmentGaps, written by the runner (tools/cloud/publish.js publishGaps).
+// Shape, verbatim from the contract:
+//   { schema, count, snapshotId, unresolved: [{ id, subject, checkKind, outcome, sought,
+//       source:{doc,row}, searched:[{source,url,result}],
+//       impact:{ signals:[DOTTED rubric slug], cappedAt, observedScore }, closesWith:[kind]|null, status }] }
+//
+// ⚠ There is NO delta field, and we do not synthesise one. publish.js refuses to publish a projected gain
+// precisely so the UI cannot render "close this gap: +3" — which would let the operator file only the
+// artefacts he predicts move the number UP, rebuilding the dial in the presentation layer. We carry the
+// CEILING (cappedAt) and what the scorer ACTUALLY gave (observedScore). Nothing else about points.
+//
+// ⚠ NAMING: `team.gaps` already exists and means HIRING gaps ("no US growth lead") — an entirely different
+// concept. These are RESEARCH gaps and they live on A.gaps. Nothing conflates them.
+const CAT_LABEL = Object.fromEntries(VSS_RUBRIC.map(c => [c.key, c.label]));
+// A gap id is interpolated into an onclick attribute (window.openGap('<id>')). Sanitising it HERE means the
+// DS can never be handed a quote to break out of — a mechanism, not a hope. The runner already caps it at 40.
+const safeId = s => String(s == null ? '' : s).replace(/[^A-Za-z0-9._:-]/g, '-').slice(0, 60);
+const bare = slug => String(slug || '').split('.').pop();
+const catOf = slug => String(slug || '').split('.')[0];
+
+export function adaptGaps(p, S) {
+  const raw = ((p.assessmentGaps || {}).unresolved) || [];
+  if (!Array.isArray(raw) || !raw.length) return { gaps: [], gapById: {}, gapBySlug: {} };
+  // what the scorer actually gave each signal — the fallback when publish.js could not stamp observedScore
+  // (a gap recorded on a run whose snapshot we don't have to hand).
+  const observed = {};
+  (S.categories || []).forEach(c => (c.subs || []).forEach(s => { observed[`${c.key}.${s.slug}`] = s.score; }));
+  const filings = p.operatorEvidence || [];
+
+  const gaps = raw
+    .filter(g => g && g.id && g.subject)
+    .map(g => {
+      const imp = g.impact || {};
+      const signals = (imp.signals || []).filter(Boolean);
+      const primary = signals[0] || '';
+      const obs = imp.observedScore != null ? imp.observedScore
+        : (primary && observed[primary] !== undefined ? observed[primary] : null);
+      const id = safeId(g.id);
+      // the operator's record for THIS gap — the most recent one wins (records are append-only, never edited)
+      const mine = filings.filter(f => safeId(f.gapId) === id)
+        .sort((a, b) => String(a.filedAt || '').localeCompare(String(b.filedAt || '')));
+      return {
+        id, subject: g.subject, checkKind: g.checkKind || '', outcome: g.outcome || 'NOT-FOUND',
+        sought: g.sought || '', source: g.source || {},
+        searched: (g.searched || []).filter(s => s && s.source),
+        signals, cappedAt: imp.cappedAt != null ? imp.cappedAt : null, observedScore: obs,
+        closesWith: g.closesWith || [],
+        categoryLabel: CAT_LABEL[catOf(primary)] || '',
+        signalQuestion: primary ? (SUB_Q[bare(primary)] || primary) : '',
+        status: g.status || 'open',
+        filing: mine.length ? mine[mine.length - 1] : null,
+      };
+    });
+
+  const gapById = {};
+  const gapBySlug = {};
+  gaps.forEach(g => {
+    gapById[g.id] = g;
+    // A signal can be docked by more than one gap. First-wins keeps the chip deterministic; the Diligence
+    // list is the complete record, and it is the one that claims completeness.
+    g.signals.forEach(s => { if (!gapBySlug[s]) gapBySlug[s] = g; });
+  });
+  return { gaps, gapById, gapBySlug };
+}
+
+// A gap about a PERSON becomes the trigger on that person's roster row — the operator meets it while reading
+// the team, which is where he already knows the answer. Matched on the member's name appearing in the gap's
+// subject (the runner writes "Dr. R. Vale — CTO" / "Jane Doe"), and only for person-shaped checks: a registry
+// gap about the COMPANY must not attach itself to whoever is listed first.
+const PERSON_KINDS = new Set(['own-materials', 'press-corroboration', 'employment-record', 'gazette', 'registry']);
+export function linkGapsToMembers(members, gaps) {
+  const person = gaps.filter(g => PERSON_KINDS.has(g.checkKind) || /^team\./.test(g.signals[0] || ''));
+  return members.map(m => {
+    const nm = String(m.name || '').split('—')[0].trim().toLowerCase();
+    const toks = nm.split(/\s+/).filter(t => t.length > 2);
+    if (!toks.length) return m;
+    const hit = person.find(g => {
+      const sub = String(g.subject || '').toLowerCase();
+      return toks.every(t => sub.includes(t));       // every name token present → it is about this person
+    });
+    return hit ? { ...m, gapId: hit.id } : m;
+  });
+}
+
 // ── ASSESSMENT (engagement + _verdict.json → M3 ASSESSMENT) ──
 export function adaptEngagement(p = {}) {
   const a = p.assessment || {};
@@ -383,8 +472,17 @@ export function adaptEngagement(p = {}) {
       meta: p.assessmentDecision ? `${p.assessmentDecision.decision} · ${p.assessmentDecision.by || ''}` : 'Confirm or decline the deal' }
   ];
 
+  // ---- the research gaps + the operator's filed records ----
+  // Gaps are what the assessment LOOKED FOR AND COULD NOT FIND — our misses, for which the venture was
+  // docked. `filings` is the append-only evidence ledger (engagements/{id}/operatorEvidence): what the
+  // operator pointed us at, what the FETCHER observed, and what the SCORER then did about it.
+  const { gaps, gapById, gapBySlug } = adaptGaps(p, S);
+  const filings = p.operatorEvidence || [];
+  team.members = linkGapsToMembers(team.members, gaps);
+
   const A = {
     inputs,          // the evidence the agents are reading — drives inputManifest on the assessing screen
+    gaps, gapById, gapBySlug, filings,
     id: p.id, name: p.name, initials: p.founderAvatar || initials(p.name),
     stageLine: [p.stage, p.venturePitch, p.lastActivity && `Assessed ${p.lastActivity}`].filter(Boolean).join(' · '),
     status: a.recommendation ? { kind: 'ok', label: 'Verdict ready', icon: 'check_circle' } : { kind: 'n', label: p.gateStatus || 'In progress', icon: 'pending' },

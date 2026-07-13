@@ -15,6 +15,18 @@ service firebase.storage {
       allow read: if false;
       allow write: if request.auth != null && request.resource.size < 50 * 1024 * 1024;
     }
+    // Operator-filed EVIDENCE — the artefact an operator hands us when the assessment could not find
+    // something (a register page, a filing, a saved profile PDF). Kept in its OWN namespace, never under
+    // founder-docs/: the founder's room is a legal term in the rubric (anchors count what the FOUNDER
+    // supplied, and one anchor counts a class as PRESENT on the FILENAME ALONE), so an operator artefact
+    // landing there would lift a founder-burden signal without anyone asserting a thing. It goes to
+    // research/ as a corroborating-or-refuting record instead — where the score can fall as easily as rise.
+    // Same posture as founder-docs: WRITE-ONLY for the client, read only by the Admin SDK (the runner), and
+    // the real gate is the Firestore operatorEvidence record, which only an operator of the org can create.
+    match /operator-evidence/{engagementId}/{fileName=**} {
+      allow read: if false;
+      allow write: if request.auth != null && request.resource.size < 50 * 1024 * 1024;
+    }
     match /{allPaths=**} {
       allow read, write: if false;
     }

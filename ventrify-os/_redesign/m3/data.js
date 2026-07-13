@@ -1,3 +1,4 @@
+import { adaptGaps, linkGapsToMembers } from '../../shared/m3/adapter.js';
 // ============================================================
 // Ventrify OS — Design System · sample data
 // Mirrors the live workspace data shapes (assessment verdict + VSS score +
@@ -783,3 +784,109 @@ export const RUN_STATES = {
   republish: { status: 'running', phase: 'republish', totalSteps: 3, step: 2, progress: 60, startedAt: ago(1),
                label: 'Re-applying the score, verdict & research…', githubRunId: 29177092529 },
 };
+
+// ============================================================
+// EVIDENCE GAPS — the DS demo state (assess.html?state=gaps).
+//
+// These are in the RUNNER'S OWN SHAPE (tools/cloud/publish.js publishGaps → engagement.assessmentGaps),
+// and they are pushed through the REAL adapter (adaptGaps) rather than hand-written in the adapted shape —
+// so this fixture cannot silently drift away from the contract the runner actually publishes.
+//
+// They are the real MoneyGym misses: Lancaster and Goudge are, in the assessment's own words, "not
+// externally verifiable". The venture was docked for that. It may well be that we simply looked in the
+// wrong places — which is the entire point of the feature.
+//
+// ⚠ NOTE WHAT IS NOT HERE: any projected score gain. `cappedAt` is a CEILING, not a promise. See ds.js.
+// ============================================================
+export const GAPS_RAW = [
+  {
+    id: 'team-lancaster-cto',
+    subject: 'Kevin Lancaster — CTO / Co-Founder',
+    checkKind: 'own-materials',
+    outcome: 'NOT-FOUND',
+    sought: 'any public record of his ML leadership history, or of his role at ilumoni',
+    source: { doc: 'assessment/team-diligence.md', row: 'Lancaster, K.' },
+    searched: [
+      { source: 'Companies House — officer search', url: 'https://find-and-update.company-information.service.gov.uk', result: 'no officer of that name at Monely Ltd' },
+      { source: 'ilumoni launch coverage (2021–22), 6 outlets', url: null, result: 'no mention' },
+      { source: 'Google / Bing — "Kevin Lancaster" + ilumoni / ML', url: null, result: '0 corroborating results' },
+      { source: 'LinkedIn', url: 'https://www.linkedin.com/', result: 'blocked — HTTP 999 to an automated fetcher' },
+    ],
+    impact: { signals: ['team.founder_market_fit', 'team.execution_record'], cappedAt: 0.5, observedScore: 0 },
+    closesWith: ['profile-page', 'employment-record', 'registry-record'],
+    status: 'open',
+  },
+  {
+    id: 'team-goudge-coo',
+    subject: 'Neil Goudge — COO / Co-Founder',
+    checkKind: 'press-corroboration',
+    outcome: 'UNVERIFIED',
+    sought: 'independent corroboration of his connection to ilumoni',
+    source: { doc: 'assessment/team-diligence.md', row: 'Goudge, N.' },
+    searched: [
+      { source: 'Companies House — Monely Ltd filings', url: 'https://find-and-update.company-information.service.gov.uk', result: 'absent from all filings' },
+      { source: 'Press archive — 3 independent outlets required', url: null, result: '0 of 3 found' },
+      { source: 'LinkedIn — name match', url: null, result: '1 unconfirmed match, commercial insurance' },
+    ],
+    impact: { signals: ['team.founder_market_fit'], cappedAt: 0.5, observedScore: 0.5 },
+    closesWith: ['profile-page', 'press-article', 'employment-record'],
+    status: 'open',
+  },
+  {
+    id: 'exec-fca-permission',
+    subject: 'FCA authorisation for open-banking data access',
+    checkKind: 'regulator-register',
+    outcome: 'NOT-FOUND',
+    sought: 'an AISP permission on the FCA register, under MoneyGym or a principal',
+    source: { doc: 'assessment/claims-validation.md', row: 'Claim 14 — "FCA-regulated data access"' },
+    searched: [
+      { source: 'FCA Financial Services Register — firm search', url: 'https://register.fca.org.uk', result: 'no firm found' },
+      { source: 'FCA register — appointed-representative search', url: 'https://register.fca.org.uk', result: 'no match' },
+    ],
+    impact: { signals: ['execution.live_surfaces'], cappedAt: 0.5, observedScore: 0 },
+    closesWith: ['regulator-record', 'filing', 'dataroom-doc'],
+    status: 'open',
+  },
+];
+
+// The operator's filed records — the append-only evidence ledger (engagements/{id}/operatorEvidence).
+// THREE STATES, all of which the UI must render honestly:
+//   · 'captured' + settled  → the runner fetched it, the scorer read it, and publish.js stamped what it did
+//                             to the score. Here it moved ONE signal UP and the composite +2.
+//   · 'fetch-failed'        → LinkedIn 999s a datacenter fetcher. This is EXPECTED, not an error, and the
+//                             receipt must name the way out: save the page as a PDF and upload it.
+// A record whose evidence went AGAINST the venture would look exactly the same, with a negative
+// compositeDelta — and the UI renders a fall as plainly as a rise. That is the mechanism working.
+export const EVIDENCE_RAW = [
+  {
+    id: 'ev-001', gapId: 'team-goudge-coo', status: 'captured',
+    url: 'https://find-and-update.company-information.service.gov.uk/company/09876543/officers',
+    finalUrl: 'https://find-and-update.company-information.service.gov.uk/company/09876543/officers',
+    httpStatus: 200, contentType: 'text/html; charset=utf-8', bytes: 41208,
+    contentSha: 'ab12cd34ef56789012345678901234567890abcdef1234567890abcdef123456',
+    capturedFile: 'research/external-record-ab12cd34.md',
+    note: 'He is on the register under the trading name, not the brand.',
+    filedBy: 'antony@ventrify.io', filedAt: '2026-07-13T14:02:00Z',
+    rescoredIn: 'snap-0009', rescoredAt: '2026-07-13T14:31:00Z', batchRecords: 1,
+    signalDelta: [{ slug: 'team.founder_market_fit', from: 0.5, to: 1 }],
+    compositeDelta: 2,
+  },
+  {
+    id: 'ev-002', gapId: 'team-lancaster-cto', status: 'fetch-failed',
+    url: 'https://www.linkedin.com/in/kevin-lancaster-ml/',
+    httpStatus: 999, fetchError: 'the site returned a login wall, not a profile',
+    note: 'His LinkedIn shows 8 years of ML leadership.',
+    filedBy: 'antony@ventrify.io', filedAt: '2026-07-13T14:20:00Z',
+  },
+];
+
+// Build the ?state=gaps ASSESSMENT through the REAL adapter — the demo exercises the shipping code path.
+export function withGaps(A, S) {
+  const p = { assessmentGaps: { schema: 1, unresolved: GAPS_RAW, count: GAPS_RAW.length }, operatorEvidence: EVIDENCE_RAW };
+  const { gaps, gapById, gapBySlug } = adaptGaps(p, S);
+  return {
+    ...A,
+    gaps, gapById, gapBySlug, filings: EVIDENCE_RAW,
+    team: { ...A.team, members: linkGapsToMembers(A.team.members, gaps) },
+  };
+}

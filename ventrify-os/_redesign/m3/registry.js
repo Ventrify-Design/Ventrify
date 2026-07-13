@@ -17,7 +17,10 @@
 //   props / variants / usedIn / adaptive   (see widget.html)
 // ============================================================
 import * as DS from './ds.js';
-import { ASSESSMENT, SCORE, ENGAGEMENTS, STATS, QUEUE } from './data.js';
+import { ASSESSMENT, SCORE, ENGAGEMENTS, STATS, QUEUE, withGaps } from './data.js';
+// the evidence-gap specimens render the ?state=gaps assessment — real contract-shaped gaps + a
+// filed ledger, pushed through the real adapter (see data.js withGaps).
+const AG = withGaps(ASSESSMENT, SCORE);
 
 const A = ASSESSMENT;
 const noAdapt = null;
@@ -513,6 +516,50 @@ export const CATALOG = {
     props: [{ name: 'a.mustBeTrue', type: 'string[]' }, { name: 'a.biggestRisk', type: '{label,headline,text}' }],
     variants: [{ label: 'Count-aware', note: 'sub-label reads “all three” from the array length' }, { label: 'No kill-risk', note: ':has() reflow to one column' }], usedIn: ['Assessment'],
     adaptive: { status: 'built', layout: { mobile: 'Conditions then kill-risk, full width.', tablet: 'Two-column.', desktop: 'Two-column, centred.' }, content: { mobile: 'Full.', tablet: 'Full.', desktop: 'Full.' } }
+  },
+  openEvidence: {
+    level: 'organism', group: 'Organisms', domain: 'Assessment', title: 'Open evidence gaps', sig: 'openEvidence(a)',
+    blurb: 'What the assessment LOOKED FOR AND COULD NOT FIND — and therefore docked the venture for. OUR miss, not the venture\u2019s, so it leads the Diligence tab in its own words. SELF-OMITTING: a venture we found everything on renders nothing. Shows the ceiling (cappedAt) and what the scorer actually gave \u2014 NEVER a projected point gain (that would rebuild the dial in the presentation layer).',
+    maxw: null, pad: false,
+    html: () => `<div class="brief" style="padding:8px 28px 20px">${DS.openEvidence(AG)}</div>`,
+    props: [{ name: 'a.gaps', type: '[{id, subject, checkKind, outcome, sought, searched[], signals[], cappedAt, observedScore, closesWith[], status}]' }],
+    variants: [{ label: 'Open', note: 'rows open the filing panel' }, { label: 'Empty', note: 'no gaps \u2192 renders nothing at all' }], usedIn: ['Assessment \u00b7 Diligence'],
+    adaptive: { status: 'built', layout: { mobile: 'Rows stack; the chip drops its hover label.', tablet: 'As desktop.', desktop: 'Full.' }, content: { mobile: 'Full.', tablet: 'Full.', desktop: 'Full.' } }
+  },
+  gapChip: {
+    level: 'atom', group: 'Atoms', domain: 'Assessment', title: 'Gap chip (file evidence)', sig: 'gapChip(gapId, label)',
+    blurb: 'The ONE \u201cthis was not found \u2014 you can point us at it\u201d affordance, used wherever a gap is READ (founder roster \u00b7 signal rows \u00b7 diligence list). Its verb is \u201cFile evidence\u201d, never \u201cFix\u201d or \u201cOverride\u201d: the operator supplies a POINTER TO EVIDENCE, not a claim about evidence.',
+    maxw: 460, pad: true,
+    html: () => DS.gapChip('team-lancaster-cto', 'Not found'),
+    props: [{ name: 'gapId', type: 'string \u00b7 sanitised by the adapter' }, { name: 'label', type: 'Not found | Unverified | Partial' }],
+    variants: [{ label: 'Hover', note: 'reveals the \u201cFile evidence\u201d verb' }], usedIn: ['Assessment \u00b7 Team / Investability / Diligence'],
+    adaptive: { status: 'built', layout: { mobile: 'Label hidden \u2014 the row itself opens the panel.', tablet: 'As desktop.', desktop: 'Full.' }, content: { mobile: 'Icon + state.', tablet: 'Full.', desktop: 'Full.' } }
+  },
+  gapHonesty: {
+    level: 'molecule', group: 'Molecules', domain: 'Assessment', title: 'Gap honesty note', sig: 'gapHonesty()',
+    blurb: 'THE HONEST MOMENT, and its own component precisely so it cannot be edited out of one surface and left in another. It says the two things the operator must know before he files: he is asserting nothing, and THE SCORE CAN GO DOWN. He cannot know which way it moves before he commits, and he does not get to choose.',
+    maxw: 520, pad: true,
+    html: () => DS.gapHonesty(),
+    props: [], variants: [], usedIn: ['Assessment \u00b7 gap filing panel'],
+    adaptive: { status: 'built', layout: { mobile: 'Full width.', tablet: 'Full.', desktop: 'Full.' }, content: { mobile: 'Full.', tablet: 'Full.', desktop: 'Full.' } }
+  },
+  gapReceipt: {
+    level: 'molecule', group: 'Molecules', domain: 'Assessment', title: 'Gap receipt', sig: 'gapReceipt(filing)',
+    blurb: 'What the SYSTEM did with the pointer \u2014 filed / captured / fetch-failed. The FAILURE state is first-class, not an error: LinkedIn 999s a datacenter fetcher, and half the registers that matter are JS-only. It names the way out (\u201csave the page as a PDF and upload it\u201d) and the panel keeps the form beneath it, or the operator hits a dead end.',
+    maxw: 520, pad: true,
+    html: () => [DS.gapReceipt({ status: 'captured', bytes: 41208, finalUrl: 'https://find-and-update.company-information.service.gov.uk/x', contentSha: 'ab12cd34ef56', filedBy: 'antony@ventrify.io', rescoredIn: 's1' }), DS.gapReceipt({ status: 'fetch-failed', httpStatus: 999, fetchError: 'the site returned a login wall, not a profile', url: 'https://www.linkedin.com/in/x/', filedBy: 'antony@ventrify.io' })].join('<div style="height:12px"></div>'),
+    props: [{ name: 'filing', type: '{status, bytes, contentSha, httpStatus, fetchError, url, finalUrl, filedBy, rescoredIn}' }],
+    variants: [{ label: 'Captured', note: 'bytes held \u00b7 sha \u00b7 not yet scored' }, { label: 'Fetch-failed', note: 'blocked \u2014 upload instead' }], usedIn: ['Assessment \u00b7 gap filing panel'],
+    adaptive: { status: 'built', layout: { mobile: 'Full width.', tablet: 'Full.', desktop: 'Full.' }, content: { mobile: 'Full.', tablet: 'Full.', desktop: 'Full.' } }
+  },
+  scoreMovement: {
+    level: 'organism', group: 'Organisms', domain: 'Assessment', title: 'The re-score \u2014 what moved', sig: 'scoreMovement(filings)',
+    blurb: 'After a re-score: WHICH SIGNALS MOVED AND WHICH WAY. Renders a FALL exactly as plainly as a rise \u2014 a fall is the mechanism WORKING (the source did not support the claim), and softening it would turn the feature back into a dial. A re-score that moved nothing is also a result and is stated as one. Deltas are READ from the ledger (publish.js), never re-derived here.',
+    maxw: null, pad: false,
+    html: () => `<div class="brief" style="padding:8px 28px 20px">${DS.scoreMovement(AG.filings)}</div>`,
+    props: [{ name: 'filings', type: '[{rescoredIn, signalDelta:[{slug,from,to}], compositeDelta}]  \u2014 compositeDelta MAY BE NEGATIVE' }],
+    variants: [{ label: 'Up' }, { label: 'Down', note: 'the source contradicted the claim \u2014 rendered just as plainly' }, { label: 'Held', note: 'read, and changed nothing' }], usedIn: ['Assessment \u00b7 Investability'],
+    adaptive: { status: 'built', layout: { mobile: 'Rows stack.', tablet: 'As desktop.', desktop: 'Full.' }, content: { mobile: 'Full.', tablet: 'Full.', desktop: 'Full.' } }
   },
   diligenceEditorial: {
     level: 'organism', group: 'Organisms', domain: 'Assessment', title: 'Diligence checklist (editorial)', sig: 'diligenceEditorial(a)',

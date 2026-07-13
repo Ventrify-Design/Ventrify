@@ -300,6 +300,73 @@ export async function listInvestabilitySnapshots(engagementId) {
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
+// ---- The evidence ledger: gaps in / records out ---------------------------
+//
+// A GAP is a check the assessment ran and could not close — it looked, it failed to find, and the venture
+// was docked for OUR miss. The operator's answer is not an opinion: it is a POINTER TO EVIDENCE. He files a
+// url or an artefact; the RUNNER fetches it (it has web access — the cold scorer does not and never will);
+// the SCORER reads it and forms its own judgement. The score can fall.
+//
+// engagements/{id}/operatorEvidence/{recId} is APPEND-ONLY (firestore.rules):
+//   · the operator may create a record with status 'filed' and NOTHING ELSE — he cannot write contentSha,
+//     httpStatus, finalUrl, signalDelta or compositeDelta, because those are what the SYSTEM observed and
+//     decided. He files a pointer; we write what we found.
+//   · he may not UPDATE or DELETE. That is the property that stops this being a dial with extra steps: he
+//     cannot quietly bin a record whose evidence went against the venture. (A withdrawal, if one is ever
+//     needed, is an Admin-SDK act — deliberately not offered here.)
+const evidenceCol = (engagementId) => collection(db, 'engagements', engagementId, 'operatorEvidence');
+
+export async function listOperatorEvidence(engagementId) {
+  const snap = await getDocs(evidenceCol(engagementId));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }))
+    .sort((a, b) => String(a.filedAt || '').localeCompare(String(b.filedAt || '')));
+}
+
+// Upload the ARTEFACT itself — the universal fallback, and the only path that works when a site blocks our
+// fetcher (LinkedIn 999s a datacenter GET; plenty of registers are JS-only). Bytes go to Storage; the runner
+// downloads them with the Admin SDK. Returns { storagePath, rawExt }.
+export async function uploadEvidenceFile(engagementId, file) {
+  const [{ storage }, { ref, uploadBytes }] = await Promise.all([
+    import('./firebase.js'),
+    import('https://www.gstatic.com/firebasejs/11.1.0/firebase-storage.js'),
+  ]);
+  const rawExt = (String(file.name || '').split('.').pop() || 'pdf').toLowerCase().replace(/[^a-z0-9]/g, '') || 'pdf';
+  // CONTENT-NEUTRAL path. The operator's own filename ("proof-jane-is-really-the-CEO.pdf") is an assertion,
+  // and a filename is prose — it never reaches the scorer's disk (the runner names the file by content hash).
+  // It is kept in Firestore only, for the ledger.
+  const storagePath = `operator-evidence/${engagementId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${rawExt}`;
+  await uploadBytes(ref(storage, storagePath), file, { contentType: file.type || undefined });
+  return { storagePath, rawExt };
+}
+
+// File a POINTER against one gap. Exactly one of url | storagePath.
+//
+// MULTI-TENANT: orgId is read from the ENGAGEMENT DOC — never from the caller's session, never an
+// array-contains first match. The rules then verify it matches, so a record can only ever be filed into the
+// org that actually owns the engagement.
+export async function fileOperatorEvidence(engagementId, { gapId, url = null, storagePath = null, rawExt = null, originalName = null, note = null, filedBy = null } = {}) {
+  if (!gapId) throw new Error('fileOperatorEvidence: a gapId is required');
+  if (!url && !storagePath) throw new Error('fileOperatorEvidence: give a link or upload a document');
+  const eng = await getEngagement(engagementId);
+  if (!eng) throw new Error('engagement not found');
+  const id = 'ev-' + Math.random().toString(36).slice(2, 10);
+  await setDoc(doc(evidenceCol(engagementId), id), {
+    gapId: String(gapId),
+    url: url ? String(url).trim() : null,
+    storagePath, rawExt,
+    // THE OPERATOR'S WORDS live here and ONLY here — the ledger, the UI, the memo, under his name. The
+    // runner's AIRLOCK (a field whitelist) cannot even see `note` or `originalName`, so neither can ever
+    // reach the scorer's disk. Prose is powerless by construction, not by a prompt line asking nicely.
+    note: note ? String(note).slice(0, 1000) : null,
+    originalName: originalName ? String(originalName).slice(0, 200) : null,
+    filedBy: filedBy || null,
+    filedAt: new Date().toISOString(),
+    orgId: eng.orgId || 'default',
+    status: 'filed',
+  });
+  return id;
+}
+
 // ---- Data-room L3 hub content (deep research / strategy / financials) ------
 // Published by the engagement repo (tools/cloud/publish-hubs.js). Sorted by hub
 // then order so both surfaces render a stable data room.

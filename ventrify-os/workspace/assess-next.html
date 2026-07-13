@@ -52,10 +52,11 @@
   }
 
   // ── mutable live data (refreshed after actions / on subscription tick) ──
-  let invSnapshot = null, invSnapshots = [], provCards = [], hubDocs = [], A = null, S = null;
+  let invSnapshot = null, invSnapshots = [], provCards = [], hubDocs = [], operatorEvidence = [], A = null, S = null;
   async function loadData() {
     invSnapshot = p.investabilitySnapshot || null; provCards = p.provCards || []; hubDocs = p.hubDocs || [];
     invSnapshots = p.investabilitySnapshots || (invSnapshot ? [invSnapshot] : []);
+    operatorEvidence = p.operatorEvidence || [];
     if (live) {
       try {
         const data = await import('../firebase/data.js');
@@ -67,9 +68,12 @@
         invSnapshot = snaps.length ? snaps[snaps.length - 1] : invSnapshot;
         provCards = await data.listCardsForEngagement(p.id);
         hubDocs = await data.listHubDocs(p.id);
+        // the evidence ledger — what the operator pointed us at, what the FETCHER observed, and what the
+        // SCORER then did about it (signalDelta / compositeDelta, which may be NEGATIVE).
+        operatorEvidence = await data.listOperatorEvidence(p.id);
       } catch (e) { console.warn('live assessment data load failed', e); }
     }
-    ({ A, S } = adaptEngagement({ ...p, investabilitySnapshot: invSnapshot, provCards, hubDocs }));
+    ({ A, S } = adaptEngagement({ ...p, investabilitySnapshot: invSnapshot, provCards, hubDocs, operatorEvidence }));
   }
 
   // ── run / deck state (?sim= keeps the inert preview override) ──
@@ -107,6 +111,12 @@
   fileInput.onchange = async () => {
     const files = [...(fileInput.files || [])]; const docType = fileInput.dataset.docType; fileInput.value = '';
     if (!files.length) return;
+    // EVIDENCE is not a founder document and must never travel the founder-document path: ingestDocs writes
+    // to founderDocs, which the runner rebuilds into research/_source-material/** — THE FOUNDER'S ROOM. The
+    // rubric treats that directory as a legal term (one anchor counts a class as PRESENT on the FILENAME
+    // ALONE), so an operator artefact landing there would lift a founder-burden signal with nobody having
+    // asserted anything. It is held in the aux panel and filed as a POINTER instead.
+    if (docType === 'evidence') { window.__gapAttach(files[0]); return; }
     window.__toast('Uploading…');
     try {
       const { ingested, skipped } = await EA.ingestDocs({ engagementId: p.id, files, docType, onProgress: m => window.__toast(m) });
@@ -236,6 +246,83 @@
     try { await EA.revokeShare({ engagementId: p.id }); p.shareLink = null; window.closeAux && window.closeAux(); window.__toast('Share link revoked.'); }
     catch (e) { window.__toast('Could not revoke: ' + ((e && (e.code || e.message)) || e), true); }
   };
+  // ══════════════════════════════════════════════════════════════════════════════════════════════════
+  // THE EVIDENCE GAP — the operator points us at what we could not find.
+  //
+  // THE RULE THE WHOLE FLOW EXISTS TO KEEP: the operator supplies A POINTER TO EVIDENCE, NOT A CLAIM ABOUT
+  // EVIDENCE. He cannot inflate anything, because he asserts nothing — the assessment fetches what he filed,
+  // reads it cold, and forms its OWN judgement. If the source CONTRADICTS the claim, THE SCORE FALLS. He
+  // cannot know which way it will move before he commits, and he does not get to choose.
+  // ══════════════════════════════════════════════════════════════════════════════════════════════════
+  let gapOpen = null;                                   // the gap whose panel is currently open
+  window.__gapFiles = [];                               // the docDropzone's view of the attached artefact
+  let gapPending = null;                                // the actual File, held in memory until it is filed
+
+  const gapRepaint = () => {
+    if (!gapOpen) return;
+    const d = DS.gapPanel(gapOpen, gapOpen.filing);
+    window.openAux({ mode: 'push', title: d.title, subtitle: d.subtitle, body: d.body, footer: d.footer });
+    window.__gapDirty();
+  };
+  window.openGap = (id) => {
+    const g = A.gapById && A.gapById[id];
+    if (!g) { window.__toast('That gap is no longer on the assessment — re-run to refresh it.'); return; }
+    gapOpen = g; gapPending = null; window.__gapFiles = [];
+    gapRepaint();
+  };
+  window.__gapPick = () => { fileInput.dataset.docType = 'evidence'; fileInput.accept = '.pdf,.png,.jpg,.jpeg,.docx,.txt,.md,.html,.csv,.xlsx'; fileInput.multiple = false; fileInput.click(); };
+  window.__gapAttach = (f) => {
+    gapPending = f;
+    window.__gapFiles = [{ icon: 'description', title: f.name, note: `${Math.max(1, Math.round(f.size / 1024))} KB · read as evidence, filename discarded`, status: 'stored' }];
+    gapRepaint();
+  };
+  window.__gapClearFile = () => { gapPending = null; window.__gapFiles = []; gapRepaint(); };
+  // The CTA is dead until there is an actual pointer. A note alone files nothing — prose is not evidence.
+  window.__gapDirty = () => DS.gapArmCTA(!!gapPending);
+
+  window.__gapFile = async (id) => {
+    const g = (A.gapById && A.gapById[id]) || gapOpen;
+    if (!g) return;
+    const url = ((document.getElementById('gap-url') || {}).value || '').trim();
+    const note = ((document.getElementById('gap-note') || {}).value || '').trim();
+    if (!url && !gapPending) { window.__toast('Add a link or upload the document first.', true); return; }
+    if (url && !/^https?:\/\//i.test(url)) { window.__toast('That needs to be a full link, starting http:// or https://', true); return; }
+    if (!live) { window.__toast('Filing evidence needs the live workspace — this is the demo.'); return; }
+
+    // THE HONEST CONFIRM. It names the DOWN direction before he commits, and it says plainly that signals he
+    // did not file against can move too — because a cold re-score re-derives all 35, and pretending otherwise
+    // would be the one lie this feature cannot afford.
+    const ok = await window.__confirm({
+      title: 'File this and re-score?',
+      message: 'The assessment fetches what you filed, reads it cold, and scores all 35 signals again from the evidence. The score may rise, fall, or hold — and signals you did not file against can move too. The current score stays on the record either way. Once filed, a record cannot be withdrawn.',
+      confirmLabel: 'File & re-score',
+    });
+    if (!ok) return;
+
+    window.__toast('Filing the record…');
+    try {
+      await EA.fileEvidence({ engagementId: p.id, gapId: g.id, url: url || null, file: gapPending, note: note || null });
+      gapPending = null; window.__gapFiles = [];
+      const started = await EA.rescore({ engagementId: p.id });
+      window.closeAux && window.closeAux();
+      window.__toast(started
+        ? 'Filed — re-scoring on the new evidence. This takes about 25 minutes.'
+        : 'Filed. Re-score when you are ready.');
+      await refresh();
+    } catch (e) { window.__toast('Could not file the record: ' + ((e && (e.code || e.message)) || e), true); }
+  };
+  // A record already filed but not yet scored — the panel's CTA re-dispatches the run rather than filing again.
+  window.__gapRescore = async () => {
+    if (!live) { window.__toast('Re-scoring needs the live workspace — this is the demo.'); return; }
+    const ok = await window.__confirm({
+      title: 'Re-score on the filed evidence?',
+      message: 'All 35 signals are scored again from the evidence, including the records you filed. The score may rise, fall, or hold.',
+      confirmLabel: 'Re-score',
+    });
+    if (!ok) return;
+    if (await EA.rescore({ engagementId: p.id })) { window.closeAux && window.closeAux(); window.__toast('Re-scoring on the new evidence.'); await refresh(); }
+  };
+
   // "More" — the management overflow (delete + re-run + republish + sign-off) as an aux panel.
   window.__eaMore = () => {
     const st = stateBits();
@@ -308,7 +395,7 @@
     const slim = (st.active || st.flagged) ? `<div class="brief" style="padding-bottom:0;margin-bottom:4px" id="ea-status">${DS.runBanner(st.rs)}</div>` : '<span id="ea-status"></span>';
     return `
       <div class="tab-panel active">${slim}${DS.missingDocs(A) ? `<div class="brief" style="padding-bottom:0">${DS.missingDocs(A)}</div>` : ''}${DS.verdictMemo(A, S)}</div>
-      <div class="tab-panel"><div class="brief">${DS.investabilityHero(S, A)}${DS.scoreProvenance(invSnapshots)}<hr class="rule">${DS.investabilityComposition(S, 'openInvest')}<hr class="rule">${DS.strengthProfile(S, 'openInvest')}</div></div>
+      <div class="tab-panel"><div class="brief">${DS.investabilityHero(S, A)}${DS.scoreProvenance(invSnapshots)}${DS.scoreMovement(A.filings)}<hr class="rule">${DS.investabilityComposition(S, 'openInvest')}<hr class="rule">${DS.strengthProfile(S, 'openInvest')}</div></div>
       <div class="tab-panel">${DS.marketMemo(A)}</div>
       <div class="tab-panel">${DS.teamMemo(A)}</div>
       <div class="tab-panel">${DS.diligenceEditorial(A)}</div>
@@ -319,7 +406,13 @@
   let mounted = false, lastVerdict = null;
   function paint() {
     const st = stateBits();
-    const tabs = st.hasVerdict ? ['Verdict', 'Investability', 'Market', 'Team', 'Diligence', 'Research'] : false;
+    // The Diligence tab carries a small count when the run recorded gaps it could not close. It is the ONLY
+    // ambient signal the feature gets: not a 7th tab (a permanent chapter about US, empty on the good deals)
+    // and not a masthead count (which would compete with Run/Confirm/Decline and read as a venture defect).
+    const nGaps = (A.gaps || []).filter(g => g.status !== 'closed').length;
+    const tabs = st.hasVerdict
+      ? ['Verdict', 'Investability', 'Market', 'Team', { label: 'Diligence', badge: nGaps || null }, 'Research']
+      : false;
     const bodyHtml = st.hasVerdict ? verdictTabs(st) : `<div class="tab-panel active">${statusBody(st)}</div>`;
     const mh = DS.masthead({
       breadcrumb: { label: 'Portfolio', href: 'dashboard-m3.html' }, crumbTail: A.name, avatar: A.initials,
@@ -367,7 +460,9 @@
     startTicker();   // a refresh may have landed us in (or out of) an active run
   }
 
-  window.openInvest = (key) => { const d = DS.categoryDetail(S, key); window.openAux({ mode: 'push', title: d.title, subtitle: d.subtitle, body: d.body }); };
+  // the per-category drill also carries the gap triggers: a signal we scored down because our RESEARCH
+  // missed something offers the file-evidence chip in its (otherwise empty) evidence slot.
+  window.openInvest = (key) => { const d = DS.categoryDetail(S, key, A.gapBySlug); window.openAux({ mode: 'push', title: d.title, subtitle: d.subtitle, body: d.body }); };
   // "Read the full competitive teardown / founder diligence" now open the FULL document as a drill page,
   // rendered through renderArticle (real GFM). They previously showed a one-line summary through mdToHtml,
   // which silently deleted every table, rule, code block and heading.

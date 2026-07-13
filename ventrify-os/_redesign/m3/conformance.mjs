@@ -4,7 +4,7 @@ import puppeteer from '/Users/antonywhenman/Desktop/Ventrify/node_modules/puppet
 // (workspace/, import ../shared/m3/ds.js — served from project root, need a FIREBASE_ENABLED=false
 // demo build or app.js redirects to login). Both mount the SAME shell so both take the same gate.
 const GROUPS = [
-  { base: 'http://localhost:3200/_redesign/m3', pages: ['portfolio.html', 'portfolio.html?state=empty', 'queue.html', 'research-detail.html', 'drill.html', 'assess.html', 'assess-setup.html', 'assess-running.html', 'assess-running.html?state=silent'] },
+  { base: 'http://localhost:3200/_redesign/m3', pages: ['portfolio.html', 'portfolio.html?state=empty', 'queue.html', 'research-detail.html', 'drill.html', 'assess.html', 'assess.html?state=gaps', 'assess-setup.html', 'assess-running.html', 'assess-running.html?state=silent'] },
   { base: 'http://localhost:3200/workspace', pages: ['dashboard-m3.html', 'queue-m3.html'] },
 ];
 const browser = await puppeteer.launch({

@@ -113,6 +113,50 @@ module.exports = async (req, res) => {
       return;
     }
 
+    // ── RE-SCORE ON OPERATOR EVIDENCE — `phase:'rescore'`.
+    //
+    //    NOT an `action`: `phase` is piped straight into the workflow inputs below and run-phase.js already
+    //    routes on VENTRIFY_PHASE, so the rescore needs NO new endpoint and NO new api/ file (Vercel Hobby
+    //    caps api/ at 12 functions and we are AT 12 — a 13th file fails the entire deploy). It sits AFTER
+    //    the authz block, so it inherits org isolation exactly as action:'cancel' does.
+    //
+    //    Three preconditions, each of which would otherwise fail deep inside a 25-minute runner job — which
+    //    is a rotten place to learn there was nothing to do:
+    if (phase === 'rescore') {
+      const engCol = db.collection('engagements').doc(engagementId);
+
+      // 1 · something to re-score AGAINST. Order by `at` (the serverTimestamp publish.js stamps), NOT
+      //     `computedAt` — the brief-time "forming" seed writes computedAt as a Timestamp while a real run
+      //     writes it as an ISO string, and Firestore sorts mixed types by TYPE first. `at` exists only on
+      //     genuinely published snapshots, and orderBy excludes docs that lack the field, so the seed can
+      //     never masquerade as a score to re-derive.
+      const snaps = await engCol.collection('investabilitySnapshots').orderBy('at', 'desc').limit(1).get();
+      const last = snaps.empty ? null : snaps.docs[0].data();
+      if (!last) {
+        res.status(400).json({ error: 'nothing_to_rescore', detail: 'Run the assessment first — there is no score to re-derive.' });
+        return;
+      }
+      // 2 · the evidence the score was DERIVED from must still exist. A rescore restores research/ +
+      //     assessment/ from the run's own archive; without it the scorer would judge a tree with the assess
+      //     agent's legitimately-found citations MISSING, and the score would fall for a reason that has
+      //     nothing to do with the venture. Refuse rather than publish that number.
+      if (!last.evidenceArchive) {
+        res.status(409).json({
+          error: 'evidence_gone',
+          detail: 'The evidence behind this score is no longer stored, so it cannot be re-derived. Run a full assessment instead.'
+        });
+        return;
+      }
+      // 3 · something to re-score WITH. 'filed' = awaiting retrieval; 'captured' = we hold the bytes but
+      //     they have not yet been put in front of the scorer (rescoredIn is stamped only after publish).
+      const filed = await engCol.collection('operatorEvidence').where('status', 'in', ['filed', 'captured']).get();
+      const pending = filed.docs.filter(d => !d.data().rescoredIn);
+      if (!pending.length) {
+        res.status(400).json({ error: 'no_evidence_filed', detail: 'File at least one record against a gap before re-scoring.' });
+        return;
+      }
+    }
+
     // Stamp runState=queued so the Workspace banner moves immediately.
     await db.collection('engagements').doc(engagementId).update({
       runState: {

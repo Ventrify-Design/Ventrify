@@ -261,6 +261,53 @@ export async function revokeShare({ engagementId } = {}) {
   if (!resp.ok) { const d = await resp.json().catch(() => ({})); throw new Error(d.error || ('Revoke failed (' + resp.status + ')')); }
 }
 
+// ---- FILE EVIDENCE against a gap the assessment could not close -------------------------------------
+//
+// The operator supplies a POINTER TO EVIDENCE, not a claim about evidence. He does not say "trust me, he is
+// legit" — he says "you looked in the wrong place, here is the page". Nothing here asserts a conclusion, and
+// nothing here can: the record carries a url or an artefact, and the SYSTEM decides what it means.
+//
+// NOTHING IS FETCHED HERE, and nothing is fetched by the scorer either (score-only.js pins --tools to
+// Read/Glob/Grep/Write with a scrubbed env — it CANNOT browse). The fetch happens in the RUNNER, an entire
+// phase before scoring, by a plain HTTP GET with no model in the path. This is a pure Firestore write.
+export async function fileEvidence({ engagementId, gapId, url = null, file = null, note = null } = {}) {
+  const data = await import('../firebase/data.js');
+  const W = window.WORKSPACE || {};
+  const me = (W.helpers && W.helpers.currentOperator && W.helpers.currentOperator()) || {};
+  let storagePath = null, rawExt = null, originalName = null;
+  if (file) {
+    const up = await data.uploadEvidenceFile(engagementId, file);
+    storagePath = up.storagePath; rawExt = up.rawExt; originalName = file.name || null;
+  }
+  return data.fileOperatorEvidence(engagementId, {
+    gapId, url, storagePath, rawExt, originalName, note,
+    filedBy: me.email || me.name || null,
+  });
+}
+
+// ---- RE-SCORE on the filed evidence (the SAME dispatch path — phase:'rescore', no new api/ file) ----
+// run-phase.js routes on VENTRIFY_PHASE and returns BEFORE it needs a Claude CLI: no assess agent re-runs.
+// It restores the research this score was derived from, fetches the operator's records, and scores all 35
+// signals again COLD (3 independent draws, median, quorum of 2). ~25 minutes, not ~2 hours.
+export async function rescore({ engagementId, onBusy } = {}) {
+  const busy = onBusy || (() => {});
+  busy(true);
+  try {
+    const token = await idToken();
+    if (!token) throw new Error('Please sign in again.');
+    const resp = await fetch('/api/dispatch-run', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken: token, engagementId, phase: 'rescore' })
+    });
+    if (!resp.ok) { const d = await resp.json().catch(() => ({})); throw new Error(d.detail || d.error || ('Re-score rejected (' + resp.status + ')')); }
+    return true;
+  } catch (e) {
+    window.__toast('Could not re-score: ' + ((e && (e.code || e.message)) || e), true);
+    busy(false);
+    return false;
+  }
+}
+
 // ---- delete engagement (VERBATIM data.deleteEngagementDeep) — caller does the confirm + redirect ----
 export async function deleteEngagement({ engagementId } = {}) {
   const data = await import('../firebase/data.js');

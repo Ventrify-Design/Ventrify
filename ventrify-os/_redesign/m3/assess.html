@@ -18,8 +18,15 @@
 <div id="app"></div>
 <script type="module">
   import * as DS from './ds.js';
-  import { ASSESSMENT as A, SCORE as S } from './data.js';
+  import { ASSESSMENT as BASE, SCORE as S, withGaps } from './data.js';
   import { resolveActions } from '../../shared/actions.js';
+
+  // ?state=gaps — THE EVIDENCE GAPS. What the assessment looked for and could not find, and therefore
+  // docked the venture for. Our miss, not the venture's. The gaps land on the DILIGENCE tab (where "what
+  // must still be checked before money moves" already lives), each row opens the filing aux panel, and the
+  // re-score movement lands on Investability. Driven through the real adapter — see data.js withGaps().
+  const state = new URLSearchParams(location.search).get('state');
+  const A = state === 'gaps' ? withGaps(BASE, S) : BASE;
   // visible-taxonomy scope: no approval state passed → no workflow primary yet (the rulebook encodes
   // Submit/Approve·Reject/Finalise per role×state; wiring that is the deferred "full" build).
   const acts = resolveActions({ page: 'assess' });
@@ -29,7 +36,7 @@
   //    data-driven editorial components (ds.js); Market/Team/Research reuse the card views. ──
   const body = `
     <div class="tab-panel active">${DS.verdictMemo(A, S)}</div>
-    <div class="tab-panel"><div class="brief">${DS.investabilityHero(S, A)}<hr class="rule">${DS.investabilityComposition(S, 'openInvest')}<hr class="rule">${DS.strengthProfile(S, 'openInvest')}</div></div>
+    <div class="tab-panel"><div class="brief">${DS.investabilityHero(S, A)}${DS.scoreMovement(A.filings)}<hr class="rule">${DS.investabilityComposition(S, 'openInvest')}<hr class="rule">${DS.strengthProfile(S, 'openInvest')}</div></div>
     <div class="tab-panel">${DS.marketMemo(A)}</div>
     <div class="tab-panel">${DS.teamMemo(A)}</div>
     <div class="tab-panel">${DS.diligenceEditorial(A)}</div>
@@ -47,7 +54,8 @@
       subheading: A.stageLine,
       compact: A.name,
       actions: acts.decision.length ? acts.decision : (acts.primary ? [acts.primary] : []),
-      tabs: ['Verdict', 'Investability', 'Market', 'Team', 'Diligence', 'Research'],
+      tabs: ['Verdict', 'Investability', 'Market', 'Team',
+        { label: 'Diligence', badge: (A.gaps || []).filter(g => g.status !== 'closed').length || null }, 'Research'],
       activeTab: 0
     }),
     body
@@ -57,10 +65,27 @@
 
   // investability drill-down — clicking a category (bar row or contribution row) opens its
   // full breakdown in the aux panel: figures + the sub-signals that would lift the score.
+  // A signal we scored down because our RESEARCH missed something also offers the file-evidence trigger.
   window.openInvest = (key) => {
-    const d = DS.categoryDetail(S, key);
+    const d = DS.categoryDetail(S, key, A.gapBySlug || {});
     window.openAux({ mode: 'push', title: d.title, subtitle: d.subtitle, body: d.body });
   };
+
+  // ---- the evidence gap: every trigger opens the SAME filing panel (roster · signal row · diligence row) ----
+  // The demo is inert (no /api, no Firestore behind it) — but the panel, the honesty copy, the receipt states
+  // and the "the score can go down" warning are the real DS components, so they are gated like everything else.
+  window.__gapFiles = [];
+  window.openGap = (id) => {
+    const g = (A.gapById || {})[id];
+    if (!g) return;
+    const d = DS.gapPanel(g, g.filing);
+    window.openAux({ mode: 'push', title: d.title, subtitle: d.subtitle, body: d.body, footer: d.footer });
+  };
+  window.__gapPick = () => window.__toast('Upload the artefact — the assessment reads the file itself, never its name.');
+  window.__gapClearFile = () => {};
+  window.__gapDirty = () => DS.gapArmCTA(false);   // same DS helper the live page uses — no second copy to drift
+  window.__gapFile = () => window.__toast('Filing evidence needs the live workspace — this is the design system.');
+  window.__gapRescore = () => window.__toast('Re-scoring needs the live workspace — this is the design system.');
 
   // ---- deep research: every document opens as its own DRILL PAGE, rendered in full ----
   // The reading room is rebuilt from A.reading (every doc with a body — nothing filtered). Keys are the

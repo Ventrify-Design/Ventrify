@@ -356,6 +356,10 @@ md-outlined-text-field { --md-outlined-text-field-container-shape: 999px; --md-o
 .m3-tab.active { color: var(--md-sys-color-primary); }
 .m3-tab.active::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: 0; height: 3px; border-radius: 3px 3px 0 0; background: var(--md-sys-color-primary); }
 .m3-tab:focus-visible { outline: 2px solid var(--md-sys-color-primary); outline-offset: -3px; border-radius: 6px; }
+/* tab-badge — a small count on a tab (the Diligence tab, when the run recorded gaps it could not close).
+   WARNING tone, never error: a gap is OUR research miss, not a defect in the venture. It exists so the
+   evidence gaps are discoverable without a 7th tab shouting about them on every clean deal. */
+.m3-tab .tab-badge { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; margin-left: 7px; border-radius: 999px; font-size: 11px; font-weight: 600; line-height: 1; color: var(--on-warning-container); background: var(--warning-container); vertical-align: 1px; }
 
 /* ---- linear progress (m3-prog) ---- */
 .m3-prog { position: relative; height: 4px; border-radius: 999px; background: var(--md-sys-color-surface-container-highest); overflow: hidden; }

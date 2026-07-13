@@ -57,9 +57,14 @@ service cloud.firestore {
       // These are set ONLY by the Admin SDK (/api/memo), which bypasses these rules.
       // Blocking them here stops a founder from forging a senior-partner sign-off, a
       // share link, or an operator decision (confirm/decline) via a hand-crafted SDK write.
+      //   • assessmentGaps   — the assessment's own record of WHAT IT LOOKED FOR AND COULD NOT FIND, and
+      //     therefore docked the venture for. It is written by the runner (publish.js publishGaps). A client
+      //     must not be able to edit or delete our declared misses: the gap list is the honest ledger the
+      //     whole file-evidence loop hangs off, and an operator who could quietly drop a gap could quietly
+      //     drop the evidence that the score was suppressed by our own failure.
       allow update: if signedIn()
         && (userEmail() == resource.data.founderEmail || isOperatorOf(resource.data.orgId))
-        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['assessmentSignoff', 'shareLink', 'assessmentDecision']);
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['assessmentSignoff', 'shareLink', 'assessmentDecision', 'assessmentGaps']);
       // Creation is intentionally NOT allowed from the client. It goes through
       // /api/create-engagement (Admin SDK), which enforces the org's licence
       // capabilities + quota server-side — so the one-off / licence limits
@@ -82,6 +87,36 @@ service cloud.firestore {
         allow read: if signedIn()
           && (userEmail() == engData(engId).founderEmail || isOperatorOf(engData(engId).orgId));
         allow write: if false;
+      }
+
+      // ── THE EVIDENCE LEDGER — operator-filed pointers to evidence we could not find ──
+      //
+      // The operator's only powers are: name a gap WE declared, hand us a pointer, and trigger a cold
+      // re-run. These rules are what make that true in the database rather than merely true in the UI.
+      //
+      //  • OPERATOR-ONLY. Not the founder: these are OUR research misses, and the venture must never be
+      //    able to file evidence about itself through this channel.
+      //  • APPEND-ONLY (no update, no delete). This is the single rule that stops the feature being a dial
+      //    with extra steps: an operator CANNOT bin a record whose evidence went against the venture. Once
+      //    filed, it is scored, and the outcome is on the record whichever way it fell.
+      //  • HE FILES A POINTER; THE SYSTEM WRITES WHAT IT FOUND. The create is rejected if it carries any
+      //    field the FETCHER or the SCORER owns — contentSha, httpStatus, finalUrl, bytes, capturedFile,
+      //    signalDelta, compositeDelta, rescoredIn. He cannot pre-declare what the page says, nor what it
+      //    did to the score. The runner (Admin SDK) bypasses these rules and stamps them afterwards.
+      //  • status must be exactly 'filed' — 'captured' is the runner's word, not his.
+      match /operatorEvidence/{recId} {
+        allow read: if signedIn() && isOperatorOf(engData(engId).orgId);
+        allow create: if signedIn()
+          && isOperatorOf(engData(engId).orgId)
+          && request.resource.data.orgId == engData(engId).orgId
+          && request.resource.data.status == 'filed'
+          && request.resource.data.gapId is string
+          && !request.resource.data.keys().hasAny([
+               'contentSha', 'httpStatus', 'finalUrl', 'contentType', 'bytes', 'capturedFile',
+               'fetchedAt', 'fetchError', 'extraction', 'text',
+               'signalDelta', 'compositeDelta', 'rescoredIn', 'rescoredAt', 'batchRecords'
+             ]);
+        allow update, delete: if false;
       }
     }
 

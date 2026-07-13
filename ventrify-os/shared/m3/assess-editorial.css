@@ -609,3 +609,79 @@
 }
 .score-prov.warn .material-symbols-rounded { color: var(--m3-error, #b3261e); opacity: 1; }
 @media (max-width: 640px) { .score-prov { margin-top: 14px; padding: 11px 12px; } }
+
+/* ============================================================
+   THE EVIDENCE GAP — what the assessment LOOKED FOR and COULD NOT FIND.
+   These are OUR misses, for which the venture was docked. The visual language is therefore
+   WARNING, never ERROR: an error tone would read as a defect in the venture, which is the exact
+   misreading the whole feature exists to correct. (ds.js: gapChip / gapRow / openEvidence /
+   gapPanel / gapHonesty / gapReceipt / scoreMovement.)
+   ============================================================ */
+
+/* gap-chip — the ONE file-evidence affordance, wherever a gap is read (roster · signal rows · list). */
+.gap-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 4px 10px; border: none; border-radius: 999px; cursor: pointer; font: inherit; font-size: var(--row-cap, 11.5px); font-weight: 600; letter-spacing: .2px; color: var(--on-warning-container); background: var(--warning-container); transition: box-shadow .12s ease, opacity .12s ease; }
+.gap-chip .material-symbols-rounded { font-size: 15px; }
+.gap-chip .gap-file { display: none; padding-left: 7px; margin-left: 1px; border-left: 1px solid color-mix(in srgb, currentColor 30%, transparent); font-weight: 500; opacity: .9; }
+.gap-chip:hover { box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 34%, transparent); }
+.gap-chip:hover .gap-file, .gap-chip:focus-visible .gap-file { display: inline; }
+.gap-chip:focus-visible { outline: 2px solid var(--md-sys-color-primary); outline-offset: 2px; }
+/* the roster's signal column is a narrow slot — the chip must not stretch it */
+.frow-sig .gap-chip { max-width: 100%; }
+
+/* the gap's aux panel: sections reuse the .cd-* scorecard rhythm, so the panel reads as one surface */
+.gap-sec { margin-bottom: 22px; }
+.gap-sec:last-child { margin-bottom: 0; }
+.gs-cap { margin: 10px 0 0; font-size: 13px; line-height: 1.5; color: var(--md-sys-color-on-surface-variant); }
+.gs-cap b { color: var(--md-sys-color-on-surface); font-weight: 600; }
+
+/* WHERE WE LOOKED — the run's own searched[], verbatim. The trust block: it is the proof we genuinely
+   tried, in named places, before asking the operator for help. */
+.gap-try { display: grid; grid-template-columns: 34px 1fr auto; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--md-sys-color-outline-variant); }
+.gap-try:first-of-type { border-top: none; }
+.gap-try .src-note { word-break: break-all; }
+.gt-res { align-self: center; max-width: 40%; font-size: var(--row-cap, 11.5px); line-height: 1.35; text-align: right; color: var(--warning); font-weight: 500; }
+
+/* the pointer OR the artefact — both, always. The upload is not a nicety: it is the only path that works
+   when a site blocks our fetcher, and half the registers that matter do. */
+.gap-or { display: flex; align-items: center; gap: 12px; margin: 14px 0; color: var(--md-sys-color-on-surface-variant); font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+.gap-or::before, .gap-or::after { content: ""; flex: 1; height: 1px; background: var(--md-sys-color-outline-variant); }
+
+/* THE HONEST MOMENT. Its own component so it cannot be edited out of one surface and left in another. */
+.gap-honest { margin-top: 18px; padding: 14px 15px; border-radius: 14px; background: var(--md-sys-color-surface-container-high); }
+.gap-honest .gh-t { display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 600; color: var(--md-sys-color-on-surface); margin-bottom: 8px; }
+.gap-honest .gh-t .material-symbols-rounded { font-size: 19px; color: var(--md-sys-color-primary); }
+.gap-honest p { margin: 0 0 8px; font-size: 13px; line-height: 1.55; color: var(--md-sys-color-on-surface-variant); }
+.gap-honest p:last-child { margin-bottom: 0; }
+.gap-honest b { color: var(--md-sys-color-on-surface); font-weight: 600; }
+/* the DOWN direction gets the warning tone. It is not a disclaimer — it is the mechanism. */
+.gap-honest .gh-warn { padding: 9px 11px; border-radius: 10px; color: var(--on-warning-container); background: var(--warning-container); }
+.gap-honest .gh-warn b { color: inherit; }
+.gap-honest .gh-fine { font-size: 12px; opacity: .9; }
+
+/* the receipt — what the SYSTEM did with the pointer. The failure state is first-class: a blocked fetch is
+   an expected outcome (LinkedIn 999s a datacenter GET), not an error, and it must name the way out. */
+.gap-receipt { padding: 14px 15px; border-radius: 14px; background: var(--md-sys-color-surface-container-high); }
+.gap-receipt .gr-t { display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 600; color: var(--md-sys-color-on-surface); margin-bottom: 8px; }
+.gap-receipt .gr-t .material-symbols-rounded { font-size: 19px; color: var(--md-sys-color-on-surface-variant); }
+.gap-receipt p { margin: 0 0 8px; font-size: 13px; line-height: 1.55; color: var(--md-sys-color-on-surface-variant); }
+.gap-receipt p:last-child { margin-bottom: 0; }
+.gap-receipt b { color: var(--md-sys-color-on-surface); font-weight: 600; }
+.gap-receipt code { font-size: 11.5px; padding: 1px 5px; border-radius: 5px; background: var(--md-sys-color-surface-container-highest); }
+.gap-receipt.ok .gr-t .material-symbols-rounded { color: var(--success); }
+.gap-receipt.bad { background: var(--warning-container); }
+.gap-receipt.bad .gr-t, .gap-receipt.bad p, .gap-receipt.bad b { color: var(--on-warning-container); }
+.gap-receipt.bad .gr-t .material-symbols-rounded { color: var(--on-warning-container); }
+.gap-receipt .gr-fix { font-weight: 500; color: var(--md-sys-color-on-surface); }
+.gap-receipt.bad .gr-fix { color: var(--on-warning-container); }
+.gap-receipt .gr-by { margin-top: 10px; padding-top: 9px; border-top: 1px solid color-mix(in srgb, currentColor 14%, transparent); font-size: 11.5px; color: var(--md-sys-color-on-surface-variant); }
+.gap-receipt.bad .gr-by { color: var(--on-warning-container); opacity: .85; }
+
+@media (max-width: 640px) {
+  .gap-try { grid-template-columns: 34px 1fr; }
+  .gt-res { grid-column: 2; max-width: 100%; text-align: left; margin-top: 2px; }
+  .gap-chip .gap-file { display: none !important; }   /* no hover on touch — the row itself opens the panel */
+}
+
+/* re-file prompt — shown UNDER a fetch-failed receipt, above the form. A blocked fetch must never be a dead
+   end: the receipt names the way out, and the form has to actually be there to take it. */
+.gap-refile { margin: 12px 0 16px; font-size: 13px; line-height: 1.5; font-weight: 500; color: var(--md-sys-color-on-surface); }

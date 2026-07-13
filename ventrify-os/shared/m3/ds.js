@@ -155,7 +155,13 @@ export function masthead(opts = {}) {
   const hasCrumb = !!(opts.breadcrumb && opts.breadcrumb !== false);
   const hasTabs = Array.isArray(opts.tabs) && opts.tabs.length > 0;
   const actions = mhActions(opts.actions);
-  const tabs = hasTabs ? `<div class="m3-tabs" role="tablist">${opts.tabs.map((t, i) => `<button class="m3-tab${i === (opts.activeTab || 0) ? ' active' : ''}" role="tab" aria-selected="${i === (opts.activeTab || 0)}">${esc(t)}</button>`).join('')}</div>` : '';
+  // tabs: (string | {label, badge})[] — a tab may carry a small count (the Diligence tab does, when the run
+  // recorded gaps it could not close). Backwards-compatible: a plain string is unchanged.
+  const tabs = hasTabs ? `<div class="m3-tabs" role="tablist">${opts.tabs.map((t, i) => {
+    const o = (t && typeof t === 'object') ? t : { label: t };
+    const on = i === (opts.activeTab || 0);
+    return `<button class="m3-tab${on ? ' active' : ''}" role="tab" aria-selected="${on}">${esc(o.label)}${o.badge ? `<span class="tab-badge">${esc(o.badge)}</span>` : ''}</button>`;
+  }).join('')}</div>` : '';
   const trail = hasCrumb ? [opts.breadcrumb].concat(opts.crumbTail ? [{ label: opts.crumbTail }] : []) : (opts.eyebrow ? [{ label: opts.eyebrow }] : []);
   const orient = orientLabel(trail);
   const cls = `masthead${hasTabs ? '' : ' mh-notabs'}${opts.avatar ? ' has-av' : ''}`;
@@ -839,15 +845,20 @@ const cdSplitRef = note => { const t = String(note || ''); const i = t.indexOf('
 const cdChip = sc => sc === 1 ? '<span class="cd-chip g">1</span>' : sc === 0.5 ? '<span class="cd-chip y">½</span>' : sc === 0 ? '<span class="cd-chip r">0</span>' : '<span class="cd-chip n">–</span>';
 // signalRows — the 5 VSS sub-signals as chip · canonical question · note rows. SHARED by categoryDetail's
 // aux drill and the Research evidenceIntegrity surface, so the two never drift. Unrated → the forming '–' chip.
-export function signalRows(subs = []) {
+// gapBySlug (optional): a map of DOTTED rubric slug → gap. Where a signal was scored down because the
+// research MISSED something, the empty trailing evidence slot becomes the file-evidence trigger instead of
+// staying blank. A signal with a real citation keeps its citation — a gap never displaces evidence.
+export function signalRows(subs = [], gapBySlug = {}, catKey = '') {
   return subs.map(x => {
     const { note, ref } = cdSplitRef(x.note);
     const cls = x.score == null ? 'na' : x.score === 1 ? 'g' : x.score === 0.5 ? 'y' : 'r';
-    return `<div class="cd-sig ${cls}">${cdChip(x.score)}<div class="bd"><div class="q">${esc(SUB_Q[x.slug] || x.slug)}</div><div class="nt${note ? '' : ' muted'}">${note ? esc(note) : 'Not yet scored — assessed when the research run completes.'}</div></div>${ref ? `<span class="cd-ev" title="${esc(ref)}">${esc(ref)}</span>` : ''}</div>`;
+    const g = gapBySlug[`${catKey}.${x.slug}`] || gapBySlug[x.slug];
+    const trail = ref ? `<span class="cd-ev" title="${esc(ref)}">${esc(ref)}</span>` : (g ? gapChip(g.id, gapWord(g.outcome)) : '');
+    return `<div class="cd-sig ${cls}">${cdChip(x.score)}<div class="bd"><div class="q">${esc(SUB_Q[x.slug] || x.slug)}</div><div class="nt${note ? '' : ' muted'}">${note ? esc(note) : 'Not yet scored — assessed when the research run completes.'}</div></div>${trail}</div>`;
   }).join('');
 }
 const cdOrd = n => n === 1 ? '1st' : n === 2 ? '2nd' : n === 3 ? '3rd' : `${n}th`;
-export function categoryDetail(s, key) {
+export function categoryDetail(s, key, gapBySlug = {}) {
   const c = s.categories.find(x => x.key === key);
   if (!c) return { title: 'Category', subtitle: '', body: '' };
   const subs = c.subs || [];
@@ -876,7 +887,7 @@ export function categoryDetail(s, key) {
   const cnt = { green: 0, yellow: 0, red: 0 };
   subs.forEach(x => { if (x.score != null) cnt[x.score === 1 ? 'green' : x.score === 0.5 ? 'yellow' : 'red']++; });
   const spread = `${cnt.green} strong · ${cnt.yellow} mixed · ${cnt.red} gap${pending ? ` · ${pending} pending` : ''}`;
-  const signals = `<div class="cd-block"><div class="cd-h"><span class="lab">The five signals</span><span class="sub">${spread}</span></div>${signalRows(subs)}</div>`;
+  const signals = `<div class="cd-block"><div class="cd-h"><span class="lab">The five signals</span><span class="sub">${spread}</span></div>${signalRows(subs, gapBySlug, key)}</div>`;
 
   // ── 4 · what would lift it ──
   let lifts;
@@ -992,7 +1003,287 @@ export function diligenceEditorial(a) {
   const checklist = total === 0 ? '' : `<hr class="rule">
     <section class="sec"><div class="dil">${groups}</div></section>`;
 
-  return `<div class="brief">${hero}${checklist}</div>`;
+  return `<div class="brief">${hero}${openEvidence(a)}${checklist}</div>`;
+}
+
+// ============================================================
+// THE EVIDENCE GAP — what we LOOKED FOR and COULD NOT FIND.
+//
+// A gap is a check the assessment RAN and could not CLOSE: it searched, it failed to find, and THE VENTURE
+// WAS DOCKED FOR OUR MISS. That is a defect in OUR research, not in the venture — so it does not belong in
+// the venture's story (Verdict/Market/Team). It belongs where "what must still be checked before money moves"
+// already lives: DILIGENCE. The difference, said out loud in the section's own words, is that WE are the ones
+// who failed.
+//
+// ⚠ THE NUMBER THAT IS NOT HERE, AND MUST NEVER BE: a projected score GAIN.
+//
+// The runner publishes `impact.cappedAt` (a CEILING — "while this gap is open this signal cannot exceed ½")
+// and `impact.observedScore` (what the scorer ACTUALLY gave it). It deliberately publishes NO delta, and
+// publish.js says why: the moment this panel renders "close this gap: +3 investability", we have rebuilt the
+// dial IN THE PRESENTATION LAYER even though the pipeline is clean — because the operator would then file
+// only the artefacts he predicts move the number UP. He must remain unable to predict which way the evidence
+// falls, and DOWN must stay visibly live. So we render the miss and the ceiling. Never a projected gain.
+// (An earlier UI sketch specified "−N pts docked" on every row. It is not built, on purpose.)
+// ============================================================
+const GAP_KIND = {
+  registry: { icon: 'domain', label: 'Company register' },
+  gazette: { icon: 'gavel', label: 'Insolvency & disqualification notices' },
+  'regulator-register': { icon: 'verified_user', label: 'Regulator register' },
+  'product-existence': { icon: 'apps', label: 'Product existence' },
+  'press-corroboration': { icon: 'newspaper', label: 'Press corroboration' },
+  'own-materials': { icon: 'badge', label: 'The founder’s own materials' },
+  'claim-substantiation': { icon: 'fact_check', label: 'Claim substantiation' },
+  'contract-corroboration': { icon: 'handshake', label: 'Contract corroboration' },
+  'metric-substantiation': { icon: 'query_stats', label: 'Metric substantiation' },
+};
+const gapKind = k => GAP_KIND[k] || { icon: 'search_off', label: 'Verification check' };
+// closesWith — the CLOSED artefact set the runner may name (assessment-contract.js GAP_CLOSES_WITH). Rendered
+// as "any one of these would close it", in the memo's own voice.
+const GAP_CLOSES = {
+  'profile-page': 'A profile page — LinkedIn, a university or company bio',
+  'registry-record': 'A company-register record — Companies House, or the local equivalent',
+  'regulator-record': 'The entry on the regulator’s own register',
+  'press-article': 'An independent press or industry article',
+  'study-or-report': 'The study or report the figure actually comes from',
+  contract: 'The contract itself',
+  'customer-reference': 'A named customer reference',
+  'employment-record': 'An employment record — a contract, an offer letter, a payslip',
+  filing: 'A filing — accounts, a statutory return, a patent',
+  'dataroom-doc': 'A data-room document we missed or misread',
+};
+const GAP_OUTCOME = { 'NOT-FOUND': 'Not found', UNVERIFIED: 'Unverified', PARTIAL: 'Partial' };
+const gapWord = o => GAP_OUTCOME[o] || 'Not found';
+// the 35 rubric slugs arrive DOTTED from the runner (`team.founder_market_fit`); SUB_Q is keyed on the BARE
+// slug. One resolver, so no caller has to know that.
+export const subQuestion = slug => SUB_Q[String(slug || '').split('.').pop()] || String(slug || '');
+const SCORE_WORD = { 0: '0', 0.5: '½', 1: '1' };
+const scoreWord = n => (n == null ? '—' : (SCORE_WORD[n] != null ? SCORE_WORD[n] : String(n)));
+
+// gapChip — ATOM. The ONE "this was not found — you can point us at it" affordance, wherever a gap is READ.
+// Its verb is "File evidence", never "Fix" / "Override" / "Correct": the operator supplies a POINTER TO
+// EVIDENCE, not a claim about evidence.
+export const gapChip = (gapId, label = 'Not found') =>
+  `<button class="gap-chip" onclick="window.openGap&&window.openGap('${esc(gapId)}')" aria-label="${esc(label)} — file evidence">
+    <span class="material-symbols-rounded">search_off</span><span class="gc-l">${esc(label)}</span><span class="gap-file">File evidence</span></button>`;
+
+// gapRow — the Diligence list row. A row() 'research' variant, so the row family stays unified (no new
+// row species). The cap line carries WHAT IT COST — as a CEILING, never as a projected gain.
+export const gapRow = g => {
+  const k = gapKind(g.checkKind);
+  const cap = [
+    g.signalQuestion ? g.categoryLabel : '',
+    g.cappedAt != null ? `capped at ${scoreWord(g.cappedAt)} of 1 while open` : '',
+    g.observedScore != null ? `scored ${scoreWord(g.observedScore)}` : '',
+    `${g.searched.length} search${g.searched.length === 1 ? '' : 'es'}`,
+  ].filter(Boolean).join(' · ');
+  return row({
+    variant: 'research', key: g.id, onDrill: 'window.openGap',
+    lead: { icon: k.icon, wtype: 'w' },
+    title: g.subject,
+    sub: g.sought || (g.signalQuestion || ''),
+    cap,
+    trail: { chip: { kind: 'warn', label: gapWord(g.outcome), icon: 'search_off' } },
+  });
+};
+
+// openEvidence — ORGANISM. The lead section of the Diligence tab. SELF-OMITTING: a venture we found
+// everything on renders nothing at all (same contract as teamGaps / marketSizing), so this can never
+// read as a permanent seventh chapter about us.
+export function openEvidence(a = {}) {
+  const gaps = (a.gaps || []).filter(g => g && g.status !== 'closed');
+  if (!gaps.length) return '';
+  const filed = gaps.filter(g => g.filing).length;
+  const searches = gaps.reduce((n, g) => n + g.searched.length, 0);
+  const meta = [`${gaps.length} open`, `${searches} searches run`, filed && `${filed} filed`].filter(Boolean).join(' · ');
+  return `<hr class="rule"><section class="sec">
+    <div class="sec-head">
+      <span class="eyebrow warn">Unverified</span>
+      <span class="t">What we looked for and could not find</span>
+      <span class="meta">${esc(meta)}</span>
+    </div>
+    <p class="lead"><span class="drop">Our miss.</span> Each of these was <b>searched for and not found</b>, and the signal
+      was scored down for the absence. That is a defect in our research, not necessarily in the venture. If you can point
+      us at the evidence, the assessment fetches it, reads it cold, and scores the signal again — <b>up or down</b>.</p>
+    <div class="profile">${gaps.map(gapRow).join('')}</div>
+  </section>`;
+}
+
+// gapHonesty — MOLECULE. The honest moment, and it is its own component precisely so it CANNOT be edited out
+// of one surface and left in another. It says the two things the operator must know before he files:
+// he is not asserting anything, and THE SCORE CAN GO DOWN.
+export function gapHonesty() {
+  return `<div class="gap-honest">
+    <div class="gh-t"><span class="material-symbols-rounded">balance</span>This is not a correction — it is a re-check.</div>
+    <p>You are not telling us the answer. You are telling us <b>where to look</b>. The assessment fetches what you filed,
+       reads it cold, and scores this signal again from what the source actually says.</p>
+    <p class="gh-warn"><b>The score can go down.</b> If the source contradicts the claim, this signal falls and the score
+       falls with it. If it supports the claim, it rises. You cannot know which before you file, and you do not get to choose.</p>
+    <p class="gh-fine">Only the <b>document</b> reaches the assessment. Your note, the file’s name and the link text do not —
+       they are recorded on the ledger, under your name.</p>
+  </div>`;
+}
+
+// gapReceipt — what the SYSTEM did with the pointer. Three states, and the failure state is the important
+// one: LinkedIn 999s a datacenter fetcher, so "we could not retrieve that — upload it instead" is a
+// first-class outcome, not an error. (The runner writes status/httpStatus/fetchError; we only report them.)
+export function gapReceipt(f = {}) {
+  const when = [f.filedBy, f.filedAt].filter(Boolean).join(' · ');
+  if (f.status === 'fetch-failed') {
+    return `<div class="gap-receipt bad">
+      <div class="gr-t"><span class="material-symbols-rounded">link_off</span>We could not retrieve that page</div>
+      <p>${f.httpStatus ? `The site answered <b>HTTP ${esc(f.httpStatus)}</b>` : 'The fetch failed'}${f.fetchError ? ` — ${esc(f.fetchError)}` : ''}.
+         Many registers and profile sites block an automated fetcher, and <b>we can only score bytes we actually hold</b>.</p>
+      <p class="gr-fix"><b>Save the page as a PDF and upload it</b> — the assessment reads that instead, and it needs no network at all.</p>
+      ${when ? `<div class="gr-by">Filed by ${esc(when)}</div>` : ''}
+    </div>`;
+  }
+  if (f.status === 'captured') {
+    const size = f.bytes ? `${Math.max(1, Math.round(f.bytes / 1024))} KB` : '';
+    const from = f.finalUrl ? hostOf(f.finalUrl) : (f.url ? hostOf(f.url) : 'your upload');
+    return `<div class="gap-receipt ok">
+      <div class="gr-t"><span class="material-symbols-rounded">task_alt</span>Retrieved and held as evidence</div>
+      <p>${size ? `<b>${esc(size)}</b> ` : ''}captured from <b>${esc(from)}</b>${f.contentSha ? ` · <code>sha256 ${esc(String(f.contentSha).slice(0, 12))}…</code>` : ''}.
+         The assessment reads this document as part of its evidence base.</p>
+      ${f.rescoredIn ? '' : '<p class="gr-fix">It has <b>not been scored yet</b> — run the re-score to put it in front of the assessment.</p>'}
+      ${when ? `<div class="gr-by">Filed by ${esc(when)}</div>` : ''}
+    </div>`;
+  }
+  return `<div class="gap-receipt">
+    <div class="gr-t"><span class="material-symbols-rounded">schedule</span>Filed — waiting on the re-score</div>
+    <p>We hold your pointer${f.url ? ` to <b>${esc(hostOf(f.url))}</b>` : ''}. The assessment retrieves the record at the start of the
+       next run, reads it cold, and scores the signal again.</p>
+    ${when ? `<div class="gr-by">Filed by ${esc(when)}</div>` : ''}
+  </div>`;
+}
+const hostOf = u => { try { return new URL(String(u)).host; } catch (e) { return String(u || '').slice(0, 40); } };
+
+// gapPanel — the AUX PANEL body for filing evidence against ONE gap. Returns {title,subtitle,body,footer}
+// for window.openAux({mode:'push'}) — the same contract as categoryDetail/sourcesPanel.
+//
+// It has to PROVE WE GENUINELY TRIED, or nobody trusts it — otherwise the feature reads as "the AI was lazy,
+// fix it for it". So "Where we looked" is not decoration: it is the run's own searched[], verbatim, and the
+// runner DROPS any gap that has none.
+export function gapPanel(g, filing = null) {
+  if (!g) return { title: 'Gap', subtitle: '', body: '', footer: '' };
+  const k = gapKind(g.checkKind);
+
+  // ── 1 · what we were checking, and what the miss cost (a CEILING — never a projected gain) ──
+  const cost = g.signals.map(s => `<div class="cd-srow"><span>${esc(subQuestion(s))}</span><b>${g.observedScore != null ? `scored ${scoreWord(g.observedScore)} of 1` : 'not yet scored'}</b></div>`).join('');
+  const ceiling = g.cappedAt != null
+    ? `<p class="gs-cap">While this stays open the signal <b>cannot go above ${scoreWord(g.cappedAt)} of 1</b> — that is a ceiling on what the evidence can earn, not a promise of what closing it would pay.</p>`
+    : '';
+  const stand = `<div class="cd-stand"><span class="cd-band red">${esc(gapWord(g.outcome))}</span>
+    <p>We ran a <b>${esc(k.label.toLowerCase())}</b> check on <b>${esc(g.subject)}</b>${g.sought ? ` — looking for ${esc(g.sought)}` : ''}, and could not find it.
+       The signal below was scored on that absence.</p>${ceiling}</div>
+    <div class="cd-standing">${cost}</div>`;
+
+  // ── 2 · WHERE WE LOOKED — the run's own attempts, verbatim. THE TRUST BLOCK. ──
+  const looked = `<section class="gap-sec"><div class="cd-h"><span class="lab">Where we looked</span><span class="sub">${g.searched.length} search${g.searched.length === 1 ? '' : 'es'}, all recorded</span></div>
+    ${g.searched.map(s => `<div class="gap-try">
+      <span class="src-ic"><span class="material-symbols-rounded">travel_explore</span></span>
+      <div class="src-bd"><div class="src-nm">${esc(s.source)}</div>${s.url ? `<div class="src-note">${esc(s.url)}</div>` : ''}</div>
+      ${s.result ? `<span class="gt-res">${esc(s.result)}</span>` : ''}
+    </div>`).join('')}</section>`;
+
+  // ── 3 · WHAT WOULD CLOSE IT — the run's own closure set, in the memo's .must voice ──
+  const closes = (g.closesWith || []).map(c => GAP_CLOSES[c]).filter(Boolean);
+  const close = closes.length ? `<section class="gap-sec"><div class="cd-h"><span class="lab">What would close it</span><span class="sub">Any one of these</span></div>
+    ${closes.map((w, i) => `<div class="must"><span class="idx">${i + 1}</span><p>${esc(w)}</p></div>`).join('')}</section>` : '';
+
+  // ── 4 · the control: a POINTER (url) or the ARTEFACT (upload). BOTH, ALWAYS — the upload is not a
+  //        fallback for the fastidious, it is the ONLY path that works when a site blocks our fetcher.
+  //
+  // ⚠ A FETCH-FAILED RECORD STILL GETS THE FORM. This was a dead end on the first cut: the receipt tells the
+  // operator "the site blocked us — save the page as a PDF and upload it", and then, because a filing
+  // existed, the form vanished and there was nowhere to upload it. The one state where the control matters
+  // most was the one state that hid it. A failed fetch is not a filing; it is an invitation to re-file.
+  const failed = !!filing && filing.status === 'fetch-failed';
+  const settled = !!filing && !failed;
+  const control = settled ? `<section class="gap-sec">${gapReceipt(filing)}</section>` : `<section class="gap-sec">
+    ${failed ? `${gapReceipt(filing)}<div class="gap-refile">Try again — upload the page, or point us somewhere we can reach.</div>` : ''}
+    <div class="cd-h"><span class="lab">File the evidence</span><span class="sub">Point us at it</span></div>
+    ${formField({ label: 'Link to the source', id: 'gap-url', type: 'url', placeholder: 'https://…',
+                  attr: ' oninput="window.__gapDirty&&window.__gapDirty()"',
+                  hint: 'A page we can fetch. We read what is there — not what you say about it.' })}
+    <div class="gap-or"><span>or</span></div>
+    ${docDropzone(((typeof window !== 'undefined' && window.__gapFiles) || []), {
+      icon: 'upload_file', prompt: 'Upload the document',
+      sub: 'PDF, screenshot, filing, contract, dataset. The assessment reads the file itself. Use this when a site blocks our fetcher.',
+      single: true, status: 'stored', clearLabel: 'Remove',
+      onPick: 'window.__gapPick()', onClear: 'window.__gapClearFile()',
+    })}
+    ${formField({ label: 'Your note', optional: true, id: 'gap-note', placeholder: 'For your team — why you filed this.',
+                  hint: 'Recorded on the ledger and the memo, under your name. The assessment never reads it.' })}
+    ${gapHonesty()}
+  </section>`;
+
+  const sub = [k.label, gapWord(g.outcome).toLowerCase(), g.categoryLabel].filter(Boolean).join(' · ');
+  return {
+    title: g.subject,
+    subtitle: sub,
+    body: `${stand}${looked}${close}${control}`,
+    footer: settled
+      ? `<button class="m3-btn text" onclick="window.closeAux&&window.closeAux()">Close</button>
+         ${filing.rescoredIn ? '' : `<button class="m3-btn filled" style="flex:1" onclick="window.__gapRescore()"><span class="material-symbols-rounded">travel_explore</span>Re-score on the evidence</button>`}`
+      : `<button class="m3-btn text" onclick="window.closeAux&&window.closeAux()">Cancel</button>
+         <button class="m3-btn filled" style="flex:1" id="gap-file-btn" disabled onclick="window.__gapFile('${esc(g.id)}')"><span class="material-symbols-rounded">upload_file</span>File evidence</button>`,
+  };
+}
+
+// gapArmCTA — the filing CTA is DEAD until there is an actual POINTER. A note alone files nothing: prose is
+// not evidence and the button must never imply it is. It lives in the DS (not in the page) because it was
+// duplicated across the live page and the demo, and the demo's copy had already silently drifted to a no-op.
+export function gapArmCTA(hasFile = false) {
+  const btn = typeof document !== 'undefined' && document.getElementById('gap-file-btn');
+  if (!btn) return;
+  const url = ((typeof document !== 'undefined' && document.getElementById('gap-url')) || {}).value || '';
+  btn.disabled = !(String(url).trim() || hasFile);
+}
+
+// scoreMovement — ORGANISM. After a re-score: WHICH SIGNALS MOVED, AND WHICH WAY.
+//
+// It renders a FALL exactly as plainly as a rise — a fall is the mechanism WORKING (the source did not support
+// the claim), and hiding it would turn the feature back into a dial. A re-score that moved nothing is also a
+// result, and is stated as one.
+//
+// The deltas are NOT recomputed here: publish.js already settled them onto the evidence ledger
+// (signalDelta / compositeDelta, which may be negative). We report the ledger; we do not re-derive it.
+// HONEST LIMIT, carried through from publish.js: with several records in one re-score we do NOT claim
+// per-record attribution — the scorer reads the whole evidence base and forms ONE judgement.
+export function scoreMovement(filings = []) {
+  const settled = (filings || []).filter(f => f && f.rescoredIn && Array.isArray(f.signalDelta));
+  if (!settled.length) return '';
+  const latest = settled.reduce((a, b) => ((b.rescoredAt || '') > (a.rescoredAt || '') ? b : a), settled[0]);
+  const batch = settled.filter(f => f.rescoredIn === latest.rescoredIn);
+  const d = Number(latest.compositeDelta || 0);
+  const moved = latest.signalDelta || [];
+
+  const verdict = d > 0
+    ? `The evidence you filed <b>raised</b> the score by ${d} point${d === 1 ? '' : 's'}.`
+    : d < 0
+      ? `The evidence you filed <b>lowered</b> the score by ${Math.abs(d)} point${Math.abs(d) === 1 ? '' : 's'}. The source did not support the claim — that is the mechanism working, not failing.`
+      : `The score <b>held</b>. The evidence was read and it changed nothing.`;
+  const drop = d > 0 ? 'Up.' : d < 0 ? 'Down.' : 'Held.';
+
+  const rows = moved.length
+    ? moved.map(m => row({
+        variant: 'metric', key: m.slug,
+        lead: { sev: (m.to > m.from) ? 'strong' : (m.to < m.from) ? 'gap' : 'mixed' },
+        title: subQuestion(m.slug),
+        sub: String(m.slug).split('.')[0],
+        trail: { kind: 'value', value: `${scoreWord(m.from)} → ${scoreWord(m.to)}`,
+                 delta: { text: m.to > m.from ? 'raised' : m.to < m.from ? 'lowered' : 'held', tone: m.to > m.from ? 'up' : 'flat' } },
+      })).join('')
+    : `<div class="mrow metric foot"><div class="mrow-lab"><div class="mrow-nm">No signal moved</div>
+        <div class="mrow-sub">The record was read and did not address what the signal tests.</div></div><span class="mrow-chev"></span></div>`;
+
+  const meta = `${batch.length} record${batch.length === 1 ? '' : 's'} · ${moved.length} signal${moved.length === 1 ? '' : 's'} moved`;
+  return `<section class="sec">
+    <div class="sec-head"><span class="eyebrow accent">The re-score</span><span class="t">What your evidence moved</span><span class="meta">${esc(meta)}</span></div>
+    <p class="lead"><span class="drop">${drop}</span> ${verdict}</p>
+    <div class="profile">${rows}</div>
+    <div class="profile-foot"><span>Scored cold against the filed document${batch.length > 1 ? 's' : ''}. Your note was not read by the assessment.${batch.length > 1 ? ' With several records in one re-score, we do not claim which one moved which signal.' : ''}</span></div>
+  </section>`;
 }
 
 // operator sign-off + provenance — status-driven (signed vs awaiting)
@@ -1262,7 +1553,7 @@ export function founderRoster(team, onOpen = '') {
     return `<div class="frow">
       <div class="mono" style="${memberBg(m.signal)}">${esc(m.i)}</div>
       <div class="frow-bd"><div class="frow-nm">${esc(nm.trim())}</div>${role ? `<div class="frow-role">${esc(role)}</div>` : ''}<div class="frow-bg">${esc(m.bg)}</div></div>
-      <div class="frow-sig ${esc(m.signal)}">${esc(SIG_WORD[m.signal] || 'To verify')}</div>
+      <div class="frow-sig ${esc(m.signal)}">${m.gapId ? gapChip(m.gapId, 'Not found') : esc(SIG_WORD[m.signal] || 'To verify')}</div>
     </div>`;
   }).join('');
   return `<section class="sec">
@@ -1361,7 +1652,7 @@ export function evidenceIntegrity(a, s) {
   return `<section class="sec">
     <div class="sec-head"><span class="eyebrow accent">Evidence integrity</span><span class="t">How sound is the assessment itself</span><span class="meta">${meta}</span></div>
     <p class="lead" style="margin-top:0"><span class="drop">The method.</span> Confidence rests on five checks — <b>${nPass}</b> clear the bar${nFail ? `, <b>${nFail}</b> do not` : ' and none fail'}.</p>
-    <div class="ev-signals">${signalRows(subs)}</div>
+    <div class="ev-signals">${signalRows(subs, a.gapBySlug || {}, 'evidence')}</div>
   </section>`;
 }
 
@@ -2242,6 +2533,7 @@ const RUN_BANNER = {
 export function runBanner(rs = {}, opts = {}) {
   const s = RUN_BANNER[rs.status] || RUN_BANNER.queued;
   const isRepub = rs.phase === 'republish';              // republish reuses runState (3 steps) — don't dress it as a fresh assessment
+  const isRescore = rs.phase === 'rescore';              // a re-score reuses it too (5 steps, no assess agent)
   const total = rs.totalSteps || 0, step = rs.step || 0;
   // ONE progress source, in order of truth. null → indeterminate.
   const pct = (typeof rs.progress === 'number' && total > 0) ? rs.progress
@@ -2251,8 +2543,10 @@ export function runBanner(rs = {}, opts = {}) {
   const stalled = stallReason != null;
   const elapsed = fmtElapsed(runAge(rs));
   const meta = [total > 0 && step > 0 ? `Step ${step} / ${total}` : '', elapsed].filter(Boolean).join(' · ');
-  const title = isRepub && s.prog ? 'Republishing…' : s.title;
-  const text = rs.label || (isRepub ? 'Recovering your saved results…' : s.text);
+  const title = s.prog ? (isRepub ? 'Republishing…' : isRescore ? 'Re-scoring…' : s.title) : s.title;
+  const text = rs.label || (isRepub ? 'Recovering your saved results…'
+    : isRescore ? 'Reading the records you filed, then scoring all 35 signals again from the evidence. The score may rise, fall, or hold.'
+      : s.text);
   return `<div class="run-banner ${stalled ? 'warn' : s.kind}">
     <span class="rb-ic"><span class="material-symbols-rounded">${stalled ? 'warning' : s.icon}</span></span>
     <div class="rb-bd">
@@ -2301,7 +2595,19 @@ export const REPUBLISH_PLAN = [
   { n: 2, title: 'Re-applying the score, verdict & research', out: 'no AI cost' },
   { n: 3, title: 'Live again', out: '' },
 ];
-const runPlan = rs => (rs && rs.phase === 'republish') ? REPUBLISH_PLAN : ASSESS_PLAN;
+// RESCORE_PLAN — the FIVE steps run-phase.js runRescore() actually executes, transcribed from it verbatim
+// (step/totalSteps:5). NO ASSESS AGENT RUNS: the research prose is restored from the run's own evidence
+// archive, the operator's records are fetched, and the 35 signals are scored again COLD. That is why it is
+// ~25 minutes and not ~2 hours — and why the plan must not be dressed up as an eleven-step assessment.
+export const RESCORE_PLAN = [
+  { n: 1, title: 'Rebuild the founder’s room', out: 'the same deck and data room, byte-for-byte' },
+  { n: 2, title: 'Restore the evidence this score was derived from', out: 'research/ + assessment/ from the run’s archive' },
+  { n: 3, title: 'Retrieve the records you filed', out: 'fetched in the runner — the scorer cannot browse' },
+  { n: 4, title: 'Score all 35 signals again — cold', out: '3 independent reads · median · quorum of 2' },
+  { n: 5, title: 'Compute investability & publish', out: 'a new snapshot, on the record beside the old one' },
+];
+const runPlan = rs => (rs && rs.phase === 'republish') ? REPUBLISH_PLAN
+  : (rs && rs.phase === 'rescore') ? RESCORE_PLAN : ASSESS_PLAN;
 // clamp: rs.totalSteps is incoherent across a run (0 at queue → 8 at start → 11 once the agent reports), and
 // the runner forces step back to its constant at the end — so an unclamped counter visibly runs BACKWARDS.
 // The plan is the only trustworthy length.
@@ -2427,19 +2733,30 @@ export function inputManifest(a = {}) {
 // assessment looks like.
 export function assessingMemo(a = {}, s = null, rs = {}) {
   const docs = (a.inputs && a.inputs.total) || 0;
+  // A RE-SCORE is a different event and the screen must say so: it is not writing a fresh verdict, it is
+  // reading the records the OPERATOR filed against our own misses and scoring the 35 signals again. The
+  // thesis line is the honest one — it names the DOWN direction, before the operator sees the result.
+  const rescore = rs && rs.phase === 'rescore';
+  const filed = (a.filings || []).filter(f => f && f.status !== 'withdrawn').length;
   const hero = sectionHero({
     left: statementLockup({
-      eyebrow: 'Under assessment', eyebrowIcon: 'hourglass_top',
-      headline: `A verdict on ${a.name} is being written.`, headlineEm: 'being written',
+      eyebrow: rescore ? 'Re-scoring on new evidence' : 'Under assessment',
+      eyebrowIcon: rescore ? 'travel_explore' : 'hourglass_top',
+      headline: rescore ? `${a.name} is being scored again — on what you filed.` : `A verdict on ${a.name} is being written.`,
+      headlineEm: rescore ? 'on what you filed' : 'being written',
       facts: [
         { k: 'Venture', v: esc(a.stageLine || '—') },
-        { k: 'Evidence in', v: `${docs} document${docs === 1 ? '' : 's'}` },
+        rescore
+          ? { k: 'Evidence filed', v: `${filed} record${filed === 1 ? '' : 's'}` }
+          : { k: 'Evidence in', v: `${docs} document${docs === 1 ? '' : 's'}` },
         { k: 'Running', v: esc(fmtElapsed(runAge(rs)) || 'just started') },
       ],
     }),
     right: formingLockup(rs, { docs }),
     thesisLabel: 'Coming back.',
-    thesis: 'An investability score out of 100 across 35 signals, the case argued both ways, the pre-wire diligence checklist, and the research that underwrites every claim.',
+    thesis: rescore
+      ? 'Every one of the 35 signals, scored again from the evidence — including the records you filed. The score may rise, fall, or hold, and signals you did not file against can move too. The current score stays on the record either way.'
+      : 'An investability score out of 100 across 35 signals, the case argued both ways, the pre-wire diligence checklist, and the research that underwrites every claim.',
   });
   // ⚠ gate on REAL categories, not on `s` being truthy — a brand-new assessment has NO investability
   // snapshot, so mapScore returns an object with an EMPTY categories array, and the composition then
