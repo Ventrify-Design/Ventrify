@@ -1,0 +1,3 @@
+#!/bin/sh
+# Refuse to commit iCloud-evicted placeholder files. See tools/check-dataless.mjs.
+node "$(git rev-parse --show-toplevel)/tools/check-dataless.mjs" || exit 1
