@@ -2140,11 +2140,14 @@ export function runStallReason(rs) {
   const age = runAge(rs);
   if (age != null && age > (RUN_BUDGET_MIN + 10) * 60000) return 'over-budget';
 
-  // 2. SILENCE. A live runner beats every 2 minutes. Fifteen minutes of nothing means the process is gone,
-  //    whatever phase it last claimed to be in.
+  // 2. NO HEARTBEAT. A live runner beats every 2 minutes. Fifteen minutes of nothing means the process is
+  //    gone, whatever phase it last claimed to be in.
+  //    NB the reason is 'runner-gone', NOT 'silent' — assess-running.html?state=silent already means the
+  //    opposite thing (a run that has started and not yet reported, which is HEALTHY). One word, two
+  //    meanings, one design system is how someone ships a bug in six months.
   const quiet = runSilence(rs);
   if (quiet == null) return null;    // no heartbeat to read → we do NOT know → say nothing. Never cry wolf
-  return quiet > 15 * 60000 ? 'silent' : null;   //                    on a run we cannot actually measure.
+  return quiet > 15 * 60000 ? 'runner-gone' : null;   //                on a run we cannot actually measure.
 }
 
 export function runStalled(rs) { return runStallReason(rs) != null; }
@@ -2152,7 +2155,7 @@ export function runStalled(rs) { return runStallReason(rs) != null; }
 const STALL_COPY = {
   'never-picked-up': 'No runner picked this up. Nothing has started, so nothing is lost — run it again.',
   'over-budget': `The run passed its ${RUN_BUDGET_MIN}-minute limit and was stopped. Anything it finished was saved; re-run to complete it.`,
-  'silent': 'The runner has gone quiet — the process has stopped. Anything it finished was saved; re-run to complete it.',
+  'runner-gone': 'The runner has stopped responding. Anything it finished was saved; re-run to complete it.',
 };
 
 // linearProgress — ATOM. THE progress bar (.m3-prog). `value` 0–100 → determinate; null/indeterminate → the
