@@ -588,3 +588,24 @@
     .gate .gt { flex-basis: calc(100% - 54px); }
     .segs { margin-left: 54px; }
   }
+
+/* scoreProvenance — how many times this was scored, and on what evidence.
+   The `warn` state is the one that matters: the SAME deck scored twice, two different numbers. That is our
+   instrument moving, not the venture — and it must read as a caveat on the score, not as decoration beside it. */
+.score-prov {
+  display: flex; align-items: flex-start; gap: 10px;
+  margin: 18px 0 0; padding: 12px 14px;
+  border-radius: 12px;
+  font-size: var(--row-note, 13.5px); line-height: 1.5;
+  color: var(--m3-on-surface-variant, #5b5b6b);
+  background: var(--m3-surface-container, rgba(0,0,0,.03));
+}
+.score-prov .material-symbols-rounded { font-size: 18px; line-height: 1.4; flex: 0 0 auto; opacity: .8; }
+.score-prov b { font-weight: 600; color: var(--m3-on-surface, #1a1a2e); }
+.score-prov.warn {
+  color: var(--m3-on-surface, #1a1a2e);
+  background: color-mix(in srgb, var(--m3-error, #b3261e) 7%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--m3-error, #b3261e) 18%, transparent);
+}
+.score-prov.warn .material-symbols-rounded { color: var(--m3-error, #b3261e); opacity: 1; }
+@media (max-width: 640px) { .score-prov { margin-top: 14px; padding: 11px 12px; } }

@@ -1050,6 +1050,63 @@ export function investabilityHero(s, a = {}) {
   });
 }
 
+// scoreProvenance — HOW MANY TIMES WAS THIS SCORED, AND ON WHAT?
+//
+// We publish the NEWEST snapshot. Re-running is cheap and unguarded. So an operator who dislikes 67 could run
+// it again and keep 73, and every earlier number simply vanished from the screen — the whole history was
+// fetched and thrown away one line before it was rendered. That is a dial with no fingerprints, and it is the
+// owner's own experiment turned into an exploit: he ran one deck three times and got 66 / 70 / 77.
+//
+// The cure is not to forbid re-running — a re-run is legitimate and often necessary (the evidence changed, the
+// rubric improved, the last run died). The cure is that a re-run CANNOT BE INVISIBLE. Every run is on the
+// record, and each one now carries a fingerprint of the evidence that produced it (publish.js provenanceHash),
+// so the two cases are told apart and named:
+//
+//   · SAME evidence, a different number  → that is OUR instrument moving, not the venture. Say so, and show
+//     every number it produced. An operator may still re-run; he simply cannot do it quietly, and a reader can
+//     see exactly what was shopped.
+//   · DIFFERENT evidence                 → a legitimate re-score. The deck or data room changed; of course the
+//     number did.
+//
+// Legacy snapshots predate the fingerprint. We then know the run count but NOT whether the evidence changed —
+// so we say only what we know, and never guess.
+export function scoreProvenance(snaps = []) {
+  const list = (snaps || []).filter(Boolean);
+  if (list.length < 2) return '';                       // one run — nothing to disclose
+
+  const hashOf = s => (s && s.provenanceHash && s.provenanceHash.sha) || null;
+  const latest = list[list.length - 1];
+  const key = hashOf(latest);
+
+  // runs scored on the SAME evidence as the one on screen
+  const sameEvidence = key ? list.filter(s => hashOf(s) === key) : [];
+  const scores = sameEvidence.map(s => s.composite).filter(n => typeof n === 'number');
+  const spread = scores.length > 1 ? Math.max(...scores) - Math.min(...scores) : 0;
+
+  const rerunOfSame = sameEvidence.length > 1;
+  const evidenceChanged = key && list.some(s => hashOf(s) && hashOf(s) !== key);
+
+  let tone = 'muted', line;
+  if (rerunOfSame && spread > 0) {
+    // The uncomfortable one — and the whole reason this component exists.
+    tone = 'warn';
+    line = `Scored ${sameEvidence.length} times on <b>the same deck and data room</b>: ${scores.join(' · ')}.
+            The ${spread}-point difference is this tool, not the venture — no new evidence was supplied between these runs.`;
+  } else if (rerunOfSame) {
+    line = `Scored ${sameEvidence.length} times on the same deck and data room, and returned <b>${scores[0]}</b> every time.`;
+  } else if (evidenceChanged) {
+    line = `Re-scored after the evidence changed. Earlier runs judged a different deck or data room.`;
+  } else {
+    line = `Scored ${list.length} times. Earlier runs predate evidence fingerprinting, so whether they judged
+            the same material is not recorded.`;
+  }
+
+  return `<div class="score-prov ${tone}">
+    <span class="material-symbols-rounded">${tone === 'warn' ? 'balance' : 'history'}</span>
+    <span>${line}</span>
+  </div>`;
+}
+
 // Market tab hero — statement + valuationLockup (the reprice band). Figures from ASSESSMENT.valuation.
 export function marketHero(a = {}) {
   const h = (a.heroes && a.heroes.market) || {}, v = a.valuation || {};

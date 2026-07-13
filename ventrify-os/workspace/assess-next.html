@@ -52,13 +52,19 @@
   }
 
   // ── mutable live data (refreshed after actions / on subscription tick) ──
-  let invSnapshot = null, provCards = [], hubDocs = [], A = null, S = null;
+  let invSnapshot = null, invSnapshots = [], provCards = [], hubDocs = [], A = null, S = null;
   async function loadData() {
     invSnapshot = p.investabilitySnapshot || null; provCards = p.provCards || []; hubDocs = p.hubDocs || [];
+    invSnapshots = p.investabilitySnapshots || (invSnapshot ? [invSnapshot] : []);
     if (live) {
       try {
         const data = await import('../firebase/data.js');
-        const snaps = await data.listInvestabilitySnapshots(p.id); invSnapshot = snaps.length ? snaps[snaps.length - 1] : invSnapshot;
+        // Keep the WHOLE history, not just the newest. It was already being fetched and then thrown away —
+        // and since the newest snapshot is the one we publish, discarding the rest is precisely what let an
+        // operator who disliked 67 run it again and keep 73, with nothing on screen ever saying so.
+        const snaps = await data.listInvestabilitySnapshots(p.id);
+        invSnapshots = snaps || [];
+        invSnapshot = snaps.length ? snaps[snaps.length - 1] : invSnapshot;
         provCards = await data.listCardsForEngagement(p.id);
         hubDocs = await data.listHubDocs(p.id);
       } catch (e) { console.warn('live assessment data load failed', e); }
@@ -302,7 +308,7 @@
     const slim = (st.active || st.flagged) ? `<div class="brief" style="padding-bottom:0;margin-bottom:4px" id="ea-status">${DS.runBanner(st.rs)}</div>` : '<span id="ea-status"></span>';
     return `
       <div class="tab-panel active">${slim}${DS.missingDocs(A) ? `<div class="brief" style="padding-bottom:0">${DS.missingDocs(A)}</div>` : ''}${DS.verdictMemo(A, S)}</div>
-      <div class="tab-panel"><div class="brief">${DS.investabilityHero(S, A)}<hr class="rule">${DS.investabilityComposition(S, 'openInvest')}<hr class="rule">${DS.strengthProfile(S, 'openInvest')}</div></div>
+      <div class="tab-panel"><div class="brief">${DS.investabilityHero(S, A)}${DS.scoreProvenance(invSnapshots)}<hr class="rule">${DS.investabilityComposition(S, 'openInvest')}<hr class="rule">${DS.strengthProfile(S, 'openInvest')}</div></div>
       <div class="tab-panel">${DS.marketMemo(A)}</div>
       <div class="tab-panel">${DS.teamMemo(A)}</div>
       <div class="tab-panel">${DS.diligenceEditorial(A)}</div>
