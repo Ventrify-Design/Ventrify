@@ -84,6 +84,10 @@
   window.__gapPick = () => window.__toast('Upload the artefact — the assessment reads the file itself, never its name.');
   window.__gapClearFile = () => {};
   window.__gapDirty = () => DS.gapArmCTA(false);   // same DS helper the live page uses — no second copy to drift
+  // Same DS behaviour the live page wires. The demo must exercise these or the conformance gate never sees them
+  // — which is precisely how the last duplicated handler drifted to a no-op here without anyone noticing.
+  window.__gapAddUrl = () => { DS.gapAddUrl(); window.__gapDirty(); };
+  window.__gapRemoveUrl = (btn) => { DS.gapRemoveUrl(btn); window.__gapDirty(); };
   window.__gapFile = () => window.__toast('Filing evidence needs the live workspace — this is the design system.');
   window.__gapRescore = () => window.__toast('Re-scoring needs the live workspace — this is the design system.');
 

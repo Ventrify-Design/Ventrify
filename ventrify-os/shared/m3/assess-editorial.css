@@ -715,3 +715,38 @@
 /* re-file prompt — shown UNDER a fetch-failed receipt, above the form. A blocked fetch must never be a dead
    end: the receipt names the way out, and the form has to actually be there to take it. */
 .gap-refile { margin: 12px 0 16px; font-size: 13px; line-height: 1.5; font-weight: 500; color: var(--md-sys-color-on-surface); }
+
+/* MORE THAN ONE POINTER. An operator closing a gap often has several: the register entry AND the filing that
+   corroborates it, two officers, a page plus its PDF. One link per filing would force him to file the same gap
+   repeatedly — and each filing costs a 25-minute re-score, so the product would be punishing him for having
+   better evidence. Each row is its own record: fetched independently, own hash, own provenance. */
+.gap-url-row { display: grid; grid-template-columns: minmax(0, 1fr) 32px; gap: 6px; align-items: center; }
+.gap-url-row + .gap-url-row { margin-top: 8px; }
+.gap-url-row .field-in { min-width: 0; }
+.gap-url-rm {
+  display: grid; place-items: center; width: 32px; height: 32px; padding: 0;
+  border: none; border-radius: 8px; cursor: pointer;
+  background: transparent; color: var(--md-sys-color-on-surface-variant);
+}
+.gap-url-rm:hover { background: var(--md-sys-color-surface-container-highest); color: var(--md-sys-color-on-surface); }
+.gap-url-rm .material-symbols-rounded { font-size: 18px; }
+/* the first row is the only row → nothing to remove. Hidden, not absent, so the grid columns never shift. */
+.gap-url-row:only-child .gap-url-rm { visibility: hidden; pointer-events: none; }
+
+.gap-add-url {
+  display: inline-flex; align-items: center; gap: 4px;
+  margin-top: 8px; padding: 5px 8px 5px 4px;
+  border: none; border-radius: 8px; cursor: pointer;
+  background: transparent; color: var(--md-sys-color-primary);
+  font: inherit; font-size: 12.5px; font-weight: 600;
+}
+.gap-add-url:hover { background: color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent); }
+.gap-add-url .material-symbols-rounded { font-size: 17px; }
+
+/* A NOTE IS A SENTENCE, NOT A LINE. On a single-line <input> Return does nothing and the box cannot grow, so
+   the field tells the operator "one line is all you get" without ever saying so. */
+.field-in.field-ta {
+  min-height: 78px; height: auto; resize: vertical;
+  padding: 10px 12px; line-height: 1.5;
+  font: inherit; font-size: var(--row-sub, 13px);
+}

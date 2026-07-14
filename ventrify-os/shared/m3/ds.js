@@ -1202,9 +1202,12 @@ export function gapPanel(g, filing = null) {
   const control = settled ? `<section class="gap-sec">${gapReceipt(filing)}</section>` : `<section class="gap-sec">
     ${failed ? `${gapReceipt(filing)}<div class="gap-refile">Try again — upload the page, or point us somewhere we can reach.</div>` : ''}
     <div class="cd-h"><span class="lab">File the evidence</span><span class="sub">Point us at it</span></div>
-    ${formField({ label: 'Link to the source', id: 'gap-url', type: 'url', placeholder: 'https://…',
-                  attr: ' oninput="window.__gapDirty&&window.__gapDirty()"',
-                  hint: 'A page we can fetch. We read what is there — not what you say about it.' })}
+    <label class="field">
+      <span class="field-lab">Links to the source</span>
+      <div id="gap-urls">${gapUrlRow()}</div>
+      <button type="button" class="gap-add-url" onclick="window.__gapAddUrl&&window.__gapAddUrl()"><span class="material-symbols-rounded">add</span>Add another link</button>
+      <span class="field-hint">Pages we can fetch. We read what is there — not what you say about it. Each link is fetched and scored on its own.</span>
+    </label>
     <div class="gap-or"><span>or</span></div>
     ${docDropzone(((typeof window !== 'undefined' && window.__gapFiles) || []), {
       icon: 'upload_file', prompt: 'Upload the document',
@@ -1212,7 +1215,8 @@ export function gapPanel(g, filing = null) {
       single: true, status: 'stored', clearLabel: 'Remove',
       onPick: 'window.__gapPick()', onClear: 'window.__gapClearFile()',
     })}
-    ${formField({ label: 'Your note', optional: true, id: 'gap-note', placeholder: 'For your team — why you filed this.',
+    ${formField({ label: 'Your note', optional: true, id: 'gap-note', multiline: true, rows: 3,
+                  placeholder: 'For your team — why you filed this.',
                   hint: 'Recorded on the ledger and the memo, under your name. The assessment never reads it.' })}
     ${gapHonesty()}
   </section>`;
@@ -1234,10 +1238,40 @@ export function gapPanel(g, filing = null) {
 // not evidence and the button must never imply it is. It lives in the DS (not in the page) because it was
 // duplicated across the live page and the demo, and the demo's copy had already silently drifted to a no-op.
 export function gapArmCTA(hasFile = false) {
-  const btn = typeof document !== 'undefined' && document.getElementById('gap-file-btn');
+  if (typeof document === 'undefined') return;
+  const btn = document.getElementById('gap-file-btn');
   if (!btn) return;
-  const url = ((typeof document !== 'undefined' && document.getElementById('gap-url')) || {}).value || '';
-  btn.disabled = !(String(url).trim() || hasFile);
+  btn.disabled = !(gapUrls().length || hasFile);
+}
+
+// Every pointer the operator has typed. ONE source of truth for the whole form — the CTA arms from it and the
+// filing reads from it, so the button can never be enabled by a link the filing then fails to send.
+export function gapUrls() {
+  if (typeof document === 'undefined') return [];
+  const box = document.getElementById('gap-urls');
+  if (!box) return [];
+  return [...box.querySelectorAll('input')].map(i => String(i.value || '').trim()).filter(Boolean);
+}
+
+// The add/remove DOM work lives HERE, not in the page — for exactly the reason gapArmCTA does. These handlers
+// are needed by the live page AND the demo, and the last thing duplicated across both silently drifted to a
+// no-op in one of them. The pages own the WIRING (window.__gapAddUrl = …); the DS owns the BEHAVIOUR.
+export function gapAddUrl() {
+  if (typeof document === 'undefined') return;
+  const box = document.getElementById('gap-urls');
+  if (!box) return;
+  box.insertAdjacentHTML('beforeend', gapUrlRow());
+  const inputs = box.querySelectorAll('input');
+  const last = inputs[inputs.length - 1];
+  if (last) last.focus();
+}
+
+export function gapRemoveUrl(btn) {
+  if (typeof document === 'undefined') return;
+  const box = document.getElementById('gap-urls');
+  const row = btn && btn.closest && btn.closest('[data-url-row]');
+  // never remove the last row — the operator would be left with no way to type a link at all
+  if (row && box && box.querySelectorAll('[data-url-row]').length > 1) row.remove();
 }
 
 // scoreMovement — ORGANISM. After a re-score: WHICH SIGNALS MOVED, AND WHICH WAY.
@@ -2350,16 +2384,35 @@ export const STAGES = ['Pre-seed', 'Seed', 'Series A', 'Series B', 'Series C', '
 // or a native <select> dropdown when `options` is passed). Plain HTML (NOT md-outlined-text-field, which mis-sizes
 // in a narrow side-sheet) → reliable at any width, themeable, and the single field pattern for forms across the
 // product. opts: { label, value, placeholder, options:[str|{v,l}], hint, optional, attr, id, type }.
+// `multiline: true` renders a TEXTAREA rather than an input — for anything a person writes a SENTENCE into.
+// A single-line <input> silently swallows Return and cannot be grown, so a note field built on one tells the
+// operator "one line is all you get" without ever saying so. Resizable vertically; `rows` sets the start height.
 export function formField(opts = {}) {
-  const { label, value = '', placeholder = '', options, hint, optional, attr = '', id, type = 'text' } = opts;
+  const { label, value = '', placeholder = '', options, hint, optional, attr = '', id, type = 'text',
+          multiline = false, rows = 3 } = opts;
   const idAttr = id ? ` id="${esc(id)}"` : '';
   const control = options
     ? `<div class="field-ctl"><select class="field-in field-sel"${idAttr}${attr}>${[
         ...(placeholder ? [{ v: '', l: placeholder }] : []),
         ...options.map(o => (typeof o === 'string' ? { v: o, l: o } : o))
       ].map(o => `<option value="${esc(o.v)}"${o.v === value ? ' selected' : ''}>${esc(o.l)}</option>`).join('')}</select><span class="material-symbols-rounded field-chev">expand_more</span></div>`
-    : `<input class="field-in" type="${esc(type)}"${idAttr}${attr} value="${esc(value)}" placeholder="${esc(placeholder)}">`;
+    : multiline
+      ? `<textarea class="field-in field-ta" rows="${Number(rows) || 3}"${idAttr}${attr} placeholder="${esc(placeholder)}">${esc(value)}</textarea>`
+      : `<input class="field-in" type="${esc(type)}"${idAttr}${attr} value="${esc(value)}" placeholder="${esc(placeholder)}">`;
   return `<label class="field">${label ? `<span class="field-lab">${esc(label)}${optional ? ' <span class="field-opt">optional</span>' : ''}</span>` : ''}${control}${hint ? `<span class="field-hint">${esc(hint)}</span>` : ''}</label>`;
+}
+
+// gapUrlRow — ONE pointer. An operator closing a gap often has more than one: the register entry AND the
+// filing that corroborates it, two officers, a page plus its PDF. Forcing one link per filing would make him
+// file the same gap repeatedly, and each filing triggers a 25-minute re-score — so the product would be
+// punishing him for having better evidence. Each row becomes its OWN operatorEvidence record: fetched
+// independently, its own content-hash, its own provenance. The runner needs no change; it already iterates
+// every record filed against the engagement.
+export function gapUrlRow(value = '') {
+  return `<div class="gap-url-row" data-url-row>
+    <input class="field-in" type="url" value="${esc(value)}" placeholder="https://…" oninput="window.__gapDirty&&window.__gapDirty()">
+    <button type="button" class="gap-url-rm" title="Remove this link" onclick="window.__gapRemoveUrl&&window.__gapRemoveUrl(this)"><span class="material-symbols-rounded">close</span></button>
+  </div>`;
 }
 
 // assessmentWizard — ORGANISM. The 3-step assessment setup body (Name → Upload deck (gate) → Confirm & run) as a pure

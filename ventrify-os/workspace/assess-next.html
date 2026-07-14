@@ -280,13 +280,20 @@
   // The CTA is dead until there is an actual pointer. A note alone files nothing — prose is not evidence.
   window.__gapDirty = () => DS.gapArmCTA(!!gapPending);
 
+  // MORE THAN ONE POINTER. Each link is filed as its OWN record — fetched independently, own content-hash, own
+  // provenance — so the runner needs no change: it already iterates every record filed against the engagement.
+  // The BEHAVIOUR is in the DS (single source); the page only wires it, exactly as it does for gapArmCTA.
+  window.__gapAddUrl = () => { DS.gapAddUrl(); window.__gapDirty && window.__gapDirty(); };
+  window.__gapRemoveUrl = (btn) => { DS.gapRemoveUrl(btn); window.__gapDirty && window.__gapDirty(); };
+
   window.__gapFile = async (id) => {
     const g = (A.gapById && A.gapById[id]) || gapOpen;
     if (!g) return;
-    const url = ((document.getElementById('gap-url') || {}).value || '').trim();
+    const urls = DS.gapUrls();                                  // the same source the CTA arms from
     const note = ((document.getElementById('gap-note') || {}).value || '').trim();
-    if (!url && !gapPending) { window.__toast('Add a link or upload the document first.', true); return; }
-    if (url && !/^https?:\/\//i.test(url)) { window.__toast('That needs to be a full link, starting http:// or https://', true); return; }
+    if (!urls.length && !gapPending) { window.__toast('Add a link or upload the document first.', true); return; }
+    const bad = urls.find(u => !/^https?:\/\//i.test(u));
+    if (bad) { window.__toast('Each link needs to be a full URL, starting http:// or https://', true); return; }
     if (!live) { window.__toast('Filing evidence needs the live workspace — this is the demo.'); return; }
 
     // THE HONEST CONFIRM. It names the DOWN direction before he commits, and it says plainly that signals he
@@ -299,9 +306,9 @@
     });
     if (!ok) return;
 
-    window.__toast('Filing the record…');
+    window.__toast(urls.length > 1 ? `Filing ${urls.length} records…` : 'Filing the record…');
     try {
-      await EA.fileEvidence({ engagementId: p.id, gapId: g.id, url: url || null, file: gapPending, note: note || null });
+      await EA.fileEvidence({ engagementId: p.id, gapId: g.id, urls, file: gapPending, note: note || null });
       gapPending = null; window.__gapFiles = [];
       const started = await EA.rescore({ engagementId: p.id });
       window.closeAux && window.closeAux();

@@ -270,19 +270,42 @@ export async function revokeShare({ engagementId } = {}) {
 // NOTHING IS FETCHED HERE, and nothing is fetched by the scorer either (score-only.js pins --tools to
 // Read/Glob/Grep/Write with a scrubbed env — it CANNOT browse). The fetch happens in the RUNNER, an entire
 // phase before scoring, by a plain HTTP GET with no model in the path. This is a pure Firestore write.
-export async function fileEvidence({ engagementId, gapId, url = null, file = null, note = null } = {}) {
+// ONE RECORD PER POINTER. `urls` may hold several: an operator closing a gap often has the register entry AND
+// the filing that corroborates it. Filing them as one record would mean one fetch, one content-hash and one
+// provenance line for several distinct sources — so each becomes its own record instead. The runner needs no
+// change: pull-operator-evidence already iterates every record filed against the engagement, fetches each
+// independently, and hashes each on its own bytes.
+//
+// `url` (singular) is still accepted so no existing caller breaks.
+export async function fileEvidence({ engagementId, gapId, url = null, urls = null, file = null, note = null } = {}) {
   const data = await import('../firebase/data.js');
   const W = window.WORKSPACE || {};
   const me = (W.helpers && W.helpers.currentOperator && W.helpers.currentOperator()) || {};
-  let storagePath = null, rawExt = null, originalName = null;
+  const filedBy = me.email || me.name || null;
+
+  const list = (Array.isArray(urls) ? urls : (url ? [url] : [])).map(u => String(u || '').trim()).filter(Boolean);
+
+  // The upload rides on its OWN record too — it is a different KIND of evidence (operator-authored, no
+  // third-party tamper-evidence) and the runner's refute-only clamp keys off that. Folding it into a URL
+  // record would blur the one distinction the clamp depends on.
+  let uploadRec = null;
   if (file) {
     const up = await data.uploadEvidenceFile(engagementId, file);
-    storagePath = up.storagePath; rawExt = up.rawExt; originalName = file.name || null;
+    uploadRec = { storagePath: up.storagePath, rawExt: up.rawExt, originalName: file.name || null };
   }
-  return data.fileOperatorEvidence(engagementId, {
-    gapId, url, storagePath, rawExt, originalName, note,
-    filedBy: me.email || me.name || null,
-  });
+
+  const out = [];
+  for (const u of list) {
+    out.push(await data.fileOperatorEvidence(engagementId, {
+      gapId, url: u, storagePath: null, rawExt: null, originalName: null, note, filedBy,
+    }));
+  }
+  if (uploadRec) {
+    out.push(await data.fileOperatorEvidence(engagementId, {
+      gapId, url: null, ...uploadRec, note, filedBy,
+    }));
+  }
+  return out;
 }
 
 // ---- RE-SCORE on the filed evidence (the SAME dispatch path — phase:'rescore', no new api/ file) ----
