@@ -635,11 +635,41 @@
 .gs-cap b { color: var(--md-sys-color-on-surface); font-weight: 600; }
 
 /* WHERE WE LOOKED — the run's own searched[], verbatim. The trust block: it is the proof we genuinely
-   tried, in named places, before asking the operator for help. */
-.gap-try { display: grid; grid-template-columns: 34px 1fr auto; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--md-sys-color-outline-variant); }
+   tried, in named places, before asking the operator for help. So it has to be LEGIBLE, or it proves nothing.
+
+   It previously rendered the URL ONE CHARACTER PER LINE, vertically. Two mistakes compounding:
+     · `grid-template-columns: 34px 1fr auto` — the third column held the RESULT, which is a full sentence
+       ("JS-rendered SPA returned a loading/CSS error to the fetch tool"). An `auto` track sizes to its
+       content, so the sentence claimed the width and squeezed the middle column.
+     · `word-break: break-all` on the URL — which drops its min-content width to a SINGLE CHARACTER, so the
+       `1fr` track was free to collapse to 1ch. Hence the vertical text.
+   The real error was of layout, not of width: a sentence must never compete with a URL for horizontal space.
+   The result now sits on its OWN line beneath the source, where it can be read. */
+.gap-try {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);   /* icon + body. Nothing else competes for the row. */
+  gap: 4px 12px;
+  align-items: start;
+  padding: 12px 0;
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+}
 .gap-try:first-of-type { border-top: none; }
-.gap-try .src-note { word-break: break-all; }
-.gt-res { align-self: center; max-width: 40%; font-size: var(--row-cap, 11.5px); line-height: 1.35; text-align: right; color: var(--warning); font-weight: 500; }
+.gap-try .src-bd  { min-width: 0; }             /* the grid child must be allowed to shrink, or it overflows */
+.gap-try .src-nm  { overflow-wrap: break-word; }
+/* A URL must wrap — but at a boundary, never mid-character-per-line. `anywhere` breaks a long unbroken URL
+   without forcing a 1ch minimum on the track the way `break-all` did. */
+.gap-try .src-note { overflow-wrap: anywhere; word-break: normal; line-height: 1.45; }
+/* the outcome of that attempt — its own full-width line under the source it belongs to. */
+.gt-res {
+  grid-column: 2;
+  max-width: none;
+  text-align: left;
+  font-size: var(--row-cap, 11.5px);
+  line-height: 1.45;
+  color: var(--warning);
+  font-weight: 500;
+  overflow-wrap: break-word;
+}
 
 /* the pointer OR the artefact — both, always. The upload is not a nicety: it is the only path that works
    when a site blocks our fetcher, and half the registers that matter do. */

@@ -839,8 +839,14 @@ export const GAPS_RAW = [
     outcome: 'NOT-FOUND',
     sought: 'an AISP permission on the FCA register, under MoneyGym or a principal',
     source: { doc: 'assessment/claims-validation.md', row: 'Claim 14 — "FCA-regulated data access"' },
+    // ⚠ THE HARD CASE — keep it. The panel used to render a URL ONE CHARACTER PER LINE, vertically, and the
+    // fixture never caught it because every `result` here was two or three tidy words ("no match", "no firm
+    // found"). In production the fetcher writes whole sentences, and a sentence in an `auto` grid column
+    // squeezed the URL column to a single character. A fixture too tidy to fail is a fixture that proves
+    // nothing: this row carries a REAL long result and a REAL long URL, exactly as the runner emits them.
     searched: [
       { source: 'FCA Financial Services Register — firm search', url: 'https://register.fca.org.uk', result: 'no firm found' },
+      { source: 'FCA Register (direct)', url: 'https://register.fca.org.uk/s/search?q=monely%20limited&type=Companies&ref=ilumoni-authorisation-check', result: 'JS-rendered SPA returned a loading/CSS error to the fetch tool — page not renderable headlessly' },
       { source: 'FCA register — appointed-representative search', url: 'https://register.fca.org.uk', result: 'no match' },
     ],
     impact: { signals: ['execution.live_surfaces'], cappedAt: 0.5, observedScore: 0 },
