@@ -750,3 +750,26 @@
   padding: 10px 12px; line-height: 1.5;
   font: inherit; font-size: var(--row-sub, 13px);
 }
+
+/* THE GAP CHIP, BY STATE. It used to be one look — warn — with the ORIGINAL research word ("Not found") burned
+   into it forever, so a gap the operator had already filed evidence against still shouted NOT FOUND at him.
+   The chip now carries gapState(): what it is NOW, not what it was when we first failed to find it. */
+.gap-chip.gc-filed, .gap-chip.gc-captured, .gap-chip.gc-unchanged {
+  background: color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent);
+  color: var(--md-sys-color-primary);
+}
+.gap-chip.gc-resolved {
+  background: var(--success-container, color-mix(in srgb, #2e7d5b 22%, transparent));
+  color: var(--on-success-container, #7ee2b8);
+}
+.gap-chip.gc-contradicted {
+  background: color-mix(in srgb, var(--warning) 16%, transparent);
+  color: var(--warning);
+}
+.gap-chip.gc-unreachable {
+  background: color-mix(in srgb, var(--md-sys-color-error) 14%, transparent);
+  color: var(--md-sys-color-error);
+}
+/* the aux-panel standing band tracks the same state */
+.cd-band.green { background: var(--success-container, color-mix(in srgb, #2e7d5b 22%, transparent)); color: var(--on-success-container, #7ee2b8); }
+.cd-band.amber { background: color-mix(in srgb, var(--warning) 16%, transparent); color: var(--warning); }

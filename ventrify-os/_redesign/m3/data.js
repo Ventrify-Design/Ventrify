@@ -853,6 +853,23 @@ export const GAPS_RAW = [
     closesWith: ['regulator-record', 'filing', 'dataroom-doc'],
     status: 'open',
   },
+  {
+    // The gap ev-004 answers — and the evidence CONTRADICTED the venture, so the signal fell. Kept in the
+    // fixture deliberately: a demo in which every filing improves the score is a demo of a dial.
+    id: 'team-carter-advisor',
+    checkKind: 'press-or-public-record',
+    outcome: 'UNVERIFIED',
+    subject: 'Dr. Alison Carter — named advisory-board member',
+    sought: 'independent confirmation that she holds the advisory seat the deck claims',
+    source: { doc: 'assessment/team-diligence.md', row: 'Advisory board — claim 3' },
+    searched: [
+      { source: 'Companies House — appointments', url: 'https://find-and-update.company-information.service.gov.uk', result: 'no appointment at Monely Ltd' },
+      { source: 'Press archive — 3 outlets', url: null, result: '0 of 3 found' },
+    ],
+    impact: { signals: ['team.talent_attraction'], cappedAt: 1, observedScore: 0.5 },
+    closesWith: ['press-article', 'employment-record', 'dataroom-doc'],
+    status: 'open',
+  },
 ];
 
 // The operator's filed records — the append-only evidence ledger (engagements/{id}/operatorEvidence).
@@ -883,6 +900,34 @@ export const EVIDENCE_RAW = [
     httpStatus: 999, fetchError: 'the site returned a login wall, not a profile',
     note: 'His LinkedIn shows 8 years of ML leadership.',
     filedBy: 'antony@ventrify.io', filedAt: '2026-07-13T14:20:00Z',
+  },
+  // ── the two states the fixture never rendered, and therefore never protected ──
+  // Every gap state must appear HERE or the conformance gate never sees it, and a stale pill ships again. The
+  // last time the demo data was tidier than production, an operator was told "Not found" about a gap he had
+  // already filed evidence against.
+  {
+    // IN FLIGHT — fetched and read, the re-score has not landed. Must NOT read "Not found".
+    id: 'ev-003', gapId: 'exec-fca-permission', status: 'captured',
+    url: 'https://register.fca.org.uk/s/firm?id=001b000000MfYRgAAN',
+    httpStatus: 200, contentType: 'text/html', bytes: 18422,
+    contentSha: 'cc99dd88ee77665544332211aabbccddeeff00112233445566778899aabbccdd',
+    capturedFile: 'research/external-record-cc99dd88.md',
+    note: 'The AISP permission sits under the principal, not MoneyGym itself.',
+    filedBy: 'antony@ventrify.io', filedAt: '2026-07-14T09:05:00Z',
+  },
+  {
+    // THE SOURCE CONTRADICTED THE VENTURE and the signal FELL. This is the mechanism WORKING, and it must
+    // render as plainly as a rise — a feature that only ever shows the score going up is a dial.
+    id: 'ev-004', gapId: 'team-carter-advisor', status: 'captured',
+    url: 'https://find-and-update.company-information.service.gov.uk/officers/x9/appointments',
+    httpStatus: 200, contentType: 'text/html', bytes: 22140,
+    contentSha: 'ff11ee22dd33cc44bb55aa66998877665544332211aabbccddeeff0011223344',
+    capturedFile: 'research/external-record-ff11ee22.md',
+    note: 'Filed to confirm the advisory board seat.',
+    filedBy: 'antony@ventrify.io', filedAt: '2026-07-13T16:40:00Z',
+    rescoredIn: 'snap-0010', rescoredAt: '2026-07-13T17:12:00Z', batchRecords: 1,
+    signalDelta: [{ slug: 'team.talent_attraction', from: 1, to: 0.5 }],
+    compositeDelta: -1.3,
   },
 ];
 

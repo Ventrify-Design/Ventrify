@@ -416,7 +416,9 @@
     // The Diligence tab carries a small count when the run recorded gaps it could not close. It is the ONLY
     // ambient signal the feature gets: not a 7th tab (a permanent chapter about US, empty on the good deals)
     // and not a masthead count (which would compete with Run/Confirm/Decline and read as a venture defect).
-    const nGaps = (A.gaps || []).filter(g => g.status !== 'closed').length;
+    // Only gaps that STILL ASK SOMETHING OF HIM. A gap he has already filed evidence against must stop
+    // nagging him from the tab — DS.gapNeedsAction is the one derivation, shared with the row pill and counts.
+    const nGaps = (A.gaps || []).filter(g => DS.gapNeedsAction(g)).length;
     const tabs = st.hasVerdict
       ? ['Verdict', 'Investability', 'Market', 'Team', { label: 'Diligence', badge: nGaps || null }, 'Research']
       : false;

@@ -853,7 +853,7 @@ export function signalRows(subs = [], gapBySlug = {}, catKey = '') {
     const { note, ref } = cdSplitRef(x.note);
     const cls = x.score == null ? 'na' : x.score === 1 ? 'g' : x.score === 0.5 ? 'y' : 'r';
     const g = gapBySlug[`${catKey}.${x.slug}`] || gapBySlug[x.slug];
-    const trail = ref ? `<span class="cd-ev" title="${esc(ref)}">${esc(ref)}</span>` : (g ? gapChip(g.id, gapWord(g.outcome)) : '');
+    const trail = ref ? `<span class="cd-ev" title="${esc(ref)}">${esc(ref)}</span>` : (g ? gapChip(g) : '');
     return `<div class="cd-sig ${cls}">${cdChip(x.score)}<div class="bd"><div class="q">${esc(SUB_Q[x.slug] || x.slug)}</div><div class="nt${note ? '' : ' muted'}">${note ? esc(note) : 'Not yet scored — assessed when the research run completes.'}</div></div>${trail}</div>`;
   }).join('');
 }
@@ -1053,6 +1053,52 @@ const GAP_CLOSES = {
 };
 const GAP_OUTCOME = { 'NOT-FOUND': 'Not found', UNVERIFIED: 'Unverified', PARTIAL: 'Partial' };
 const gapWord = o => GAP_OUTCOME[o] || 'Not found';
+
+// gapState — THE ONE derivation of "where is this gap up to". Everything that renders gap state reads it.
+//
+// It exists because the state was being derived AD HOC in six places, and five of them only ever looked at
+// `g.outcome` — the ORIGINAL research result, which never changes. So a gap the operator had already filed
+// evidence against still displayed "Not found", on the row, on the chip, in the tab count. That is not a
+// cosmetic bug: the operator does the work, and the product tells him nothing happened. It is the one lie this
+// feature cannot afford, because the whole promise is "point us at it and we will look again".
+//
+// The lifecycle, in the order it actually happens:
+//   open         nothing filed                            → the original outcome ("Not found" / "Unverified")
+//   unreachable  filed, but the site blocked our fetcher  → still needs him: re-file, or upload the page
+//   filed        filed, not yet fetched
+//   captured     fetched and read, re-score not yet in
+//   resolved     re-scored, and the gap's own signal ROSE
+//   contradicted re-scored, and it FELL — the source did not support the claim. The mechanism WORKING.
+//   unchanged    re-scored, read, and the signal held. Honest: we looked, it changed nothing.
+//
+// `needsAction` is what the counts and the tab badge key off — a filed gap is no longer asking anything of him.
+export function gapState(g) {
+  const f = g && g.filing;
+  if (!f) return { key: 'open', label: gapWord(g && g.outcome), kind: 'warn', icon: 'search_off', needsAction: true };
+
+  if (f.status === 'fetch-failed')
+    return { key: 'unreachable', label: 'Could not retrieve', kind: 'err', icon: 'link_off', needsAction: true };
+
+  if (!f.rescoredIn)
+    return f.status === 'captured'
+      ? { key: 'captured', label: 'Re-scoring', kind: 'info', icon: 'hourglass_top', needsAction: false }
+      : { key: 'filed', label: 'Evidence filed', kind: 'info', icon: 'schedule', needsAction: false };
+
+  // SETTLED. Did THIS gap's own signal move, and which way? (Not the composite: several records can ride one
+  // re-score, and publish.js is explicit that per-record attribution is not knowable. The gap's own signals
+  // are, though — they are named on the gap itself.)
+  const mine = new Set(g.signals || []);
+  const moved = (f.signalDelta || []).filter(d => d && mine.has(d.slug));
+  const net = moved.reduce((n, d) => n + ((Number(d.to) || 0) - (Number(d.from) || 0)), 0);
+
+  if (net > 0) return { key: 'resolved', label: 'Resolved', kind: 'ok', icon: 'check_circle', needsAction: false };
+  if (net < 0) return { key: 'contradicted', label: 'Scored down', kind: 'warn', icon: 'trending_down', needsAction: false };
+  return { key: 'unchanged', label: 'No change', kind: 'info', icon: 'remove', needsAction: false };
+}
+
+// Does this gap still ask something of the operator? Open, or filed-but-unreachable. Counts and the tab badge
+// key off THIS, never off the raw list length — a gap he has already answered must stop nagging him.
+export const gapNeedsAction = g => gapState(g).needsAction;
 // the 35 rubric slugs arrive DOTTED from the runner (`team.founder_market_fit`); SUB_Q is keyed on the BARE
 // slug. One resolver, so no caller has to know that.
 export const subQuestion = slug => SUB_Q[String(slug || '').split('.').pop()] || String(slug || '');
@@ -1062,19 +1108,29 @@ const scoreWord = n => (n == null ? '—' : (SCORE_WORD[n] != null ? SCORE_WORD[
 // gapChip — ATOM. The ONE "this was not found — you can point us at it" affordance, wherever a gap is READ.
 // Its verb is "File evidence", never "Fix" / "Override" / "Correct": the operator supplies a POINTER TO
 // EVIDENCE, not a claim about evidence.
-export const gapChip = (gapId, label = 'Not found') =>
-  `<button class="gap-chip" onclick="window.openGap&&window.openGap('${esc(gapId)}')" aria-label="${esc(label)} — file evidence">
-    <span class="material-symbols-rounded">search_off</span><span class="gc-l">${esc(label)}</span><span class="gap-file">File evidence</span></button>`;
+// Takes the GAP, not a bare label — so it can never fall out of step with gapState(). The hover verb changes
+// with the state too: "File evidence" is wrong once he already has.
+export const gapChip = (g) => {
+  const id = typeof g === 'string' ? g : (g && g.id);
+  const st = typeof g === 'string' ? { key: 'open', label: 'Not found', icon: 'search_off' } : gapState(g);
+  const verb = st.needsAction ? 'File evidence' : 'Open';
+  return `<button class="gap-chip gc-${esc(st.key)}" onclick="window.openGap&&window.openGap('${esc(id)}')" aria-label="${esc(st.label)} — ${esc(verb.toLowerCase())}">
+    <span class="material-symbols-rounded">${esc(st.icon)}</span><span class="gc-l">${esc(st.label)}</span><span class="gap-file">${esc(verb)}</span></button>`;
+};
 
 // gapRow — the Diligence list row. A row() 'research' variant, so the row family stays unified (no new
 // row species). The cap line carries WHAT IT COST — as a CEILING, never as a projected gain.
 export const gapRow = g => {
   const k = gapKind(g.checkKind);
+  const st = gapState(g);
   const cap = [
     g.signalQuestion ? g.categoryLabel : '',
-    g.cappedAt != null ? `capped at ${scoreWord(g.cappedAt)} of 1 while open` : '',
+    // "capped at ½ while open" is only TRUE while it IS open. Once he has filed, the cap is no longer the
+    // story — what the evidence did to the signal is.
+    (st.needsAction && g.cappedAt != null) ? `capped at ${scoreWord(g.cappedAt)} of 1 while open` : '',
     g.observedScore != null ? `scored ${scoreWord(g.observedScore)}` : '',
     `${g.searched.length} search${g.searched.length === 1 ? '' : 'es'}`,
+    (!st.needsAction && g.filing && g.filing.filedBy) ? `filed by ${g.filing.filedBy}` : '',
   ].filter(Boolean).join(' · ');
   return row({
     variant: 'research', key: g.id, onDrill: 'window.openGap',
@@ -1082,7 +1138,7 @@ export const gapRow = g => {
     title: g.subject,
     sub: g.sought || (g.signalQuestion || ''),
     cap,
-    trail: { chip: { kind: 'warn', label: gapWord(g.outcome), icon: 'search_off' } },
+    trail: { chip: { kind: st.kind, label: st.label, icon: st.icon } },
   });
 };
 
@@ -1090,11 +1146,18 @@ export const gapRow = g => {
 // everything on renders nothing at all (same contract as teamGaps / marketSizing), so this can never
 // read as a permanent seventh chapter about us.
 export function openEvidence(a = {}) {
-  const gaps = (a.gaps || []).filter(g => g && g.status !== 'closed');
+  const gaps = (a.gaps || []).filter(Boolean);
   if (!gaps.length) return '';
+  const open  = gaps.filter(gapNeedsAction).length;   // still asking something of him
   const filed = gaps.filter(g => g.filing).length;
   const searches = gaps.reduce((n, g) => n + g.searched.length, 0);
-  const meta = [`${gaps.length} open`, `${searches} searches run`, filed && `${filed} filed`].filter(Boolean).join(' · ');
+  // "open" = still asking something of him. A gap he has already filed against is NOT open, and counting it as
+  // such was the same lie as the stale pill: it nags him for work he has already done.
+  const meta = [
+    open ? `${open} open` : 'all answered',
+    `${searches} searches run`,
+    filed && `${filed} filed`,
+  ].filter(Boolean).join(' · ');
   return `<hr class="rule"><section class="sec">
     <div class="sec-head">
       <span class="eyebrow warn">Unverified</span>
@@ -1172,7 +1235,8 @@ export function gapPanel(g, filing = null) {
   const ceiling = g.cappedAt != null
     ? `<p class="gs-cap">While this stays open the signal <b>cannot go above ${scoreWord(g.cappedAt)} of 1</b> — that is a ceiling on what the evidence can earn, not a promise of what closing it would pay.</p>`
     : '';
-  const stand = `<div class="cd-stand"><span class="cd-band red">${esc(gapWord(g.outcome))}</span>
+  const gst = gapState(g);
+  const stand = `<div class="cd-stand"><span class="cd-band ${gst.needsAction ? 'red' : (gst.key === 'resolved' ? 'green' : 'amber')}">${esc(gst.label)}</span>
     <p>We ran a <b>${esc(k.label.toLowerCase())}</b> check on <b>${esc(g.subject)}</b>${g.sought ? ` — looking for ${esc(g.sought)}` : ''}, and could not find it.
        The signal below was scored on that absence.</p>${ceiling}</div>
     <div class="cd-standing">${cost}</div>`;
@@ -1221,7 +1285,7 @@ export function gapPanel(g, filing = null) {
     ${gapHonesty()}
   </section>`;
 
-  const sub = [k.label, gapWord(g.outcome).toLowerCase(), g.categoryLabel].filter(Boolean).join(' · ');
+  const sub = [k.label, gapState(g).label.toLowerCase(), g.categoryLabel].filter(Boolean).join(' · ');
   return {
     title: g.subject,
     subtitle: sub,

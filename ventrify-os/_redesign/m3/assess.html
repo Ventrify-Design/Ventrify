@@ -55,7 +55,9 @@
       compact: A.name,
       actions: acts.decision.length ? acts.decision : (acts.primary ? [acts.primary] : []),
       tabs: ['Verdict', 'Investability', 'Market', 'Team',
-        { label: 'Diligence', badge: (A.gaps || []).filter(g => g.status !== 'closed').length || null }, 'Research'],
+        // DS.gapNeedsAction — the SAME derivation the live page and the row pills use. It counted every gap
+        // before, so a gap already answered kept nagging from the tab. `g.status` never becomes 'closed'.
+        { label: 'Diligence', badge: (A.gaps || []).filter(g => DS.gapNeedsAction(g)).length || null }, 'Research'],
       activeTab: 0
     }),
     body
