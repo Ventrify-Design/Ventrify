@@ -854,6 +854,24 @@ export const GAPS_RAW = [
     status: 'open',
   },
   {
+    // ⚠ THE CASE THE OPERATOR ACTUALLY HIT. He filed evidence; the gap's OWN signal held; and the score still
+    // went 75 → 76, because a cold re-score re-derives all 35 signals from the whole evidence base. The pill
+    // said "No change" to a man watching the number change in front of him. It must render "Score +1".
+    id: 'market-som-study',
+    checkKind: 'claim-substantiation',
+    outcome: 'UNVERIFIED',
+    subject: 'The 118M-install SOM funnel — the study behind the number',
+    sought: 'the underlying study or dataset the bottoms-up install figure is drawn from',
+    source: { doc: 'assessment/claims-validation.md', row: 'Claim 7 — SOM funnel' },
+    searched: [
+      { source: 'Data room — Market Analysis folder', url: null, result: 'the deck asserts it; no source attached' },
+      { source: 'Web — the cited firms', url: null, result: 'no matching publication' },
+    ],
+    impact: { signals: ['market.demand_validation'], cappedAt: 0.5, observedScore: 0 },
+    closesWith: ['study-or-report', 'dataroom-doc'],
+    status: 'open',
+  },
+  {
     // The gap ev-004 answers — and the evidence CONTRADICTED the venture, so the signal fell. Kept in the
     // fixture deliberately: a demo in which every filing improves the score is a demo of a dial.
     id: 'team-carter-advisor',
@@ -914,6 +932,21 @@ export const EVIDENCE_RAW = [
     capturedFile: 'research/external-record-cc99dd88.md',
     note: 'The AISP permission sits under the principal, not MoneyGym itself.',
     filedBy: 'antony@ventrify.io', filedAt: '2026-07-14T09:05:00Z',
+  },
+  {
+    // ⚠ THE OPERATOR'S ACTUAL CASE. The gap's OWN signal (market.demand_validation) is NOT in signalDelta —
+    // it held. But the cold re-score moved market.why_now, and the composite went +1 (75 → 76). The pill must
+    // read "Score +1", not "No change". This is the record that protects that.
+    id: 'ev-005', gapId: 'market-som-study', status: 'captured',
+    url: 'https://www.arizton.com/market-reports/us-financial-wellness-benefits-market',
+    httpStatus: 200, contentType: 'text/html', bytes: 30110,
+    contentSha: '77aa88bb99cc00dd11ee22ff33445566778899aabbccddeeff001122334455667',
+    capturedFile: 'research/external-record-77aa88bb.md',
+    note: 'The sizing study the funnel is drawn from.',
+    filedBy: 'antony@ventrify.io', filedAt: '2026-07-14T10:02:00Z',
+    rescoredIn: 'snap-0011', rescoredAt: '2026-07-14T10:29:00Z', batchRecords: 1,
+    signalDelta: [{ slug: 'market.why_now', from: 0.5, to: 1 }],   // NOT the gap's own signal
+    compositeDelta: 1,
   },
   {
     // THE SOURCE CONTRADICTED THE VENTURE and the signal FELL. This is the mechanism WORKING, and it must

@@ -1084,15 +1084,36 @@ export function gapState(g) {
       ? { key: 'captured', label: 'Re-scoring', kind: 'info', icon: 'hourglass_top', needsAction: false }
       : { key: 'filed', label: 'Evidence filed', kind: 'info', icon: 'schedule', needsAction: false };
 
-  // SETTLED. Did THIS gap's own signal move, and which way? (Not the composite: several records can ride one
-  // re-score, and publish.js is explicit that per-record attribution is not knowable. The gap's own signals
-  // are, though — they are named on the gap itself.)
+  // SETTLED. Two questions, and BOTH matter — reading only the first is what made the pill lie.
+  //
+  //   1. did THIS gap's own signal move?  → the precise answer, and the one the gap is about.
+  //   2. did the SCORE move?              → the answer the operator can SEE.
+  //
+  // These come apart, because a re-score is COLD: it re-derives all 35 signals from the whole evidence base.
+  // So a filed record can leave the gap's own signal exactly where it was and still move the composite through
+  // other signals — the score goes 75 → 76 while the gap's signal holds. Reporting only (1) meant the pill
+  // said "No change" to an operator watching the number change in front of him. Both get reported now.
+  //
+  // ATTRIBUTION, HONESTLY. publish.js stamps the SNAPSHOT-level composite move onto every record in the batch
+  // and records how many were in it — because which of three records moved a signal is not knowable from the
+  // outside. So the number is only shown when this record rode the re-score ALONE. With several, the move is
+  // real but unattributable, and we say "Re-scored" rather than invent a share of it.
   const mine = new Set(g.signals || []);
   const moved = (f.signalDelta || []).filter(d => d && mine.has(d.slug));
   const net = moved.reduce((n, d) => n + ((Number(d.to) || 0) - (Number(d.from) || 0)), 0);
 
-  if (net > 0) return { key: 'resolved', label: 'Resolved', kind: 'ok', icon: 'check_circle', needsAction: false };
-  if (net < 0) return { key: 'contradicted', label: 'Scored down', kind: 'warn', icon: 'trending_down', needsAction: false };
+  const d = Math.round((Number(f.compositeDelta) || 0) * 10) / 10;
+  const solo = (Number(f.batchRecords) || 1) === 1;
+  const pts = `${d > 0 ? '+' : '−'}${Math.abs(d)}`;              // en-dash for a fall, never a hyphen
+  const withPts = (w) => (solo && d ? `${w} · ${pts}` : w);
+
+  if (net > 0) return { key: 'resolved', label: withPts('Resolved'), kind: 'ok', icon: 'check_circle', needsAction: false };
+  if (net < 0) return { key: 'contradicted', label: withPts('Scored down'), kind: 'warn', icon: 'trending_down', needsAction: false };
+
+  // The gap's own signal held — but the score may still have moved, and he can see that it did.
+  if (d > 0) return { key: 'moved-up', label: solo ? `Score ${pts}` : 'Re-scored', kind: 'ok', icon: 'trending_up', needsAction: false };
+  if (d < 0) return { key: 'moved-down', label: solo ? `Score ${pts}` : 'Re-scored', kind: 'warn', icon: 'trending_down', needsAction: false };
+
   return { key: 'unchanged', label: 'No change', kind: 'info', icon: 'remove', needsAction: false };
 }
 

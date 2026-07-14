@@ -773,3 +773,7 @@
 /* the aux-panel standing band tracks the same state */
 .cd-band.green { background: var(--success-container, color-mix(in srgb, #2e7d5b 22%, transparent)); color: var(--on-success-container, #7ee2b8); }
 .cd-band.amber { background: color-mix(in srgb, var(--warning) 16%, transparent); color: var(--warning); }
+/* the gap's own signal held, but the COLD re-score moved the composite through other signals. He can see the
+   number changed, so the pill must say so — "No change" was a lie told to a man watching 75 become 76. */
+.gap-chip.gc-moved-up   { background: var(--success-container, color-mix(in srgb, #2e7d5b 22%, transparent)); color: var(--on-success-container, #7ee2b8); }
+.gap-chip.gc-moved-down { background: color-mix(in srgb, var(--warning) 16%, transparent); color: var(--warning); }
