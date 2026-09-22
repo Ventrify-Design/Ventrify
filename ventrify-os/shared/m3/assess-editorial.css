@@ -597,17 +597,17 @@
   margin: 18px 0 0; padding: 12px 14px;
   border-radius: 12px;
   font-size: var(--row-note, 13.5px); line-height: 1.5;
-  color: var(--m3-on-surface-variant, #5b5b6b);
-  background: var(--m3-surface-container, rgba(0,0,0,.03));
+  color: var(--md-sys-color-on-surface-variant);
+  background: var(--md-sys-color-surface-container);
 }
 .score-prov .material-symbols-rounded { font-size: 18px; line-height: 1.4; flex: 0 0 auto; opacity: .8; }
-.score-prov b { font-weight: 600; color: var(--m3-on-surface, #1a1a2e); }
+.score-prov b { font-weight: 600; color: var(--md-sys-color-on-surface); }
 .score-prov.warn {
-  color: var(--m3-on-surface, #1a1a2e);
-  background: color-mix(in srgb, var(--m3-error, #b3261e) 7%, transparent);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--m3-error, #b3261e) 18%, transparent);
+  color: var(--md-sys-color-on-surface);
+  background: color-mix(in srgb, var(--md-sys-color-error) 7%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--md-sys-color-error) 18%, transparent);
 }
-.score-prov.warn .material-symbols-rounded { color: var(--m3-error, #b3261e); opacity: 1; }
+.score-prov.warn .material-symbols-rounded { color: var(--md-sys-color-error); opacity: 1; }
 @media (max-width: 640px) { .score-prov { margin-top: 14px; padding: 11px 12px; } }
 
 /* ============================================================

@@ -1098,12 +1098,14 @@ export function gapState(g) {
   // and records how many were in it — because which of three records moved a signal is not knowable from the
   // outside. So the number is only shown when this record rode the re-score ALONE. With several, the move is
   // real but unattributable, and we say "Re-scored" rather than invent a share of it.
+  // The same holds when the INSTRUMENT changed under the re-score (publish.js `instrumentChanged` — a new
+  // scoring model or rubric since the previous snapshot): the delta is the evidence AND the upgrade, inseparably.
   const mine = new Set(g.signals || []);
   const moved = (f.signalDelta || []).filter(d => d && mine.has(d.slug));
   const net = moved.reduce((n, d) => n + ((Number(d.to) || 0) - (Number(d.from) || 0)), 0);
 
   const d = Math.round((Number(f.compositeDelta) || 0) * 10) / 10;
-  const solo = (Number(f.batchRecords) || 1) === 1;
+  const solo = (Number(f.batchRecords) || 1) === 1 && !f.instrumentChanged;
   const pts = `${d > 0 ? '+' : '−'}${Math.abs(d)}`;              // en-dash for a fall, never a hyphen
   const withPts = (w) => (solo && d ? `${w} · ${pts}` : w);
 
@@ -1376,11 +1378,25 @@ export function scoreMovement(filings = []) {
   const batch = settled.filter(f => f.rescoredIn === latest.rescoredIn);
   const d = Number(latest.compositeDelta || 0);
   const moved = latest.signalDelta || [];
+  // A re-score taken with a DIFFERENT instrument (new scoring model or rubric) than the score before it cannot
+  // credit its move to the evidence — the upgrade moved it too. Report the move; do not attribute it.
+  const upgraded = !!latest.instrumentChanged;
+  const pts = n => `${n} point${n === 1 ? '' : 's'}`;
+  // WHICH half of the instrument changed — the ledger records it (publish.js instrumentChange). A rubric edit
+  // is not a model upgrade, and calling every change "a new model" would be a confident guess about our own tool.
+  const ic = latest.instrumentChange || {};
+  const what = ic.model && ic.rubric ? 'an upgraded scoring model and revised scoring criteria'
+    : ic.rubric && !ic.model ? 'revised scoring criteria'
+    : ic.model ? 'an upgraded scoring model'
+    : 'a changed scoring model or criteria';
 
-  const verdict = d > 0
-    ? `The evidence you filed <b>raised</b> the score by ${d} point${d === 1 ? '' : 's'}.`
+  const verdict = upgraded
+    ? (d ? `The score moved <b>${d > 0 ? 'up' : 'down'}</b> by ${pts(Math.abs(d))} on this re-score — but it was also the first scored with ${what}, so the move cannot be credited to your evidence alone.`
+         : `The score <b>held</b> on this re-score, which was also the first taken with ${what}.`)
+    : d > 0
+    ? `The evidence you filed <b>raised</b> the score by ${pts(d)}.`
     : d < 0
-      ? `The evidence you filed <b>lowered</b> the score by ${Math.abs(d)} point${Math.abs(d) === 1 ? '' : 's'}. The source did not support the claim — that is the mechanism working, not failing.`
+      ? `The evidence you filed <b>lowered</b> the score by ${pts(Math.abs(d))}. The source did not support the claim — that is the mechanism working, not failing.`
       : `The score <b>held</b>. The evidence was read and it changed nothing.`;
   const drop = d > 0 ? 'Up.' : d < 0 ? 'Down.' : 'Held.';
 
@@ -1401,7 +1417,7 @@ export function scoreMovement(filings = []) {
     <div class="sec-head"><span class="eyebrow accent">The re-score</span><span class="t">What your evidence moved</span><span class="meta">${esc(meta)}</span></div>
     <p class="lead"><span class="drop">${drop}</span> ${verdict}</p>
     <div class="profile">${rows}</div>
-    <div class="profile-foot"><span>Scored cold against the filed document${batch.length > 1 ? 's' : ''}. Your note was not read by the assessment.${batch.length > 1 ? ' With several records in one re-score, we do not claim which one moved which signal.' : ''}</span></div>
+    <div class="profile-foot"><span>Scored cold against the filed document${batch.length > 1 ? 's' : ''}. Your note was not read by the assessment.${batch.length > 1 ? ' With several records in one re-score, we do not claim which one moved which signal.' : ''}${upgraded ? ` The signal moves shown include the effect of ${what}.` : ''}</span></div>
   </section>`;
 }
 
@@ -1480,31 +1496,59 @@ export function investabilityHero(s, a = {}) {
 //
 // Legacy snapshots predate the fingerprint. We then know the run count but NOT whether the evidence changed —
 // so we say only what we know, and never guess.
+//
+// "THE SAME" HAS TWO HALVES, and reading only one is how this component lied. It keyed on provenanceHash alone
+// — the founder's room — so a RESCORE after the operator filed evidence (same room, new augmentHash) was told
+// "no new evidence was supplied … this is the tool", which is the precise opposite of what happened. And a
+// scoring-model upgrade on an unchanged deck would have been branded instrument noise too.
+//   EVIDENCE   = the founder's room (provenanceHash) + the operator's records (augmentHash)
+//   INSTRUMENT = the rubric (rubricHash) + the model that applied it (scorer.model; unstamped = unrecorded)
+// Only runs matching on BOTH are re-rolls, and only a re-roll's spread is the tool's fault.
+const evidenceOf = s => (s && s.provenanceHash && s.provenanceHash.sha)
+  ? `${s.provenanceHash.sha}+${(s.augmentHash && s.augmentHash.sha) || '-'}` : null;
+const instrumentOf = s => `${(s && s.rubricHash) || '?'}|${(s && s.scorer && s.scorer.model) || 'unrecorded'}`;
+
 export function scoreProvenance(snaps = []) {
   const list = (snaps || []).filter(Boolean);
   if (list.length < 2) return '';                       // one run — nothing to disclose
 
-  const hashOf = s => (s && s.provenanceHash && s.provenanceHash.sha) || null;
+  const roomOf = s => (s && s.provenanceHash && s.provenanceHash.sha) || null;
   const latest = list[list.length - 1];
-  const key = hashOf(latest);
+  const key = evidenceOf(latest);
 
-  // runs scored on the SAME evidence as the one on screen
-  const sameEvidence = key ? list.filter(s => hashOf(s) === key) : [];
-  const scores = sameEvidence.map(s => s.composite).filter(n => typeof n === 'number');
-  const spread = scores.length > 1 ? Math.max(...scores) - Math.min(...scores) : 0;
+  // runs on the SAME evidence as the one on screen — and, of those, the ones taken with the SAME instrument
+  const sameEvidence = key ? list.filter(s => evidenceOf(s) === key) : [];
+  const rerolls = sameEvidence.filter(s => instrumentOf(s) === instrumentOf(latest));
+  const scores = rerolls.map(s => s.composite).filter(n => typeof n === 'number');
+  const spread = scores.length > 1 ? Math.round((Math.max(...scores) - Math.min(...scores)) * 10) / 10 : 0;
 
-  const rerunOfSame = sameEvidence.length > 1;
-  const evidenceChanged = key && list.some(s => hashOf(s) && hashOf(s) !== key);
+  const upgraded = sameEvidence.filter(s => instrumentOf(s) !== instrumentOf(latest));
+  const modelMoved = upgraded.some(s => ((s.scorer && s.scorer.model) || 'unrecorded') !== ((latest.scorer && latest.scorer.model) || 'unrecorded'));
+  const operatorFiled = key && list.some(s => evidenceOf(s) && evidenceOf(s) !== key && roomOf(s) === roomOf(latest));
+  const roomChanged = key && list.some(s => roomOf(s) && roomOf(s) !== roomOf(latest));
 
   let tone = 'muted', line;
-  if (rerunOfSame && spread > 0) {
+  if (rerolls.length > 1 && spread > 0) {
     // The uncomfortable one — and the whole reason this component exists.
     tone = 'warn';
-    line = `Scored ${sameEvidence.length} times on <b>the same deck and data room</b>: ${scores.join(' · ')}.
+    line = `Scored ${rerolls.length} times on <b>the same deck and data room</b>: ${scores.join(' · ')}.
             The ${spread}-point difference is this tool, not the venture — no new evidence was supplied between these runs.`;
-  } else if (rerunOfSame) {
-    line = `Scored ${sameEvidence.length} times on the same deck and data room, and returned <b>${scores[0]}</b> every time.`;
-  } else if (evidenceChanged) {
+  } else if (rerolls.length > 1) {
+    line = `Scored ${rerolls.length} times on the same deck and data room, and returned <b>${scores[0]}</b> every time.`;
+  } else if (upgraded.length) {
+    // An instrument change must not ERASE what came before it. Showing a single "before" would hide the case
+    // this component exists for: three runs on the same deck that disagreed (67 · 73 · 78) are still our
+    // instrument moving, and an upgrade since does not settle that — so their spread keeps the warn tone.
+    const prevInstrument = instrumentOf(upgraded[upgraded.length - 1]);
+    const before = upgraded.filter(s => instrumentOf(s) === prevInstrument).map(s => s.composite).filter(n => typeof n === 'number');
+    const beforeSpread = before.length > 1 ? Math.round((Math.max(...before) - Math.min(...before)) * 10) / 10 : 0;
+    if (beforeSpread > 0) tone = 'warn';
+    line = `Re-scored on the same evidence with ${modelMoved ? 'an upgraded scoring model' : 'revised scoring criteria'}:
+            <b>${latest.composite}</b> now, against ${before.join(' · ')} before. The change reflects the instrument, not new evidence.
+            ${beforeSpread > 0 ? `The earlier ${before.length} runs disagreed by ${beforeSpread} points among themselves — on the same deck, with no new evidence between them.` : ''}`;
+  } else if (operatorFiled) {
+    line = `Re-scored after evidence was filed by an operator. Earlier runs did not have it.`;
+  } else if (roomChanged) {
     line = `Re-scored after the evidence changed. Earlier runs judged a different deck or data room.`;
   } else {
     line = `Scored ${list.length} times. Earlier runs predate evidence fingerprinting, so whether they judged

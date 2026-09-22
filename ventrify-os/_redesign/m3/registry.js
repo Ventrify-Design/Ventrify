@@ -556,10 +556,33 @@ export const CATALOG = {
     level: 'organism', group: 'Organisms', domain: 'Assessment', title: 'The re-score \u2014 what moved', sig: 'scoreMovement(filings)',
     blurb: 'After a re-score: WHICH SIGNALS MOVED AND WHICH WAY. Renders a FALL exactly as plainly as a rise \u2014 a fall is the mechanism WORKING (the source did not support the claim), and softening it would turn the feature back into a dial. A re-score that moved nothing is also a result and is stated as one. Deltas are READ from the ledger (publish.js), never re-derived here.',
     maxw: null, pad: false,
-    html: () => `<div class="brief" style="padding:8px 28px 20px">${DS.scoreMovement(AG.filings)}</div>`,
-    props: [{ name: 'filings', type: '[{rescoredIn, signalDelta:[{slug,from,to}], compositeDelta}]  \u2014 compositeDelta MAY BE NEGATIVE' }],
-    variants: [{ label: 'Up' }, { label: 'Down', note: 'the source contradicted the claim \u2014 rendered just as plainly' }, { label: 'Held', note: 'read, and changed nothing' }], usedIn: ['Assessment \u00b7 Investability'],
+    html: () => `<div class="brief" style="padding:8px 28px 20px">${DS.scoreMovement(AG.filings)}</div>`
+      + `<div class="brief" style="padding:8px 28px 20px">${DS.scoreMovement(AG.filings.map(f => ({ ...f, instrumentChanged: true })))}</div>`,
+    props: [{ name: 'filings', type: '[{rescoredIn, signalDelta:[{slug,from,to}], compositeDelta, batchRecords, instrumentChanged}]  \u2014 compositeDelta MAY BE NEGATIVE' }],
+    variants: [{ label: 'Up' }, { label: 'Down', note: 'the source contradicted the claim \u2014 rendered just as plainly' }, { label: 'Held', note: 'read, and changed nothing' }, { label: 'Model upgraded', note: 'instrumentChanged \u2014 the move is reported but NOT credited to the evidence' }], usedIn: ['Assessment \u00b7 Investability'],
     adaptive: { status: 'built', layout: { mobile: 'Rows stack.', tablet: 'As desktop.', desktop: 'Full.' }, content: { mobile: 'Full.', tablet: 'Full.', desktop: 'Full.' } }
+  },
+  scoreProvenance: {
+    level: 'molecule', group: 'Molecules', domain: 'Assessment', title: 'Score provenance \u2014 how many times, on what', sig: 'scoreProvenance(snapshots)',
+    blurb: 'A re-run CANNOT BE INVISIBLE. Every score this deck was given is on the record, and runs are told apart on TWO halves: the EVIDENCE (founder\u2019s room + operator records) and the INSTRUMENT (rubric + scoring model). Only runs matching on both are re-rolls, and only a re-roll\u2019s spread is flagged as the tool\u2019s fault \u2014 a model upgrade or filed evidence is named for what it is.',
+    maxw: 640, pad: true,
+    html: () => {
+      const P = { sha: 'a1b2c3d4e5f60718', docs: 58 }, R = '9f8e7d6c5b4a3921', M = { model: 'claude-opus-5', effort: 'max', cli: '2.1.278' };
+      const s = (composite, extra = {}) => ({ composite, provenanceHash: P, augmentHash: null, rubricHash: R, scorer: M, ...extra });
+      const sets = [
+        [s(67), s(73), s(78)],                                                        // re-roll, spread \u2192 warn
+        [s(73), s(73), s(73)],                                                        // re-roll, stable
+        [s(75), s(76, { augmentHash: { sha: '130766ae2e3d9495', records: 1 } })],     // operator filed evidence
+        [s(73, { scorer: undefined }), s(71)],                                        // scoring model upgraded
+        [s(67, { scorer: undefined }), s(73, { scorer: undefined }), s(78, { scorer: undefined }), s(71)],  // upgrade AFTER a re-roll spread — the earlier disagreement survives
+        [s(64, { provenanceHash: { sha: '0000aaaa1111bbbb', docs: 41 } }), s(73)],    // the deck / data room changed
+        [{ composite: 24.5 }, { composite: 68 }],                                     // legacy: before fingerprinting
+      ];
+      return sets.map(x => DS.scoreProvenance(x)).join('<div style="height:10px"></div>');
+    },
+    props: [{ name: 'snapshots', type: '[{composite, provenanceHash:{sha}, augmentHash:{sha}|null, rubricHash, scorer:{model,effort,cli}}]  \u2014 oldest first' }],
+    variants: [{ label: 'Re-roll (warn)', note: 'same evidence + same instrument, different number' }, { label: 'Re-roll (stable)' }, { label: 'Operator evidence', note: 'same room, new augmentHash' }, { label: 'Model upgraded', note: 'same evidence, new scorer.model' }, { label: 'Upgraded after a spread', note: 'an upgrade does not erase the earlier runs’ disagreement — stays warn' }, { label: 'Evidence changed' }, { label: 'Legacy', note: 'predates fingerprinting' }], usedIn: ['Assessment \u00b7 Investability'],
+    adaptive: { status: 'built', layout: { mobile: 'Full width, wraps.', tablet: 'Full.', desktop: 'Full.' }, content: { mobile: 'Full.', tablet: 'Full.', desktop: 'Full.' } }
   },
   diligenceEditorial: {
     level: 'organism', group: 'Organisms', domain: 'Assessment', title: 'Diligence checklist (editorial)', sig: 'diligenceEditorial(a)',
