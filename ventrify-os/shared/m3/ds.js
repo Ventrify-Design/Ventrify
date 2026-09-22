@@ -2636,7 +2636,11 @@ export function fmtElapsed(ms) {
 // The GitHub job's own timeout (run-phase.yml `timeout-minutes: 180`). Past this the job HAS been killed —
 // that is not an estimate, it is the contract. If nothing then updated Firestore, the run is an orphan and
 // would otherwise sit on screen saying "running" forever. That is the one case a stall signal must catch.
-export const RUN_BUDGET_MIN = 180;
+// ONE CONTRACT with the runner's `timeout-minutes` (ventrify-engagement-runner .github/workflows/run-phase.yml).
+// Raised 180 → 300 on 2026-09-22 with it: Opus 5's cold scoring draws take ~45-90 min each (≈20 on Opus 4.8),
+// so a real run outgrew the old budget and GitHub killed it mid-scoring. If these two numbers ever disagree,
+// the Workspace either cries "over-budget" at a healthy run or waits on one GitHub has already killed.
+export const RUN_BUDGET_MIN = 300;
 
 // SILENCE — how long since the runner last said anything. This is the honest health instrument.
 //
