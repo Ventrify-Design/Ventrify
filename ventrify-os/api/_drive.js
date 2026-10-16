@@ -52,7 +52,15 @@ function credentials() {
   if ((raw.startsWith('"') && raw.endsWith('"')) || (raw.startsWith("'") && raw.endsWith("'"))) raw = raw.slice(1, -1).trim();
   let c;
   try { c = JSON.parse(raw); }
-  catch (e) { throw new Error('drive_credential_malformed: the value is not JSON — it should start with { and be the whole service-account file'); }
+  catch (e) {
+    // Describe the SHAPE of what is stored, never its content: a Secret cannot be read back from the
+    // dashboard, so without this the only way to diagnose a bad paste is to delete and retry blind.
+    const shape = `${raw.length} chars, starts "${raw.slice(0, 6).replace(/[^\x20-\x7e]/g, '·')}", ` +
+      `${/^\{/.test(raw) ? 'opens with {' : 'does NOT open with {'}, ` +
+      `${raw.includes('service_account') ? 'contains service_account' : 'no service_account'}, ` +
+      `${raw.includes('BEGIN PRIVATE KEY') ? 'contains a private key' : 'NO private key'}`;
+    throw new Error('drive_credential_malformed: the value is not JSON — it should be the whole service-account file, starting with {. Stored value is ' + shape);
+  }
   if (!c.client_email || !c.private_key) throw new Error('drive_credential_malformed: JSON parsed but has no client_email / private_key');
   return c;
 }
