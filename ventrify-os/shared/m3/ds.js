@@ -1361,6 +1361,51 @@ export function gapRemoveUrl(btn) {
   if (row && box && box.querySelectorAll('[data-url-row]').length > 1) row.remove();
 }
 
+// roomCheck — ORGANISM. What the LINKED DATA ROOM appears to be missing, BEFORE a two-hour run is spent.
+//
+// It reports the SAME six founder artefact classes the scorer counts for `financial.files_complete` — not a
+// parallel checklist, because a second list would eventually disagree with the score and the score is the
+// product. The operator sees it seconds after pasting the link, which is the whole point: a gap is worth far
+// more before the run than after it.
+//
+// IT SAYS "WE COULD NOT SEE IT", NEVER "YOU ARE MISSING IT". A class can legitimately be satisfied inside
+// another document, so a keyword read can produce a false absence — and sending an operator to chase a cap
+// table the founder already supplied is worse than staying quiet. The wording carries that uncertainty, and
+// the panel offers to run anyway in the same breath.
+export function roomCheck(check = {}) {
+  const classes = check.classes || [], extras = check.strengtheners || [];
+  const unseen = classes.filter(c => !c.found);
+  const head = unseen.length
+    ? `${unseen.length} of ${classes.length} document types could not be found in the room`
+    : `All ${classes.length} document types the score looks for are present`;
+
+  // COMPACT density: this renders inside the ~390px setup panel, not the full-width assessment page, and the
+  // reading ramp wraps the trailing state onto two lines there.
+  const lines = classes.map(c => row({
+    variant: 'metric', key: c.key, density: 'compact',
+    lead: { sev: c.found ? 'strong' : 'gap' },
+    title: c.label,
+    sub: c.found ? `Seen in ${c.seenIn || 'the room'}` : c.want,
+    trail: { kind: 'value', value: c.found ? 'Present' : 'Not seen' },
+  })).join('');
+
+  const strengthen = extras.length ? `<div class="rc-extra">
+      <div class="rc-extra-h">Would strengthen the assessment</div>
+      ${extras.map(e => `<div class="rc-extra-i"><b>${esc(e.label)}</b><span>${esc(e.why)}</span></div>`).join('')}
+    </div>` : '';
+
+  return `<section class="sec rc">
+    <div class="sec-head"><span class="eyebrow accent">Data room</span><span class="t">${esc(head)}</span><span class="meta">${check.docCount || 0} documents read</span></div>
+    <div class="profile">${lines}</div>
+    ${strengthen}
+    ${(unseen.length || extras.length) ? `<div class="rc-act">
+      <button class="m3-btn tonal" type="button" onclick="window.__naRequestDocs&&window.__naRequestDocs()"><span class="material-symbols-rounded">outgoing_mail</span>Request these from the founder</button>
+      <span class="rc-act-x">or run the assessment on the room as it stands</span>
+    </div>` : ''}
+    <div class="profile-foot"><span>Read from the linked folder by filename and content. A document can satisfy more than one of these, and something we could not see may still be in there — the assessment reads everything either way.</span></div>
+  </section>`;
+}
+
 // scoreMovement — ORGANISM. After a re-score: WHICH SIGNALS MOVED, AND WHICH WAY.
 //
 // It renders a FALL exactly as plainly as a rise — a fall is the mechanism WORKING (the source did not support

@@ -57,6 +57,14 @@ async function extractText(name, buf) {
   return buf.toString('utf8');
 }
 
+const drive = require('./_drive.js');
+const { checkRoom } = require('./_roomcheck.js');
+
+// Drive files above this go to Storage rather than Firestore base64 chunks — the same threshold the browser
+// path uses (workspace/engagement-actions.js). A 34MB PDF base64-encodes to ~46MB, which has no business in
+// Firestore even chunked.
+const INLINE_MAX = 3 * 1024 * 1024;
+
 module.exports = async (req, res) => {
   if (req.method !== 'POST') { res.status(405).json({ error: 'method_not_allowed' }); return; }
   try {
@@ -66,9 +74,13 @@ module.exports = async (req, res) => {
     const file = body.file || {};
     const name = String(file.name || '').trim();
     const docType = body.docType === 'pitch' ? 'pitch' : 'dataroom';
+    const action = String(body.action || '').trim();
     let storagePath = (typeof body.storagePath === 'string' && body.storagePath) ? body.storagePath : null;
     if (!idToken) { res.status(401).json({ error: 'no_token' }); return; }
-    if (!engagementId || !name || (!file.dataBase64 && file.text == null && !storagePath)) { res.status(400).json({ error: 'bad_request' }); return; }
+    if (!engagementId) { res.status(400).json({ error: 'bad_request' }); return; }
+    // Read-only actions carry no file; only the ingest path needs one.
+    const READ_ONLY = ['drive-list', 'room-check'];
+    if (!READ_ONLY.includes(action) && (!name || (!file.dataBase64 && file.text == null && !storagePath && !file.driveId))) { res.status(400).json({ error: 'bad_request' }); return; }
 
     ensureAdmin();
     const decoded = await admin.auth().verifyIdToken(idToken);
@@ -93,6 +105,39 @@ module.exports = async (req, res) => {
     }
     if (!isFounder && !isOperator) { res.status(403).json({ error: 'forbidden' }); return; }
 
+    // ── LIST A LINKED GOOGLE DRIVE DATA ROOM ──────────────────────────────────────────────────────────
+    // Read-only, nothing stored: the operator gets the manifest (and what was skipped and why) BEFORE any
+    // ingesting happens, so a mis-shared or wrong folder costs five seconds rather than a full ingest.
+    if (action === 'drive-list') {
+      const folderId = drive.parseFolderId(body.folderUrl);
+      if (!folderId) { res.status(400).json({ error: 'bad_folder_link', detail: 'That does not look like a Google Drive folder link.' }); return; }
+      try {
+        const meta = await drive.folderMeta(folderId);
+        const { files, skipped, folders, truncated } = await drive.listFolder(folderId);
+        // Remember WHICH room this engagement is linked to: the gap-chasing email needs somewhere to send
+        // the founder, and watching the folder for new files later needs the id.
+        await db.collection('engagements').doc(engagementId).set({
+          dataRoom: { provider: 'google-drive', folderId, folderUrl: String(body.folderUrl || ''), folderName: meta.name, fileCount: files.length, linkedBy: caller, linkedAt: new Date().toISOString() }
+        }, { merge: true });
+        res.status(200).json({ ok: true, folderId, folderName: meta.name, files, skipped, folders, truncated });
+      } catch (e) {
+        const msg = String((e && e.message) || e);
+        const code = msg.startsWith('drive_') ? msg.split(':')[0] : 'drive_error';
+        res.status(code === 'drive_not_shared' ? 404 : 502).json({ error: code, detail: msg.slice(0, 300) });
+      }
+      return;
+    }
+
+    // ── WHAT THE ROOM APPEARS TO BE MISSING ───────────────────────────────────────────────────────────
+    // Runs the rubric's own six artefact classes over what has been ingested, so the operator can chase the
+    // founder BEFORE committing a two-hour run. Read-only, and deliberately not a score.
+    if (action === 'room-check') {
+      const snap = await db.collection('engagements').doc(engagementId).collection('founderDocs').get();
+      const docs = snap.docs.map(d => ({ name: d.data().name, text: d.data().text || '' }));
+      res.status(200).json({ ok: true, ...checkRoom(docs) });
+      return;
+    }
+
     // A client may only register a Storage object under THIS engagement's prefix.
     if (storagePath && !storagePath.startsWith(`founder-docs/${engagementId}/`)) { res.status(403).json({ error: 'bad_storage_path' }); return; }
 
@@ -116,6 +161,17 @@ module.exports = async (req, res) => {
     if (storagePath) {
       try { const [dl] = await bucket.file(storagePath).download(); buf = dl; }
       catch (e) { res.status(422).json({ error: 'storage_read_failed', detail: String((e && e.message) || e).slice(0, 200) }); return; }
+    } else if (file.driveId) {
+      // Fetched server-side: the Drive credential never reaches the browser. Native Google formats are
+      // exported on the way out (a Doc downloaded raw is an empty file, which is this integration's
+      // classic silent failure).
+      try { buf = await drive.fetchFile({ driveId: file.driveId, exportMime: file.exportMime || null, name }); }
+      catch (e) { res.status(502).json({ error: 'drive_download_failed', detail: String((e && e.message) || e).slice(0, 200) }); return; }
+      if (buf.length > INLINE_MAX) {
+        storagePath = `founder-docs/${engagementId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${(name.split('.').pop() || 'bin').toLowerCase()}`;
+        try { await bucket.file(storagePath).save(buf, { contentType: mimeFor((name.split('.').pop() || '').toLowerCase()) || undefined }); }
+        catch (e) { res.status(502).json({ error: 'storage_write_failed', detail: String((e && e.message) || e).slice(0, 200) }); return; }
+      }
     } else if (file.dataBase64 != null) {
       buf = Buffer.from(String(file.dataBase64).replace(/^data:[^;]+;base64,/, ''), 'base64');
     }

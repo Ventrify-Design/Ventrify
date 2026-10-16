@@ -589,6 +589,15 @@
     .segs { margin-left: 54px; }
   }
 
+/* roomCheck — the pre-run data-room playback. Reuses .sec / .profile / .mrow wholesale; only the
+   "would strengthen" block is its own, and it is deliberately quieter than the six classes above it:
+   those are what the score counts, these are optional upside. */
+.rc .rc-extra { margin-top: 14px; padding: 13px 15px; border-radius: 10px; background: var(--md-sys-color-surface-container); display: flex; flex-direction: column; gap: 9px; }
+.rc .rc-extra-h { font-size: var(--row-note, 13px); font-weight: 600; color: var(--md-sys-color-on-surface); }
+.rc .rc-extra-i { display: flex; flex-direction: column; gap: 1px; }
+.rc .rc-extra-i b { font-size: var(--row-note, 13px); font-weight: 500; color: var(--md-sys-color-on-surface); }
+.rc .rc-extra-i span { font-size: 12.5px; line-height: 1.45; color: var(--md-sys-color-on-surface-variant); }
+
 /* scoreProvenance — how many times this was scored, and on what evidence.
    The `warn` state is the one that matters: the SAME deck scored twice, two different numbers. That is our
    instrument moving, not the venture — and it must read as a caveat on the score, not as decoration beside it. */

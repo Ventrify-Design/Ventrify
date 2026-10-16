@@ -7,7 +7,7 @@
 // NO app.js edits, no pipeline touch. Pure read + present.
 // ============================================================
 
-import { _esc as esc, formField, STAGES, docDropzone, linearProgress } from '../shared/m3/ds.js';   // ONE real HTML escaper + the single-source form-field / dropzone molecules + the shared stage list
+import { _esc as esc, formField, STAGES, docDropzone, linearProgress, roomCheck } from '../shared/m3/ds.js';   // ONE real HTML escaper + the single-source form-field / dropzone molecules + the shared stage list
 function initials(name) {
   return String(name || '').trim().split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || 'V';
 }
@@ -21,7 +21,10 @@ const HUB_IDS = ['research', 'vision', 'strategy', 'financials', 'marketing', 'v
 
 // Files staged in the panel — held in memory and uploaded only once the engagement exists (ingest
 // needs an engagementId). Reset every time the panel opens.
-const NA = { deck: null, docs: [], busy: false, deckStatus: '', docStatus: {} };
+const NA = { deck: null, docs: [], busy: false, deckStatus: '', docStatus: {},
+  // A LINKED data room. `createdId` is set once the engagement exists — reading the room has to create
+  // it first, so Run must then skip creation rather than making a second engagement.
+  driveUrl: '', driveFiles: null, roomRead: false, createdId: null, created: null };
 const DOC_ACCEPT = '.pdf,.docx,.xlsx,.xls,.xlsm,.txt,.md,.csv,.zip';
 
 function naInput() {
@@ -108,6 +111,7 @@ export function openNewAssessment() {
     body: `<div class="na-form">
       ${formField({ label: 'Venture name', id: 'na-name', placeholder: 'e.g. Verdana Bio', attr: ' autocomplete="off"' })}
       ${formField({ label: 'Founder', id: 'na-founder', placeholder: 'e.g. Jane Okafor', hint: 'Who the assessment is about — the agents diligence them by name', attr: ' autocomplete="off"' })}
+      ${formField({ label: 'Founder email', id: 'na-founder-email', optional: true, type: 'email', placeholder: 'jane@acme.com', hint: 'Only needed to ask them for missing data-room documents' })}
       ${formField({ label: 'Assessor', id: 'na-op', options: opList })}
       <div class="na-two">
         ${formField({ label: 'Website', id: 'na-site', optional: true, type: 'url', placeholder: 'acme.com' })}
@@ -120,6 +124,13 @@ export function openNewAssessment() {
       <div class="na-sec">
         <span class="na-lab">Data room <span class="field-opt">optional</span></span>
         <div id="na-docs">${docDropzone([], naDocsOpts)}</div>
+        <div class="na-drive">
+          <div class="na-drive-row">
+            ${formField({ label: 'Or link a Google Drive folder', id: 'na-drive', optional: true, type: 'url', placeholder: 'https://drive.google.com/drive/folders/…', hint: 'Shared with anyone who has the link, or with dataroom-reader@ventrify-os.iam.gserviceaccount.com' })}
+            <button class="m3-btn tonal na-drive-go" type="button" onclick="window.__naReadRoom()">Read data room</button>
+          </div>
+          <div id="na-room"></div>
+        </div>
       </div>
       <div class="na-prog" id="na-prog" hidden>
         ${linearProgress({ indeterminate: true })}
@@ -135,78 +146,198 @@ export function openNewAssessment() {
 }
 window.openNewAssessment = openNewAssessment;
 
-window.__wsCreateAssessment = async () => {
+// Gather + validate the form once. Returns null (having toasted) when something required is missing.
+function naForm() {
   const W = window.WORKSPACE || {}, org = W.org || {};
   const name = ((document.getElementById('na-name') || {}).value || '').trim();
-  if (!name) { window.__toast('Enter a venture name.', true); return; }
+  if (!name) { window.__toast('Enter a venture name.', true); return null; }
   const founder = ((document.getElementById('na-founder') || {}).value || '').trim();
-  const operator = (document.getElementById('na-op') || {}).value || '';
-  const website = ((document.getElementById('na-site') || {}).value || '').trim();
   const stage = ((document.getElementById('na-stage') || {}).value || '').trim();
-  if (!stage) { window.__toast('Select the venture stage.', true); return; }
-  if (!founder) { window.__toast('Name the founder — the assessment diligences them by name.', true); return; }
-  if (!NA.deck) { window.__toast('Attach the pitch deck — the assessment runs from it.', true); return; }
-  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').slice(0, 40) || 'venture';
+  if (!stage) { window.__toast('Select the venture stage.', true); return null; }
+  if (!founder) { window.__toast('Name the founder — the assessment diligences them by name.', true); return null; }
+  if (!NA.deck) { window.__toast('Attach the pitch deck — the assessment runs from it.', true); return null; }
+  return {
+    org, name, founder, stage,
+    operator: (document.getElementById('na-op') || {}).value || '',
+    website: ((document.getElementById('na-site') || {}).value || '').trim(),
+    driveUrl: ((document.getElementById('na-drive') || {}).value || '').trim(),
+    founderEmail: ((document.getElementById('na-founder-email') || {}).value || '').trim().toLowerCase(),
+  };
+}
+
+// CREATE ONCE. Reading a linked data room needs an engagement to ingest into, so it creates one — and Run
+// must then reuse it. Without this, pressing Read and then Run would leave two engagements for one venture.
+async function naEnsureEngagement(f) {
+  if (NA.createdId) return NA.createdId;
+  const W = window.WORKSPACE || {}, org = f.org;
+  const slug = f.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').slice(0, 40) || 'venture';
   const programId = 'prg-' + slug + '-' + Math.random().toString(36).slice(2, 6);
   const newProgram = {
     id: programId, slug, engagementType: 'assessment',
-    website: website || null, stage: stage || null, name,
-    // the founder IDENTITY. Not cosmetic: the assessment diligences this person by name, and the runner's
-    // isolation gate uses it to tell "our own founder" from "another engagement's founder" — an engagement
-    // with no founder name fails that gate on its own evidence.
-    founderName: founder, founderEmail: '',
-    founderAvatar: (founder || name).split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || 'VV',
+    website: f.website || null, stage: f.stage || null, name: f.name,
+    founderName: f.founder, founderEmail: f.founderEmail || '',
+    founderAvatar: (f.founder || f.name).split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || 'VV',
     founderAvatarColor: org.primaryColor || '#0036FF',
     industry: null, venturePitch: null, briefSubmitted: false, phase: 0,
     gateStatus: 'Ready to run',
     startDate: new Date().toISOString().slice(0, 10), daysActive: 0,
     lastActivity: 'just now', lastActivityDetail: 'Assessment created — deck attached',
-    assignedOperator: operator, organisationSlug: org.slug || null, health: 'on-track',
+    assignedOperator: f.operator, organisationSlug: org.slug || null, health: 'on-track',
     cards: { drafted: 0, awaitingFounder: 0, resolved: 0, awaitingL3Rebuild: 0 },
     hubs: HUB_IDS.reduce((a, h) => { a[h] = { status: 'disabled' }; return a; }, {}),
     mvpDemoModeReady: false, brand: null, createdAt: new Date().toISOString()
   };
-  const land = () => { NA.deck = null; NA.docs = []; NA.deckStatus = ''; NA.docStatus = {}; window.closeOverlay && window.closeOverlay(); location.href = 'assess-next.html?id=' + encodeURIComponent(programId); };
+  NA.created = newProgram;
+  if (W.mode !== 'live') { NA.createdId = programId; return programId; }
+  naProg('Creating the assessment…');
+  const { auth } = await import('../firebase/firebase.js');
+  const idToken = await auth.currentUser.getIdToken();
+  const resp = await fetch('/api/create-engagement', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken, orgId: org.id, engagement: newProgram }) });
+  const out = await resp.json().catch(() => ({}));
+  if (!resp.ok) throw new Error(out.reason === 'limit' ? 'Your plan has no allowance left for another assessment.' : out.reason === 'capability' ? 'Your plan doesn’t include assessments.' : (out.error || ('HTTP ' + resp.status)));
+  NA.createdId = programId;
+  return programId;
+}
+
+// Ingest the deck. The hard gate: dispatch-run REFUSES to start without one, so a failure here must never
+// be allowed to reach dispatch. Returns the reason it failed, or null on success.
+async function naIngestDeck(EA, programId) {
+  if (NA.deckStatus === 'Read') return null;
+  NA.deckStatus = 'Uploading…'; naPaintDeck();
+  naProg('Reading the pitch deck…');
+  const r = await EA.ingestDocs({ engagementId: programId, files: [NA.deck], docType: 'pitch', onProgress: m => naProg(m) });
+  if (!r || r.ingested !== 1 || (r.skipped || []).length) return ((r && r.skipped && r.skipped[0]) || {}).reason || 'the deck could not be read';
+  NA.deckStatus = 'Read'; naPaintDeck();
+  return null;
+}
+
+// READ A LINKED GOOGLE DRIVE DATA ROOM, then play back what the score will look for and could not find.
+// Deliberately BEFORE the run: a missing cap table is worth knowing in three minutes, not in two hours.
+window.__naReadRoom = async () => {
+  const f = naForm(); if (!f) return;
+  if (!f.driveUrl) { window.__toast('Paste the Google Drive folder link first.', true); return; }
+  const W = window.WORKSPACE || {};
+  if (W.mode !== 'live') { window.__toast('Linking a data room needs the live workspace.', true); return; }
+  naBusy(true);
+  try {
+    const programId = await naEnsureEngagement(f);
+    const { auth } = await import('../firebase/firebase.js');
+    const idToken = await auth.currentUser.getIdToken();
+    const EA = await import('./engagement-actions.js');
+
+    const deckFail = await naIngestDeck(EA, programId);
+    if (deckFail) { window.__toast('The pitch deck didn’t upload: ' + deckFail, true); naBusy(false); naProg(null); return; }
+
+    naProg('Opening the Drive folder…');
+    const lr = await fetch('/api/ingest-docs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken, engagementId: programId, action: 'drive-list', folderUrl: f.driveUrl }) });
+    const list = await lr.json().catch(() => ({}));
+    if (!lr.ok) {
+      // Drive answers the same way for "no such folder" and "not shared with us", so the message covers both.
+      const msg = list.error === 'drive_not_shared'
+        ? 'Could not open that folder. Check the link, and that it is shared — either “anyone with the link can view”, or with dataroom-reader@ventrify-os.iam.gserviceaccount.com as Viewer.'
+        : list.error === 'bad_folder_link' ? 'That does not look like a Google Drive folder link.'
+        : list.error === 'drive_not_configured' ? 'The Drive reader is not configured on this environment yet.'
+        : (list.detail || list.error || 'Could not read the folder.');
+      window.__toast(msg, true); naBusy(false); naProg(null); return;
+    }
+    NA.driveFiles = list.files || [];
+    const skipped = (list.skipped || []).length;
+    if (!NA.driveFiles.length) { window.__toast('That folder has no readable documents in it.', true); naBusy(false); naProg(null); return; }
+
+    // Ingest one at a time: each request stays inside the serverless budget, and the operator sees honest
+    // progress rather than a spinner for three minutes.
+    let failed = 0;
+    for (let i = 0; i < NA.driveFiles.length; i++) {
+      const d = NA.driveFiles[i];
+      naProg(`Reading the data room · ${i + 1} of ${NA.driveFiles.length} · ${d.name.slice(0, 44)}`);
+      const r = await fetch('/api/ingest-docs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken, engagementId: programId, docType: 'dataroom', file: { name: d.name, driveId: d.driveId, exportMime: d.exportMime } }) });
+      if (!r.ok) failed++;
+    }
+
+    naProg('Checking what the score will look for…');
+    const cr = await fetch('/api/ingest-docs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken, engagementId: programId, action: 'room-check' }) });
+    const check = await cr.json().catch(() => ({}));
+    const slot = document.getElementById('na-room');
+    if (slot && cr.ok) slot.innerHTML = roomCheck(check);
+    NA.roomRead = true;
+    naBusy(false); naProg(null);
+    naSyncCta();
+    const read = NA.driveFiles.length - failed;
+    window.__toast(`Read ${read} document${read === 1 ? '' : 's'} from ${list.folderName}` + (skipped ? ` · ${skipped} skipped` : '') + (failed ? ` · ${failed} failed` : ''));
+  } catch (e) {
+    naBusy(false); naProg(null);
+    window.__toast('Could not read the data room: ' + ((e && e.message) || e), true);
+  }
+};
+
+// CHASE THE GAPS. Sends the founder the list the playback just showed — what the score looks for and could
+// not find in the room, with a link straight back to the folder they should drop it into.
+//
+// The email's CONTENT is built server-side from the engagement record and a fresh room check; the client
+// chooses the recipient and may add a note, and nothing else. An operator cannot compose arbitrary mail
+// through this, which matters for anything that leaves the building from a verified domain.
+window.__naRequestDocs = async () => {
+  const id = NA.createdId;
+  if (!id) { window.__toast('Read the data room first.', true); return; }
+  const to = ((document.getElementById('na-founder-email') || {}).value || '').trim().toLowerCase();
+  if (!to || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) {
+    window.__toast('Add the founder’s email so we know where to send the request.', true);
+    const el = document.getElementById('na-founder-email'); if (el) { el.focus(); el.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+    return;
+  }
+  const btn = document.querySelector('.rc-act .m3-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+  try {
+    const { auth } = await import('../firebase/firebase.js');
+    const idToken = await auth.currentUser.getIdToken();
+    const r = await fetch('/api/send-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'docs-request', idToken, engagementId: id, email: to }) });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error === 'nothing_missing' ? 'There is nothing missing to ask for.' : (d.detail || d.error || ('HTTP ' + r.status)));
+    const slot = document.querySelector('.rc-act');
+    if (slot) slot.innerHTML = `<span class="rc-act-sent"><span class="material-symbols-rounded">mark_email_read</span>Request sent to ${esc(to)} · ${d.requested} item${d.requested === 1 ? '' : 's'}</span>`;
+    window.__toast('Request sent to ' + to + '.');
+  } catch (e) {
+    if (btn) { btn.disabled = false; btn.textContent = 'Request these from the founder'; }
+    window.__toast('Could not send the request: ' + ((e && e.message) || e), true);
+  }
+};
+
+window.__wsCreateAssessment = async () => {
+  const f = naForm(); if (!f) return;
+  const W = window.WORKSPACE || {};
+  const land = () => { NA.deck = null; NA.docs = []; NA.deckStatus = ''; NA.docStatus = {}; NA.driveFiles = null; NA.roomRead = false; const id = NA.createdId; NA.createdId = null; window.closeOverlay && window.closeOverlay(); location.href = 'assess-next.html?id=' + encodeURIComponent(id); };
 
   naBusy(true);
   try {
     // DEMO / local — there is no Firestore doc to ingest into or dispatch against. Create only.
     if (W.mode !== 'live') {
-      newProgram.pitchDoc = { title: NA.deck.name, note: 'Pitch deck' };
-      try { const stored = JSON.parse(localStorage.getItem('workspace.programs') || '[]'); stored.unshift(newProgram); localStorage.setItem('workspace.programs', JSON.stringify(stored)); } catch (e) {}
+      await naEnsureEngagement(f);
+      const p = NA.created; p.pitchDoc = { title: NA.deck.name, note: 'Pitch deck' };
+      try { const stored = JSON.parse(localStorage.getItem('workspace.programs') || '[]'); stored.unshift(p); localStorage.setItem('workspace.programs', JSON.stringify(stored)); } catch (e) {}
       window.__toast('Assessment created.');
       land();
       return;
     }
 
-    // 1 — CREATE. create-engagement commits the doc before it answers, so no read-back is needed.
-    naProg('Creating the assessment…');
-    const { auth } = await import('../firebase/firebase.js');
-    const idToken = await auth.currentUser.getIdToken();
-    const resp = await fetch('/api/create-engagement', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken, orgId: org.id, engagement: newProgram }) });
-    const out = await resp.json().catch(() => ({}));
-    if (!resp.ok) { throw new Error(out.reason === 'limit' ? 'Your plan has no allowance left for another assessment.' : out.reason === 'capability' ? 'Your plan doesn’t include assessments.' : (out.error || ('HTTP ' + resp.status))); }
+    // 1 — CREATE, unless reading a linked data room already did. One venture, one engagement.
+    const programId = await naEnsureEngagement(f);
 
     const EA = await import('./engagement-actions.js');
 
-    // 2 — THE PITCH DECK. This is the hard gate: dispatch-run REFUSES to start without an ingested deck.
-    // ingestDocs NEVER throws on a per-file failure — it resolves with {ingested:0, skipped:[…]}. If we
-    // trusted that resolve and dispatched anyway, the run would bounce off its own guard and leave a
-    // brand-new, dead engagement. So reconcile the result and DO NOT dispatch unless the deck truly landed.
-    NA.deckStatus = 'Uploading…'; naPaintDeck();
-    naProg('Reading the pitch deck…');
-    const deckRes = await EA.ingestDocs({ engagementId: programId, files: [NA.deck], docType: 'pitch', onProgress: m => naProg(m) });
-    if (!deckRes || deckRes.ingested !== 1 || (deckRes.skipped || []).length) {
-      const why = ((deckRes && deckRes.skipped && deckRes.skipped[0]) || {}).reason || 'the deck could not be read';
-      window.__toast('Assessment created, but the pitch deck didn’t upload: ' + why + ' — add it from the assessment.', true);
+    // 2 — THE PITCH DECK. The hard gate: dispatch-run REFUSES to start without an ingested deck, so a
+    // failure here must never reach dispatch (it would leave a brand-new, dead engagement). No-ops when
+    // the Read step already ingested it.
+    const deckFail = await naIngestDeck(EA, programId);
+    if (deckFail) {
+      window.__toast('Assessment created, but the pitch deck didn’t upload: ' + deckFail + ' — add it from the assessment.', true);
       land();                                   // recoverable: the page opens on "Upload deck", never a dead end
       return;                                   // ⚠️ DO NOT DISPATCH — the run would be rejected
     }
-    NA.deckStatus = 'Read'; naPaintDeck();
 
     // 3 — THE DATA ROOM (optional). Fully awaited BEFORE dispatch so the runner never reads a half-filled
     // room. A skipped data-room file is a warning, never a blocker — only the deck is required.
     const roomSkipped = [];
+    if (NA.roomRead) naProg(`Linked data room already read · ${(NA.driveFiles || []).length} documents`);
     for (let i = 0; i < NA.docs.length; i++) {
       NA.docStatus = { ...(NA.docStatus || {}), [i]: 'Uploading…' }; naPaintDocs();
       naProg(`Data room · document ${i + 1} of ${NA.docs.length}`);

@@ -562,6 +562,24 @@ export const CATALOG = {
     variants: [{ label: 'Up' }, { label: 'Down', note: 'the source contradicted the claim \u2014 rendered just as plainly' }, { label: 'Held', note: 'read, and changed nothing' }, { label: 'Model upgraded', note: 'instrumentChanged \u2014 the move is reported but NOT credited to the evidence' }], usedIn: ['Assessment \u00b7 Investability'],
     adaptive: { status: 'built', layout: { mobile: 'Rows stack.', tablet: 'As desktop.', desktop: 'Full.' }, content: { mobile: 'Full.', tablet: 'Full.', desktop: 'Full.' } }
   },
+  roomCheck: {
+    level: 'organism', group: 'Organisms', domain: 'Assessment', title: 'Data room \u2014 what is missing', sig: 'roomCheck({docCount, classes, strengtheners})',
+    blurb: 'The pre-run playback of a LINKED data room. Reports the SAME six founder artefact classes the scorer counts for financial.files_complete \u2014 not a parallel checklist, which would eventually disagree with the score. Says \u201cwe could not see it\u201d rather than \u201cyou are missing it\u201d, because a class can be satisfied inside another document and chasing a document the founder already sent is worse than silence.',
+    maxw: null, pad: false,
+    html: () => `<div class="brief" style="padding:8px 28px 20px">${DS.roomCheck({ docCount: 46, classes: [
+      { key: 'financial_model', label: 'Financial model', found: true, seenIn: 'MoneyGym - Customer and Finance Base Case v0.11.xlsx', want: '' },
+      { key: 'unit_economics', label: 'Unit economics', found: true, seenIn: 'MoneyGym_Unit_Economics_v21 (FINAL).docx', want: '' },
+      { key: 'cost_basis', label: 'Cost basis', found: true, seenIn: 'MoneyGym_LLM_Cost_Assumptions.docx', want: '' },
+      { key: 'ownership', label: 'Ownership / cap table', found: false, want: 'A cap table, equity split, share register, SAFE or option schedule' },
+      { key: 'corporate_legal', label: 'Corporate / legal', found: true, seenIn: 'Copy of DebtFit Inc Cert of Incorporation.pdf', want: '' },
+      { key: 'observed_metrics', label: 'Observed metrics or primary research', found: false, want: 'At least one number this venture measured \u2014 a pilot, waitlist, funnel or primary interviews' },
+    ], strengtheners: [
+      { key: 'loi', label: 'A signed LOI, pilot or customer contract', why: 'Demand validation scores highest when a counterparty outside the company has paid or committed in writing' },
+    ] })}</div>`,
+    props: [{ name: 'check', type: '{docCount, classes:[{key,label,found,seenIn,want}], strengtheners:[{label,why}]}' }],
+    variants: [{ label: 'Gaps found', note: 'the normal case \u2014 chase, or run anyway' }, { label: 'All six present', note: 'header flips; no chase prompt' }], usedIn: ['New assessment \u00b7 data room'],
+    adaptive: { status: 'built', layout: { mobile: 'Rows stack; the trailing state wraps under the label.', tablet: 'As desktop.', desktop: 'Full.' }, content: { mobile: 'Full.', tablet: 'Full.', desktop: 'Full.' } }
+  },
   scoreProvenance: {
     level: 'molecule', group: 'Molecules', domain: 'Assessment', title: 'Score provenance \u2014 how many times, on what', sig: 'scoreProvenance(snapshots)',
     blurb: 'A re-run CANNOT BE INVISIBLE. Every score this deck was given is on the record, and runs are told apart on TWO halves: the EVIDENCE (founder\u2019s room + operator records) and the INSTRUMENT (rubric + scoring model). Only runs matching on both are re-rolls, and only a re-roll\u2019s spread is flagged as the tool\u2019s fault \u2014 a model upgrade or filed evidence is named for what it is.',

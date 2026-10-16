@@ -73,6 +73,37 @@ function inviteHtml({ orgName, ventureName, link }) {
   </body></html>`;
 }
 
+function docsRequestHtml({ orgName, ventureName, operatorName, missing, extras, folderUrl, note }) {
+  const org = esc(orgName), venture = esc(ventureName);
+  const li = (t, sub) => `<tr><td style="padding:9px 0;border-bottom:1px solid rgba(0,0,0,0.06);"><div style="font-size:14px;font-weight:600;color:#141414;">${esc(t)}</div>${sub ? `<div style="font-size:13px;line-height:1.5;color:#6b7280;margin-top:2px;">${esc(sub)}</div>` : ''}</td></tr>`;
+  return `<!doctype html><html><body style="margin:0;background:#f4f5f7;font-family:-apple-system,'Segoe UI',Inter,Helvetica,Arial,sans-serif;color:#141414;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5f7;padding:32px 12px;"><tr><td align="center">
+    <table role="presentation" width="520" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:16px;border:1px solid rgba(0,0,0,0.06);overflow:hidden;">
+      <tr><td style="padding:28px 32px 0;">
+        <div style="font-weight:700;letter-spacing:-0.01em;font-size:15px;color:#0036FF;">${org}</div>
+      </td></tr>
+      <tr><td style="padding:18px 32px 8px;">
+        <h1 style="margin:0 0 12px;font-size:22px;letter-spacing:-0.02em;line-height:1.25;">A few documents for the ${venture} assessment</h1>
+        <p style="margin:0 0 18px;font-size:15px;line-height:1.6;color:#444;">${esc(operatorName)} is preparing the investability assessment for <strong>${venture}</strong>. These are the things the assessment looks for that we could not find in the data room:</p>
+        ${note ? `<p style="margin:0 0 18px;padding:12px 14px;background:#f4f5f7;border-radius:10px;font-size:14px;line-height:1.6;color:#333;">${esc(note)}</p>` : ''}
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 18px;">
+          ${missing.map(m => li(m.label, m.want)).join('')}
+          ${extras.map(e => li(e.label, e.why)).join('')}
+        </table>
+        ${folderUrl ? `<a href="${esc(folderUrl)}" style="display:inline-block;background:#0036FF;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:13px 26px;border-radius:10px;">Add them to the data room &rarr;</a>
+        <p style="margin:18px 0 0;font-size:13px;line-height:1.6;color:#8a8f98;">Drop them straight into the shared folder — nothing else to do. We pick them up from there.</p>` : `<p style="margin:0;font-size:14px;line-height:1.6;color:#444;">Reply to this email with the documents and we will add them.</p>`}
+        <p style="margin:18px 0 0;font-size:13px;line-height:1.6;color:#8a8f98;">If something on this list is already in the room inside another document, just say so — nothing is being marked against you.</p>
+      </td></tr>
+      <tr><td style="padding:22px 32px 26px;border-top:1px solid rgba(0,0,0,0.06);">
+        <p style="margin:0;font-size:12px;color:#aab0b8;">Powered by Ventrify OS</p>
+      </td></tr>
+    </table>
+  </td></tr></table>
+  </body></html>`;
+}
+
+const { checkRoom } = require('./_roomcheck.js');
+
 module.exports = async (req, res) => {
   if (req.method !== 'POST') { res.status(405).json({ error: 'method_not_allowed' }); return; }
   try {
@@ -80,6 +111,55 @@ module.exports = async (req, res) => {
     const email = String(body.email || '').trim().toLowerCase();
     if (!email) { res.status(400).json({ error: 'email_required' }); return; }
     if (!process.env.RESEND_API_KEY) { res.status(503).json({ error: 'email_not_configured' }); return; }
+
+    // ── REQUEST THE MISSING DOCUMENTS (authenticated) ───────────────────────────────────────────────
+    // Unlike 'login' and 'invite' above, this type requires an ID token and proves the caller is an operator
+    // of the engagement's org. It also DERIVES ITS OWN CONTENT from Firestore — the venture name, the gap
+    // list and the folder link all come from the record, never from the request body. A caller can choose
+    // the recipient and add a note (escaped); they cannot dictate what the email claims.
+    if (body.type === 'docs-request') {
+      const engagementId = String(body.engagementId || '').trim();
+      if (!body.idToken || !engagementId) { res.status(400).json({ error: 'bad_request' }); return; }
+      ensureAdmin();
+      let decoded;
+      try { decoded = await admin.auth().verifyIdToken(body.idToken); }
+      catch (e) { res.status(401).json({ error: 'invalid_token' }); return; }   // say 401, not a 500 stack
+      const caller = (decoded.email || '').toLowerCase();
+      const db = admin.firestore();
+      const engSnap = await db.collection('engagements').doc(engagementId).get();
+      if (!engSnap.exists) { res.status(404).json({ error: 'engagement_not_found' }); return; }
+      const eng = engSnap.data();
+      const orgSnap = await db.collection('organisations').doc(eng.orgId || 'default').get();
+      const ops = ((orgSnap.exists && orgSnap.data().operatorEmails) || []).map(e => String(e).toLowerCase());
+      if (!ops.includes(caller)) { res.status(403).json({ error: 'forbidden' }); return; }
+
+      const docsSnap = await db.collection('engagements').doc(engagementId).collection('founderDocs').get();
+      const check = checkRoom(docsSnap.docs.map(d => ({ name: d.data().name, text: d.data().text || '' })));
+      const missing = check.classes.filter(c => !c.found).map(c => ({ label: c.label, want: c.want }));
+      const extras = check.strengtheners.map(e => ({ label: e.label, why: e.why }));
+      if (!missing.length && !extras.length) { res.status(400).json({ error: 'nothing_missing', detail: 'The room already has everything the score looks for.' }); return; }
+
+      const ventureName = eng.ventureName || eng.name || 'the venture';
+      const orgName = (orgSnap.exists && orgSnap.data().name) || 'Ventrify';
+      const folderUrl = (eng.dataRoom && eng.dataRoom.folderUrl) || '';
+      const html = docsRequestHtml({ orgName, ventureName, operatorName: caller, missing, extras, folderUrl, note: String(body.note || '').slice(0, 600) });
+      const sendResp = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from: process.env.INVITE_FROM_EMAIL || 'Ventrify <hello@ventrify.io>',
+          to: [email], reply_to: caller,
+          subject: `Documents needed for the ${ventureName} assessment`,
+          html
+        })
+      });
+      if (!sendResp.ok) { const detail = await sendResp.text(); res.status(502).json({ error: 'send_failed', detail: detail.slice(0, 300) }); return; }
+      await db.collection('engagements').doc(engagementId).set({
+        dataRoom: { ...(eng.dataRoom || {}), lastRequestAt: new Date().toISOString(), lastRequestTo: email, lastRequestBy: caller, lastRequestItems: missing.length + extras.length }
+      }, { merge: true });
+      res.status(200).json({ ok: true, requested: missing.length + extras.length });
+      return;
+    }
 
     // Default to 'invite' when unspecified so any legacy caller that omitted the field
     // still behaves as the old /api/send-invite did.
