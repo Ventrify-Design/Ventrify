@@ -129,7 +129,7 @@ export function renderVSSScorecard(snap, opts = {}) {
         <span class="vss-band-pill" style="color:${cc};background:${bandTint(snap.band)};">${esc(bandWord)}</span>
         <div class="vss-band-label">${esc(snap.bandLabel || '')}</div>
         <div class="vss-hero-meta">${ratedLine}</div>
-        <div class="vss-attribution">VSS v3 &middot; weighted &middot; TDK Ventures &middot; GoingVC &middot; VCII / Payne</div>
+        <div class="vss-attribution">VSS v3 &middot; weighted &middot; structure adapted under CC BY from TDK Ventures&rsquo; Investment Scorecard, modified</div>
       </div>
     </div>`;
 

@@ -296,12 +296,12 @@
     }
 
     // -------------------------------------------------------------------
-    // TDK 7×5 RUBRIC — 7 dimensions × 5 sub-criteria
+    // VSS 7×5 RUBRIC — 7 dimensions × 5 sub-criteria (Venture Sentiment Score)
     // For prototype the scores are derived from the brief's seeded score
     // plus deterministic per-sub-criterion deltas. Real wiring later swaps
     // this for an actual Claude API call against the brief + research hub.
     // -------------------------------------------------------------------
-    const TDK_RUBRIC = [
+    const VSS_RUBRIC = [
       {
         key: 'team', name: 'Team',
         subs: ['Founder-market fit', 'Domain depth', 'Execution track record', 'Hiring leverage', 'Decision velocity'],
@@ -355,7 +355,7 @@
 
     function buildFullScorecard(seed) {
       // Build a 7×5 from existing dim scores (if any) plus deterministic sub-scores
-      const dims = TDK_RUBRIC.map((rub, i) => {
+      const dims = VSS_RUBRIC.map((rub, i) => {
         const subs = rub.subs.map((subLabel, j) => ({
           label: subLabel,
           score: scoreFromSeed(seed, i, j)
@@ -444,11 +444,11 @@
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
           </span>
           <div class="inv-empty-title">No Investability score yet for ${engagement.name}.</div>
-          <div class="inv-empty-sub">The TDK 7×5 rubric needs material to score against. You can seed it from an uploaded one-pager (richest scoring), or score from your brief form data manually.</div>
+          <div class="inv-empty-sub">The 7×5 rubric needs material to score against. You can seed it from an uploaded one-pager (richest scoring), or score from your brief form data manually.</div>
           <div class="inv-empty-paths">
             <a href="${briefURL}" class="inv-empty-path">
               <div class="inv-empty-path-title">Upload a one-pager or deck in your brief</div>
-              <div class="inv-empty-path-sub">Richest scoring. The platform reads the PDF, maps to TDK dimensions, returns scores + suggestions.</div>
+              <div class="inv-empty-path-sub">Richest scoring. The platform reads the PDF, maps to the seven VSS dimensions, returns scores + suggestions.</div>
             </a>
             <a href="javascript:rescoreNow();" class="inv-empty-path">
               <div class="inv-empty-path-title">Score from form data now</div>
@@ -473,7 +473,7 @@
       const headerHTML = `
         <div class="inv-header">
           <div class="inv-header-body">
-            <div class="inv-header-eyebrow">Investability · TDK 7×5</div>
+            <div class="inv-header-eyebrow">Investability · VSS 7×5</div>
             <h1 class="inv-header-title">${headline}</h1>
             <p class="inv-header-sub">Computed across seven investor-facing dimensions, each with five sub-criteria. Refines as the engagement progresses and as research-curator surfaces new evidence in the Data Room.</p>
             <div class="inv-header-meta">
@@ -556,7 +556,7 @@
     // -------------------------------------------------------------------
     // LIVE VSS v2 — read engagements/{id}/investabilitySnapshots from Firestore
     // (published by the engagement repo's tools/cloud/publish.js). Supersedes
-    // the mock TDK scorecard above.
+    // the mock VSS scorecard above.
     // -------------------------------------------------------------------
     let snapshots = [];
     if (window.STUDIO.mode === 'live') {
@@ -609,7 +609,7 @@
       const headerHTML = `
         <div class="inv-header">
           <div class="inv-header-body">
-            <div class="inv-header-eyebrow">Investability · VSS v2 (TDK 7×5)</div>
+            <div class="inv-header-eyebrow">Investability · VSS v2 (7×5)</div>
             <h1 class="inv-header-title">${headline}</h1>
             <p class="inv-header-sub">Seven investor-facing categories, 35 sub-criteria scored 0 / 0.5 / 1 against your research. Updates at every gate as evidence accrues.</p>
             <div class="inv-header-meta">

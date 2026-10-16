@@ -596,12 +596,12 @@
       const subCopy = snap
         ? escBrief(snap.bandLabel || snap.band || 'Investor-lens score across 35 signals.')
         : (isAssess
-          ? 'VSS v2 (TDK 7×5) &mdash; investor-lens score from the deck + diligence. Operator-only.'
-          : 'VSS v2 (TDK 7×5) &mdash; the founder sees this in their Studio. Updates each gate.');
+          ? 'VSS v2 (7×5) &mdash; investor-lens score from the deck + diligence. Operator-only.'
+          : 'VSS v2 (7×5) &mdash; the founder sees this in their Studio. Updates each gate.');
       const head = `<div class="section-head"><div><div class="section-title">Investability</div><div class="section-sub">${subCopy}</div></div></div>`;
       if (!snap) {
         const emptyCopy = isAssess
-          ? 'No score yet. Run the assessment to score this venture against the TDK 7×5 rubric.'
+          ? 'No score yet. Run the assessment to score this venture against the VSS 7×5 rubric.'
           : 'No score yet. It computes automatically when the research run completes.';
         return `<div class="section">${head}<div class="card" style="text-align:center;padding:1.75rem;color:var(--text-muted);">${emptyCopy}</div></div>`;
       }
