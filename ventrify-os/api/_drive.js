@@ -41,11 +41,19 @@ const FOLDER_MIME = 'application/vnd.google-apps.folder';
 
 let cached = { token: null, expires: 0 };
 
+// Tolerant of how the key actually gets pasted into a dashboard. A service-account JSON is long and arrives
+// by copy-paste, so it turns up wrapped in quotes, or with the variable NAME still attached
+// (`DRIVE_SERVICE_ACCOUNT={...}`) when someone pastes a whole .env line into the value box. Both are obvious
+// in intent and cost a deploy cycle each to discover, so they are accepted rather than rejected.
 function credentials() {
-  const raw = process.env.DRIVE_SERVICE_ACCOUNT;
+  let raw = String(process.env.DRIVE_SERVICE_ACCOUNT || '').trim();
   if (!raw) throw new Error('drive_not_configured');
-  const c = JSON.parse(raw);
-  if (!c.client_email || !c.private_key) throw new Error('drive_credential_malformed');
+  raw = raw.replace(/^DRIVE_SERVICE_ACCOUNT\s*=\s*/, '').trim();
+  if ((raw.startsWith('"') && raw.endsWith('"')) || (raw.startsWith("'") && raw.endsWith("'"))) raw = raw.slice(1, -1).trim();
+  let c;
+  try { c = JSON.parse(raw); }
+  catch (e) { throw new Error('drive_credential_malformed: the value is not JSON — it should start with { and be the whole service-account file'); }
+  if (!c.client_email || !c.private_key) throw new Error('drive_credential_malformed: JSON parsed but has no client_email / private_key');
   return c;
 }
 
