@@ -112,6 +112,7 @@ async function buildCorpus(db, engagementId) {
   const vss = snaps[snaps.length - 1] || null;
 
   const blocks = [];
+  const aliases = {};                 // a more precise id the model may cite → the block that carries it
   const add = (id, title, kind, text, rank = 0) => {
     const t = str(text).trim();
     if (t) blocks.push({ id, title, kind, text: t, rank });
@@ -166,6 +167,16 @@ async function buildCorpus(db, engagementId) {
     ].join('\n'));
 
     for (const c of vss.categories || []) {
+      // EACH SIGNAL IS A CITABLE SOURCE IN ITS OWN RIGHT. The first cut registered ids only down to the
+      // category, and the model answered by citing `vss:demand_validation` — a real signal slug, and a
+      // MORE precise citation than `vss:market`. The validator called that a fabrication, which was the id
+      // scheme being too narrow rather than the model inventing anything. Signals now resolve to their
+      // category's block. Slug collisions would make a citation ambiguous, so the first registration wins
+      // and a duplicate is simply not aliased.
+      for (const sub of c.subs || []) {
+        const alias = `vss:${sub.slug}`;
+        if (sub.slug && !aliases[alias] && alias !== `vss:${c.key}`) aliases[alias] = `vss:${c.key}`;
+      }
       add(`vss:${c.key}`, `${c.label} (scorecard category)`, 'score', [
         `${c.sum} of ${c.max} · weight ${c.weight} · ${c.rated} rated, ${c.pending} pending${c.band ? ` · ${c.band}` : ''}`,
         ...(c.subs || []).map((s) => `- ${s.slug}: ${s.score == null ? 'not yet rated' : s.score}${s.note ? ` — ${str(s.note)}` : ''}`),
@@ -216,7 +227,7 @@ async function buildCorpus(db, engagementId) {
     corpus: {
       engagementId,
       ventureName: e.ventureName || e.name || engagementId,
-      blocks,
+      blocks, aliases,
       sourceIds: blocks.map((b) => b.id),
       manifest,
       integrity,
@@ -244,8 +255,8 @@ async function buildCorpus(db, engagementId) {
 // that is not in the assessment, which is a signal worth having.
 const CITE_RE = /\[\[\s*([^\]]{1,140}?)\s*\]\]/g;
 
-function validateCitations(answer, sourceIds) {
-  const known = new Set(sourceIds || []);
+function validateCitations(answer, sourceIds, aliases = {}) {
+  const known = new Set([...(sourceIds || []), ...Object.keys(aliases || {})]);
   const used = [];
   const invalid = [];
   let m;
@@ -333,6 +344,14 @@ function systemPrompt(corpus) {
     'not use it to assert a fact about this venture, its market, or its competitors. If you reach for',
     'outside context, label it as yours and uncited.',
     '',
+    'FIGURES',
+    'Copy every number EXACTLY as the source writes it, digit for digit. Do not retype one from memory, do',
+    'not tidy it, do not reconstruct a precise figure you half-recall — if you are not looking straight at',
+    'it, give the rounded form or say you cannot quote it precisely. A number that is one digit out looks',
+    'exactly as authoritative as a correct one, and the citation beside it makes it worse, not better.',
+    'If you work a figure out yourself, say so in the same sentence ("that is my subtraction"). Every',
+    'number is checked against the sources after you answer, and anything that is not in them is marked.',
+    '',
     'HONESTY ABOUT THE SCORE',
     corpus.integrity.note,
     corpus.stale ? 'Documents have arrived since this assessment ran — see the freshness source and raise it unprompted when it could change the answer.' : '',
@@ -371,10 +390,15 @@ function stubAnswer(corpus, question) {
  */
 async function answer({ corpus, history = [], question, apiKey = process.env.ANTHROPIC_API_KEY, model = 'claude-sonnet-5-5' }) {
   const fitted = fitCorpus(corpus);
-  if (!apiKey) {
-    const v = validateCitations(stubAnswer(fitted, question), fitted.sourceIds);
-    return { ...v, stub: true, usage: null, dropped: fitted.dropped };
-  }
+  const finish = (raw) => {
+    const v = validateCitations(raw, fitted.sourceIds, fitted.aliases);
+    const f = checkFigures(v.text, fitted.text);
+    return {
+      ...v, text: f.text, figures: f.figures, unsupportedFigures: f.unsupported,
+      ok: v.ok && f.ok, dropped: fitted.dropped,
+    };
+  };
+  if (!apiKey) return { ...finish(stubAnswer(fitted, question)), stub: true, usage: null };
   const resp = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
@@ -393,11 +417,71 @@ async function answer({ corpus, history = [], question, apiKey = process.env.ANT
   }
   const data = await resp.json();
   const raw = (data.content || []).filter((c) => c.type === 'text').map((c) => c.text).join('');
-  const v = validateCitations(raw, fitted.sourceIds);
-  return { ...v, stub: false, usage: data.usage || null, dropped: fitted.dropped };
+  return { ...finish(raw), stub: false, usage: data.usage || null };
+}
+
+// ── FIGURE VALIDATION ─────────────────────────────────────────────────────────────────────────────────
+//
+// THE GATE FOUND TWO REAL FABRICATIONS AND THEY BOTH WORE A VALID CITATION. One answer said minimum cash
+// was "$3,363,774", where the research says $3,363,744 — and then invented a discrepancy between two
+// documents to explain the digits it had changed. Another gave "about $613k recognised" against a real
+// source id, with 613 appearing nowhere in the corpus. A correct citation beside an incorrect number is
+// the worst case this product has: it looks more sourced than an uncited claim, not less.
+//
+// So numbers get what ids already get — checked in code, at answer time, every time. If a figure is not in
+// the corpus it is marked in the text. Nothing is deleted: the operator should see the claim AND the doubt.
+//
+// DERIVED ARITHMETIC IS NOT A FABRICATION. A model that subtracts two corpus figures and says "that is my
+// subtraction, not a figure the research reports" is behaving exactly as it should. Where the sentence
+// discloses the derivation the figure is marked as derived rather than unsupported — a quieter signal,
+// because an honest calculation and a corrupted quotation deserve different alarm.
+const DISCLOSED = /\b(my (own )?(subtraction|arithmetic|calculation|estimate|maths|math)|I (calculated|computed|subtracted|derived|worked (it|this) out)|implied|derived from|not a figure the research reports|back-of-|rounded from)\b/i;
+
+// Years and anything under three digits are discourse ("1 of 5", "in 2026"), not claimed figures.
+function figureTokens(text) {
+  return (String(text).match(/\d[\d,]*(?:\.\d+)?/g) || [])
+    .map((n) => n.replace(/[.,]$/, ''))
+    .filter((n) => {
+      const bare = n.replace(/,/g, '');
+      if (bare.replace('.', '').length <= 2) return false;
+      if (/^(19|20)\d{2}$/.test(bare)) return false;
+      return true;
+    });
+}
+
+function checkFigures(answer, corpusText) {
+  const text = String(answer || '');
+  const found = [];
+  const seen = new Set();
+  for (const n of figureTokens(text)) {
+    if (seen.has(n)) continue;
+    seen.add(n);
+    const bare = n.replace(/,/g, '');
+    if (corpusText.includes(n) || corpusText.includes(bare)) continue;
+    // Judge disclosure from the figure's own sentence AND THE ONE AFTER IT, but no wider. People disclose
+    // a calculation in the following breath — "…gives about 72.5, which rounds to the reported 73. That is
+    // my arithmetic, not a source figure." — and a one-sentence window scored that honest answer as a
+    // fabrication. Two sentences is still narrow enough that a single "my subtraction" cannot launder every
+    // other number in a long reply.
+    const at = text.indexOf(n);
+    const from = Math.max(0, text.lastIndexOf('.', at) + 1);
+    let to = text.indexOf('.', at + n.length);
+    if (to !== -1) { const next = text.indexOf('.', to + 1); to = next === -1 ? text.length : next; }
+    const window = text.slice(from, to === -1 ? text.length : to + 1);
+    found.push({ value: n, disclosed: DISCLOSED.test(window) });
+  }
+  // Mark in place, without touching digits inside a longer number or inside a citation marker.
+  let marked = text;
+  for (const f of found) {
+    const esc = f.value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    marked = marked.replace(new RegExp(`(?<![\\d.,\\[])${esc}(?![\\d.,])`, 'g'),
+      f.disclosed ? `${f.value}⟨derived⟩` : `${f.value}⟨not in sources⟩`);
+  }
+  const unsupported = found.filter((f) => !f.disclosed);
+  return { text: marked, figures: found, unsupported, ok: unsupported.length === 0 };
 }
 
 module.exports = {
-  buildCorpus, fitCorpus, validateCitations, systemPrompt, answer,
+  buildCorpus, fitCorpus, validateCitations, checkFigures, systemPrompt, answer,
   estTokens, CORPUS_WARN_TOKENS, CORPUS_MAX_TOKENS, INSTRUMENT_FROM,
 };

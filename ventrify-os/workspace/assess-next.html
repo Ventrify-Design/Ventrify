@@ -550,7 +550,7 @@
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(d.detail || d.error || ('HTTP ' + r.status));
-      CHAT.messages = [...CHAT.messages, { role: 'assistant', text: d.text, cited: d.cited, invalid: d.invalid, stub: d.stub, dropped: d.dropped }];
+      CHAT.messages = [...CHAT.messages, { role: 'assistant', text: d.text, cited: d.cited, invalid: d.invalid, unsupportedFigures: d.unsupportedFigures, stub: d.stub, dropped: d.dropped }];
     } catch (e) {
       CHAT.messages = [...CHAT.messages, { role: 'assistant', text: 'That question could not be answered: ' + ((e && e.message) || e), invalid: [] }];
     } finally {

@@ -163,10 +163,12 @@ module.exports = async (req, res) => {
       const saved = await chatCol.add({
         role: 'assistant', text: out.text, at: new Date().toISOString(),
         cited: out.used, invalid: out.invalid, stub: !!out.stub,
+        unsupportedFigures: out.unsupportedFigures || [],
         dropped: out.dropped || [], usage: out.usage || null,
         corpusTokens: built.corpus.tokens,
       });
-      res.status(200).json({ ok: true, id: saved.id, text: out.text, cited: out.used, invalid: out.invalid, stub: !!out.stub, dropped: out.dropped || [] });
+      res.status(200).json({ ok: true, id: saved.id, text: out.text, cited: out.used, invalid: out.invalid,
+        unsupportedFigures: out.unsupportedFigures || [], stub: !!out.stub, dropped: out.dropped || [] });
       return;
     }
 

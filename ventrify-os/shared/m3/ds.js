@@ -1995,16 +1995,24 @@ function chatMsg(m) {
         ? `<sup class="chat-ref" data-src="${esc(id)}" title="${esc(id)}">${num.get(id)}</sup>`
         : `<span class="chat-bad" title="This source does not exist in the assessment">unverified: ${esc(id)}</span>`;
     })
+    // Figure markers, inserted by checkFigures after the model answered. Two tones on purpose: a number the
+    // model worked out and said so is honest and gets a quiet note; a number that simply is not in the
+    // sources is the dangerous case — a mis-keyed digit beside a correct citation reads MORE sourced than
+    // an uncited claim, not less.
+    .replace(/⟨not in sources⟩/g, '<span class="chat-bad" title="This figure does not appear anywhere in the assessment">not in sources</span>')
+    .replace(/⟨derived⟩/g, '<span class="chat-derived" title="The assistant calculated this; it is not quoted from a source">derived</span>')
     .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
     .replace(/\n/g, '<br>');
   const chips = cited.length
     ? `<div class="chat-srcs">${cited.map((id, i) => `<button class="chat-chip" data-src="${esc(id)}"><b>${i + 1}</b>${esc(id)}</button>`).join('')}</div>` : '';
+  const figs = (m.unsupportedFigures || []).length
+    ? `<div class="chat-warn"><span class="material-symbols-rounded">report</span>${m.unsupportedFigures.length} figure${m.unsupportedFigures.length === 1 ? '' : 's'} in this answer ${m.unsupportedFigures.length === 1 ? 'does' : 'do'} not appear in the assessment. Check ${m.unsupportedFigures.length === 1 ? 'it' : 'them'} against the source before using ${m.unsupportedFigures.length === 1 ? 'it' : 'them'}.</div>` : '';
   const bad = (m.invalid || []).length
     ? `<div class="chat-warn"><span class="material-symbols-rounded">report</span>Cited ${m.invalid.length} source${m.invalid.length === 1 ? '' : 's'} that ${m.invalid.length === 1 ? 'does' : 'do'} not exist in this assessment. Treat ${m.invalid.length === 1 ? 'that claim' : 'those claims'} as unsupported.</div>` : '';
   const omitted = (m.dropped || []).length
     ? `<div class="chat-note">${m.dropped.length} research document${m.dropped.length === 1 ? '' : 's'} too large to load for this answer.</div>` : '';
   const stub = m.stub ? `<div class="chat-note">Stub mode &mdash; no model was called.</div>` : '';
-  return `<div class="chat-msg bot">${stub}<div class="chat-body">${body}</div>${bad}${chips}${omitted}</div>`;
+  return `<div class="chat-msg bot">${stub}<div class="chat-body">${body}</div>${bad}${figs}${chips}${omitted}</div>`;
 }
 
 export function chatPanel(c = {}) {

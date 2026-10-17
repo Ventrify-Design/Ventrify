@@ -777,9 +777,11 @@ export const CATALOG = {
       { role: 'user', text: 'What is their CAC in Germany?' },
       { role: 'assistant', cited: ['manifest'], text: 'Not covered. The research pass did not surface a German CAC [[manifest]]. If the figure exists it would be in Q3_Financial_Model.xlsx, which I cannot read.' },
       { role: 'assistant', cited: ['verdict'], invalid: ['research:revenue-deep-dive'], text: 'Revenue grew 300% last quarter [[unverified: research:revenue-deep-dive]], which supports the thesis [[verdict]].' },
+      { role: 'user', text: 'What is the minimum cash position?' },
+      { role: 'assistant', cited: ['research:unit-economics'], unsupportedFigures: [{ value: '3,363,774' }], text: 'Minimum cash is $3,363,774⟨not in sources⟩ at month 13 [[research:unit-economics]]. The drop from month 12 is about $1.19M⟨derived⟩, which is my subtraction rather than a figure the research reports.' },
     ] }); return `<div class="brief" style="padding:8px 28px 20px;max-width:440px"><div class="title-l" style="margin-bottom:2px">${pnl.title}</div><div class="overline" style="margin-bottom:18px">${pnl.subtitle}</div>${pnl.body}<div style="margin-top:16px">${pnl.footer}</div></div>`; },
     props: [{ name: 'c.ventureName', type: 'string' }, { name: 'c.messages', type: '[{role,text,cited,invalid,stub,dropped}]' }, { name: 'c.pending', type: 'boolean — shows the thinking indicator' }],
-    variants: [{ label: 'role', note: 'user (bubble, right) / assistant (flowed, with references)' }, { label: 'invalid', note: 'a cited source that is not in the assessment — red inline marker + warning' }, { label: 'stub', note: 'no API key configured — says so rather than faking an answer' }],
+    variants: [{ label: 'role', note: 'user (bubble, right) / assistant (flowed, with references)' }, { label: 'invalid', note: 'a cited source that is not in the assessment — red inline marker + warning' }, { label: 'figures', note: 'a number absent from the corpus is marked "not in sources"; one the assistant calculated and disclosed is marked "derived"' }, { label: 'stub', note: 'no API key configured — says so rather than faking an answer' }],
     usedIn: ['Assessment', 'utilRail'],
     adaptive: { status: 'built', layout: { mobile: 'Full-width sheet; composer pinned to the foot.', tablet: 'Side sheet.', desktop: 'Side sheet.' }, content: { mobile: 'Full.', tablet: 'Full.', desktop: 'Full.' } }
   },
