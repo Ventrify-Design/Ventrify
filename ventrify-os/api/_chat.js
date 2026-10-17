@@ -570,15 +570,38 @@ function figureTokens(text) {
     });
 }
 
-function checkFigures(answer, corpusText) {
+// A SUBSTRING SEARCH OF MARKDOWN IS NOT A SEARCH FOR A NUMBER, and this cost a false accusation. The
+// research writes emphasised figures as `$3,363,**744**`, so looking for "3,363,744" found nothing and the
+// checker reported a fabrication where the model had quoted the source correctly. Research prose is full of
+// bold, italics, backticks and non-breaking spaces, and every one of them can land inside a number.
+//
+// So both sides are reduced to bare digit runs before comparing. The corpus is indexed once per call into
+// the set of every number it contains, however it was decorated.
+function corpusNumbers(corpusText) {
+  const flat = String(corpusText)
+    .replace(/[*_`~]/g, '')                 // markdown emphasis, including mid-number
+    .replace(/[\u00a0\u202f\u2009\u2007]/g, '');   // non-breaking and thin spaces used as separators
+  const set = new Set();
+  for (const m of flat.match(/\d[\d,. ]*/g) || []) {
+    const bare = m.replace(/[,\s]/g, '').replace(/\.$/, '');
+    if (bare) set.add(bare);
+    // A figure may be quoted without the fractional part the source carries ("6,776,729.40" → "6,776,729").
+    const intPart = bare.split('.')[0];
+    if (intPart) set.add(intPart);
+  }
+  return set;
+}
+
+function checkFigures(answer, corpusText, index = null) {
   const text = String(answer || '');
+  const nums = index || corpusNumbers(corpusText);
   const found = [];
   const seen = new Set();
   for (const n of figureTokens(text)) {
     if (seen.has(n)) continue;
     seen.add(n);
     const bare = n.replace(/,/g, '');
-    if (corpusText.includes(n) || corpusText.includes(bare)) continue;
+    if (nums.has(bare) || nums.has(bare.split('.')[0])) continue;
     // Judge disclosure from the figure's own sentence AND THE ONE AFTER IT, but no wider. People disclose
     // a calculation in the following breath — "…gives about 72.5, which rounds to the reported 73. That is
     // my arithmetic, not a source figure." — and a one-sentence window scored that honest answer as a
@@ -603,6 +626,6 @@ function checkFigures(answer, corpusText) {
 }
 
 module.exports = {
-  buildCorpus, fitCorpus, validateCitations, checkFigures, systemPrompt, answer, toProposals, TOOLS,
+  buildCorpus, fitCorpus, validateCitations, checkFigures, corpusNumbers, systemPrompt, answer, toProposals, TOOLS,
   estTokens, CORPUS_WARN_TOKENS, CORPUS_MAX_TOKENS, INSTRUMENT_FROM,
 };
