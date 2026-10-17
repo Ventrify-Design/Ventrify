@@ -37,6 +37,13 @@ const SECRETS = path.join(process.env.HOME, 'Desktop/ventrify-engagement-templat
 if (!process.env.FIREBASE_SERVICE_ACCOUNT) {
   process.env.FIREBASE_SERVICE_ACCOUNT = fs.readFileSync(path.join(SECRETS, 'firebase-admin.json'), 'utf8');
 }
+// The gate runs on a laptop, not on Vercel, so it reads the model key the same way it reads the Firebase
+// and Drive ones — from the secrets directory, never from the repo. Drop the key in that file and this runs
+// for real; leave it out and it self-tests the graders instead.
+const KEY_FILE = path.join(SECRETS, 'anthropic-key.txt');
+if (!process.env.ANTHROPIC_API_KEY && fs.existsSync(KEY_FILE)) {
+  process.env.ANTHROPIC_API_KEY = fs.readFileSync(KEY_FILE, 'utf8').trim();
+}
 const admin = require(path.join(ROOT, 'node_modules/firebase-admin'));
 const chat = require(path.join(ROOT, 'api/_chat.js'));
 if (!admin.apps.length) {
