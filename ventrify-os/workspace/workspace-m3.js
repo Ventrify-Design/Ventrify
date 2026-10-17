@@ -282,44 +282,14 @@ window.__naCheckRoom = async () => {
   if (!id) { window.__toast('Read the data room first.', true); return; }
   const btn = document.querySelector('.na-drive-again');
   if (btn) { btn.disabled = true; btn.textContent = 'Checking…'; }
-  naBusy(true);
-  try {
-    const { auth } = await import('../firebase/firebase.js');
-    const idToken = await auth.currentUser.getIdToken();
-    const post = (body) => fetch('/api/ingest-docs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken, engagementId: id, ...body }) });
-
-    naProg('Checking the folder…');
-    const dr = await post({ action: 'drive-diff' });
-    const diff = await dr.json().catch(() => ({}));
-    if (!dr.ok) throw new Error(diff.detail || diff.error || ('HTTP ' + dr.status));
-
-    const work = [...(diff.added || []), ...(diff.changed || [])];
-    if (!work.length) {
-      const extra = (diff.removed || []).length ? ` · ${diff.removed.length} no longer in the folder` : '';
-      window.__toast(`Nothing new — ${diff.unchanged} document${diff.unchanged === 1 ? '' : 's'} unchanged${extra}.`);
-    } else {
-      for (let i = 0; i < work.length; i++) {
-        const d = work[i];
-        naProg(`Reading new documents · ${i + 1} of ${work.length} · ${d.name.slice(0, 40)}`);
-        await post({ docType: 'dataroom', file: { name: d.name, driveId: d.driveId, exportMime: d.exportMime, driveModified: d.modifiedTime } });
-      }
-      naProg('Re-checking what the score will look for…');
-      const cr = await post({ action: 'room-check' });
-      const check = await cr.json().catch(() => ({}));
-      const slot = document.getElementById('na-room');
-      if (slot && cr.ok) slot.innerHTML = roomCheck(check);
-      const bits = [];
-      if ((diff.added || []).length) bits.push(`${diff.added.length} new`);
-      if ((diff.changed || []).length) bits.push(`${diff.changed.length} updated`);
-      if ((diff.removed || []).length) bits.push(`${diff.removed.length} no longer in the folder`);
-      window.__toast('Read ' + bits.join(' · ') + '.');
-    }
-  } catch (e) {
-    window.__toast('Could not check the folder: ' + ((e && e.message) || e), true);
-  } finally {
-    naBusy(false); naProg(null);
-    if (btn) { btn.disabled = false; btn.textContent = 'Check for new files'; }
+  const EA = await import('./engagement-actions.js');
+  const r = await EA.rescanDataRoom({ engagementId: id, onProgress: naProg, onBusy: naBusy });
+  if (r) {
+    const slot = document.getElementById('na-room');
+    if (slot && r.check) slot.innerHTML = roomCheck(r.check);
+    window.__toast(EA.rescanSummary(r));
   }
+  if (btn) { btn.disabled = false; btn.textContent = 'Check for new files'; }
 };
 
 // CHASE THE GAPS. Sends the founder the list the playback just showed — what the score looks for and could

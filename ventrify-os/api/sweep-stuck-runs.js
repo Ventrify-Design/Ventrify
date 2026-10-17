@@ -31,6 +31,23 @@ function ensureAdmin() {
   admin.initializeApp({ credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)) });
 }
 
+const drive = require('./_drive.js');
+
+// ── WATCHING A LINKED DATA ROOM ───────────────────────────────────────────────────────────────────────
+// The founder is emailed a list of missing documents and drops them into the Drive folder. Nothing told the
+// Workspace that happened, so the operator had to think to go and look. This pass notices.
+//
+// It rides the watchdog's existing 15-minute ping rather than adding a function (the project is at its
+// 12-function cap) or a second schedule. The per-room cooldown below means Drive is polled about hourly
+// however often the endpoint is hit — which also stops an open endpoint being a way to burn Drive quota.
+const ROOM_COOLDOWN_MS = 55 * 60 * 1000;     // ~hourly per room, regardless of ping frequency
+const ROOM_DORMANT_MS = 30 * 24 * 60 * 60 * 1000;  // stop watching a room nobody has touched in a month
+const ROOM_MAX_PER_PING = 3;                 // a Drive walk is seconds, and the watchdog must still answer
+// Hard wall-clock stop, well inside the 60s this function declares in vercel.json. Measured: walking a
+// 46-document nested room costs ~5s, so three rooms plus pass 1 lands around 20s. Anything that does not
+// fit is deferred to the next ping rather than risking a timeout mid-write.
+const ROOM_BUDGET_MS = 40000;
+
 const STALE_QUEUED_MS = 8 * 60 * 1000;    // queued and silent → never picked up
 const STALE_ACTIVE_MS = 30 * 60 * 1000;   // running/partial and silent → runner died
 const ACTIVE = ['queued', 'running', 'partial'];
@@ -93,7 +110,80 @@ module.exports = async (req, res) => {
       flipped++;
     }
 
-    res.status(200).json({ ok: true, checked, flipped });
+    // ── PASS 2: have any linked data rooms gained documents? ──────────────────────────────────────
+    let roomsChecked = 0, roomsChanged = 0, roomsSkipped = 0, roomsDeferred = 0;
+    if (process.env.DRIVE_SERVICE_ACCOUNT) {
+      const deadline = Date.now() + ROOM_BUDGET_MS;
+      // Engagements are few and the field is nested; a scan is cheaper and simpler than an index here.
+      const all = await db.collection('engagements').get();
+
+      const due = [];
+      for (const doc of all.docs) {
+        const d = doc.data();
+        const room = d.dataRoom || {};
+        if (!room.folderId) continue;
+        if (ACTIVE.includes((d.runState || {}).status)) { roomsSkipped++; continue; }   // never nag mid-run
+        // Dormancy counts only HUMAN activity — linking the room, chasing the founder, any write to the
+        // engagement. NOT lastCheckedAt: that is this sweep's own write, so counting it would keep every
+        // room looking freshly touched and this cutoff would never fire.
+        const touched = [toMs(room.linkedAt), toMs(room.lastRequestAt), toMs(d.updatedAt)]
+          .filter(Number.isFinite).sort((a, b) => b - a)[0];
+        if (Number.isFinite(touched) && now - touched > ROOM_DORMANT_MS) { roomsSkipped++; continue; }
+        const lastCheck = toMs(room.lastCheckedAt);
+        if (Number.isFinite(lastCheck) && now - lastCheck < ROOM_COOLDOWN_MS) { roomsSkipped++; continue; }
+        due.push({ ref: doc.ref, room, since: Number.isFinite(lastCheck) ? lastCheck : 0 });
+      }
+      // Least-recently-checked first, so no room can starve behind the same few every ping.
+      due.sort((a, b) => a.since - b.since);
+
+      for (const item of due) {
+        // Whatever does not fit this ping is first in line on the next one, 15 minutes away. Deferring is
+        // always safe: the next check re-derives the same answer from the folder.
+        if (roomsChecked >= ROOM_MAX_PER_PING || Date.now() > deadline) { roomsDeferred++; continue; }
+        roomsChecked++;
+        try {
+          const { files } = await drive.listFolder(item.room.folderId);
+          const have = new Map();
+          (await item.ref.collection('founderDocs').get()).docs.forEach(x => {
+            const v = x.data(); have.set(v.name, v.driveModified || null);
+          });
+          const added = files.filter(f => !have.has(f.name));
+          const changed = files.filter(f => have.has(f.name) && have.get(f.name) && f.modifiedTime && have.get(f.name) !== f.modifiedTime);
+
+          const patch = {
+            'dataRoom.lastCheckedAt': new Date().toISOString(),
+            'dataRoom.lastError': FieldValue.delete(),   // a room that reads again is no longer broken
+          };
+          if (added.length || changed.length) {
+            // Keep the ORIGINAL detectedAt while the set is unchanged, so the operator sees how long the
+            // documents have been sitting there rather than a timestamp that resets itself every hour.
+            const prev = item.room.pending;
+            const same = prev && prev.added === added.length && prev.changed === changed.length;
+            patch['dataRoom.pending'] = {
+              added: added.length, changed: changed.length,
+              names: [...added, ...changed].slice(0, 8).map(f => f.name),
+              detectedAt: (same && prev.detectedAt) || new Date().toISOString(),
+            };
+            roomsChanged++;
+          } else {
+            // DERIVED STATE, NOT AN EVENT. The flag means "the room holds documents we have not read" — so
+            // once they are read it has to go, or the queue keeps chasing evidence that is already scored.
+            // Clearing it here makes the flag self-heal even if whatever ingested them forgot to.
+            patch['dataRoom.pending'] = FieldValue.delete();
+          }
+          await item.ref.update(patch);
+        } catch (e) {
+          // A folder that was un-shared or deleted must not break the sweep for everyone else. Record it so
+          // the operator can see WHY their room stopped updating, rather than it just going quiet.
+          await item.ref.update({
+            'dataRoom.lastCheckedAt': new Date().toISOString(),
+            'dataRoom.lastError': String((e && e.message) || e).slice(0, 200),
+          }).catch(() => {});
+        }
+      }
+    }
+
+    res.status(200).json({ ok: true, checked, flipped, roomsChecked, roomsChanged, roomsSkipped, roomsDeferred });
   } catch (e) {
     res.status(500).json({ error: String((e && e.message) || e) });
   }

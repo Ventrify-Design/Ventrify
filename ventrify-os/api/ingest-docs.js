@@ -263,6 +263,12 @@ module.exports = async (req, res) => {
     if (isNewDoc) engUpdate.founderDocCount = admin.firestore.FieldValue.increment(1);
     if (docType === 'pitch') engUpdate.pitchDoc = { name, at: admin.firestore.FieldValue.serverTimestamp() };
     if (Object.keys(engUpdate).length) await db.collection('engagements').doc(engagementId).set(engUpdate, { merge: true });
+    // Reading a file OUT of the linked room is what answers the watcher's "unread documents" flag, so clear
+    // it here rather than on re-run — a run started without reading them would score the old document set
+    // and lose the only signal that newer evidence exists. If a re-scan stops half way the sweep re-raises
+    // the flag within the hour, because it re-derives it from the folder rather than remembering an event.
+    if (file.driveId) await db.collection('engagements').doc(engagementId)
+      .update({ 'dataRoom.pending': admin.firestore.FieldValue.delete() }).catch(() => {});
 
     res.status(200).json({ ok: true, id: docRef.id, name, docType, chars: text.length, truncated, extraction, needsDeepRead: extraction !== 'ok', storedOriginal: hasOriginal });
   } catch (e) {

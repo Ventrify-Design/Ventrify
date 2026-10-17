@@ -2,6 +2,14 @@
   "cleanUrls": true,
   "trailingSlash": false,
   "rewrites": [
-    { "source": "/m/:token", "destination": "/api/memo?t=:token" }
-  ]
+    {
+      "source": "/m/:token",
+      "destination": "/api/memo?t=:token"
+    }
+  ],
+  "functions": {
+    "api/sweep-stuck-runs.js": {
+      "maxDuration": 60
+    }
+  }
 }

@@ -167,12 +167,14 @@ const Q_ICON = {
   'qa-flag': 'search', 'l3-rebuild': 'autorenew', 'intake': 'auto_awesome',
   'assessment-ready': 'task_alt', 'assessment-running': 'autorenew', 'assessment-attention': 'warning',
   'assessment-deck': 'description', 'assessment-run': 'play_arrow',
+  'dataroom-new': 'move_to_inbox',
 };
 const Q_LABEL = {
   'gate-ready': 'Gate ready', 'cards-to-review': 'Cards to review', 'stuck-program': 'Stuck',
   'qa-flag': 'QA flag', 'l3-rebuild': 'L3 rebuild', 'intake': 'New intake',
   'assessment-ready': 'Assessment ready', 'assessment-running': 'Assessing', 'assessment-attention': 'Needs attention',
   'assessment-deck': 'Awaiting deck', 'assessment-run': 'Ready to run',
+  'dataroom-new': 'New documents',
 };
 
 export function adaptQueue(actions = [], ctx = {}) {

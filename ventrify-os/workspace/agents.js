@@ -112,6 +112,20 @@
     return parseLastActivityAge(p.lastActivity);
   }
 
+  // Relative age of an ISO timestamp, in the short form the queue's age column uses. Mirrors `ago` in
+  // shared/util.js — this file is a plain script, not a module, so it cannot import it. Keep the two
+  // in step if the wording changes.
+  function ago(iso) {
+    const t = Date.parse(iso || '');
+    if (isNaN(t)) return null;
+    const mins = Math.max(0, Math.floor((Date.now() - t) / 60000));
+    if (mins < 60) return mins < 2 ? 'just now' : `${mins} mins`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs} hour${hrs === 1 ? '' : 's'}`;
+    const days = Math.floor(hrs / 24);
+    return `${days} day${days === 1 ? '' : 's'}`;
+  }
+
   // Whole days since an ISO timestamp (null if missing/unparseable).
   function daysSince(iso) {
     if (!iso) return null;
@@ -141,6 +155,27 @@
         detail: status === 'error' ? 'The last run reported an error. Its results may be saved — try Republish, or re-run.' : 'The assessment finished but needs republishing to this page.',
         age: p.lastActivity || 'recently', cta: 'Open assessment', score: 88 };
     }
+    // NEW DOCUMENTS HAVE LANDED IN THE LINKED DATA ROOM. Set by the watchdog's data-room pass; cleared
+    // when they are read. This outranks "ready to review" deliberately: a verdict the operator has already
+    // seen matters less than evidence that could change it.
+    const room = p.dataRoom || {}, pend = room.pending;
+    if (pend && (pend.added || pend.changed)) {
+      const n = (pend.added || 0) + (pend.changed || 0);
+      const names = (pend.names || []).slice(0, 3).join(', ');
+      const extra = n > 3 ? ` and ${n - 3} more` : '';
+      // Honest about the sequence: reading is a few seconds, re-running is an hour-plus. They are two
+      // presses, and the queue should not imply the score updates on its own.
+      const what = pend.added && pend.changed
+        ? `${pend.added} new, ${pend.changed} updated`
+        : `${n} ${pend.added ? 'new' : 'updated'} document${n === 1 ? '' : 's'}`;
+      return { id: `act-room-new-${p.id}`, type: 'dataroom-new', urgency: 'high', programId: p.id,
+        title: `${what} in the ${p.name} data room`,
+        detail: (names ? `${names}${extra}. ` : '')
+          + (room.lastRequestAt ? 'The founder has answered your document request. ' : '')
+          + 'Read them into the assessment, then re-run to score against the new evidence.',
+        age: ago(pend.detectedAt) || 'just now', cta: 'Read the new documents', score: 92 };
+    }
+
     if (status === 'done' && hasVerdict) {
       const age = daysSince(rs.finishedAt);
       if (age == null || age <= 7) {

@@ -185,6 +185,76 @@ async function recordIngestOutcome({ engagementId, skipped, landed }) {
 }
 
 // clearSkippedDoc — the operator has dealt with it (re-added elsewhere, or it genuinely doesn't belong).
+// ---- RE-SCAN A LINKED GOOGLE DRIVE DATA ROOM -------------------------------
+// The founder drops documents into the folder after the room was first read; nothing tells the Workspace
+// that happened. This re-lists the folder, reads ONLY what is new or changed, and re-runs the room check.
+// Shared because two places need it — the new-assessment panel (first link, then return visits) and the
+// engagement page (where the action queue sends the operator when the watchdog spots new files). One
+// implementation means the two can never drift into reading the room differently.
+//
+// Returns { added, changed, removed, unchanged, failed, check } — never throws for a Drive-side problem;
+// it toasts and returns null, so a caller can repaint without wrapping every call.
+export async function rescanDataRoom({ engagementId, onProgress, onBusy } = {}) {
+  const prog = onProgress || (() => {});
+  const busy = onBusy || (() => {});
+  busy(true);
+  try {
+    const token = await idToken();
+    const post = (body) => fetch('/api/ingest-docs', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken: token, engagementId, ...body }),
+    });
+
+    prog('Checking the folder…');
+    const dr = await post({ action: 'drive-diff' });
+    const diff = await dr.json().catch(() => ({}));
+    if (!dr.ok) {
+      // Drive answers identically for "no such folder" and "not shared with us", so the message covers both.
+      throw new Error(diff.error === 'drive_not_shared'
+        ? 'Could not open the folder. Check it is still shared with the data-room reader.'
+        : diff.error === 'no_room_linked' ? 'No Google Drive folder is linked to this assessment.'
+        : (diff.detail || diff.error || ('HTTP ' + dr.status)));
+    }
+
+    const work = [...(diff.added || []), ...(diff.changed || [])];
+    let failed = 0;
+    for (let i = 0; i < work.length; i++) {
+      const d = work[i];
+      prog(`Reading new documents · ${i + 1} of ${work.length} · ${d.name.slice(0, 40)}`);
+      const r = await post({ docType: 'dataroom', file: { name: d.name, driveId: d.driveId, exportMime: d.exportMime, driveModified: d.modifiedTime } });
+      if (!r.ok) failed++;
+    }
+
+    // Only worth re-deriving when something actually landed.
+    let check = null;
+    if (work.length > failed) {
+      prog('Re-checking what the score will look for…');
+      const cr = await post({ action: 'room-check' });
+      if (cr.ok) check = await cr.json().catch(() => null);
+    }
+    return { added: diff.added || [], changed: diff.changed || [], removed: diff.removed || [], unchanged: diff.unchanged || 0, failed, check };
+  } catch (e) {
+    window.__toast('Could not check the folder: ' + ((e && e.message) || e), true);
+    return null;
+  } finally {
+    busy(false); prog(null);
+  }
+}
+
+// What a re-scan actually did, in one line — so both callers report it identically.
+export function rescanSummary(r) {
+  if (!r) return '';
+  const bits = [];
+  if (r.added.length) bits.push(`${r.added.length} new`);
+  if (r.changed.length) bits.push(`${r.changed.length} updated`);
+  if (r.removed.length) bits.push(`${r.removed.length} no longer in the folder`);
+  if (r.failed) bits.push(`${r.failed} could not be read`);
+  if (!r.added.length && !r.changed.length) {
+    return `Nothing new — ${r.unchanged} document${r.unchanged === 1 ? '' : 's'} unchanged` + (r.removed.length ? ` · ${r.removed.length} no longer in the folder` : '') + '.';
+  }
+  return 'Read ' + bits.join(' · ') + '.';
+}
+
 export async function clearSkippedDoc({ engagementId, name = null } = {}) {
   const data = await import('../firebase/data.js');
   const eng = await data.getEngagement(engagementId);

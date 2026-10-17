@@ -23,9 +23,10 @@
     .upload-row { display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:0.95rem 1.1rem; border-radius:12px; background:var(--surface,#F0F4F8); box-shadow:inset 2px 2px 5px rgba(0,0,0,0.05), inset -2px -2px 5px rgba(255,255,255,0.7); }
     .upload-row.is-required { box-shadow:inset 0 0 0 1.5px rgba(196,34,51,0.35); background:rgba(196,34,51,0.03); }
     .upload-row.is-set { box-shadow:inset 0 0 0 1.5px rgba(0,184,160,0.3); background:rgba(0,184,160,0.04); }
+    .upload-row.is-new { box-shadow:inset 0 0 0 1.5px rgba(199,119,0,0.4); background:rgba(199,119,0,0.05); }
     .upload-row-main { min-width:0; }
-    .upload-row-label { font-weight:600; font-size:0.92rem; color:var(--text,#141414); display:flex; align-items:center; gap:0.5rem; }
-    .upload-row-state { font-size:0.82rem; color:var(--text-muted,#656565); margin-top:0.2rem; line-height:1.45; }
+    .upload-row-label { font-weight:600; font-size:0.92rem; color:var(--text,#141414); display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap; }
+    .upload-row-state { font-size:0.82rem; color:var(--text-muted,#656565); margin-top:0.2rem; line-height:1.45; overflow-wrap:anywhere; }
     .upload-req { font-size:0.6rem; letter-spacing:0.06em; text-transform:uppercase; font-weight:700; color:#C42233; background:rgba(196,34,51,0.1); padding:0.12rem 0.45rem; border-radius:5px; }
     .upload-row .btn { flex:none; white-space:nowrap; }
     @media (max-width:640px){ .run-banner{ flex-direction:column; align-items:stretch; } .upload-row{ flex-direction:column; align-items:stretch; } .upload-row .btn{ width:100%; } }
@@ -42,7 +43,7 @@
     import { renderVSSScorecard, renderStrengthenSuggestions, ensureInvestabilityStyles, bandColor } from '../shared/investability-view.js';
     import { MAX_POSSIBLE } from '../shared/vss-rubric.js';
     import { renderWelcomePack, ensureWelcomePackStyles } from '../shared/welcome-pack-view.js';
-    import { esc as escBrief } from '../shared/util.js';
+    import { esc as escBrief, escAttr, ago as agoShort } from '../shared/util.js';
     await window.WORKSPACE_READY;
     ensureCardStyles();
     ensureHubStyles();
@@ -273,6 +274,26 @@
     }
     window.__uploadPitch = (id) => __ingestFiles(id, 'pitch-input', 'pitch');
     window.__uploadDataRoom = (id) => __ingestFiles(id, 'dataroom-input', 'dataroom');
+    // RE-READ A LINKED DRIVE ROOM. This is where the action queue's "new documents" item lands the operator.
+    // It reads only what changed, then reloads — the page is rendered from the engagement doc, so the row,
+    // the document count and the queue item all settle from the same refreshed state rather than three
+    // hand-patched copies of it.
+    window.__rescanRoom = async function(engagementId) {
+      const btn = document.getElementById('room-rescan-btn');
+      const stateEl = document.getElementById('deck-state');
+      const say = (m) => { if (stateEl) stateEl.innerHTML = m ? `<span class="run-spinner"></span> ${escBrief(m)}` : ''; };
+      if (btn) { btn.disabled = true; btn.textContent = 'Checking…'; }
+      const EA = await import('./engagement-actions.js');
+      const r = await EA.rescanDataRoom({ engagementId, onProgress: say });
+      if (btn) { btn.disabled = false; }
+      if (!r) { say(null); if (btn) btn.textContent = 'Check for new files'; return; }
+      const msg = EA.rescanSummary(r);
+      if (stateEl) stateEl.innerHTML = `<span style="color:var(--accent,#00B8A0);">${escBrief(msg)}</span>`;
+      window.__toast(msg);
+      // Nothing changed → nothing to repaint, and a reload would wipe the message the operator just got.
+      if (r.added.length || r.changed.length) setTimeout(() => window.location.reload(), 1100);
+      else if (btn) btn.textContent = 'Check for new files';
+    };
     // Best-effort email nudge to the other side — never blocks the action.
     async function notifyRecipient(direction) {
       try {
@@ -628,6 +649,43 @@
     }
 
     // ---------------- Assessment view (investor mode, Workspace-only) ----------
+    // The data room is EITHER a linked Google Drive folder or uploaded files — never both at once, because
+    // a room that is half-linked and half-uploaded cannot be re-scanned coherently. A linked room gets the
+    // re-scan the action queue sends the operator here to press.
+    function dataRoomRowHTML(p, dataN) {
+      const room = p.dataRoom || {};
+      if (!room.folderId) {
+        return `<div class="upload-row">
+            <div class="upload-row-main">
+              <div class="upload-row-label">Data room <span class="dim" style="font-weight:400;">&middot; optional</span></div>
+              <div class="upload-row-state">${dataN ? `${dataN} document${dataN === 1 ? '' : 's'} attached` : 'Financials, SAFEs, team, customers &mdash; upload files or a <strong>.zip</strong> of the whole room.'}</div>
+            </div>
+            <input type="file" id="dataroom-input" accept=".pdf,.docx,.xlsx,.xls,.xlsm,.txt,.md,.csv,.zip" multiple style="display:none;" onchange="window.__uploadDataRoom('${p.id}')">
+            <button class="btn btn-outline btn-sm" onclick="document.getElementById('dataroom-input').click()">${dataN ? '+ Add more' : 'Upload data room'}</button>
+          </div>`;
+      }
+      const pend = room.pending;
+      const n = pend ? (pend.added || 0) + (pend.changed || 0) : 0;
+      // Say WHICH documents are waiting. "3 new files" sends the operator off to Drive to find out what;
+      // naming them means they can judge from here whether it is worth an hour of run.
+      const names = pend && (pend.names || []).length
+        ? `<div style="margin-top:0.3rem;font-size:0.82rem;font-weight:400;color:var(--text-muted,#656565);">${(pend.names || []).slice(0, 6).map(escBrief).join(' &middot; ')}${n > 6 ? ` &middot; +${n - 6} more` : ''}</div>` : '';
+      const note = pend
+        ? `<div class="upload-row-state" style="color:#C77700;font-weight:600;">&#9679;&nbsp; ${n} document${n === 1 ? '' : 's'} in the folder ${n === 1 ? 'has' : 'have'} not been read yet${names}</div>`
+        : `<div class="upload-row-state">${dataN ? `${dataN} document${dataN === 1 ? '' : 's'} read` : 'Linked, but nothing read from it yet'}${room.lastCheckedAt ? ` &middot; checked ${escBrief(agoShort(room.lastCheckedAt))}` : ''}</div>`;
+      const err = room.lastError
+        ? `<div class="upload-row-state" style="color:var(--danger,#C0392B);">Last check failed: ${escBrief(room.lastError)}</div>` : '';
+      const link = room.folderUrl
+        ? ` &middot; <a href="${escAttr(room.folderUrl)}" target="_blank" rel="noopener">open in Drive</a>` : '';
+      return `<div class="upload-row ${pend ? 'is-new' : room.lastError ? '' : 'is-set'}">
+            <div class="upload-row-main">
+              <div class="upload-row-label">Data room <span class="dim" style="font-weight:400;">&middot; Google Drive &middot; ${escBrief(room.folderName || 'linked folder')}${link}</span></div>
+              ${note}${err}
+            </div>
+            <button id="room-rescan-btn" class="btn btn-${pend ? 'primary' : 'outline'} btn-sm" onclick="window.__rescanRoom('${p.id}')">${pend ? 'Read new documents' : 'Check for new files'}</button>
+          </div>`;
+    }
+
     function deckUploadHTML(p) {
       const hasPitch = !!p.pitchDoc;
       const pitchName = (p.pitchDoc && p.pitchDoc.name) || '';
@@ -645,14 +703,7 @@
             <input type="file" id="pitch-input" accept=".pdf,.docx" style="display:none;" onchange="window.__uploadPitch('${p.id}')">
             <button class="btn btn-${hasPitch ? 'outline' : 'primary'} btn-sm" onclick="document.getElementById('pitch-input').click()">${hasPitch ? 'Replace' : 'Upload pitch deck'}</button>
           </div>
-          <div class="upload-row">
-            <div class="upload-row-main">
-              <div class="upload-row-label">Data room <span class="dim" style="font-weight:400;">&middot; optional</span></div>
-              <div class="upload-row-state">${dataN ? `${dataN} document${dataN === 1 ? '' : 's'} attached` : 'Financials, SAFEs, team, customers &mdash; upload files or a <strong>.zip</strong> of the whole room.'}</div>
-            </div>
-            <input type="file" id="dataroom-input" accept=".pdf,.docx,.xlsx,.xls,.xlsm,.txt,.md,.csv,.zip" multiple style="display:none;" onchange="window.__uploadDataRoom('${p.id}')">
-            <button class="btn btn-outline btn-sm" onclick="document.getElementById('dataroom-input').click()">${dataN ? '+ Add more' : 'Upload data room'}</button>
-          </div>
+          ${dataRoomRowHTML(p, dataN)}
         </div>
         <span id="deck-state" style="display:block;margin-top:0.85rem;font-size:0.85rem;color:var(--text-muted);"></span>
       </div>`;
@@ -1438,7 +1489,7 @@
             </div>
           </div>
         </div>
-        ${deckUploadHTML(p)}
+        <div id="documents-region">${deckUploadHTML(p)}</div>
         <div id="run-region">${assessRunBannerHTML(p.runState, p)}</div>
         <div id="provenance-region">${provenanceStripHTML(p)}</div>
         <div id="lifecycle-region">${lifecycleBannerHTML(p)}</div>
@@ -1603,7 +1654,7 @@
     try {
       const focus = new URLSearchParams(location.search).get('focus');
       if (focus) {
-        const FOCUS_REGION = { 'cards-to-review': 'cards-region', 'assessment-ready': 'verdict-region', 'qa-flag': 'investability-region', 'l3-rebuild': 'deep-research' };
+        const FOCUS_REGION = { 'cards-to-review': 'cards-region', 'assessment-ready': 'verdict-region', 'qa-flag': 'investability-region', 'l3-rebuild': 'deep-research', 'dataroom-new': 'documents-region' };
         const el = document.getElementById(FOCUS_REGION[focus] || 'run-region') || document.getElementById('run-region');
         if (el) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'center' }), 250);
       }
@@ -1624,6 +1675,19 @@
           latestRunState = eng.runState || latestRunState;
           ensureRunTicker();
           if (isAssess) set('lifecycle-region', lifecycleBannerHTML({ ...p, runState: eng.runState, assessment: eng.assessment || p.assessment }));
+
+          // The data-room watcher writes dataRoom.pending from the server while this page may be open, so
+          // the documents row has to follow it. Same coercion rule as sign-off below: watchEngagement
+          // delivers the FULL doc, so an absent field means GONE — mirror null rather than guarding on
+          // presence, or a cleared flag would stay on screen as a phantom "unread documents".
+          if (isAssess) {
+            const drNext = eng.dataRoom || null;
+            if (JSON.stringify(drNext) !== JSON.stringify(p.dataRoom || null)) {
+              p.dataRoom = drNext;
+              p.founderDocCount = eng.founderDocCount != null ? eng.founderDocCount : p.founderDocCount;
+              set('documents-region', deckUploadHTML(p));
+            }
+          }
 
           // Sign-off + share-link are operator actions that can change in another
           // session — mirror them so the verdict badge/button stay truthful. Re-render
