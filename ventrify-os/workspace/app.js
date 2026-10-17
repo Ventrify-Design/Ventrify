@@ -197,6 +197,48 @@ async function bootstrap() {
 
 window.WORKSPACE_READY = bootstrap();
 
+// ----- Nudge the data-room watcher when someone is actually looking ------------------------------------
+//
+// WHY THIS EXISTS. The watcher rides the stuck-run watchdog's GitHub Actions schedule, which DECLARES every
+// 15 minutes and in practice fires far less: measured across 30 scheduled runs, the median gap is 245
+// minutes and the worst is 475. So a founder's documents could sit unnoticed for four hours, and the
+// 55-minute per-room cooldown the sweep enforces was never even reached.
+//
+// Opening the Workspace is exactly the moment the data should be fresh, so opening it asks. The server's
+// own cooldown means this cannot hammer Drive however often the page is loaded — the ping is a prompt to
+// check, not a check. The local throttle below just avoids pointless requests from refreshes and tabs.
+//
+// Fire and forget: it never blocks the page, never gates a render, and a failure is silent. The worst case
+// is the status quo — the schedule gets there eventually.
+const ROOM_PING_EVERY_MS = 10 * 60 * 1000;
+
+async function pingRoomWatcher() {
+  if (!FIREBASE_ENABLED) return;                     // demo/local builds have no rooms to watch
+  try {
+    const last = Number(localStorage.getItem('workspace.roomPingAt') || 0);
+    if (Date.now() - last < ROOM_PING_EVERY_MS) return;
+    localStorage.setItem('workspace.roomPingAt', String(Date.now()));
+  } catch (e) { /* private window — ping anyway, the server throttles */ }
+
+  try {
+    const resp = await fetch('/api/sweep-stuck-runs', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}',
+      signal: AbortSignal.timeout(55000),
+    });
+    if (!resp.ok) return;
+    const d = await resp.json();
+    if (!d || !d.roomsChanged) return;
+    // Say it rather than reloading underneath them. The operator is mid-thought; a page that yanks itself
+    // out from under a half-read verdict is worse than one that tells you there is something new.
+    const n = d.roomsChanged;
+    if (window.__toast) window.__toast(`New documents found in ${n} data room${n === 1 ? '' : 's'} — refresh to see ${n === 1 ? 'it' : 'them'}.`);
+    window.dispatchEvent(new CustomEvent('ventrify:rooms-changed', { detail: d }));
+  } catch (e) { /* best effort, always */ }
+}
+
+// After the workspace has loaded, so it never competes with the first paint.
+window.WORKSPACE_READY.then(() => { setTimeout(pingRoomWatcher, 1200); }).catch(() => {});
+
 // ============================================================
 //  Shell rendering — reads window.WORKSPACE at call time (after READY)
 // ============================================================
