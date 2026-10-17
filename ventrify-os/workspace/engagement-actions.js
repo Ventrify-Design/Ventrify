@@ -185,6 +185,25 @@ async function recordIngestOutcome({ engagementId, skipped, landed }) {
 }
 
 // clearSkippedDoc — the operator has dealt with it (re-added elsewhere, or it genuinely doesn't belong).
+// ---- ASK THE FOUNDER FOR WHAT THE ROOM IS MISSING ---------------------------
+// The server derives the list from a FRESH room check and sends it; nothing the caller passes decides what
+// is asked for. Shared because the setup panel and the assistant's proposal card both need it, and two
+// copies would eventually ask for two different things.
+export async function requestDocs({ engagementId, email } = {}) {
+  const token = await idToken();
+  const resp = await fetch('/api/send-email', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ type: 'docs-request', idToken: token, engagementId, email }),
+  });
+  const d = await resp.json().catch(() => ({}));
+  if (!resp.ok) {
+    throw new Error(d.error === 'nothing_missing'
+      ? 'The room already has everything the score looks for.'
+      : (d.detail || d.error || ('Could not send (' + resp.status + ')')));
+  }
+  return d;
+}
+
 // ---- RE-SCAN A LINKED GOOGLE DRIVE DATA ROOM -------------------------------
 // The founder drops documents into the folder after the room was first read; nothing tells the Workspace
 // that happened. This re-lists the folder, reads ONLY what is new or changed, and re-runs the room check.

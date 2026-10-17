@@ -557,3 +557,23 @@ md-outlined-text-field { --md-outlined-text-field-container-shape: 999px; --md-o
   font-family: inherit; font-size: 15px; line-height: 1.45; }
 .chat-input:focus { outline: 2px solid var(--md-sys-color-primary); outline-offset: -1px; border-color: transparent; }
 .chat-send { min-width: 44px; min-height: 44px; padding: 0 14px; flex: none; }
+
+/* A proposal card. Visually distinct from the answer above it: this is the assistant asking permission,
+   not telling you something, and the difference has to be obvious at a glance. */
+.chat-prop { margin-top: 4px; padding: 11px 13px; border-radius: 12px;
+  background: var(--md-sys-color-surface-container-high);
+  border-left: 3px solid var(--md-sys-color-primary);
+  display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.chat-prop.warn { border-left-color: var(--md-sys-color-error); }
+.chat-prop-t { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600;
+  color: var(--md-sys-color-on-surface); }
+.chat-prop-t .material-symbols-rounded { font-size: 17px; color: var(--md-sys-color-primary); }
+.chat-prop.warn .chat-prop-t .material-symbols-rounded { color: var(--md-sys-color-error); }
+.chat-prop-d { font-size: 12px; line-height: 1.45; color: var(--md-sys-color-on-surface-variant); }
+.chat-prop-l { font-size: 11.5px; line-height: 1.5; color: var(--md-sys-color-on-surface-variant);
+  background: var(--md-sys-color-surface-container-lowest); padding: 7px 9px; border-radius: 8px;
+  overflow-wrap: anywhere; width: 100%; box-sizing: border-box; font-family: ui-monospace, monospace; }
+.chat-prop-go { min-height: 36px; margin-top: 2px; }
+.chat-prop-done { display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600;
+  color: var(--on-success-container, var(--md-sys-color-primary)); }
+.chat-prop-done .material-symbols-rounded { font-size: 16px; }

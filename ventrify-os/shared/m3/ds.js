@@ -1975,7 +1975,7 @@ export function srcRow(d = {}) {
 // stripped bad citation leaves the sentence standing and looking sourced, which is the failure we care about.
 //
 // Rendering only. The page owns sending, subscribing and scroll — see workspace/assess-next.html.
-function chatMsg(m) {
+function chatMsg(m, idx) {
   if (m.role === 'user') {
     return `<div class="chat-msg user"><div class="chat-bubble">${esc(m.text)}</div></div>`;
   }
@@ -2012,7 +2012,19 @@ function chatMsg(m) {
   const omitted = (m.dropped || []).length
     ? `<div class="chat-note">${m.dropped.length} research document${m.dropped.length === 1 ? '' : 's'} too large to load for this answer.</div>` : '';
   const stub = m.stub ? `<div class="chat-note">Stub mode &mdash; no model was called.</div>` : '';
-  return `<div class="chat-msg bot">${stub}<div class="chat-body">${body}</div>${bad}${figs}${chips}${omitted}</div>`;
+  // PROPOSALS, NOT ACTIONS. Every card shows exactly what will be written and does nothing until pressed.
+  // The commit runs through the operator's own credentials, so the assistant can never reach further than
+  // the person reading it could by clicking the same thing themselves.
+  const props = (m.proposals || []).map((pr, j) => {
+    const done = pr.committed ? `<div class="chat-prop-done"><span class="material-symbols-rounded">check</span>${esc(pr.committed)}</div>` : '';
+    const lines = (pr.lines || []).length ? `<div class="chat-prop-l">${pr.lines.map((l) => esc(l)).join('<br>')}</div>` : '';
+    const btn = pr.committed ? '' :
+      `<button class="m3-btn ${pr.warn ? 'outlined' : 'filled'} chat-prop-go" data-msg="${idx}" data-prop="${j}">${esc(pr.cta)}</button>`;
+    return `<div class="chat-prop${pr.warn ? ' warn' : ''}">
+      <div class="chat-prop-t"><span class="material-symbols-rounded">${pr.warn ? 'warning' : 'bolt'}</span>${esc(pr.title)}</div>
+      <div class="chat-prop-d">${esc(pr.detail)}</div>${lines}${done}${btn}</div>`;
+  }).join('');
+  return `<div class="chat-msg bot">${stub}<div class="chat-body">${body}</div>${bad}${figs}${chips}${omitted}${props}</div>`;
 }
 
 export function chatPanel(c = {}) {

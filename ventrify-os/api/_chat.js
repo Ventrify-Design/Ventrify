@@ -192,6 +192,21 @@ async function buildCorpus(db, engagementId) {
     add(`research:${slug}`, str(d.title || slug), 'research', d.body || d.markdown || '', Number(d.order) || 0);
   }
 
+  // ── open gaps ───────────────────────────────────────────────────────────────────────────────────
+  // A GAP is a check the assessment RAN and could not close, so the venture was docked for our miss. These
+  // are the only things the operator can file evidence against, and the only place a legitimate gapId comes
+  // from — the chat may not invent one, and the proposal card shows the id so a wrong one is visible.
+  const gaps = (((e.assessmentGaps || {}).unresolved) || []).filter((g) => g && g.id && g.subject);
+  if (gaps.length) {
+    add('gaps', 'Open evidence gaps', 'gaps', [
+      'Checks the assessment ran and could not close. Each was scored against the venture. The operator can',
+      'file a pointer to evidence (a URL) against one of these, which the next run fetches and re-scores —',
+      'the score can go either way.',
+      '',
+      ...gaps.map((g) => `- [${g.id}] ${str(g.subject)}\n    sought: ${str(g.sought).slice(0, 300)}`),
+    ].join('\n'));
+  }
+
   // ── the manifest: names only, never contents ────────────────────────────────────────────────────
   const manifest = docSnap.docs.map((x) => x.data()).map((d) => ({
     name: str(d.name),
@@ -228,6 +243,8 @@ async function buildCorpus(db, engagementId) {
       engagementId,
       ventureName: e.ventureName || e.name || engagementId,
       blocks, aliases,
+      gapIds: gaps.map((g) => g.id),
+      hasRoom: !!(room.folderId),
       sourceIds: blocks.map((b) => b.id),
       manifest,
       integrity,
@@ -281,7 +298,13 @@ function validateCitations(answer, sourceIds, aliases = {}) {
 //
 // Order of protection: identity, verdict, scorecard, manifest and freshness are never dropped. Research is.
 const CORPUS_MAX_TOKENS = 140000;
-const NEVER_DROP = new Set(['identity', 'verdict', 'score', 'manifest', 'freshness']);
+// `gaps` is protected for a reason beyond its size: it is the ONLY legitimate source of a gapId, and the
+// file-evidence proposal is built from one. Drop it and the assistant either cannot propose at all or
+// starts guessing ids — and a guessed id on a card the operator might press is not a risk worth taking.
+const NEVER_DROP = new Set(['identity', 'verdict', 'score', 'manifest', 'freshness', 'gaps']);
+// The "research not loaded" notice is appended AFTER the budget is spent, so it has to be paid for up
+// front or the fitted corpus lands just over the cap — it did, by 455 tokens.
+const OMITTED_NOTICE_TOKENS = 600;
 
 function fitCorpus(corpus, maxTokens = CORPUS_MAX_TOKENS) {
   if (corpus.tokens <= maxTokens) return { ...corpus, dropped: [] };
@@ -292,7 +315,7 @@ function fitCorpus(corpus, maxTokens = CORPUS_MAX_TOKENS) {
   // so that curation already encodes what matters most. Respect it rather than inventing a size heuristic.
   const droppable = corpus.blocks.filter((b) => !NEVER_DROP.has(b.kind))
     .sort((a, b) => (a.rank || 0) - (b.rank || 0) || a.text.length - b.text.length);
-  let budget = maxTokens - estTokens(keep.map((b) => b.text).join(''));
+  let budget = maxTokens - estTokens(keep.map((b) => b.text).join('')) - OMITTED_NOTICE_TOKENS;
   const kept = [], dropped = [];
   let full = false;
   for (const b of droppable) {
@@ -356,6 +379,15 @@ function systemPrompt(corpus) {
     corpus.integrity.note,
     corpus.stale ? 'Documents have arrived since this assessment ran — see the freshness source and raise it unprompted when it could change the answer.' : '',
     '',
+    'DOING THINGS',
+    'You have tools, but none of them act. Each one puts a card in front of the operator with a button; they',
+    'decide. Propose only when it is the obvious next step and you have what the tool needs — a real gapId',
+    'from the gaps source, a URL the operator actually gave you. Do not propose a re-run casually: it costs',
+    'over an hour of compute. Say what you are proposing in your reply too; the card is not the explanation.',
+    'Write it as something you are OFFERING, never as something you have done — "there is a card to file',
+    'this" or "I can file this", not "I am filing it". Nothing happens until they press the button, and an',
+    'operator who believes it is already filed will not press it.',
+    '',
     'STYLE',
     'Brief and direct. The operator is a professional investor; do not restate the verdict back at them or',
     'pad with caveats. Lead with the answer.',
@@ -364,6 +396,90 @@ function systemPrompt(corpus) {
     `Valid source ids: ${corpus.sourceIds.join(', ')}`,
     corpus.text,
   ].filter((l) => l !== '').join('\n');
+}
+
+// ── PROPOSALS: WHAT THE ASSISTANT MAY SUGGEST, AND WHY IT CAN NEVER DO IT ─────────────────────────────
+//
+// The assistant can act, but only in one direction: it PROPOSES, the operator COMMITS. Nothing here runs a
+// tool. The model's tool call is captured, turned into a card, and handed to the browser; the commit then
+// goes through the ordinary engagement-actions.js path with the operator's own credentials and the same
+// Firestore rules that govern a button click. So the chat can never do anything the operator could not do
+// themselves, and never does anything they did not press.
+//
+// That is also why no tool result is ever returned to the model. The turn ends at the proposal. History is
+// rebuilt from stored TEXT only, so an unanswered tool_use can never be replayed into a later request.
+//
+// AND IT CANNOT MOVE A NUMBER. Filing evidence writes an append-only `filed` record that the NEXT governed
+// run fetches, reads and re-scores — the score can fall. The chat puts evidence in front of the scorer; it
+// never edits the scorer's output. Re-running is just the existing run, with its existing cost and gates.
+const TOOLS = [
+  {
+    name: 'propose_file_evidence',
+    description: 'Propose filing a pointer to evidence against one open gap. Use ONLY when the operator has '
+      + 'named a specific source (a URL) that speaks to that gap. The gapId must be one listed in the "gaps" '
+      + 'source — never invent one. This does not change the score: the next run fetches the evidence, reads '
+      + 'it and re-scores, and the score may go down.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        gapId: { type: 'string', description: 'id from the gaps source, e.g. 2ec6a2e5' },
+        url: { type: 'string', description: 'the URL the operator gave' },
+        note: { type: 'string', description: 'one line on what this evidence shows' },
+      },
+      required: ['gapId', 'url'],
+    },
+  },
+  {
+    name: 'propose_document_request',
+    description: 'Propose emailing the founder for the documents the assessment could not find. The content '
+      + 'is derived server-side from a fresh check of the data room, not from anything you write.',
+    input_schema: { type: 'object', properties: { reason: { type: 'string', description: 'one line on why now' } } },
+  },
+  {
+    name: 'propose_rescan_room',
+    description: 'Propose re-reading the linked data room to pick up documents added since the last run. '
+      + 'Only when a room is linked. Cheap and fast.',
+    input_schema: { type: 'object', properties: { reason: { type: 'string' } } },
+  },
+  {
+    name: 'propose_rerun',
+    description: 'Propose re-running the whole assessment. EXPENSIVE — well over an hour of compute. Only '
+      + 'propose this when new evidence has actually landed that the current score did not see.',
+    input_schema: { type: 'object', properties: { reason: { type: 'string', description: 'what changed that justifies the cost' } } },
+  },
+];
+
+// What the card says. Written here rather than in the panel so the wording cannot drift from the schema.
+const PROPOSAL_COPY = {
+  propose_file_evidence: (i, c) => ({
+    title: 'File this evidence against a gap',
+    detail: `Gap ${i.gapId}: ${(c.gapIds || []).includes(i.gapId) ? 'open on this assessment' : 'NOT A KNOWN GAP — do not commit'}`,
+    lines: [i.url, i.note].filter(Boolean),
+    warn: !(c.gapIds || []).includes(i.gapId),
+    cta: 'File evidence',
+  }),
+  propose_document_request: (i) => ({
+    title: 'Email the founder for the missing documents',
+    detail: 'The list is rebuilt from a fresh check of the data room when you send it.',
+    lines: [i.reason].filter(Boolean), cta: 'Review and send',
+  }),
+  propose_rescan_room: (i) => ({
+    title: 'Re-read the data room',
+    detail: 'Reads only what has changed since last time. Seconds, no model cost.',
+    lines: [i.reason].filter(Boolean), cta: 'Re-read now',
+  }),
+  propose_rerun: (i) => ({
+    title: 'Re-run the whole assessment',
+    detail: 'Over an hour of compute, and it will publish a new score.',
+    lines: [i.reason].filter(Boolean), warn: true, cta: 'Re-run assessment',
+  }),
+};
+
+function toProposals(blocks, corpus) {
+  return (blocks || []).filter((b) => b.type === 'tool_use' && PROPOSAL_COPY[b.name]).map((b) => {
+    const input = b.input || {};
+    return { tool: b.name, input, ...PROPOSAL_COPY[b.name](input, corpus) };
+  });
 }
 
 // Exercises the entire path — corpus, prompt, citation validation, persistence, rendering — with no API key
@@ -390,15 +506,16 @@ function stubAnswer(corpus, question) {
  */
 async function answer({ corpus, history = [], question, apiKey = process.env.ANTHROPIC_API_KEY, model = 'claude-sonnet-5-5' }) {
   const fitted = fitCorpus(corpus);
-  const finish = (raw) => {
+  const finish = (raw, blocks) => {
     const v = validateCitations(raw, fitted.sourceIds, fitted.aliases);
     const f = checkFigures(v.text, fitted.text);
     return {
       ...v, text: f.text, figures: f.figures, unsupportedFigures: f.unsupported,
+      proposals: toProposals(blocks, fitted),
       ok: v.ok && f.ok, dropped: fitted.dropped,
     };
   };
-  if (!apiKey) return { ...finish(stubAnswer(fitted, question)), stub: true, usage: null };
+  if (!apiKey) return { ...finish(stubAnswer(fitted, question), []), stub: true, usage: null };
   const resp = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
@@ -407,6 +524,10 @@ async function answer({ corpus, history = [], question, apiKey = process.env.ANT
       // The corpus is identical on every turn, so cache it: the first question pays to write the cache and
       // every one after it reads at a fraction of the price.
       system: [{ type: 'text', text: systemPrompt(fitted), cache_control: { type: 'ephemeral' } }],
+      tools: TOOLS,
+      // HISTORY IS TEXT ONLY, DELIBERATELY. A tool_use block is never answered with a tool_result — the turn
+      // ends at the proposal — so replaying one into a later request would be a protocol error. Rebuilding
+      // from stored text makes that impossible rather than merely unlikely.
       messages: [...history.slice(-12).map((m) => ({ role: m.role, content: String(m.text || '') })),
         { role: 'user', content: String(question) }],
     }),
@@ -417,7 +538,7 @@ async function answer({ corpus, history = [], question, apiKey = process.env.ANT
   }
   const data = await resp.json();
   const raw = (data.content || []).filter((c) => c.type === 'text').map((c) => c.text).join('');
-  return { ...finish(raw), stub: false, usage: data.usage || null };
+  return { ...finish(raw, data.content), stub: false, usage: data.usage || null };
 }
 
 // ── FIGURE VALIDATION ─────────────────────────────────────────────────────────────────────────────────
@@ -482,6 +603,6 @@ function checkFigures(answer, corpusText) {
 }
 
 module.exports = {
-  buildCorpus, fitCorpus, validateCitations, checkFigures, systemPrompt, answer,
+  buildCorpus, fitCorpus, validateCitations, checkFigures, systemPrompt, answer, toProposals, TOOLS,
   estTokens, CORPUS_WARN_TOKENS, CORPUS_MAX_TOKENS, INSTRUMENT_FROM,
 };
