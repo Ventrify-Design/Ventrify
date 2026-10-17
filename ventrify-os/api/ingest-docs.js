@@ -79,7 +79,7 @@ module.exports = async (req, res) => {
     if (!idToken) { res.status(401).json({ error: 'no_token' }); return; }
     if (!engagementId) { res.status(400).json({ error: 'bad_request' }); return; }
     // Read-only actions carry no file; only the ingest path needs one.
-    const READ_ONLY = ['drive-list', 'room-check'];
+    const READ_ONLY = ['drive-list', 'drive-diff', 'room-check'];
     if (!READ_ONLY.includes(action) && (!name || (!file.dataBase64 && file.text == null && !storagePath && !file.driveId))) { res.status(400).json({ error: 'bad_request' }); return; }
 
     ensureAdmin();
@@ -124,6 +124,39 @@ module.exports = async (req, res) => {
         const msg = String((e && e.message) || e);
         const code = msg.startsWith('drive_') ? msg.split(':')[0] : 'drive_error';
         res.status(code === 'drive_not_shared' ? 404 : 502).json({ error: code, detail: msg.slice(0, 300) });
+      }
+      return;
+    }
+
+    // ── HAS THE LINKED ROOM CHANGED SINCE WE READ IT? ─────────────────────────────────────────────────
+    // The founder was asked for documents and dropped them into the folder; nothing tells the Workspace that
+    // happened. This compares the folder against what was ingested, by Drive id and last-modified, so a
+    // re-scan costs one listing and re-reads only what actually changed.
+    if (action === 'drive-diff') {
+      const engSnapNow = engSnap.data() || {};
+      const url = String(body.folderUrl || (engSnapNow.dataRoom && engSnapNow.dataRoom.folderUrl) || '');
+      const folderId = drive.parseFolderId(url);
+      if (!folderId) { res.status(400).json({ error: 'no_room_linked', detail: 'No Google Drive folder is linked to this assessment yet.' }); return; }
+      try {
+        const { files, skipped, truncated } = await drive.listFolder(folderId);
+        const have = new Map();
+        (await db.collection('engagements').doc(engagementId).collection('founderDocs').get())
+          .docs.forEach(d => { const x = d.data(); have.set(x.name, { driveId: x.driveId || null, driveModified: x.driveModified || null }); });
+        const added = [], changed = [], unchanged = [];
+        for (const f of files) {
+          const prev = have.get(f.name);
+          if (!prev) added.push(f);
+          else if (prev.driveModified && f.modifiedTime && prev.driveModified !== f.modifiedTime) changed.push(f);
+          else unchanged.push(f.name);
+        }
+        // Gone from the folder, but still ingested. NOT deleted here: a score may already have been derived
+        // from it, and silently dropping evidence underneath a published number is worse than a stale row.
+        const liveNames = new Set(files.map(f => f.name));
+        const removed = [...have.keys()].filter(n => !liveNames.has(n) && have.get(n).driveId);
+        res.status(200).json({ ok: true, added, changed, removed, unchanged: unchanged.length, skipped, truncated });
+      } catch (e) {
+        const msg = String((e && e.message) || e);
+        res.status(msg.startsWith('drive_not_shared') ? 404 : 502).json({ error: msg.split(':')[0], detail: msg.slice(0, 300) });
       }
       return;
     }
@@ -209,6 +242,7 @@ module.exports = async (req, res) => {
     const hasOriginal = !!(rawChunks || storagePath);
     await docRef.set({
       name, docType, chars: text.length, truncated, text,
+      driveId: file.driveId || null, driveModified: file.driveModified || null,
       extraction, extractionDetail,
       storagePath: storagePath || null,
       rawEncoding: rawChunks ? 'base64' : null, rawExt: hasOriginal ? (ext || 'bin') : null,

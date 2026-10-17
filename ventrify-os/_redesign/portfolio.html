@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio — Ventrify OS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<style>
+  .filters { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 22px 0 6px; }
+  .fpill { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 8px 13px; border-radius: 999px; border: 1px solid var(--border); color: var(--text-muted); cursor: pointer; background: var(--surface-2); }
+  .fpill.on { background: linear-gradient(100deg, var(--violet), var(--violet-deep)); border-color: transparent; color: #fff; box-shadow: 0 6px 18px rgba(var(--violet-rgb),0.3); }
+  .search { margin-left: auto; display: flex; align-items: center; gap: 8px; padding: 9px 14px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text-faint); font-size: 0.84rem; min-width: 220px; }
+  .search svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; }
+  .sub-filter { display: flex; align-items: center; gap: 8px; margin: 12px 0 22px; }
+  .eng-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .eng { padding: 20px 22px; }
+  .eng-head { display: flex; align-items: center; gap: 12px; }
+  .eng-head .nm { font-family: var(--font-head); font-weight: 600; font-size: 1.05rem; }
+  .eng-head .who { color: var(--text-faint); font-size: 0.8rem; }
+  .phase-line { font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--violet-soft); margin: 16px 0 8px; }
+  .gate { font-size: 0.92rem; font-weight: 500; }
+  .eng-meta { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.04em; color: var(--text-ghost); margin: 12px 0; }
+  .eng-stats { display: flex; gap: 26px; padding-top: 14px; border-top: 1px solid var(--border); }
+  .eng-stats .n { font-family: var(--font-head); font-size: 1.15rem; font-weight: 600; }
+  .eng-stats .l { color: var(--text-faint); font-size: 0.72rem; margin-top: 2px; }
+  .eng.assess { border-left: 2px solid var(--green); }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="side-logo"><span class="mk"></span><span class="wm">VENTRIFY <small>OS</small></span></div>
+    <div class="side-label">Operate</div>
+    <div class="nav-item active"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg> Portfolio <span class="nav-badge">7</span></div>
+    <div class="nav-item"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg> Action queue <span class="nav-badge">7</span></div>
+    <div class="nav-item"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg> Pipeline</div>
+    <div class="side-label">Manage</div>
+    <div class="nav-item"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg> Team <span class="nav-badge">3</span></div>
+    <div class="nav-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg> Settings</div>
+    <div class="side-foot"><span class="av">AC</span><span class="nm">Apex Capital<small>Partner workspace</small></span></div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <span class="eyebrow">Portfolio</span>
+        <h1 class="page-h1">All engagements <span class="faint" style="font-weight:400;">· 7 active</span></h1>
+        <p class="page-sub">Every venture running on your Workspace. Open one for the full assessment and timeline.</p>
+      </div>
+      <button class="btn btn-primary"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> New engagement</button>
+    </div>
+
+    <!-- stat row -->
+    <div class="stat-grid">
+      <div class="card stat accent"><div class="n">7</div><div class="l">Active programs</div></div>
+      <div class="card stat accent"><div class="n">5</div><div class="l">In flight · Phase 1–4</div></div>
+      <div class="card stat accent"><div class="n">11</div><div class="l">Cards awaiting founder</div></div>
+      <div class="card stat accent"><div class="n">71<small>%</small></div><div class="l">Portfolio completeness</div><div class="sub">119 / 168 expected outputs</div></div>
+    </div>
+
+    <!-- filters -->
+    <div class="filters">
+      <span class="fpill on">All</span>
+      <span class="fpill">On track</span>
+      <span class="fpill">Needs attention</span>
+      <span class="fpill">Stuck</span>
+      <span class="fpill">Assigned to me</span>
+      <span class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg> Search programs or founders…</span>
+    </div>
+    <div class="sub-filter">
+      <span class="mono faint" style="font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;">Recommendation</span>
+      <span class="fpill on" style="font-size:.62rem;padding:6px 11px;">All</span>
+      <span class="fpill" style="font-size:.62rem;padding:6px 11px;">Invest</span>
+      <span class="fpill" style="font-size:.62rem;padding:6px 11px;">Consider</span>
+      <span class="fpill" style="font-size:.62rem;padding:6px 11px;">Pass</span>
+    </div>
+
+    <!-- engagement grid -->
+    <div class="eng-grid">
+      <!-- Northwind -->
+      <div class="card eng hover">
+        <div class="eng-head">
+          <span class="av-sq" style="background:linear-gradient(135deg,#FF8A5B,#F0603A);">MC</span>
+          <div style="flex:1;"><div class="nm">Northwind</div><div class="who">Marcus Chen · Climate / Energy</div></div>
+          <span class="pill green"><span class="dot"></span> On track</span>
+        </div>
+        <div class="phase-line">Phase 4 · Develop</div>
+        <div class="gate">Gate 2.5 signed off · SOW signed</div>
+        <div class="bar thin" style="margin-top:10px;"><span style="width:88%"></span></div>
+        <div class="eng-meta">Started 2026-03-04 · 71 days active · Last activity 2h ago</div>
+        <div class="eng-stats"><div><div class="n">24</div><div class="l">Cards resolved</div></div><div><div class="n">0</div><div class="l">Awaiting founder</div></div><div><div class="n">24</div><div class="l">Total drafted</div></div></div>
+      </div>
+
+      <!-- Stellaria -->
+      <div class="card eng hover">
+        <div class="eng-head">
+          <span class="av-sq" style="background:linear-gradient(135deg,#8B5CF6,#6D28D9);">SL</span>
+          <div style="flex:1;"><div class="nm">Stellaria</div><div class="who">Sophie Laurent · Healthtech</div></div>
+          <span class="pill green"><span class="dot"></span> On track</span>
+        </div>
+        <div class="phase-line">Phase 2 · Define</div>
+        <div class="gate">Gate 2 in review · 5 cards awaiting founder</div>
+        <div class="bar thin" style="margin-top:10px;"><span style="width:42%"></span></div>
+        <div class="eng-meta">Started 2026-04-22 · 22 days active · Last activity 8h ago</div>
+        <div class="eng-stats"><div><div class="n">8</div><div class="l">Cards resolved</div></div><div><div class="n">5</div><div class="l">Awaiting founder</div></div><div><div class="n">13</div><div class="l">Total drafted</div></div></div>
+      </div>
+
+      <!-- Halo Sound -->
+      <div class="card eng hover">
+        <div class="eng-head">
+          <span class="av-sq" style="background:linear-gradient(135deg,#2DD4A7,#17B98C);color:#06120E;">JP</span>
+          <div style="flex:1;"><div class="nm">Halo Sound</div><div class="who">Jamie Patel · Consumer audio</div></div>
+          <span class="pill red"><span class="dot"></span> Stuck</span>
+        </div>
+        <div class="phase-line">Phase 1 · Discover</div>
+        <div class="gate">Gate 1 stuck · founder unresponsive 9 days</div>
+        <div class="bar thin" style="margin-top:10px;"><span style="width:20%;background:linear-gradient(90deg,#E23E63,#FF6B87)"></span></div>
+        <div class="eng-meta">Started 2026-05-01 · 13 days active · Last activity 9d ago</div>
+        <div class="eng-stats"><div><div class="n">0</div><div class="l">Cards resolved</div></div><div><div class="n">6</div><div class="l">Awaiting founder</div></div><div><div class="n">6</div><div class="l">Total drafted</div></div></div>
+      </div>
+
+      <!-- Quill -->
+      <div class="card eng hover">
+        <div class="eng-head">
+          <span class="av-sq" style="background:linear-gradient(135deg,#F472B6,#DB2777);">EV</span>
+          <div style="flex:1;"><div class="nm">Quill</div><div class="who">Eleni Vasquez · B2B SaaS</div></div>
+          <span class="pill amber"><span class="dot"></span> Needs attention</span>
+        </div>
+        <div class="phase-line">Phase 2.5 · Financials</div>
+        <div class="gate">Gate 2.5 ready · all cards resolved, L3 rebuilt</div>
+        <div class="bar thin" style="margin-top:10px;"><span style="width:55%"></span></div>
+        <div class="eng-meta">Started 2026-03-18 · 57 days active · Last activity 1h ago</div>
+        <div class="eng-stats"><div><div class="n">18</div><div class="l">Cards resolved</div></div><div><div class="n">0</div><div class="l">Awaiting founder</div></div><div><div class="n">18</div><div class="l">Total drafted</div></div></div>
+      </div>
+
+      <!-- Verdana Bio (assessment) -->
+      <div class="card eng assess hover" style="grid-column:1/-1;">
+        <div class="eng-head">
+          <span class="av-sq" style="background:linear-gradient(135deg,#2DD4A7,#17B98C);color:#06120E;">VB</span>
+          <div style="flex:1;"><div class="nm">Verdana Bio</div><div class="who">Climate biotech · Seed</div></div>
+          <span class="pill green"><span class="dot"></span> Assessment</span>
+        </div>
+        <div style="display:flex;gap:20px;align-items:flex-start;margin-top:16px;flex-wrap:wrap;">
+          <span class="rec consider" style="font-size:.8rem;padding:8px 14px;"><span class="dot"></span> DILIGENCE FURTHER</span>
+          <p style="flex:1;min-width:280px;font-size:.9rem;line-height:1.55;color:var(--text-muted);margin:0;">A biological input that meaningfully cuts fertiliser cost and emissions, riding the regenerative-ag tailwind — if field efficacy holds outside the greenhouse.</p>
+          <div style="text-align:right;"><div style="font-family:var(--font-head);font-size:1.8rem;font-weight:600;">67<span class="faint" style="font-size:.9rem;">/100</span></div><div class="faint mono" style="font-size:.6rem;">PROMISING</div></div>
+        </div>
+        <div class="eng-meta" style="margin-top:14px;margin-bottom:0;">Ask $3M on $12M pre (Seed) · 31 of 35 signals rated · Assessed 1 hour ago</div>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

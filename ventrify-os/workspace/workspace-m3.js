@@ -127,7 +127,10 @@ export function openNewAssessment() {
         <div class="na-drive">
           <div class="na-drive-row">
             ${formField({ label: 'Or link a Google Drive folder', id: 'na-drive', optional: true, type: 'url', placeholder: 'https://drive.google.com/drive/folders/…', hint: 'Shared with anyone who has the link, or with dataroom-reader@ventrify-os.iam.gserviceaccount.com' })}
-            <button class="m3-btn tonal na-drive-go" type="button" onclick="window.__naReadRoom()">Read data room</button>
+            <div class="na-drive-btns">
+              <button class="m3-btn tonal na-drive-go" type="button" onclick="window.__naReadRoom()">Read data room</button>
+              <button class="m3-btn text na-drive-again" type="button" onclick="window.__naCheckRoom()" hidden>Check for new files</button>
+            </div>
           </div>
           <div id="na-room"></div>
         </div>
@@ -250,7 +253,7 @@ window.__naReadRoom = async () => {
     for (let i = 0; i < NA.driveFiles.length; i++) {
       const d = NA.driveFiles[i];
       naProg(`Reading the data room · ${i + 1} of ${NA.driveFiles.length} · ${d.name.slice(0, 44)}`);
-      const r = await fetch('/api/ingest-docs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken, engagementId: programId, docType: 'dataroom', file: { name: d.name, driveId: d.driveId, exportMime: d.exportMime } }) });
+      const r = await fetch('/api/ingest-docs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken, engagementId: programId, docType: 'dataroom', file: { name: d.name, driveId: d.driveId, exportMime: d.exportMime, driveModified: d.modifiedTime } }) });
       if (!r.ok) failed++;
     }
 
@@ -260,6 +263,7 @@ window.__naReadRoom = async () => {
     const slot = document.getElementById('na-room');
     if (slot && cr.ok) slot.innerHTML = roomCheck(check);
     NA.roomRead = true;
+    const again = document.querySelector('.na-drive-again'); if (again) again.hidden = false;
     naBusy(false); naProg(null);
     naSyncCta();
     const read = NA.driveFiles.length - failed;
@@ -267,6 +271,54 @@ window.__naReadRoom = async () => {
   } catch (e) {
     naBusy(false); naProg(null);
     window.__toast('Could not read the data room: ' + ((e && e.message) || e), true);
+  }
+};
+
+// RE-SCAN. The founder was emailed a list and has dropped files into the folder; nothing tells the Workspace
+// that happened. This re-lists the room, re-reads ONLY what is new or changed — a re-scan of a 46-document
+// room that gained one file costs one listing and one ingest, not three minutes — and repaints the playback.
+window.__naCheckRoom = async () => {
+  const id = NA.createdId;
+  if (!id) { window.__toast('Read the data room first.', true); return; }
+  const btn = document.querySelector('.na-drive-again');
+  if (btn) { btn.disabled = true; btn.textContent = 'Checking…'; }
+  naBusy(true);
+  try {
+    const { auth } = await import('../firebase/firebase.js');
+    const idToken = await auth.currentUser.getIdToken();
+    const post = (body) => fetch('/api/ingest-docs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken, engagementId: id, ...body }) });
+
+    naProg('Checking the folder…');
+    const dr = await post({ action: 'drive-diff' });
+    const diff = await dr.json().catch(() => ({}));
+    if (!dr.ok) throw new Error(diff.detail || diff.error || ('HTTP ' + dr.status));
+
+    const work = [...(diff.added || []), ...(diff.changed || [])];
+    if (!work.length) {
+      const extra = (diff.removed || []).length ? ` · ${diff.removed.length} no longer in the folder` : '';
+      window.__toast(`Nothing new — ${diff.unchanged} document${diff.unchanged === 1 ? '' : 's'} unchanged${extra}.`);
+    } else {
+      for (let i = 0; i < work.length; i++) {
+        const d = work[i];
+        naProg(`Reading new documents · ${i + 1} of ${work.length} · ${d.name.slice(0, 40)}`);
+        await post({ docType: 'dataroom', file: { name: d.name, driveId: d.driveId, exportMime: d.exportMime, driveModified: d.modifiedTime } });
+      }
+      naProg('Re-checking what the score will look for…');
+      const cr = await post({ action: 'room-check' });
+      const check = await cr.json().catch(() => ({}));
+      const slot = document.getElementById('na-room');
+      if (slot && cr.ok) slot.innerHTML = roomCheck(check);
+      const bits = [];
+      if ((diff.added || []).length) bits.push(`${diff.added.length} new`);
+      if ((diff.changed || []).length) bits.push(`${diff.changed.length} updated`);
+      if ((diff.removed || []).length) bits.push(`${diff.removed.length} no longer in the folder`);
+      window.__toast('Read ' + bits.join(' · ') + '.');
+    }
+  } catch (e) {
+    window.__toast('Could not check the folder: ' + ((e && e.message) || e), true);
+  } finally {
+    naBusy(false); naProg(null);
+    if (btn) { btn.disabled = false; btn.textContent = 'Check for new files'; }
   }
 };
 

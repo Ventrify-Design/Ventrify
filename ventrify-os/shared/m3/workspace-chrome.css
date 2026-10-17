@@ -181,7 +181,11 @@
    leave the button jammed beside a three-line hint on a 1440px screen, which is exactly what it did. */
 .na-drive-row { display: flex; flex-direction: column; align-items: stretch; gap: 10px; }
 .na-drive-row > *:first-child { min-width: 0; }
-.na-drive-go { align-self: flex-start; white-space: nowrap; }
+.na-drive-btns { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.na-drive-go { white-space: nowrap; }
+/* Re-scan is the quieter sibling: same row, text weight — it is the thing you press on a return visit,
+   not the thing you press first. */
+.na-drive-again { white-space: nowrap; }
 #na-room:not(:empty) { margin-top: 2px; }
 #na-room .sec { padding-block: 0; border: none; }
 /* The chase-the-gaps action. Sits under the list, with the "or just run it" alternative stated beside it —

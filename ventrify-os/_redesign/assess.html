@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cadence Health — Assessment · Ventrify OS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<style>
+  /* page-local helpers */
+  .venture-head { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 8px; }
+  .venture-head .meta { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); margin-top: 6px; }
+  .jump { position: sticky; top: 0; z-index: 5; display: flex; gap: 4px; padding: 12px 0; margin: 8px 0 22px; border-bottom: 1px solid var(--border); background: rgba(6,7,11,0.72); backdrop-filter: blur(10px); flex-wrap: wrap; }
+  .jump a { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-faint); padding: 6px 12px; border-radius: 999px; }
+  .jump a.on, .jump a:hover { color: #fff; background: var(--surface); }
+  .score-hero { text-align: right; }
+  .score-hero .big { font-family: var(--font-head); font-size: 4.2rem; font-weight: 600; line-height: 0.9; letter-spacing: -0.04em; }
+  .score-hero .big small { font-size: 1.4rem; color: var(--text-faint); font-weight: 500; }
+  .vss-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid var(--border); }
+  .vss-row:first-of-type { border-top: none; }
+  .vss-row .nm { flex: 1; color: var(--text-muted); font-size: 0.84rem; }
+  .vss-row .num { font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-faint); min-width: 26px; text-align: right; }
+  .vss-row .bar { flex: 1.1; }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+  .tbl th { text-align: left; font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-ghost); padding: 8px 10px; border-bottom: 1px solid var(--border); font-weight: 600; }
+  .tbl td { padding: 10px; border-bottom: 1px solid var(--border); color: rgba(255,255,255,0.82); vertical-align: top; }
+  .tbl tr.me td { background: rgba(var(--violet-rgb),0.08); }
+  .tier { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 12px; }
+  .tier .t { border: 1px solid var(--border); border-radius: var(--r-md); padding: 14px; text-align: center; background: var(--surface-2); }
+  .tier .t .v { font-family: var(--font-head); font-size: 1.4rem; font-weight: 600; }
+  .tier .t .k { font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); margin-top: 4px; }
+  .signoff { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: space-between; margin-top: 16px; padding: 12px 14px; border-radius: var(--r-md); background: rgba(var(--green-rgb),0.07); border: 1px solid rgba(var(--green-rgb),0.25); border-left: 3px solid var(--green); }
+  .doc-row { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-top: 1px solid var(--border); }
+  .doc-ic { width: 32px; height: 32px; border-radius: 9px; background: var(--surface-strong); display: flex; align-items: center; justify-content: center; color: var(--violet-soft); flex: none; }
+  .lvl { font-family: var(--font-mono); font-size: 0.58rem; letter-spacing: 0.08em; padding: 2px 7px; border-radius: 5px; background: rgba(var(--violet-rgb),0.16); color: var(--violet-soft); }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ============ SIDENAV ============ -->
+  <aside class="side">
+    <div class="side-logo"><span class="mk"></span><span class="wm">VENTRIFY <small>OS</small></span></div>
+    <div class="side-label">Operate</div>
+    <div class="nav-item active"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg> Portfolio</div>
+    <div class="nav-item"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg> Action queue <span class="nav-badge">6</span></div>
+    <div class="nav-item"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg> Pipeline</div>
+    <div class="side-label">Manage</div>
+    <div class="nav-item"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/></svg> Team</div>
+    <div class="nav-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg> Settings</div>
+    <div class="side-foot"><span class="av">AC</span><span class="nm">Apex Capital<small>Partner workspace</small></span></div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main class="main">
+    <!-- topbar -->
+    <div class="topbar">
+      <div class="eyebrow dim">Portfolio <span style="opacity:.4">/</span> <span style="color:var(--text-muted)">Cadence Health</span></div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-sm"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg> Export memo</button>
+        <button class="btn btn-sm"><svg viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v13"/></svg> Share link</button>
+      </div>
+    </div>
+
+    <!-- venture header -->
+    <div class="venture-head">
+      <span class="av-sq" style="background:linear-gradient(135deg,#8B5CF6,#6D28D9);">CH</span>
+      <div style="flex:1;">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+          <h1 style="font-size:1.9rem;">Cadence Health</h1>
+          <span class="pill green"><span class="dot"></span> Verdict ready</span>
+        </div>
+        <div class="meta">Seed · Raising $3M on $12M pre · Digital health · Assessed 1 hour ago</div>
+      </div>
+    </div>
+
+    <!-- jump nav -->
+    <nav class="jump">
+      <a class="on" href="#verdict">Verdict</a>
+      <a href="#investability">Investability</a>
+      <a href="#case">The case</a>
+      <a href="#market">Market</a>
+      <a href="#deal">Deal</a>
+      <a href="#bench">Benchmark</a>
+      <a href="#team">Founders</a>
+      <a href="#diligence">Diligence</a>
+      <a href="#dataroom">Data room</a>
+    </nav>
+
+    <!-- ===== BENTO HERO: recommendation + investability ===== -->
+    <section id="verdict" class="bento" style="margin-bottom:16px;">
+      <!-- recommendation -->
+      <div class="card pad-lg">
+        <div class="card-top">
+          <span class="sec-label">Recommendation</span>
+          <span class="mono faint" style="font-size:.66rem;letter-spacing:.1em;">VSS · V3</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+          <div>
+            <span class="rec invest"><span class="dot"></span> INVEST</span>
+            <div style="display:flex;align-items:center;gap:12px;margin-top:16px;">
+              <span class="muted" style="font-size:.86rem;">Conviction <b style="color:#fff;">High</b></span>
+              <span class="meter"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span>
+            </div>
+            <div style="margin-top:12px;font-size:.9rem;color:var(--text-muted);">Founder ask <b style="color:#fff;">$3.0M</b> on <b style="color:#fff;">$12M</b> pre · 20% post-round</div>
+          </div>
+          <div class="score-hero">
+            <div class="big">82<small>/100</small></div>
+            <div style="margin-top:8px;"><span class="pill green"><span class="dot"></span> Strong</span></div>
+          </div>
+        </div>
+        <p style="margin-top:18px;font-size:.98rem;line-height:1.6;"><b>Thesis.</b> An outcome-led platform in a large, underserved market — a credible founder, a real wedge, and early traction that already moved the metric that matters.</p>
+        <div class="callout risk" style="margin-top:16px;"><b>Biggest kill-risk · Defensibility.</b> The moat is designed but not yet built; a fast follower could copy the wedge before it compounds.</div>
+
+        <!-- must-be-true -->
+        <div style="margin-top:18px;padding-top:16px;border-top:1px solid var(--border);">
+          <div class="mono" style="font-size:.62rem;letter-spacing:.09em;text-transform:uppercase;color:var(--green);margin-bottom:10px;">For the thesis to hold, these must be true</div>
+          <div style="display:flex;flex-direction:column;gap:8px;font-size:.9rem;">
+            <div style="display:flex;gap:10px;"><span class="mono" style="color:var(--green);font-weight:700;">1</span> The retention lift holds beyond the design-partner cohort.</div>
+            <div style="display:flex;gap:10px;"><span class="mono" style="color:var(--green);font-weight:700;">2</span> The moat ships before a fast follower copies the wedge.</div>
+            <div style="display:flex;gap:10px;"><span class="mono" style="color:var(--green);font-weight:700;">3</span> A repeatable enterprise motion emerges at the next round.</div>
+          </div>
+        </div>
+
+        <!-- confidence + provenance -->
+        <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;">
+          <span class="pill green" style="font-size:.6rem;">Confidence · High</span>
+          <span class="muted mono" style="font-size:.68rem;letter-spacing:.04em;">Full data room · 12 documents · 24 sources cited · 31 of 35 signals rated</span>
+        </div>
+        <!-- sign-off -->
+        <div class="signoff">
+          <div style="font-size:.84rem;"><span style="color:var(--green);">&#10003;</span> Reviewed &amp; signed off by <b>Alex Rivera</b> <span class="faint">· 3 Jul 2026</span>
+            <span style="display:block;margin-top:3px;font-size:.78rem;font-style:italic;color:var(--text-muted);">&ldquo;Endorse — clear to take to IC, subject to the defensibility diligence.&rdquo;</span>
+          </div>
+          <div style="display:flex;gap:8px;"><button class="btn btn-sm">Update</button></div>
+        </div>
+      </div>
+
+      <!-- investability -->
+      <div id="investability" class="card pad-lg stack">
+        <div class="card-top" style="margin-bottom:6px;">
+          <span class="sec-label">Investability</span>
+          <span class="mono faint" style="font-size:.62rem;">NOW · CEILING</span>
+        </div>
+        <!-- radar -->
+        <svg viewBox="0 0 300 300" style="width:100%;max-width:340px;margin:0 auto;display:block;">
+          <polygon points="150,35 239.9,78.4 262.1,175.6 199.9,253.6 100.1,253.6 37.9,175.6 60.1,78.4" fill="none" stroke="rgba(255,255,255,0.08)"/>
+          <polygon points="150,92.5 195,114.2 206.1,162.8 175,201.8 125,201.8 93.9,162.8 105,114.2" fill="none" stroke="rgba(255,255,255,0.06)"/>
+          <g stroke="rgba(255,255,255,0.06)"><line x1="150" y1="150" x2="150" y2="35"/><line x1="150" y1="150" x2="239.9" y2="78.4"/><line x1="150" y1="150" x2="262.1" y2="175.6"/><line x1="150" y1="150" x2="199.9" y2="253.6"/><line x1="150" y1="150" x2="100.1" y2="253.6"/><line x1="150" y1="150" x2="37.9" y2="175.6"/><line x1="150" y1="150" x2="60.1" y2="78.4"/></g>
+          <polygon points="150,44.2 227.3,88.4 245.3,171.8 188.9,230.8 114.1,224.6 69.3,168.5 79.9,94.1" fill="none" stroke="var(--green)" stroke-width="1.4" stroke-dasharray="4 4" opacity="0.8"/>
+          <polygon points="150,46.5 223.7,91.2 239.7,170.5 177.4,207 125,201.8 80.5,165.9 87.1,99.8" fill="rgba(139,92,246,0.22)" stroke="var(--violet)" stroke-width="2"/>
+          <g fill="var(--violet-soft)"><circle cx="150" cy="46.5" r="3.4"/><circle cx="223.7" cy="91.2" r="3.4"/><circle cx="239.7" cy="170.5" r="3.4"/><circle cx="177.4" cy="207" r="3.4"/><circle cx="125" cy="201.8" r="3.4"/><circle cx="80.5" cy="165.9" r="3.4"/><circle cx="87.1" cy="99.8" r="3.4"/></g>
+          <g fill="var(--text-faint)" font-family="JetBrains Mono, monospace" font-size="9" letter-spacing="0.06em">
+            <text x="150" y="26" text-anchor="middle">TEAM</text>
+            <text x="266" y="72" text-anchor="middle">MARKET</text>
+            <text x="278" y="182" text-anchor="middle">PRODUCT</text>
+            <text x="205" y="272" text-anchor="middle">MOAT</text>
+            <text x="95" y="272" text-anchor="middle">FINANCIAL</text>
+            <text x="24" y="182" text-anchor="middle">EXEC</text>
+            <text x="34" y="72" text-anchor="middle">EVIDENCE</text>
+          </g>
+        </svg>
+        <div class="muted" style="text-align:center;font-size:.82rem;margin-top:-4px;"><b style="color:#fff;">82</b>/100 now · <b style="color:var(--green);">91</b> reachable ceiling</div>
+        <div>
+          <div class="vss-row"><span class="nm">Team &amp; founder-market fit</span><span class="bar"><span style="width:96%"></span></span><span class="num">25</span></div>
+          <div class="vss-row"><span class="nm">Market opportunity</span><span class="bar"><span style="width:88%"></span></span><span class="num">20</span></div>
+          <div class="vss-row"><span class="nm">Product &amp; clarity</span><span class="bar"><span style="width:80%"></span></span><span class="num">15</span></div>
+          <div class="vss-row"><span class="nm">Technical / moat</span><span class="bar"><span style="width:62%"></span></span><span class="num">15</span></div>
+          <div class="vss-row"><span class="nm">Financial defensibility</span><span class="bar"><span style="width:55%"></span></span><span class="num">10</span></div>
+          <div class="vss-row"><span class="nm">Execution &amp; traction</span><span class="bar"><span style="width:70%"></span></span><span class="num">10</span></div>
+          <div class="vss-row"><span class="nm">Evidence integrity</span><span class="bar"><span style="width:78%"></span></span><span class="num">5</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== CASE BOTH WAYS ===== -->
+    <section id="case" class="grid-2" style="margin-bottom:16px;">
+      <div class="card">
+        <div class="card-top"><span class="sec-label" style="color:var(--green);">The case to invest</span></div>
+        <ul class="pts good">
+          <li><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> Verified founding team — track record stands up to public record.</li>
+          <li><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> Category with no clear leader — open lane to define the space.</li>
+          <li><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> Outcome-led retention loop already moving the core metric.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-top"><span class="sec-label" style="color:var(--red);">The case to pass</span></div>
+        <ul class="pts bad">
+          <li><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg> Moat still to be built — defensibility is designed, not shipped.</li>
+          <li><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg> Series-A dependency — the model needs the next round to work.</li>
+          <li><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg> Single market, pre-revenue — concentration and timing risk.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ===== MARKET + COMPARABLE ROUNDS ===== -->
+    <section id="market" class="grid-2" style="margin-bottom:16px;">
+      <div class="card">
+        <div class="card-top"><span class="sec-label">Market sizing</span><span class="mono faint" style="font-size:.6rem;">REBUILT BOTTOM-UP</span></div>
+        <div class="vss-row" style="border:none;"><span class="mono faint" style="width:44px;font-size:.66rem;">TAM</span><span class="bar"><span style="width:100%"></span></span><span style="min-width:64px;text-align:right;font-weight:600;">$190B</span></div>
+        <div class="vss-row"><span class="mono faint" style="width:44px;font-size:.66rem;">SAM</span><span class="bar"><span style="width:58%"></span></span><span style="min-width:64px;text-align:right;font-weight:600;">$30B</span></div>
+        <div class="vss-row"><span class="mono faint" style="width:44px;font-size:.66rem;">SOM</span><span class="bar"><span style="width:22%"></span></span><span style="min-width:64px;text-align:right;font-weight:600;">$1.2B</span></div>
+        <p class="muted" style="font-size:.84rem;margin-top:12px;">Large and underserved — credible room for a category-defining wedge, not the deck's number taken on faith.</p>
+      </div>
+      <div class="card">
+        <div class="card-top"><span class="sec-label">Comparable rounds</span><span class="mono faint" style="font-size:.6rem;">HOW THE ASK READS</span></div>
+        <div class="doc-row" style="border:none;"><span class="av-sq sm" style="background:linear-gradient(135deg,#3366FF,#0036FF);">N</span><div style="flex:1;"><b>Northwind</b><div class="faint" style="font-size:.78rem;">Seed · 2024</div></div><div style="text-align:right;"><b>$4.0M</b><div class="faint" style="font-size:.76rem;">@ $16M pre</div></div></div>
+        <div class="doc-row"><span class="av-sq sm" style="background:linear-gradient(135deg,#8B5CF6,#6D28D9);">S</span><div style="flex:1;"><b>Stellaris</b><div class="faint" style="font-size:.78rem;">Seed · 2024</div></div><div style="text-align:right;"><b>$6.0M</b><div class="faint" style="font-size:.76rem;">@ $22M pre</div></div></div>
+        <div class="doc-row" style="background:rgba(var(--violet-rgb),0.06);margin:0 -22px;padding:11px 22px;"><span class="av-sq sm" style="background:linear-gradient(135deg,#8B5CF6,#6D28D9);">CH</span><div style="flex:1;"><b>Cadence Health</b> <span class="lvl">THIS DEAL</span><div class="faint" style="font-size:.78rem;">Seed · 2026</div></div><div style="text-align:right;"><b>$3.0M</b><div class="faint" style="font-size:.76rem;">@ $12M pre</div></div></div>
+      </div>
+    </section>
+
+    <!-- ===== DEAL & VALUATION ===== -->
+    <section id="deal" class="card" style="margin-bottom:16px;">
+      <div class="card-top"><span class="sec-label">Deal &amp; valuation</span><span class="pill violet">Fair — in range</span></div>
+      <p style="font-size:.92rem;line-height:1.6;">At $12M pre the ask sits mid-pack against 2024–26 seed comps in digital health; the discount to Stellaris is warranted given the earlier moat and single-market exposure, but it is not cheap.</p>
+    </section>
+
+    <!-- ===== COMPETITIVE BENCHMARK ===== -->
+    <section id="bench" class="card" style="margin-bottom:16px;overflow-x:auto;">
+      <div class="card-top"><span class="sec-label">Competitive benchmark</span><span class="mono faint" style="font-size:.6rem;">6 COMPETITORS</span></div>
+      <table class="tbl">
+        <thead><tr><th>Company</th><th>Wedge</th><th>Traction</th><th>Moat</th><th>Pricing</th></tr></thead>
+        <tbody>
+          <tr class="me"><td><b>Cadence Health</b> ◂ this</td><td>Outcome-led loop</td><td>Design partners</td><td>Designed</td><td>Per-outcome</td></tr>
+          <tr><td>Northwind</td><td>Care-team ops</td><td>$1M ARR</td><td>Integrations</td><td>Per-seat</td></tr>
+          <tr><td>Stellaris</td><td>Data layer</td><td>$2M ARR</td><td>Network</td><td>Usage</td></tr>
+          <tr><td>Helio</td><td>Point tool</td><td>Early</td><td>None yet</td><td>Freemium</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ===== EXIT & TEAM ===== -->
+    <section class="grid-2" style="margin-bottom:16px;">
+      <div class="card">
+        <div class="card-top"><span class="sec-label">Exit &amp; returns</span></div>
+        <p style="font-size:.9rem;line-height:1.6;"><b>Likely acquirers:</b> Northwind · Epic · UnitedHealth ventures.<br><b>Path:</b> strategic acquisition at Series B/C once the outcome data compounds.<br><b>Returns:</b> 8–12× at a $250–400M outcome, contingent on the moat shipping.</p>
+      </div>
+      <div id="team" class="card">
+        <div class="card-top"><span class="sec-label">Team &amp; founder diligence</span><span class="pill green" style="font-size:.6rem;">Verified vs public record</span></div>
+        <div class="doc-row" style="border:none;"><span class="av-sq sm" style="background:linear-gradient(135deg,#2DD4A7,#17B98C);color:#06120E;">MC</span><div style="flex:1;"><b>Maya Chen</b> <span class="faint">— CEO</span><div class="faint" style="font-size:.78rem;">Ex-Oscar PM · 1 prior exit (acq. 2021)</div></div></div>
+        <div class="doc-row"><span class="av-sq sm" style="background:linear-gradient(135deg,#3366FF,#0036FF);">DA</span><div style="flex:1;"><b>Dev Anand</b> <span class="faint">— CTO</span><div class="faint" style="font-size:.78rem;">Ex-Google Health · ML infra lead</div></div></div>
+        <div style="margin-top:10px;font-size:.82rem;" class="muted"><b style="color:var(--amber);">Gap:</b> no commercial / GTM hire yet — flagged for the next round.</div>
+      </div>
+    </section>
+
+    <!-- ===== DILIGENCE CHECKLIST ===== -->
+    <section id="diligence" class="card" style="margin-bottom:16px;">
+      <div class="card-top"><span class="sec-label">Diligence checklist</span><span class="mono faint" style="font-size:.6rem;">BEFORE YOU WIRE</span></div>
+      <div class="doc-row" style="border:none;"><span class="pill red" style="font-size:.58rem;">Blocker</span><div style="flex:1;"><b>Retention cohort data</b> <span class="faint" style="font-size:.8rem;">— no wire without this.</span> Raw cohort retention beyond the 3 design partners.</div></div>
+      <div class="doc-row"><span class="pill amber" style="font-size:.58rem;">Key</span><div style="flex:1;"><b>Moat roadmap</b> <span class="faint" style="font-size:.8rem;">— when does defensibility actually ship?</span></div></div>
+      <div class="doc-row"><span class="pill ghost" style="font-size:.58rem;">Standard</span><div style="flex:1;"><b>Cap table + option pool</b> confirmation.</div></div>
+    </section>
+
+    <!-- ===== DATA ROOM ===== -->
+    <section id="dataroom" class="card" style="margin-bottom:16px;">
+      <div class="card-top"><span class="sec-label">Data room</span><span class="mono faint" style="font-size:.6rem;">12 SOURCES · L1–L3</span></div>
+      <div class="doc-row" style="border:none;"><span class="doc-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg></span><div style="flex:1;"><b>Deal memo</b><div class="faint" style="font-size:.78rem;">Full write-up · exported PDF</div></div><span class="lvl">L1</span></div>
+      <div class="doc-row"><span class="doc-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg></span><div style="flex:1;"><b>Market analysis</b><div class="faint" style="font-size:.78rem;">TAM rebuild · 8 sources</div></div><span class="lvl">L2</span></div>
+      <div class="doc-row"><span class="doc-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg></span><div style="flex:1;"><b>Competitive teardown</b><div class="faint" style="font-size:.78rem;">6 competitors benchmarked</div></div><span class="lvl">L2</span></div>
+      <div class="doc-row"><span class="doc-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg></span><div style="flex:1;"><b>Founder diligence pack</b><div class="faint" style="font-size:.78rem;">Background + reference notes</div></div><span class="lvl">L3</span></div>
+    </section>
+
+  </main>
+</div>
+</body>
+</html>

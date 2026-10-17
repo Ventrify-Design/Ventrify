@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Action queue — Ventrify OS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<style>
+  .group-head { display: flex; align-items: baseline; gap: 12px; margin: 30px 0 4px; }
+  .group-head h2 { font-size: 1.15rem; font-weight: 600; }
+  .group-head .ct { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-faint); }
+  .group-sub { color: var(--text-faint); font-size: 0.86rem; margin-bottom: 14px; }
+  .qitem { display: flex; align-items: center; gap: 16px; padding: 18px 20px; margin-bottom: 12px; border-left: 3px solid var(--border); }
+  .qitem.high { border-left-color: var(--red); }
+  .qitem.med { border-left-color: var(--amber); }
+  .qitem.low { border-left-color: var(--green); }
+  .q-ic { width: 42px; height: 42px; border-radius: 11px; flex: none; display: flex; align-items: center; justify-content: center; background: var(--surface-strong); }
+  .q-ic svg { width: 19px; height: 19px; stroke-width: 2; fill: none; }
+  .qitem.high .q-ic svg { stroke: var(--red); } .qitem.med .q-ic svg { stroke: var(--amber); } .qitem.low .q-ic svg { stroke: var(--green); }
+  .q-body { flex: 1; min-width: 0; }
+  .q-title { font-family: var(--font-head); font-weight: 600; font-size: 0.98rem; }
+  .q-desc { color: var(--text-muted); font-size: 0.86rem; margin-top: 3px; line-height: 1.45; }
+  .q-meta { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-ghost); margin-top: 8px; }
+  .q-act { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex: none; }
+  .q-open { font-size: 0.78rem; color: var(--text-faint); }
+  @media (max-width: 720px){ .qitem { flex-wrap: wrap; } .q-act { flex-direction: row; align-items: center; width: 100%; justify-content: space-between; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="side-logo"><span class="mk"></span><span class="wm">VENTRIFY <small>OS</small></span></div>
+    <div class="side-label">Operate</div>
+    <div class="nav-item"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg> Portfolio <span class="nav-badge">7</span></div>
+    <div class="nav-item active"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg> Action queue <span class="nav-badge">7</span></div>
+    <div class="nav-item"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg> Pipeline</div>
+    <div class="side-label">Manage</div>
+    <div class="nav-item"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg> Team <span class="nav-badge">3</span></div>
+    <div class="nav-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg> Settings</div>
+    <div class="side-foot"><span class="av">AC</span><span class="nm">Apex Capital<small>Partner workspace</small></span></div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <span class="eyebrow">Action queue</span>
+        <h1 class="page-h1">Your work this week</h1>
+        <p class="page-sub">Everything the platform needs from you, across every engagement. Prioritised by urgency — gate sign-offs and stuck founders surface to the top.</p>
+      </div>
+    </div>
+
+    <!-- HIGH -->
+    <div class="group-head"><h2>High urgency</h2><span class="ct">· 3</span></div>
+    <div class="group-sub">Blocking a gate or a founder. Address first.</div>
+
+    <div class="card qitem high hover">
+      <div class="q-ic"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
+      <div class="q-body">
+        <div class="q-title">Gate 2.5 ready to close on Quill</div>
+        <div class="q-desc">All 7 Financials Hub cards resolved · L3 rebuilt · founder has signed off. Confirm scope and unlock Phase 3.</div>
+        <div class="q-meta">Gate ready · Quill · 1 hour ago</div>
+      </div>
+      <div class="q-act"><button class="btn btn-primary btn-sm">Review &amp; close gate</button><span class="q-open">Open engagement →</span></div>
+    </div>
+
+    <div class="card qitem high hover">
+      <div class="q-ic"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></div>
+      <div class="q-body">
+        <div class="q-title">7 Vision Hub cards awaiting your review on Stellaria</div>
+        <div class="q-desc">research-curator drafted 7 cards from L3. Review before publishing to the founder.</div>
+        <div class="q-meta">Cards to review · Stellaria · 8 hours ago</div>
+      </div>
+      <div class="q-act"><button class="btn btn-primary btn-sm">Review cards</button><span class="q-open">Open engagement →</span></div>
+    </div>
+
+    <div class="card qitem high hover">
+      <div class="q-ic"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg></div>
+      <div class="q-body">
+        <div class="q-title">Halo Sound founder unresponsive for 9 days</div>
+        <div class="q-desc">6 cards in Research Hub awaiting founder. Last activity: opened hub 9 days ago. Recommend a nudge.</div>
+        <div class="q-meta">Stuck · Halo Sound · 9 days ago</div>
+      </div>
+      <div class="q-act"><button class="btn btn-primary btn-sm">Send nudge</button><span class="q-open">Open engagement →</span></div>
+    </div>
+
+    <!-- MEDIUM -->
+    <div class="group-head"><h2>Medium urgency</h2><span class="ct">· 2</span></div>
+    <div class="group-sub">Should be cleared this week.</div>
+
+    <div class="card qitem med hover">
+      <div class="q-ic"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></div>
+      <div class="q-body">
+        <div class="q-title">4 Marketing cards awaiting your review on Riverdraft</div>
+        <div class="q-desc">copy-reviewer flagged 2 cards for tone alignment. Review and publish.</div>
+        <div class="q-meta">Cards to review · Riverdraft · Yesterday</div>
+      </div>
+      <div class="q-act"><button class="btn btn-sm">Review cards</button><span class="q-open">Open engagement →</span></div>
+    </div>
+
+    <div class="card qitem med hover">
+      <div class="q-ic"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg></div>
+      <div class="q-body">
+        <div class="q-title">ux-designer flagged 3 critical issues on Riverdraft beta</div>
+        <div class="q-desc">Round 2 audit · 2 contrast failures, 1 nav UX issue. Must close before Phase 5 unlocks.</div>
+        <div class="q-meta">QA flag · Riverdraft · 4 hours ago</div>
+      </div>
+      <div class="q-act"><button class="btn btn-sm">Open audit report</button><span class="q-open">Open engagement →</span></div>
+    </div>
+
+    <!-- LOW -->
+    <div class="group-head"><h2>Low urgency</h2><span class="ct">· 2</span></div>
+    <div class="group-sub">Awareness items. No immediate action required.</div>
+
+    <div class="card qitem low hover">
+      <div class="q-ic"><svg viewBox="0 0 24 24"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg></div>
+      <div class="q-body">
+        <div class="q-title">L3 rebuild complete on Quill Financials Hub</div>
+        <div class="q-desc">financial-modeler regenerated underlying research against resolved cards. Founder can review.</div>
+        <div class="q-meta">L3 rebuild · Quill · 2 hours ago</div>
+      </div>
+      <div class="q-act"><button class="btn btn-sm">View changes</button><span class="q-open">Open engagement →</span></div>
+    </div>
+
+    <div class="card qitem low hover">
+      <div class="q-ic"><svg viewBox="0 0 24 24"><path d="M12 2l2.4 7.4H22l-6 4.4 2.3 7.2L12 16.6 5.7 21l2.3-7.2-6-4.4h7.6z"/></svg></div>
+      <div class="q-body">
+        <div class="q-title">New program kicked off · Caldera (Inez Okonkwo)</div>
+        <div class="q-desc">Brief intake form opened by founder. Phase 0 in progress · welcome pack queued.</div>
+        <div class="q-meta">New intake · Caldera · 20 min ago</div>
+      </div>
+      <div class="q-act"><button class="btn btn-sm">Open program</button><span class="q-open">Open engagement →</span></div>
+    </div>
+  </main>
+</div>
+</body>
+</html>
