@@ -95,7 +95,7 @@ module.exports = async (req, res) => {
     const action = String(body.action || '');
     if (!idToken) { res.status(401).json({ error: 'no_token' }); return; }
     if (!engagementId) { res.status(400).json({ error: 'engagement_required' }); return; }
-    const ACTIONS = ['share', 'revoke-share', 'sign', 'revoke-sign', 'decide', 'revoke-decision'];
+    const ACTIONS = ['share', 'revoke-share', 'sign', 'revoke-sign', 'decide', 'revoke-decision', 'chat'];
     if (!ACTIONS.includes(action)) { res.status(400).json({ error: 'bad_action' }); return; }
 
     ensureAdmin();
@@ -121,6 +121,54 @@ module.exports = async (req, res) => {
     const ops = ((orgSnap.exists && orgSnap.data().operatorEmails) || []).map(e => String(e).toLowerCase());
     const supers = ((cfgSnap.exists && cfgSnap.data().superAdminEmails) || []).map(e => String(e).toLowerCase());
     if (!ops.includes(caller) && !supers.includes(caller)) { res.status(403).json({ error: 'forbidden' }); return; }
+
+    // ---- assessment chat ----------------------------------------------------------------------------
+    // Hosted here rather than in its own file because the OS project sits at its 12-function Vercel cap
+    // (see api/_drive.js). It reads the same assessment objects the rest of this function already works
+    // with, and it rides the authz above unchanged — operator or super-admin, founders excluded.
+    //
+    // THE SERVER WRITES BOTH TURNS. firestore.rules makes engagements/{id}/chat read-only to the browser,
+    // so a client cannot forge an assistant message. The UI subscribes to that subcollection and the reply
+    // appears when this write lands.
+    if (action === 'chat') {
+      const question = String(body.question || '').trim();
+      if (!question) { res.status(400).json({ error: 'question_required' }); return; }
+      if (question.length > 4000) { res.status(400).json({ error: 'question_too_long' }); return; }
+
+      const chat = require('./_chat.js');
+      const built = await chat.buildCorpus(db, engagementId);
+      if (!built.ok) { res.status(404).json({ error: built.reason }); return; }
+      if (!built.corpus.blocks.length) { res.status(409).json({ error: 'nothing_to_discuss', detail: 'This venture has no assessment, scorecard or research yet.' }); return; }
+
+      const chatCol = engRef.collection('chat');
+      const prior = await chatCol.orderBy('at', 'desc').limit(12).get();
+      const history = prior.docs.map(d => d.data()).reverse()
+        .map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', text: m.text || '' }));
+
+      const asked = new Date().toISOString();
+      await chatCol.add({ role: 'user', text: question, by: caller, at: asked });
+
+      let out;
+      try {
+        out = await chat.answer({ corpus: built.corpus, history, question });
+      } catch (e) {
+        // The question is already on the record, so the failure belongs there too — a conversation that
+        // silently loses a turn is worse than one that shows what went wrong.
+        const msg = String((e && e.message) || e).slice(0, 300);
+        await chatCol.add({ role: 'assistant', text: 'That question could not be answered: ' + msg, error: true, at: new Date().toISOString() });
+        res.status(502).json({ error: 'model_failed', detail: msg });
+        return;
+      }
+
+      const saved = await chatCol.add({
+        role: 'assistant', text: out.text, at: new Date().toISOString(),
+        cited: out.used, invalid: out.invalid, stub: !!out.stub,
+        dropped: out.dropped || [], usage: out.usage || null,
+        corpusTokens: built.corpus.tokens,
+      });
+      res.status(200).json({ ok: true, id: saved.id, text: out.text, cited: out.used, invalid: out.invalid, stub: !!out.stub, dropped: out.dropped || [] });
+      return;
+    }
 
     // ---- sign-off ----
     if (action === 'revoke-sign') {

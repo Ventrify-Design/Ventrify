@@ -118,6 +118,21 @@ service cloud.firestore {
              ]);
         allow update, delete: if false;
       }
+
+      // Assessment chat — the operator's conversation with the assistant about THIS venture.
+      //
+      //  • OPERATORS ONLY. The founder is not in isOperatorOf, so they cannot read a word of it, by query
+      //    or otherwise. This is diligence talk: who is weak on the team, what the bear case is, what we
+      //    are not telling them yet. It must never be reachable from the Studio.
+      //  • THE CLIENT NEVER WRITES. Every message — the operator's and the assistant's alike — is written
+      //    server-side by the route (Admin SDK, which bypasses these rules). If the browser could create
+      //    documents here it could forge an assistant turn, and a fabricated "the model said X" sitting in
+      //    the record is exactly the kind of claim this product cannot afford. The UI holds the pending
+      //    message in local state until the server's write comes back.
+      match /chat/{msgId} {
+        allow read: if signedIn() && isOperatorOf(engData(engId).orgId);
+        allow write: if false;
+      }
     }
 
     // Provocation cards — operators have full access to their org's cards.

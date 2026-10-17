@@ -767,6 +767,22 @@ export const CATALOG = {
     props: [{ name: 'steps', type: '[{label, at, meta, state}]' }, { name: 'state', type: "'done'|'current'|'pending'" }], variants: [{ label: 'state', note: 'done (green) / current (accent) / pending (muted)' }], usedIn: ['sourcesPanel', 'Assessment'],
     adaptive: { status: 'built', layout: { mobile: 'Full width.', tablet: 'Full.', desktop: 'Full.' }, content: { mobile: 'Full.', tablet: 'Full.', desktop: 'Full.' } }
   },
+  chatPanel: {
+    level: 'organism', group: 'Organisms', domain: 'Assessment', title: 'Assistant panel', sig: 'chatPanel(c)',
+    blurb: 'The Assist rail-panel content: a conversation with the assessment assistant about ONE venture. The assistant reads the distilled layer only — verdict, scorecard and deep research, plus a filename-only manifest — never the founder\'s documents, and it has no web access. Citations are a visible part of the component rather than a detail: every answer carries numbered references keyed to source chips, and a cited id that does not exist in the assessment renders as a loud unverified marker instead of being quietly dropped, because a stripped bad citation leaves the sentence looking sourced. Rendering only — the page owns sending, subscribing and scroll. Returns {title, subtitle, body, footer} for openAux().',
+    maxw: 440, pad: true,
+    html: () => { const pnl = DS.chatPanel({ ventureName: 'Verdana Bio', messages: [
+      { role: 'user', text: 'What is the single biggest risk here?' },
+      { role: 'assistant', cited: ['verdict', 'vss:financial'], text: 'The **8% loss rate**. It is the one output the whole model rests on, and nothing in the room evidences it [[verdict]]. Financial Discipline scores 2 of 5 largely because of it [[vss:financial]].' },
+      { role: 'user', text: 'What is their CAC in Germany?' },
+      { role: 'assistant', cited: ['manifest'], text: 'Not covered. The research pass did not surface a German CAC [[manifest]]. If the figure exists it would be in Q3_Financial_Model.xlsx, which I cannot read.' },
+      { role: 'assistant', cited: ['verdict'], invalid: ['research:revenue-deep-dive'], text: 'Revenue grew 300% last quarter [[unverified: research:revenue-deep-dive]], which supports the thesis [[verdict]].' },
+    ] }); return `<div class="brief" style="padding:8px 28px 20px;max-width:440px"><div class="title-l" style="margin-bottom:2px">${pnl.title}</div><div class="overline" style="margin-bottom:18px">${pnl.subtitle}</div>${pnl.body}<div style="margin-top:16px">${pnl.footer}</div></div>`; },
+    props: [{ name: 'c.ventureName', type: 'string' }, { name: 'c.messages', type: '[{role,text,cited,invalid,stub,dropped}]' }, { name: 'c.pending', type: 'boolean — shows the thinking indicator' }],
+    variants: [{ label: 'role', note: 'user (bubble, right) / assistant (flowed, with references)' }, { label: 'invalid', note: 'a cited source that is not in the assessment — red inline marker + warning' }, { label: 'stub', note: 'no API key configured — says so rather than faking an answer' }],
+    usedIn: ['Assessment', 'utilRail'],
+    adaptive: { status: 'built', layout: { mobile: 'Full-width sheet; composer pinned to the foot.', tablet: 'Side sheet.', desktop: 'Side sheet.' }, content: { mobile: 'Full.', tablet: 'Full.', desktop: 'Full.' } }
+  },
   sourcesPanel: {
     level: 'organism', group: 'Organisms', domain: 'Assessment', title: 'Sources panel', sig: 'sourcesPanel(a)',
     blurb: 'The Sources rail-panel content: the lifecycle playback + the loaded documents grouped by kind (founder uploads / data room / generated, each with a read/stored status) + re-run controls. Opened from the utility rail (the \'sources\' tool) via the window.RAIL_PANELS hook; additive to the Research data-room card. Returns {title, subtitle, body, footer} for openAux().',

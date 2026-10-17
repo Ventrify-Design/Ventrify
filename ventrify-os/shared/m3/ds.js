@@ -1966,6 +1966,71 @@ export function srcRow(d = {}) {
       ${d.status ? `<span class="src-status ${esc(d.status)}">${d.status === 'read' ? 'Read' : 'Stored'}</span>` : (d.tag ? `<span class="status info">${esc(d.tag)}</span>` : '')}
     </div>`;
 }
+// chatPanel — ORGANISM. The Assist rail panel: a conversation with the assistant about THIS venture.
+//
+// WHY CITATIONS ARE A VISIBLE PART OF THE COMPONENT, not a detail. The assistant reads only the assessment's
+// own outputs, and the operator has to be able to tell at a glance which sentences came from the governed
+// work and which are the model talking. So every answer shows the sources it used as chips, and anything it
+// cited that does NOT exist in the corpus is rendered as a loud warning rather than quietly dropped — a
+// stripped bad citation leaves the sentence standing and looking sourced, which is the failure we care about.
+//
+// Rendering only. The page owns sending, subscribing and scroll — see workspace/assess-next.html.
+function chatMsg(m) {
+  if (m.role === 'user') {
+    return `<div class="chat-msg user"><div class="chat-bubble">${esc(m.text)}</div></div>`;
+  }
+  // NUMBERED REFERENCES, not inline ids. The first cut printed the raw source id in superscript, which both
+  // shoved the line spacing apart and repeated "research:claims-validation" mid-sentence. Numbers keyed to
+  // the chips underneath say the same thing and get out of the way of the prose.
+  const cited = m.cited || [];
+  const num = new Map(cited.map((id, i) => [id, i + 1]));
+  const body = esc(m.text)
+    .replace(/\[\[unverified: ([^\]]+)\]\]/g, (f, id) => `<span class="chat-bad" title="This source does not exist in the assessment">unverified: ${esc(id)}</span>`)
+    // DEFENCE IN DEPTH. The route validates before storing, so a bad id should never reach here — but if one
+    // ever did, rendering it as an ordinary reference would make an unsupported claim look sourced, which is
+    // the single failure this panel exists to prevent. Anything not in the validated list is shown as bad.
+    .replace(/\[\[([^\]]+)\]\]/g, (f, raw) => {
+      const id = raw.trim();
+      return num.has(id)
+        ? `<sup class="chat-ref" data-src="${esc(id)}" title="${esc(id)}">${num.get(id)}</sup>`
+        : `<span class="chat-bad" title="This source does not exist in the assessment">unverified: ${esc(id)}</span>`;
+    })
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br>');
+  const chips = cited.length
+    ? `<div class="chat-srcs">${cited.map((id, i) => `<button class="chat-chip" data-src="${esc(id)}"><b>${i + 1}</b>${esc(id)}</button>`).join('')}</div>` : '';
+  const bad = (m.invalid || []).length
+    ? `<div class="chat-warn"><span class="material-symbols-rounded">report</span>Cited ${m.invalid.length} source${m.invalid.length === 1 ? '' : 's'} that ${m.invalid.length === 1 ? 'does' : 'do'} not exist in this assessment. Treat ${m.invalid.length === 1 ? 'that claim' : 'those claims'} as unsupported.</div>` : '';
+  const omitted = (m.dropped || []).length
+    ? `<div class="chat-note">${m.dropped.length} research document${m.dropped.length === 1 ? '' : 's'} too large to load for this answer.</div>` : '';
+  const stub = m.stub ? `<div class="chat-note">Stub mode &mdash; no model was called.</div>` : '';
+  return `<div class="chat-msg bot">${stub}<div class="chat-body">${body}</div>${bad}${chips}${omitted}</div>`;
+}
+
+export function chatPanel(c = {}) {
+  const msgs = c.messages || [];
+  const empty = `<div class="chat-empty">
+    <span class="material-symbols-rounded">auto_awesome</span>
+    <div class="title-s">Ask about ${esc(c.ventureName || 'this venture')}</div>
+    <div class="body-s variant">I can only see this assessment &mdash; its verdict, its scorecard and its deep research.
+    I have not read the founder&rsquo;s own documents, and I have no web access. If something is not in the
+    assessment I will say so rather than guess.</div>
+  </div>`;
+  const body = `<div class="chat-log" id="chat-log">${msgs.length ? msgs.map(chatMsg).join('') : empty}
+    ${c.pending ? `<div class="chat-msg bot"><div class="chat-thinking"><span></span><span></span><span></span></div></div>` : ''}</div>`;
+  const footer = `<form class="chat-form" id="chat-form" onsubmit="return false;">
+      <textarea id="chat-input" class="chat-input" rows="1" placeholder="Ask about this assessment&hellip;"
+        aria-label="Ask about this assessment"${c.pending ? ' disabled' : ''}></textarea>
+      <button class="m3-btn filled chat-send" id="chat-send" type="button" aria-label="Send"${c.pending ? ' disabled' : ''}>
+        <span class="material-symbols-rounded">arrow_upward</span></button>
+    </form>`;
+  return {
+    title: 'Assistant',
+    subtitle: `${esc(c.ventureName || 'Assessment')} \u00b7 reads this assessment only`,
+    body, footer,
+  };
+}
+
 export function sourcesPanel(a = {}) {
   const docs = a.dataRoom || [], run = a.run || {};
   const groups = SRC_GROUPS.map(([k, lab]) => {

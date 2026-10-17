@@ -501,3 +501,57 @@ md-outlined-text-field { --md-outlined-text-field-container-shape: 999px; --md-o
 /* inside the app shell the frame already provides the gutters — trim the brief's own padding.
    (scoped to .shell-main so the standalone mockup, which has no shell, keeps its full padding) */
 .shell-main .brief { padding: 8px clamp(4px, 2vw, 28px) 96px; min-width: 0; }   /* a flex item in .shell-body — without this it sizes to its widest child (a wide table) and overflows narrow screens */
+
+/* ── Assist rail: the assessment chat (organism chatPanel) ──────────────────────────────────────────
+   The transcript scrolls inside the panel while the composer stays pinned to the foot, so the operator
+   never loses the input while reading back. Citations are deliberately prominent: this panel's job is to
+   be visibly less authoritative than the assessment it sits beside. */
+.chat-log { display: flex; flex-direction: column; gap: 14px; }
+.chat-msg { display: flex; flex-direction: column; gap: 6px; }
+.chat-msg.user { align-items: flex-end; }
+.chat-bubble { max-width: 85%; padding: 9px 13px; border-radius: 16px 16px 4px 16px;
+  background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container);
+  font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; }
+.chat-body { font-size: 14px; line-height: 1.6; color: var(--md-sys-color-on-surface); overflow-wrap: anywhere; }
+.chat-body strong { font-weight: 600; }
+
+/* An inline reference stays readable but subordinate — it is a pointer, not part of the sentence. */
+.chat-ref { font-size: 10px; font-weight: 700; margin-left: 2px; cursor: pointer;
+  color: var(--md-sys-color-primary); vertical-align: super; line-height: 0; }
+.chat-ref:hover { text-decoration: underline; }
+
+/* A citation that does not resolve is the one thing in this panel that should be impossible to miss. */
+.chat-bad { font-size: 11px; font-weight: 600; padding: 0 5px; border-radius: 5px;
+  background: var(--md-sys-color-error-container); color: var(--md-sys-color-on-error-container); }
+.chat-warn { display: flex; align-items: flex-start; gap: 7px; padding: 8px 10px; border-radius: 10px;
+  background: var(--md-sys-color-error-container); color: var(--md-sys-color-on-error-container);
+  font-size: 12px; line-height: 1.45; }
+.chat-warn .material-symbols-rounded { font-size: 16px; flex: none; }
+.chat-note { font-size: 11px; color: var(--md-sys-color-on-surface-variant); font-style: italic; }
+
+.chat-srcs { display: flex; flex-wrap: wrap; gap: 5px; }
+.chat-chip b { color: var(--md-sys-color-primary); margin-right: 5px; font-weight: 700; }
+.chat-chip { font-size: 11px; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--md-sys-color-outline-variant);
+  background: transparent; color: var(--md-sys-color-on-surface-variant); cursor: pointer;
+  font-family: inherit; min-height: 24px; }
+.chat-chip:hover { background: var(--md-sys-color-surface-container-high); color: var(--md-sys-color-on-surface); }
+
+.chat-empty { text-align: center; padding: 26px 8px; display: flex; flex-direction: column; gap: 8px; align-items: center; }
+.chat-empty .material-symbols-rounded { font-size: 30px; color: var(--md-sys-color-primary); }
+.chat-empty .body-s { max-width: 34ch; }
+
+.chat-thinking { display: flex; gap: 4px; padding: 4px 0; }
+.chat-thinking span { width: 6px; height: 6px; border-radius: 50%; background: var(--md-sys-color-outline);
+  animation: chat-blink 1.2s infinite both; }
+.chat-thinking span:nth-child(2) { animation-delay: .2s; }
+.chat-thinking span:nth-child(3) { animation-delay: .4s; }
+@keyframes chat-blink { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .chat-thinking span { animation: none; opacity: .5; } }
+
+.chat-form { display: flex; gap: 8px; align-items: flex-end; width: 100%; }
+.chat-input { flex: 1; min-height: 44px; max-height: 160px; resize: none; padding: 11px 13px;
+  border-radius: 14px; border: 1px solid var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface-container-lowest); color: var(--md-sys-color-on-surface);
+  font-family: inherit; font-size: 15px; line-height: 1.45; }
+.chat-input:focus { outline: 2px solid var(--md-sys-color-primary); outline-offset: -1px; border-color: transparent; }
+.chat-send { min-width: 44px; min-height: 44px; padding: 0 14px; flex: none; }

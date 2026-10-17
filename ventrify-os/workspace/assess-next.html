@@ -483,7 +483,10 @@
     if (d) return window.openResearchDrill(d.slug);
     window.__toast && window.__toast(kind === 'benchmark' ? 'The competitive teardown has not been generated yet.' : 'The founder diligence has not been generated yet.');
   };
-  window.RAIL_PANELS = { sources: () => DS.sourcesPanel(A) };
+  window.RAIL_PANELS = {
+    sources: () => DS.sourcesPanel(A),
+    assist: () => DS.chatPanel({ ventureName: CHAT.name, messages: CHAT.messages, pending: CHAT.pending }),
+  };
   // Deal memo / Share / Manage moved off the masthead → the utility rail. deal_memo downloads the PDF,
   // share opens the shareable-link flow, and the rail's overflow kebab (__more) opens the Manage menu.
   window.RAIL_ACTIONS = {
@@ -492,6 +495,69 @@
     __more: () => window.__eaMore(),
   };
   window.openSources = () => window.openAux({ mode: 'push', ...DS.sourcesPanel(A) });
+
+  // ---- Assist: the assessment chat -----------------------------------------------------------------
+  // The transcript lives in engagements/{id}/chat, which firestore.rules makes READ-ONLY to the browser —
+  // both turns are written server-side by /api/memo (action:'chat'), so a client cannot forge an answer.
+  // We therefore render the operator's own question optimistically and let the subscription replace it.
+  const CHAT = { name: p.ventureName || p.name || 'this venture', messages: [], pending: false };
+
+  function chatRepaint() {
+    const panel = DS.chatPanel({ ventureName: CHAT.name, messages: CHAT.messages, pending: CHAT.pending });
+    const body = document.querySelector('.m3-aux .aux-body');
+    const foot = document.querySelector('.m3-aux .aux-foot');
+    if (!body) return;                       // the panel is not open — nothing to repaint
+    body.innerHTML = panel.body;
+    if (foot) foot.innerHTML = panel.footer;
+    chatBind();
+    const log = document.getElementById('chat-log');
+    if (log) log.scrollTop = log.scrollHeight;
+  }
+
+  function chatBind() {
+    const input = document.getElementById('chat-input');
+    const send = document.getElementById('chat-send');
+    if (!input || !send) return;
+    // Grow with the question rather than making the operator scroll a one-line box.
+    const grow = () => { input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 160) + 'px'; };
+    input.addEventListener('input', grow);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); chatSend(); }
+    });
+    send.addEventListener('click', chatSend);
+    // Clicking a citation opens the research document it points at, so a source is one click from the claim.
+    document.querySelectorAll('.chat-chip, .chat-ref').forEach(el => el.addEventListener('click', () => {
+      const id = el.dataset.src || '';
+      if (id.startsWith('research:') && window.openResearchDrill) window.openResearchDrill(id.slice(9));
+      else window.__toast && window.__toast('Source: ' + id);
+    }));
+    if (!CHAT.pending) input.focus();
+  }
+
+  async function chatSend() {
+    const input = document.getElementById('chat-input');
+    const q = (input && input.value || '').trim();
+    if (!q || CHAT.pending) return;
+    CHAT.messages = [...CHAT.messages, { role: 'user', text: q }];
+    CHAT.pending = true;
+    chatRepaint();
+    try {
+      const { auth } = await import('../firebase/firebase.js');
+      const idToken = await auth.currentUser.getIdToken();
+      const r = await fetch('/api/memo', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken, engagementId: p.id, action: 'chat', question: q }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.detail || d.error || ('HTTP ' + r.status));
+      CHAT.messages = [...CHAT.messages, { role: 'assistant', text: d.text, cited: d.cited, invalid: d.invalid, stub: d.stub, dropped: d.dropped }];
+    } catch (e) {
+      CHAT.messages = [...CHAT.messages, { role: 'assistant', text: 'That question could not be answered: ' + ((e && e.message) || e), invalid: [] }];
+    } finally {
+      CHAT.pending = false;
+      chatRepaint();
+    }
+  }
   window.addDocuments = () => window.__eaUpload('dataroom');
   window.rerunAssessment = () => window.__eaRun();
 

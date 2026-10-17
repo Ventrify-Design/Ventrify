@@ -10,6 +10,9 @@
   "functions": {
     "api/sweep-stuck-runs.js": {
       "maxDuration": 60
+    },
+    "api/memo.js": {
+      "maxDuration": 60
     }
   }
 }
