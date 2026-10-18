@@ -509,59 +509,65 @@
     if (!body) return;                       // the panel is not open — nothing to repaint
     body.innerHTML = panel.body;
     if (foot) foot.innerHTML = panel.footer;
-    chatBind();
     const log = document.getElementById('chat-log');
     if (log) log.scrollTop = log.scrollHeight;
+    const input = document.getElementById('chat-input');
+    if (input && !CHAT.pending) input.focus();
   }
 
-  function chatBind() {
-    const input = document.getElementById('chat-input');
-    const send = document.getElementById('chat-send');
-    if (!input || !send) return;
+  // DELEGATED, NOT BOUND. The first cut attached listeners inside chatBind() and only ever called it from
+  // chatRepaint() — so opening the panel from the rail, where openAux injects the HTML directly, produced a
+  // composer with nothing listening to it. You could type and not send. Delegation off `document` is bound
+  // once, survives every repaint and every reopen, and cannot be forgotten by a new render path.
+  document.addEventListener('keydown', (e) => {
+    if (e.target && e.target.id === 'chat-input' && e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); chatSend(); }
+  });
+  document.addEventListener('input', (e) => {
     // Grow with the question rather than making the operator scroll a one-line box.
-    const grow = () => { input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 160) + 'px'; };
-    input.addEventListener('input', grow);
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); chatSend(); }
-    });
-    send.addEventListener('click', chatSend);
+    if (e.target && e.target.id === 'chat-input') { e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 160) + 'px'; }
+  });
+  document.addEventListener('click', (e) => {
+    const el = e.target && e.target.closest && e.target.closest('#chat-send, .chat-chip, .chat-ref, .chat-prop-go');
+    if (!el) return;
+    if (el.id === 'chat-send') return chatSend();
     // Clicking a citation opens the research document it points at, so a source is one click from the claim.
-    document.querySelectorAll('.chat-chip, .chat-ref').forEach(el => el.addEventListener('click', () => {
+    if (el.classList.contains('chat-chip') || el.classList.contains('chat-ref')) {
       const id = el.dataset.src || '';
       if (id.startsWith('research:') && window.openResearchDrill) window.openResearchDrill(id.slice(9));
       else window.__toast && window.__toast('Source: ' + id);
-    }));
-    // COMMITTING A PROPOSAL. Runs the ordinary engagement action with the operator's own credentials — the
-    // same call the equivalent button makes — so the assistant never reaches past what this person could do
-    // themselves, and never does it unpressed.
-    document.querySelectorAll('.chat-prop-go').forEach(el => el.addEventListener('click', async () => {
-      const m = CHAT.messages[Number(el.dataset.msg)], pr = m && (m.proposals || [])[Number(el.dataset.prop)];
-      if (!pr || pr.committed) return;
-      el.disabled = true; el.textContent = 'Working…';
-      const EA = await import('./engagement-actions.js');
-      try {
-        if (pr.tool === 'propose_file_evidence') {
-          if (!p.gaps && !(p.assessmentGaps || {}).unresolved) throw new Error('This assessment has no open gaps.');
-          await EA.fileEvidence({ engagementId: p.id, gapId: pr.input.gapId, url: pr.input.url, note: pr.input.note || null });
-          pr.committed = 'Evidence filed — the next run will fetch and re-score it.';
-        } else if (pr.tool === 'propose_document_request') {
-          if (!p.founderEmail) throw new Error('No founder email on this engagement.');
-          await EA.requestDocs({ engagementId: p.id, email: p.founderEmail });
-          pr.committed = 'Request sent to ' + p.founderEmail + '.';
-        } else if (pr.tool === 'propose_rescan_room') {
-          const r = await EA.rescanDataRoom({ engagementId: p.id });
-          pr.committed = r ? EA.rescanSummary(r) : 'Could not read the room.';
-        } else if (pr.tool === 'propose_rerun') {
-          await EA.dispatchRun({ engagementId: p.id, phase: 'assess' });
-          pr.committed = 'Assessment queued.';
-        } else throw new Error('Unknown proposal.');
-        window.__toast(pr.committed);
-      } catch (e) {
-        window.__toast('Could not do that: ' + ((e && e.message) || e), true);
-      }
-      chatRepaint();
-    }));
-    if (!CHAT.pending) input.focus();
+      return;
+    }
+    chatCommit(el);
+  });
+
+  // COMMITTING A PROPOSAL. Runs the ordinary engagement action with the operator's own credentials — the
+  // same call the equivalent button makes — so the assistant never reaches past what this person could do
+  // themselves, and never does it unpressed.
+  async function chatCommit(el) {
+    const m = CHAT.messages[Number(el.dataset.msg)], pr = m && (m.proposals || [])[Number(el.dataset.prop)];
+    if (!pr || pr.committed) return;
+    el.disabled = true; el.textContent = 'Working…';
+    const EA = await import('./engagement-actions.js');
+    try {
+      if (pr.tool === 'propose_file_evidence') {
+        await EA.fileEvidence({ engagementId: p.id, gapId: pr.input.gapId, url: pr.input.url, note: pr.input.note || null });
+        pr.committed = 'Evidence filed — the next run will fetch and re-score it.';
+      } else if (pr.tool === 'propose_document_request') {
+        if (!p.founderEmail) throw new Error('No founder email on this engagement.');
+        await EA.requestDocs({ engagementId: p.id, email: p.founderEmail });
+        pr.committed = 'Request sent to ' + p.founderEmail + '.';
+      } else if (pr.tool === 'propose_rescan_room') {
+        const r = await EA.rescanDataRoom({ engagementId: p.id });
+        pr.committed = r ? EA.rescanSummary(r) : 'Could not read the room.';
+      } else if (pr.tool === 'propose_rerun') {
+        await EA.dispatchRun({ engagementId: p.id, phase: 'assess' });
+        pr.committed = 'Assessment queued.';
+      } else throw new Error('Unknown proposal.');
+      window.__toast(pr.committed);
+    } catch (e) {
+      window.__toast('Could not do that: ' + ((e && e.message) || e), true);
+    }
+    chatRepaint();
   }
 
   async function chatSend() {
