@@ -373,7 +373,13 @@ const sevOf = frac => frac >= 0.8 ? 'strong' : frac >= 0.5 ? 'mixed' : 'gap';   
 // convPips — the conviction segment pips (High=4 / Medium=3 / Low=2 of 5). Shared by the hero + callers.
 const convPips = conv => { const on = CONV_PIPS[conv] ?? 3; return `<span class="conv">${Array.from({ length: 5 }, (_, i) => `<i class="${i < on ? 'on' : ''}"></i>`).join('')}</span>`; };
 const SCORELK_ICON = { good: 'trending_up', mid: 'trending_flat', bad: 'trending_down' };
-const BAND_TONE = { Strong: 'good', Promising: 'mid', Weak: 'bad', Uninvestable: 'bad' };
+// Tone keys off the LABEL the adapter produced. 'Investment ready' is the only one that reads as good;
+// 'High risk' and 'Potential decline' must read as bad, which they would NOT have done while every
+// unmapped code fell through to 'Promising'.
+const BAND_TONE = {
+  'Investment ready': 'good', 'Promising': 'mid', 'High risk': 'bad', 'Potential decline': 'bad',
+  Strong: 'good', Weak: 'bad', Uninvestable: 'bad', Forming: 'mid',
+};
 
 // scoreLockup — MOLECULE. The headline-score lockup: eyebrow label · big number/max · a tone-coloured band
 // chip · an optional now→potential bar. Generic + defaults; drops into any surface that needs a headline score.

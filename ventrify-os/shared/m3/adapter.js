@@ -131,7 +131,15 @@ function shortOf(key, label) {
 }
 function mapScore(snap, docN = 0) {
   if (!snap) return { composite: 0, potential: 0, band: 'Forming', categories: [] };
-  const BAND = { approved: 'Strong', feedback: 'Promising', rework: 'Weak', pass: 'Uninvestable', forming: 'Forming', unrated: 'Forming' };
+  // FOUR GUIDANCE BANDS, and the three they replaced. A snapshot published under the old instrument keeps
+  // its stored band forever, so both vocabularies have to render — and the fallback must never silently
+  // turn an unrecognised code into 'Promising', which is what it did: HIGH_RISK and POTENTIAL_DECLINE
+  // would both have displayed as Promising, in a promising colour, on the verdict.
+  const BAND = {
+    READY: 'Investment ready', PROMISING: 'Promising', HIGH_RISK: 'High risk', POTENTIAL_DECLINE: 'Potential decline',
+    approved: 'Strong', feedback: 'Promising', rework: 'Weak', pass: 'Uninvestable',
+    forming: 'Forming', unrated: 'Forming',
+  };
   const src = snap.categories || [];
   // composite: the snapshot is authoritative; normalise a legacy /27 or /35 to /100
   const composite = snap.pct != null ? snap.pct : Math.round(((snap.composite || 0) / (snap.maxPossible || 100)) * 100);
@@ -184,7 +192,7 @@ function mapScore(snap, docN = 0) {
       if (n) c.unsettled = n;
     }
   }
-  return { composite, potential, band: BAND[snap.band] || 'Promising', categories: cats,
+  return { composite, potential, band: BAND[snap.band] || 'Forming', categories: cats,
            wobbleNote: wobbleNote(snap, docN), unsettled: w.oneVote, wobbleFlagged: w.flagged };
 }
 

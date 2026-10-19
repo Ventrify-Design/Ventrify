@@ -157,3 +157,19 @@ export function wobbleNote(snap, docN) {
     + `${cause} Adding the missing documents would settle them and is the only thing that will: `
     + `re-running on the same evidence can move this number by several points without making it more right.`;
 }
+
+
+// The four guidance bands, mirroring tools/sentiment/compute.js in the runner. The runner DECIDES the
+// band — including the gates on READY — and stamps it on the snapshot; this is only how the OS names it.
+export const GUIDANCE_BANDS = {
+  READY:             { label: 'Investment ready',                            tone: 'good' },
+  PROMISING:         { label: 'Promising, with amendments or gaps to close',  tone: 'mid'  },
+  HIGH_RISK:         { label: 'High risk',                                    tone: 'bad'  },
+  POTENTIAL_DECLINE: { label: 'Potential decline',                            tone: 'bad'  },
+};
+
+/** A band code → its label, old vocabulary included. Unknown codes stay unknown rather than reading well. */
+export function bandLabelOf(code) {
+  if (GUIDANCE_BANDS[code]) return GUIDANCE_BANDS[code].label;
+  return ({ approved: 'Strong — investor-ready', feedback: 'Promising — named gaps to close', rework: 'Material gaps', forming: 'Forming', unrated: 'Forming' })[code] || 'Forming';
+}
