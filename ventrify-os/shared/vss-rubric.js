@@ -66,3 +66,77 @@ export function snapshotSummary(snap) {
     status: snap.status || 'scored',
   };
 }
+
+// ── HOW MUCH OF THIS SCORE RESTED ON A COIN-FLIP ──────────────────────────────────────────────────────
+//
+// Each signal is scored by three blind draws and the MEDIAN is published. When the draws agree, the number
+// is solid. When they split 2–1, the published value is a single vote away from its opposite — and it looks
+// exactly as confident on the page as a unanimous one. KreditMate scored 47 and then 39 on the same deck
+// because four such votes fell the other way the second time.
+//
+// WHY NOT JUST COUNT THE SPLITS. ORE split on six signals too and moved ONE point between runs, because its
+// splits landed in light categories and did not cluster. KreditMate's landed in Team (weight .25) and
+// Product (.15), moved together and moved down. So what matters is not how many signals wobbled but HOW
+// MUCH OF THE WEIGHTED COMPOSITE is resting on them.
+//
+// The threshold is set from observed behaviour, not taste. Measured across every scored venture:
+//     KreditMate 3   1 doc    20.0%   ← moved 8 points between runs
+//     KreditMate 4   1 doc    15.0%   ← moved 8 points between runs
+//     0X Labs        2 docs   15.0%
+//     ORE           37 docs    9.0%   ← moved 1 point
+//     Holoclara      3 docs    9.0%
+//     MoneyGym      56 docs    8.0%   ← moved 1 point
+//     MoneyGym S1   58 docs    0.0%
+// 12% separates every venture we have measured as unstable from every one measured as stable. It is a
+// threshold drawn through seven data points, so it should move if the data does — but it must never become
+// a caveat printed on everything, because a warning that always fires is read as decoration and ignored.
+export const WOBBLE_THRESHOLD = 0.12;
+
+const CAT_WEIGHT = Object.fromEntries(VSS_RUBRIC.map(c => [c.key, c.weight]));
+
+/**
+ * @param {object} snap a published investability snapshot (needs snap.consensus.splits)
+ * @returns {{measurable:boolean, exposure:number, oneVote:string[], byCategory:object, flagged:boolean}}
+ *   measurable=false when the snapshot predates consensus being recorded — ABSENT IS NOT STABLE, and the
+ *   caller must not read a missing record as a clean bill of health.
+ */
+export function scoreWobble(snap) {
+  const c = snap && snap.consensus;
+  if (!c || !Array.isArray(c.splits)) return { measurable: false, exposure: 0, oneVote: [], byCategory: {}, flagged: false };
+
+  const oneVote = [];
+  const byCategory = {};
+  for (const entry of c.splits) {
+    const text = String(entry || '');
+    const id = text.split(' ')[0];
+    const m = text.match(/\[([^\]]+)\]/);
+    if (!id || !m) continue;
+    const votes = m[1].split(',').map(t => t.trim()).filter(Boolean);
+    const tally = {};
+    votes.forEach(v => { tally[v] = (tally[v] || 0) + 1; });
+    // Decided by ONE vote: the winning value had exactly one more than everything else put together,
+    // i.e. a single draw changing its mind would change the published score.
+    if (Math.max(...Object.values(tally)) !== votes.length - 1) continue;
+    oneVote.push(id);
+    const cat = id.split('.')[0];
+    byCategory[cat] = (byCategory[cat] || 0) + 1;
+  }
+
+  const perCat = VSS_RUBRIC.length ? (VSS_RUBRIC[0].subs || []).length || 5 : 5;
+  const exposure = Object.entries(byCategory)
+    .reduce((a, [k, n]) => a + (CAT_WEIGHT[k] || 0) * (n / perCat), 0);
+
+  return { measurable: true, exposure, oneVote, byCategory, flagged: exposure >= WOBBLE_THRESHOLD };
+}
+
+/** One sentence for the verdict, or '' when the score is solid enough that saying anything would be noise. */
+export function wobbleNote(snap) {
+  const w = scoreWobble(snap);
+  if (!w.flagged) return '';
+  const n = w.oneVote.length;
+  const cats = Object.entries(w.byCategory).sort((a, b) => b[1] - a[1])
+    .map(([k]) => (VSS_RUBRIC.find(c => c.key === k) || {}).label || k);
+  return `${n} of ${TOTAL_SIGNALS} signals were decided by a single vote among the three independent reads, `
+    + `concentrated in ${cats.slice(0, 2).join(' and ')}. That is ${Math.round(w.exposure * 100)}% of the weighted score `
+    + `resting on calls the evidence could not settle — re-running could move this number by several points.`;
+}

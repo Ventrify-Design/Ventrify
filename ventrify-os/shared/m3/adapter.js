@@ -15,7 +15,7 @@
 // until then the derivations below carry them. Nothing here is a hard dependency.
 // ============================================================
 
-import { VSS_RUBRIC } from '../vss-rubric.js';   // the 7 category labels — one source, never a local copy
+import { VSS_RUBRIC, wobbleNote } from '../vss-rubric.js';   // the 7 category labels + score-stability note — one source, never a local copy
 import { SUB_Q } from '../investability-view.js';
 
 const esc = s => String(s == null ? '' : s);
@@ -168,7 +168,9 @@ function mapScore(snap) {
       subs: c.subs || []                                            // {slug, score, note} — M3 categoryDetail + SUB_Q consume directly
     };
   });
-  return { composite, potential, band: BAND[snap.band] || 'Promising', categories: cats };
+  // Carried on the score object so the verdict can say when the number is soft. Empty for a solid score —
+  // see wobbleNote in shared/vss-rubric.js for why this must stay silent most of the time.
+  return { composite, potential, band: BAND[snap.band] || 'Promising', categories: cats, wobbleNote: wobbleNote(snap) };
 }
 
 // ── per-tab hero copy (derived — the runner doesn't emit editorial hero copy) ──

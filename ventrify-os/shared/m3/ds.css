@@ -577,3 +577,14 @@ md-outlined-text-field { --md-outlined-text-field-container-shape: 999px; --md-o
 .chat-prop-done { display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600;
   color: var(--on-success-container, var(--md-sys-color-primary)); }
 .chat-prop-done .material-symbols-rounded { font-size: 16px; }
+
+/* Score-stability warning on the verdict. Shown ONLY when enough of the weighted composite is resting on
+   signals the three draws decided by one vote — never as a default caveat, because a warning that always
+   fires is read as decoration and stops carrying information. Sits ABOVE the hero: a reader who takes the
+   number and leaves must have passed it. */
+.verdict-wobble { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 18px;
+  padding: 12px 14px; border-radius: 12px;
+  background: color-mix(in srgb, var(--md-sys-color-error-container) 45%, transparent);
+  border-left: 3px solid var(--md-sys-color-error);
+  font-size: 13px; line-height: 1.55; color: var(--md-sys-color-on-surface); }
+.verdict-wobble .material-symbols-rounded { font-size: 19px; flex: none; color: var(--md-sys-color-error); }

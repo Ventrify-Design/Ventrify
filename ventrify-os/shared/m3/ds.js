@@ -1488,6 +1488,7 @@ export function verdictSignoff(a) {
 // The hero is the reusable sectionHero organism, fed the MoneyGym verdict + score.
 export function verdictMemo(a, s) {
   return `<div class="brief">
+    ${s.wobbleNote ? `<div class="verdict-wobble"><span class="material-symbols-rounded">balance</span><div><strong>Treat this number as indicative.</strong> ${esc(s.wobbleNote)}</div></div>` : ''}
     ${sectionHero({
       eyebrow: 'The verdict', eyebrowIcon: 'balance',
       headline: a.verdictLine || a.recommendation, headlineEm: a.verdictEm,

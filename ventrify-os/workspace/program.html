@@ -44,6 +44,7 @@
     import { MAX_POSSIBLE } from '../shared/vss-rubric.js';
     import { renderWelcomePack, ensureWelcomePackStyles } from '../shared/welcome-pack-view.js';
     import { esc as escBrief, escAttr, ago as agoShort } from '../shared/util.js';
+    import { wobbleNote } from '../shared/vss-rubric.js';
     await window.WORKSPACE_READY;
     ensureCardStyles();
     ensureHubStyles();
@@ -834,7 +835,13 @@
       if (cf.inputBadge) provItems.push(cf.inputBadge);
       if (cf.sourcesN) provItems.push(`${cf.sourcesN} source${cf.sourcesN === 1 ? '' : 's'} cited`);
       provItems.push(cf.scored ? `${cf.ratedCount} of 35 signals rated` : 'scored across 35 signals');
-      const provLine = `<div style="margin-top:1.1rem;border-top:1px solid rgba(0,0,0,0.07);padding-top:0.75rem;display:flex;flex-wrap:wrap;gap:0.5rem 0.7rem;align-items:center;">${confChip}<span style="font-size:0.72rem;line-height:1.5;color:var(--text-muted,#656565);display:inline-flex;flex-wrap:wrap;gap:0.3rem 0.6rem;align-items:center;">${provItems.map((t, i) => `${i > 0 ? '<span style="opacity:0.35;">&middot;</span>' : ''}<span>${escBrief(t)}</span>`).join('')}</span></div>`;
+      // WHEN THE SCORE IS ACTUALLY WOBBLY, AND ONLY THEN. wobbleNote returns '' unless enough of the
+      // weighted composite is resting on signals the three draws decided by a single vote — the thing that
+      // made KreditMate read 47 one run and 39 the next on the same deck. Deliberately silent on a solid
+      // score: a caveat printed on everything is read as decoration and stops being information.
+      const wob = wobbleNote(snap);
+      const wobBar = wob ? `<div style="margin-top:0.9rem;padding:0.7rem 0.85rem;border-radius:var(--radius-md,10px);background:rgba(var(--warning-rgb),0.08);border:1px solid rgba(var(--warning-rgb),0.3);border-left:3px solid var(--warning,#C77700);font-size:0.78rem;line-height:1.55;color:var(--text,#141414);"><strong>Treat this number as indicative.</strong> ${escBrief(wob)}</div>` : '';
+      const provLine = `<div style="margin-top:1.1rem;border-top:1px solid rgba(0,0,0,0.07);padding-top:0.75rem;display:flex;flex-wrap:wrap;gap:0.5rem 0.7rem;align-items:center;">${confChip}<span style="font-size:0.72rem;line-height:1.5;color:var(--text-muted,#656565);display:inline-flex;flex-wrap:wrap;gap:0.3rem 0.6rem;align-items:center;">${provItems.map((t, i) => `${i > 0 ? '<span style="opacity:0.35;">&middot;</span>' : ''}<span>${escBrief(t)}</span>`).join('')}</span></div>${wobBar}`;
       // Operator sign-off — the human endorsement on top of the AI-assisted read. When
       // present it renders as a green reviewed-by bar (and carries into the memo); when
       // absent, a subtle prompt to sign off before forwarding. If the score has moved
