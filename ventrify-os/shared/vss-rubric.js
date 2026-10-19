@@ -129,14 +129,31 @@ export function scoreWobble(snap) {
   return { measurable: true, exposure, oneVote, byCategory, flagged: exposure >= WOBBLE_THRESHOLD };
 }
 
-/** One sentence for the verdict, or '' when the score is solid enough that saying anything would be noise. */
-export function wobbleNote(snap) {
+/**
+ * One short paragraph for the verdict, or '' when the score is solid enough that saying anything is noise.
+ *
+ * NAMES THE CAUSE AND THE REMEDY, because "treat this as indicative" on its own leaves the reader with a
+ * worse number and nothing to do about it. The cause is stated from the engagement's ACTUAL document count
+ * rather than asserted — every venture that has flagged so far had one or two documents, and every one
+ * with three or more has stayed quiet, but the sentence should be true of the venture in front of you and
+ * not of the average.
+ *
+ * @param {object} snap   the published snapshot
+ * @param {number} docN   documents in the room (0/undefined = unknown, and the cause is then left unstated)
+ */
+export function wobbleNote(snap, docN) {
   const w = scoreWobble(snap);
   if (!w.flagged) return '';
   const n = w.oneVote.length;
   const cats = Object.entries(w.byCategory).sort((a, b) => b[1] - a[1])
     .map(([k]) => (VSS_RUBRIC.find(c => c.key === k) || {}).label || k);
+  const docs = Number(docN) || 0;
+  const cause = docs
+    ? `There ${docs === 1 ? 'is 1 document' : `are ${docs} documents`} in the data room, and these signals need evidence `
+      + `${docs === 1 ? 'a deck does not carry' : 'the room does not carry'} — so each read reaches a different conclusion.`
+    : 'These signals need evidence the data room does not carry, so each read reaches a different conclusion.';
   return `${n} of ${TOTAL_SIGNALS} signals were decided by a single vote among the three independent reads, `
-    + `concentrated in ${cats.slice(0, 2).join(' and ')}. That is ${Math.round(w.exposure * 100)}% of the weighted score `
-    + `resting on calls the evidence could not settle — re-running could move this number by several points.`;
+    + `concentrated in ${cats.slice(0, 2).join(' and ')} — ${Math.round(w.exposure * 100)}% of the weighted score. `
+    + `${cause} Adding the missing documents would settle them and is the only thing that will: `
+    + `re-running on the same evidence can move this number by several points without making it more right.`;
 }

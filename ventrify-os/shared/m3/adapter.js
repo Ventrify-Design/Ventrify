@@ -15,7 +15,7 @@
 // until then the derivations below carry them. Nothing here is a hard dependency.
 // ============================================================
 
-import { VSS_RUBRIC, wobbleNote } from '../vss-rubric.js';   // the 7 category labels + score-stability note — one source, never a local copy
+import { VSS_RUBRIC, wobbleNote, scoreWobble } from '../vss-rubric.js';   // the 7 category labels + score-stability note — one source, never a local copy
 import { SUB_Q } from '../investability-view.js';
 
 const esc = s => String(s == null ? '' : s);
@@ -129,7 +129,7 @@ const CAT_WEIGHTS = { market: 20, team: 25, product: 15, moat: 15, financial: 10
 function shortOf(key, label) {
   return ({ market: 'market', team: 'the team', product: 'product', moat: 'the moat', financial: 'financials', execution: 'execution', evidence: 'evidence' })[key] || String(label || key).toLowerCase();
 }
-function mapScore(snap) {
+function mapScore(snap, docN = 0) {
   if (!snap) return { composite: 0, potential: 0, band: 'Forming', categories: [] };
   const BAND = { approved: 'Strong', feedback: 'Promising', rework: 'Weak', pass: 'Uninvestable', forming: 'Forming', unrated: 'Forming' };
   const src = snap.categories || [];
@@ -170,7 +170,22 @@ function mapScore(snap) {
   });
   // Carried on the score object so the verdict can say when the number is soft. Empty for a solid score —
   // see wobbleNote in shared/vss-rubric.js for why this must stay silent most of the time.
-  return { composite, potential, band: BAND[snap.band] || 'Promising', categories: cats, wobbleNote: wobbleNote(snap) };
+  // MARK THE AFFECTED SIGNALS AT THE SOURCE. The verdict warning says a fifth of the score is unsettled;
+  // without this the reader cannot see WHICH fifth. Marking the subs here means the signal rows, the
+  // category rows and the drill-down panel all read one fact rather than each deriving its own.
+  const w = scoreWobble(snap);
+  const unsettled = new Set(w.oneVote);
+  if (unsettled.size) {
+    for (const c of cats) {
+      let n = 0;
+      for (const sub of (c.subs || [])) {
+        if (unsettled.has(`${c.key}.${sub.slug}`)) { sub.unsettled = true; n++; }
+      }
+      if (n) c.unsettled = n;
+    }
+  }
+  return { composite, potential, band: BAND[snap.band] || 'Promising', categories: cats,
+           wobbleNote: wobbleNote(snap, docN), unsettled: w.oneVote, wobbleFlagged: w.flagged };
 }
 
 // ── per-tab hero copy (derived — the runner doesn't emit editorial hero copy) ──
@@ -301,7 +316,7 @@ export function linkGapsToMembers(members, gaps) {
 // ── ASSESSMENT (engagement + _verdict.json → M3 ASSESSMENT) ──
 export function adaptEngagement(p = {}) {
   const a = p.assessment || {};
-  const S = mapScore(p.investabilitySnapshot);
+  const S = mapScore(p.investabilitySnapshot, p.founderDocCount || 0);
 
   // the ask → amount + rest ("$3M on $12M pre (Seed)")
   const theAsk = a.theAsk || a.the_ask || '';

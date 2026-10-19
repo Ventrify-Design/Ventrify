@@ -588,3 +588,17 @@ md-outlined-text-field { --md-outlined-text-field-container-shape: 999px; --md-o
   border-left: 3px solid var(--md-sys-color-error);
   font-size: 13px; line-height: 1.55; color: var(--md-sys-color-on-surface); }
 .verdict-wobble .material-symbols-rounded { font-size: 19px; flex: none; color: var(--md-sys-color-error); }
+
+/* A signal the three blind draws split on — decided by a single vote, so one read changing its mind would
+   change the published number. Deliberately small: it marks a caveat on a number, it does not replace it. */
+.cd-unsettled { font-size: 15px; vertical-align: -3px; margin-left: 5px; color: var(--md-sys-color-error);
+  opacity: .85; cursor: help; }
+.cd-sig.unsettled { background: color-mix(in srgb, var(--md-sys-color-error-container) 22%, transparent); }
+
+/* The category-scoped version of the verdict's warning, shown inside the drill-down panel above the
+   signals it is explaining. */
+.cd-wobble { display: flex; gap: 9px; align-items: flex-start; margin: 14px 0; padding: 11px 13px;
+  border-radius: 11px; background: color-mix(in srgb, var(--md-sys-color-error-container) 40%, transparent);
+  border-left: 3px solid var(--md-sys-color-error); font-size: 12.5px; line-height: 1.55;
+  color: var(--md-sys-color-on-surface); }
+.cd-wobble .material-symbols-rounded { font-size: 18px; flex: none; color: var(--md-sys-color-error); }

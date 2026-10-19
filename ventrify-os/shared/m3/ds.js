@@ -715,7 +715,12 @@ function trailValue(value, valueMuted, delta) {
 const rowChev = clickable => clickable ? '<span class="material-symbols-rounded mrow-chev">chevron_right</span>' : '<span class="mrow-chev"></span>';
 
 export function row(opts = {}) {
-  const { variant = 'metric', lead = {}, title = '', sub = '', bar, trail = {}, onDrill = '', key = '', foot = false, cls = '' } = opts;
+  const { variant = 'metric', lead = {}, title = '', sub = '', bar, trail = {}, onDrill = '', key = '', foot = false, cls = '', unsettled = 0 } = opts;
+  // The title is ESCAPED and stays escaped, so a marker cannot ride along inside it. UNSETTLED means the
+  // three blind draws split on signals here and a single vote decided them — see scoreWobble.
+  const unsettledMark = unsettled
+    ? `<span class="cd-unsettled material-symbols-rounded" title="${esc(String(unsettled))} signal${unsettled === 1 ? '' : 's'} here ${unsettled === 1 ? 'was' : 'were'} decided by a single vote among the three independent reads. More evidence would settle ${unsettled === 1 ? 'it' : 'them'}.">balance</span>`
+    : '';
   const clickable = onDrill && !foot;
   const density = opts.density || (ROW_COMPACT.has(variant) ? 'compact' : 'reading');
   const act = clickable
@@ -739,7 +744,7 @@ export function row(opts = {}) {
   // BODY assembly is per-variant: metric/funnel nest the dot inside .mrow-nm within .mrow-lab.
   if (variant === 'metric' || variant === 'funnel') {
     return `<div class="${cl}"${act}>
-    <div class="mrow-lab"><div class="mrow-nm">${leadDot(lead.sev)}${esc(title)}</div>${sub ? `<div class="mrow-sub">${esc(sub)}</div>` : ''}</div>
+    <div class="mrow-lab"><div class="mrow-nm">${leadDot(lead.sev)}${esc(title)}${unsettledMark}</div>${sub ? `<div class="mrow-sub">${esc(sub)}</div>` : ''}</div>
     ${mid}${tr}${rowChev(clickable)}
   </div>`;
   }
@@ -758,10 +763,10 @@ export function row(opts = {}) {
 // opts: { key, label, sub, dot:'strong'|'mixed'|'gap'|null, bar:{now:0..1, pot:0..1, tick},
 //         value, valueMuted, sub2:{text, tone:'up'|'flat'}, onDrill, foot }
 export function metricRow(opts = {}) {
-  const { key, label, sub, dot, bar = {}, value, valueMuted = '', sub2, onDrill = '', foot = false, cls = '' } = opts;
+  const { key, label, sub, dot, bar = {}, value, valueMuted = '', sub2, onDrill = '', foot = false, cls = '', unsettled = 0 } = opts;
   return row({
     variant: (cls && /funnel/.test(cls)) ? 'funnel' : 'metric',
-    key, title: label, sub, lead: { kind: 'dot', sev: dot || null }, bar,
+    key, title: label, unsettled, sub, lead: { kind: 'dot', sev: dot || null }, bar,
     trail: { kind: 'value', value, valueMuted, delta: sub2 },
     onDrill, foot, cls: cls.replace(/\bfunnel\b/, '').trim(),
   });
@@ -781,6 +786,7 @@ export function strengthProfile(s, onDrill = '') {
       bar: { now: c.frac, pot: c.pot, tick: headroom },
       value: parseFloat(c.num).toFixed(1),
       sub2: headroom ? { text: `→ ${(c.pot * 5).toFixed(1)}`, tone: 'up' } : { text: 'at ceiling', tone: 'flat' },
+      unsettled: c.unsettled || 0,
       onDrill
     });
   }).join('');
@@ -818,6 +824,7 @@ export function investabilityComposition(s, onDrill = '', head = {}) {
       bar: { now: c.contrib / maxW, pot: c.potContrib / maxW, tick: false },
       value: `+${c.contrib.toFixed(1)}`,
       sub2: c.headroom ? { text: `+${(c.potContrib - c.contrib).toFixed(1)} avail.`, tone: 'up' } : { text: 'at ceiling', tone: 'flat' },
+      unsettled: c.unsettled || 0,
       onDrill
     })).join('');
   const foot = metricRow({ label: 'Investability score', value: `${s.composite}`, valueMuted: ' / 100', foot: true });
@@ -854,7 +861,11 @@ export function signalRows(subs = [], gapBySlug = {}, catKey = '') {
     const cls = x.score == null ? 'na' : x.score === 1 ? 'g' : x.score === 0.5 ? 'y' : 'r';
     const g = gapBySlug[`${catKey}.${x.slug}`] || gapBySlug[x.slug];
     const trail = ref ? `<span class="cd-ev" title="${esc(ref)}">${esc(ref)}</span>` : (g ? gapChip(g) : '');
-    return `<div class="cd-sig ${cls}">${cdChip(x.score)}<div class="bd"><div class="q">${esc(SUB_Q[x.slug] || x.slug)}</div><div class="nt${note ? '' : ' muted'}">${note ? esc(note) : 'Not yet scored — assessed when the research run completes.'}</div></div>${trail}</div>`;
+    // UNSETTLED: the three blind draws split 2-1 here, so this value is one vote from its opposite. Marked
+    // on the signal itself because the verdict's warning says a fifth of the score is unsettled without
+    // saying WHICH fifth — and the operator's next question is always which.
+    const un = x.unsettled ? `<span class="cd-unsettled material-symbols-rounded" title="The three independent reads split on this signal — it was decided by a single vote. More evidence would settle it.">balance</span>` : '';
+    return `<div class="cd-sig ${cls}${x.unsettled ? ' unsettled' : ''}">${cdChip(x.score)}<div class="bd"><div class="q">${esc(SUB_Q[x.slug] || x.slug)}${un}</div><div class="nt${note ? '' : ' muted'}">${note ? esc(note) : 'Not yet scored — assessed when the research run completes.'}</div></div>${trail}</div>`;
   }).join('');
 }
 const cdOrd = n => n === 1 ? '1st' : n === 2 ? '2nd' : n === 3 ? '3rd' : `${n}th`;
@@ -911,7 +922,13 @@ export function categoryDetail(s, key, gapBySlug = {}) {
       <div class="cd-srow"><span>Provenance</span><b>${rated} of 5 rated · L2 · Investability rubric</b></div>
     </div>`;
 
-  return { title: c.label, subtitle: `${CD_SB_WORD[cb]} · ${c.weightPct}% weight · L2 · Investability`, body: `${standfirst}${figures}${signals}${lifts}${standing}` };
+  // The same warning the verdict carries, repeated HERE and scoped to this category — an operator who
+  // drilled in to understand a number should not have to go back to the verdict to learn it is unsettled.
+  // Placed above the signals, since the rows beneath it carry the individual markers it is explaining.
+  const un = c.unsettled
+    ? `<div class="cd-wobble"><span class="material-symbols-rounded">balance</span><div><strong>${c.unsettled} of these 5 signals ${c.unsettled === 1 ? 'was' : 'were'} decided by a single vote.</strong> The three independent reads disagreed and a majority of one settled ${c.unsettled === 1 ? 'it' : 'them'} — marked below. The evidence does not support a firm call, so this category could score differently on a re-run. Adding documents that speak to ${c.unsettled === 1 ? 'that signal' : 'those signals'} is what would fix it.</div></div>`
+    : '';
+  return { title: c.label, subtitle: `${CD_SB_WORD[cb]} · ${c.weightPct}% weight · L2 · Investability`, body: `${standfirst}${figures}${un}${signals}${lifts}${standing}` };
 }
 
 // the case, argued both ways — two grouped lists (the one place cards earn elevation)
