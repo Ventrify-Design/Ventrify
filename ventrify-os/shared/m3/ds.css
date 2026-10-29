@@ -253,6 +253,10 @@ md-outlined-text-field { --md-outlined-text-field-container-shape: 999px; --md-o
 /* ---- action queue ---- */
 .group-head { display: flex; align-items: baseline; gap: 10px; margin: 24px 0 4px; }
 .group-sub { color: var(--md-sys-color-on-surface-variant); font-size: 14px; line-height: 20px; letter-spacing: 0.25px; margin-bottom: 12px; }
+/* The queue's "all caught up" state — centred type on the page, no container. */
+.q-allclear { text-align: center; padding: 56px 24px 40px; }
+.q-allclear .body-m { margin-top: 6px; max-width: 480px; margin-left: auto; margin-right: auto; }
+
 /* Editorial list row (see queueItem in ds.js). A hairline BETWEEN rows, never under
    the last one, and no background — the icon tile carries the urgency. The row still
    lights on hover so it reads as actionable without a permanent container. */

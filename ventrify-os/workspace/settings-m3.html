@@ -108,7 +108,10 @@
   const cur = (org.primaryColor || '').toUpperCase();
   // The "where it shows" sentence moved to the hero's coda — repeating it here
   // put the same 26 words twice on one screen.
-  const brandCard = `<div class="m3-card" style="padding:22px">
+  /* Editorial sections, not filled tubs. `.ws-panel` is the one settings-panel class
+     (workspace-chrome.css) — the padding used to be an inline style repeated four times,
+     so nothing could restyle Settings from the shared layer. */
+  const brandCard = `<section class="ws-panel">
     <div class="title-l" style="margin-bottom:18px">Brand kit</div>
     <div style="margin-bottom:22px;max-width:380px">${DS.formField({ label: 'Organisation name', id: 'b-name', value: org.name || '' })}</div>
     <div style="margin-bottom:22px"><div class="overline" style="margin-bottom:10px">Primary colour</div>
@@ -122,7 +125,7 @@
         <input type="file" id="b-logo-input" accept="image/png,image/svg+xml,image/jpeg" hidden>
       </div>
     </div>
-  </div>`;
+  </section>`;
 
   const Plan = window.VentrifyPlan, plan = W.plan;
   const presetDef = (Plan.PLAN_PRESETS[plan.preset] || {});
@@ -135,9 +138,9 @@
   const row = (l, v, muted) => DS.row({ variant: 'spec', title: l,
     trail: { kind: 'value', value: muted ? '' : v, valueMuted: muted ? v : '' } });
   function capUsage(type, label) { if (!Plan.orgCan(plan, type)) return ''; const used = Plan.usageFor(programs, type); const lim = Plan.limitFor(plan, type); return row(label, lim == null ? `${used} · unlimited` : `${used} of ${lim}`); }
-  const orgCard = `<div class="m3-card" style="padding:22px"><div class="title-l" style="margin-bottom:10px">Organisation</div>${row('Slug', org.slug || '—')}${row('Created', org.createdAt ? new Date(org.createdAt).toLocaleDateString() : '—')}${row('Custom domain', 'Enterprise only', true)}</div>`;
-  const planCard = `<div class="m3-card" style="padding:22px"><div class="title-l" style="margin-bottom:10px">Plan &amp; usage</div>${row('Plan', Plan.planLabel(plan))}${capUsage('assessment', 'Assessments')}${capUsage('build', 'MVP builds')}${row('Operators', String(operators.length))}<div style="margin-top:14px;display:flex;gap:8px"><a class="m3-btn text" href="../pricing.html" target="_blank">View pricing</a><button class="m3-btn filled" onclick="window.__requestUpgrade&&window.__requestUpgrade()">Request upgrade</button></div></div>`;
-  const dangerCard = `<div class="m3-card" style="padding:22px;border:1px solid color-mix(in srgb, var(--md-sys-color-error) 30%, transparent)"><div class="title-l" style="margin-bottom:6px">Danger zone</div><div class="body-m variant" style="margin-bottom:14px">Wipes every locally-stored value and returns to first-run setup.</div><button class="m3-btn outlined" style="color:var(--md-sys-color-error);border-color:color-mix(in srgb, var(--md-sys-color-error) 40%, transparent)" onclick="window.__resetWorkspace&&window.__resetWorkspace()">Clear all workspace data</button></div>`;
+  const orgCard = `<section class="ws-panel"><div class="title-l" style="margin-bottom:10px">Organisation</div>${row('Slug', org.slug || '—')}${row('Created', org.createdAt ? new Date(org.createdAt).toLocaleDateString() : '—')}${row('Custom domain', 'Enterprise only', true)}</section>`;
+  const planCard = `<section class="ws-panel"><div class="title-l" style="margin-bottom:10px">Plan &amp; usage</div>${row('Plan', Plan.planLabel(plan))}${capUsage('assessment', 'Assessments')}${capUsage('build', 'MVP builds')}${row('Operators', String(operators.length))}<div style="margin-top:14px;display:flex;gap:8px"><a class="m3-btn text" href="../pricing.html" target="_blank">View pricing</a><button class="m3-btn filled" onclick="window.__requestUpgrade&&window.__requestUpgrade()">Request upgrade</button></div></section>`;
+  const dangerCard = `<section class="ws-panel danger"><div class="title-l" style="margin-bottom:6px">Danger zone</div><div class="body-m variant" style="margin-bottom:14px">Wipes every locally-stored value and returns to first-run setup.</div><button class="m3-btn outlined" style="color:var(--md-sys-color-error);border-color:color-mix(in srgb, var(--md-sys-color-error) 40%, transparent)" onclick="window.__resetWorkspace&&window.__resetWorkspace()">Clear all workspace data</button></section>`;
 
   document.getElementById('app').outerHTML = DS.pageShell({
     active: 'settings', nav: wsNavConfig(), brand: wsBrandConfig(), account: wsAccountConfig(),

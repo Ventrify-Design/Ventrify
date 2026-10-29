@@ -331,8 +331,11 @@ export function workspaceEmpty({ assessOnly = false, orgName = 'your Workspace',
     ['Score', 'Investability score', 'A weighted 0–100 venture score across seven categories, with the gaps called out.'],
     ['Verdict', 'Decision-grade verdict', 'Recommendation, thesis, key findings, and how to strengthen it — ready to act on.'],
   ];
+  /* Numbered editorial rows, not stacked tubs — the same .must idiom the Verdict tab
+     uses for its numbered list. These four are a SEQUENCE (deck → research → score →
+     verdict), and a sequence reads as numbered steps down a rule, not as four boxes. */
   const steps = (assessOnly ? assessSteps : buildSteps)
-    .map(([tag, t, p]) => `<div class="ws-step"><div class="ws-step-tag">${tag}</div><div class="ws-step-title">${t}</div><p>${p}</p></div>`).join('');
+    .map(([tag, t, p], i) => `<div class="ws-step"><div class="ws-step-n">${i + 1}</div><div class="ws-step-b"><div class="ws-step-tag">${tag}</div><div class="ws-step-title">${t}</div><p>${p}</p></div></div>`).join('');
   const cta = canCreate
     ? `<button class="m3-btn filled" style="margin-top:20px" onclick="window.openNewAssessment&&window.openNewAssessment()"><span class="material-symbols-rounded">add</span>${assessOnly ? 'Start your first assessment' : 'Start your first engagement'}</button>`
     : `<div style="margin-top:20px">${planGateBanner(assessOnly ? 'New assessment' : 'New engagement')}</div>`;
@@ -340,12 +343,18 @@ export function workspaceEmpty({ assessOnly = false, orgName = 'your Workspace',
     ['tune', 'Refine your brand', 'Edit your organisation name, primary colour, or logo before your first engagement goes live.', 'settings-m3.html', 'Open settings →', ''],
     ['dashboard', 'How the Workspace works', 'Three surfaces, three audiences. The marketing tour explains how operators, founders, and investors connect.', '../the-workspace.html', 'Read the tour →', ' target="_blank"'],
     ['groups', 'Meet the 47 agents', 'The fleet behind every engagement — substrate keystones, Build-First 8, and the full domain breakdown.', '../agents.html', 'Explore the fleet →', ' target="_blank"'],
-  ].map(([ic, t, p, href, cta2, attr]) => `<a class="m3-card ws-explorer" href="${href}"${attr}>
+  ].map(([ic, t, p, href, cta2, attr]) => `<a class="ws-explorer" href="${href}"${attr}>
       <div class="ws-explorer-head"><span class="ws-explorer-icon"><span class="material-symbols-rounded">${ic}</span></span><span class="ws-explorer-title">${t}</span></div>
       <p>${p}</p><span class="ws-explorer-cta">${cta2}</span>
     </a>`).join('');
-  return `<div class="m3-card ws-empty-hero">
-      <div>
+  /* EDITORIAL, not a card-in-a-card-in-a-card. This screen is the first thing a new
+     customer ever sees, and it was three nested layers of filled tub: an outer
+     .m3-card hero, four .m3-card-styled step boxes inside it, and three .m3-card
+     explorers below. Every other surface in the product had already moved to
+     hairlines and type; this one was missed because the demo org has engagements,
+     so the empty state never rendered in review. */
+  return `<div class="ws-empty-hero">
+      <div class="ws-empty-lead">
         <div class="overline" style="color:var(--md-sys-color-primary)">${eyebrow}</div>
         <h2 class="ws-empty-title">${title}</h2>
         <p class="ws-empty-sub">${sub}</p>
@@ -353,6 +362,7 @@ export function workspaceEmpty({ assessOnly = false, orgName = 'your Workspace',
       </div>
       <div class="ws-empty-steps">${steps}</div>
     </div>
+    <hr class="rule">
     <div class="ws-explorers">${explorers}</div>`;
 }
 

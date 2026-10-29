@@ -2,5 +2,16 @@
 .DS_Store
 **/.DS_Store
 
-# Local redesign mockups — never deploy
-_redesign/
+# Workshop CONCEPTS stay local — half-finished explorations, one-off mockups.
+_redesign/m3/_*
+_redesign/m3/mockups/
+_redesign/m3/*.mjs
+
+# ...but the DESIGN SYSTEM itself SHIPS. It documents the components every live
+# surface is built from, and a design system nobody can open is a design system
+# nobody follows — which is exactly how the first-run screen kept three layers of
+# card tub after every other surface had moved to editorial. Reachable at
+#   /_redesign/m3/design-system.html   (catalogue, tokens, every component)
+#   /_redesign/m3/specimen.html?id=<id> (one component, full page)
+#   /_redesign/m3/row-showcase.html     (the row family)
+# These carry demo fixtures only — no customer data.

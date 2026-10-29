@@ -4033,7 +4033,11 @@ export function queueGroupHead(urgency, items) { const m = UMETA[urgency]; const
 // {label, icon, onclick} adds a call-to-action to the all-clear card; opts.emptyTitle/emptyText override its copy.
 export function queueBoard(items = [], opts = {}) {
   const cta = opts.emptyCta ? `<div style="margin-top:20px"><button class="m3-btn filled" onclick="${opts.emptyCta.onclick || ''}">${opts.emptyCta.icon ? `<span class="material-symbols-rounded">${esc(opts.emptyCta.icon)}</span>` : ''}${esc(opts.emptyCta.label)}</button></div>` : '';
-  const allClear = `<div class="m3-card" style="text-align:center;padding:40px 24px"><div class="title-l">${esc(opts.emptyTitle || "You're all caught up")}</div><div class="body-m variant" style="margin-top:6px;max-width:480px;margin-left:auto;margin-right:auto">${esc(opts.emptyText || 'Nothing needs you right now.')}</div>${cta}</div>`;
+  /* Editorial, like every other empty state. This was a filled tub with inline
+     centring — found by tools/surface-audit.mjs, which drives the queue into its
+     EMPTY branch; nothing had ever rendered it, because the demo fixture always
+     has actions. */
+  const allClear = `<div class="q-allclear"><div class="title-l">${esc(opts.emptyTitle || "You're all caught up")}</div><div class="body-m variant">${esc(opts.emptyText || 'Nothing needs you right now.')}</div>${cta}</div>`;
   const groups = ['high', 'med', 'low'].map(u => {
     const g = items.filter(i => i.urgency === u);
     if (!g.length) return '';

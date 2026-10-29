@@ -132,7 +132,8 @@
         ${isOwner ? DS.statusPill({ kind: 'info', label: 'Owner' }) : `<button class="m3-btn text" onclick="window.__removeOperator('${esc(o.id)}','${esc(e)}')">Remove</button>`}
       </div>`;
     };
-    return `<div class="m3-card org-card">
+    /* Editorial row, not a tub — the admin screen is a LIST of organisations. */
+    return `<div class="org-card">
       <div class="org-hd">
         <div class="org-id"><div class="title-l">${esc(o.name)}</div><div class="org-meta${o.ownerEmail ? '' : ' warn'}">${meta}</div></div>
         <div class="org-pills">
