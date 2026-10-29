@@ -5,8 +5,8 @@
    M3 look (dark default + light toggle). It carries:
      (1) the rich portfolio/queue card organisms (workspace-cards.js markup),
      (2) the org-switcher panel + account chrome the M3 drawer gains,
-     (3) M3 shims for .modal-scrim/.modal-card/.btn*/.settings-toast — the
-         classes window.__confirm/__toast/__signOut emit, which live in
+     (3) M3 shims for .modal-scrim, .modal-card, .btn* and .settings-toast —
+         the classes window.__confirm/__toast/__signOut emit, which live in
          workspace/styles.css and are NOT loaded here,
      (4) the portfolio filter bar layout.
    Everything references --md-sys-color-* tokens (no invented hex).
@@ -44,7 +44,7 @@
 /* founder-facing stats trio */
 .pc-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding-top: 4px; }
 .pc-stat { text-align: center; padding: 10px 6px; border-radius: 10px; background: var(--md-sys-color-surface-container-high); }
-.pc-stat .v { font-size: 19px; font-weight: 700; color: var(--md-sys-color-on-surface); font-family: var(--md-ref-typeface-brand, 'Roboto'); }
+.pc-stat .v { font-size: 19px; font-weight: 700; color: var(--md-sys-color-on-surface); font-family: var(--font-display); }
 .pc-stat .l { font-size: 10.5px; letter-spacing: .04em; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); margin-top: 3px; }
 
 /* awaiting-brief sub-state */
@@ -57,7 +57,7 @@
 .pc-rec.invest { background: var(--success, #00A368); }
 .pc-rec.pass { background: var(--md-sys-color-error); }
 .pc-rec.consider { background: var(--warning, #C77700); }
-.pc-score { font-size: 22px; font-weight: 700; font-family: var(--md-ref-typeface-brand, 'Roboto'); color: var(--md-sys-color-on-surface); line-height: 1; }
+.pc-score { font-size: 22px; font-weight: 700; font-family: var(--font-display); color: var(--md-sys-color-on-surface); line-height: 1; }
 .pc-score .band { font-size: 12.5px; font-weight: 500; color: var(--md-sys-color-on-surface-variant); }
 .pc-thesis { font-size: 13px; line-height: 1.55; color: var(--md-sys-color-on-surface-variant); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 
@@ -69,6 +69,163 @@
 .pc-run { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; }
 
 /* ---------- stat row ---------- */
+/* ---------- admin org card ----------
+   Was a 1020x162 card holding 85 characters above 692px of empty page, with
+   every rule written inline. Sectioned now: identity + licence at the top,
+   then access, then (super admin only) the plan. */
+.org-card { padding: 22px; margin-bottom: 18px; }
+.org-hd { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+.org-id { min-width: 0; }
+.org-meta { font-size: var(--row-cap); color: var(--md-sys-color-on-surface-variant); margin-top: 5px; overflow-wrap: anywhere; }
+.org-meta.warn { color: var(--warning); }
+.org-meta code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .95em; }
+.org-pills { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.org-sec { padding-top: 18px; border-top: 1px solid var(--md-sys-color-outline-variant); }
+.org-sec + .org-sec { margin-top: 18px; }
+.org-sec .overline { display: block; margin-bottom: 10px; }
+.org-ops { display: flex; flex-direction: column; gap: 6px; }
+.org-op { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 44px;
+  padding: 4px 6px 4px 14px; border-radius: 10px; background: var(--md-sys-color-surface-container-high); }
+.org-op-e { font-size: var(--row-sub-lg); overflow-wrap: anywhere; }
+.org-empty { font-size: var(--row-sub); color: var(--md-sys-color-on-surface-variant); }
+.org-add { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.org-add .field-in { flex: 1 1 220px; min-width: 0; }
+
+/* ---------- sign-in ----------
+   The front door, and until this migration it was the one screen still wearing
+   the pre-brand identity: a white card, Inter, the default blue, "VENTRIFY OS
+   WORKSPACE" — a different product from the dark one behind it. Its footer also
+   floated beside the card at mid-height rather than under it.
+
+   It is the ONLY screen with no tenant, which is exactly why the product's own
+   lockup sits here at full size while everywhere else the drawer head belongs
+   to the customer.
+
+   The backdrop reuses the brand layer's OWN photo tokens — the same
+   --product-photo / -dim / -grade the masthead band uses — so the sign-in screen
+   re-skins with the identity instead of carrying a second copy of the artwork. */
+body.signin { min-height: 100dvh; margin: 0; background: var(--surface-ground, var(--md-sys-color-surface)); isolation: isolate; }
+body.signin::before {
+  content: ""; position: fixed; inset: 0; z-index: -2; pointer-events: none;
+  background-image: var(--product-photo); background-size: cover; background-position: 50% 38%;
+  filter: var(--product-photo-grade); opacity: var(--product-photo-dim);
+}
+/* The scrim: holds contrast under the card and lands the photograph on the page
+   colour at the foot, so it ends rather than being cut off. */
+body.signin::after {
+  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(to bottom,
+    color-mix(in srgb, var(--surface-ground) 40%, transparent) 0%,
+    color-mix(in srgb, var(--surface-ground) 72%, transparent) 55%,
+    var(--surface-ground) 100%);
+}
+.signin-shell { min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 22px; padding: 40px 20px; box-sizing: border-box; }
+.signin-card { width: 100%; max-width: 420px; padding: 34px 32px 30px; }
+.signin-mark { margin-bottom: 26px; }
+.signin-mark .brand-lockup { --lockup-h: 26px; }
+.signin-title { margin: 0 0 8px; font: 500 clamp(1.4rem, 3.4vw, 1.75rem)/1.2 var(--font-display, inherit); letter-spacing: -.02em; color: var(--md-sys-color-on-surface); }
+.signin-sub { margin: 0 0 24px; font-size: var(--row-sub-lg); line-height: 1.55; color: var(--md-sys-color-on-surface-variant); }
+.signin-sub strong { color: var(--md-sys-color-on-surface); font-weight: 500; }
+.signin-form { display: flex; flex-direction: column; gap: 14px; }
+.signin-go { width: 100%; justify-content: center; }
+.signin-meta { margin: 18px 0 0; font-size: var(--row-cap); line-height: 1.5; color: var(--md-sys-color-on-surface-variant); }
+.signin-meta.err { color: var(--md-sys-color-error); }
+.signin-meta strong { color: inherit; }
+.signin-foot { margin: 0; font-size: var(--row-cap); color: var(--md-sys-color-on-surface-variant); text-align: center; }
+.signin-foot a { color: var(--md-sys-color-primary); text-decoration: none; }
+.signin-foot a:hover { text-decoration: underline; }
+
+/* ---------- first-run setup ----------
+   Shares the sign-in page's shell (same body.signin backdrop, same card) because
+   it is the same moment in the product: before there is a workspace. Wider,
+   because it is a form rather than one field, and top-aligned because it is
+   taller than the viewport on a phone. */
+.setup-shell { justify-content: flex-start; padding-top: 48px; }
+.setup-card { max-width: 620px; }
+.setup-sec { margin-top: 30px; padding-top: 22px; border-top: 1px solid var(--md-sys-color-outline-variant); }
+.setup-sec > .overline { display: block; margin-bottom: 16px; }
+.setup-field { margin-top: 18px; }
+.setup-field > .field-lab { display: block; margin-bottom: 10px; font-size: var(--row-cap);
+  font-weight: 500; color: var(--md-sys-color-on-surface); }
+.setup-field > .field-lab .field-opt { font-weight: 400; color: var(--md-sys-color-on-surface-variant); }
+.setup-two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 560px) { .setup-two { grid-template-columns: 1fr; } }
+.setup-drop { display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 14px; border: 1px dashed var(--md-sys-color-outline-variant); border-radius: 12px; }
+.setup-droplogo { flex: none; width: 48px; height: 48px; border-radius: 11px; overflow: hidden;
+  display: flex; align-items: center; justify-content: center; font-weight: 700; }
+.setup-droplogo img { width: 100%; height: 100%; object-fit: cover; }
+.setup-dropcopy { flex: 1 1 150px; min-width: 0; }
+.setup-preview { background: var(--md-sys-color-surface-container-high); padding: 20px; }
+.setup-skip { text-align: center; margin-top: 16px; }
+.setup-skip a { color: var(--md-sys-color-primary); text-decoration: none; }
+.setup-skip a:hover { text-decoration: underline; }
+.signin-card .signin-go { margin-top: 28px; }
+
+/* ---------- settings layout ----------
+   An inline `auto-fit minmax(300px,1fr)` with no align-items stretched every
+   card in a row to the tallest of them: three cards at 525px to carry 226, 82
+   and 131 characters. `align-items: start` is the whole fix — a card is as
+   tall as what is in it. The split is asymmetric on purpose: the brand kit is
+   the only card with real controls, so it gets the wide column, and the three
+   read-mostly cards stack beside it. */
+.ws-settings { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; align-items: start; }
+.ws-settings .ws-stack { display: grid; gap: 20px; align-content: start; }
+/* A grid item's automatic minimum is its MIN-CONTENT, not the track — so one
+   un-wrappable row inside a card pushed the whole column 10px past a 390px
+   phone and took every card with it. `1fr` does not prevent that; `min-width:
+   0` does. It is needed on both levels: the column AND the stack inside it. */
+.ws-settings > *, .ws-settings .ws-stack > * { min-width: 0; }
+.ws-settings .ws-span { grid-column: 1 / -1; }
+@media (max-width: 900px) { .ws-settings { grid-template-columns: 1fr; } }
+
+/* ---------- brand preview (settings hero, right slot) ---------- */
+.brand-prev { display: flex; flex-direction: column; gap: 18px; }
+.bp-row { display: flex; align-items: center; gap: 14px; }
+.bp-mark { display: inline-flex; align-items: center; justify-content: center; overflow: hidden; font-weight: 700; letter-spacing: .02em; flex: none; }
+.bp-mark img { width: 100%; height: 100%; object-fit: cover; }
+.bp-mark.lg { width: 56px; height: 56px; border-radius: 16px; }
+.bp-mark.sm { width: 34px; height: 34px; border-radius: 10px; }
+.bp-id { min-width: 0; }
+.bp-nm { font-size: var(--row-title-lg); font-weight: 600; letter-spacing: .1px; overflow-wrap: anywhere; }
+.bp-sub { font-size: var(--row-sub); color: var(--md-sys-color-on-surface-variant); margin-top: 2px; }
+.bp-meta { display: flex; flex-wrap: wrap; gap: 8px 22px; padding-top: 16px; border-top: 1px solid var(--md-sys-color-outline-variant); }
+.bp-meta .unit { font-size: var(--row-cap); color: var(--md-sys-color-on-surface-variant); font-variant-numeric: tabular-nums; }
+.bp-meta .unit b { display: block; font-size: var(--row-val); font-weight: 600; color: var(--md-sys-color-on-surface); margin-bottom: 3px; }
+
+/* ---------- brand swatches ----------
+   44px tap targets with an 8px gap, per the mobile rules. The native colour
+   input is kept (it is the only accessible picker) but made the swatch: it is
+   stretched transparent over the tile, so what the user sees is a tile in the
+   current colour with a dropper on it, not OS chrome. */
+.bsw-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.bsw, .bsw-custom { width: 44px; height: 44px; border-radius: 13px; border: none; padding: 0; cursor: pointer;
+  box-shadow: 0 0 0 2px transparent; transition: box-shadow .12s ease; }
+.bsw.on { box-shadow: 0 0 0 2px var(--md-sys-color-surface), 0 0 0 4px var(--md-sys-color-on-surface); }
+.bsw:focus-visible, .bsw-custom:focus-within { outline: 2px solid var(--md-sys-color-primary); outline-offset: 3px; }
+.bsw-custom { position: relative; display: inline-flex; align-items: center; justify-content: center; margin-left: 8px; }
+.bsw-custom.empty { background: var(--md-sys-color-surface-container-highest); box-shadow: inset 0 0 0 1px var(--md-sys-color-outline-variant); color: var(--md-sys-color-on-surface-variant); }
+.bsw-custom input[type="color"] { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; border: none; padding: 0; cursor: pointer; }
+.bsw-custom .material-symbols-rounded { font-size: 20px; pointer-events: none; }
+.bsw-hex { width: 108px; height: 44px; font-variant-numeric: tabular-nums; text-transform: uppercase; }
+
+/* ---------- operator load (team roster aside) ----------
+   The assigned list used to be one grey run-on line of names, which gave the
+   single most important fact on the page — how much each person is carrying —
+   less weight than their email address. The count is set as a figure on the
+   type ramp the rest of the product uses for figures, and the ventures are
+   chips so three of them read as three, not as a sentence. */
+.op-load { display: flex; align-items: flex-start; gap: 14px; padding-top: 12px; border-top: 1px solid var(--md-sys-color-outline-variant); }
+.op-load-n { flex: none; min-width: 34px; font: 600 28px/1 var(--font-display); letter-spacing: -.025em; font-variant-numeric: tabular-nums; color: var(--md-sys-color-on-surface); }
+.op-load-n.dim { color: var(--md-sys-color-on-surface-variant); }
+.op-load-b { min-width: 0; }
+.op-load-l { font-size: var(--row-cap); letter-spacing: .4px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); }
+.op-load-names { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
+.op-load-names span { font-size: var(--row-sub); line-height: 1.2; padding: 4px 9px; border-radius: 999px;
+  background: var(--md-sys-color-surface-container-highest); color: var(--md-sys-color-on-surface); }
+.op-load-none { font-size: var(--row-sub); color: var(--md-sys-color-on-surface-variant); margin-top: 7px; }
+
 .ws-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
 @media (max-width: 900px) { .ws-stats { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 520px) { .ws-stats { grid-template-columns: 1fr; } }

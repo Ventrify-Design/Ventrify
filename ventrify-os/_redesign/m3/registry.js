@@ -31,7 +31,7 @@ const SLOT_MOLECULES = {
   statement: () => DS.statementLockup(),
   score: () => DS.scoreLockup({ now: 72, potential: 88 }),
   progress: () => DS.progressLockup({ label: 'Pre-wire clearance', done: 0, total: 9, status: 'Do not wire', tone: 'bad', segments: [{ kind: 'err' }, { kind: 'err' }, { kind: 'err' }, { kind: 'warn' }, { kind: 'warn' }, { kind: 'warn' }, { kind: 'info' }, { kind: 'info' }, { kind: 'info' }], capRight: '3 blockers · 3 key · 3 standard' }),
-  profile: () => DS.profileLockup(),
+  radar: () => DS.radarLockup({ score: SCORE.composite, now: SCORE.composite, potential: SCORE.potential, categories: SCORE.categories }),
   valuation: () => DS.valuationLockup({ multiple: '3.75', multipleSuffix: '× seed median', band: 'Rich — reprice', tone: 'bad', asked: 60, defensibleLo: 15, defensibleHi: 35, scaleMax: 70 }),
   coverage: () => DS.coverageLockup(),
   figures: () => DS.keyFigures([{ v: '$1.4B', l: 'TAM' }, { v: '28%', l: 'CAGR' }, { v: '6:1', l: 'LTV / CAC' }]),
@@ -39,12 +39,12 @@ const SLOT_MOLECULES = {
 };
 const SLOT_OPTS = [
   { v: 'statement', l: 'Statement lockup' }, { v: 'score', l: 'Score lockup' }, { v: 'progress', l: 'Progress lockup' },
-  { v: 'profile', l: 'Profile lockup' }, { v: 'valuation', l: 'Valuation lockup' }, { v: 'coverage', l: 'Coverage lockup' },
+  { v: 'radar', l: 'Radar lockup' }, { v: 'valuation', l: 'Valuation lockup' }, { v: 'coverage', l: 'Coverage lockup' },
   { v: 'figures', l: 'Key figures' }, { v: 'empty', l: '— empty —' }
 ];
 const byV = v => SLOT_OPTS.find(o => o.v === v);
 // right slot lists the metric molecules first (statement is the usual left half)
-const SLOT_OPTS_R = ['score', 'progress', 'profile', 'valuation', 'coverage', 'statement', 'figures', 'empty'].map(byV);
+const SLOT_OPTS_R = ['score', 'progress', 'radar', 'valuation', 'coverage', 'statement', 'figures', 'empty'].map(byV);
 
 export const CATALOG = {
 
@@ -177,13 +177,6 @@ export const CATALOG = {
     html: () => `<div class="drawer-brand" style="padding:0"><span class="logo"><span class="material-symbols-rounded" style="font-size:20px">bolt</span></span><span class="wm">Ventrify <small>OS</small></span></div>`,
     props: [{ name: 'logo', type: 'icon atom' }, { name: 'wordmark', type: 'string' }], variants: [], usedIn: ['UI shell'], adaptive: noAdapt
   },
-  themeToggle: {
-    level: 'molecule', group: 'Molecules', domain: 'Shell', title: 'Theme toggle', sig: 'themeToggle()',
-    blurb: 'Segmented Light / Dark control, persisted to localStorage and broadcast so every surface re-tints.',
-    maxw: 260, pad: true,
-    html: () => `<div style="max-width:220px">${DS.themeToggle()}</div>`,
-    props: [{ name: 'data-set', type: "'light'|'dark'" }], variants: [{ label: 'Rail', note: 'stacks vertically when collapsed' }], usedIn: ['UI shell', 'Design system'], adaptive: noAdapt
-  },
   accountChip: {
     level: 'molecule', group: 'Molecules', domain: 'Shell', title: 'Account chip', sig: '.drawer-foot',
     blurb: 'The signed-in workspace at the foot of the drawer — avatar atom + org name + role.',
@@ -218,12 +211,20 @@ export const CATALOG = {
   },
   stat: {
     level: 'molecule', group: 'Molecules', domain: 'Portfolio', title: 'Stat', sig: 'statCard(s)',
-    blurb: 'A single headline number + label (+ optional sub). Four sit in a row above the portfolio table.',
+    blurb: 'A single headline number + label (+ optional sub), boxed. Still right for a LONE figure (the team page uses one). A GROUP of counts now goes through figureStrip instead — four boxed tiles above a de-carded table read as a different product from the assessment they link into.',
     maxw: 260, pad: true,
     html: () => DS.statCard(STATS[3]),
     props: [{ name: 'n', type: 'string' }, { name: 'l', type: 'string' }, { name: 'sub', type: 'string?' }],
     variants: [{ label: 'With sub', note: 'e.g. "119 / 168 outputs"' }], usedIn: ['Portfolio'],
     adaptive: { status: 'proposed', layout: { mobile: 'Row of 4 → 2×2, then single column below 400px.', tablet: '2×2 grid.', desktop: 'Row of 4.' }, content: { mobile: 'Drop the sub-caption; number + label only.', tablet: 'Keep sub.', desktop: 'Keep sub.' } }
+  },
+  figureStrip: {
+    level: 'molecule', group: 'Molecules', domain: 'Portfolio', title: 'Figure strip', sig: 'figureStrip(stats)',
+    blurb: 'The same counts statCard renders, de-carded: figures sit ON the page between two hairlines, divided by one more. A boxed tile says "this is a thing"; a count of engagements is not a thing, it is a measurement of the list beneath it — so the portfolio landing reads like the assessment figure strips rather than like a different product. A zero dims rather than disappears, because "0 awaiting a deck" is an answer and dropping the cell would make the strip jump width between loads. Collapses 4 to 2 columns below 900px.',
+    maxw: 760, pad: true,
+    html: () => DS.figureStrip(STATS),
+    props: [{ name: 'stats', type: '[{n, l}]' }],
+    variants: [{ label: 'zero', note: 'dimmed, never dropped' }], usedIn: ['Portfolio landing'], adaptive: noAdapt
   },
   listRow: {
     level: 'molecule', group: 'Molecules', title: 'List row', sig: '.m3-li',
@@ -325,7 +326,7 @@ export const CATALOG = {
   },
   engagementTable: {
     level: 'organism', group: 'Organisms', domain: 'Portfolio', title: 'Engagement table', sig: 'engagementTable(rows, opts)',
-    blurb: 'The portfolio at a glance — one row per venture with stage, status, progress/signal and last activity. A row opens the Assessment.',
+    blurb: 'The portfolio list. Sits ON the page — no container card, the same treatment every other table in the product now gets. opts.groups renders it banded instead of flat: ONE table with a caption row per group, not a table per group, so the columns cannot drift apart between bands; the visible column header goes sr-only but stays in the accessibility tree. DS.triageGroups(rows) derives those groups from the row data — Needs you / In flight / Settled, first match wins — so the page answers what needs me before what exists, and a venture changes group the moment its state does. A filtered or searched view drops the grouping, since the filter is already the answer to which ones. opts.onDelete (a global handler NAME) opts IN a trailing destructive column.',
     maxw: null, pad: true,
     html: () => DS.engagementTable(ENGAGEMENTS),
     props: [{ name: 'row.name / sub', type: 'string' }, { name: 'row.stage', type: 'string' }, { name: 'row.status', type: '{kind,label,icon}' }, { name: 'row.progress', type: '0–1', note: 'or row.rec' }, { name: 'row.when', type: 'string' }],
@@ -353,11 +354,11 @@ export const CATALOG = {
   },
   investabilityHero: {
     level: 'organism', group: 'Organisms', domain: 'Assessment', title: 'Investability hero', sig: 'investabilityHero(score, a)',
-    blurb: 'The Section hero atop the Investability tab — recycled statementLockup (left, copy from a.heroes.investability) + profileLockup (right, the 55 re-expressed as its severity shape, derived from SCORE.categories) + thesis. Same frame as the verdict hero, molecule swapped.',
+    blurb: 'The Section hero atop the Investability tab — recycled statementLockup (left, copy from a.heroes.investability) + radarLockup (right, the score as the shape of its categories, derived from SCORE.categories) + thesis. Same frame as the verdict hero, molecule swapped.',
     maxw: null, pad: true,
     html: () => `<div class="brief" style="padding:8px 28px 20px">${DS.investabilityHero(SCORE, A)}</div>`,
     props: [{ name: 'score', type: 'SCORE' }, { name: 'a', type: 'ASSESSMENT (a.heroes.investability copy)' }],
-    variants: [{ label: 'Composes', note: 'sectionHero( statementLockup · profileLockup )' }], usedIn: ['Assessment'],
+    variants: [{ label: 'Composes', note: 'sectionHero( statementLockup · radarLockup )' }], usedIn: ['Assessment'],
     adaptive: { status: 'built', layout: { mobile: 'Statement over profile.', tablet: 'Two-column.', desktop: 'Full.' }, content: { mobile: 'Full.', tablet: 'Full.', desktop: 'Full.' } }
   },
   marketHero: {
@@ -370,13 +371,13 @@ export const CATALOG = {
     adaptive: { status: 'built', layout: { mobile: 'Statement over valuation.', tablet: 'Two-column.', desktop: 'Full.' }, content: { mobile: 'Full.', tablet: 'Full.', desktop: 'Full.' } }
   },
   teamHero: {
-    level: 'organism', group: 'Organisms', domain: 'Assessment', title: 'Team hero', sig: 'teamHero(a)',
-    blurb: 'The Section hero atop the Team tab — recycled statementLockup (left) + progressLockup recycled as a signal spread (right: verified/neutral/flagged, derived from team.members[].signal) + thesis. Shows the same molecule serving two tabs.',
+    level: 'organism', group: 'Organisms', domain: 'Assessment', title: 'Team hero', sig: 'teamHero(a, score)',
+    blurb: 'The Section hero atop the Team tab — recycled statementLockup (left) + benchLockup (right: the cast split into who runs the company, who advises it, and the seats nobody is in) + thesis. Takes the score as a second argument so the numeral can be the team category\'s OWN score, and DROPS a hero fact that merely restates that same N / 5 — the runner writes one more often than not, and the lockup now owns the figure.',
     maxw: null, pad: true,
-    html: () => `<div class="brief" style="padding:8px 28px 20px">${DS.teamHero(A)}</div>`,
-    props: [{ name: 'a', type: 'ASSESSMENT (heroes.team + team.members)' }],
-    variants: [{ label: 'Composes', note: 'sectionHero( statementLockup · progressLockup )' }], usedIn: ['Assessment'],
-    adaptive: { status: 'built', layout: { mobile: 'Statement over signal.', tablet: 'Two-column.', desktop: 'Full.' }, content: { mobile: 'Full.', tablet: 'Full.', desktop: 'Full.' } }
+    html: () => `<div class="brief" style="padding:8px 28px 20px">${DS.teamHero(A, SCORE)}</div>`,
+    props: [{ name: 'a', type: 'ASSESSMENT (heroes.team + team.members + team.gaps)' }, { name: 'score', type: 'SCORE → the team category (num, weightPct, subs)' }],
+    variants: [{ label: 'Composes', note: 'sectionHero( statementLockup · benchLockup )' }], usedIn: ['Assessment'],
+    adaptive: { status: 'built', layout: { mobile: 'Statement over bench.', tablet: 'Two-column.', desktop: 'Full.' }, content: { mobile: 'Pills wrap; tiers keep their order.', tablet: 'Full.', desktop: 'Full.' } }
   },
   researchHero: {
     level: 'organism', group: 'Organisms', domain: 'Assessment', title: 'Research hero', sig: 'researchHero(a, score)',
@@ -389,12 +390,19 @@ export const CATALOG = {
   },
   scoreLockup: {
     level: 'molecule', group: 'Molecules', domain: 'Assessment', title: 'Score lockup', sig: 'scoreLockup(opts)',
-    blurb: 'The headline-score lockup — eyebrow label · a big number with /max · a tone-coloured band chip · an optional now→potential bar. Generic + defaults, so it drops into any surface that needs a headline score. Rendered here with its defaults.',
-    maxw: 340, pad: true,
-    html: () => DS.scoreLockup({ now: 72, potential: 88 }),
-    props: [{ name: 'label', type: 'string' }, { name: 'score / max', type: 'number' }, { name: 'band', type: 'string' }, { name: 'tone', type: "'good'|'mid'|'bad'" }, { name: 'now / potential', type: 'number (optional bar)' }],
-    variants: [{ label: 'Tone', note: 'good (green) · mid (amber) · bad (red) band' }, { label: 'No bar', note: 'omit now/potential' }], usedIn: ['sectionHero', 'Assessment'],
-    adaptive: { status: 'built', layout: { mobile: 'Full width; number scales with clamp().', tablet: 'Full.', desktop: 'Full.' }, content: { mobile: 'Full.', tablet: 'Full.', desktop: 'Full.' } }
+    blurb: 'The headline-score lockup — TWO graphics locked together, each doing a job the other cannot. The DIAL is a 270° sweep placing the score on 0–100, with the headroom ghosted behind it. The STABILITY STRIP zooms into the three blind draws and shows how far apart they landed — which a 0–100 rail cannot, because three draws inside three points are one invisible dot at that scale. Replaces the old number/bar/pill. Pass `draws` to get the strip; without them it says so rather than inventing a spread, which is what every real run renders today (the runner publishes the median and keeps nothing else).',
+    maxw: 420, pad: true,
+    html: () => DS.scoreLockup({ now: 55, potential: 76, band: 'Promising', tone: 'mid', draws: [49, 61, 55], }),
+    props: [{ name: 'label', type: 'string · eyebrow' }, { name: 'score / now', type: 'number · the published composite' }, { name: 'max', type: 'number · default 100' }, { name: 'potential', type: 'number · ghosts the headroom arc; omit and none is drawn' }, { name: 'band', type: 'string · the band label' }, { name: 'tone', type: "'good'|'mid'|'bad' · colours dial, chip and strip" }, { name: 'draws', type: 'number[] · the blind draws; omit → "not recorded"' }],
+    variants: [
+      { label: 'Tone', note: 'good (green) · mid (amber) · bad (red) — dial, chip and strip all follow' },
+      { label: 'Solid vs indicative', note: 'a spread of ≤5 pts reads "solid"; wider reads "indicative"' },
+      { label: 'No draws', note: 'omit `draws` — the strip states it plainly instead of faking a spread' },
+      { label: 'No headroom', note: 'omit `potential` — no ghost arc' },
+      { label: 'Composition', note: 'pass `categories` — adds "what makes the N": real sub-signal pips per category, each row\'s CONTRIBUTION (weight × score) so the column sums to the headline, and a total that states the rounding (54.5 → 55). The x/5 figures deliberately are NOT used: they sum to 80.0 at 80 and 52.9 at 55, so they look correct on one assessment and contradict the next.' },
+    ],
+    usedIn: ['sectionHero', 'verdictMemo', 'Assessment'],
+    adaptive: { status: 'built', layout: { mobile: 'Dial shrinks to 136px, strip stays full width.', tablet: 'Full.', desktop: 'Full.' }, content: { mobile: 'Full.', tablet: 'Full.', desktop: 'Full.' } }
   },
   progressLockup: {
     level: 'molecule', group: 'Molecules', domain: 'Assessment', title: 'Progress lockup', sig: 'progressLockup(opts)',
@@ -405,31 +413,192 @@ export const CATALOG = {
     variants: [{ label: 'Severity pips', note: 'pass segments for coloured blocker/key/standard bar' }, { label: 'Plain', note: 'omit segments → even done/total bar' }, { label: 'Cleared', note: "tone 'good' + lock_open when all done" }], usedIn: ['sectionHero', 'Assessment'],
     adaptive: { status: 'built', layout: { mobile: 'Full width; number scales with clamp().', tablet: 'Full.', desktop: 'Full.' }, content: { mobile: 'Pips wrap; caption stacks.', tablet: 'Full.', desktop: 'Full.' } }
   },
-  profileLockup: {
-    level: 'molecule', group: 'Molecules', domain: 'Assessment', title: 'Profile lockup', sig: 'profileLockup(opts)',
-    blurb: 'Sibling to scoreLockup that re-expresses the score as its SHAPE — the big numeral + a split of tone chips (strong/mixed/gap) + a weighted severity strip (one segment per category, width ∝ weight, tone by severity) + a now→potential caption. Fronts the Investability tab so its hero isn\'t a duplicate of the Verdict score. Pass `categories` (SCORE.categories) to derive the split + strip live. Rendered here with defaults.',
-    maxw: 340, pad: true,
-    html: () => DS.profileLockup(),
-    props: [{ name: 'label', type: 'string' }, { name: 'score / max', type: 'number' }, { name: 'now / potential', type: 'number' }, { name: 'categories', type: 'SCORE.categories → derives split + strip' }, { name: 'split / segments', type: 'override the derived shape' }],
-    variants: [{ label: 'Derived', note: 'pass categories → split + weighted strip computed via sevOf()' }, { label: 'Hand-driven', note: 'pass split + segments explicitly' }], usedIn: ['sectionHero', 'Assessment'],
-    adaptive: { status: 'built', layout: { mobile: 'Full width; chips + strip wrap.', tablet: 'Full.', desktop: 'Full.' }, content: { mobile: 'Full.', tablet: 'Full.', desktop: 'Full.' } }
+  radarLockup: {
+    level: 'molecule', group: 'Molecules', domain: 'Assessment', title: 'Radar lockup', sig: 'radarLockup(opts)',
+    blurb: 'Sibling to scoreLockup that re-expresses the score as the SHAPE of its categories. Reads in the family\'s order — eyebrow, the numeral, the now/potential radar that explains it, then a split (strong/mixed/gap) + headroom caption. Fronts the Investability hero. Axes and labels DERIVE from `categories`: no axis count, key list or label map is assumed, so a five-category rubric draws five. Supersedes profileLockup. Zero is the innermost grid ring rather than the centre point, so a venture with nothing rated still draws a shape instead of collapsing to a dot.',
+    maxw: null, pad: true,
+    /* Four states, because a molecule that only works on the live fixture is not a
+       molecule. These are the cases the product actually hands it. */
+    html: () => {
+      const mk = f => SCORE.categories.map(f);
+      const cell = (t, o) => `<div style="min-width:0"><div style="font:500 11px/1 var(--font-mono,monospace);letter-spacing:.08em;color:var(--md-sys-color-outline);margin-bottom:10px">${t}</div>${DS.radarLockup(o)}</div>`;
+      return `<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:34px 40px">
+        ${cell('LIVE · 7 CATEGORIES', { score: SCORE.composite, now: SCORE.composite, potential: SCORE.potential, categories: SCORE.categories })}
+        ${cell('FORMING · NOTHING RATED', { score: 0, now: 0, potential: 0, categories: mk(c => ({ ...c, frac: 0, pot: 0, subs: (c.subs || []).map(x => ({ ...x, score: null })) })) })}
+        ${cell('A FIVE-CATEGORY RUBRIC', { score: 52, now: 52, potential: 70, categories: SCORE.categories.slice(0, 5) })}
+        ${cell('AT CEILING · NO HEADROOM', { score: SCORE.composite, now: SCORE.composite, potential: SCORE.composite, categories: mk(c => ({ ...c, pot: c.frac })) })}
+      </div>`;
+    },
+    props: [{ name: 'label', type: 'string' }, { name: 'score / max', type: 'number' }, { name: 'now / potential', type: 'number' }, { name: 'categories', type: 'SCORE.categories → derives axes, split, caption' }, { name: 'rated / total', type: 'number (override the derived signal count)' }, { name: 'hole', type: 'number — radius of the zero ring (default 16); raise it to clear a numeral placed in the middle' }, { name: 'weightDots', type: 'bool — vertex radius ∝ category weight' }],
+    variants: [
+      { label: 'Derived', note: 'pass categories → axes, labels, split and caption all computed' },
+      { label: 'Forming', note: 'no signal rated → labels read "–", caption reads "0 of N rated", never "7 gaps"' },
+      { label: 'At ceiling', note: 'no headroom anywhere → the dashed potential ring is omitted, not drawn over the solid' },
+      { label: 'Any rubric', note: 'five categories draw a pentagon; nothing assumes 7×5' }
+    ], usedIn: ['sectionHero', 'Assessment'],
+    adaptive: { status: 'built', layout: { mobile: 'Full width; the chart scales with the column and the numeral clamps.', tablet: 'Full.', desktop: 'Full.' }, content: { mobile: 'Caption wraps to two rows.', tablet: 'Full.', desktop: 'Full.' } }
+  },
+  clearanceLockup: {
+    level: 'molecule', group: 'Molecules', domain: 'Assessment', title: 'Clearance lockup', sig: 'clearanceLockup(opts)',
+    blurb: 'Sibling to scoreLockup expressing a GATE: how many checks still block a wire, the gate chip, then one cell per check. Fronts the Diligence tab. Replaces a borrowed progressLockup whose numeral read “0 of 9 cleared” — which says all nine gate the wire, and diligenceEditorial\'s own gateOpen has never believed that. The numeral now counts BLOCKERS, which is what the rule is actually about. Composes unitGrid. ⚠ Nothing in the OS writes `done` yet (the adapter hardcodes false), so the cleared states below are built and correct but not yet reachable in the product.',
+    maxw: null, pad: true,
+    /* The shapes a real run produces. Counts are never 3/3/3 by rule — the runner writes free
+       text and the adapter maps it, so a clean deal can be 0/2/4 and a messy one 7/0/1. */
+    html: () => {
+      const D = ASSESSMENT.diligence;
+      const cell = (t, o) => `<div style="min-width:0"><div style="font:500 11px/1 var(--font-mono,monospace);letter-spacing:.08em;color:var(--md-sys-color-outline);margin-bottom:10px">${t}</div>${DS.clearanceLockup(o)}</div>`;
+      const only = k => D.filter(d => d.kind === k);
+      return `<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:34px 40px">
+        ${cell('LIVE · 3 BLOCK / 3 KEY / 3 STANDARD', { items: D })}
+        ${cell('BLOCKERS CLEARED · gate opens', { items: D.map(d => d.kind === 'err' ? { ...d, done: true } : d) })}
+        ${cell('NO BLOCKERS AT ALL', { items: D.filter(d => d.kind !== 'err') })}
+        ${cell('ONE BLOCKER, NOTHING ELSE', { items: only('err').slice(0, 1) })}
+        ${cell('A CLEAN ASSESSMENT · nothing open', { items: [] })}
+        ${cell('30 CHECKS · cells cap and carry the rest', { items: Array.from({ length: 30 }, (_, i) => D[i % D.length]) })}
+        ${cell('AN UNKNOWN SEVERITY · drawn, not dropped', { items: [...D.slice(0, 2), { kind: 'critical', title: 'A severity the adapter has never emitted' }] })}
+        ${cell('EVERYTHING CLEARED', { items: D.map(d => ({ ...d, done: true })) })}
+      </div>`;
+    },
+    props: [
+      { name: 'label', type: 'string — the eyebrow' },
+      { name: 'items', type: '[{kind, title, done}] — a.diligence, straight from the adapter' },
+      { name: 'maxCells', type: 'number (default 24) — past it the last cell carries the remainder' },
+    ],
+    variants: [
+      { label: 'Gate = blockers', note: 'only a gating severity counts toward the numeral and the chip; key/standard never lock a wire' },
+      { label: 'Derived legend', note: 'built from the severities PRESENT — a standard-only assessment shows one entry, not three with two zeroes' },
+      { label: 'Unknown severity', note: 'an unrecognised kind falls through to the neutral cell rather than vanishing from the chart' },
+      { label: 'Self-omitting', note: 'no items → “Nothing to clear”, no grid, no legend, and an honest sentence' },
+    ], usedIn: ['diligenceEditorial', 'Assessment'],
+    adaptive: { status: 'built', layout: { mobile: 'Cells wrap within the column.', tablet: 'Full.', desktop: 'Full.' }, content: { mobile: 'Legend wraps to two rows.', tablet: 'Full.', desktop: 'Full.' } }
+  },
+  unitGrid: {
+    level: 'molecule', group: 'Molecules', domain: 'Assessment', title: 'Unit grid', sig: 'unitGrid(opts)',
+    blurb: 'One cell per discrete thing, tinted by kind, with a state glyph — the unit is the item, so nothing is averaged: nine checks draw nine cells and three draw three. Sorted by severity order, capped with a “+N” remainder cell. Generic over [{kind, done, title}]. A grid of cells is a CHART, so it carries one role="img" and a derived summary label and the cells are hidden — reading nine cell names aloud would just duplicate the checklist below it; `title` still gives a sighted user the item on hover.',
+    maxw: 420, pad: true,
+    html: () => {
+      const D = ASSESSMENT.diligence;
+      const row = (t, o) => `<div style="margin-bottom:22px"><div style="font:500 11px/1 var(--font-mono,monospace);letter-spacing:.08em;color:var(--md-sys-color-outline);margin-bottom:10px">${t}</div>${DS.unitGrid(o)}</div>`;
+      return row('NINE · MIXED SEVERITY', { items: D, label: 'nine checks' })
+        + row('PART CLEARED', { items: D.map((d, i) => i % 3 === 0 ? { ...d, done: true } : d), label: 'three cleared' })
+        + row('FORTY · CAPPED AT 24', { items: Array.from({ length: 40 }, (_, i) => D[i % D.length]), label: 'forty checks' })
+        + row('ONE', { items: D.slice(0, 1), label: 'one check' });
+    },
+    props: [
+      { name: 'items', type: '[{kind, done, title}] — kind keys the SEVERITY map in ds.js' },
+      { name: 'max', type: 'number (default 24) — the last cell becomes “+N”' },
+      { name: 'label', type: 'string — the role="img" summary a screen reader gets instead of the cells' },
+    ],
+    variants: [
+      { label: 'Severity-ordered', note: 'DOM order is severity order, so the blockers land first — and the entrance animation follows the DOM' },
+      { label: 'Open vs cleared', note: 'different glyph AND different fill, so the state survives without colour' },
+      { label: 'Overflow', note: 'past `max` the final cell carries the remainder and the summary label still states the true total' },
+      { label: 'Tooltips', note: 'hovering a cell gives the severity + the check\'s title as the heading and its full note as the body — the whole reason a cell can be one glyph. Replaces a native `title`, which waits a second, cannot wrap and never showed the note' },
+    ], usedIn: ['clearanceLockup', 'Assessment'],
+    adaptive: { status: 'built', layout: { mobile: 'Wraps; 40px cells hold at every width.', tablet: 'Full.', desktop: 'Full.' }, content: { mobile: 'Full.', tablet: 'Full.', desktop: 'Full.' } }
+  },
+  benchLockup: {
+    level: 'molecule', group: 'Molecules', domain: 'Assessment', title: 'Bench lockup', sig: 'benchLockup(opts)',
+    blurb: 'Sibling to scoreLockup expressing a TEAM as a bench: the category score, then the cast arranged into who runs the company, who advises it, and the seats nobody is in. Fronts the Team tab. Replaces a borrowed progressLockup whose numeral was a count of the people we could look up — diligence hygiene, not a judgement — and whose single row of pips averaged away the one pattern that changes a decision: a verified board above an unverified executive team. Tiering is a regex on the member\'s role, so nothing is venture-specific; a member with no matching role counts as executive. Composes signalTier.',
+    maxw: null, pad: true,
+    /* The states a real run produces. The MoneyGym fixture is the luxury case; a live
+       assessment routinely arrives with no board, no gaps, or nothing scored at all. */
+    html: () => {
+      const T = A.team, cat = SCORE.categories.find(c => c.key === 'team') || {};
+      const cell = (t, o) => `<div style="min-width:0"><div style="font:500 11px/1 var(--font-mono,monospace);letter-spacing:.08em;color:var(--md-sys-color-outline);margin-bottom:10px">${t}</div>${DS.benchLockup(o)}</div>`;
+      const base = { label: 'Team signal', members: T.members, gaps: T.gaps, score: cat.num, weightPct: cat.weightPct };
+      return `<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:34px 40px">
+        ${cell('LIVE · EXEC + BOARD + GAPS', base)}
+        ${cell('NO BOARD, NO GAPS', { ...base, members: T.members.filter(m => !DS.isBoardRole(DS.memberParts(m).role)), gaps: [] })}
+        ${cell('FORMING · NOTHING SCORED', { ...base, score: null, weightPct: null })}
+        ${cell('TWO-PERSON TEAM', { ...base, members: T.members.slice(0, 2), gaps: T.gaps.slice(0, 1) })}
+        ${cell('NOBODY NAMED YET', { ...base, members: [], gaps: [] })}
+        ${cell('TEN GAPS · SEATS CAP AT 7', { ...base, gaps: [...T.gaps, ...T.gaps] })}
+      </div>`;
+    },
+    props: [
+      { name: 'label', type: 'string — the eyebrow' },
+      { name: 'members', type: '[{i, person, role, signal}] — role drives the tiering' },
+      { name: 'gaps', type: 'string[] — one empty seat each, drawn UNLABELLED' },
+      { name: 'score / max', type: 'the team category score; null → "Forming"' },
+      { name: 'weightPct', type: 'number — drives the "N% of the score" caption' },
+      { name: 'execLabel / boardLabel / seatLabel', type: 'string — tier headings' },
+      { name: 'maxSeats', type: 'number (default 7) — cap on drawn seats' },
+    ],
+    variants: [
+      { label: 'Tiered', note: 'role matches /ned|advisor|chair|board|observer|investor|mentor/ → board; everything else builds the thing' },
+      { label: 'Self-omitting', note: 'no board → no board tier; no gaps → no seat tier; no members → one honest line' },
+      { label: 'Forming', note: 'nothing scored → "Forming", and the weight caption is suppressed rather than printing 0%' },
+      { label: 'Unlabelled seats', note: '`gaps` is free prose and not every entry is a role — the count is drawn, a parsed role name is not' },
+      { label: 'Seat tooltips', note: 'hovering a seat shows the gap VERBATIM — which role is missing and why. The em-dash split into heading + body is presentational; both halves show either way, so a gap without a dash loses nothing' },
+    ], usedIn: ['teamHero', 'Assessment'],
+    adaptive: { status: 'built', layout: { mobile: 'Full width; pills wrap within each tier.', tablet: 'Full.', desktop: 'Full.' }, content: { mobile: 'Tier metas wrap under the label.', tablet: 'Full.', desktop: 'Full.' } }
+  },
+  signalTier: {
+    level: 'molecule', group: 'Molecules', domain: 'Assessment', title: 'Signal tier', sig: 'signalTier(opts)',
+    blurb: 'One labelled band of signal-tinted people-pills: an eyebrow, a derived tally on the right, and the pills. Generic over any [{i, label, signal, icon}] set — `signal` picks the tint and an item with an `icon` and no label renders as an empty-seat outline. An empty tier renders NOTHING, so a self-omitting caller never leaves a dangling heading. Extracted out of benchLockup so a second tiering (by function, by tenure, by workstream) reuses it instead of re-growing it.',
+    maxw: 520, pad: true,
+    html: () => {
+      const T = A.team;
+      const pill = m => ({ i: m.i, label: (DS.memberParts(m).role.split('/')[0] || '').trim(), signal: m.signal });
+      return `<div style="display:grid;gap:18px">
+        ${DS.signalTier({ label: 'Running the company', meta: '0 of 3 verified · 2 flagged', items: T.members.filter(m => !DS.isBoardRole(DS.memberParts(m).role)).map(pill) })}
+        ${DS.signalTier({ label: 'Board & advisory', meta: '2 of 3 verified', items: T.members.filter(m => DS.isBoardRole(DS.memberParts(m).role)).map(pill) })}
+        ${DS.signalTier({ label: 'Seats nobody is in', meta: '5 to hire', items: T.gaps.map(() => ({ icon: 'person_add' })) })}
+        ${DS.signalTier({ label: 'Meta as a verdict (opt-in)', meta: 'escalate', metaTone: 'bad', items: T.members.slice(0, 2).map(pill) })}
+      </div>`;
+    },
+    props: [
+      { name: 'label', type: 'string — rendered as the house .eyebrow atom, not a second label treatment' },
+      { name: 'items', type: '[{i, label, signal, icon, kind, alt, tip}] — `kind` forces a class (the outline on a labelled overflow pill); `alt` is the screen-reader name of an icon-only pill; `tip` is {title, body, kind} for the shared hover tooltip' },
+      { name: 'meta', type: 'string — the right-hand tally' },
+      { name: 'metaTone', type: "'' | 'bad' — a TALLY stays neutral; only opt in when the meta really is a verdict" },
+    ],
+    variants: [
+      { label: 'positive / neutral / flag', note: 'the roster\'s container pairs — colour IS the verdict, one source for both views' },
+      { label: 'seat', note: 'icon + no label → a dashed outline: nothing is in it, so nothing is filled in' },
+      { label: 'Empty', note: 'no items → renders nothing at all' },
+    ], usedIn: ['benchLockup', 'Assessment'],
+    adaptive: { status: 'built', layout: { mobile: 'Pills wrap.', tablet: 'Full.', desktop: 'Full.' }, content: { mobile: 'Full.', tablet: 'Full.', desktop: 'Full.' } }
   },
   valuationLockup: {
     level: 'molecule', group: 'Molecules', domain: 'Assessment', title: 'Valuation lockup', sig: 'valuationLockup(opts)',
-    blurb: 'Sibling to scoreLockup expressing a CORRECTIVE premium — a big multiple + a tone verdict chip + a reprice bar (a success-tinted defensible band, an error-tinted overshoot, and a marker at the ask). The inverse of scoreLockup\'s grow-up bar — reprice DOWN into a band. Fronts the Market tab. Takes explicit numeric opts, never parses prose. Rendered here with the MoneyGym reprice.',
-    maxw: 340, pad: true,
-    html: () => DS.valuationLockup({ multiple: '3.75', multipleSuffix: '× seed median', band: 'Rich — reprice', tone: 'bad', asked: 60, defensibleLo: 15, defensibleHi: 35, scaleMax: 70 }),
-    props: [{ name: 'label', type: 'string' }, { name: 'multiple / multipleSuffix', type: 'string' }, { name: 'band / tone / bandIcon', type: 'verdict chip' }, { name: 'asked / defensibleLo / defensibleHi / scaleMax', type: 'number ($M)' }, { name: 'captionLo / captionHi / askedNote', type: 'string' }],
-    variants: [{ label: 'Rich', note: 'asked above the band → error overshoot + red marker' }, { label: 'Fair', note: 'marker sits inside the band, no overshoot' }], usedIn: ['sectionHero', 'Assessment'],
-    adaptive: { status: 'built', layout: { mobile: 'Full width; number scales with clamp().', tablet: 'Full.', desktop: 'Full.' }, content: { mobile: 'Caption stacks.', tablet: 'Full.', desktop: 'Full.' } }
+    blurb: 'Sibling to scoreLockup expressing a CORRECTIVE premium — the ask, the defensible band and the overshoot between them, on a MEASURED AXIS. The axis is the point: the original version was an 8px track with a coloured band and an unlabelled tick, so you could see the ask was high but not against what, and the one number that mattered had to be read out of the caption. Ticks are DERIVED on a 1/2/2.5/5 ladder from the range, because a $60M seed and a $900M growth round land on this same component. Only the part above the ceiling is amber — the ask itself is not a warning, the overshoot is. Fronts the Market tab. Takes explicit numeric opts in $M, never parses prose.',
+    maxw: null, pad: true,
+    /* The states the live adapter actually produces. It regex-matches the band out of the
+       valuation note and emits null when the note is not phrased "$A–$B pre", and it emits
+       no `multiple` at all on a real run — so the shippable cases are the middle two, and
+       the MoneyGym fixture on the left is the luxury one. */
+    html: () => {
+      const V = A.valuation || {};
+      const base = { label: 'Valuation verdict', band: V.verdict, tone: 'mid', multipleSuffix: V.multipleSuffix };
+      const cell = (t, o) => `<div style="min-width:0"><div style="font:500 11px/1 var(--font-mono,monospace);letter-spacing:.08em;color:var(--md-sys-color-outline);margin-bottom:10px">${t}</div>${DS.valuationLockup(o)}</div>`;
+      return `<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:34px 40px">
+        ${cell('OVER THE BAND · full fixture', { ...base, multiple: V.multiple, asked: V.asked, defensibleLo: V.defensibleLo, defensibleHi: V.defensibleHi, scaleMax: V.scaleMax })}
+        ${cell('NO MULTIPLE · the common real case', { ...base, asked: V.asked, defensibleLo: V.defensibleLo, defensibleHi: V.defensibleHi, scaleMax: V.scaleMax })}
+        ${cell('NO BAND · note not parseable', { ...base, asked: V.asked })}
+        ${cell('INSIDE THE BAND · nothing to reprice', { ...base, band: 'Fairly priced', tone: 'good', asked: 25, defensibleLo: 15, defensibleHi: 35, scaleMax: 40 })}
+        ${cell('NO ASK AT ALL · nothing priced yet', { ...base, band: '', asked: 0 })}
+        ${cell('A $900M GROWTH ROUND · the ladder rescales', { ...base, band: 'Rich — reprice', asked: 900, defensibleLo: 400, defensibleHi: 620 })}
+      </div>`;
+    },
+    props: [{ name: 'label', type: 'string' }, { name: 'multiple / multipleSuffix', type: 'number — omit and the ask carries the numeral' }, { name: 'band / tone / bandIcon', type: 'verdict chip' }, { name: 'asked / defensibleLo / defensibleHi / scaleMax', type: 'number ($M)' }, { name: 'askedLabel / bandLabel', type: 'string — the two figures stated above the bar' }],
+    variants: [
+      { label: 'Over the band', note: 'the overshoot is hatched and dimensioned on the chart, in the warning colour — not described underneath it' },
+      { label: 'Inside the band', note: 'no overshoot drawn, and the read says so rather than printing a 0' },
+      { label: 'No band', note: 'band null → the bar keeps the ask and states that no band is set, never "$0–0M"' },
+      { label: 'Derived ticks', note: 'a tick label centres on its tick, except within 4% of either end — decided per tick, because the last tick is not the end of the scale' },
+      { label: 'No multiple', note: 'the runner emits none on a real run → the ask becomes the numeral' }
+    ], usedIn: ['sectionHero', 'Assessment'],
+    adaptive: { status: 'built', layout: { mobile: 'Full width; the bar and axis hold at 330px.', tablet: 'Full.', desktop: 'Full.' }, content: { mobile: 'Ticks thin out naturally — the ladder keys off the range, not the width.', tablet: 'Full.', desktop: 'Full.' } }
   },
   coverageLockup: {
     level: 'molecule', group: 'Molecules', domain: 'Assessment', title: 'Coverage lockup', sig: 'coverageLockup(opts)',
     blurb: 'Sibling to scoreLockup for an evidence base — a big completeness numeral + a confidence tone chip + a demoted, dot-separated provenance figure-row (no bar; one dominant numeral, not a row of equals). Fronts the Research tab. Rendered here with defaults.',
     maxw: 340, pad: true,
     html: () => DS.coverageLockup(),
-    props: [{ name: 'label / ratedLabel', type: 'string' }, { name: 'rated / total', type: 'number' }, { name: 'confidence / tone / confidenceIcon', type: 'confidence chip' }, { name: 'facts', type: '[{v, k}] provenance units' }],
-    variants: [{ label: 'Complete', note: 'rated == total → good tone' }, { label: 'No provenance', note: 'empty facts → strip omitted' }], usedIn: ['sectionHero', 'Assessment'],
+    props: [{ name: 'label / ratedLabel', type: 'string' }, { name: 'rated / total', type: 'number' }, { name: 'numeral', type: 'string · overrides the rated/total figure whole' }, { name: 'confidence / tone / confidenceIcon', type: 'confidence chip' }, { name: 'bandSuffix', type: "string · default ' confidence'; '' when the band states its own whole phrase" }, { name: 'facts', type: '[{v, k}] provenance units' }],
+    variants: [{ label: 'Complete', note: 'rated == total → good tone' }, { label: 'No provenance', note: 'empty facts → strip omitted' }, { label: 'Non-assessment', note: "numeral + bandSuffix:'' re-point it at any x-of-n measure — the Team screen uses it for cover of the book" }], usedIn: ['sectionHero', 'Assessment', 'Team', 'Admin'],
     adaptive: { status: 'built', layout: { mobile: 'Full width; provenance wraps to stacked units.', tablet: 'Full.', desktop: 'Full.' }, content: { mobile: 'Full.', tablet: 'Full.', desktop: 'Full.' } }
   },
   statementLockup: {
@@ -443,7 +612,7 @@ export const CATALOG = {
   },
   sectionHero: {
     level: 'organism', group: 'Organisms', domain: 'Assessment', title: 'Section hero', sig: 'sectionHero(opts)',
-    blurb: 'The reusable "top of a section" — TWO molecule SLOTS (left + right) + an optional thesis. Defaults to statementLockup (left) + scoreLockup (right) for the verdict; pass explicit `left`/`right` HTML to swap in any molecule per section. One empty slot → a single-molecule hero. Compose & test the slots below — it fronts any tab across the workspace.',
+    blurb: 'The reusable "top of a section" — TWO molecule SLOTS (left + right) + an optional thesis. Defaults to statementLockup (left) + scoreLockup (right) for the verdict; pass explicit `left`/`right` HTML to swap in any molecule per section. One empty slot → a single-molecule hero: one column capped to a readable measure, no divider, no 300px floor (that floor exists to reserve room for the TALL slot, and there is none). The thesis sits inside the left column in BOTH cases, so the gap below the facts is the same either way.',
     maxw: null, pad: true,
     html: (inst, cfg = {}) => {
       const opts = { left: (SLOT_MOLECULES[cfg.left] || SLOT_MOLECULES.statement)(), right: (SLOT_MOLECULES[cfg.right] || SLOT_MOLECULES.score)() };
@@ -461,15 +630,19 @@ export const CATALOG = {
   },
   metricRow: {
     level: 'molecule', group: 'Molecules', domain: 'Assessment', title: 'Metric row', sig: 'metricRow(opts)',
-    blurb: 'The ONE shared row for the Investability tab — label(+optional severity dot) · bar · value(+sub-line) · drill chevron. Both the strength profile AND the contributions table compose it; only the bar payload + value strings differ, so the two lists read as one component with identical hover, chevron and keyboard focus.',
+    blurb: 'The ONE shared row for the Investability tab — label · bar · value(+sub-line) · drill chevron. The leading severity DOT was retired: it restated what the bar, the value and the section footer\'s strong/mixed/gap split already said, six of seven rows drew the same colour, and its ramp did not even order (gap, the worst band, rendered as a pale brand tint while mixed rendered grey). Dropping it also put these labels on the same left edge as every other row on the tab. Both the strength profile AND the contributions table compose it; only the bar payload + value strings differ, so the two lists read as one component with identical hover, chevron and keyboard focus.',
     maxw: 640, pad: true,
     html: () => `<div class="brief" style="padding:0"><div class="profile">
-      ${DS.metricRow({ key: 'moat', label: 'Technical / competitive moat', dot: 'gap', sub: '15% weight · gap', bar: { now: 0.3, pot: 0.9, tick: true }, value: '1.5', sub2: { text: '→ 4.5', tone: 'up' }, onDrill: 'void' })}
-      ${DS.metricRow({ key: 'team', label: 'Team & founder-market fit', dot: null, sub: '25% weight · rated 3.0/5', bar: { now: 0.6, pot: 0.6 }, value: '+15.0', sub2: { text: 'at ceiling', tone: 'flat' }, onDrill: 'void' })}
+      ${DS.metricRow({ key: 'moat', label: 'Technical / competitive moat', sub: '15% weight · gap', bar: { now: 0.3, pot: 0.9, tick: true }, value: '1.5', sub2: { text: '→ 4.5', tone: 'up' }, onDrill: 'void' })}
+      ${DS.metricRow({ key: 'team', label: 'Team & founder-market fit', sub: '25% weight · rated 3.0/5', bar: { now: 0.6, pot: 0.6 }, value: '+15.0', sub2: { text: 'at ceiling', tone: 'flat' }, onDrill: 'void' })}
       ${DS.metricRow({ label: 'Investability score', value: '55', valueMuted: ' / 100', foot: true })}
+    </div>
+    <div class="profile" style="margin-top:26px">
+      ${DS.row({ variant: 'spec', title: 'Plan', trail: { kind: 'value', value: 'Full platform licence' } })}
+      ${DS.row({ variant: 'spec', title: 'Custom domain', trail: { kind: 'value', value: '', valueMuted: 'Enterprise only' } })}
     </div></div>`,
     props: [{ name: 'label / sub', type: 'string' }, { name: 'dot', type: "'strong'|'mixed'|'gap'|null" }, { name: 'bar', type: '{now:0..1, pot:0..1, tick}' }, { name: 'value / valueMuted', type: 'string' }, { name: 'sub2', type: '{text, tone:up|flat}' }, { name: 'onDrill / foot', type: 'handler | bool' }],
-    variants: [{ label: 'Strength face', note: 'severity dot + 0–5 bar + tick' }, { label: 'Contribution face', note: 'no dot + share-of-100 bar' }, { label: 'Drill', note: 'chevron + role=button + Enter/Space' }, { label: 'Foot', note: 'total row — no bar / no chevron' }], usedIn: ['Assessment'],
+    variants: [{ label: 'Strength face', note: 'severity dot + 0–5 bar + tick' }, { label: 'Contribution face', note: 'no dot + share-of-100 bar' }, { label: 'Spec face', note: "DS.row({variant:'spec'}) — label + a value that SIZES TO ITSELF. The metric face's value column is a fixed 104px because it holds scores; a slug, a plan name or a date just wraps in it. Nowrap above 640px, wraps below. Used by Settings." }, { label: 'Drill', note: 'chevron + role=button + Enter/Space' }, { label: 'Foot', note: 'total row — no bar / no chevron' }], usedIn: ['Assessment', 'Settings'],
     adaptive: { status: 'built', layout: { mobile: 'Bar hides; label + value + chevron.', tablet: 'Full.', desktop: 'label · bar · value · chevron.' }, content: { mobile: 'Labels wrap; dot pins to line 1.', tablet: 'Full.', desktop: 'Full.' } }
   },
   strengthProfile: {
@@ -483,7 +656,7 @@ export const CATALOG = {
   },
   investabilityComposition: {
     level: 'organism', group: 'Organisms', domain: 'Assessment', title: 'Score composition (editorial)', sig: 'investabilityComposition(score, onDrill)',
-    blurb: 'Option B lock-up: the now-vs-potential radar as a centered hero band, with a full-width per-category contributions table beneath (metricRow rows: weight · rated · a share-of-100 bar · +contribution · upside-available · chevron). Rows drill into the aux panel; the whole tab reads as one vertical rhythm.',
+    blurb: 'The full-width per-category contributions table (metricRow rows: weight · rated · a share-of-100 bar · +contribution · upside-available · chevron). Rows drill into the aux panel. The radar that used to sit on top of this as a centred band now fronts the hero as radarLockup — one chart, one place — so the table gets the whole row it was already sharing.',
     maxw: null, pad: false,
     html: () => `<div class="brief" style="padding:8px 28px 20px">${DS.investabilityComposition(SCORE)}</div>`,
     props: [{ name: 'score.categories', type: '[{key,label,weightPct,frac,pot,num}]' }, { name: 'row', type: 'metricRow molecule' }, { name: 'onDrill', type: 'handler name (optional)' }],
@@ -492,8 +665,8 @@ export const CATALOG = {
   },
   categoryDetail: {
     level: 'molecule', group: 'Molecules', domain: 'Assessment', title: 'Category detail (aux)', sig: 'categoryDetail(score, key)',
-    blurb: 'The standardised 5-section per-category drill-down behind the Investability aux panel: verdict standfirst · figure strip · THE FIVE SIGNALS (the spine — all 5 VSS sub-signals: chip + canonical SUB_Q question + note) · what-would-lift (derived from flagged signals) · contribution & standing. Same shape on every engagement, degrades to a scaffold when unrated. Returns {title, subtitle, body} for openAux().',
-    maxw: 440, pad: true,
+    blurb: 'The standardised per-category drill-down behind the Investability aux panel: verdict standfirst · figure strip · THE FIVE SIGNALS (the spine — all 5 VSS sub-signals: chip + canonical SUB_Q question + note + the lift that signal is worth) · contribution & standing. It used to carry a sixth block, "What would lift it", which re-printed the same questions with the same notes in a different order — for a category with headroom the panel said everything twice and ran 1306px deep. The lift now rides on the signal that earned it and that block\'s closing sentence became this one\'s footnote. Returns {size:\'wide\', title, subtitle, body} for openAux() — it declares its own panel width, because a rubric question needs a reading measure.',
+    maxw: 680, pad: true,
     html: () => DS.categoryDetail(SCORE, 'moat').body,
     props: [{ name: 'score.categories[].subs', type: '[{slug,score∈{0,.5,1,null},note}]' }, { name: 'SUB_Q', type: 'shared/investability-view.js (canonical labels)' }, { name: 'key', type: "category key e.g. 'moat'" }],
     variants: [{ label: 'Has headroom', note: 'section 4 ranks the flagged signals by lift' }, { label: 'At ceiling', note: 'section 4 → “no diligence headroom”' }, { label: 'Forming', note: 'all 5 rows render as a scaffold; no fabricated numbers' }], usedIn: ['Assessment (aux)'],
@@ -501,7 +674,7 @@ export const CATALOG = {
   },
   caseEditorial: {
     level: 'organism', group: 'Organisms', domain: 'Assessment', title: 'Case, both ways (editorial)', sig: 'caseEditorial(a)',
-    blurb: 'Bull and bear as two accent-railed cards. Counts derive from the arrays; a side with no points shows a muted empty row, not a hollow shell.',
+    blurb: 'Bull and bear as two columns on the BACKGROUND — no card, no shadow. A card says “separate object”, and the two sides of an argument are one argument; boxing each half made the Verdict tab read as a dashboard rather than a memo. The structure the card implied now comes from a hairline between the columns, a 2px rule under each heading in the side\'s colour (the bar that used to run down the card edge), and the tick/cross markers. Counts derive from the arrays; a side with no points shows a muted empty row, not a hollow shell. Stacked below 900px the divider turns with the columns.',
     maxw: null, pad: false,
     html: () => `<div class="brief" style="padding:8px 28px 20px">${DS.caseEditorial(A)}</div>`,
     props: [{ name: 'a.bull', type: 'string[]' }, { name: 'a.bear', type: 'string[]' }],
@@ -656,10 +829,10 @@ export const CATALOG = {
   },
   benchmarkTable: {
     level: 'organism', group: 'Organisms', domain: 'Assessment', title: 'Competitive benchmark', sig: 'benchmarkTable(b)',
-    blurb: 'An editorial standfirst lifted onto the background, THEN the dense 5×6 matrix in the ONE card that earns elevation (column cross-read), THEN the structural-edge callout. The tab’s single earned card.',
+    blurb: 'An editorial standfirst, THEN the matrix, THEN the structural-edge callout — all on the background. The matrix used to sit in the “one card that earns its container”; it does not, because the table\'s own header rule and row hairlines already do everything the card did, and a filled panel mid-memo reads as a widget pasted into an argument. De-carded it needs FLUSH EDGES to belong: the end cells drop their padding so the first column aligns with the prose above. The “us” row keeps its highlight as a tint plus an accent edge rather than a solid fill, which on the background had become louder than the verdict.',
     maxw: null, pad: false,
     html: () => `<div class="brief" style="padding:8px 28px 20px">${DS.benchmarkTable(A.benchmark, 'openPeek')}</div>`,
-    props: [{ name: 'b.leadDrop / lead / edge', type: 'string' }, { name: 'b.cols', type: 'string[]' }, { name: 'b.rows', type: '[{cells,me}]' }], variants: [{ label: 'me row', note: 'the assessed venture, highlighted' }], usedIn: ['Market', 'Assessment'],
+    props: [{ name: 'b.leadDrop / lead / edge', type: 'string' }, { name: 'b.cols', type: 'string[]' }, { name: 'b.rows', type: '[{cells,me}]' }], variants: [{ label: 'me row', note: 'the assessed venture — tint + accent left edge, not a solid fill' }, { label: 'Overflow', note: 'the matrix scrolls horizontally inside .tbl-scroll below ~900px; the page never does' }], usedIn: ['Market', 'Assessment'],
     adaptive: { status: 'built', layout: { mobile: 'Standfirst breathes; matrix scrolls in its card.', tablet: 'Full.', desktop: 'Full matrix.' }, content: { mobile: 'Full (scroll).', tablet: 'Full.', desktop: 'Full.' } }
   },
   marketMemo: {
@@ -696,11 +869,11 @@ export const CATALOG = {
     adaptive: { status: 'built', layout: { mobile: 'Full width.', tablet: 'Full.', desktop: 'Full.' }, content: { mobile: 'Full.', tablet: 'Full.', desktop: 'Full.' } }
   },
   teamMemo: {
-    level: 'organism', group: 'Organisms', domain: 'Assessment', title: 'Team memo (editorial)', sig: 'teamMemo(a)',
-    blurb: 'The whole Team tab as one editorial .brief: hero → founder roster → the gap → the exit. Zero cards (no tabular data to protect); the thesis prints once. What assess.html mounts.',
+    level: 'organism', group: 'Organisms', domain: 'Assessment', title: 'Team memo (editorial)', sig: 'teamMemo(a, score)',
+    blurb: 'The whole Team tab as one editorial .brief: hero → founder roster → the gap → the exit. Zero cards (no tabular data to protect); the thesis prints once. What assess.html mounts. Passes the score through to teamHero so the bench can head the tab with the team\'s own category score.',
     maxw: null, pad: false,
-    html: () => DS.teamMemo(A),
-    props: [{ name: 'a', type: 'ASSESSMENT (heroes.team, team, exit)' }],
+    html: () => DS.teamMemo(A, SCORE),
+    props: [{ name: 'a', type: 'ASSESSMENT (heroes.team, team, exit)' }, { name: 'score', type: 'SCORE → forwarded to teamHero' }],
     variants: [{ label: 'Composes', note: 'teamHero · founderRoster · teamGaps · exitLedger' }], usedIn: ['Assessment'],
     adaptive: { status: 'built', layout: { mobile: 'Single column.', tablet: 'Full.', desktop: 'Full.' }, content: { mobile: 'Full.', tablet: 'Full.', desktop: 'Full.' } }
   },

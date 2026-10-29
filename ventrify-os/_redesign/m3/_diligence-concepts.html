@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en" data-brand="verdictscore">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diligence — replacing the clearance chart</title>
+<meta name="description" content="Exploration: six replacements for the Diligence tab's pre-wire clearance chart, each tested against what the live runner actually emits.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter+Tight:wght@500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/brand/brand.css">
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="ds.css">
+<link rel="stylesheet" href="assess-editorial.css">
+<link rel="stylesheet" href="../../shared/m3/brand-map.css">
+<script src="_preview-brand-switch.js" defer></script>
+<style>
+  body { margin:0; background:var(--surface-ground); color:var(--text-1);
+         font:400 15px/1.6 var(--font-text); -webkit-font-smoothing:antialiased; }
+  .pg { max-width:1180px; margin:0 auto; padding:64px 40px 160px; }
+  h1 { font:600 clamp(2rem,4vw,2.9rem)/1.05 var(--font-display); letter-spacing:-.02em; margin:0 0 .5rem; }
+  .sub { color:var(--text-2); max-width:74ch; margin:0 0 .4rem; }
+  .fine { color:var(--text-4); font-size:13px; max-width:86ch; }
+  .flag { margin:18px 0 0; padding:16px 18px; border-radius:var(--r-lg); max-width:86ch;
+          background:color-mix(in srgb, #e0a33a 9%, transparent);
+          border:1px solid color-mix(in srgb, #e0a33a 28%, transparent); font-size:13.5px; line-height:1.6; }
+  .flag b { color:var(--text-1); }
+  .cx { margin:58px 0 0; padding-top:32px; border-top:1px solid var(--line-1); }
+  .cx-h { display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; }
+  .cx-n { font:500 12px/1 var(--font-mono); color:var(--brand-accent-2); letter-spacing:.1em; }
+  .cx-t { font:600 1.35rem/1.2 var(--font-display); letter-spacing:-.01em; }
+  .cx-d { color:var(--text-2); max-width:84ch; margin:.3rem 0 0; font-size:14px; }
+  .cx-need { margin:.6rem 0 0; font:500 11px/1.5 var(--font-mono); letter-spacing:.05em; }
+  .cx-need.ok   { color:var(--brand-accent-2); }
+  .cx-need.warn { color:#e0a33a; }
+  /* 1020 = the real 948px brief + the stage's own 2×36 padding, so every chart is drawn
+     at the width it would actually ship at (408px right column, 364 of content). */
+  .stage { margin-top:24px; width:1020px; max-width:100%; box-sizing:border-box;
+           padding:34px 36px; background:var(--surface-base);
+           border:1px solid var(--line-1); border-radius:var(--r-lg); }
+  .deg { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:22px; margin-top:20px; }
+  .deg > div { padding:20px 22px; background:var(--surface-base); border:1px solid var(--line-1); border-radius:var(--r-lg); }
+  .deg-t { font:500 10.5px/1 var(--font-mono); letter-spacing:.09em; color:var(--text-4); margin-bottom:14px; }
+
+  .dil-lockup { display:flex; flex-direction:column; }
+  .dil-lockup .lockup-num { margin-top:12px; font-size:clamp(54px,5.6vw,78px);
+    letter-spacing:-3px; line-height:.84; }
+  .dil-lockup .lockup-num small { font-size:clamp(15px,1.6vw,21px); margin-top:5px; }
+
+  /* ─── shared chart chrome ───────────────────────────────────────────────── */
+  .dz-chart { margin-top:20px; }
+  .dz-note { margin-top:16px; font-size:12.5px; line-height:1.55; color:var(--md-sys-color-on-surface-variant); }
+  .dz-note b { color:var(--md-sys-color-on-surface); font-weight:600; }
+  .dz-note .bad { color:var(--md-sys-color-error); font-weight:600; }
+  .dz-note .ok  { color:var(--success); font-weight:600; }
+  .dz-none { margin-top:16px; font-size:12.5px; color:var(--md-sys-color-outline); font-style:italic; }
+  .dz-cap { display:flex; justify-content:space-between; align-items:center; gap:10px 14px; flex-wrap:wrap;
+            margin-top:15px; font-size:13px; color:var(--md-sys-color-on-surface-variant); }
+  .dz-cap b { color:var(--md-sys-color-on-surface); font-weight:600; }
+  .dz-cap .r { color:var(--md-sys-color-outline); font-size:12px; }
+
+  /* 01 — the gate. The blockers ARE the gate; everything else is work behind it. */
+  .d1-gate { display:flex; gap:6px; }
+  .d1-gate i { flex:1; height:38px; border-radius:9px; display:block;
+               background:color-mix(in srgb, var(--md-sys-color-error) 17%, transparent);
+               box-shadow:inset 0 0 0 1.5px color-mix(in srgb, var(--md-sys-color-error) 55%, transparent); }
+  .d1-gate i.done { background:var(--success-container); box-shadow:none; }
+  .d1-lock { display:flex; align-items:center; gap:8px; margin-top:11px;
+             font:500 11px/1 var(--font-mono); letter-spacing:.09em; text-transform:uppercase; }
+  .d1-lock .material-symbols-rounded { font-size:17px; }
+  .d1-lock.shut { color:var(--md-sys-color-error); }
+  .d1-lock.open { color:var(--success); }
+  .d1-rest { margin-top:20px; }
+  .d1-rest .rh { display:flex; justify-content:space-between; align-items:baseline; gap:10px; margin-bottom:8px; }
+  .d1-rest em { font-style:normal; font-size:11.5px; color:var(--md-sys-color-outline); }
+  .d1-strip { display:flex; gap:4px; }
+  .d1-strip i { flex:1; height:12px; border-radius:4px; background:var(--md-sys-color-surface-container-highest); }
+  .d1-strip i.warn { background:color-mix(in srgb, var(--warning) 42%, transparent); }
+
+  /* 02 — the blockers, named. */
+  .d2 { display:grid; gap:7px; }
+  .d2-row { display:grid; grid-template-columns:22px minmax(0,1fr); gap:11px; align-items:start;
+            padding:11px 13px; border-radius:10px;
+            background:color-mix(in srgb, var(--md-sys-color-error) 11%, transparent); }
+  .d2-row .material-symbols-rounded { font-size:18px; color:var(--md-sys-color-error); margin-top:1px; }
+  .d2-row span.t { font-size:13.5px; font-weight:500; line-height:1.35; }
+  .d2-more { margin-top:12px; font-size:12.5px; color:var(--md-sys-color-outline); }
+  .d2-more b { color:var(--md-sys-color-on-surface-variant); font-weight:600; }
+
+  /* 03 — tier ladder. One row per severity; cells, not a smooth bar. */
+  .d3 { display:grid; gap:14px; }
+  .d3-row { display:grid; gap:7px; }
+  .d3-h { display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
+  .d3-h em { font-style:normal; font-size:11.5px; color:var(--md-sys-color-outline); }
+  .d3-cells { display:flex; gap:5px; }
+  .d3-cells i { flex:1; height:16px; border-radius:5px; background:var(--md-sys-color-surface-container-highest); }
+  .d3-cells i.err  { background:color-mix(in srgb, var(--md-sys-color-error) 48%, transparent); }
+  .d3-cells i.warn { background:color-mix(in srgb, var(--warning) 45%, transparent); }
+  .d3-cells i.info { background:var(--md-sys-color-surface-container-highest); box-shadow:inset 0 0 0 1px var(--md-sys-color-outline-variant); }
+  .d3-cells i.done { background:var(--success-container); box-shadow:none; }
+
+  /* 04 — clearance grid. One cell per check; the unit is the check. */
+  .d4 { display:flex; flex-wrap:wrap; gap:7px; }
+  .d4 i { width:40px; height:40px; border-radius:10px; display:grid; place-items:center; }
+  .d4 i.err  { background:color-mix(in srgb, var(--md-sys-color-error) 15%, transparent);
+               box-shadow:inset 0 0 0 1.5px color-mix(in srgb, var(--md-sys-color-error) 55%, transparent); }
+  .d4 i.warn { background:color-mix(in srgb, var(--warning) 14%, transparent);
+               box-shadow:inset 0 0 0 1.5px color-mix(in srgb, var(--warning) 48%, transparent); }
+  .d4 i.info { box-shadow:inset 0 0 0 1.5px var(--md-sys-color-outline-variant); }
+  .d4 i .material-symbols-rounded { font-size:18px; color:var(--md-sys-color-outline); }
+  .d4 i.err .material-symbols-rounded  { color:var(--md-sys-color-error); }
+  .d4 i.warn .material-symbols-rounded { color:var(--warning); }
+  .d4-leg { display:flex; flex-wrap:wrap; gap:6px 14px; margin-top:14px;
+            font:500 10.5px/1 var(--font-mono); letter-spacing:.07em; color:var(--md-sys-color-on-surface-variant); }
+  .d4-leg span { display:inline-flex; align-items:center; gap:6px; }
+  .d4-leg s { width:9px; height:9px; border-radius:3px; display:block; text-decoration:none; }
+
+  /* 05 — tiered arcs. Three rings, one per severity. */
+  .d5 { position:relative; }
+  .d5 svg { width:100%; height:auto; display:block; max-width:260px; margin:0 auto; }
+  .d5-mid { position:absolute; inset:0; display:grid; place-items:center; text-align:center; pointer-events:none; }
+  .d5-mid b { display:block; font:500 30px/1 var(--font-display); letter-spacing:-1px; color:var(--md-sys-color-on-surface); }
+  .d5-mid u { display:block; text-decoration:none; margin-top:5px;
+              font:500 9.5px/1.3 var(--font-mono); letter-spacing:.1em; color:var(--md-sys-color-outline); }
+  .d5-leg { display:flex; justify-content:center; flex-wrap:wrap; gap:6px 16px; margin-top:14px;
+            font:500 10.5px/1 var(--font-mono); letter-spacing:.07em; color:var(--md-sys-color-on-surface-variant); }
+  .d5-leg span { display:inline-flex; align-items:center; gap:6px; }
+  .d5-leg s { width:9px; height:9px; border-radius:999px; display:block; text-decoration:none; }
+
+  /* 06 — the wire rail. Vertical, with the line money cannot cross. */
+  .d6 { position:relative; padding-left:16px; }
+  .d6-rail { position:absolute; left:4px; top:4px; bottom:4px; width:2px; border-radius:2px;
+             background:var(--md-sys-color-surface-container-highest); }
+  .d6-rail i { position:absolute; left:0; right:0; top:0; border-radius:2px; background:var(--md-sys-color-error); }
+  .d6-item { position:relative; padding:0 0 11px 14px; font-size:12.5px; line-height:1.35; }
+  .d6-item::before { content:''; position:absolute; left:-5px; top:4px; width:10px; height:10px; border-radius:999px;
+                     background:var(--surface-base); box-shadow:inset 0 0 0 2px var(--md-sys-color-outline-variant); }
+  .d6-item.err::before  { box-shadow:inset 0 0 0 2px var(--md-sys-color-error); }
+  .d6-item.warn::before { box-shadow:inset 0 0 0 2px var(--warning); }
+  .d6-item.err  { color:var(--md-sys-color-on-surface); font-weight:500; }
+  .d6-item.warn, .d6-item.info { color:var(--md-sys-color-on-surface-variant); }
+  .d6-wire { position:relative; margin:4px 0 14px -16px; display:flex; align-items:center; gap:9px; }
+  .d6-wire s { flex:1; height:0; border-top:1px dashed color-mix(in srgb, var(--success) 60%, transparent); }
+  .d6-wire span { font:600 9.5px/1 var(--font-mono); letter-spacing:.1em; color:var(--success); white-space:nowrap; }
+  /* a cleared check is struck through and demoted — otherwise the "gate open" state
+     still draws three red blockers and the two states look identical */
+  .d6-item.done { color:var(--md-sys-color-outline); text-decoration:line-through; font-weight:400; }
+  .d6-item.done::before { background:var(--success-container); box-shadow:inset 0 0 0 2px var(--success); }
+</style>
+</head>
+<body>
+<div class="pg">
+  <h1>Replacing the clearance chart</h1>
+  <p class="sub">Today's Diligence hero is <code>progressLockup</code> in its native home: a big <b>0</b>, a <em>Do not wire</em> chip, nine 7px pips and a caption. It is the most honest of the four heroes and still has two problems — it says <b>0 of 9 cleared</b> three times over, and it implies all nine must clear before money moves, which the code itself does not believe.</p>
+  <p class="fine"><b>Read the data line under each concept first.</b> The runner emits each check as one free-text <code>item</code> plus a free-text <code>priority</code>; the adapter splits the item into a title and a note and maps the priority onto three severities. Counts are never 3/3/3 by rule — a clean assessment can be 0/2/4.</p>
+  <div class="flag">
+    <b>⚠ The one thing worth deciding before the chart.</b> <code>done</code> is hardcoded <code>false</code> in the adapter, the checkboxes in the list below the hero are bare <code>&lt;div&gt;</code>s with no handler, and nothing anywhere in the OS ever writes a cleared state for an assessment check. <b>So “0 of 9 cleared” reads zero on every assessment, forever</b> — today's chart is a progress bar that cannot progress. Each concept below is therefore drawn <b>twice</b>: as it looks today (nothing cleared, the only state that ships) and as it would look if clearing were wired up. Concepts 01, 02 and 06 stay useful in both; 03, 04 and 05 are mostly waiting for a feature that does not exist yet.
+  </div>
+  <div id="out"></div>
+</div>
+
+<script type="module">
+import * as DS from './ds.js';
+import { ASSESSMENT as A } from './data.js';
+
+const ITEMS = A.diligence || [];
+const KIND = ['err', 'warn', 'info'];
+const LABEL = { err: 'Blockers', warn: 'Key', info: 'Standard' };
+const NOTE  = { err: 'resolve before any wire', warn: 'resolve in diligence', info: 'confirm on the call' };
+
+const of = (d, k) => d.items.filter(x => x.kind === k);
+const doneOf = (d, k) => of(d, k).filter(x => x.done).length;
+
+/* The shared read, derived — every concept closes with it so no chart has to
+   carry the whole argument by itself. */
+function note(d) {
+  const n = d.items.length;
+  if (!n) return `<p class="dz-note"><span class="ok">No open diligence.</span> Nothing stands between this and a wire.</p>`;
+  const b = of(d, 'err'), bDone = b.filter(x => x.done).length;
+  const rest = n - b.length;
+  if (!b.length) return `<p class="dz-note">No blockers — the gate is <span class="ok">open</span>. <b>${n}</b> check${n === 1 ? '' : 's'} to work through in diligence.</p>`;
+  return bDone === b.length
+    ? `<p class="dz-note">All <b>${b.length}</b> blockers cleared — the gate is <span class="ok">open</span>${rest ? `, with <b>${rest}</b> non-gating check${rest === 1 ? '' : 's'} still to work` : ''}.</p>`
+    : `<p class="dz-note"><span class="bad">${b.length - bDone} of ${b.length} blockers</span> still stand between this and a wire${rest ? `. <b>${rest}</b> further check${rest === 1 ? '' : 's'} do not gate it` : ''}.</p>`;
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   THE SIX CONCEPTS. Each takes { items } and reads nothing else.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* 01 · THE GATE — the blockers ARE the gate; the rest is work behind it. */
+function c01(d) {
+  const b = of(d, 'err'), rest = d.items.filter(x => x.kind !== 'err');
+  const shut = b.some(x => !x.done);
+  if (!b.length) return `<div><div class="dz-chart d1-lock open">
+    <span class="material-symbols-rounded">lock_open</span>No blockers — gate open</div>${note(d)}</div>`;
+  return `<div><div class="dz-chart">
+    <div class="d1-gate">${b.map(x => `<i class="${x.done ? 'done' : ''}"></i>`).join('')}</div>
+    <div class="d1-lock ${shut ? 'shut' : 'open'}">
+      <span class="material-symbols-rounded">${shut ? 'lock' : 'lock_open'}</span>
+      ${shut ? 'Gate locked — do not wire' : 'Gate open — cleared to wire'}</div>
+    ${rest.length ? `<div class="d1-rest">
+      <div class="rh"><span class="eyebrow">Behind the gate</span><em>${rest.length} non-gating</em></div>
+      <div class="d1-strip">${rest.map(x => `<i class="${x.kind === 'warn' ? 'warn' : ''}"></i>`).join('')}</div>
+    </div>` : ''}
+  </div>${note(d)}</div>`;
+}
+
+/* 02 · THE BLOCKERS, NAMED — the hero states what they are, not how many. */
+function c02(d) {
+  const b = of(d, 'err').filter(x => !x.done), rest = d.items.length - of(d, 'err').length;
+  if (!b.length) return `<div><div class="dz-chart d1-lock open">
+    <span class="material-symbols-rounded">lock_open</span>Nothing blocks a wire</div>${note(d)}</div>`;
+  return `<div><div class="dz-chart d2">
+    ${b.slice(0, 4).map(x => `<div class="d2-row">
+      <span class="material-symbols-rounded">lock</span><span class="t">${x.title}</span></div>`).join('')}
+  </div>
+  ${(b.length > 4 || rest) ? `<div class="d2-more">${[
+      b.length > 4 ? `<b>+${b.length - 4}</b> more blocking` : '',
+      rest ? `<b>${rest}</b> further check${rest === 1 ? '' : 's'} that do not gate the wire` : ''
+    ].filter(Boolean).join(' · ')}</div>` : ''}
+  ${note(d)}</div>`;
+}
+
+/* 03 · TIER LADDER — one row per severity, discrete cells not a smooth bar. */
+function c03(d) {
+  const rows = KIND.map(k => [k, of(d, k)]).filter(([, g]) => g.length);
+  if (!rows.length) return `<div><p class="dz-none">No open diligence on this assessment.</p></div>`;
+  return `<div><div class="dz-chart d3">
+    ${rows.map(([k, g]) => `<div class="d3-row">
+      <div class="d3-h"><span class="eyebrow ${k === 'err' ? 'bad' : k === 'warn' ? 'warn' : ''}">${LABEL[k]}</span>
+        <em>${g.filter(x => x.done).length} of ${g.length} cleared · ${NOTE[k]}</em></div>
+      <div class="d3-cells">${g.map(x => `<i class="${x.done ? 'done' : k}"></i>`).join('')}</div>
+    </div>`).join('')}
+  </div>${note(d)}</div>`;
+}
+
+/* 04 · CLEARANCE GRID — one cell per check, the unit is the check itself. */
+function c04(d) {
+  if (!d.items.length) return `<div><p class="dz-none">No open diligence on this assessment.</p></div>`;
+  const order = { err: 0, warn: 1, info: 2 };
+  const sorted = [...d.items].sort((a, b) => order[a.kind] - order[b.kind]);
+  const n = k => of(d, k).length;
+  return `<div><div class="dz-chart d4">
+    ${sorted.map(x => `<i class="${x.kind}"><span class="material-symbols-rounded">${
+      x.done ? 'check' : x.kind === 'err' ? 'lock' : x.kind === 'warn' ? 'priority_high' : 'remove'}</span></i>`).join('')}
+  </div>
+  <div class="d4-leg">
+    ${n('err')  ? `<span><s style="background:color-mix(in srgb,var(--md-sys-color-error) 55%,transparent)"></s>BLOCKER ${n('err')}</span>` : ''}
+    ${n('warn') ? `<span><s style="background:color-mix(in srgb,var(--warning) 50%,transparent)"></s>KEY ${n('warn')}</span>` : ''}
+    ${n('info') ? `<span><s style="box-shadow:inset 0 0 0 1.5px var(--md-sys-color-outline-variant)"></s>STANDARD ${n('info')}</span>` : ''}
+  </div>${note(d)}</div>`;
+}
+
+/* 05 · TIERED ARCS — three rings, one per severity, in the score dial's family. */
+function c05(d) {
+  const rows = KIND.map(k => [k, of(d, k)]).filter(([, g]) => g.length);
+  if (!rows.length) return `<div><p class="dz-none">No open diligence on this assessment.</p></div>`;
+  const COL = { err: 'var(--md-sys-color-error)', warn: 'var(--warning)', info: 'var(--md-sys-color-outline)' };
+  const SWEEP = 0.75;
+  const ring = (i, k, g) => {
+    const R = 86 - i * 22, C = 2 * Math.PI * R;
+    const frac = g.length ? g.filter(x => x.done).length / g.length : 0;
+    return `<circle cx="100" cy="100" r="${R}" stroke="var(--md-sys-color-surface-container-highest)" stroke-width="13"
+              stroke-dasharray="${(SWEEP * C).toFixed(1)} ${C.toFixed(1)}"/>
+            ${frac > 0 ? `<circle cx="100" cy="100" r="${R}" stroke="var(--success-container)" stroke-width="13"
+              stroke-dasharray="${(frac * SWEEP * C).toFixed(1)} ${C.toFixed(1)}"/>` : ''}
+            <circle cx="100" cy="100" r="${R}" stroke="${COL[k]}" stroke-width="13" opacity=".3"
+              stroke-dasharray="${((1 - frac) * SWEEP * C).toFixed(1)} ${C.toFixed(1)}"
+              stroke-dashoffset="${(-frac * SWEEP * C).toFixed(1)}"/>`;
+  };
+  // the centre carries the WHOLE workload, not the blocker count again — the lockup prints
+  // that two inches above, and a dial repeating it is one number rendered twice.
+  const done = d.items.filter(x => x.done).length;
+  return `<div><div class="dz-chart d5">
+    <svg viewBox="0 0 200 200" aria-hidden="true"><g transform="rotate(135 100 100)" fill="none" stroke-linecap="butt">
+      ${rows.map(([k, g], i) => ring(i, k, g)).join('')}
+    </g></svg>
+    <div class="d5-mid"><div><b>${done}<span style="opacity:.45">/${d.items.length}</span></b><u>CHECKS DONE</u></div></div>
+  </div>
+  <div class="d5-leg">${rows.map(([k, g]) =>
+    `<span><s style="background:${COL[k]};opacity:.55"></s>${LABEL[k].toUpperCase()} ${g.filter(x => x.done).length}/${g.length}</span>`).join('')}
+  </div>${note(d)}</div>`;
+}
+
+/* 06 · THE WIRE RAIL — vertical, with the line money cannot cross drawn on it. */
+function c06(d) {
+  const b = of(d, 'err'), rest = d.items.filter(x => x.kind !== 'err');
+  if (!d.items.length) return `<div><p class="dz-none">No open diligence on this assessment.</p></div>`;
+  const row = x => `<div class="d6-item ${x.kind}${x.done ? ' done' : ''}">${x.title}</div>`;
+  return `<div><div class="dz-chart d6">
+    <div class="d6-rail">${b.length ? `<i style="height:${(b.length / d.items.length * 100).toFixed(0)}%"></i>` : ''}</div>
+    ${b.map(row).join('')}
+    <div class="d6-wire"><s></s><span>${b.every(x => x.done) ? 'WIRE OPEN' : 'WIRE OPENS BELOW HERE'}</span><s></s></div>
+    ${rest.slice(0, 4).map(row).join('')}
+    ${rest.length > 4 ? `<div class="d6-item info" style="opacity:.7">+${rest.length - 4} more</div>` : ''}
+  </div>${note(d)}</div>`;
+}
+
+/* ── the molecule wrapper, matching the lockup family ────────────────────── */
+function wrap(d, chart) {
+  const b = of(d, 'err'), open = b.filter(x => !x.done).length;
+  const gateOpen = !b.length || open === 0;
+  const num = b.length
+    ? `<div class="lockup-num">${open}<small>/${b.length} blocking</small></div>`
+    : `<div class="lockup-num">${d.items.length}<small>to work</small></div>`;
+  return `<div class="dil-lockup">
+    <span class="eyebrow accent">Pre-wire clearance</span>${num}
+    <span class="lockup-band ${gateOpen ? 'good' : 'bad'}">
+      <span class="material-symbols-rounded">${gateOpen ? 'lock_open' : 'lock'}</span>
+      ${gateOpen ? 'Cleared to wire' : 'Do not wire'}</span>
+    ${chart}</div>`;
+}
+
+/* the states that matter: today (nothing can be cleared), and the three the
+   product would produce if clearing were wired */
+const TODAY   = { items: ITEMS };
+const PARTIAL = { items: ITEMS.map((x, i) => i % 2 === 0 ? { ...x, done: true } : x) };
+const CLEARED = { items: ITEMS.map(x => x.kind === 'err' ? { ...x, done: true } : x) };
+const NOBLOCK = { items: ITEMS.filter(x => x.kind !== 'err') };
+const CLEAN   = { items: [] };
+
+const hero = chart => DS.sectionHero({
+  left: DS.statementLockup({
+    eyebrow: 'Pre-wire diligence', eyebrowIcon: 'fact_check', tone: 'mid',
+    headline: 'Three blockers stand between this and a wire.', headlineEm: 'Three blockers',
+    facts: [{ k: 'Gate', v: 'Locked' }, { k: 'To clear', v: '9 checks' }],
+  }),
+  right: chart, thesis: '',
+});
+
+const C = [
+  { n:'01', f:c01, t:'The gate',
+    need:['ok','ships today · needs only the severity split, which every run has'],
+    d:'The blockers <em>are</em> the gate: three cells across the top, a lock beneath them, and the six non-gating checks demoted to a thin strip labelled “behind the gate”. It is the only concept that fixes the real error in today\'s chart — <b>the wire does not need all nine</b>, and <code>gateOpen</code> in ds.js already knows that while the hero contradicts it.' },
+  { n:'02', f:c02, t:'The blockers, named',
+    need:['ok','ships today · titles are already short and bounded'],
+    d:'Stop counting and start saying. The hero names the three things blocking the wire, so you know what they are without scrolling, and the rest collapses to one line. The Diligence equivalent of the bench naming people instead of tallying them. <b>Unaffected by the <code>done</code> gap</b> — it is a statement, not a progress reading.' },
+  { n:'03', f:c03, t:'Tier ladder',
+    need:['warn','ships today, but reads as three empty rows until clearing is wired'],
+    d:'One row per severity, discrete cells rather than a smooth bar, because a half-cleared check does not exist. Honest about the shape of the workload — but it is fundamentally a progress chart, and today there is no progress to draw.' },
+  { n:'04', f:c04, t:'Clearance grid',
+    need:['warn','ships today, but every cell is “open” on every assessment'],
+    d:'A unit chart where the unit is the check: one glyph each, severity-coloured, a tick when cleared. Compact and literal, and it scales from three checks to twenty without reflowing. Same caveat as 03 — the ticks never arrive today.' },
+  { n:'05', f:c05, t:'Tiered arcs',
+    need:['warn','ships today · strongest family resemblance, weakest at precision'],
+    d:'Three concentric arcs, one per severity, in the Verdict dial\'s family. Handsome and immediately “ours”. You can see that something is unfinished but not what, so the sentence underneath does the real work — and with nothing ever cleared, all three rings read full.' },
+  { n:'06', f:c06, t:'The wire rail',
+    need:['warn','ships today · but a vertical rail is already the Market tab\'s signature'],
+    d:'Vertical, with a dashed line across it marking where money becomes possible: blockers above the line, everything else below. The most explicit about the rule. <b>The honest objection is duplication</b> — the reprice ladder already owns the vertical-rail-with-a-threshold idea one tab over, and two tabs with the same gesture is the drift the DS audit exists to catch.' },
+];
+
+document.getElementById('out').innerHTML = `
+  <section class="cx" style="border-top:none;padding-top:8px">
+    <div class="cx-h"><span class="cx-n">00</span><span class="cx-t">Today, for comparison</span></div>
+    <p class="cx-d">What ships right now: <code>progressLockup</code> with all nine checks as segments.</p>
+    <div class="stage">${DS.diligenceEditorial(A).split('<hr class="rule">')[0].replace('<div class="brief">', '<div>')}</div>
+  </section>` + C.map(c => `
+  <section class="cx">
+    <div class="cx-h"><span class="cx-n">${c.n}</span><span class="cx-t">${c.t}</span></div>
+    <p class="cx-d">${c.d}</p>
+    <p class="cx-need ${c.need[0]}">${c.need[0] === 'ok' ? '●' : '▲'} ${c.need[1]}</p>
+    <div class="stage">${hero(wrap(TODAY, c.f(TODAY)))}</div>
+    <div class="deg">
+      <div><div class="deg-t">IF CLEARING WERE WIRED · part-done</div>${wrap(PARTIAL, c.f(PARTIAL))}</div>
+      <div><div class="deg-t">BLOCKERS CLEARED · gate open</div>${wrap(CLEARED, c.f(CLEARED))}</div>
+      <div><div class="deg-t">NO BLOCKERS AT ALL</div>${wrap(NOBLOCK, c.f(NOBLOCK))}</div>
+    </div>
+  </section>`).join('');
+</script>
+</body>
+</html>

@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en" data-brand="verdictscore">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Team — replacing the signal spread</title>
+<meta name="description" content="Exploration: six replacements for the Team tab's hero chart, each tested against what the live runner actually emits for a team.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter+Tight:wght@500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/brand/brand.css">
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="ds.css">
+<link rel="stylesheet" href="assess-editorial.css">
+<link rel="stylesheet" href="../../shared/m3/brand-map.css">
+<script src="_preview-brand-switch.js" defer></script>
+<style>
+  body { margin:0; background:var(--surface-ground); color:var(--text-1);
+         font:400 15px/1.6 var(--font-text); -webkit-font-smoothing:antialiased; }
+  .pg { max-width:1180px; margin:0 auto; padding:64px 40px 160px; }
+  h1 { font:600 clamp(2rem,4vw,2.9rem)/1.05 var(--font-display); letter-spacing:-.02em; margin:0 0 .5rem; }
+  .sub { color:var(--text-2); max-width:74ch; margin:0 0 .4rem; }
+  .fine { color:var(--text-4); font-size:13px; max-width:86ch; }
+  .cx { margin:58px 0 0; padding-top:32px; border-top:1px solid var(--line-1); }
+  .cx-h { display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; }
+  .cx-n { font:500 12px/1 var(--font-mono); color:var(--brand-accent-2); letter-spacing:.1em; }
+  .cx-t { font:600 1.35rem/1.2 var(--font-display); letter-spacing:-.01em; }
+  .cx-d { color:var(--text-2); max-width:84ch; margin:.3rem 0 0; font-size:14px; }
+  .cx-need { margin:.6rem 0 0; font:500 11px/1.5 var(--font-mono); letter-spacing:.05em; }
+  .cx-need.ok   { color:var(--brand-accent-2); }
+  .cx-need.warn { color:#e0a33a; }
+  /* 1020px = the real 948px brief + the stage's own 2×36 padding, so every chart below
+     is drawn at the width it will actually ship at (408px right column, 364 of content). */
+  .stage { margin-top:24px; width:1020px; max-width:100%; box-sizing:border-box;
+           padding:34px 36px; background:var(--surface-base);
+           border:1px solid var(--line-1); border-radius:var(--r-lg); }
+  .deg { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:22px; margin-top:20px; }
+  .deg > div { padding:20px 22px; background:var(--surface-base); border:1px solid var(--line-1); border-radius:var(--r-lg); }
+  .deg-t { font:500 10.5px/1 var(--font-mono); letter-spacing:.09em; color:var(--text-4); margin-bottom:14px; }
+
+  /* The family numeral is clamp(96px…150px) — sized down to the radarLockup ramp, the
+     same call already taken twice, because here the numeral introduces a chart rather
+     than being the whole molecule. */
+  .team-lockup .lockup-num { margin-top:12px; font-size:clamp(46px,5.6vw,78px);
+    letter-spacing:-3px; line-height:.84; }
+  .team-lockup .lockup-num small { font-size:clamp(14px,1.6vw,21px); margin-top:5px; }
+  .team-lockup { display:flex; flex-direction:column; }
+
+  /* ─── shared chart chrome ───────────────────────────────────────────────── */
+  .tz { --ok:var(--success); --no:var(--md-sys-color-error); --mid:var(--md-sys-color-outline); }
+  .tz-chart { margin-top:20px; }
+  .tz-note { margin-top:16px; font-size:12.5px; line-height:1.55; color:var(--md-sys-color-on-surface-variant); }
+  .tz-note b { color:var(--md-sys-color-on-surface); font-weight:600; }
+  .tz-note .bad { color:var(--md-sys-color-error); font-weight:600; }
+  .tz-note .warn { color:var(--warning); font-weight:600; }
+  .tz-none { margin-top:16px; font-size:12.5px; color:var(--md-sys-color-outline); font-style:italic; }
+  .tz-cap { display:flex; justify-content:space-between; align-items:center; gap:10px 14px; flex-wrap:wrap;
+            margin-top:16px; font-size:13px; color:var(--md-sys-color-on-surface-variant); }
+  .tz-cap b { color:var(--md-sys-color-on-surface); font-weight:600; }
+
+  /* 01 — signal comb. Two pips per row because the rubric only ever scores 0 / .5 / 1:
+     the chart's resolution is the data's resolution, so it cannot imply precision. */
+  .t1 { display:grid; gap:11px; }
+  .t1-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:14px; align-items:center; }
+  .t1-k { font-size:13px; color:var(--md-sys-color-on-surface); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .t1-row.zero .t1-k { color:var(--md-sys-color-on-surface-variant); }
+  .t1-pips { display:flex; gap:4px; }
+  .t1-pips i { display:block; width:28px; height:11px; border-radius:3px;
+               background:var(--md-sys-color-surface-container-highest); }
+  .t1-pips i.on { background:var(--md-sys-color-primary); }
+  .t1-row.zero .t1-pips i { box-shadow:inset 0 0 0 1px var(--md-sys-color-outline-variant); background:transparent; }
+
+  /* 02 — the cast. One mark per actual human, plus a ghost per named gap. */
+  .t2 { display:flex; flex-wrap:wrap; gap:9px; }
+  .t2 b { position:relative; width:46px; height:46px; border-radius:12px; display:grid; place-items:center;
+          font:600 13px/1 var(--font-mono); letter-spacing:.02em; }
+  .t2 b.pos  { background:var(--success-container); color:var(--on-success-container); }
+  .t2 b.neu  { background:var(--md-sys-color-surface-container-high); color:var(--md-sys-color-on-surface-variant); }
+  .t2 b.flag { background:var(--md-sys-color-error-container); color:var(--md-sys-color-on-error-container); }
+  .t2 b.gap  { color:var(--md-sys-color-outline); box-shadow:inset 0 0 0 1.5px var(--md-sys-color-outline-variant);
+               background:transparent; }
+  .t2 b.gap .material-symbols-rounded { font-size:20px; }
+  .t2-rule { width:100%; height:0; margin:5px 0 1px; border-top:1px dashed var(--md-sys-color-outline-variant); }
+  .t2-leg { display:flex; flex-wrap:wrap; gap:6px 14px; margin-top:15px;
+            font:500 10.5px/1 var(--font-mono); letter-spacing:.07em; color:var(--md-sys-color-on-surface-variant); }
+  .t2-leg span { display:inline-flex; align-items:center; gap:6px; }
+  .t2-leg s { width:9px; height:9px; border-radius:3px; display:block; }
+
+  /* 03 — the bench. The same marks, split by WHO RUNS THE COMPANY. */
+  .t3 { display:grid; gap:16px; }
+  .t3-tier { display:grid; grid-template-columns:minmax(0,1fr); gap:9px; }
+  .t3-h { display:flex; align-items:baseline; justify-content:space-between; gap:10px;
+          font:500 10.5px/1 var(--font-mono); letter-spacing:.09em; color:var(--md-sys-color-on-surface-variant); }
+  .t3-h em { font-style:normal; color:var(--md-sys-color-outline); letter-spacing:0;
+             font:400 11.5px/1 var(--font-text); }
+  .t3-h em.bad { color:var(--md-sys-color-error); font-weight:600; }
+  .t3-row { display:flex; flex-wrap:wrap; gap:7px; }
+  .t3-row b { display:inline-flex; align-items:center; gap:7px; height:32px; padding:0 11px 0 7px;
+              border-radius:9px; font:500 12px/1 var(--font-text); }
+  .t3-row b s { width:20px; height:20px; border-radius:6px; display:grid; place-items:center;
+                font:600 9px/1 var(--font-mono); text-decoration:none; }
+  .t3-row b.pos  { background:color-mix(in srgb, var(--success) 15%, transparent); color:var(--md-sys-color-on-surface); }
+  .t3-row b.pos s { background:var(--success-container); color:var(--on-success-container); }
+  .t3-row b.neu  { background:var(--md-sys-color-surface-container-high); color:var(--md-sys-color-on-surface-variant); }
+  .t3-row b.neu s { background:var(--md-sys-color-surface-container-highest); color:var(--md-sys-color-on-surface-variant); }
+  .t3-row b.flag { background:color-mix(in srgb, var(--md-sys-color-error) 15%, transparent); color:var(--md-sys-color-on-surface); }
+  .t3-row b.flag s { background:var(--md-sys-color-error-container); color:var(--md-sys-color-on-error-container); }
+
+  /* 04 — seats. One bar: the team it will be, shaded by how much of it exists. */
+  .t4-track { display:flex; height:40px; border-radius:10px; overflow:hidden; gap:2px;
+              background:var(--md-sys-color-surface-container-highest); }
+  .t4-track i { display:block; min-width:2px; }
+  .t4-track i.pos  { background:var(--success); }
+  .t4-track i.neu  { background:var(--md-sys-color-outline); }
+  .t4-track i.flag { background:var(--md-sys-color-error); }
+  .t4-track i.gap  { background:repeating-linear-gradient(135deg,
+                       var(--md-sys-color-surface-container-highest) 0 5px,
+                       var(--md-sys-color-surface-container) 5px 10px); }
+  .t4-ax { position:relative; height:18px; margin-top:7px; }
+  .t4-ax span { position:absolute; top:0; white-space:nowrap;
+                font:500 10px/1 var(--font-mono); letter-spacing:.06em; color:var(--md-sys-color-outline); }
+  .t4-ax span.r { right:0; }
+
+  /* 05 — weight & forfeit. The team's 25 points, and what is left on the table. */
+  .t5-track { position:relative; height:34px; border-radius:9px; overflow:hidden;
+              background:var(--md-sys-color-surface-container-highest); }
+  .t5-track i { position:absolute; top:0; bottom:0; }
+  .t5-track i.got  { left:0; background:var(--md-sys-color-primary); }
+  .t5-track i.head { background:repeating-linear-gradient(135deg,
+                       color-mix(in srgb, var(--md-sys-color-primary) 30%, transparent) 0 5px,
+                       transparent 5px 10px); }
+  .t5-dim { position:relative; height:19px; margin-top:5px; }
+  .t5-dim .bar { position:absolute; top:8px; height:1px; background:var(--md-sys-color-outline); opacity:.7; }
+  .t5-dim .cap { position:absolute; top:0; transform:translateX(-50%); padding:0 7px; white-space:nowrap;
+                 background:var(--surface-base); font:600 10.5px/1.6 var(--font-mono);
+                 color:var(--md-sys-color-on-surface-variant); }
+  .t5-leg { display:flex; justify-content:space-between; margin-top:12px;
+            font:500 10.5px/1 var(--font-mono); letter-spacing:.07em; color:var(--md-sys-color-outline); }
+
+  /* 07 — the bench, complete: the third tier is the seats nobody is in. Dashed pills
+     carry NO label, because `gaps` is free text and only some entries are actually
+     roles — the count is honest, a parsed role name would not always be. */
+  .t3-row b.seat { background:transparent; box-shadow:inset 0 0 0 1.5px var(--md-sys-color-outline-variant);
+                   color:var(--md-sys-color-outline); padding:0 9px; }
+  .t3-row b.seat .material-symbols-rounded { font-size:17px; }
+
+  /* 06 — the fan. A 180° cousin of the radar, scoped to one category's five signals. */
+  .t6 { width:100%; }
+  .t6 svg { width:100%; height:auto; display:block; overflow:visible; }
+  .t6 .wg-bg { fill:var(--md-sys-color-surface-container-highest); }
+  .t6 .wg-on { fill:var(--md-sys-color-primary); }
+  .t6 .wg-l  { font-family:var(--font-mono); font-size:9.5px; font-weight:500; letter-spacing:.07em;
+               fill:var(--md-sys-color-on-surface-variant); }
+</style>
+</head>
+<body>
+<div class="pg">
+  <h1>Replacing the team chart</h1>
+  <p class="sub">Today's Team hero recycles <code>progressLockup</code>: a giant <b>2</b>, six 7px pips, and a caption that repeats the chip above it. The numeral is the weakest thing on the tab — it reads as a <em>score</em> of 2 while the fact beside it says 3.0&nbsp;/&nbsp;5, and what it actually counts is how many people we could look up, which is diligence hygiene, not team quality. Six replacements.</p>
+  <p class="fine"><b>Read the data line under each concept first.</b> I checked the runner's contract before designing. Per person it emits exactly <code>{name, role, background, signal}</code> — <b>no equity, no tenure, no dates</b>, so the sharpest fact on this tab ("two co-founders hold 43% and neither is verifiable") cannot be drawn today without an additive field. <code>gaps</code> are free-text sentences, not role names. What <em>is</em> guaranteed is the rubric: team is <b>five fixed sub-signals</b> (<code>ceo_vision</code>, <code>talent_attraction</code>, <code>founder_market_fit</code>, <code>execution_record</code>, <code>ethics_trust</code>), each scored 0&nbsp;/&nbsp;0.5&nbsp;/&nbsp;1, and it carries the <b>heaviest weight in the whole rubric at 25%</b>. Every concept is also drawn in the three states a real run lands in.</p>
+  <div id="out"></div>
+</div>
+
+<script type="module">
+import * as DS from './ds.js';
+import { ASSESSMENT as A, SCORE as S } from './data.js';
+
+/* ── what we are actually given ──────────────────────────────────────────── */
+const CAT = (S.categories || []).find(c => c.key === 'team') || {};
+const MEM = (A.team && A.team.members) || [];
+const GAP = (A.team && A.team.gaps) || [];
+
+/* Short axis labels. SUB_Q holds the full assessor QUESTION ("Does the CEO communicate
+   a compelling vision…") which is far too long for a chart, so a chart needs its own
+   short form. Derived from the slug by default — the map only overrides the five where
+   title-casing the slug reads badly. */
+const SHORT = { ceo_vision:'CEO vision', talent_attraction:'Talent pull',
+                founder_market_fit:'Founder–market fit', execution_record:'Execution record',
+                ethics_trust:'Ethics & trust' };
+const shortOf = s => SHORT[s] || String(s).replace(/_/g, ' ').replace(/^./, c => c.toUpperCase());
+
+/* signal → the three buckets every concept shares */
+const SIG = { positive:'pos', flag:'flag', neutral:'neu' };
+const cls = m => SIG[m.signal] || 'neu';
+const count = (ms, k) => ms.filter(m => cls(m) === k).length;
+
+/* Role tiering — derived from the role half of `name` ("Kevin Lancaster — CTO / Co-Founder").
+   Executives are the people who have to BUILD the thing; board/advisory are the people who
+   advise them. Both patterns are generic, not MoneyGym-specific. */
+const roleOf = m => String(m.name).split('—').slice(1).join('—').trim();
+const isBoard = m => /\b(ned|non[- ]exec|advis|chair|board|investor)\b/i.test(roleOf(m));
+
+/* ── the shared read: the chart never carries the whole argument alone ───── */
+function note(d) {
+  if (!d.members.length) return `<p class="tz-none">No team named on this assessment yet.</p>`;
+  const v = count(d.members,'pos'), f = count(d.members,'flag');
+  const g = d.gaps.length;
+  return `<p class="tz-note"><b>${d.members.length} named</b> — ${v} verified, ${f} we could not stand up${
+    g ? `, and <b>${g} seat${g===1?'':'s'}</b> the thesis needs that nobody is in` : ''}.${
+    d.cat.num != null ? ` Team scores <b>${d.cat.num} / 5</b> on the heaviest-weighted category in the rubric.` : ''}</p>`;
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   THE SIX CONCEPTS. Each takes {members, gaps, cat} and reads nothing else.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* 01 · SIGNAL COMB — the five scored team signals, at the rubric's own resolution. */
+function c01(d) {
+  const subs = d.cat.subs || [];
+  if (!subs.length) return `<div class="tz"><p class="tz-none">Not scored yet — the five team signals are rated when the run completes.</p></div>`;
+  return `<div class="tz"><div class="tz-chart t1">
+    ${subs.map(s => `<div class="t1-row${s.score === 0 ? ' zero' : ''}">
+      <span class="t1-k">${shortOf(s.slug)}</span>
+      <span class="t1-pips"><i class="${s.score >= 0.5 ? 'on' : ''}"></i><i class="${s.score >= 1 ? 'on' : ''}"></i></span>
+    </div>`).join('')}
+  </div>${note(d)}</div>`;
+}
+
+/* 02 · THE CAST — one mark per human, then a ghost per seat nobody is in. */
+function c02(d) {
+  const ghosts = d.gaps.slice(0, 6);
+  return `<div class="tz"><div class="tz-chart t2">
+    ${d.members.map(m => `<b class="${cls(m)}">${m.i}</b>`).join('')}
+    ${ghosts.length ? `<span class="t2-rule"></span>${ghosts.map(() =>
+      `<b class="gap"><span class="material-symbols-rounded">add</span></b>`).join('')}` : ''}
+  </div>
+  <div class="t2-leg">
+    <span><s style="background:var(--success-container)"></s>VERIFIED ${count(d.members,'pos')}</span>
+    <span><s style="background:var(--md-sys-color-surface-container-high)"></s>TO VERIFY ${count(d.members,'neu')}</span>
+    <span><s style="background:var(--md-sys-color-error-container)"></s>FLAGGED ${count(d.members,'flag')}</span>
+    ${ghosts.length ? `<span><s style="box-shadow:inset 0 0 0 1.5px var(--md-sys-color-outline-variant)"></s>EMPTY ${d.gaps.length}</span>` : ''}
+  </div>${note(d)}</div>`;
+}
+
+/* 03 · THE BENCH — the same marks, split by who has to build the thing. On MoneyGym
+   this is the one arrangement where the real pattern shows itself: every verified
+   person on the team is a non-executive. */
+function c03(d) {
+  const ex = d.members.filter(m => !isBoard(m)), bd = d.members.filter(isBoard);
+  const tier = (label, ms) => {
+    if (!ms.length) return '';
+    const v = count(ms,'pos'), f = count(ms,'flag');
+    return `<div class="t3-tier">
+      <div class="t3-h"><span>${label}</span><em class="${v === 0 ? 'bad' : ''}">${v} of ${ms.length} verified${f ? ` · ${f} flagged` : ''}</em></div>
+      <div class="t3-row">${ms.map(m => `<b class="${cls(m)}"><s>${m.i}</s>${
+        (roleOf(m).split('/')[0] || '').trim() || String(m.name).split('—')[0].trim()}</b>`).join('')}</div>
+    </div>`;
+  };
+  return `<div class="tz"><div class="tz-chart t3">
+    ${tier('RUNNING THE COMPANY', ex)}${tier('BOARD &amp; ADVISORY', bd)}
+  </div>${note(d)}</div>`;
+}
+
+/* 04 · SEATS — the team it will have to be, shaded by how much of it exists. */
+function c04(d) {
+  const total = d.members.length + d.gaps.length;
+  if (!total) return `<div class="tz"><p class="tz-none">No team named on this assessment yet.</p></div>`;
+  const w = n => `flex:${n} 0 0`;
+  const order = ['pos','neu','flag'];
+  return `<div class="tz">
+    <div class="tz-chart t4-track">
+      ${order.map(k => { const n = count(d.members,k); return n ? `<i class="${k}" style="${w(n)}"></i>` : ''; }).join('')}
+      ${d.gaps.length ? `<i class="gap" style="${w(d.gaps.length)}"></i>` : ''}
+    </div>
+    <div class="t4-ax"><span>${d.members.length} IN SEAT</span><span class="r">${d.gaps.length} EMPTY</span></div>
+    <div class="tz-cap"><span><b>${d.members.length}</b> of ${total} seats filled</span>
+      <span><b>${count(d.members,'pos')}</b> of those verified</span></div>
+    ${note(d)}</div>`;
+}
+
+/* 05 · WEIGHT &amp; FORFEIT — team is 25 of the 100 points, the heaviest single block
+   in the rubric. This draws what it earned, what diligence could still recover, and
+   what is simply gone. */
+function c05(d) {
+  const c = d.cat;
+  if (c.frac == null) return `<div class="tz"><p class="tz-none">Not scored yet — the team's 25 points are unallocated.</p></div>`;
+  const W = c.weightPct || 25;
+  const got = c.frac * W, pot = (c.pot != null ? c.pot : c.frac) * W;
+  const head = Math.max(0, pot - got), lost = Math.max(0, W - pot);
+  const pc = v => (v / W) * 100;
+  return `<div class="tz">
+    <div class="tz-chart t5-track">
+      <i class="got" style="width:${pc(got).toFixed(1)}%"></i>
+      ${head > 0 ? `<i class="head" style="left:${pc(got).toFixed(1)}%;width:${pc(head).toFixed(1)}%"></i>` : ''}
+    </div>
+    ${lost > 0 ? `<div class="t5-dim">
+      <span class="bar" style="left:${pc(pot).toFixed(1)}%;width:${pc(lost).toFixed(1)}%"></span>
+      <span class="cap" style="left:${(pc(pot) + pc(lost) / 2).toFixed(1)}%">−${lost.toFixed(1)} forfeited</span>
+    </div>` : ''}
+    <div class="t5-leg"><span>+${got.toFixed(1)} EARNED</span><span>${W} POINTS AT STAKE</span></div>
+    <p class="tz-note">The heaviest category in the rubric. ${head > 0
+      ? `<b>+${head.toFixed(1)}</b> is still recoverable by evidence; <span class="warn">${lost.toFixed(1)}</span> is not.`
+      : `With no headroom left, <span class="bad">${lost.toFixed(1)} points</span> cannot be won back by more diligence — only by hiring.`}</p>
+  </div>`;
+}
+
+/* 06 · THE FAN — the radar's 180° cousin, scoped to one category's five signals.
+   Same visual family as the Investability hero without being the same chart. */
+function c06(d) {
+  const subs = d.cat.subs || [];
+  if (!subs.length) return `<div class="tz"><p class="tz-none">Not scored yet — the five team signals are rated when the run completes.</p></div>`;
+  const n = subs.length, R = 104, CX = 170, CY = 118, PAD = 1.6 * Math.PI / 180;
+  const wedge = (i, r) => {
+    const a0 = Math.PI + (i / n) * Math.PI + PAD, a1 = Math.PI + ((i + 1) / n) * Math.PI - PAD;
+    const p = (ang, rr) => `${(CX + Math.cos(ang) * rr).toFixed(2)},${(CY + Math.sin(ang) * rr).toFixed(2)}`;
+    const IN = 26;
+    return `M${p(a0,IN)} L${p(a0,r)} A${r} ${r} 0 0 1 ${p(a1,r)} L${p(a1,IN)} A${IN} ${IN} 0 0 0 ${p(a0,IN)} Z`;
+  };
+  const mid = i => Math.PI + ((i + 0.5) / n) * Math.PI;
+  return `<div class="tz"><div class="tz-chart t6">
+    <svg viewBox="0 0 340 150" aria-hidden="true">
+      ${subs.map((_, i) => `<path class="wg-bg" d="${wedge(i, R)}"/>`).join('')}
+      ${subs.map((s, i) => s.score > 0
+        ? `<path class="wg-on" d="${wedge(i, 26 + (R - 26) * s.score)}"/>` : '').join('')}
+      ${subs.map((s, i) => { const a = mid(i), rr = R + 11;
+        const x = CX + Math.cos(a) * rr, y = CY + Math.sin(a) * rr;
+        const anchor = Math.abs(Math.cos(a)) < .22 ? 'middle' : (Math.cos(a) < 0 ? 'end' : 'start');
+        return `<text class="wg-l" x="${x.toFixed(1)}" y="${(y + 3).toFixed(1)}" text-anchor="${anchor}">${
+          shortOf(s.slug).toUpperCase()}</text>`; }).join('')}
+    </svg>
+  </div>${note(d)}</div>`;
+}
+
+/* 07 · THE BENCH, COMPLETE — 03 with the holes drawn. Three tiers: who runs the
+   company, who advises it, and the seats nobody is in. The whole org picture in one
+   molecule, and the only concept that carries both the pattern AND the gaps. */
+function c07(d) {
+  const ex = d.members.filter(m => !isBoard(m)), bd = d.members.filter(isBoard);
+  const tier = (label, ms) => {
+    if (!ms.length) return '';
+    const v = count(ms,'pos'), f = count(ms,'flag');
+    return `<div class="t3-tier">
+      <div class="t3-h"><span>${label}</span><em class="${v === 0 ? 'bad' : ''}">${v} of ${ms.length} verified${f ? ` · ${f} flagged` : ''}</em></div>
+      <div class="t3-row">${ms.map(m => `<b class="${cls(m)}"><s>${m.i}</s>${
+        (roleOf(m).split('/')[0] || '').trim() || String(m.name).split('—')[0].trim()}</b>`).join('')}</div>
+    </div>`;
+  };
+  const seats = d.gaps.length ? `<div class="t3-tier">
+      <div class="t3-h"><span>SEATS NOBODY IS IN</span><em class="bad">${d.gaps.length} to hire</em></div>
+      <div class="t3-row">${d.gaps.slice(0, 7).map(() =>
+        `<b class="seat"><span class="material-symbols-rounded">person_add</span></b>`).join('')}</div>
+    </div>` : '';
+  return `<div class="tz"><div class="tz-chart t3">
+    ${tier('RUNNING THE COMPANY', ex)}${tier('BOARD &amp; ADVISORY', bd)}${seats}
+  </div>${note(d)}</div>`;
+}
+
+/* ── the molecule wrapper, matching the lockup family ────────────────────── */
+function wrap(d, chart, numeral) {
+  const n = numeral || (d.cat.num != null
+    ? `<div class="lockup-num">${d.cat.num}<small>/5 · 25% weight</small></div>`
+    : `<div class="lockup-num"><span class="lockup-forming">Forming</span></div>`);
+  return `<div class="team-lockup"><span class="eyebrow accent">Team signal</span>${n}${chart}</div>`;
+}
+
+/* the three states a real assessment lands in */
+const FULL    = { members: MEM, gaps: GAP, cat: CAT };
+const NOGAPS  = { members: MEM, gaps: [], cat: CAT };
+const FORMING = { members: MEM, gaps: GAP,
+                  cat: { ...CAT, num: null, frac: null, subs: (CAT.subs||[]).map(s => ({ ...s, score: null })) } };
+const TINY    = { members: MEM.slice(0, 2), gaps: GAP.slice(0, 1), cat: CAT };
+
+const h = (A.heroes && A.heroes.team) || {};
+const hero = chart => DS.sectionHero({
+  eyebrow: h.eyebrow, eyebrowIcon: h.eyebrowIcon, headline: h.headline, headlineEm: h.headlineEm,
+  facts: h.facts, right: chart, thesis: h.thesis,
+});
+
+const C = [
+  { n:'01', f:c01, t:'Signal comb',
+    need:['ok','ships today · the five rubric sub-signals, always present once scored'],
+    d:'The five signals the team was actually scored on, at the rubric\'s own resolution — two pips, because a sub-signal is only ever 0, 0.5 or 1 and a smooth bar would imply a precision that does not exist. The only concept that explains the number beside it. Weakest as a <em>picture</em>: it is five rows of text with pips.' },
+  { n:'02', f:c02, t:'The cast',
+    need:['ok','ships today · one mark per member, one ghost per named gap'],
+    d:'A unit chart where the unit is a person. Every human on the cap table as a tinted monogram, then — below a dashed rule — a ghost seat for every role the thesis needs and nobody holds. The team and the hole in it in one glance, and the only concept that draws the gaps at all.' },
+  { n:'03', f:c03, t:'The bench',
+    need:['ok','ships today · role tiering is a regex on the role string, which every member carries'],
+    d:'The same marks, split by who actually has to build the thing. On this assessment the split is the finding: <b>every verified person is a non-executive</b> — the board checks out, the executive team does not. That pattern is invisible in all five other concepts and in today\'s chart.' },
+  { n:'04', f:c04, t:'Seats filled',
+    need:['ok','ships today · pure counts, survives any team size'],
+    d:'One bar: the team this venture will have to be, shaded by how much of it exists. Verified, to-verify and flagged run left to right, then the hatched remainder is the seats nobody is in. The most compact of the six and the most robust — it still says something with two people and no gaps.' },
+  { n:'05', f:c05, t:'Weight &amp; forfeit',
+    need:['ok','ships today · weight, frac and pot are on every category'],
+    d:'Team is 25 of the 100 points — the heaviest single block in the rubric. This draws what it earned, what evidence could still recover (hatched), and what is simply gone. On this assessment potential equals current, which means something the other five cannot say: <b>no amount of further diligence moves this number — only hiring does.</b>' },
+  { n:'06', f:c06, t:'The fan',
+    need:['warn','ships today, but five labels on a 180° arc get tight at 364px and very tight at 390px mobile'],
+    d:'The radar\'s 180° cousin, scoped to one category\'s five signals. Strongest family resemblance — it is visibly the same house as the Investability hero without being the same chart. The cheaper variant of this is to feed the existing <code>radar()</code> a five-axis team score, which is pure reuse but makes the two tabs look identical.' },
+  { n:'07', f:c07, t:'The bench, complete &nbsp;— my pick',
+    need:['ok','ships today · 03 plus 02\'s gaps; nothing parsed out of prose'],
+    d:'<b>03 with the holes drawn.</b> Three tiers — who runs the company, who advises it, and the seats nobody is in — so the molecule carries the pattern <em>and</em> the gap, and it is tall enough to balance the thesis beside it instead of leaving 200px of dead column. The empty seats are deliberately unlabelled: <code>gaps</code> is free text and only some entries are actually roles, so the count is honest where a parsed role name would not always be. The named gaps are already listed in full further down the tab.' },
+];
+
+document.getElementById('out').innerHTML = C.map(c => `
+  <section class="cx">
+    <div class="cx-h"><span class="cx-n">${c.n}</span><span class="cx-t">${c.t}</span></div>
+    <p class="cx-d">${c.d}</p>
+    <p class="cx-need ${c.need[0]}">${c.need[0] === 'ok' ? '●' : '▲'} ${c.need[1]}</p>
+    <div class="stage">${hero(wrap(FULL, c.f(FULL)))}</div>
+    <div class="deg">
+      <div><div class="deg-t">NO GAPS NAMED</div>${wrap(NOGAPS, c.f(NOGAPS))}</div>
+      <div><div class="deg-t">NOT SCORED YET · the forming state</div>${wrap(FORMING, c.f(FORMING))}</div>
+      <div><div class="deg-t">TWO-PERSON TEAM</div>${wrap(TINY, c.f(TINY))}</div>
+    </div>
+  </section>`).join('');
+
+/* today's chart, for comparison, at the top — the REAL teamHero, not a rebuild of it */
+document.getElementById('out').insertAdjacentHTML('afterbegin', `
+  <section class="cx" style="border-top:none;padding-top:8px">
+    <div class="cx-h"><span class="cx-n">00</span><span class="cx-t">What shipped</span></div>
+    <p class="cx-d">Concept 07 is now live, so this renders the real <code>teamHero</code>. Before it, the hero borrowed <code>progressLockup</code> — the lifecycle progress bar — with the members passed in as segments, and printed a giant <b>2</b> that counted how many people we could look up. Note the hero fact that used to restate the score here is gone: <code>teamHero</code> drops it, because the lockup owns that figure now.</p>
+    <div class="stage">${DS.teamHero(A, S)}</div>
+  </section>`);
+</script>
+</body>
+</html>

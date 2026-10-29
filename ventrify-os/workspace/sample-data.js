@@ -6,6 +6,17 @@
 
 const SAMPLE_ORG = {
   name: 'Mercer Ventures',
+  // ownerEmail + operatorEmails mirror what a LIVE org doc carries (api/admin.js
+  // writes both on create, and loadLive() builds the operator list from the
+  // second). Without them the demo diverged from live in two visible ways: the
+  // admin screen bounced every demo visitor to the dashboard, so it was the one
+  // page nobody could see or audit — its number-fidelity baseline was silently a
+  // copy of the dashboard's — and the org card there counted 0 operators beside a
+  // nav badge reading 3. The emails match SAMPLE_OPERATORS below.
+  ownerEmail: 'alex@mercer.vc',
+  operatorEmails: ['alex@mercer.vc', 'priya@mercer.vc', 'tom@mercer.vc'],
+  slug: 'mercer-ventures',
+  createdAt: '2026-02-11T09:00:00Z',
   tier: 'Cohort',
   programsLimit: 'Unlimited',
   operatorSeatsLimit: 'Unlimited',
@@ -100,16 +111,35 @@ const SAMPLE_PROGRAMS = [
       video: { status: 'pending' },
       blog: { status: 'in-progress' }
     },
+    // VSS v3. This was the last pre-v3 record in the fixture: a raw SUM of the seven
+    // category scores — composite 25, maxPossible 35 — which is not how the product
+    // has scored anything since the v3 cutover (shared/vss-rubric.js: the composite
+    // is a WEIGHTED 0-100 mean of per-category fractions, and 35 is the SIGNAL COUNT,
+    // not the scale). Kept as it was, the demo showed every operator the one shape a
+    // real org only has if it has not been re-run, and program.html's own provenance
+    // line had to announce it as legacy.
+    //
+    // The seven category scores are UNCHANGED. Only the arithmetic over them is the
+    // product's current arithmetic: frac = sum/5, composite = 100 * Σ(frac × weight),
+    // weights straight from VSS_RUBRIC (.20 .25 .15 .15 .10 .10 .05, summing to 1.00).
+    // That lands on 71.5 → 72, against the old 25/35 = 71.4% → 71: the one-point move
+    // IS the weighting, which the raw sum could not express because it treated Team
+    // (.25) and Evidence (.05) as equals.
+    //
+    // `key` is new on every row and load-bearing: weight lookup is CAT_WEIGHTS[c.key],
+    // so the old keyless rows resolved to weight 0 and could never have been weighted
+    // at all. No `subs` — inventing 35 sub-scores and their notes would be fabricating
+    // findings for a demo venture; `rated` carries the count the breakdown needs.
     investabilitySnapshot: {
-      composite: 25, maxPossible: 35, pct: 71, band: 'feedback', bandLabel: 'Promising — clear levers to pull', ratedCount: 35,
+      composite: 72, maxPossible: 100, pct: 72, band: 'feedback', bandLabel: 'Promising — clear levers to pull', ratedCount: 35,
       categories: [
-        { label: 'Market', sum: 4, max: 5, band: 'green' },
-        { label: 'Team', sum: 3.5, max: 5, band: 'yellow' },
-        { label: 'Product', sum: 4, max: 5, band: 'green' },
-        { label: 'Technical', sum: 3, max: 5, band: 'yellow' },
-        { label: 'Financial', sum: 3.5, max: 5, band: 'yellow' },
-        { label: 'Execution', sum: 3, max: 5, band: 'yellow' },
-        { label: 'Evidence', sum: 4, max: 5, band: 'green' }
+        { key: 'market',    label: 'Market Opportunity',          sum: 4,   max: 5, rated: 5, pending: 0, weight: 0.20, band: 'green' },
+        { key: 'team',      label: 'Team & Founder-Market Fit',   sum: 3.5, max: 5, rated: 5, pending: 0, weight: 0.25, band: 'yellow' },
+        { key: 'product',   label: 'Product & Solution Clarity',  sum: 4,   max: 5, rated: 5, pending: 0, weight: 0.15, band: 'green' },
+        { key: 'moat',      label: 'Technical / Competitive Moat', sum: 3,  max: 5, rated: 5, pending: 0, weight: 0.15, band: 'yellow' },
+        { key: 'financial', label: 'Financial Defensibility',     sum: 3.5, max: 5, rated: 5, pending: 0, weight: 0.10, band: 'yellow' },
+        { key: 'execution', label: 'Execution & Traction',        sum: 3,   max: 5, rated: 5, pending: 0, weight: 0.10, band: 'yellow' },
+        { key: 'evidence',  label: 'Evidence Integrity',          sum: 4,   max: 5, rated: 5, pending: 0, weight: 0.05, band: 'green' }
       ]
     },
     investabilitySuggestions: { items: [

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en" data-brand="verdictscore">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio landing — adopting the assessment language</title>
+<meta name="description" content="Concepts for the portfolio landing screen: de-carded figures, the list on the background, and positives in the brand colour.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter+Tight:wght@500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/brand/brand.css">
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="ds.css">
+<link rel="stylesheet" href="assess-editorial.css">
+<link rel="stylesheet" href="../../shared/m3/brand-map.css">
+<script src="_preview-brand-switch.js" defer></script>
+<style>
+  body { margin:0; background:var(--md-sys-color-surface); color:var(--md-sys-color-on-surface);
+         font:400 15px/1.6 Inter,sans-serif; -webkit-font-smoothing:antialiased; }
+  .pg { max-width:1340px; margin:0 auto; padding:56px 36px 140px; }
+  h1 { font:600 clamp(1.9rem,3.6vw,2.7rem)/1.05 'Space Grotesk',sans-serif; letter-spacing:-.02em; margin:0 0 .5rem; }
+  .sub { color:var(--md-sys-color-on-surface-variant); max-width:84ch; margin:0 0 .4rem; }
+  .flag { margin:18px 0 0; padding:15px 17px; border-radius:14px; max-width:94ch;
+          background:color-mix(in srgb,#e0a33a 9%,transparent);
+          border:1px solid color-mix(in srgb,#e0a33a 28%,transparent); font-size:13.5px; line-height:1.62; }
+  .flag b { color:var(--md-sys-color-on-surface); }
+  .cx { margin:54px 0 0; padding-top:26px; border-top:1px solid var(--md-sys-color-outline-variant); }
+  .cx-h { display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; }
+  .cx-n { font:500 12px/1 ui-monospace,monospace; color:var(--md-sys-color-primary); letter-spacing:.1em; }
+  .cx-t { font:600 1.3rem/1.2 'Space Grotesk',sans-serif; letter-spacing:-.01em; }
+  .cx-d { color:var(--md-sys-color-on-surface-variant); max-width:94ch; margin:.3rem 0 0; font-size:14px; }
+  .stage { margin-top:20px; border:1px solid var(--md-sys-color-outline-variant); border-radius:14px;
+           overflow:hidden; background:var(--md-sys-color-surface); padding:30px 32px 38px; }
+
+  /* ── the shared editorial atoms, as the assessment tabs use them ───────────── */
+  .ph { display:flex; align-items:baseline; gap:14px; margin:0 0 22px; flex-wrap:wrap; }
+  .ph .eyebrow { font:500 10.5px/1 ui-monospace,monospace; letter-spacing:.12em; text-transform:uppercase;
+                 color:var(--md-sys-color-primary); }
+  .ph .t { font:600 22px/1.2 'Space Grotesk',sans-serif; letter-spacing:-.015em; }
+  .ph .meta { margin-left:auto; font-size:12.5px; color:var(--md-sys-color-on-surface-variant); }
+
+  /* de-carded figure strip — numbers on the background, a rule between them */
+  .figs { display:grid; grid-template-columns:repeat(4,1fr); gap:0; margin:0 0 30px;
+          border-top:1px solid var(--md-sys-color-outline-variant);
+          border-bottom:1px solid var(--md-sys-color-outline-variant); }
+  .figs .f { padding:16px 20px 15px; border-left:1px solid var(--md-sys-color-outline-variant); }
+  .figs .f:first-child { border-left:none; padding-left:0; }
+  .figs .v { font:600 30px/1 'Space Grotesk',sans-serif; letter-spacing:-.025em; }
+  .figs .v.dim { color:var(--md-sys-color-on-surface-variant); }
+  .figs .l { font-size:12px; color:var(--md-sys-color-on-surface-variant); margin-top:7px; }
+
+  /* the list, on the background — no container card */
+  .lst { width:100%; border-collapse:collapse; }
+  .lst th { text-align:left; font:500 10.5px/1 ui-monospace,monospace; letter-spacing:.1em; text-transform:uppercase;
+            color:var(--md-sys-color-on-surface-variant); padding:0 14px 11px 0; border-bottom:1px solid var(--md-sys-color-outline-variant); }
+  .lst th:last-child, .lst td:last-child { text-align:right; padding-right:0; }
+  .lst td { padding:15px 14px 15px 0; border-bottom:1px solid var(--md-sys-color-outline-variant); vertical-align:middle; }
+  .lst tr:hover td { background:color-mix(in srgb,var(--md-sys-color-on-surface) 4%,transparent); }
+  .vn { display:flex; align-items:center; gap:13px; }
+  .av { width:34px; height:34px; border-radius:9px; display:grid; place-items:center; flex:none;
+        font:600 12px/1 ui-monospace,monospace; letter-spacing:.02em;
+        background:color-mix(in srgb,var(--md-sys-color-primary) 18%,transparent); color:var(--md-sys-color-primary); }
+  .vn .nm { font-size:15px; font-weight:500; }
+  .vn .sb { font-size:12.5px; color:var(--md-sys-color-on-surface-variant); margin-top:2px; }
+  .chip { display:inline-flex; align-items:center; gap:6px; padding:5px 10px; border-radius:7px;
+          font:500 12px/1 Inter,sans-serif; white-space:nowrap; }
+  .chip .material-symbols-rounded { font-size:15px; }
+  /* POSITIVE = brand. amber and red are kept for warnings and risks only. */
+  .chip.ok   { background:color-mix(in srgb,var(--md-sys-color-primary) 15%,transparent); color:var(--md-sys-color-primary); }
+  .chip.n    { background:color-mix(in srgb,var(--md-sys-color-on-surface) 8%,transparent); color:var(--md-sys-color-on-surface-variant); }
+  .chip.warn { background:color-mix(in srgb,#e0a33a 16%,transparent); color:#f0c073; }
+  .chip.err  { background:color-mix(in srgb,#f2b8b5 15%,transparent); color:#f2b8b5; }
+  .score { font:600 17px/1 'Space Grotesk',sans-serif; letter-spacing:-.02em; font-variant-numeric:tabular-nums; }
+  .score i { font:500 11px/1 ui-monospace,monospace; font-style:normal; color:var(--md-sys-color-on-surface-variant); }
+  .prog { display:flex; align-items:center; gap:10px; }
+  .trk { width:120px; height:6px; border-radius:99px; background:var(--md-sys-color-surface-container-highest); overflow:hidden; }
+  .trk i { display:block; height:100%; border-radius:99px; background:var(--md-sys-color-primary); }
+  .trk i.risk { background:#f2b8b5; }
+  .pct { font:500 12.5px/1 ui-monospace,monospace; font-variant-numeric:tabular-nums; color:var(--md-sys-color-on-surface-variant); }
+  .when { font-size:12.5px; color:var(--md-sys-color-on-surface-variant); white-space:nowrap; }
+
+  /* 03 — triage groups */
+  .grp { margin-top:30px; }
+  .grp:first-of-type { margin-top:0; }
+  .grp-h { display:flex; align-items:baseline; gap:10px; margin:0 0 6px; }
+  .grp-h .g { font:600 13px/1 Inter,sans-serif; }
+  .grp-h .c { font:500 11px/1 ui-monospace,monospace; color:var(--md-sys-color-on-surface-variant); }
+  .grp-h .why { margin-left:auto; font-size:12px; color:var(--md-sys-color-on-surface-variant); }
+</style>
+</head>
+<body>
+<main class="pg">
+  <h1>The portfolio, in the assessment's language</h1>
+  <p class="sub">Three treatments of the landing screen, rendered from the real <code>ENGAGEMENTS</code> data — the same eleven rows the live page shows.</p>
+  <p class="flag"><b>What today's screen is doing that the assessment no longer does.</b>
+    The engagements list sits <b>inside a container card</b> — the exact treatment you had me strip from the Market table.
+    The four counts are <b>boxed tiles</b> rather than figures on the page. And the status chips use <b>green and teal for
+    positives</b> ("Assessment", "On track", "Invest"), which breaks the rule the assessment now follows: the brand colour
+    carries anything positive, and amber and red are reserved for warnings and risks. All three concepts fix those;
+    they differ in what the list is <i>for</i>.</p>
+
+  <section class="cx" id="c1"></section>
+  <section class="cx" id="c2"></section>
+  <section class="cx" id="c3"></section>
+</main>
+
+<script type="module">
+import { ENGAGEMENTS as E } from './data.js';
+const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const inFlight = r => r.runState && ['queued','running','partial'].includes(r.runState.status);
+const stats = [
+  [E.length, 'Active engagements'],
+  [E.filter(inFlight).length, 'Assessments in flight'],
+  [E.filter(r=>r.rec).length, 'Verdicts ready'],
+  [E.filter(r=>r.runState && r.runState.status==='idle').length, 'Awaiting a deck'],
+];
+const figs = () => `<div class="figs">${stats.map(([n,l])=>
+  `<div class="f"><div class="v${n===0?' dim':''}">${n}</div><div class="l">${l}</div></div>`).join('')}</div>`;
+const head = (eyebrow,title,meta) => `<div class="ph"><span class="eyebrow">${eyebrow}</span><span class="t">${title}</span><span class="meta">${meta}</span></div>`;
+const chip = s => s ? `<span class="chip ${s.kind}">${s.icon?`<span class="material-symbols-rounded">${s.icon}</span>`:''}${esc(s.label)}</span>` : '';
+const venture = r => `<div class="vn"><span class="av">${esc(r.i)}</span><div><div class="nm">${esc(r.name)}</div><div class="sb">${esc(r.sub)}</div></div></div>`;
+const progress = r => {
+  if (r.rec) return `<span class="score">${esc(r.rec.score)}<i>/100</i></span>`;
+  if (typeof r.progress === 'number') { const pct = Math.round(r.progress*100);
+    return `<div class="prog"><span class="trk"><i class="${r.danger||(r.status&&r.status.kind==='err')?'risk':''}" style="width:${pct}%"></i></span><span class="pct">${pct}%</span></div>`; }
+  if (r.runState) return `<span class="chip n">${esc(r.runState.status)}</span>`;
+  return '';
+};
+
+/* ── 01 · editorial list ─────────────────────────────────────────────────── */
+document.getElementById('c1').innerHTML = `
+  <div class="cx-h"><span class="cx-n">01</span><span class="cx-t">Editorial list</span></div>
+  <p class="cx-d">The straight translation. Counts become figures on the page, the list loses its container, the section
+     gets the eyebrow → heading → meta head every assessment section has, and every positive chip is brand-coloured.
+     Same information, same order — it just stops looking like a different product.</p>
+  <div class="stage">
+    ${head('Portfolio','All engagements', `${E.length} active`)}
+    ${figs()}
+    <table class="lst"><thead><tr>
+      <th>Venture</th><th>Stage</th><th>Status</th><th>Progress / signal</th><th>Last activity</th>
+    </tr></thead><tbody>
+    ${E.map(r=>`<tr>
+      <td>${venture(r)}</td><td>${esc(r.stage)}</td><td>${chip(r.status)}</td>
+      <td>${progress(r)}</td><td class="when">${esc(r.when)}</td></tr>`).join('')}
+    </tbody></table>
+  </div>`;
+
+/* ── 02 · verdict-first ──────────────────────────────────────────────────── */
+const scored = [...E].filter(r=>r.rec).sort((a,b)=>+b.rec.score - +a.rec.score);
+const rest = E.filter(r=>!r.rec);
+document.getElementById('c2').innerHTML = `
+  <div class="cx-h"><span class="cx-n">02</span><span class="cx-t">Verdict first</span></div>
+  <p class="cx-d">Same chrome, different priority. The score and its recommendation lead the row and the scored ventures
+     sort to the top, because on a deal-room landing the first question is "what did we conclude", not "what stage is it".
+     Stage and status demote to the sub-line. Everything without a verdict yet sits below, still visible.</p>
+  <div class="stage">
+    ${head('Portfolio','Where the book stands', `${scored.length} of ${E.length} scored`)}
+    ${figs()}
+    <table class="lst"><thead><tr>
+      <th>Venture</th><th>Verdict</th><th>Score</th><th>Status</th><th>Last activity</th>
+    </tr></thead><tbody>
+    ${scored.map(r=>`<tr>
+      <td>${venture(r)}</td>
+      <td>${chip({ kind: r.rec.kind==='invest'?'ok':'warn', label:r.rec.label, icon:r.rec.icon })}</td>
+      <td><span class="score">${esc(r.rec.score)}<i>/100</i></span></td>
+      <td>${chip(r.status)}</td><td class="when">${esc(r.when)}</td></tr>`).join('')}
+    ${rest.map(r=>`<tr>
+      <td>${venture(r)}</td>
+      <td><span class="chip n">Not yet scored</span></td>
+      <td>${progress(r)}</td><td>${chip(r.status)}</td><td class="when">${esc(r.when)}</td></tr>`).join('')}
+    </tbody></table>
+  </div>`;
+
+/* ── 03 · triage ─────────────────────────────────────────────────────────── */
+const needs = E.filter(r=>r.status && (r.status.kind==='err'||r.status.kind==='warn') || (r.runState&&r.runState.status==='idle'));
+const flight = E.filter(r=>!needs.includes(r) && (inFlight(r) || (r.status&&r.status.label==='Assessment')));
+const settled = E.filter(r=>!needs.includes(r) && !flight.includes(r));
+const group = (title, rows, why) => rows.length ? `<div class="grp">
+    <div class="grp-h"><span class="g">${title}</span><span class="c">${rows.length}</span><span class="why">${why}</span></div>
+    <table class="lst"><tbody>
+    ${rows.map(r=>`<tr><td>${venture(r)}</td><td>${chip(r.status)}</td><td>${progress(r)}</td><td class="when">${esc(r.when)}</td></tr>`).join('')}
+    </tbody></table></div>` : '';
+document.getElementById('c3').innerHTML = `
+  <div class="cx-h"><span class="cx-n">03</span><span class="cx-t">Triage</span></div>
+  <p class="cx-d">The page answers "what do I do next" before "what exists". Three groups, each with its own count and a
+     one-line reason, so a blocked venture cannot sit nine rows down a flat list. The cost: you lose the single sortable
+     table, and a venture's position moves as its state changes.</p>
+  <div class="stage">
+    ${head('Portfolio','What needs you', `${needs.length} of ${E.length} need a decision`)}
+    ${figs()}
+    ${group('Needs you', needs, 'blocked, flagged, or waiting on a document')}
+    ${group('In flight', flight, 'assessment running or queued')}
+    ${group('Settled', settled, 'on track — nothing to decide today')}
+  </div>`;
+</script>
+</body>
+</html>

@@ -38,7 +38,7 @@
       subheading: 'Every venture on your workspace — open one for the full assessment and timeline.',
       actions: [{ ...acts.primary, label: 'New assessment', onclick: 'window.openNewAssessment&&window.openNewAssessment()' }]
     }),
-    body: `<div class="grid-4">${stats.map(DS.statCard).join('')}</div>${DS.filterBar(['All', 'On track', 'Needs attention', 'Stuck', 'Assessment'], 'Search ventures or founders')}${DS.engagementTable(rows)}`
+    body: `${DS.figureStrip(stats)}${DS.filterBar(['All', 'On track', 'Needs attention', 'Stuck', 'Assessment'], 'Search ventures or founders')}${DS.engagementTable(rows)}`
   });
   DS.initShell();
   DS.initAssessmentWizard();

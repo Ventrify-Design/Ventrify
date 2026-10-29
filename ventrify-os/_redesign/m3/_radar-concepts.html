@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en" data-brand="verdictscore">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Radar — refining the category profile</title>
+<meta name="description" content="Exploration: six ways to refine the 7-axis radar so it can front the Investability hero at full size.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter+Tight:wght@500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/brand/brand.css">
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="ds.css">
+<link rel="stylesheet" href="assess-editorial.css">
+<link rel="stylesheet" href="../../shared/m3/brand-map.css">
+<script src="_preview-brand-switch.js" defer></script>
+<style>
+  body { margin:0; background:var(--surface-ground); color:var(--text-1);
+         font:400 15px/1.6 var(--font-text); -webkit-font-smoothing:antialiased; }
+  .pg { max-width:1180px; margin:0 auto; padding:64px 40px 160px; }
+  h1 { font:600 clamp(2rem,4vw,2.9rem)/1.05 var(--font-display); letter-spacing:-.02em; margin:0 0 .5rem; }
+  .sub { color:var(--text-2); max-width:72ch; margin:0 0 .4rem; }
+  .fine { color:var(--text-4); font-size:13px; max-width:84ch; }
+  .cx { margin:58px 0 0; padding-top:32px; border-top:1px solid var(--line-1); }
+  .cx-h { display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; }
+  .cx-n { font:500 12px/1 var(--font-mono); color:var(--brand-accent-2); letter-spacing:.1em; }
+  .cx-t { font:600 1.35rem/1.2 var(--font-display); letter-spacing:-.01em; }
+  .cx-d { color:var(--text-2); max-width:84ch; margin:.3rem 0 0; font-size:14px; }
+  .cx-m { color:var(--text-4); font:500 11px/1 var(--font-mono); margin:.7rem 0 0; letter-spacing:.06em; }
+
+  /* THE STAGE IS THE REAL READING COLUMN. The assess page's .brief measures
+     948px at a 1440 viewport; judged any wider, every chart here looks bigger
+     than it will ever ship. 948 + 2×36 padding. */
+  .stage { margin-top:24px; width:1020px; max-width:100%; box-sizing:border-box;
+           padding:34px 36px; background:var(--surface-base);
+           border:1px solid var(--line-1); border-radius:var(--r-lg); }
+
+  .ctl { display:flex; align-items:center; gap:10px; margin:24px 0 0; flex-wrap:wrap;
+         font-size:12px; color:var(--text-4); font-family:var(--font-mono); letter-spacing:.06em; }
+  .ctl + .ctl { margin-top:10px; }
+  .ctl span.lab { width:168px; }
+  .ctl button { font:500 12px/1 var(--font-mono); letter-spacing:.06em; padding:9px 14px; border-radius:999px;
+                border:1px solid var(--line-1); background:transparent; color:var(--text-3); cursor:pointer; }
+  .ctl button.on { background:var(--brand-accent); border-color:transparent; color:#fff; }
+  body.wide .stage .section-hero { grid-template-columns:1fr 1px 1.18fr; }
+
+  /* ─── the molecule frame every concept shares (prototype of radarLockup) ─── */
+  .radar-lockup { display:flex; flex-direction:column; }
+  .rl-chart { position:relative; width:100%; margin-top:14px; }
+  .rl-chart svg { width:100%; height:auto; display:block; overflow:visible; }
+  .rl-mid { position:absolute; inset:0; display:grid; place-content:center; text-align:center; pointer-events:none; }
+  .rl-num { font:300 54px/.84 var(--font-display); letter-spacing:-2.5px; color:var(--md-sys-color-on-surface); }
+  .rl-num u { display:block; text-decoration:none; font:500 10.5px/1 var(--font-mono);
+              letter-spacing:.14em; color:var(--md-sys-color-on-surface-variant); margin-top:8px; }
+  /* numeral ABOVE — the lockup-family convention (eyebrow → big numeral → content) */
+  .radar-lockup.top .rl-num { font-size:74px; letter-spacing:-4px; text-align:left; margin-top:10px; }
+  .radar-lockup.top .rl-num u { display:inline; margin:0 0 0 10px; font-size:13px; letter-spacing:.1em; }
+  .rl-cap { display:flex; justify-content:space-between; align-items:center; gap:14px; flex-wrap:wrap;
+            margin-top:18px; font-size:13px; color:var(--md-sys-color-on-surface-variant); }
+  .rl-cap b { color:var(--md-sys-color-on-surface); font-weight:600; }
+  .rl-cap .up { color:var(--md-sys-color-primary); font-weight:500; }
+  .rl-split { display:flex; gap:7px; flex-wrap:wrap; }
+  .rl-split span { display:inline-flex; align-items:center; gap:5px; height:26px; padding:0 10px;
+                   border-radius:999px; background:var(--md-sys-color-surface-container-high);
+                   font-size:12px; color:var(--md-sys-color-on-surface-variant); }
+  .rl-split span b { font-weight:700; color:var(--md-sys-color-on-surface); }
+
+  .rl-chart text { font-family:var(--font-mono), monospace; }
+  .ax-l { font-size:10.5px; font-weight:500; letter-spacing:.09em; fill:var(--md-sys-color-on-surface-variant); }
+  .ax-v { font-size:11.5px; font-weight:600; letter-spacing:.02em; fill:var(--md-sys-color-on-surface); }
+  .ax-w { font-size:9.5px; font-weight:500; letter-spacing:.06em; fill:var(--md-sys-color-outline); }
+  .ax-up { font-size:11px; font-weight:600; letter-spacing:.02em; fill:var(--md-sys-color-primary); }
+
+  .grid4 { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px; margin-top:24px; }
+  .mini { padding:24px 26px; background:var(--surface-base); border:1px solid var(--line-1); border-radius:var(--r-lg); }
+  .mini-t { font:600 13px/1.2 var(--font-display); letter-spacing:.01em; margin-bottom:4px; }
+  .mini-c { width:100%; }
+  .mini-d { color:var(--text-4); font-size:12.5px; line-height:1.55; margin:14px 0 0; }
+</style>
+</head>
+<body>
+<div class="pg">
+  <h1>Refining the radar</h1>
+  <p class="sub">The radar moves out of the body band — where it draws a 202px web inside a 948px row, two thirds of it empty — and into the hero slot the category profile holds today. Six ways to make it carry that slot.</p>
+  <p class="fine">Every concept renders the <b>real MoneyGym 55</b> through the real <code>sectionHero</code>, at the real 948px reading width, so the left column, the divider and the available space are exactly what ships. <b>CHART</b> below each is the measured diameter of the drawn web — not the SVG box, which includes the label gutter. Today's is <b>202px</b>. One hue throughout: a category scoring 1.5/5 is a <em>lower</em> number, not a warning, so nothing here is coloured by its score. Switch brands to check both accents.</p>
+  <div class="ctl"><span class="lab">Hero column ratio</span>
+    <button data-w="0" class="on">1.32 / 1 · today</button>
+    <button data-w="1">1 / 1.18 · chart takes the width</button>
+  </div>
+  <div class="ctl"><span class="lab">The composite number</span>
+    <button data-c="1" class="on">In the centre · annular floor</button>
+    <button data-c="0">Above the chart · lockup convention</button>
+  </div>
+  <div id="out"></div>
+</div>
+
+<script type="module">
+import * as DS from './ds.js';
+import { ASSESSMENT as A, SCORE as S } from './data.js';
+
+/* ════════════════════════════════════════════════════════════════════════
+   SHARED GEOMETRY
+
+   Derived from score.categories — never a fixed axis list. The live radar
+   hardcodes seven keys and a label map, so a rubric with six categories would
+   draw a phantom seventh at zero and a renamed one would lose its label.
+   Everything below reads the categories it is handed, in the order handed.
+
+   The FRAME is computed, not guessed: each concept declares its labels, and
+   the viewBox is expanded to contain them. That is what lets the web grow —
+   the old chart reserved a fixed gutter whether the labels needed it or not,
+   and spent 48% of its box on empty margin.
+   ════════════════════════════════════════════════════════════════════════ */
+const TAU = Math.PI * 2;
+const R = 118;                       // the web's outer radius; the frame scales around it
+const CHW = 7.0, LINE = 13;          // measured advance of 10.5px mono at .09em, and the line box
+const CFG = { wide: false, centre: true };
+/* 0 sits on an INNER RING when the numeral is in the middle. Two things come
+   of that: the centre is free, and execution at 0.5/5 — a dot 2px from the
+   middle today, invisible — becomes a readable notch. The ring is drawn
+   dashed and the floor declared, never hidden. */
+const R0 = () => CFG.centre ? 48 : 12;
+const rOf = v => R0() + Math.max(0, Math.min(1, v)) * (R - R0());
+const px = (a, r) => [Math.cos(a) * r, Math.sin(a) * r];
+const pt = (a, r) => px(a, r).map(n => n.toFixed(1)).join(',');
+
+function axesOf(score) {
+  const cats = score.categories || [];
+  const n = cats.length || 1;
+  return cats.map((c, i) => ({
+    key: c.key,
+    label: String(c.short || c.label || c.key).replace(/^the\s+/i, '').toUpperCase(),
+    frac: c.frac || 0,
+    pot: (c.pot != null ? c.pot : c.frac) || 0,
+    w: c.weightPct || 0,
+    num: parseFloat(c.num != null ? c.num : (c.frac || 0) * 5),
+    a: -Math.PI / 2 + i * (TAU / n),
+  }));
+}
+const polyOf = (ax, key) => ax.map(x => pt(x.a, rOf(x[key]))).join(' ');
+
+/* a label: anchored by angle, stacked NAME over VALUE so the horizontal gutter
+   is the name's width rather than the name plus the number. */
+function label(a, name, val, trail = null, trailChars = 0, push = 0) {
+  const [lx, ly] = px(a, R + 14 + push);
+  const anc = Math.cos(a) > 0.3 ? 'start' : Math.cos(a) < -0.3 ? 'end' : 'middle';
+  const dy = Math.sin(a) > 0.3 ? 12 : Math.sin(a) < -0.3 ? -8 : 0;
+  const w = Math.max(name.length, val != null ? String(val).length + trailChars : 0) * CHW;
+  const y = ly + dy;
+  const svg = `<text class="ax-l" x="${lx.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="${anc}">${name}${
+    val != null ? `<tspan class="ax-v" x="${lx.toFixed(1)}" dy="${LINE}">${val}</tspan>` : ''}${trail || ''}</text>`;
+  const x0 = anc === 'start' ? lx : anc === 'end' ? lx - w : lx - w / 2;
+  return { svg, box: [x0, y - 10, x0 + w, y + (val != null ? LINE + 4 : 4)] };
+}
+/* viewBox = the web, expanded to contain every label it was given */
+function frame(labels = []) {
+  let a = -R - 4, b = -R - 4, c = R + 4, d = R + 4;
+  labels.forEach(L => { a = Math.min(a, L.box[0]); b = Math.min(b, L.box[1]); c = Math.max(c, L.box[2]); d = Math.max(d, L.box[3]); });
+  const pad = 3;
+  return { vb: `${(a - pad).toFixed(0)} ${(b - pad).toFixed(0)} ${(c - a + pad * 2).toFixed(0)} ${(d - b + pad * 2).toFixed(0)}`,
+           w: c - a + pad * 2 };
+}
+const svgOf = (labels, body) => {
+  const f = frame(labels);
+  return `<svg viewBox="${f.vb}" data-web="${2 * R}" data-box="${f.w.toFixed(0)}" aria-hidden="true">
+    ${body}${labels.map(L => L.svg).join('')}</svg>`;
+};
+
+const GRID = 'var(--md-sys-color-surface-container-highest)';
+const ACC = 'var(--md-sys-color-primary)';
+const webRings = (ax, steps = [0.25, 0.5, 0.75, 1]) => steps
+  .map(g => `<polygon points="${ax.map(x => pt(x.a, rOf(g))).join(' ')}" fill="none" stroke="${GRID}" stroke-width="1"/>`).join('');
+const rings = (steps = [0.5, 1]) => steps
+  .map(g => `<circle cx="0" cy="0" r="${rOf(g).toFixed(1)}" fill="none" stroke="${GRID}" stroke-width="1"/>`).join('');
+const spokes = ax => ax.map(x => { const [x1, y1] = px(x.a, R0()), [x2, y2] = px(x.a, R);
+  return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"
+    stroke="${GRID}" stroke-width="1"/>`; }).join('');
+const floorRing = () => CFG.centre
+  ? `<circle cx="0" cy="0" r="${R0()}" fill="none" stroke="var(--md-sys-color-outline-variant)"
+       stroke-width="1" stroke-dasharray="2 4" opacity=".75"/>` : '';
+const dots = (ax, sizeByWeight = false) => {
+  const mw = Math.max(...ax.map(x => x.w)) || 1;
+  return ax.map(x => `<circle cx="${px(x.a, rOf(x.frac))[0].toFixed(1)}" cy="${px(x.a, rOf(x.frac))[1].toFixed(1)}"
+    r="${sizeByWeight ? (2.6 + 4.4 * (x.w / mw)).toFixed(1) : '3.6'}" fill="${ACC}"/>`).join('');
+};
+const nowPoly = (ax, op = '.26', sw = '2') =>
+  `<polygon points="${polyOf(ax, 'frac')}" fill="${ACC}" fill-opacity="${op}" stroke="${ACC}"
+     stroke-width="${sw}" stroke-linejoin="round"/>`;
+const potPoly = ax => `<polygon points="${polyOf(ax, 'pot')}" fill="none" stroke="${ACC}"
+  stroke-opacity=".5" stroke-width="1.5" stroke-dasharray="4 4"/>`;
+/* annular sector — the weighted-wedge concept */
+function sector(a0, a1, ri, ro) {
+  const lg = (a1 - a0) > Math.PI ? 1 : 0;
+  return `M${pt(a0, ri)} A${ri},${ri} 0 ${lg} 1 ${pt(a1, ri)} L${pt(a1, ro)} A${ro},${ro} 0 ${lg} 0 ${pt(a0, ro)} Z`;
+}
+/* equal-angle axes carved into weight-proportional spans, shared by 04 and 05.
+   `gap` in radians: the wedges want a hairline, the weight ring wants a gap you
+   can actually see — at 0.016 its seven arcs merged into one plain circle and
+   the concept failed at the only thing it was for. */
+function wedgesOf(ax, gap = 0.016) {
+  const tot = ax.reduce((t, x) => t + x.w, 0) || 1;
+  let a = -Math.PI / 2 - (ax[0] ? (ax[0].w / tot) * TAU / 2 : 0);
+  return ax.map(x => { const span = (x.w / tot) * TAU;
+    const o = { ...x, a0: a + gap / 2, a1: a + span - gap / 2, mid: a + span / 2 }; a += span; return o; });
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   THE SIX CONCEPTS
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* 01 · THE WEB, ENLARGED */
+const c01 = s => { const ax = axesOf(s);
+  return svgOf(ax.map(x => label(x.a, x.label, x.num.toFixed(1))),
+    `${webRings(ax)}${spokes(ax)}${floorRing()}${potPoly(ax)}${nowPoly(ax)}${dots(ax)}`); };
+
+/* 02 · HEADROOM — the gap filled as a band, not drawn as a second outline */
+const c02 = s => { const ax = axesOf(s);
+  const band = `<path fill-rule="evenodd" fill="${ACC}" fill-opacity=".19"
+    d="M${polyOf(ax, 'pot').replace(/ /g, 'L')}Z M${polyOf(ax, 'frac').replace(/ /g, 'L')}Z"/>`;
+  // the points still available ride on the value line, in the accent
+  return svgOf(ax.map(x => { const up = x.pot > x.frac + 0.001;
+      return label(x.a, x.label, x.num.toFixed(1),
+        up ? `<tspan class="ax-up" dx="6">+${((x.pot - x.frac) * 5).toFixed(1)}</tspan>` : null,
+        up ? 5 : 0); }),
+    `${webRings(ax)}${spokes(ax)}${floorRing()}${band}
+     <polygon points="${polyOf(ax, 'pot')}" fill="none" stroke="${ACC}" stroke-opacity=".45"
+       stroke-width="1.25" stroke-dasharray="3 4"/>${nowPoly(ax, '.34', '2.25')}${dots(ax)}`); };
+
+/* 03 · BARE WEB — no labels in the chart at all. The contribution table three
+   inches below names all seven, with weights and values; repeating them around
+   the rim buys nothing and costs 48% of the box. Vertex dots are sized by
+   weight, so the heavy categories still announce themselves. */
+const c03 = s => { const ax = axesOf(s);
+  return svgOf([], `${webRings(ax)}${spokes(ax)}${floorRing()}${potPoly(ax)}${nowPoly(ax)}${dots(ax, true)}`); };
+
+/* 04 · WEIGHTED WEDGES — angular width IS the weight, so the area IS the score */
+const c04 = s => { const w = wedgesOf(axesOf(s));
+  const body = w.map(p => `${p.pot > p.frac + 0.001
+      ? `<path d="${sector(p.a0, p.a1, rOf(p.frac), rOf(p.pot))}" fill="${ACC}" fill-opacity=".13"/>` : ''}
+    <path d="${sector(p.a0, p.a1, R0(), rOf(p.frac))}" fill="${ACC}" fill-opacity=".42"
+      stroke="${ACC}" stroke-width="1.25"/>`).join('');
+  return svgOf(w.map(p => label(p.mid, p.label, p.num.toFixed(1),
+      `<tspan class="ax-w" dx="6">${p.w}%</tspan>`, 5)),
+    `${rings([0.25, 0.5, 0.75])}${floorRing()}
+     <circle cx="0" cy="0" r="${R}" fill="none" stroke="var(--md-sys-color-outline-variant)" stroke-width="1"/>
+     ${body}`); };
+
+/* 05 · WEB + WEIGHT RING — 01, plus an outer arc whose segment lengths are the
+   weights. States weight without distorting the shape everyone already reads. */
+const c05 = s => { const ax = axesOf(s), RING = R + 11;
+  const arcs = wedgesOf(ax, 0.075).map(p => { const lg = (p.a1 - p.a0) > Math.PI ? 1 : 0;
+    return `<path d="M${pt(p.a0, RING)} A${RING},${RING} 0 ${lg} 1 ${pt(p.a1, RING)}" fill="none"
+      stroke="${ACC}" stroke-opacity=".4" stroke-width="5" stroke-linecap="round"/>`; }).join('');
+  // `push` clears the weight ring — the frame widens with it, computed not guessed
+  const labs = ax.map(x => label(x.a, x.label, x.num.toFixed(1),
+    `<tspan class="ax-w" dx="6">${x.w}%</tspan>`, 5, 13));
+  return svgOf(labs, `${webRings(ax)}${spokes(ax)}${floorRing()}${arcs}${potPoly(ax)}${nowPoly(ax)}${dots(ax)}`); };
+
+/* 06 · QUIET — no spokes, two rings, a smoothed silhouette. The most graphic
+   of the six and the least diagnostic: you read the shape, not the mechanism. */
+const c06 = s => { const ax = axesOf(s);
+  /* Catmull-Rom OVERSHOOTS: at T=.22 the product vertex bulged past the outer
+     ring, drawing a 4.0 as something over 5. A chart may simplify; it may not
+     overstate. Tension is down to .13 and every control point is clamped to R,
+     so the curve can round a corner but can never leave the grid. */
+  const clamp = p => { const d = Math.hypot(p[0], p[1]); return d > R ? [p[0] * R / d, p[1] * R / d] : p; };
+  const sm = key => { const p = ax.map(x => px(x.a, rOf(x[key]))), n = p.length, T = 0.13;
+    let d = `M${p[0][0].toFixed(1)},${p[0][1].toFixed(1)}`;
+    for (let i = 0; i < n; i++) { const p0 = p[(i - 1 + n) % n], p1 = p[i], p2 = p[(i + 1) % n], p3 = p[(i + 2) % n];
+      const c1 = clamp([p1[0] + (p2[0] - p0[0]) * T, p1[1] + (p2[1] - p0[1]) * T]);
+      const c2 = clamp([p2[0] - (p3[0] - p1[0]) * T, p2[1] - (p3[1] - p1[1]) * T]);
+      d += ` C${c1[0].toFixed(1)},${c1[1].toFixed(1)} ${c2[0].toFixed(1)},${c2[1].toFixed(1)}`
+         + ` ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`; }
+    return d + 'Z'; };
+  return svgOf(ax.map(x => label(x.a, x.label, x.num.toFixed(1))),
+    `${rings()}${floorRing()}
+     <path d="${sm('pot')}" fill="none" stroke="${ACC}" stroke-opacity=".4" stroke-width="1.25" stroke-dasharray="4 5"/>
+     <path d="${sm('frac')}" fill="${ACC}" fill-opacity=".3" stroke="${ACC}" stroke-width="2.25"/>
+     ${dots(ax)}`); };
+
+/* ── the molecule wrapper every concept shares: eyebrow · chart · the composite
+      · the split and headroom caption the profile lockup carries today. Nothing
+      the old lockup said is lost; it is re-sited. ── */
+const sev = f => f >= 0.8 ? 'strong' : f >= 0.5 ? 'mixed' : 'gap';
+function wrap(score, svg) {
+  const c = { strong: 0, mixed: 0, gap: 0 };
+  (score.categories || []).forEach(x => { c[sev(x.frac)]++; });
+  const d = score.potential - score.composite;
+  const split = [c.strong && `<span><b>${c.strong}</b> strong</span>`, c.mixed && `<span><b>${c.mixed}</b> mixed</span>`,
+                 c.gap && `<span><b>${c.gap}</b> gap${c.gap > 1 ? 's' : ''}</span>`].filter(Boolean).join('');
+  const num = `<div class="rl-num">${score.composite}<u>/ 100</u></div>`;
+  return `<div class="radar-lockup${CFG.centre ? '' : ' top'}">
+    <span class="eyebrow accent">Category profile</span>
+    ${CFG.centre ? '' : num}
+    <div class="rl-chart">${svg}${CFG.centre ? `<div class="rl-mid">${num}</div>` : ''}</div>
+    <div class="rl-cap"><span class="rl-split">${split}</span>
+      <span>Potential <b>${score.potential}</b>${d > 0 ? ` <span class="up">+${d}</span>` : ''}</span></div>
+  </div>`;
+}
+
+const h = (A.heroes && A.heroes.investability) || {};
+const hero = svg => DS.sectionHero({
+  tone: 'mid', eyebrow: h.eyebrow, eyebrowIcon: h.eyebrowIcon,
+  headline: h.headline, headlineEm: h.headlineEm, facts: h.facts,
+  right: wrap(S, svg), thesis: h.thesis,
+});
+
+const V = [
+  { n: '01', f: c01, t: 'The web, enlarged',
+    d: 'Today’s chart, properly sized and given the hero slot. The frame is computed to the labels instead of reserving a fixed gutter, zero moves onto an inner ring so the hole can hold the composite, and every label carries its own rating — which retires the legend.' },
+  { n: '02', f: c02, t: 'Headroom',
+    d: 'The band between now and potential is filled rather than outlined, and each label carries the points still available. The question this tab exists to answer is “how much is left, and where” — this is the only concept that answers it by area.' },
+  { n: '03', f: c03, t: 'Bare web',
+    d: 'No labels in the chart at all. The contribution table three inches below already names all seven with their weights and ratings; repeating them around the rim buys nothing and costs half the box. Vertex dots are sized by weight so the heavy categories still announce themselves. <b>By far the biggest chart of the six.</b>' },
+  { n: '04', f: c04, t: 'Weighted wedges',
+    d: 'Each category’s angular width is its weight, so the filled area <em>is</em> the score. Seven equal spokes claim team and evidence matter the same; they are 25% and 5%. The only concept where a dent in a heavy category looks as expensive as it is — at the cost of the familiar web silhouette.' },
+  { n: '05', f: c05, t: 'Web + weight ring',
+    d: '01 with an outer arc whose segment lengths are the weights, so weight is stated without distorting the shape everyone already reads. Answers “which of these actually moves the number” and keeps the web.' },
+  { n: '06', f: c06, t: 'Quiet',
+    d: 'No spokes, two rings, a smoothed silhouette. The most graphic of the six and the least diagnostic: you read the shape, not the mechanism. It also has a defect the others don’t — a curve between two vertices draws values at angles where no category exists, so it <em>implies</em> readings it hasn’t got. The overshoot is clamped and the vertices are dotted to hold it honest, but the implication is structural. Strongest if this slot is an image, weakest if it is a tool.' },
+];
+
+/* ── OTHER ASSESSMENTS ────────────────────────────────────────────────────
+   A molecule that only works on MoneyGym is not a molecule. Four states the
+   live product will actually hand this thing, rendered from the same code:
+   a strong book, a brand-new assessment with nothing rated, a rubric that
+   isn't 7×5, and a venture that is at its ceiling everywhere. ── */
+const mk = (cats, composite, potential) => ({ categories: cats, composite, potential });
+const scale = (f, pot) => S.categories.map(c => ({ ...c, frac: f(c), pot: pot(c),
+  num: (f(c) * 5).toFixed(1) }));
+const STATES = [
+  { t: 'Strong book · 80', s: mk(scale(c => Math.min(1, c.frac + 0.3), c => Math.min(1, c.frac + 0.35)), 80, 88),
+    d: 'A near-full web. The shape has to read as strong without the labels colliding with the rim.' },
+  { t: 'Forming · nothing rated yet', s: mk(scale(() => 0, () => 0), 0, 0),
+    d: 'A brand-new assessment, before the run scores anything. Everything collapses onto the inner ring — which is exactly why zero sits on a ring and not at the centre: at the centre this would be a single invisible dot and a 0 in the hole.' },
+  { t: 'A five-category rubric', s: mk(S.categories.slice(0, 5).map(c => ({ ...c })), 52, 70),
+    d: 'The live radar hardcodes seven keys and a label map, so this case renders two phantom axes at zero today. Derived from the categories, it just draws five.' },
+  { t: 'At its ceiling everywhere', s: mk(scale(c => c.frac, c => c.frac), 55, 55),
+    d: 'No headroom at all. The dashed potential ring must vanish rather than trace the solid one — a double line that says nothing.' },
+];
+
+const out = document.getElementById('out');
+function render() {
+  out.innerHTML = V.map(v => `
+    <section class="cx">
+      <div class="cx-h"><span class="cx-n">${v.n}</span><span class="cx-t">${v.t}</span></div>
+      <p class="cx-d">${v.d}</p>
+      <div class="stage" data-k="${v.n}">${hero(v.f(S))}</div>
+      <p class="cx-m" data-m="${v.n}">measuring…</p>
+    </section>`).join('')
+  + `<section class="cx">
+      <div class="cx-h"><span class="cx-n">∀</span><span class="cx-t">Other assessments</span></div>
+      <p class="cx-d">The same code against four states the live product will hand it. A molecule that only works on MoneyGym is not a molecule — these are the cases that decide whether this ships.</p>
+      <div class="grid4">${STATES.map(st => `<div class="mini">
+        <div class="mini-t">${st.t}</div>
+        <div class="mini-c">${wrap(st.s, c01(st.s))}</div>
+        <p class="mini-d">${st.d}</p></div>`).join('')}</div>
+    </section>`;
+  requestAnimationFrame(measure);
+}
+function measure() {
+  document.querySelectorAll('.stage').forEach(st => {
+    const svg = st.querySelector('.rl-chart svg'), o = document.querySelector(`[data-m="${st.dataset.k}"]`);
+    const col = st.querySelector('.section-hero .right'), lk = st.querySelector('.radar-lockup');
+    if (!svg || !o) return;
+    const r = svg.getBoundingClientRect();
+    const web = r.width * (+svg.dataset.web / +svg.dataset.box);
+    o.textContent = `CHART ${Math.round(web)}px  (${(web / 202 * 100 - 100 > 0 ? '+' : '')}${Math.round(web / 202 * 100 - 100)}% vs today)`
+      + `  ·  BOX ${Math.round(r.width)}px  ·  COLUMN ${Math.round(col.getBoundingClientRect().width)}px`
+      + `  ·  LOCKUP ${Math.round(lk.getBoundingClientRect().height)}px tall  ·  TODAY 202px`;
+  });
+}
+document.querySelectorAll('.ctl button').forEach(b => b.onclick = () => {
+  const g = b.dataset.w != null ? 'w' : 'c';
+  document.querySelectorAll(`.ctl button[data-${g}]`).forEach(x => x.classList.toggle('on', x === b));
+  if (g === 'w') { CFG.wide = b.dataset.w === '1'; document.body.classList.toggle('wide', CFG.wide); }
+  else CFG.centre = b.dataset.c === '1';
+  render();
+});
+addEventListener('resize', () => requestAnimationFrame(measure));
+render();
+</script>
+</body>
+</html>

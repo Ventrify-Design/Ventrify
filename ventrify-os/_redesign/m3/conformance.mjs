@@ -4,8 +4,15 @@ import puppeteer from '/Users/antonywhenman/Desktop/Ventrify/node_modules/puppet
 // (workspace/, import ../shared/m3/ds.js — served from project root, need a FIREBASE_ENABLED=false
 // demo build or app.js redirects to login). Both mount the SAME shell so both take the same gate.
 const GROUPS = [
-  { base: 'http://localhost:3200/_redesign/m3', pages: ['portfolio.html', 'portfolio.html?state=empty', 'queue.html', 'research-detail.html', 'drill.html', 'assess.html', 'assess.html?state=gaps', 'assess-setup.html', 'assess-running.html', 'assess-running.html?state=silent'] },
-  { base: 'http://localhost:3200/workspace', pages: ['dashboard-m3.html', 'queue-m3.html'] },
+  { base: 'http://localhost:3200/_redesign/m3', pages: ['portfolio.html', 'portfolio.html?state=empty', 'queue.html', 'research-detail.html', 'drill.html', 'assess.html', 'assess.html?state=gaps', 'assess-brand.html', 'portfolio-brand.html', 'assess-setup.html', 'assess-running.html', 'assess-running.html?state=silent'] },
+  // EVERY page an operator can reach, not the two that happened to be here.
+  // team/settings/admin/assess-next were already on the M3 shell and already
+  // live, but were outside the gate — so nothing stopped them drifting. The
+  // brand migration is about to touch all of them, which is the wrong moment
+  // to be flying blind on five of seven.
+  { base: 'http://localhost:3200/workspace',
+    pages: ['dashboard-m3.html', 'queue-m3.html', 'team-m3.html', 'settings-m3.html',
+            'admin-m3.html', 'assess-next.html'] },
 ];
 const browser = await puppeteer.launch({
   executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
@@ -20,6 +27,22 @@ async function check(base, file) {
   const noInlineChrome = !/<style>[\s\S]*\.(masthead|m3-appbar|m3-main)\b[\s\S]*<\/style>/.test(src);
 
   const page = await browser.newPage();
+  /* DEMO MODE WITHOUT EDITING THE TREE. The header above says this gate needs
+     "a FIREBASE_ENABLED=false demo build" — i.e. edit firebase/config.js and
+     remember to put it back. A forgotten revert ships a workspace with its
+     backend switched off, and the gate itself was the thing asking for the
+     edit. Intercepting the module in flight cannot be forgotten. */
+  await page.setRequestInterception(true);
+  page.on('request', async req => {
+    if (req.url().endsWith('/firebase/config.js')) {
+      try {
+        const src = await (await fetch(req.url())).text();
+        return req.respond({ status: 200, contentType: 'application/javascript',
+          body: src.replace(/export const FIREBASE_ENABLED\s*=\s*true/, 'export const FIREBASE_ENABLED = false') });
+      } catch { /* fall through to the real file */ }
+    }
+    req.continue();
+  });
   const errs = [];
   page.on('pageerror', e => errs.push(String(e.message || e)));
   page.on('console', m => { if (m.type() === 'error' && !/404|Failed to load resource/.test(m.text())) errs.push(m.text()); });

@@ -16,7 +16,7 @@
   .sec:first-of-type { padding-top: 8px; }
   .eyebrow { font-size: 11px; font-weight: 500; letter-spacing: 1.4px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); }
   .eyebrow.accent { color: var(--md-sys-color-primary); }
-  .eyebrow.good { color: var(--success); }
+  .eyebrow.good { color: var(--md-sys-color-primary); }
   .eyebrow.warn { color: var(--warning); }
   .eyebrow.bad  { color: var(--md-sys-color-error); }
   /* stacked: the eyebrow tag sits top-left, the optional .meta tag top-right on the SAME row, and the title
@@ -48,8 +48,35 @@
   .section-hero.single .divide { display: none; }
   .section-hero.single .left, .section-hero.single .right { padding: 0; }
   .section-hero.single .left:empty, .section-hero.single .right:empty { display: none; }
+  /* min-height: 300px exists so the two-column hero reserves room for the TALL
+     slot — the score dial, the book strip. A single-molecule hero has no such
+     slot, so the floor just opened a gap between its facts and the coda that
+     follows (measured ~200px on the owner view of Admin). It also loses the
+     column that was holding the headline to a readable measure, so the measure
+     is restated here rather than left to run the full width of the page. */
+  .section-hero.single { min-height: 0; }
+  .section-hero.single > .left { max-width: 46rem; }
 
-  .statement-lockup-eyebrow { display: inline-flex; align-items: center; gap: 9px; height: 30px; padding: 0 4px; color: var(--warning); font-size: 12px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; }
+  /* --tone carries the verdict's colour to everything in the lockup. 'mid' is
+   the default so nothing that existed before this moves. */
+/* COLOUR RULE — green and red are reserved for SEMANTICS.
+   A pass, a failure, a cleared check, the case for and the case against: those
+   earn green and red. A score, a dial, a pip, a headroom delta is a GRAPHIC,
+   and it takes the product's accent instead. Two reasons it matters: green
+   doing double duty means a reader cannot tell "this is good" from "this
+   passed", and VentureStack's accent is itself green, so a green graphic
+   beside green chrome stops reading as a judgement at all.
+   Amber and red stay on `mid` and `bad` — a caution is still a caution. */
+.statement-lockup { --tone: var(--md-sys-color-primary); }   /* no verdict → brand, never a caution */
+.statement-lockup.tone-brand { --tone: var(--md-sys-color-primary); }
+.statement-lockup.tone-good  { --tone: var(--md-sys-color-primary); }
+.statement-lockup.tone-mid   { --tone: var(--warning); }
+.statement-lockup.tone-bad   { --tone: var(--md-sys-color-error); }
+/* Always the accent, never the tone: an eyebrow names the section, it does
+   not judge it. Following --tone made "The market" render amber, which reads
+   as a warning about a heading. The emphasised word in the headline and the
+   conviction pips still follow the tone — those ARE the judgement. */
+.statement-lockup-eyebrow { display: inline-flex; align-items: center; gap: 9px; height: 30px; padding: 0 4px; color: var(--md-sys-color-primary); font-size: 12px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; }
   .statement-lockup-eyebrow .material-symbols-rounded { font-size: 18px; }
   /* Bounded so a verbose verdict can't tower over the score and open a void:
      moderated size + a 4-line guardrail. Copy contract: the verdict is a short
@@ -64,14 +91,14 @@
        counts LINES, so padding cannot leak an extra one; it only gives the descenders room to exist. */
     padding-bottom: 0.07em;
   }
-  .statement-lockup-headline em { font-style: normal; color: var(--warning); }
+  .statement-lockup-headline em { font-style: normal; color: var(--tone); }
   .statement-lockup-facts { display: flex; flex-wrap: wrap; gap: 10px 30px; margin-top: 26px; }
   .fact .k { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); }
   .fact .v { font-size: 16px; font-weight: 500; margin-top: 4px; display: flex; align-items: center; gap: 10px; }
   .fact .v small { font-weight: 400; color: var(--md-sys-color-on-surface-variant); font-size: 13px; }
   .conv { display: inline-flex; gap: 4px; }
   .conv i { width: 22px; height: 6px; border-radius: 3px; background: var(--md-sys-color-surface-container-highest); }
-  .conv i.on { background: var(--warning); }
+  .conv i.on { background: var(--tone, var(--warning)); }
 
   /* ============ LOCKUP PRIMITIVES — shared by every headline-metric lockup (score, progress, …) ============ */
   /* the big display numeral with a small suffix, and the tone chip — the editorial "big/small" treatment */
@@ -81,9 +108,28 @@
   .lockup-num .lockup-forming { font-size: clamp(30px, 4.4vw, 48px); letter-spacing: -1px; color: var(--md-sys-color-on-surface-variant); }
   .lockup-band { margin-top: 16px; display: inline-flex; align-items: center; gap: 7px; height: 30px; padding: 0 13px; border-radius: 8px; font-size: 13px; font-weight: 500; letter-spacing: .3px; }
   .lockup-band .material-symbols-rounded { font-size: 17px; }
-  .lockup-band.good { background: var(--success-container); color: var(--on-success-container); }
-  .lockup-band.mid { background: var(--warning-container); color: var(--on-warning-container); }
-  .lockup-band.bad { background: var(--md-sys-color-error-container); color: var(--md-sys-color-on-error-container); }
+  /* ── THE VERDICT BAND IS A STAMP, NOT A LABEL ─────────────────────────────────────
+     These were tinted containers. That worked while "good" was green, because green was
+     nothing else on the page. With affirmation moved onto the brand colour, a tinted
+     accent band sat among an accent eyebrow, an accent dial and accent bars, and
+     "Investment ready" — the product's actual judgement — stopped reading as a judgement
+     and became more chrome.
+
+     The fix is WEIGHT, not hue. A verdict is the one element on the page entitled to a
+     solid fill, so all three bands are now solid. That makes the band a different class
+     of object from everything the accent does as chrome, and it keeps the three-step
+     ramp (brand → amber → red) legible as one scale. */
+  /* ⚠ ALL THREE STAMPS USE THE LIGHT STEP AS THE FILL, WITH THE DEEP INK AS TEXT.
+     The saturated step looked like the obvious choice and measured 4.38:1 for white on the
+     violet — under AA at 13px, on "Investment ready", "Cleared to wire" and the confidence
+     line. A mid-luminance accent is the worst case for this: white is too close above it
+     and the brand ink too far below. Going one step LIGHTER fixes it at ~9:1 and reads
+     more like a stamp anyway, the way a highlighter does. Amber and red already worked
+     this way, so the three now share one construction. */
+  .lockup-band { font-weight: 600; }
+  .lockup-band.good { background: var(--brand-affirm); color: var(--brand-ink); }
+  .lockup-band.mid  { background: var(--warning); color: var(--on-warning, #30230A); }
+  .lockup-band.bad  { background: var(--md-sys-color-error); color: var(--md-sys-color-on-error); }
 
   /* ============ SCORE LOCKUP — label · big number/max · tone band · optional now→potential bar ============ */
   .score-lockup { text-align: left; }
@@ -94,7 +140,7 @@
   .score-lockup-bar .track .now { position: absolute; inset: 0 auto 0 0; border-radius: 999px; background: var(--md-sys-color-primary); }
   .score-lockup-bar .cap { display: flex; justify-content: space-between; margin-top: 10px; font-size: 12.5px; color: var(--md-sys-color-on-surface-variant); }
   .score-lockup-bar .cap b { color: var(--md-sys-color-on-surface); font-weight: 500; }
-  .score-lockup-bar .cap .up { color: var(--success); font-weight: 500; }
+  .score-lockup-bar .cap .up { color: var(--md-sys-color-primary); font-weight: 500; }
 
   /* ============ PROGRESS LOCKUP — label · big cleared/total · status chip · segmented severity bar ============ */
   /* mirrors the score lockup's big/small numeral; the bar is a clearance gate (severity-coloured pips). */
@@ -113,28 +159,225 @@
   /* ---- shared caption row for the metric-lockup family (profile / valuation / coverage) ---- */
   .lockup-cap { display: flex; justify-content: space-between; gap: 12px; margin-top: 10px; font-size: 12.5px; color: var(--md-sys-color-on-surface-variant); }
   .lockup-cap b { color: var(--md-sys-color-on-surface); font-weight: 500; }
-  .lockup-cap .up { color: var(--success); font-weight: 500; }
+  .lockup-cap .up { color: var(--md-sys-color-primary); font-weight: 500; }
   .lockup-cap .over-lab, .lockup-cap .over-lab b { color: var(--md-sys-color-error); }
 
-  /* ============ PROFILE LOCKUP — big score · split chips · weighted severity strip · headroom cap ====== */
-  .profile-lockup { text-align: left; }
+  /* ============ SPLIT CHIPS + WEIGHTED STRIP — introduced by profileLockup (retired), now
+     owned by bookLockup on the Portfolio screen. The Investability tab's category profile
+     is radarLockup; see RADAR LOCKUP below. ====== */
   .profile-split { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 8px; }
   .profile-split .lockup-band { margin-top: 0; height: 28px; padding: 0 11px; }
+  /* These are COUNTS of categories by score band — "6 strong · 1 mixed" —
+     not a verdict on the venture, so they follow the strip beside them
+     rather than the green/amber a verdict chip earns. The standalone
+     .lockup-band (Investment ready / Promising) is untouched: that one IS
+     the judgement. */
+  .profile-split .lockup-band.good,
+  .profile-split .lockup-band.mid,
+  .profile-split .lockup-band.bad {
+    color: var(--md-sys-color-primary);
+    background: color-mix(in srgb, var(--md-sys-color-primary) 14%, transparent);
+  }
+  .profile-split .lockup-band.mid { color: color-mix(in srgb, var(--md-sys-color-primary) 78%, var(--md-sys-color-on-surface)); }
+  .profile-split .lockup-band.bad { color: var(--md-sys-color-on-surface-variant);
+    background: var(--md-sys-color-surface-container-highest); }
   .profile-split .lockup-band b { font-weight: 700; }
   .profile-strip { margin-top: 22px; display: flex; gap: 2px; height: 10px; border-radius: 999px; overflow: hidden; }
   .profile-strip .seg { border-radius: 2px; }
-  .profile-strip .seg.good { background: var(--success); }
-  .profile-strip .seg.mid { background: var(--warning); }
-  .profile-strip .seg.bad { background: var(--md-sys-color-error); }
+  .profile-strip .seg.good { background: var(--md-sys-color-primary); }
+  .profile-strip .seg.mid { background: color-mix(in srgb, var(--md-sys-color-primary) 46%, transparent); }
+  .profile-strip .seg.bad { background: color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent); }
 
-  /* ============ VALUATION LOCKUP — big multiple · verdict chip · reprice band + ask marker ============ */
+  /* ============ RADAR LOCKUP — the category profile as a chart =========================
+     Fronts the Investability hero. The SVG sizes itself to the column and its viewBox is
+     computed around the labels it actually draws (ds.js radar()), so there is no fixed
+     aspect ratio to maintain here — only type, the centred numeral, and the caption. */
+  .radar-lockup { display: flex; flex-direction: column; }
+  /* the chart CLOSES the lockup — the readable half (numeral + split + headroom)
+     stacks above it, so this margin is the break between reading and looking */
+  .rl-chart { position: relative; width: 100%; margin-top: 24px; }
+  /* overflow:visible is a GUARD, not a licence: the frame is computed to contain every
+     label, so nothing should spill — this only stops a rounding error clipping a glyph. */
+  .rl-chart .rad-svg { width: 100%; height: auto; display: block; overflow: visible; }
+  .rad-l { font-family: var(--font-mono, 'Roboto Mono', ui-monospace, monospace); font-size: 10.5px;
+           font-weight: 500; letter-spacing: .09em; fill: var(--md-sys-color-on-surface-variant); }
+  .rad-v { font-family: var(--font-mono, 'Roboto Mono', ui-monospace, monospace); font-size: 11.5px;
+           font-weight: 600; letter-spacing: .02em; fill: var(--md-sys-color-on-surface); }
+  /* The SAME .lockup-num every other lockup in the family uses — a second numeral ramp
+     is exactly the drift the DS audit exists to catch. Sized DOWN from the family's
+     clamp(96px,…,150px): here the numeral shares the slot with a chart that is the point
+     of the molecule, and at 150px it competed with it instead of introducing it. */
+  .radar-lockup .lockup-num {
+    margin-top: 12px; font-size: clamp(54px, 5.6vw, 78px); letter-spacing: -3px; line-height: .84;
+  }
+  .radar-lockup .lockup-num small { font-size: clamp(16px, 1.6vw, 21px); margin-top: 5px; }
+  /* nothing rated yet — the 0 is true, but it is not a result, so it does not shout */
+  .radar-lockup .lockup-num.is-forming { color: var(--md-sys-color-on-surface-variant); }
+  .rl-cap { display: flex; justify-content: space-between; align-items: center; gap: 10px 14px;
+            flex-wrap: wrap; margin-top: 16px; font-size: 13px; color: var(--md-sys-color-on-surface-variant); }
+  .rl-cap b { color: var(--md-sys-color-on-surface); font-weight: 600; }
+  .rl-cap .up { color: var(--md-sys-color-primary); font-weight: 500; }
+  .rl-right { display: inline-flex; align-items: center; gap: 10px; }
+  .rl-part { font-style: normal; font-size: 12px; color: var(--md-sys-color-outline); }
+  .rl-wait { font-size: 12.5px; color: var(--md-sys-color-outline); }
+  /* COUNTS of categories by band, not a verdict — one hue, exactly like .profile-split */
+  .rl-split { display: flex; gap: 7px; flex-wrap: wrap; }
+  .rl-split span { display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 11px;
+                   border-radius: 999px; background: var(--md-sys-color-surface-container-high);
+                   font-size: 12px; color: var(--md-sys-color-on-surface-variant); }
+  .rl-split span b { font-weight: 700; color: var(--md-sys-color-on-surface); }
+  .rl-split .rl-forming { color: var(--md-sys-color-on-surface-variant); }
+
+  /* ============ VALUATION LOCKUP — the MEASURED AXIS ==================================
+     A money scale under a single bar: the defensible band as a bracketed region, the ask
+     as a marker on it, and the overshoot between them hatched and dimensioned. Replaces a
+     vertical ladder, and before that an 8px track with no axis at all — the version that
+     made you read the one number that mattered out of the caption underneath. */
   .valuation-lockup { text-align: left; }
-  .valuation-bar { margin-top: 22px; }
-  .valuation-bar .track { position: relative; height: 10px; border-radius: 999px; background: var(--md-sys-color-surface-container-highest); overflow: hidden; }
-  .valuation-bar .track .band { position: absolute; top: 0; bottom: 0; border-radius: 999px; background: color-mix(in srgb, var(--success) 40%, transparent); }
-  .valuation-bar .track .over { position: absolute; top: 0; bottom: 0; background: color-mix(in srgb, var(--md-sys-color-error) 28%, transparent); }
-  .valuation-bar .track .tick { position: absolute; top: -3px; bottom: -3px; width: 2px; margin-left: -1px; background: var(--md-sys-color-error); box-shadow: 0 0 0 2px var(--md-sys-color-surface); }
-  .valuation-bar .lockup-cap { overflow: visible; }
+  /* the same numeral ramp radarLockup uses. The family default is clamp(96px…150px),
+     at which "60M pre" — the fallback when the runner emits no multiple — overflows the
+     hero column outright, and "3.75" crowds the chart it is meant to introduce. */
+  .valuation-lockup .lockup-num { margin-top: 12px; font-size: clamp(42px, 5.6vw, 78px);
+    letter-spacing: -3px; line-height: .84; }
+  .valuation-lockup .lockup-num small { font-size: clamp(13px, 1.6vw, 21px); margin-top: 5px; }
+
+  /* the two figures the bar is about, stated above it so the chart never has to be decoded */
+  .vz-lab { display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+    margin-top: 22px; font-size: 12.5px; color: var(--md-sys-color-on-surface-variant); }
+  .vz-lab b { color: var(--md-sys-color-on-surface); font-weight: 600; }
+
+  .v1-track { position: relative; height: 34px; border-radius: 8px; margin-top: 10px;
+    background: var(--md-sys-color-surface-container-highest); overflow: hidden; }
+  /* the band is the ACCENT: it is the recommendation, not a warning */
+  .v1-band { position: absolute; top: 0; bottom: 0;
+    background: color-mix(in srgb, var(--md-sys-color-primary) 34%, transparent);
+    border-left: 2px solid var(--md-sys-color-primary);
+    border-right: 2px solid var(--md-sys-color-primary); }
+  /* ⚠ only the part ABOVE the ceiling is amber. Painting the whole ask as a warning says the
+     ask itself is the problem; the overshoot is. Hatched so it reads as "this part is not
+     supported" rather than as more bar. */
+  .v1-over { position: absolute; top: 0; bottom: 0;
+    background: repeating-linear-gradient(135deg,
+      color-mix(in srgb, var(--warning) 26%, transparent) 0 6px, transparent 6px 12px); }
+  .v1-ask { position: absolute; top: 0; bottom: 0; width: 3px; border-radius: 2px; background: var(--warning); }
+  /* ⚠ the marker is amber only when there IS an overshoot. An ask sitting inside the band was
+     still being drawn in the warning colour, directly under a green "Fairly priced" chip —
+     the chart contradicting the verdict beside it. With nothing over, the ask is just a
+     position on the scale, so it takes the reading hue. */
+  .v1-ask.ok { background: var(--md-sys-color-on-surface); }
+
+  /* the overshoot, dimensioned on the chart — the number that used to live only in prose */
+  .v1-gap { position: relative; height: 17px; margin-top: 4px; }
+  .v1-gap .bar { position: absolute; top: 7px; height: 1px; background: var(--warning); opacity: .75; }
+  .v1-gap .cap { position: absolute; top: 0; transform: translateX(-50%); padding: 0 6px; white-space: nowrap;
+    background: var(--md-sys-color-surface);
+    font: 600 10.5px/1.5 var(--font-mono, 'Roboto Mono', monospace); color: var(--warning); }
+
+  /* the axis: ticks derived on a 1/2/2.5/5 ladder, so it reads in round money at any scale */
+  .vz-axis { position: relative; height: 20px; margin-top: 7px; }
+  .vz-axis i { position: absolute; top: 0; width: 1px; height: 5px; background: var(--md-sys-color-outline-variant); }
+  .vz-axis span { position: absolute; top: 7px; transform: translateX(-50%); white-space: nowrap;
+    font: 500 10px/1 var(--font-mono, 'Roboto Mono', monospace); letter-spacing: .05em;
+    color: var(--md-sys-color-on-surface-variant); }
+  /* the per-tick transform is set inline by valuationLockup — see the note there */
+
+  .vl-read { margin: 16px 0 0; font-size: 12.5px; line-height: 1.55; color: var(--md-sys-color-on-surface-variant); }
+  .vl-read b { color: var(--md-sys-color-on-surface); font-weight: 600; }
+  .vl-read .over { color: var(--warning); font-weight: 600; }
+  .vl-none { margin: 16px 0 0; font-size: 12.5px; color: var(--md-sys-color-outline); font-style: italic; }
+
+  /* ============ BENCH LOCKUP — the cast split by who has to build the thing (Team hero) ================ */
+  .bench-lockup { display: flex; flex-direction: column; }
+  /* the SAME ramp radarLockup and valuationLockup already took down from the family's
+     clamp(96px…150px): here the numeral introduces a chart instead of being the molecule. */
+  .bench-lockup .lockup-num { margin-top: 12px; font-size: clamp(54px, 5.6vw, 78px);
+                              letter-spacing: -3px; line-height: .84; }
+  .bench-lockup .lockup-num small { font-size: clamp(16px, 1.6vw, 21px); margin-top: 5px; }
+  .bl-cap { display: flex; justify-content: space-between; align-items: center; gap: 10px 14px;
+            flex-wrap: wrap; margin-top: 15px; font-size: 13px; color: var(--md-sys-color-on-surface-variant); }
+  .bl-cap b { color: var(--md-sys-color-on-surface); font-weight: 600; }
+  /* same call as .sigtier-h em — outline measured 5.87:1 beside neighbours at 10.9:1 */
+  .bl-part { font-size: 12.5px; color: var(--md-sys-color-on-surface-variant); }
+  .bl-wait { font-size: 12.5px; color: var(--md-sys-color-on-surface-variant); }
+  /* the bench CLOSES the lockup, so this margin is the break between reading and looking —
+     the same beat .rl-chart puts in front of the radar. */
+  .bl-bench { display: grid; gap: 16px; margin-top: 22px; }
+
+  /* signalTier — one labelled band of people-pills. Used by benchLockup; generic over any
+     [{i,label,signal,icon}] set, so a future tiering (by function, by tenure) reuses it as-is. */
+  .sigtier { display: grid; gap: 9px; min-width: 0; }
+  .sigtier-h { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+  /* ⚠ this was --md-sys-color-outline at 11.5px, which measures 5.87:1 — it passes AA on paper and
+     still read as the faintest thing in the molecule, because everything around it sits at 10.9:1.
+     Clearing the bar is not the same as being legible next to its neighbours. */
+  .sigtier-h em { font-style: normal; font-size: 12.5px; font-weight: 400; white-space: nowrap;
+                  color: var(--md-sys-color-on-surface-variant); }
+  .sigtier-h em i { font-style: normal; margin: 0 5px; color: var(--md-sys-color-outline); }
+  /* the clause that is a WARNING, not a tally: nobody verified on a tier, people flagged, seats
+     unfilled. Set per clause by the caller, so "0 of 3 verified · 2 flagged" can colour only the
+     half that is bad and leave the half that is arithmetic alone. */
+  .sigtier-h em .bad { color: var(--md-sys-color-error); font-weight: 600; }
+  .sigtier-row { display: flex; flex-wrap: wrap; gap: 7px; min-width: 0; }
+  .sigtier-row b { display: inline-flex; align-items: center; gap: 7px; min-height: 32px;
+                   max-width: 100%; padding: 4px 11px 4px 7px; border-radius: 9px;
+                   font: 500 12px/1.3 var(--font-text, inherit); }
+  .sigtier-row b s { width: 20px; height: 20px; border-radius: 6px; display: grid; place-items: center;
+                     flex: none; text-decoration: none;
+                     font-family: var(--font-mono, 'Roboto Mono', ui-monospace, monospace);
+                     font-size: 9px; font-weight: 600; }
+  /* tints reuse the roster's container pairs — colour IS the verdict, one source for both views */
+  .sigtier-row b.positive { background: color-mix(in srgb, var(--success) 15%, transparent); color: var(--md-sys-color-on-surface); }
+  .sigtier-row b.positive s { background: var(--success-container); color: var(--on-success-container); }
+  .sigtier-row b.neutral { background: var(--md-sys-color-surface-container-high); color: var(--md-sys-color-on-surface-variant); }
+  .sigtier-row b.neutral s { background: var(--md-sys-color-surface-container-highest); color: var(--md-sys-color-on-surface-variant); }
+  .sigtier-row b.flag { background: color-mix(in srgb, var(--md-sys-color-error) 15%, transparent); color: var(--md-sys-color-on-surface); }
+  .sigtier-row b.flag s { background: var(--md-sys-color-error-container); color: var(--md-sys-color-on-error-container); }
+  /* an empty seat is an OUTLINE: nothing is in it, so nothing is filled in */
+  .sigtier-row b.seat { background: transparent; padding: 4px 9px; color: var(--md-sys-color-outline);
+                        box-shadow: inset 0 0 0 1.5px var(--md-sys-color-outline-variant); }
+  .sigtier-row b.seat .material-symbols-rounded { font-size: 17px; }
+
+  /* ============ CLEARANCE LOCKUP + UNIT GRID — one cell per check (Diligence hero) ===================== */
+  .clearance-lockup { display: flex; flex-direction: column; }
+  /* the same ramp radarLockup / valuationLockup / benchLockup already took down from the family's
+     clamp(96px…150px) — the numeral introduces a chart here rather than being the molecule. */
+  .clearance-lockup .lockup-num { margin-top: 12px; font-size: clamp(54px, 5.6vw, 78px);
+                                  letter-spacing: -3px; line-height: .84; }
+  .clearance-lockup .lockup-num small { font-size: clamp(15px, 1.6vw, 21px); margin-top: 5px; }
+
+  /* the grid closes the readable half — same beat .rl-chart and .bl-bench put before their charts */
+  .ugrid { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 22px; }
+  .ugrid i { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; flex: none; }
+  .ugrid i .material-symbols-rounded { font-size: 18px; color: var(--md-sys-color-outline); }
+  /* a cell is TINTED by severity and OUTLINED because it is open; filled only once it is cleared.
+     Open vs cleared has to survive without colour, so it is also a different glyph. */
+  .ugrid i.err  { background: color-mix(in srgb, var(--md-sys-color-error) 15%, transparent);
+                  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--md-sys-color-error) 55%, transparent); }
+  .ugrid i.warn { background: color-mix(in srgb, var(--warning) 14%, transparent);
+                  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--warning) 48%, transparent); }
+  .ugrid i.info { box-shadow: inset 0 0 0 1.5px var(--md-sys-color-outline-variant); }
+  .ugrid i.err  .material-symbols-rounded { color: var(--md-sys-color-error); }
+  .ugrid i.warn .material-symbols-rounded { color: var(--warning); }
+  .ugrid i.done { background: var(--success-container); box-shadow: none; }
+  .ugrid i.done .material-symbols-rounded { color: var(--on-success-container); }
+  /* the overflow cell past `max` — a count, not a check, so it carries no severity */
+  .ugrid i.more { box-shadow: inset 0 0 0 1.5px var(--md-sys-color-outline-variant);
+                  font-family: var(--font-mono, 'Roboto Mono', ui-monospace, monospace);
+                  font-size: 11px; font-weight: 600; color: var(--md-sys-color-on-surface-variant); }
+
+  .ug-leg { display: flex; flex-wrap: wrap; gap: 7px 15px; margin-top: 15px;
+            font-family: var(--font-mono, 'Roboto Mono', ui-monospace, monospace);
+            font-size: 10.5px; font-weight: 500; letter-spacing: .07em;
+            color: var(--md-sys-color-on-surface-variant); }
+  .ug-leg .ug-k { display: inline-flex; align-items: center; gap: 6px; }
+  .ug-leg .ug-k s { width: 9px; height: 9px; border-radius: 3px; display: block; text-decoration: none; }
+  .ug-leg .err s  { background: color-mix(in srgb, var(--md-sys-color-error) 55%, transparent); }
+  .ug-leg .warn s { background: color-mix(in srgb, var(--warning) 50%, transparent); }
+  .ug-leg .info s { box-shadow: inset 0 0 0 1.5px var(--md-sys-color-outline-variant); }
+  .ug-read { margin: 16px 0 0; font-size: 12.5px; line-height: 1.55; color: var(--md-sys-color-on-surface-variant); }
+  .ug-read b { color: var(--md-sys-color-on-surface); font-weight: 600; }
+  .ug-read b.bad { color: var(--md-sys-color-error); }
+  .ug-read b.ok  { color: var(--success); }
 
   /* ============ COVERAGE LOCKUP — big completeness numeral · confidence chip · demoted provenance row === */
   .coverage-lockup { text-align: left; }
@@ -156,6 +399,43 @@
   .compscan-fig b { font-size: var(--row-val); font-weight: 600; }
   .compscan-fig span { display: block; font-size: var(--row-cap); color: var(--md-sys-color-on-surface-variant); margin-top: 2px; }
   .compscan-clause { grid-column: 1 / -1; margin: 6px 0 0; font-size: var(--row-clause); line-height: 1.5; color: var(--md-sys-color-on-surface-variant); }
+
+  /* ============ THE MATRIX — the competitive table, on the background, not in a card ================== */
+  /* A table standing on its own has to supply the structure the card used to imply. Three things
+     do it: the header rule, the row hairlines it already had, and — the one that actually makes it
+     read as part of the memo — FLUSH EDGES. Inside a card the 12px cell padding was measured from
+     the card's edge; on the background that same padding indents the first column away from the
+     prose above it, and the table looks dropped in rather than set. The end cells lose it. */
+  /* the matrix belongs to the standfirst above it, not to a new section — a full .sec gap made the
+     de-carded table float between two paragraphs instead of answering the one before it */
+  .matrix-sec { padding-top: 24px; }
+  .tbl-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-inline: -2px; padding-inline: 2px; }
+  /* ⚠ border-collapse: SEPARATE, with a row gap. Collapsed, the header's rule sat flush on
+     top of the highlighted row — and because that row is a rounded, tinted pill, the rule
+     read as a stray keyline crossing its top edge. A few px of row spacing gives the pill
+     clearance from the rule and loosens the whole table at the same time, which is the
+     other half of the problem: at 14px padding with six prose columns it was reading as
+     one block of text rather than a grid. */
+  .tbl-bare { min-width: 760px; border-collapse: separate; border-spacing: 0 4px; }
+  .tbl-bare th { padding: 0 18px 15px 0; border-bottom: 1px solid var(--md-sys-color-outline-variant); }
+  .tbl-bare td { padding: 15px 18px 16px 0; line-height: 1.52; }
+  .tbl-bare th:first-child, .tbl-bare td:first-child { padding-left: 0; }
+  .tbl-bare th:last-child,  .tbl-bare td:last-child  { padding-right: 0; }
+  /* a company name wrapping to two lines was costing a row 22px for nothing */
+  .tbl-bare td:first-child { min-width: 132px; }
+  /* the hairline is drawn at the very bottom of the cell; with a row gap it needs to sit
+     at the gap's midpoint instead, or it reads as underlining the row above it */
+  .tbl-bare td::after { bottom: -2px; }
+  .tbl-bare tbody tr:last-child td::after { content: none; }   /* no trailing rule under the last row */
+  /* ⚠ the "us" row keeps its highlight but loses the solid primary-container fill. In a card that
+     fill was one panel inside another; on the background it became the loudest thing on the tab,
+     louder than the verdict itself. A tint plus an accent edge marks the row just as unambiguously
+     — the same treatment .compscan-row.anchor already uses for "this is the one you are here for". */
+  .tbl-bare tr.me td { background: color-mix(in srgb, var(--md-sys-color-primary) 13%, transparent);
+                       color: var(--md-sys-color-on-surface); }
+  .tbl-bare tr.me td:first-child { border-radius: 8px 0 0 8px; box-shadow: inset 3px 0 0 var(--md-sys-color-primary); padding-left: 15px; }
+  .tbl-bare tr.me td:last-child { border-radius: 0 8px 8px 0; padding-right: 15px; }
+  .tbl-bare tr.me td b { color: var(--md-sys-color-primary); }
 
   /* ============ FOUNDER ROSTER — signal-tinted member rows on the bg (colour IS the verdict) =========== */
   .frow { display: grid; grid-template-columns: 40px 1fr auto; gap: 16px; padding: 16px 0; border-top: 1px solid var(--md-sys-color-outline-variant); align-items: start; }
@@ -282,10 +562,14 @@
 
   .profile { display: flex; flex-direction: column; }
   .profile-foot { margin-top: 22px; display: flex; align-items: center; gap: 16px; font-size: 13px; color: var(--md-sys-color-on-surface-variant); }
+  /* "1 strong · 4 mixed · 2 gaps" — a COUNT of categories by band, the same thing
+     .profile-split and .rl-split say, so it takes the same one hue. `.g` was painting
+     the error colour: a category rated 1.5/5 is a lower number, not a failure, and the
+     word "gaps" beside it already carries the meaning. */
   .profile-foot .split b { font-weight: 500; }
-  .profile-foot .split .s { color: var(--success); }
+  .profile-foot .split .s { color: var(--md-sys-color-primary); }
   .profile-foot .split .m { color: var(--md-sys-color-on-surface); }
-  .profile-foot .split .g { color: var(--md-sys-color-error); }
+  .profile-foot .split .g { color: var(--md-sys-color-on-surface-variant); }
 
   /* ============ metricRow — the ONE shared row (strength profile + composition table) ============ */
   /* HAIRLINE RULE: a `border` on a rounded box traces the corner radius, so the divider curls up at
@@ -298,18 +582,20 @@
   .mrow { --_hl: var(--row-title-lg); --_sub: var(--row-sub-lg); --_val: var(--row-val-lg); }
   .mrow.compact { --_hl: var(--row-title); --_sub: var(--row-sub); --_val: var(--row-val); }
   .mrow { position: relative; display: grid; grid-template-columns: minmax(180px, 1.6fr) 1fr 104px 22px; gap: 24px; align-items: center; padding: 18px 12px; }
-  .mrow::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: var(--md-sys-color-outline-variant); pointer-events: none; }
-  .mrow:first-of-type::before { content: none; }
+  /* ZEBRA, same as every table (ds.css): the row hairline is gone and alternate rows carry the tint.
+     The parity is a CLASS the component emits, not :nth-of-type — these rows are divs in a plain
+     container, and .contrib puts a caption div before them, which silently flips the whole list.
+     A table can use :nth-of-type safely because its children are uniformly <tr>; a div list cannot.
+     .foot is a TOTAL, not a row, so it never stripes and keeps a rule above it to separate the sum
+     from what was summed. */
+  .mrow.zebra:not(.foot) { background: var(--zebra); border-radius: 12px; }
+  .mrow.foot { border-top: 1px solid var(--md-sys-color-outline-variant); margin-top: 6px; }
   .mrow.drill { cursor: pointer; border-radius: 12px; transition: background .12s ease; }
   .mrow.drill:hover, .mrow.drill:focus-visible { background: var(--md-sys-color-surface-container); outline: none; }
   .mrow.drill:hover .mrow-chev, .mrow.drill:focus-visible .mrow-chev { color: var(--md-sys-color-primary); }
   .mrow-lab { min-width: 0; }
   /* flex-start + dot nudge so a wrapped (multi-line) label pins the dot to line 1 */
   .mrow-nm { display: flex; align-items: flex-start; gap: 10px; font-size: var(--_hl); font-weight: var(--row-title-weight); letter-spacing: .1px; }
-  .mrow-dot { width: 10px; height: 10px; border-radius: 999px; flex: none; margin-top: 7px; }
-  .mrow-dot.strong { background: var(--success); }
-  .mrow-dot.mixed { background: var(--md-sys-color-on-surface-variant); }
-  .mrow-dot.gap { background: var(--md-sys-color-error); }
   /* clamp to 2 lines so no note (even a bug-length one) can ever balloon a row — belt-and-suspenders with the adapter's bounded summary */
   .mrow-sub { font-size: var(--_sub); line-height: 1.4; color: var(--md-sys-color-on-surface-variant); margin-top: 4px; letter-spacing: .2px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
   /* readTime · N sources · N sections — the classic index carried these; they are how a reader chooses */
@@ -322,15 +608,27 @@
   .mrow-val .v { display: block; font-size: var(--_val); font-weight: var(--row-val-weight); letter-spacing: .2px; }
   .mrow-val .v .out { font-size: var(--row-val); font-weight: 400; color: var(--md-sys-color-on-surface-variant); }
   .mrow-val .s { display: block; font-size: var(--row-delta); margin-top: 4px; }
-  .mrow-val .s.up { color: var(--success); font-weight: 500; }
+  .mrow-val .s.up { color: var(--md-sys-color-primary); font-weight: 500; }
   .mrow-val .s.flat { color: var(--md-sys-color-on-surface-variant); }
   .mrow-chev { font-size: 24px; color: var(--md-sys-color-on-surface-variant); }
   .mrow.foot { border-top: 1.5px solid var(--md-sys-color-outline-variant); margin-top: 4px; }
   .mrow.foot .mrow-bar { background: transparent; }
   .mrow.foot .mrow-nm { font-weight: 600; }
-  .mrow.foot .mrow-val .v { color: var(--warning); }
+  .mrow.foot .mrow-val .v { color: var(--md-sys-color-primary); }
   /* grid variants: funnel keeps the bar with an auto-width value ($ band); research drops the bar (bar-less index row) */
   .mrow.funnel { grid-template-columns: minmax(150px, 1.3fr) 1fr auto 22px; }
+  /* spec: the value column is `auto` — it is a slug, a plan name or a date, not a
+     score, so a fixed 104px gutter just wraps it. The label takes what is left. */
+  .mrow.spec { grid-template-columns: minmax(90px, 1fr) auto 22px; gap: 18px; }
+  .mrow.spec .mrow-val .v { white-space: nowrap; }
+  /* nowrap is the point of this variant on a wide screen — "Full platform
+     licence" should not break over two lines in a gutter. On a phone there is
+     no gutter to protect, and holding the line forces the whole card wider
+     than the viewport, so the value wraps and the label floor goes. */
+  @media (max-width: 640px) {
+    .mrow.spec { grid-template-columns: minmax(0, 1fr) auto 22px; gap: 12px; }
+    .mrow.spec .mrow-val .v { white-space: normal; }
+  }
   .mrow.research { grid-template-columns: minmax(180px, 1.7fr) auto 22px; }
   .mrow.research .mrow-lab { display: flex; align-items: center; gap: 16px; }
   /* the title/note column must be able to shrink + wrap long slug/URL tokens instead of overflowing into the tag column */
@@ -340,16 +638,10 @@
   .mrow.research .rlead .material-symbols-rounded { font-size: 22px; }
   .mrow.research .mrow-val { text-align: right; }
 
-  /* ============ SCORE COMPOSITION — Option B: radar hero band + full-width table ============ */
+  /* ============ SCORE COMPOSITION — the full-width contributions table ============
+     The radar used to sit on top of this as a centred band; it fronts the hero now
+     (radarLockup), so the table gets the whole row it was already sharing. */
   .compose { display: flex; flex-direction: column; gap: 26px; }
-  .radar-wrap { max-width: 360px; width: 100%; margin: 0 auto; }
-  .radar-wrap svg text { fill: var(--md-sys-color-on-surface-variant); }
-  .radar-legend { display: flex; justify-content: center; gap: 22px; margin-top: 4px; font-size: 13px; color: var(--md-sys-color-on-surface-variant); }
-  .radar-legend .key { display: inline-flex; align-items: center; gap: 8px; }
-  .radar-legend b { color: var(--md-sys-color-on-surface); font-weight: 600; }
-  .radar-legend .sw-now { width: 20px; height: 3px; border-radius: 2px; background: var(--md-sys-color-primary); }
-  .radar-legend .sw-pot.dash { width: 20px; height: 0; border-top: 2px dashed var(--success); }
-  .radar-legend .up { color: var(--success); font-weight: 500; }
   .contrib { width: 100%; }
   .contrib-cap { font-size: 12.5px; line-height: 1.5; color: var(--md-sys-color-on-surface-variant); margin-bottom: 8px; }
   .contrib-cap b { color: var(--md-sys-color-on-surface); font-weight: 500; }
@@ -382,20 +674,28 @@
   .cd-note { margin: 4px 0 0; font-size: 13.5px; line-height: 1.5; color: var(--md-sys-color-on-surface-variant); }
   .cd-note b { color: var(--md-sys-color-on-surface); }
   /* 3 · the five signals + 4 · levers — shared row shape (chip + body + trailing) */
-  .cd-sig, .cd-lever { display: grid; grid-template-columns: 28px 1fr auto; gap: 14px; align-items: start; padding: 16px 0; border-top: 1px solid var(--md-sys-color-outline-variant); }
-  .cd-sig:first-of-type, .cd-lever:first-of-type { border-top: none; }
+  /* .cd-lever retired — the lift list merged into .cd-sig, so there is one signal row, not two. */
+  .cd-sig { display: grid; grid-template-columns: 28px 1fr auto; gap: 14px; align-items: start; padding: 16px 0; border-top: 1px solid var(--md-sys-color-outline-variant); }
+  .cd-sig:first-of-type { border-top: none; }
   .cd-sig.na { opacity: .6; }
   .cd-chip { width: 28px; height: 28px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
-  .cd-chip.g { color: var(--success); background: var(--success-container); }
-  .cd-chip.y { color: var(--on-warning-container); background: var(--warning-container); }
-  .cd-chip.r { color: var(--md-sys-color-on-error-container); background: var(--md-sys-color-error-container); }
+  /* A cd-chip prints a SIGNAL SCORE (1 / ½ / 0) — the same data as a pip in
+   the composition, so it takes the same colours. It was green while the pips
+   were accent: one number, two colours, depending which panel you opened. */
+.cd-chip.g { color: var(--md-sys-color-primary); background: color-mix(in srgb, var(--md-sys-color-primary) 16%, transparent); }
+  .cd-chip.y { color: var(--md-sys-color-primary); background: color-mix(in srgb, var(--md-sys-color-primary) 9%, transparent); }
+  .cd-chip.r { color: var(--md-sys-color-on-surface-variant); background: var(--md-sys-color-surface-container-highest); }
   .cd-chip.n { color: var(--md-sys-color-on-surface-variant); background: var(--md-sys-color-surface-container-highest); }
-  .cd-sig .bd, .cd-lever .bd { min-width: 0; }
-  .cd-sig .q, .cd-lever .q { font-size: var(--row-title-lg); font-weight: 500; line-height: 1.35; color: var(--md-sys-color-on-surface); }
-  .cd-sig .nt, .cd-lever .nt { font-size: var(--row-sub-lg); line-height: 1.5; color: var(--md-sys-color-on-surface-variant); margin-top: 5px; }
+  .cd-sig .bd { min-width: 0; }
+  .cd-sig .q { font-size: var(--row-title-lg); font-weight: 500; line-height: 1.35; color: var(--md-sys-color-on-surface); }
+  .cd-sig .nt { font-size: var(--row-sub-lg); line-height: 1.5; color: var(--md-sys-color-on-surface-variant); margin-top: 5px; }
   .cd-sig .nt.muted { font-style: italic; opacity: .85; }
   .cd-ev { align-self: center; font-size: var(--row-cap); padding: 4px 9px; border-radius: 999px; background: var(--md-sys-color-surface-container-highest); color: var(--md-sys-color-on-surface-variant); max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .cd-liftv { align-self: center; font-size: var(--row-delta); font-weight: 600; color: var(--success); font-variant-numeric: tabular-nums; }
+  /* the lift a signal is worth, sitting ON that signal. Brand-tinted: headroom is an
+     opportunity, and amber/red stay reserved for warnings and risks. */
+  .cd-liftv { align-self: start; margin-top: 2px; font-size: var(--row-delta); font-weight: 600; font-variant-numeric: tabular-nums;
+              color: var(--md-sys-color-primary); background: color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent);
+              padding: 4px 8px; border-radius: 7px; white-space: nowrap; }
   .cd-foot { margin: 12px 0 0; font-size: 12.5px; color: var(--md-sys-color-on-surface-variant); }
   .cd-foot b { color: var(--md-sys-color-on-surface); font-weight: 600; }
   /* 5 · contribution & standing */
@@ -407,19 +707,35 @@
   /* ============ THE CASE — the one place two grouped lists earn cards ============ */
   /* align-items:start so an uneven/short side keeps its natural height instead of
      stretching to match the taller card and opening a dead void beneath it. */
-  .case-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
-  .case-card { border-radius: 20px; padding: 26px 26px 28px; background: var(--md-sys-color-surface-container-low); box-shadow: var(--md-elev-1); position: relative; overflow: hidden; }
-  .case-card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
-  .case-card.forc::before { background: var(--success); }
-  .case-card.against::before { background: var(--md-sys-color-error); }
-  .case-card .ch { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  /* ── THE CASE, ARGUED BOTH WAYS — two columns breathing on the background ──────────────
+     These were two filled, shadowed cards. A card says "this is a separate object"; the two
+     sides of an argument are not separate objects, they are one argument, and boxing each
+     half made the Verdict tab read as a dashboard rather than a memo — the one tab where the
+     prose matters most.
+
+     What the card was doing structurally now comes from three cheaper things: a hairline
+     between the columns so they stay two columns, a 2px rule under each heading carrying the
+     side's colour (the 4px bar that used to run down the card's edge), and the tick/cross
+     markers that were already there. Nothing is lost except the container. */
+  .case-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; align-items: start; }
+  .case-card { position: relative; padding: 0; background: none; box-shadow: none; border-radius: 0; }
+  .case-card.forc { padding-right: clamp(24px, 3.2vw, 44px); }
+  .case-card.against { padding-left: clamp(24px, 3.2vw, 44px); border-left: 1px solid var(--md-sys-color-outline-variant); }
+  /* the heading carries the side's colour now, as a rule under it rather than a bar beside it */
+  .case-card .ch { display: flex; align-items: center; gap: 12px; margin-bottom: 18px;
+                   padding-bottom: 13px; border-bottom: 2px solid var(--md-sys-color-outline-variant); }
+  .case-card.forc .ch { border-bottom-color: var(--success); }
+  .case-card.against .ch { border-bottom-color: var(--md-sys-color-error); }
   .case-card .ch .ttl { font-size: 17px; font-weight: 500; letter-spacing: .1px; }
   .case-card .ch .ct { margin-left: auto; font-size: 12px; color: var(--md-sys-color-on-surface-variant); letter-spacing: .5px; }
   .case-card .ch .material-symbols-rounded { font-size: 22px; }
   .case-card.forc .ch .material-symbols-rounded { color: var(--success); }
   .case-card.against .ch .material-symbols-rounded { color: var(--md-sys-color-error); }
   .cpt { display: flex; gap: 13px; padding: 13px 0; border-top: 1px solid var(--md-sys-color-outline-variant); }
-  .cpt:first-of-type { border-top: none; }
+  /* ⚠ `.cpt:first-of-type` never matched: :first-of-type is per TAG, and .ch is a div too, so the
+     first .cpt is the second div and always drew a rule. Harmless inside a card; directly under the
+     new coloured heading rule it read as a double rule. `.ch + .cpt` is what was meant all along. */
+  .ch + .cpt { border-top: none; }
   .cpt .mk { flex: none; width: 20px; height: 20px; margin-top: 1px; display: grid; place-items: center; }
   .cpt .mk .material-symbols-rounded { font-size: 19px; }
   .case-card.forc .cpt .mk .material-symbols-rounded { color: var(--success); }
@@ -450,7 +766,7 @@
   .must.run-step.pending .idx { color: var(--md-sys-color-outline); }
   .must.run-step.pending p { color: var(--md-sys-color-on-surface-variant); }
   /* the artefact each step writes — a fact about the run, in the run's own file names */
-  .rs-out { margin-top: 5px; font-size: var(--row-cap); line-height: 1.45; color: var(--md-sys-color-on-surface-variant); font-family: 'Roboto Mono', monospace; }
+  .rs-out { margin-top: 5px; font-size: var(--row-cap); line-height: 1.45; color: var(--md-sys-color-on-surface-variant); font-family: var(--font-mono); }
   /* the ONE place model-authored prose appears: the live step, quoted as the run's own words */
   .rs-say { margin-top: 7px; font-size: var(--row-sub-lg); line-height: 1.5; color: var(--md-sys-color-primary); }
   .rs-more { margin-top: 14px; font-size: var(--row-sub); line-height: 1.5; color: var(--md-sys-color-on-surface-variant); }
@@ -495,7 +811,12 @@
   .kill p b { color: var(--md-sys-color-on-surface); font-weight: 500; }
 
   /* ============ DILIGENCE CHECKLIST — scannable, severity-ranked, gated ============ */
-  .dil { border-radius: 24px; background: var(--md-sys-color-surface-container); padding: 28px 30px 30px; box-shadow: var(--md-elev-1); }
+  /* the checklist sits on the BACKGROUND, like the rest of the memo. It was a filled,
+     shadowed panel — the last card on the tab — which made the one list you are meant to
+     work through read as a widget parked beside the argument rather than the end of it.
+     Flush edges, so the numbered items align with the prose above them. */
+  .dil { padding: 0; background: none; box-shadow: none; border-radius: 0; }
+  .dil .dil-group:first-child { margin-top: 0; }
   .dil-top { display: flex; align-items: flex-end; gap: 20px; flex-wrap: wrap; }
   .dil-top .h .eyebrow { display: block; }
   .dil-top .h .t { font-size: 22px; font-weight: 500; letter-spacing: .1px; margin-top: 6px; }
@@ -568,6 +889,11 @@
     .section-hero .left { padding-right: 0; }
     .section-hero .right { padding-left: 0; margin-top: 34px; }
     .case-grid, .mbt-grid { grid-template-columns: 1fr; gap: 20px; }
+    /* stacked, the column hairline would run along the wrong edge — the two sides are now
+       above and below each other, so the divider has to turn with them */
+    .case-card.forc { padding-right: 0; }
+    .case-card.against { padding-left: 0; border-left: none;
+                         padding-top: 28px; border-top: 1px solid var(--md-sys-color-outline-variant); }
     .cd-figures { grid-template-columns: repeat(2, 1fr); }
   }
   @media (max-width: 640px) {
@@ -786,3 +1112,150 @@
    number changed, so the pill must say so — "No change" was a lie told to a man watching 75 become 76. */
 .gap-chip.gc-moved-up   { background: var(--success-container, color-mix(in srgb, #2e7d5b 22%, transparent)); color: var(--on-success-container, #7ee2b8); }
 .gap-chip.gc-moved-down { background: color-mix(in srgb, var(--warning) 16%, transparent); color: var(--warning); }
+
+/* ═══ SCORE LOCKUP — dial + stability strip ═════════════════════════════════
+   Replaces the number/bar/pill. The dial places the score on 0–100 and ghosts
+   the headroom behind it; the strip zooms into the three blind draws. Each
+   does a job the other cannot, which is why they are two graphics locked
+   together rather than one graphic doing both.
+   `.lockup-num` and `.lockup-band` are kept deliberately: they are the shared
+   numeral and chip of the lockup FAMILY (progress / profile / valuation /
+   coverage), and this component staying in that family is the point. Only its
+   numeral is re-sized, because here it sits inside a dial. */
+
+.score-lockup { --sl-tone: var(--warning); }
+.score-lockup.tone-good { --sl-tone: var(--md-sys-color-primary); }   /* dial, strip, median */
+.score-lockup.tone-mid  { --sl-tone: var(--warning); }
+.score-lockup.tone-bad  { --sl-tone: var(--md-sys-color-error); }
+
+.score-lockup .sl-top { display: flex; align-items: center; gap: clamp(16px, 2.4vw, 30px); margin-top: 16px; }
+
+.score-lockup .sl-dial { position: relative; flex: none; width: clamp(146px, 15vw, 200px); }
+.sl-dial-svg { display: block; width: 100%; height: auto; }
+.sl-track { stroke: var(--md-sys-color-outline-variant); }
+.sl-pot   { stroke: var(--md-sys-color-primary); opacity: .26; }
+.sl-now   { stroke: var(--sl-tone); }
+.score-lockup .sl-mid { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding-bottom: 10px; }
+/* sized to the dial, not to the family default */
+.score-lockup .lockup-num { margin: 0; font-size: clamp(42px, 5.4vw, 66px); letter-spacing: -2px; gap: 2px; }
+.score-lockup .lockup-num small { font-size: clamp(13px, 1.3vw, 17px); margin-top: 6px; }
+
+.score-lockup .sl-aside { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+.score-lockup .lockup-band { margin-top: 0; white-space: nowrap; }
+.sl-head { font-size: 12.5px; line-height: 1.45; color: var(--md-sys-color-on-surface-variant); }
+.sl-head b { color: var(--md-sys-color-on-surface); font-weight: 600; }
+.sl-head b.up { color: var(--md-sys-color-primary); }
+
+/* ── the strip ───────────────────────────────────────────────────────────── */
+.sl-strip { margin-top: 22px; min-width: 0; }
+.sl-strip-lab {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+  font-size: 10.5px; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--md-sys-color-on-surface-variant); margin-bottom: 10px;
+}
+.sl-strip-lab span { white-space: nowrap; }     /* three-line wrap reads as a fault, not a tight fit */
+.sl-strip-lab em {
+  font-style: normal; color: var(--sl-tone); letter-spacing: .02em;
+  text-transform: none; font-size: 12px; font-weight: 600; text-align: right;
+}
+.sl-rail { position: relative; height: 24px; }
+.sl-rail::before { content: ""; position: absolute; left: 0; right: 0; top: 10px; height: 2px;
+                   border-radius: 2px; background: var(--md-sys-color-outline-variant); }
+.sl-span { position: absolute; top: 7px; height: 8px; border-radius: 5px; background: var(--sl-tone); opacity: .26; }
+.sl-tick { position: absolute; top: 4px; width: 2px; height: 14px; border-radius: 2px;
+           background: var(--md-sys-color-on-surface-variant); transform: translateX(-1px); }
+.sl-med  { position: absolute; top: 0; width: 3px; height: 22px; border-radius: 3px;
+           background: var(--sl-tone); transform: translateX(-1.5px); }
+.sl-sc { display: flex; justify-content: space-between; font-size: 10.5px;
+         font-family: var(--font-mono, ui-monospace, monospace); color: var(--md-sys-color-on-surface-variant); }
+.sl-none { font-size: 12px; color: var(--md-sys-color-on-surface-variant); margin: 0; }
+
+@media (max-width: 720px) {
+  .score-lockup .sl-top { gap: 16px; }
+  .score-lockup .sl-dial { width: 136px; }
+}
+
+/* ── The dial takes the column ───────────────────────────────────────────
+   A 270° gauge leaves an opening at the bottom doing nothing. The band chip
+   drops into it, so the dial stops sharing its row with the chip and gets
+   the whole column: measured 200px → 320px, numeral 66px → 98px.
+
+   The /100 stacks under the numeral rather than sitting beside it, which is
+   what lets the number grow at all.
+
+   This stays inside the score column, so the two-column hero every tab
+   shares is untouched — Market, Team, Diligence and Research keep their own
+   right-slot molecules exactly as they are. */
+
+.score-lockup .sl-top { display: block; }
+.score-lockup .sl-dial { width: min(100%, 320px); margin-inline: auto; }
+.score-lockup .sl-mid { padding-bottom: 0; }
+.score-lockup .lockup-num {
+  flex-direction: column; align-items: center; gap: 0;
+  font-size: clamp(58px, 6.4vw, 98px); letter-spacing: -4px; line-height: .84;
+}
+.score-lockup .lockup-num small { font-size: clamp(14px, 1.5vw, 19px); margin: 4px 0 0; }
+.score-lockup .sl-aside {
+  align-items: center; text-align: center; gap: 6px;
+  margin-top: calc(-1 * clamp(34px, 4vw, 52px));
+}
+
+@media (max-width: 760px) {
+  .score-lockup .sl-dial { width: min(100%, 240px); }
+  .score-lockup .lockup-num { font-size: clamp(50px, 14vw, 72px); }
+}
+
+/* ═══ SCORE BREAKDOWN ═══════════════════════════════════════════════════════
+   The full-width composition section under the verdict hero. Four columns:
+   label · the real sub-signal pips · weight · contribution. At full width the
+   labels have room, which they did not inside the hero's score column. */
+
+.score-breakdown .bd-t { margin-top: 4px; }
+.bd-r, .bd-sum {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 92px 92px;
+  gap: 18px; align-items: center;
+}
+.bd-r { padding: 9px 0; border-bottom: 1px solid var(--md-sys-color-outline-variant); }
+.bd-r:last-child { border-bottom: 0; }
+.bd-lb { font-size: 14px; color: var(--md-sys-color-on-surface);
+         overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.bd-w  { font-size: 11.5px; color: var(--md-sys-color-on-surface-variant); text-align: right; white-space: nowrap; }
+
+.bd-pips { display: flex; gap: 5px; }
+.bd-pips i { width: 22px; height: 8px; border-radius: 2px; position: relative; overflow: hidden;
+             background: var(--md-sys-color-outline-variant); }
+.bd-pips i span { position: absolute; inset: 0 auto 0 0; display: block; }
+/* One colour. The score is how many pips are filled, not what shade they
+   are — a low category is not a caution, and tinting it amber made a 3.0
+   shout next to a 4.0. */
+.p-on { background: var(--md-sys-color-primary); }
+
+.bd-v { font: 500 14px/1 var(--font-mono, ui-monospace, monospace); text-align: right;
+        color: var(--md-sys-color-on-surface); white-space: nowrap; }
+.bd-v u, .bd-tv u { text-decoration: none; font-size: 11.5px;
+                    color: var(--md-sys-color-on-surface-variant); }
+
+.bd-sum { margin-top: 10px; padding-top: 12px; border-top: 1px solid var(--md-sys-color-outline); }
+.bd-k { font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase;
+        color: var(--md-sys-color-on-surface-variant); }
+.bd-k em { font-style: normal; text-transform: none; letter-spacing: 0; opacity: .8; }
+.bd-tv { font: 600 17px/1 var(--font-mono, ui-monospace, monospace); text-align: right; white-space: nowrap; }
+
+@media (max-width: 760px) {
+  .bd-r, .bd-sum { grid-template-columns: minmax(0, 1fr) auto 74px; gap: 12px; }
+  .bd-w { display: none; }               /* weight is already in the “/20” suffix */
+  .bd-pips i { width: 16px; }
+  .bd-lb { font-size: 13px; }
+}
+
+/* The thesis now lives in the hero's left column (see sectionHero). It needs
+   air above it and a measure of its own; full-width `.lead` spacing would
+   leave it crammed against the facts row. */
+.section-hero > .left > .lead {
+  margin: 26px 0 0;
+  max-width: 62ch;
+}
+@media (max-width: 1100px) {
+  .section-hero > .left > .lead { margin-top: 20px; }
+}

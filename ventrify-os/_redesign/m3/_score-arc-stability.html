@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en" data-brand="verdictscore">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Score graphic — arc × stability</title>
+<meta name="description" content="Exploration: the arc gauge and the stability spread combined into one object — where the score landed, and how much to trust it.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter+Tight:wght@500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/brand/brand.css">
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="../../shared/m3/brand-map.css">
+<script src="_preview-brand-switch.js" defer></script>
+<style>
+  body { margin:0; background:var(--surface-ground); color:var(--text-1);
+         font:400 15px/1.6 var(--font-text); -webkit-font-smoothing:antialiased; }
+  .pg { max-width:1240px; margin:0 auto; padding:72px 32px 140px; }
+  h1 { font:600 clamp(2rem,4vw,3rem)/1.05 var(--font-display); letter-spacing:-.02em; margin:0 0 .6rem; }
+  .sub { color:var(--text-2); max-width:64ch; margin:0 0 .5rem; }
+  .fine { color:var(--text-4); font-size:13px; max-width:72ch; }
+  .cx { margin:66px 0 0; padding-top:38px; border-top:1px solid var(--line-1); }
+  .cx-h { display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; }
+  .cx-n { font:500 12px/1 var(--font-mono); color:var(--brand-accent-2); letter-spacing:.1em; }
+  .cx-t { font:600 1.4rem/1.2 var(--font-display); letter-spacing:-.01em; }
+  .cx-d { color:var(--text-2); max-width:70ch; margin:.3rem 0 0; font-size:14px; }
+  .cx-w { color:var(--text-4); max-width:70ch; margin:.5rem 0 0; font-size:13px; }
+  .row { display:grid; grid-template-columns:repeat(4,1fr); gap:22px; margin-top:28px; }
+  @media (max-width:1100px){ .row { grid-template-columns:repeat(2,1fr); } }
+  @media (max-width:620px){ .row { grid-template-columns:1fr; } }
+  .cell { background:var(--surface-base); border:1px solid var(--line-1); border-radius:var(--r-lg);
+          padding:26px 20px 20px; display:flex; flex-direction:column; align-items:center;
+          min-width:0; overflow:hidden; }
+  .cell-cap { margin-top:14px; font:500 10.5px/1.4 var(--font-mono); color:var(--text-4);
+              letter-spacing:.07em; text-align:center; }
+
+  .sg-band { display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:999px;
+             font:600 11.5px/1 var(--font-text); white-space:nowrap; }
+  .tone-good { color:var(--ok);   background:var(--ok-film); }
+  .tone-mid  { color:var(--warn); background:var(--warn-film); }
+  .tone-bad  { color:var(--risk); background:var(--risk-film); }
+  .s-good { stroke:var(--ok); }  .s-mid { stroke:var(--warn); }  .s-bad { stroke:var(--risk); }
+  .f-good { fill:var(--ok); }    .f-mid { fill:var(--warn); }    .f-bad { fill:var(--risk); }
+
+  .gauge { position:relative; width:100%; max-width:232px; }
+  .gauge .mid { position:absolute; inset:0; display:flex; flex-direction:column;
+                align-items:center; justify-content:center; gap:7px; padding-bottom:12px; }
+  .gauge .num { font:600 3.1rem/0.86 var(--font-display); letter-spacing:-.04em; font-variant-numeric:tabular-nums; }
+  .gauge .num small { font:500 .95rem/1 var(--font-text); color:var(--text-3); letter-spacing:0; margin-left:2px; }
+  .stabline { margin-top:12px; font-size:12px; color:var(--text-3); text-align:center; max-width:30ch; }
+  .stabline b { color:var(--text-1); font-weight:600; }
+</style>
+</head>
+<body>
+<div class="pg">
+  <h1>Arc × stability</h1>
+  <p class="sub">The arc says where the score landed. The spread says how much to trust it. Three ways of putting both in one object.</p>
+  <p class="fine">Same 270° gauge in all three: the solid sweep is the score, the faint continuation is the headroom. What differs is how the three blind draws are expressed. Shown at <b>80</b> (draws within 3 — solid), <b>55</b> (spread 12 — soft), <b>34</b> (spread 15 — soft), and a fourth column with <b>no draws recorded</b>, which is what today's snapshots actually contain.</p>
+  <div id="out"></div>
+</div>
+
+<script type="module">
+import { SCORE as RAW } from './data.js';
+import { strongScore } from './data-strong.js';
+
+const MAX = 86, C = 2 * Math.PI * MAX, SWEEP = 0.75;   // R=86, 270° of the circle
+const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+
+/* value → fraction of the dial */
+const fr = (v, max) => Math.max(0, Math.min(1, v / max));
+/* an arc slice between two values, as dasharray + offset on a rotated circle */
+const slice = (a, b, max) => ({
+  da: `${((fr(b, max) - fr(a, max)) * SWEEP * C).toFixed(2)} ${C.toFixed(2)}`,
+  off: (-(fr(a, max) * SWEEP * C)).toFixed(2),
+});
+/* a point on the dial, for ticks */
+function pt(v, max, r) {
+  const deg = 135 + fr(v, max) * 270, rad = deg * Math.PI / 180;
+  return [100 + r * Math.cos(rad), 100 + r * Math.sin(rad)];
+}
+
+/* ═══ A · COLLAR ════════════════════════════════════════════════════════════
+   The spread is a separate thin arc sitting outside the main sweep, with a
+   tick for each draw. Reads as a tolerance band on an instrument. */
+function collar({ score, potential, band, tone, draws, max = 100 }) {
+  const has = draws && draws.length > 1;
+  const lo = has ? Math.min(...draws) : 0, hi = has ? Math.max(...draws) : 0;
+  const sp = slice(lo, hi, max), tr = slice(0, max, max), po = slice(0, potential, max), sc = slice(0, score, max);
+  const ticks = has ? draws.map(d => {
+    const [x1, y1] = pt(d, max, 97), [x2, y2] = pt(d, max, 107);
+    return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"
+             class="s-${tone}" stroke-width="2.5" stroke-linecap="round" opacity=".85"/>`;
+  }).join('') : '';
+  return `<svg viewBox="-14 -14 228 228" role="img" aria-label="${score} of ${max}, ${esc(band)}">
+    <g transform="rotate(135 100 100)" fill="none" stroke-linecap="round">
+      <circle cx="100" cy="100" r="86" stroke="var(--line-1)" stroke-width="13" stroke-dasharray="${tr.da}"/>
+      <circle cx="100" cy="100" r="86" stroke="var(--brand-accent-2)" stroke-width="13" opacity=".24"
+              stroke-dasharray="${po.da}" stroke-dashoffset="${po.off}"/>
+      <circle cx="100" cy="100" r="86" class="s-${tone}" stroke-width="13"
+              stroke-dasharray="${sc.da}" stroke-dashoffset="${sc.off}"/>
+      ${has ? `<circle cx="100" cy="100" r="102" class="s-${tone}" stroke-width="4" opacity=".4"
+              stroke-dasharray="${(((fr(hi,max)-fr(lo,max))*SWEEP*2*Math.PI*102)).toFixed(2)} ${(2*Math.PI*102).toFixed(2)}"
+              stroke-dashoffset="${(-(fr(lo,max)*SWEEP*2*Math.PI*102)).toFixed(2)}"/>` : ''}
+    </g>
+    ${ticks}
+  </svg>`;
+}
+
+/* ═══ B · FEATHERED TERMINUS ════════════════════════════════════════════════
+   The arc does not end in a hard line. It dissolves across the range the
+   draws disagreed over, so the SHARPNESS OF THE EDGE *is* the confidence:
+   three draws within 3 points end crisply, three draws 15 apart trail off.
+   The reader learns how solid the number is without reading a word. */
+function feathered({ score, potential, band, tone, draws, max = 100 }) {
+  const has = draws && draws.length > 1;
+  const lo = has ? Math.min(...draws) : score, hi = has ? Math.max(...draws) : score;
+  const tr = slice(0, max, max), po = slice(0, potential, max);
+  const solid = slice(0, lo, max);
+  const STEPS = 30;
+  let fade = '';
+  if (has && hi > lo) {
+    for (let i = 0; i < STEPS; i++) {
+      const a = lo + (hi - lo) * (i / STEPS), b = lo + (hi - lo) * ((i + 1) / STEPS);
+      const s = slice(a, b + 0.5, max);           // overlap the joins so no hairlines show
+      fade += `<circle cx="100" cy="100" r="86" class="s-${tone}" stroke-width="13"
+                 stroke-dasharray="${s.da}" stroke-dashoffset="${s.off}"
+                 opacity="${(1 - i / STEPS).toFixed(3)}"/>`;
+    }
+  }
+  return `<svg viewBox="-14 -14 228 228" role="img" aria-label="${score} of ${max}, ${esc(band)}">
+    <g transform="rotate(135 100 100)" fill="none" stroke-linecap="${has && hi > lo ? 'butt' : 'round'}">
+      <circle cx="100" cy="100" r="86" stroke="var(--line-1)" stroke-width="13"
+              stroke-dasharray="${tr.da}" stroke-linecap="round"/>
+      <circle cx="100" cy="100" r="86" stroke="var(--brand-accent-2)" stroke-width="13" opacity=".24"
+              stroke-dasharray="${po.da}" stroke-dashoffset="${po.off}" stroke-linecap="round"/>
+      <circle cx="100" cy="100" r="86" class="s-${tone}" stroke-width="13"
+              stroke-dasharray="${solid.da}" stroke-dashoffset="${solid.off}" stroke-linecap="round"/>
+      ${fade}
+    </g>
+  </svg>`;
+}
+
+/* ═══ C · MEDIAN MARKER ═════════════════════════════════════════════════════
+   The sweep runs to the LOW draw and a translucent band carries it on to the
+   high one, with a hard marker on the median — the number actually published.
+   The most literal of the three: you can read all three draws off the dial. */
+function marker({ score, potential, band, tone, draws, max = 100 }) {
+  const has = draws && draws.length > 1;
+  const lo = has ? Math.min(...draws) : score, hi = has ? Math.max(...draws) : score;
+  const tr = slice(0, max, max), po = slice(0, potential, max);
+  const solid = slice(0, has ? lo : score, max), span = slice(lo, hi, max);
+  /* The headroom starts where the spread ends: drawn from 0 it sat UNDER the
+     translucent spread band and the two mixed to a muddy brown. */
+  const ghost = slice(has ? hi : score, potential, max);
+  const [mx1, my1] = pt(score, max, 76), [mx2, my2] = pt(score, max, 96);
+  return `<svg viewBox="-14 -14 228 228" role="img" aria-label="${score} of ${max}, ${esc(band)}">
+    <g transform="rotate(135 100 100)" fill="none" stroke-linecap="round">
+      <circle cx="100" cy="100" r="86" stroke="var(--line-1)" stroke-width="13" stroke-dasharray="${tr.da}"/>
+      <circle cx="100" cy="100" r="86" stroke="var(--brand-accent-2)" stroke-width="13" opacity=".24"
+              stroke-dasharray="${ghost.da}" stroke-dashoffset="${ghost.off}"/>
+      <circle cx="100" cy="100" r="86" class="s-${tone}" stroke-width="13"
+              stroke-dasharray="${solid.da}" stroke-dashoffset="${solid.off}"/>
+      ${has && hi > lo ? `<circle cx="100" cy="100" r="86" class="s-${tone}" stroke-width="13" opacity=".34"
+              stroke-dasharray="${span.da}" stroke-dashoffset="${span.off}"/>` : ''}
+    </g>
+    ${has ? `<line x1="${mx1.toFixed(1)}" y1="${my1.toFixed(1)}" x2="${mx2.toFixed(1)}" y2="${my2.toFixed(1)}"
+      stroke="var(--surface-ground)" stroke-width="5" stroke-linecap="round"/>
+      <line x1="${mx1.toFixed(1)}" y1="${my1.toFixed(1)}" x2="${mx2.toFixed(1)}" y2="${my2.toFixed(1)}"
+      class="s-${tone}" stroke-width="2.5" stroke-linecap="round"/>` : ''}
+  </svg>`;
+}
+
+/* The one line of prose that goes under any of them. The threshold is the
+   point at which a reader should stop treating the number as precise. */
+function stabilityLine(draws, score) {
+  if (!draws || draws.length < 2) return `<span style="color:var(--text-4)">Draw spread not recorded for this run.</span>`;
+  const d = Math.max(...draws) - Math.min(...draws);
+  return d <= 5
+    ? `Three blind draws within <b>${d}</b> points — the number is solid.`
+    : `Three blind draws spread <b>${d}</b> points — treat as indicative.`;
+}
+
+function wrap(fn, st) {
+  return `<div class="gauge">${fn(st)}
+      <div class="mid">
+        <div class="num">${st.score}<small>/${st.max || 100}</small></div>
+        <span class="sg-band tone-${st.tone}">${esc(st.band)}</span>
+      </div>
+    </div>
+    <div class="stabline">${stabilityLine(st.draws, st.score)}</div>`;
+}
+
+/* ── states ─────────────────────────────────────────────────────────────── */
+const weak = S => ({ ...S, composite: 34, potential: 58 });
+const STATES = [
+  { s: strongScore(RAW), tone: 'good', band: 'Investment ready', draws: [78, 81, 80], cap: '80 · SOLID\ndraws 78 · 80 · 81' },
+  { s: RAW,              tone: 'mid',  band: 'Promising',        draws: [49, 61, 55], cap: '55 · SOFT\ndraws 49 · 55 · 61' },
+  { s: weak(RAW),        tone: 'bad',  band: 'High risk',        draws: [31, 46, 34], cap: '34 · SOFT\ndraws 31 · 34 · 46' },
+  { s: RAW,              tone: 'mid',  band: 'Promising',        draws: null,         cap: '55 · NO DRAWS\n(today’s snapshots)' },
+];
+
+const VARIANTS = [
+  { n: 'A', t: 'Collar', fn: collar,
+    d: 'The spread is its own thin arc outside the sweep, with a tick for each draw. Reads like the tolerance band on an instrument.',
+    w: 'Clearest at telling you the draws exist, and the only one where you can see all three individually. But it adds a second ring, which is the thing the arc was supposed to avoid.' },
+  { n: 'B', t: 'Feathered terminus', fn: feathered,
+    d: 'The arc does not end in a hard line — it dissolves across the range the draws disagreed over. The sharpness of the edge IS the confidence.',
+    w: 'One object, no extra furniture, and the meaning lands before you read anything: a crisp end means solid, a soft end means do not lean on it. Hardest to label, and a reader has to be told once what the fade means.' },
+  { n: 'C', t: 'Median marker', fn: marker,
+    d: 'The sweep runs to the lowest draw, a translucent band carries on to the highest, and a hard marker sits on the median — the number actually published.',
+    w: 'The most literal: all three draws are readable off the dial. Also the busiest, and the marker can collide with the numeral at low scores.' },
+];
+
+document.getElementById('out').innerHTML = VARIANTS.map(v => `
+  <section class="cx">
+    <div class="cx-h"><span class="cx-n">${v.n}</span><span class="cx-t">${v.t}</span></div>
+    <p class="cx-d">${v.d}</p>
+    <p class="cx-w">${v.w}</p>
+    <div class="row">${STATES.map(st => `<div class="cell">${wrap(v.fn, {
+      score: st.s.composite, potential: st.s.potential, band: st.band, tone: st.tone, draws: st.draws, max: 100,
+    })}<div class="cell-cap">${st.cap.replace(/\n/g, '<br>')}</div></div>`).join('')}</div>
+  </section>`).join('');
+</script>
+</body>
+</html>

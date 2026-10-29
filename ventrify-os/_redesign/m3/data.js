@@ -686,17 +686,17 @@ export const SCORE = {
 // ---- Portfolio engagements (table rows) ----
 export const ENGAGEMENTS = [
   // in-flight assessments — demonstrate the run-state signal (queued / running / idle-bridge)
-  { i: 'LM', avatar: 'p', name: 'Lumen Health', sub: 'Digital therapeutics · Seed', stage: 'Seed · Assessment', status: { kind: 'ok', label: 'Assessment', icon: 'fact_check' }, runState: { status: 'running', requestedAt: '2026-07-07T14:20:00Z' }, when: '3m ago' },
-  { i: 'AX', avatar: 't', name: 'Arcstate', sub: 'Dev-tools · Pre-seed', stage: 'Seed · Assessment', status: { kind: 'ok', label: 'Assessment', icon: 'fact_check' }, runState: { status: 'queued', requestedAt: '2026-07-07T14:31:00Z' }, when: 'just now' },
+  { i: 'LM', avatar: 'p', name: 'Lumen Health', sub: 'Digital therapeutics · Seed', stage: 'Seed · Assessment', status: { kind: 'ok', label: 'Assessment', icon: 'fact_check' }, runState: { status: 'running', requestedAt: '2026-07-07T14:20:00Z' }, rec: { kind: 'consider', label: 'Diligence further', icon: 'balance', score: '74' }, when: '3m ago' },
+  { i: 'AX', avatar: 't', name: 'Arcstate', sub: 'Dev-tools · Pre-seed', stage: 'Seed · Assessment', status: { kind: 'ok', label: 'Assessment', icon: 'fact_check' }, runState: { status: 'queued', requestedAt: '2026-07-07T14:31:00Z' }, rec: { kind: 'pass', label: 'Pass', icon: 'trending_down', score: '38' }, when: 'just now' },
   { i: 'NV', avatar: 's', name: 'Nova Freight', sub: 'Logistics · Seed', stage: 'Seed · Assessment', status: { kind: 'n', label: 'Draft', icon: 'edit_note' }, runState: { status: 'idle' }, when: '12m ago' },
-  { i: 'MC', avatar: 't', name: 'Northwind', sub: 'Marcus Chen · Climate / Energy', stage: 'Phase 4 · Develop', status: { kind: 'ok', label: 'On track', icon: 'check_circle' }, progress: 0.88, when: '2h ago' },
-  { i: 'SL', avatar: 'p', name: 'Stellaria', sub: 'Sophie Laurent · Healthtech', stage: 'Phase 2 · Define', status: { kind: 'ok', label: 'On track', icon: 'check_circle' }, progress: 0.42, when: '8h ago' },
-  { i: 'JP', avatar: 's', name: 'Halo Sound', sub: 'Jamie Patel · Consumer audio', stage: 'Phase 1 · Discover', status: { kind: 'err', label: 'Stuck', icon: 'error' }, progress: 0.2, danger: true, when: '9d ago' },
-  { i: 'EV', avatar: 't', name: 'Quill', sub: 'Eleni Vasquez · B2B SaaS', stage: 'Phase 2.5 · Financials', status: { kind: 'warn', label: 'Needs attention', icon: 'warning' }, progress: 0.55, when: '1h ago' },
+  { i: 'MC', avatar: 't', name: 'Northwind', sub: 'Marcus Chen · Climate / Energy', stage: 'Phase 4 · Develop', status: { kind: 'ok', label: 'On track', icon: 'check_circle' }, progress: 0.88, rec: { kind: 'invest', label: 'Invest', icon: 'trending_up', score: '85' }, when: '2h ago' },
+  { i: 'SL', avatar: 'p', name: 'Stellaria', sub: 'Sophie Laurent · Healthtech', stage: 'Phase 2 · Define', status: { kind: 'ok', label: 'On track', icon: 'check_circle' }, progress: 0.42, rec: { kind: 'consider', label: 'Diligence further', icon: 'balance', score: '63' }, when: '8h ago' },
+  { i: 'JP', avatar: 's', name: 'Halo Sound', sub: 'Jamie Patel · Consumer audio', stage: 'Phase 1 · Discover', status: { kind: 'err', label: 'Stuck', icon: 'error' }, progress: 0.2, danger: true, rec: { kind: 'pass', label: 'Pass', icon: 'trending_down', score: '31' }, when: '9d ago' },
+  { i: 'EV', avatar: 't', name: 'Quill', sub: 'Eleni Vasquez · B2B SaaS', stage: 'Phase 2.5 · Financials', status: { kind: 'warn', label: 'Needs attention', icon: 'warning' }, progress: 0.55, rec: { kind: 'consider', label: 'Diligence further', icon: 'balance', score: '48' }, when: '1h ago' },
   { i: 'VB', avatar: 's', name: 'Verdana Bio', sub: 'Climate biotech · Seed', stage: 'Seed · Assessment', status: { kind: 'ok', label: 'Assessment', icon: 'fact_check' }, rec: { kind: 'consider', label: 'Diligence further', icon: 'balance', score: '67' }, when: '1h ago' },
   { i: 'MG', avatar: 'p', name: 'MoneyGym', sub: 'Behavioural finance · Seed', stage: 'Seed · Assessment', status: { kind: 'ok', label: 'Assessment', icon: 'fact_check' }, rec: { kind: 'consider', label: 'Diligence further', icon: 'balance', score: '55' }, when: '1h ago' },
   { i: 'CH', avatar: 'p', name: 'Cadence Health', sub: 'Digital health · Seed', stage: 'Seed · Assessment', status: { kind: 'ok', label: 'Assessment', icon: 'fact_check' }, rec: { kind: 'invest', label: 'Invest', icon: 'trending_up', score: '82' }, when: '1h ago' },
-  { i: 'IO', avatar: 't', name: 'Caldera', sub: 'Inez Okonkwo · Fintech', stage: 'Phase 0 · Intake', status: { kind: 'ok', label: 'On track', icon: 'check_circle' }, progress: 0.05, when: '20m ago' }
+  { i: 'IO', avatar: 't', name: 'Caldera', sub: 'Inez Okonkwo · Fintech', stage: 'Phase 0 · Intake', status: { kind: 'ok', label: 'On track', icon: 'check_circle' }, progress: 0.05, rec: { kind: 'consider', label: 'Diligence further', icon: 'balance', score: '52' }, when: '20m ago' }
 ];
 
 export const STATS = [

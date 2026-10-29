@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en" data-brand="venturestack">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>List rows — zebra, instead of strokes</title>
+<meta name="description" content="Three zebra treatments to replace the mismatched divider strokes in the engagement list.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter+Tight:wght@500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/brand/brand.css"><link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="ds.css"><link rel="stylesheet" href="assess-editorial.css">
+<link rel="stylesheet" href="../../shared/m3/brand-map.css">
+<script src="_preview-brand-switch.js" defer></script>
+<style>
+  body { margin:0; background:var(--md-sys-color-surface); color:var(--md-sys-color-on-surface); font:400 15px/1.6 Inter,sans-serif; -webkit-font-smoothing:antialiased; }
+  .pg { max-width:1240px; margin:0 auto; padding:52px 36px 140px; }
+  h1 { font:600 clamp(1.8rem,3.4vw,2.5rem)/1.05 'Space Grotesk',sans-serif; letter-spacing:-.02em; margin:0 0 .5rem; }
+  .sub { color:var(--md-sys-color-on-surface-variant); max-width:90ch; margin:0 0 .4rem; }
+  .flag { margin:16px 0 0; padding:14px 16px; border-radius:12px; max-width:94ch; font-size:13.5px; line-height:1.6;
+          background:color-mix(in srgb,#e0a33a 9%,transparent); border:1px solid color-mix(in srgb,#e0a33a 26%,transparent); }
+  .flag b { color:var(--md-sys-color-on-surface); }
+  .cx { margin:46px 0 0; padding-top:24px; border-top:1px solid var(--md-sys-color-outline-variant); }
+  .cx-h { display:flex; align-items:baseline; gap:14px; }
+  .cx-n { font:500 12px/1 ui-monospace,monospace; color:var(--md-sys-color-primary); letter-spacing:.1em; }
+  .cx-t { font:600 1.25rem/1.2 'Space Grotesk',sans-serif; letter-spacing:-.01em; }
+  .cx-d { color:var(--md-sys-color-on-surface-variant); max-width:92ch; margin:.3rem 0 0; font-size:14px; }
+  .stage { margin-top:16px; border:1px solid var(--md-sys-color-outline-variant); border-radius:14px; padding:24px 26px 26px; }
+
+  /* shared skeleton — same markup as the real engagementTable, styled three ways */
+  .z { width:100%; border-collapse:collapse; }
+  .z td { padding:14px 16px; vertical-align:middle; }
+  .z td:first-child { padding-left:14px; } .z td:last-child { text-align:right; padding-right:14px; }
+  .z .gh th { text-align:left; font-weight:400; padding:24px 14px 8px; }
+  .z .gh .g { font:500 13px/1 Inter,sans-serif; } .z .gh .c { margin-left:9px; font:500 11px/1 ui-monospace,monospace; color:var(--md-sys-color-on-surface-variant); }
+  .z .gh .why { float:right; font-size:12px; color:var(--md-sys-color-on-surface-variant); }
+  .v { display:flex; align-items:center; gap:12px; }
+  .av { width:32px; height:32px; border-radius:8px; display:grid; place-items:center; flex:none; font:600 11px/1 ui-monospace,monospace;
+        background:color-mix(in srgb,var(--md-sys-color-primary) 16%,transparent); color:var(--md-sys-color-primary); }
+  .nm { font-size:14.5px; font-weight:500; } .sb { font-size:12px; color:var(--md-sys-color-on-surface-variant); margin-top:2px; }
+  .when { font-size:12.5px; color:var(--md-sys-color-on-surface-variant); }
+  .chip { display:inline-flex; align-items:center; gap:6px; padding:5px 10px; border-radius:7px; font:500 12px/1 Inter,sans-serif; white-space:nowrap;
+          background:color-mix(in srgb,var(--md-sys-color-primary) 15%,transparent); color:var(--md-sys-color-primary); }
+  .chip.warn { background:color-mix(in srgb,#e0a33a 16%,transparent); color:#f0c073; }
+  .chip.err  { background:color-mix(in srgb,#f2b8b5 15%,transparent); color:#f2b8b5; }
+
+  /* A · zebra only — no strokes anywhere */
+  .zA tbody tr:nth-of-type(odd) td { background:color-mix(in srgb,var(--md-sys-color-on-surface) 3.5%,transparent); }
+  .zA tbody tr td:first-child { border-radius:10px 0 0 10px; } .zA tbody tr td:last-child { border-radius:0 10px 10px 0; }
+  .zA tbody tr:hover td { background:color-mix(in srgb,var(--md-sys-color-primary) 9%,transparent); }
+
+  /* B · zebra + one hairline per GROUP, not per row */
+  .zB tbody tr:nth-of-type(odd) td { background:color-mix(in srgb,var(--md-sys-color-on-surface) 3.5%,transparent); }
+  .zB tbody tr td:first-child { border-radius:10px 0 0 10px; } .zB tbody tr td:last-child { border-radius:0 10px 10px 0; }
+  .zB .gh th { border-bottom:1px solid var(--md-sys-color-outline-variant); }
+  .zB tbody tr:hover td { background:color-mix(in srgb,var(--md-sys-color-primary) 9%,transparent); }
+
+  /* C · banded blocks — the stripe is the whole group, rows separated by air */
+  .zC tbody.grp { }
+  .zC tbody.grp tr td { background:color-mix(in srgb,var(--md-sys-color-on-surface) 3.5%,transparent); }
+  .zC tbody.grp tr:first-of-type td { padding-top:16px; }
+  .zC tbody.grp tr td:first-child { border-radius:0 0 0 0; }
+  .zC tbody.grp tr:first-of-type td:first-child { border-top-left-radius:12px; }
+  .zC tbody.grp tr:first-of-type td:last-child { border-top-right-radius:12px; }
+  .zC tbody.grp tr:last-of-type td:first-child { border-bottom-left-radius:12px; }
+  .zC tbody.grp tr:last-of-type td:last-child { border-bottom-right-radius:12px; }
+  .zC tbody.grp tr:not(:last-of-type) td { box-shadow:inset 0 -1px 0 color-mix(in srgb,var(--md-sys-color-on-surface) 6%,transparent); }
+  .zC .gh th { background:none; padding-top:26px; }
+  .zC tbody.grp tr:hover td { background:color-mix(in srgb,var(--md-sys-color-primary) 9%,transparent); }
+  .note { font-size:12.5px; color:var(--md-sys-color-on-surface-variant); margin:16px 0 0; } .note b { color:var(--md-sys-color-on-surface); }
+</style>
+</head>
+<body><main class="pg">
+  <h1>Rows without strokes</h1>
+  <p class="sub">Three zebra treatments for the engagement list, on the real data and the real markup.</p>
+  <p class="flag"><b>The defect, measured.</b> It isn't overlap — the list draws <b>two different divider tokens</b>.
+     Group captions use <code>outline-variant</code> (white at 10%); data rows use <code>surface-container-highest</code>
+     (a solid grey, <code>#3B3F43</code>). Two strokes of different colour and apparent weight alternate down one list,
+     and where a group ends the two sit one pixel apart. Zebra removes the question entirely — there is nothing to misalign.</p>
+  <section class="cx" id="a"></section><section class="cx" id="b"></section><section class="cx" id="c"></section>
+</main>
+<script type="module">
+import { ENGAGEMENTS as E } from './data.js';
+const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const inFlight = r => r.runState && ['queued','running','partial'].includes(r.runState.status);
+const needs = r => (r.status && (r.status.kind==='err'||r.status.kind==='warn')) || (r.runState&&r.runState.status==='idle') || r.danger;
+const taken = new Set(); const take = f => E.filter(r=>!taken.has(r)&&f(r)).map(r=>(taken.add(r),r));
+const G = [
+  { t:'Needs you', why:'blocked, flagged, or waiting on a document', rows: take(needs) },
+  { t:'In flight', why:'assessment running or queued', rows: take(r=>inFlight(r)||(r.status&&r.status.label==='Assessment')) },
+  { t:'Settled',   why:'on track — nothing to decide today', rows: take(()=>true) },
+];
+const chip = s => s ? `<span class="chip ${s.kind==='err'?'err':s.kind==='warn'?'warn':''}">${esc(s.label)}</span>` : '';
+const tr = r => `<tr>
+  <td><div class="v"><span class="av">${esc(r.i)}</span><div><div class="nm">${esc(r.name)}</div><div class="sb">${esc(r.sub)}</div></div></div></td>
+  <td>${esc(r.stage)}</td><td>${chip(r.status)}</td><td class="when">${esc(r.when)}</td></tr>`;
+const flat = cls => `<table class="z ${cls}">${G.map(g=>`<tbody class="grp">
+    <tr class="gh"><th colspan="4"><span class="g">${g.t}</span><span class="c">${g.rows.length}</span><span class="why">${g.why}</span></th></tr>
+    ${g.rows.map(tr).join('')}</tbody>`).join('')}</table>`;
+const shell = (id,n,t,d,cls,note) => document.getElementById(id).innerHTML =
+  `<div class="cx-h"><span class="cx-n">${n}</span><span class="cx-t">${t}</span></div><p class="cx-d">${d}</p>
+   <div class="stage">${flat(cls)}<p class="note">${note}</p></div>`;
+
+shell('a','A','Zebra only',
+ 'Every stroke removed. Alternate rows carry a 3.5% tint with rounded ends, so the banding reads as rows without drawing a single line. Hover deepens the tint in the brand colour.',
+ 'zA','Nothing to misalign, because there is nothing to align. The group caption separates on <b>space alone</b>.');
+shell('b','B','Zebra + a group hairline',
+ 'The same zebra, but each group caption keeps one hairline under it. The stripe does the row work; the single rule does the group work — and there is now exactly <b>one</b> stroke token in the list instead of two.',
+ 'zB','My pick: zebra for rhythm, one rule for structure, no stroke between rows at all.');
+shell('c','C','Banded group blocks',
+ 'The stripe becomes the whole group rather than the alternate row: each band is one tinted block with rows divided by a faint inset line, and air between bands. Strongest grouping, but a long group turns into a large slab of tint.',
+ 'zC','Reads as three objects rather than one list — good for triage, heavier at 24 ventures.');
+</script></body></html>

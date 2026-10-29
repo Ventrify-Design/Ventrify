@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en" data-brand="verdictscore">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Palette — Ventrify, VerdictScore, VentureStack</title>
+<meta name="description" content="The resolved colour palette for all three identities, read live from brand.css rather than transcribed.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter+Tight:wght@500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/brand/brand.css">
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="ds.css">
+<link rel="stylesheet" href="assess-editorial.css">
+<link rel="stylesheet" href="../../shared/m3/brand-map.css">
+<style>
+  body { margin:0; background:var(--surface-ground); color:var(--text-1);
+         font:400 15px/1.6 var(--font-text); -webkit-font-smoothing:antialiased; }
+  .pg { max-width:1400px; margin:0 auto; padding:56px 40px 140px; }
+  h1 { font:600 clamp(1.9rem,3.6vw,2.7rem)/1.05 var(--font-display); letter-spacing:-.02em; margin:0 0 .5rem; }
+  .sub { color:var(--text-2); max-width:84ch; margin:0 0 .4rem; }
+  .fine { color:var(--text-4); font-size:13px; max-width:94ch; }
+  h2 { font:600 1.15rem/1.2 var(--font-display); letter-spacing:-.01em; margin:48px 0 4px; }
+  .h2n { color:var(--text-4); font-size:13px; margin:0 0 18px; max-width:88ch; }
+
+  .cols { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; }
+  .idcol { border:1px solid var(--line-1); border-radius:var(--r-lg); overflow:hidden; background:var(--surface-base); }
+  .idhead { padding:14px 16px; border-bottom:1px solid var(--line-1); }
+  .idhead b { display:block; font:600 13px/1 var(--font-mono); letter-spacing:.09em; text-transform:uppercase; }
+  .idhead span { display:block; margin-top:5px; font-size:12px; color:var(--text-3); }
+  .idbody { padding:6px 0 10px; }
+
+  .sw { display:grid; grid-template-columns:40px 1fr auto; gap:12px; align-items:center;
+        padding:8px 16px; }
+  .sw .chip { width:40px; height:34px; border-radius:8px; border:1px solid rgba(255,255,255,.1); }
+  .sw .nm { min-width:0; }
+  .sw .nm b { display:block; font:500 11.5px/1.3 var(--font-mono); letter-spacing:.02em;
+              color:var(--text-1); overflow:hidden; text-overflow:ellipsis; }
+  .sw .nm i { font-style:normal; font-size:11px; color:var(--text-4); }
+  .sw .hx { font:500 11px/1 var(--font-mono); color:var(--text-3); white-space:nowrap; }
+  .grp { padding:14px 16px 4px; font:500 10px/1 var(--font-mono); letter-spacing:.1em;
+         text-transform:uppercase; color:var(--text-4); }
+
+  /* a live slice so the palette is seen doing its job, not just as squares */
+  .demo { margin:10px 16px 14px; padding:14px; border-radius:12px; background:var(--surface-ground);
+          border:1px solid var(--line-1); }
+  .demo .eb { font-size:10px; font-weight:500; letter-spacing:.11em; text-transform:uppercase; }
+  .demo .big { font:500 30px/1 var(--font-display); letter-spacing:-1px; margin-top:6px; }
+  .demo .stamp { display:inline-flex; align-items:center; height:26px; padding:0 11px; border-radius:7px;
+                 font:600 11.5px/1 var(--font-text); margin-top:10px; }
+  .demo .trio { display:flex; gap:6px; margin-top:12px; }
+  .demo .trio s { flex:1; height:8px; border-radius:4px; text-decoration:none; }
+
+  table.flat { width:100%; border-collapse:separate; border-spacing:0 4px; margin-top:10px; }
+  table.flat td { padding:9px 14px 9px 0; font:500 12px/1.4 var(--font-mono); color:var(--text-2);
+                  border-bottom:1px solid var(--line-1); vertical-align:middle; }
+  table.flat td:first-child { color:var(--text-1); white-space:nowrap; }
+  table.flat td.c { width:46px; }
+  table.flat .chip { width:34px; height:24px; border-radius:6px; border:1px solid rgba(255,255,255,.1); display:block; }
+  .note { margin-top:10px; font-size:12.5px; color:var(--text-3); max-width:90ch; }
+  .note b { color:var(--text-1); }
+  .dead { color:#F5C451; }
+</style>
+</head>
+<body>
+<div class="pg">
+  <h1>The palette, all three identities</h1>
+  <p class="sub">Every value on this page is <b>read live from the rendered page</b>, not transcribed — so it cannot drift from <code>assets/brand.css</code>. If a token changes there, this page changes with it.</p>
+  <p class="fine">Only a handful of tokens differ between the three. Everything else — surfaces, text, lines, radii, type — is shared, which is why the three can look like one operating system and still be told apart instantly.</p>
+  <div id="out"></div>
+</div>
+
+<script type="module">
+const BRANDS = [
+  ['ventrify',     'Ventrify',     'the parent · neutral, no hue'],
+  ['verdictscore', 'VerdictScore', 'electric violet · considered, a judgement'],
+  ['venturestack', 'VentureStack', 'aqua · constructive, systemic'],
+];
+
+/* the tokens that CHANGE per identity */
+const IDENTITY = [
+  ['--brand-accent',   'the saturated fill'],
+  ['--brand-accent-2', 'the second step'],
+  ['--brand-affirm',   'legible-on-dark · drives --success'],
+  ['--brand-tint',     'accent at surface strength'],
+  ['--text-on-accent', 'what sits ON the fill'],
+];
+/* the ground, shared by all three */
+const GROUND = [
+  ['--brand-ink',        'the deepest ground — deliberately shared'],
+  ['--surface-ground',   'the page'],
+  ['--surface-sunken',   'recessed'],
+  ['--surface-base',     'a panel'],
+  ['--surface-raised',   'raised'],
+  ['--surface-floating', 'floating'],
+];
+const TYPE = [
+  ['--text-1', 'primary'], ['--text-2', 'secondary'],
+  ['--text-3', 'tertiary'], ['--text-4', 'quiet'],
+  ['--line-1', 'hairline divider'], ['--line-2', 'visible border'],
+];
+const STATUS = [
+  ['--warn', 'caution'], ['--warn-ink', 'on caution'],
+  ['--risk', 'risk'],    ['--risk-ink', 'on risk'],
+  ['--ok',   'RETIRED from the product'],
+];
+
+/* resolve a custom property as the browser actually computes it, by painting it and
+   reading the result back — so color-mix() and var() chains come out as real values. */
+const probe = document.createElement('span');
+probe.style.display = 'none';
+document.body.appendChild(probe);
+function resolve(host, token) {
+  probe.remove(); host.appendChild(probe);
+  probe.style.color = `var(${token})`;
+  const v = getComputedStyle(probe).color;
+  return v === 'rgba(0, 0, 0, 0)' || !v ? null : v;
+}
+/* ⚠ TWO SYNTAXES COME BACK, and assuming one silently produces black. A plain token
+   resolves to `rgb(124 92 252)` with 0–255 channels; anything built with color-mix()
+   resolves to `color(srgb 0.106 0.104 0.215)` with 0–1 channels. Rounding the second as
+   if it were the first gave #000000 for every --brand-tint on this page, which looked
+   like a broken token and was a broken converter. */
+const hex = v => {
+  const s = String(v);
+  const m = s.match(/[\d.]+/g); if (!m) return s;
+  const unit = /^color\(/.test(s) ? 255 : 1;          // color(srgb …) is 0–1
+  const [r, g, b] = m.slice(0, 3).map(n => +n * unit);
+  const a = m[3] != null ? +m[3] : 1;
+  const h = '#' + [r, g, b].map(c => Math.round(Math.min(255, Math.max(0, c))).toString(16).padStart(2, '0')).join('').toUpperCase();
+  return a < .99 ? `${h} ${Math.round(a * 100)}%` : h;
+};
+
+const out = document.getElementById('out');
+
+function swatches(host, list) {
+  return list.map(([tok, desc]) => {
+    const v = resolve(host, tok);
+    if (!v) return '';
+    return `<div class="sw"><span class="chip" style="background:var(${tok})"></span>
+      <span class="nm"><b>${tok}</b><i>${desc}</i></span><span class="hx">${hex(v)}</span></div>`;
+  }).join('');
+}
+
+/* build the three identity columns */
+const host = document.createElement('div');
+host.style.display = 'none';
+document.body.appendChild(host);
+
+out.insertAdjacentHTML('beforeend', `<h2>What changes per identity</h2>
+  <p class="h2n">Five tokens, and a photo grade. Nothing else in the system is brand-specific.</p>
+  <div class="cols">${BRANDS.map(([key, name, strap]) => {
+    const h = document.createElement('div'); h.setAttribute('data-brand', key); host.appendChild(h);
+    const grade = getComputedStyle(h).getPropertyValue('--photo-grade').trim();
+    return `<div class="idcol" data-brand="${key}">
+      <div class="idhead" style="background:var(--brand-tint)">
+        <b style="color:var(--brand-affirm)">${name}</b><span>${strap}</span></div>
+      <div class="idbody">
+        ${swatches(h, IDENTITY)}
+        <div class="sw"><span class="chip" style="background:repeating-linear-gradient(135deg,var(--brand-accent) 0 6px,transparent 6px 12px)"></span>
+          <span class="nm"><b>--photo-grade</b><i>the masthead image filter</i></span>
+          <span class="hx">${grade || 'none'}</span></div>
+        <div class="demo">
+          <div class="eb" style="color:var(--brand-affirm)">Investability score</div>
+          <div class="big">80<span style="font-size:13px;color:var(--text-3)">/100</span></div>
+          <div class="stamp" style="background:var(--brand-affirm);color:var(--brand-ink)">Investment ready</div>
+          <div class="trio">
+            <s style="background:var(--brand-affirm)" title="affirmative"></s>
+            <s style="background:var(--warn)" title="caution"></s>
+            <s style="background:var(--risk)" title="risk"></s>
+          </div>
+        </div>
+      </div></div>`;
+  }).join('')}</div>`);
+
+/* the shared layers — identical in all three, so shown once */
+const root = document.documentElement;
+const flat = list => `<table class="flat">${list.map(([tok, desc]) => {
+  const v = resolve(root, tok); if (!v) return '';
+  return `<tr><td class="c"><span class="chip" style="background:var(${tok})"></span></td>
+    <td>${tok}</td><td style="color:var(--text-3)">${desc}</td><td style="text-align:right">${hex(v)}</td></tr>`;
+}).join('')}</table>`;
+
+out.insertAdjacentHTML('beforeend', `
+  <h2>The ground — shared</h2>
+  <p class="h2n">Identical across all three. <code>--brand-ink</code> deliberately does not change: two coloured grounds would say "two products", and the point is one operating system.</p>
+  ${flat(GROUND)}
+  <h2>Type &amp; lines — shared</h2>
+  <p class="h2n">Four text weights where Material has two, and two line weights. Mapping <code>outline</code> and <code>outline-variant</code> the wrong way round is the usual mistake and makes every divider shout.</p>
+  ${flat(TYPE)}
+  <h2>Status — shared, and now only two of them</h2>
+  <p class="h2n">Affirmation moved onto the brand colour, so these are the only saturated non-brand things left in the product. Each means exactly one thing.</p>
+  ${flat(STATUS)}
+  <p class="note"><b class="dead">⚠ --ok (the lime) is retired from the product.</b> It only ever existed as a compromise: brand.css records that it had to be lime rather than emerald to stay clear of VentureStack's old green accent. With affirmation now on the brand colour it is unreferenced by any product component — but it is still defined, and the marketing sites may use it. <b>Check before deleting.</b></p>
+  <p class="note" style="margin-top:14px"><b>Not shown:</b> the raw ramps (<code>--v-violet-*</code>, <code>--v-aqua-*</code>, <code>--v-core-*</code>) and the retired <code>--v-blue-*</code> / <code>--v-green-*</code>, which are kept intact in brand.css so the current pairing can be reverted in two lines.</p>`);
+
+host.remove(); probe.remove();
+</script>
+</body>
+</html>

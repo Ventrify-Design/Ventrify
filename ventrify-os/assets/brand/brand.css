@@ -1,0 +1,607 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   VENTRIFY BRAND — THE CANONICAL TOKEN LAYER
+   The single definition of the brand. Everything else maps onto this.
+
+   WHY THIS FILE EXISTS, AND WHY IT IS NOT A COMPONENT LIBRARY.
+   Two systems already exist and neither can absorb the other:
+     • the PRODUCT (ventrify-os/shared/m3) is a real Material 3 build — 42KB of
+       --md-sys-color-* roles, a 249KB render layer, dark but seeded violet;
+     • the SITES (sites/shared) are custom elements on --ink / --paper naming.
+   Merging them would mean rewriting the product's renderer, which is not worth
+   doing to change a colour. So this is a REFERENCE layer: raw brand values with
+   no opinion about components. Each system keeps its own vocabulary and adds a
+   thin mapping file that points its names at these. One brand, two dialects.
+
+     brand.css  (here: what the brand IS)
+        ├── sites/shared/brand-map.css      --ink, --paper …          → brand
+        └── ventrify-os/shared/m3/brand-map.css  --md-sys-color-* …   → brand
+
+   PALETTES ARE TAKEN FROM THE IDENTITY SHEET, UNCHANGED. Every hex below is
+   transcribed from the supplied brand artwork; none are invented or "improved".
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  color-scheme: dark;
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     1. PALETTES — three ramps, 6 steps each, darkest to lightest.
+     Ventrify is the neutral spine; each product adds one chromatic ramp.
+     ───────────────────────────────────────────────────────────────────────── */
+
+  /* Absolute primitives — the two ends of the range everything mixes toward. */
+  --black: #000000;
+  --white: #FFFFFF;
+
+  /* Ventrify (Core) — Visionary. Connected. Expansive. */
+  --v-core-900: #0A0F14;
+  --v-core-800: #1A2432;
+  --v-core-600: #4B5563;
+  --v-core-400: #9CA3AF;
+  --v-core-200: #E5E7EB;
+  --v-core-000: #FFFFFF;
+
+  /* VerdictScore — Analytical. Confident. Focused. */
+  --v-blue-900: #0A1328;
+  --v-blue-600: #0B6CFF;
+  --v-blue-500: #3B82F6;
+  --v-blue-400: #60A5FA;
+  --v-blue-200: #CBD5E1;
+  --v-blue-000: #FFFFFF;
+
+  /* VentureStack — Progressive. Constructive. Actionable. */
+  --v-green-900: #06251E;
+  --v-green-600: #10C981;
+  --v-green-500: #34D399;
+  --v-green-400: #86F7C7;
+  --v-green-200: #E6FFF6;
+  --v-green-000: #FFFFFF;
+
+  /* ── CANDIDATE RAMPS · warm stone + electric violet ──────────────────────
+     Under evaluation, not yet committed. The blue and green ramps above are
+     kept intact so reverting is a two-line change in the BRAND SELECTION
+     block below and nothing else.
+
+     WHY THESE TWO. The blue and green they would replace each collide with a
+     status colour: --info IS --v-blue-400, and --ok had to be lime rather than
+     emerald to stay clear of --v-green-600 (see the note on --ok). Stone and
+     violet free both.
+
+     ⚠ MEASURED CAUTION on stone: its 600 step sits ~80 RGB units from --warn
+     (#F5C451). Both are warm, and 80 is the second-closest of the candidates
+     tested. Every other pairing cleared 160+. This is the thing to judge on
+     screen — look at an amber "Watch" chip beside a stone accent. */
+
+  /* VentureStack (candidate) — Constructive. Systemic. Instrument-like.
+     ⚠ WHY NOT THE WARM STONE THAT WAS HERE: its chroma was 44 against the Ventrify
+     parent's 19. RGB distance said 92 units and looked survivable; chroma said the two
+     were both essentially neutral, and on screen VerdictScore stopped being tellable
+     from the parent brand. Chroma, not hue distance, is the metric for "does this read
+     as the grey house colour" — a light tint is always near a light grey in RGB terms. */
+  --v-aqua-900: #04222B;
+  --v-aqua-600: #0FB5D4;
+  --v-aqua-500: #38CDE5;
+  --v-aqua-400: #67DDF0;
+  --v-aqua-200: #D6F5FB;
+  --v-aqua-000: #FFFFFF;
+
+  /* VerdictScore (candidate) — Considered. Premium. A judgement, not an action. */
+  --v-violet-900: #140E2B;
+  --v-violet-600: #7C5CFC;
+  --v-violet-500: #9B82FF;
+  --v-violet-400: #B9A7FF;
+  --v-violet-200: #E7E1FF;
+  --v-violet-000: #FFFFFF;
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     2. BRAND SELECTION
+     --brand-* is whichever identity the current surface belongs to. Set once,
+     per site or per product, by [data-brand]. Nothing downstream names a
+     palette directly — that is what makes one component serve three brands.
+     ───────────────────────────────────────────────────────────────────────── */
+
+  --brand-ink:     var(--v-core-900);   /* deepest ground — the UI elevation stack rises from here */
+  --brand-accent:  var(--v-core-200);   /* the identity colour */
+  --brand-accent-2:var(--v-core-400);
+  --brand-tint:    var(--v-core-800);   /* accent at surface strength */
+  --brand-wash:    rgba(255,255,255,.06);
+
+  /* THE PAGE GROUND, which is not the same thing as --brand-ink.
+     --brand-ink is where the UI elevation stack STARTS; everything in §3 is
+     measured up from it. --brand-ground is the one colour a whole page is
+     painted, edge to edge, with nothing else behind anything. They coincide
+     for Ventrify and diverge for the two product identities — see the note
+     at BRAND THEMES for why that split exists and where each one applies. */
+  --brand-ground:  var(--brand-ink);
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     3. SURFACES — a dark tonal stack. Each step is a real elevation, not a
+     shade picked by eye: ground → sunken → base → raised → floating.
+     ───────────────────────────────────────────────────────────────────────── */
+
+  --surface-ground:   var(--brand-ink);
+  --surface-sunken:   color-mix(in srgb, var(--brand-ink) 88%, var(--black));
+  --surface-base:     color-mix(in srgb, var(--brand-ink) 92%, var(--white));
+  --surface-raised:   color-mix(in srgb, var(--brand-ink) 86%, var(--white));
+  --surface-floating: color-mix(in srgb, var(--brand-ink) 80%, var(--white));
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     4. GLASS — the iOS-style translucent material.
+     A real glass surface is four things at once, and dropping any one of them
+     is what makes most web "glassmorphism" look like grey plastic:
+       · BLUR            the backdrop is defocused, not just dimmed
+       · SATURATION      colour behind it intensifies rather than washing out
+       · TOP HIGHLIGHT   a 1px inner light edge, where the light catches
+       · DEPTH SHADOW    it is floating, so it casts
+     Tiers are by prominence, not by blur amount.
+     ───────────────────────────────────────────────────────────────────────── */
+
+  --glass-blur-sm: 12px;
+  --glass-blur:    24px;
+  --glass-blur-lg: 40px;
+  --glass-sat:     180%;
+
+  --glass-film-1:  rgba(255,255,255,.055);   /* chrome: nav bars, toolbars */
+  --glass-film-2:  rgba(255,255,255,.085);   /* cards, panels */
+  --glass-film-3:  rgba(255,255,255,.125);   /* modals, menus, popovers */
+
+  --glass-edge:    rgba(255,255,255,.14);    /* hairline border */
+  --glass-edge-hi: rgba(255,255,255,.22);    /* the lit top edge */
+
+  --glass-cast-1:  0 2px 14px rgba(0,0,0,.28);
+  --glass-cast-2:  0 12px 40px rgba(0,0,0,.42);
+  --glass-cast-3:  0 24px 70px rgba(0,0,0,.55);
+
+  /* BEVEL — glass has thickness. One flat hairline on all four sides reads as
+     a sticker. A real pane is lit along the top, dim along the bottom, and
+     splits light into colour at the two sides it refracts through. The side
+     tints are deliberately asymmetric: neutral-cool on one edge, the brand
+     accent on the other, so dispersion re-skins with the identity. */
+  --glass-lift:     1.05;                    /* glass is lit, not just see-through */
+  --glass-bevel-hi: rgba(255,255,255,.30);
+  --glass-bevel-lo: rgba(255,255,255,.07);
+  --glass-chroma-a: rgba(150,195,255,.45);
+  --glass-chroma-b: color-mix(in srgb, var(--brand-accent) 55%, transparent);
+  --glass-bevel:
+    inset  0  1px 0     var(--glass-bevel-hi),
+    inset  0 -1px 0     var(--glass-bevel-lo),
+    inset  2px 0 6px -4px var(--glass-chroma-a),
+    inset -2px 0 6px -4px var(--glass-chroma-b);
+  --glass-lip:      var(--glass-bevel);      /* former name, kept so older rules upgrade too */
+
+  /* SPECULAR — the bloom where light enters the pane. Its position is a pair
+     of variables so a pointer can move it (see motion.js); static, it sits
+     top-left, which is where the rest of the lighting already comes from. */
+  --glass-spec:    rgba(255,255,255,.11);
+  --glass-spec-x:  28%;
+  --glass-spec-y:  -18%;
+  /* Wide and weak. A tight bright blob at the same spot on every card in a
+     grid stops reading as light and starts reading as a texture someone
+     pasted five times; glass catches light across its whole upper face, not
+     in one corner. The position is a pair of variables so a pointer can move
+     it on the surfaces where that makes sense. */
+  --glass-sheen:   radial-gradient(160% 110% at var(--glass-spec-x) var(--glass-spec-y),
+                                   var(--glass-spec), transparent 64%);
+
+  /* The whole filter chain per tier, as ONE token. A surface names the tier
+     instead of restating blur + saturate + brightness, so improving the
+     material reaches every surface at once rather than three of four. */
+  --glass-fx-1: blur(var(--glass-blur-sm)) saturate(var(--glass-sat)) brightness(var(--glass-lift));
+  --glass-fx-2: blur(var(--glass-blur))    saturate(var(--glass-sat)) brightness(var(--glass-lift));
+  --glass-fx-3: blur(var(--glass-blur-lg)) saturate(var(--glass-sat)) brightness(var(--glass-lift));
+
+  /* REFRACTION — how far the rim bends the backdrop, in fractions of the
+     element. Only the rim: a real pane is flat through the middle. */
+  --glass-refract: .012;
+
+  /* A tinted glass picks up the brand colour rather than staying neutral.
+     Kept very low — glass that is obviously coloured stops reading as glass. */
+  --glass-tint:    color-mix(in srgb, var(--brand-accent) 9%, transparent);
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     5. TEXT — on dark ground. Ratios checked against --surface-base.
+     ───────────────────────────────────────────────────────────────────────── */
+
+  --text-1: var(--v-core-000);                    /* headings, primary */
+  --text-2: rgba(255,255,255,.78);                /* body */
+  --text-3: rgba(255,255,255,.58);                /* secondary */
+  --text-4: rgba(255,255,255,.40);                /* captions, disabled */
+  --text-on-accent: var(--v-core-900);
+
+  --line-1: rgba(255,255,255,.10);                /* hairline dividers */
+  --line-2: rgba(255,255,255,.16);                /* visible borders */
+  --line-3: rgba(255,255,255,.28);                /* emphasis / focus ring */
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     6. STATUS — product roles. Deliberately NOT the brand greens and blues:
+     a score that turns the same green as the VentureStack identity reads as
+     branding rather than as a result.
+     ───────────────────────────────────────────────────────────────────────── */
+
+  /* OK is LIME, not emerald, and that is deliberate. VentureStack's accent is
+     #10C981 / #34D399; an emerald success colour sat 16 units from it, which is
+     the same colour to the eye — a green bar could mean "good" or could mean
+     "VentureStack" and nobody could tell. Lime is 128 from the nearest brand or
+     status colour, the widest separation of the candidates tested, and still
+     reads unambiguously as go. */
+  --ok:     #84CC16;  --ok-ink:   #182B04;  --ok-film:   rgba(132,204,22,.15);
+  --warn:   #F5C451;  --warn-ink: #30230A;  --warn-film: rgba(245,196,81,.14);
+  --risk:   #FF6B6B;  --risk-ink: #330E0E;  --risk-film: rgba(255,107,107,.14);
+  --info:   var(--v-blue-400); --info-film: rgba(96,165,250,.14);
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     7. TYPE — one fluid scale for sites and product alike.
+     ───────────────────────────────────────────────────────────────────────── */
+
+  --font-display: "Inter Tight", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-text:    Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono:    ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+
+  --t-micro:   0.75rem;
+  --t-caption: 0.8125rem;
+  --t-small:   0.875rem;
+  --t-base:    0.9375rem;
+  --t-body:    1rem;
+  --t-lead:    clamp(1.0625rem, 1.4vw, 1.25rem);
+  --t-h5:      1.125rem;
+  --t-h4:      clamp(1.25rem, 1.8vw, 1.5rem);
+  --t-h3:      clamp(1.5rem, 2.6vw, 2rem);
+  --t-h2:      clamp(2rem, 4.4vw, 3.25rem);
+  --t-h1:      clamp(2.75rem, 7vw, 5rem);
+  --t-display: clamp(3.5rem, 11vw, 8rem);
+
+  --lh-flat: 1;      --lh-display: .95;  --lh-tight: 1.1;
+  --lh-snug: 1.3;    --lh-body: 1.6;
+
+  --tr-display: -0.04em; --tr-tight: -0.025em; --tr-normal: -0.01em;
+  --tr-flat: 0;          --tr-wide: 0.08em;    --tr-wider: 0.16em;
+  /* UPPERCASE MICRO-TYPE needs its own step, and it sits between the two
+     above. Judged at 2x zoom on 12px bold caps: 0.08em reads tight and the
+     letters crowd; 0.16em opens the letter gaps until they rival the word
+     gaps and the labels stop reading as words. 0.12em separates the letters
+     while the words still hold together. */
+  --tr-caps: 0.12em;
+
+  --w-regular: 400; --w-medium: 500; --w-semi: 600; --w-bold: 700;
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     8. SPACE · SHAPE · MOTION
+     Radii follow Apple's continuous-corner feel: generous, and larger on
+     larger surfaces so the curvature reads as constant.
+     ───────────────────────────────────────────────────────────────────────── */
+
+  --s-1: .25rem;  --s-2: .5rem;   --s-3: .75rem;  --s-4: 1rem;
+  --s-5: 1.5rem;  --s-6: 2rem;    --s-7: 3rem;    --s-8: 4rem;
+  --s-9: 6rem;    --s-10: 8rem;
+
+  --r-xs: 6px;  --r-sm: 10px;  --r-md: 14px;  --r-lg: 20px;
+  --r-xl: 28px; --r-2xl: 36px; --r-pill: 999px;
+
+  --dur-1: .15s; --dur-2: .25s; --dur-3: .4s; --dur-4: .6s; --dur-5: .9s;
+  --ease-out:    cubic-bezier(.22,.61,.36,1);
+  --ease-inout:  cubic-bezier(.65,.05,.36,1);
+  --ease-spring: cubic-bezier(.34,1.56,.64,1);
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     9. PHOTOGRAPHY TREATMENT
+     The identity guidance says the same photographic style runs across all
+     three brands, separated only by grade: neutral / cool blue / natural
+     green. Encoding it as tokens means an image is tinted by the brand it sits
+     in, instead of three separately-graded asset libraries.
+     ───────────────────────────────────────────────────────────────────────── */
+
+  --photo-grade:   none;                                   /* per-brand below */
+  --photo-dim:     brightness(.82) contrast(1.06);
+  /* A scrim has to end in the colour the page actually is, or it leaves a
+     halo where it finishes — which is --brand-ground, not --brand-ink. */
+  --photo-scrim:   linear-gradient(to top,
+                     var(--brand-ground) 0%,
+                     color-mix(in srgb, var(--brand-ground) 55%, transparent) 38%,
+                     transparent 72%);
+  --photo-veil:    color-mix(in srgb, var(--brand-ground) 35%, transparent);
+
+  /* A TILE is a bounded photograph inside a layout, and it needs its own
+     grade — not the bed's. MEASURED against the one-colour page: at
+     --photo-dim the tiles averaged L* 34-42 on a ground of L* 4.2, with top
+     edges at L* 46-54. That is a tenfold jump at a hard rectangle edge, and
+     it was the last thing on the page still reading as pasted on rather than
+     lit. The target is a photograph that belongs to the same room: mean
+     around L* 18, highlights still alive in the 40s.
+     Contrast and saturation come back up because brightness alone turns a
+     landscape into grey sludge — it is a GRADE, not a dimmer. */
+  --tile-dim:      brightness(.45) contrast(1.16) saturate(.94);
+  /* A tile keeps its left and right edges: it is an object in a column, and
+     a photograph in a layout is allowed to be rectangular. Its HORIZONTAL
+     edges are the problem, because those are where the page continues above
+     and below it, so both get a scrim into the ground. */
+  --tile-scrim:    linear-gradient(to bottom,
+                     color-mix(in srgb, var(--canvas) 72%, transparent) 0%,
+                     transparent 26%, transparent 62%,
+                     color-mix(in srgb, var(--canvas) 78%, transparent) 100%);
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     10. LIGHT — the cinematic layer.
+
+     §2 already says colour should "signal rather than fill". These are the
+     tokens that let it. A surface is lit rather than coloured: a BEAM is the
+     brand at emissive strength for streaks and rims, a BLOOM is the brand as
+     atmosphere behind a subject, a RIM is where a black object catches an
+     edge. Nothing here is a background-colour; everything is light added to
+     a dark ground, which is why the three identities can share one geometry
+     and differ only by which lamp is switched on.
+
+     THE CANVAS IS THE WHOLE PAGE, not a layer inside one. A page reads as
+     cinematic when it is ONE unbroken ground with light played across it —
+     the moment a section paints its own fill, the eye reads a panel and the
+     illusion of a lit space collapses. So --canvas is --brand-ground, every
+     surface in §3 sits ABOVE it, and depth is made of light, never of fill.
+     ───────────────────────────────────────────────────────────────────────── */
+
+  /* STRENGTH. Ventrify's accent is the neutral spine (#E5E7EB), so mixing it
+     toward white gives a pure-white beam that blows out at full opacity and
+     reads as a searchlight rather than as light. The two chromatic identities
+     have no such problem. So intensity is per-brand, like hue — a neutral
+     house colour has to be spent more quietly than a saturated one. */
+  --light-strength: 1;
+
+  --light-beam:    color-mix(in srgb, var(--brand-accent) 92%, var(--white));
+  --light-beam-2:  color-mix(in srgb, var(--brand-accent-2) 70%, transparent);
+  --light-bloom:   color-mix(in srgb, var(--brand-accent) 38%, transparent);
+  --light-haze:    color-mix(in srgb, var(--brand-accent) 12%, transparent);
+  --light-rim:     color-mix(in srgb, var(--brand-accent) 60%, var(--white));
+
+  --canvas:        var(--brand-ground);
+  --canvas-lift:   color-mix(in srgb, var(--brand-ground) 96%, var(--white));
+
+  /* GRAIN. The thing that stops a dark gradient looking like a dark gradient.
+     MEASURED: `overlay` is a no-op on a near-black ground — it multiplies
+     toward black and the grain vanishes entirely. `soft-light` lifts instead,
+     which is what reads as film rather than as noise someone pasted on. */
+  --grain-blend:   soft-light;
+  --grain-opacity: .55;
+  --grain-img:     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
+
+  /* VIGNETTE. The rule both reference sites follow without exception: an
+     asset must die into the ground before the frame reaches it, never be
+     cropped by the frame. */
+  --vignette:      radial-gradient(92% 78% at 50% 48%, transparent 28%, var(--canvas) 86%);
+  /* A PLATE is a photograph kept as the hero's subject rather than used as a
+     backdrop. It needs a far harder falloff than a light field: everything
+     but the subject has to go to black, or it is still a backdrop. */
+  --plate-vignette: radial-gradient(66% 62% at 62% 56%, transparent 0%,
+                      color-mix(in srgb, var(--canvas) 62%, transparent) 46%,
+                      var(--canvas) 84%);
+  /* The PAGE vignette is a different instrument from the other two: it is
+     fixed to the window and frames the whole document, so it has to be far
+     weaker than either. Its only job is to stop a single flat colour reading
+     as a flat rectangle — if it is strong enough to notice, it is strong
+     enough to dim the text nearest the gutters. */
+  --page-vignette: radial-gradient(132% 104% at 50% 40%, transparent 54%,
+                     color-mix(in srgb, var(--black) 32%, transparent) 100%);
+}
+
+/* ═══ BRAND THEMES ═════════════════════════════════════════════════════════
+   ONE NEUTRAL CHASSIS — AND, FOR THE SITES, THREE GROUNDS.
+
+   --brand-ink (the UI chassis) stays the Ventrify core ramp for all three
+   identities. That has not changed, and the reasons still hold:
+
+     · LEGIBILITY. Dense product UI — tables, scores, evidence rows — reads
+       better on neutral than on a saturated ground. A blue page behind blue
+       data flattens the hierarchy that the data needs.
+     · FAMILY. VerdictScore and VentureStack should feel like two parts of one
+       operating system, not two products. A shared chassis says that; two
+       coloured grounds say the opposite.
+
+   --brand-ground (the page ground) is a SEPARATE token because both of those
+   arguments are about dense data, and a marketing page has none. A site has
+   the opposite problem: three products on three domains have to be tellable
+   apart in the first second, before a word is read. So the sites tint the
+   ground and the product does not — same brand, two jobs. The split is real,
+   and it is enforced by which mapping file opts in: sites/shared/brand-map.css
+   points --paper at --brand-ground; ventrify-os/shared/m3/brand-map.css does
+   not, and the Operator Workspace stays neutral.
+
+   MEASURED — how the three values were chosen, not eyeballed. The family rule
+   is EQUAL LIGHTNESS, FREE CHROMA: all three sit at L* 4.2, so no site reads
+   darker or heavier than its siblings, while each keeps as much of its own
+   hue as that lightness allows.
+
+       ventrify      #0A0F14   L* 4.20   chroma 10   (= --v-core-900, unmixed)
+       verdictscore  #100B22   L* 4.20   chroma 23
+       venturestack  #021015   L* 4.20   chroma 19
+
+   The mix percentages differ wildly (100% / 78% / 49%) because the ramps do:
+   cyan carries far more luminance per unit of colour than violet, so pages
+   built on the raw -900 steps would run L* 4.2 / 5.8 / 11.6 — VentureStack
+   nearly 3x lighter than Ventrify, and the family broken. Matching lightness
+   is what holds it together. Contrast was checked on the lightest of the
+   three: 18.0 / 11.7 / 6.3 for text-1/2/3 — all clear of AA.
+
+   Accent, tint and photo-grade still change per brand exactly as before.    */
+
+[data-brand="ventrify"] {
+  /* the house brand IS the chassis: ground and ink coincide, no mix */
+  --brand-ground:   var(--v-core-900);
+  --brand-accent:   var(--v-core-200);
+  --brand-accent-2: var(--v-core-400);
+  --brand-tint:     var(--v-core-800);
+  --text-on-accent: var(--v-core-900);
+  --photo-grade:    saturate(.85);
+  /* MEASURED: at full strength a near-white beam reads as a blown-out
+     searchlight, not as light. The neutral spine gets a whisper. */
+  --light-strength: .3;
+
+  /* the step that is LEGIBLE ON DARK — see the note by --success in brand-map.css */
+  --brand-affirm:   var(--v-core-200);
+}
+
+/* ⚠ EVALUATING: violet. Revert = swap --v-violet-* back to --v-blue-*. Blue ramp untouched. */
+[data-brand="verdictscore"] {
+  /* 78% of --v-violet-900 — solved for L* 4.2, the shared family lightness */
+  --brand-ground:   color-mix(in srgb, var(--v-violet-900) 78%, var(--black));
+  --brand-accent:   var(--v-violet-600);
+  --brand-accent-2: var(--v-violet-400);
+  --brand-tint:     color-mix(in srgb, var(--v-violet-600) 15%, var(--v-core-900));
+  /* MEASURED: --v-violet-000 is #FFFFFF, and white on the accent step a filled button actually
+     paints (#B9A7FF) is 2.09:1 — a clear AA failure on every primary button in the identity.
+     The violet ink gives 8.9:1. VentureStack already used its own -900 here; this was the odd
+     one out, not a tuning choice. */
+  --text-on-accent: var(--v-violet-900);
+  --photo-grade:    saturate(1.04) hue-rotate(-16deg);
+
+  /* the step that is LEGIBLE ON DARK — see the note by --success in brand-map.css */
+  --brand-affirm:   var(--v-violet-400);
+}
+
+/* ⚠ EVALUATING: aqua. Revert = swap --v-aqua-* back to --v-green-*. Green ramp untouched.
+   Coral was tried here and rejected: its 600 step measured 23 RGB units from --risk — coral
+   occupies the arc between --risk (hue 0) and --warn (hue 42), so every coral is nearly the
+   risk colour, and on the Diligence tab "Cleared to wire" became indistinguishable from a
+   blocker. Not a tuning problem; there is no coral that clears it. */
+[data-brand="venturestack"] {
+  /* 49% of --v-aqua-900 — solved for L* 4.2; cyan needs the deepest cut */
+  --brand-ground:   color-mix(in srgb, var(--v-aqua-900) 49%, var(--black));
+  --brand-accent:   var(--v-aqua-600);
+  --brand-accent-2: var(--v-aqua-400);
+  --brand-tint:     color-mix(in srgb, var(--v-aqua-600) 14%, var(--v-core-900));
+  --text-on-accent: var(--v-aqua-900);
+  --photo-grade:    saturate(1.04) hue-rotate(-2deg);
+
+  /* the step that is LEGIBLE ON DARK — see the note by --success in brand-map.css */
+  --brand-affirm:   var(--v-aqua-400);
+}
+
+/* An OPT-IN immersive ground, for a hero or a full-bleed moment where the
+   identity should flood rather than accent. Never the default, and never
+   behind dense data. */
+[data-brand="verdictscore"] .is-immersive { --brand-ground: var(--v-violet-900); }
+[data-brand="venturestack"] .is-immersive { --brand-ground: var(--v-aqua-900); }
+
+/* ═══ MATERIALS ════════════════════════════════════════════════════════════
+   The three glass tiers as ready classes. A component should use these rather
+   than reassembling blur + film + edge + cast itself and getting one wrong.   */
+
+.glass-1, .glass-2, .glass-3 {
+  position: relative;
+  border: 1px solid var(--glass-edge);
+  background-clip: padding-box;
+}
+
+.glass-1 {
+  background-color: var(--glass-film-1);
+  background-image: var(--glass-sheen);
+  backdrop-filter: var(--glass-fx-1);
+  -webkit-backdrop-filter: var(--glass-fx-1);
+  box-shadow: var(--glass-bevel), var(--glass-cast-1);
+  border-radius: var(--r-md);
+}
+.glass-2 {
+  background-color: var(--glass-film-2);
+  background-image: var(--glass-sheen);
+  backdrop-filter: var(--glass-fx-2);
+  -webkit-backdrop-filter: var(--glass-fx-2);
+  box-shadow: var(--glass-bevel), var(--glass-cast-2);
+  border-radius: var(--r-lg);
+}
+.glass-3 {
+  background-color: var(--glass-film-3);
+  background-image: var(--glass-sheen);
+  backdrop-filter: var(--glass-fx-3);
+  -webkit-backdrop-filter: var(--glass-fx-3);
+  box-shadow: var(--glass-bevel), var(--glass-cast-3);
+  border-radius: var(--r-xl);
+}
+
+/* Brand-tinted glass — the accent bleeds through very slightly.
+   The sheen stays on top of the tint, so tinting never costs the highlight. */
+.glass-tinted {
+  background-image: var(--glass-sheen),
+                    linear-gradient(var(--glass-tint), var(--glass-tint));
+}
+
+/* The lit top edge. A real glass panel catches light along its upper rim; a
+   flat border on all four sides is the single biggest tell of fake glass. */
+.glass-1::after, .glass-2::after, .glass-3::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit;
+  padding: 1px; pointer-events: none;
+  background: linear-gradient(160deg, var(--glass-edge-hi), transparent 42%);
+  -webkit-mask: linear-gradient(var(--black) 0 0) content-box, linear-gradient(var(--black) 0 0);
+  -webkit-mask-composite: xor; mask: linear-gradient(var(--black) 0 0) content-box, linear-gradient(var(--black) 0 0);
+  mask-composite: exclude;
+}
+
+/* ── REFRACTION ────────────────────────────────────────────────────────────
+   Blur defocuses the backdrop; it does not BEND it. Bending is what separates
+   a pane of glass from a sheet of frosted plastic, and it is the one thing
+   plain glassmorphism never does. `#v-lens` displaces the backdrop outward
+   along the rim and leaves the middle untouched, which is how a real pane
+   with thickness behaves.
+
+   It lives on its own ::before rather than in the element's backdrop-filter
+   on purpose. Safari does not support SVG filters inside backdrop-filter, and
+   an unsupported filter drops the WHOLE chain — putting it on the element
+   would mean the glass vanishing entirely there. Isolated like this, the
+   worst case is losing the rim bend and keeping a correct pane.
+
+   Opt in, because it costs a compositor pass: use it on surfaces the eye
+   rests on, not on every row in a list. */
+.glass-lens { position: relative; isolation: isolate; }
+.glass-lens::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit;
+  pointer-events: none; z-index: 0;
+  backdrop-filter: url(#v-lens);
+  -webkit-backdrop-filter: url(#v-lens);
+  /* No mask. The map is already neutral grey through the middle, so the
+     displacement falls to zero there on its own and the layer is a no-op
+     away from the rim. Masking a band instead puts a hard edge where the
+     mask stops, which reads as a second border — the exact artefact this
+     effect is supposed to avoid. */
+}
+/* Content must sit above the rim layer. */
+.glass-lens > * { position: relative; z-index: 1; }
+
+/* The rim layer re-composites everything behind it, and "behind it" includes
+   this element's own film — so the film lands twice. Measured on a card over
+   photography: interior rgb(33,39,45) without the layer, rgb(52,58,63) with
+   it, against bare photograph at rgb(12,15,17). That is the film contributing
+   21 points and then 40, which is what turned the cards milky and hid the
+   picture they are standing on. Halving it here means a lensed surface and a
+   plain one read as the same material, which is the entire point of having
+   one. */
+.glass-lens {
+  --glass-film-1: rgba(255,255,255,.028);
+  --glass-film-2: rgba(255,255,255,.043);
+  --glass-film-3: rgba(255,255,255,.064);
+  --glass-spec:   rgba(255,255,255,.06);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass-lens::before { display: none; }
+}
+
+/* WITHOUT backdrop-filter the film is nearly invisible and the panel vanishes
+   into the page. Fall back to an opaque tonal surface instead of transparency. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass-1 { background-color: var(--surface-base); }
+  .glass-2 { background-color: var(--surface-raised); }
+  .glass-3 { background-color: var(--surface-floating); }
+  .glass-lens::before { display: none; }
+}
+
+/* ═══ PHOTOGRAPHY ══════════════════════════════════════════════════════════ */
+
+.photo { position: relative; overflow: hidden; background: var(--surface-sunken); }
+.photo > img, .photo > video {
+  display: block; width: 100%; height: 100%; object-fit: cover;
+  filter: var(--photo-grade) var(--photo-dim);
+}
+.photo::after {                                   /* scrim, so text can sit on it */
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: var(--photo-scrim);
+}
+.photo.is-flat::after { background: var(--photo-veil); }
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur-1:.01ms; --dur-2:.01ms; --dur-3:.01ms; --dur-4:.01ms; --dur-5:.01ms; }
+}
+

@@ -45,6 +45,35 @@
   --md-sys-color-on-surface-variant: #CAC4D0;
   --md-sys-color-surface-container-lowest: #0F0D13;
   --md-sys-color-surface-container-low: #1D1B20;
+  /* App chrome (drawer, aux panel, util rail) is NOT an elevated card, so it no longer
+     borrows surface-container-low. It sits a whisper above the page — enough for the seam
+     to read, not enough to advertise itself.
+     DERIVED, never a hex: --chrome-lift is how far the chrome rises off whatever the page
+     colour happens to be, so it stays the right hue and the right distance on every theme
+     AND every brand identity (the brands re-point surface/-container-low at their own ink).
+     0% = flush with the page, 100% = the old container-low. This is the one dial. */
+  /* ZEBRA — the one row-separation mechanism for every table in the product. Rows used to be
+     divided by strokes, and the strokes had drifted apart: .eng-table and .tbl drew
+     surface-container-highest while group captions drew outline-variant, so two different weights
+     alternated down a single list. A tint cannot misalign with itself. Derived, so it re-tints per
+     theme and per brand like everything else. */
+  /* TYPOGRAPHY TOKENS. These previously existed only in assets/brand.css, which the product pages
+     do not load — so on portfolio.html, assess.html, queue.html and drill.html every var(--font-*)
+     resolved to nothing and each rule fell through to whatever family it had hardcoded. Declaring
+     them here gives every page the same three names; brand.css still overrides them per identity. */
+  /* --brand-ink is declared by the brand layer, which the product pages do not load; declaring a
+     default here means no rule has to carry a literal hex as a fallback. */
+  /* the shape scale stops at 8px; chips, pips and chart cells need a step below it, and twelve
+     different hand-picked radii had crept in across the new components. One token, one value. */
+  --r-mark: 4px;
+  --brand-ink: #0A0F14;
+  --font-display: "Inter Tight", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-text:    Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono:    ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  --zebra: color-mix(in srgb, var(--md-sys-color-on-surface) 3.5%, transparent);
+  --zebra-hover: color-mix(in srgb, var(--md-sys-color-primary) 9%, transparent);
+  --chrome-lift: 14%;
+  --chrome-bg: color-mix(in srgb, var(--md-sys-color-surface-container-low) var(--chrome-lift), var(--md-sys-color-surface));
   --md-sys-color-surface-container: #211F26;
   --md-sys-color-surface-container-high: #2B2930;
   --md-sys-color-surface-container-highest: #36343B;
@@ -55,7 +84,13 @@
   --md-sys-color-inverse-on-surface: #322F35;
 
   /* product-specific semantic roles (M3-style container pairs) */
-  --success: #6FDBB4;  --on-success: #003828;  --success-container: #08442F;  --on-success-container: #8FF8CE;
+  /* POSITIVE IS THE BRAND COLOUR, not green. Amber and red stay reserved for warnings and risks,
+     so a green would be a third "this is fine" signal competing with the brand for the same job.
+     The branded identities already mapped --success onto --brand-affirm; the default theme kept a
+     mint green, which is why an unbranded page still showed green "On track" / "Invest" pills.
+     Same token names, so statusPill, recPill and everything else downstream just follow. */
+  --success: var(--md-sys-color-primary);  --on-success: var(--md-sys-color-on-primary);
+  --success-container: var(--md-sys-color-primary-container);  --on-success-container: var(--md-sys-color-on-primary-container);
   --warning: #F7C067;  --on-warning: #402D00;  --warning-container: #5B4300;  --on-warning-container: #FFDEA8;
 
   /* shape scale */
@@ -70,7 +105,7 @@
   --md-elev-2: 0 1px 2px rgba(0,0,0,0.30), 0 2px 6px 2px rgba(0,0,0,0.15);
   --md-elev-3: 0 4px 8px 3px rgba(0,0,0,0.15), 0 1px 3px rgba(0,0,0,0.30);
 
-  /* semantic shadow roles — theme-aware (light overrides these in :root.light) */
+  /* semantic shadow roles */
   --shadow-panel:   -10px 0 30px rgba(0,0,0,0.30);                              /* aux right side-sheet */
   --shadow-mh-min:  0 8px 26px rgba(0,0,0,0.32);                                /* minified sticky masthead */
   --shadow-bar:     0 -2px 12px rgba(0,0,0,0.28);                               /* mobile bottom utility bar */
@@ -94,60 +129,14 @@
   --nav-w: 260px;
 }
 
-/* ============ LIGHT SCHEME (M3 baseline light, violet primary) ============ */
-:root.light {
-  color-scheme: light;
-  --md-sys-color-primary: #6750A4;
-  --md-sys-color-on-primary: #FFFFFF;
-  --md-sys-color-primary-container: #EADDFF;
-  --md-sys-color-on-primary-container: #21005D;
-  --md-sys-color-secondary: #625B71;
-  --md-sys-color-on-secondary: #FFFFFF;
-  --md-sys-color-secondary-container: #E8DEF8;
-  --md-sys-color-on-secondary-container: #1D192B;
-  --md-sys-color-tertiary: #7D5260;
-  --md-sys-color-on-tertiary: #FFFFFF;
-  --md-sys-color-tertiary-container: #FFD8E4;
-  --md-sys-color-on-tertiary-container: #31111D;
-  --md-sys-color-error: #B3261E;
-  --md-sys-color-on-error: #FFFFFF;
-  --md-sys-color-error-container: #F9DEDC;
-  --md-sys-color-on-error-container: #410E0B;
-
-  --md-sys-color-surface: #F2ECF6;          /* EXPERIMENT: bg = the tint (was the card colour) */
-  --md-sys-color-on-surface: #1D1B20;
-  --md-sys-color-on-surface-variant: #49454F;
-  --md-sys-color-surface-container-lowest: #FFFFFF;
-  --md-sys-color-surface-container-low: #F9F5FC;   /* drawer/aux: lifted toward white, a clean nav surface distinct from the tinted bg */
-  --md-sys-color-surface-container: #FCF8FE;   /* EXPERIMENT: card = near-white (was the bg) → cards lighter than bg */
-  --md-sys-color-surface-container-high: #ECE6F0;
-  --md-sys-color-surface-container-highest: #E6E0E9;
-  --md-sys-color-surface-bright: #FCF8FE;
-  --md-sys-color-outline: #79747E;
-  --md-sys-color-outline-variant: #CAC4D0;
-  --md-sys-color-inverse-surface: #322F35;
-  --md-sys-color-inverse-on-surface: #F5EFF7;
-
-  /* product roles — darkened for legibility on light surfaces */
-  --success: #1C6B4C;  --on-success: #FFFFFF;  --success-container: #A9F2CE;  --on-success-container: #00210F;
-  --warning: #7A5900;  --on-warning: #FFFFFF;  --warning-container: #FFDEA6;  --on-warning-container: #261900;
-
-  /* masthead — light violet tint */
-  --masthead-bg: #E8DFF4;   /* deeper light-violet band — distinct from the (now tinted) content bg */
-  --masthead-border: rgba(103,80,164,0.16);
-  --masthead-shadow: 0 3px 14px rgba(42,34,58,0.08);   /* violet ink — matches the shadow family below */
-
-  /* shadows — softened for near-white surfaces, inked in a heavily-desaturated deep-violet
-     (rgba(42,34,58)) so they read as the tinted surfaces' own self-shadow, not a cold grey smudge */
-  --md-elev-1: 0 1px 2px rgba(42,34,58,0.08), 0 1px 3px 1px rgba(42,34,58,0.05);
-  --md-elev-2: 0 1px 2px rgba(42,34,58,0.09), 0 2px 8px 2px rgba(42,34,58,0.06);
-  --md-elev-3: 0 4px 12px 3px rgba(42,34,58,0.08), 0 1px 3px rgba(42,34,58,0.10);
-  --shadow-panel:   -1px 0 4px rgba(42,34,58,0.06), -16px 0 44px rgba(42,34,58,0.11);
-  --shadow-mh-min:  0 2px 6px rgba(42,34,58,0.06), 0 8px 28px rgba(42,34,58,0.10);
-  --shadow-bar:     0 -1px 3px rgba(42,34,58,0.05), 0 -8px 24px rgba(42,34,58,0.09);
-  --shadow-drawer:  6px 0 20px rgba(42,34,58,0.08);   /* soft rightward spread only — no tight contact layer (that read as a keyline stroke) */
-  --shadow-rail:    -6px 0 20px rgba(42,34,58,0.08);  /* mirrors the drawer, casts left — keyline-free */
-}
+/* NO LIGHT SCHEME. The workspace is dark-only: VerdictScore has its own
+   identity and theming was removed 2026-10-29 rather than maintained. The
+   :root.light token block that stood here is gone, which also disarms any
+   stray `classList.add('light')` — the class now selects nothing. If a light
+   scheme ever returns, shared/m3/brand-map.css is the file that has to answer
+   it: it paints the chrome from --surface-base / --surface-ground and never
+   had a light branch, which is why light mode measured 1.00:1 in places.
+   `node tools/contrast.mjs --light` is still there to prove it. */
 
 /* Scoped reset — never strip padding from the @material/web custom elements
    (a blanket `* { padding:0 }` overrides each component's shadow :host inset,
@@ -157,7 +146,7 @@ body, h1, h2, h3, h4, h5, h6, p, figure, ul, ol, dl, blockquote { margin: 0; }
 ul, ol { padding: 0; }
 body {
   background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface);
-  font-family: 'Roboto', system-ui, sans-serif; font-size: 14px; line-height: 1.5;
+  font-family: var(--font-text); font-size: 14px; line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
 a { color: inherit; text-decoration: none; }
@@ -194,14 +183,38 @@ a { color: inherit; text-decoration: none; }
 
 .m3-drawer {
   position: sticky; top: 0; height: 100vh; padding: 12px; overflow-y: auto;
-  background: var(--md-sys-color-surface-container-low);
+  background: var(--chrome-bg);
   display: flex; flex-direction: column; gap: 2px;
   box-shadow: var(--shadow-drawer); z-index: 2;   /* depth: lifts the persistent side-nav off the content canvas */
 }
 .drawer-brand { display: flex; align-items: center; gap: 12px; padding: 16px 16px 20px; }
-.drawer-brand .logo { flex: none; width: 34px; height: 34px; border-radius: 10px; background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); display: grid; place-items: center; }
-.drawer-brand .wm { font-weight: 500; font-size: 16px; letter-spacing: .01em; }
+.drawer-brand .logo { flex: none; --logo-w: 34px; width: var(--logo-w); height: 34px; border-radius: 10px; background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); display: grid; place-items: center; }
+/* the wordmark is set as a LOCKUP, not as running text: the product half carries the
+   weight, the suffix is light, and the tracking is opened up because at .01em the two
+   halves ran together into one word. Inter 300–600 are loaded, so both ends are real
+   weights rather than synthesised ones. */
+.drawer-brand .wm { font-weight: 600; font-size: 16px; letter-spacing: .028em; }
 .drawer-brand .wm small { color: var(--md-sys-color-on-surface-variant); font-weight: 400; }
+/* one wordmark per identity, all rendered, CSS picks — see brandMark() in ds.js for why.
+   Default to the parent so a page with no [data-brand] still reads "Ventrify OS".
+   Scoped to .m3-drawer, NOT .drawer-brand: brandMark() is now drawn at the FOOT
+   too (the product's signature under the tenant's account chip), and while these
+   rules were scoped to the head the foot matched none of them — so every fallback
+   wordmark fell through to the base rule and the drawer printed
+   "Ventrify OSVentureStack" under the lockup. */
+.m3-drawer .wm-for { display: none; }
+.m3-drawer .wm-for[data-for="ventrify"] { display: inline; }
+[data-brand="ventrify"] .m3-drawer .wm-for[data-for="ventrify"],
+[data-brand="verdictscore"] .m3-drawer .wm-for[data-for="verdictscore"],
+[data-brand="venturestack"] .m3-drawer .wm-for[data-for="venturestack"] { display: inline; }
+[data-brand="verdictscore"] .m3-drawer .wm-for[data-for="ventrify"],
+[data-brand="venturestack"] .m3-drawer .wm-for[data-for="ventrify"] { display: none; }
+/* An identity WITH artwork has no use for its text wordmark — the lockup already
+   carries the name. Hiding the whole .wm keeps the two from printing together. */
+[data-brand="verdictscore"] .drawer-product .wm { display: none; }
+/* the second half of the name carries the identity — Verdict·Score, Venture·Stack */
+.drawer-brand .wm em { font-style: normal; font-weight: 300;
+                       color: var(--brand-affirm, var(--md-sys-color-primary)); }
 .drawer-section { padding: 16px 16px 8px; }
 .nav-item {
   display: flex; align-items: center; gap: 12px; height: 56px; padding: 0 16px;
@@ -215,9 +228,22 @@ a { color: inherit; text-decoration: none; }
 .nav-item .material-symbols-rounded { font-size: 24px; flex: none; }
 .nav-item::before { content: ""; position: absolute; inset: 0; background: currentColor; opacity: 0; transition: opacity .2s; }
 .nav-item:hover::before { opacity: 0.08; }
-.nav-item.active { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
+/* the you-are-here state takes the IDENTITY, not a neutral container. A tint rather than
+   a fill, because this is a selection and the filled treatment is reserved for a verdict. */
+.nav-item.active { background: color-mix(in srgb, var(--brand-affirm, var(--md-sys-color-primary)) 16%, transparent);
+                   color: var(--brand-affirm, var(--md-sys-color-primary)); }
 .nav-item.active .material-symbols-rounded { font-variation-settings: 'FILL' 1; }
-.nav-badge { margin-left: auto; font-size: 11px; font-weight: 500; letter-spacing: .5px; }
+/* the count is a NOTIFICATION, so it looks like one: a filled pill that holds its shape at
+   one digit and grows at three. Brand-filled rather than red — a queue of things waiting
+   for you is a prompt, not a risk, and red means exactly one thing in this system now. */
+.nav-badge { margin-left: auto; display: inline-grid; place-items: center;
+             min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px;
+             background: var(--brand-affirm, var(--md-sys-color-primary));
+             color: var(--brand-ink);
+             font-size: 11px; font-weight: 700; letter-spacing: 0; line-height: 1;
+             font-variant-numeric: tabular-nums; }
+/* on the active row the pill would sit tint-on-tint, so it inverts to stay separable */
+.nav-item.active .nav-badge { background: var(--brand-ink); color: var(--brand-affirm, var(--md-sys-color-primary)); }
 .drawer-foot { margin-top: auto; display: flex; align-items: center; gap: 12px; padding: 14px 16px; }
 .drawer-foot .av { flex: none; width: 36px; height: 36px; border-radius: 999px; background: var(--md-sys-color-tertiary-container); color: var(--md-sys-color-on-tertiary-container); display: grid; place-items: center; font-weight: 500; font-size: 14px; }
 .drawer-foot .nm { font-size: 14px; font-weight: 500; }
@@ -340,6 +366,17 @@ md-outlined-button, md-filled-button, md-text-button, md-filled-tonal-button { -
 .m3-app.rail .nav-badge,
 .m3-app.rail .drawer-brand .wm,
 .m3-app.rail .drawer-foot .nm { opacity: 0; }
+.m3-app.rail .drawer-brand .logo {
+  /* ...except the brand logo, which is the ONE lead that is not 24px wide, so it hangs off to the
+     right of the 24px track it starts in: the 34px bolt tile by 5px, a 42px mark by 9px. That
+     overhang is what made the mark look off-centre in the collapsed rail. Centre it on the axis.
+     position/left rather than a margin: a negative margin is swallowed by the drawer's own
+     overflow-x:hidden, and this way layout — and so the row's height, and every nav item below
+     it — does not move. --logo-nudge is an optional per-asset optical trim for artwork whose
+     visual mass is not balanced about its own centre; it defaults to 0. */
+  position: relative;
+  left: calc((24px - var(--logo-w, 34px)) / 2 + var(--logo-nudge, 0px));
+}
 
 /* Motion: smoothly animate the column width; fade the labels; clip anything overflowing the narrowing rail. */
 .m3-app { transition: grid-template-columns 340ms var(--md-sys-motion-emphasized); }
@@ -354,7 +391,7 @@ md-outlined-button, md-filled-button, md-text-button, md-filled-tonal-button { -
 
 /* ---- Theme toggle (light / dark) — lives in Settings (removed from the drawer) ---- */
 .theme-toggle { display: inline-flex; gap: 4px; padding: 4px; border-radius: 999px; background: var(--md-sys-color-surface-container-high); }
-.theme-toggle button { height: 36px; padding: 0 18px; border: none; border-radius: 999px; background: transparent; color: var(--md-sys-color-on-surface-variant); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-family: 'Roboto',sans-serif; font-size: 13px; font-weight: 500; letter-spacing: .3px; transition: background .2s; }
+.theme-toggle button { height: 36px; padding: 0 18px; border: none; border-radius: 999px; background: transparent; color: var(--md-sys-color-on-surface-variant); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-family: var(--font-text); font-size: 13px; font-weight: 500; letter-spacing: .3px; transition: background .2s; }
 .theme-toggle button .material-symbols-rounded { font-size: 18px; }
 .theme-toggle button.on { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
 
@@ -362,14 +399,31 @@ md-outlined-button, md-filled-button, md-text-button, md-filled-tonal-button { -
    push  = .aux-push  → grid reserves a right column, content narrows (no scrim)
    modal = .aux-modal → panel floats over a scrim, content unchanged
    both slide the panel in via transform; the grid width animates via .m3-app's transition */
-.m3-aux { position: absolute; top: 0; right: var(--rail-w, 0px); height: 100%; width: var(--aux-panel-w); max-width: 100%; background: var(--md-sys-color-surface-container-low); box-shadow: var(--shadow-panel); transform: translateX(100%); transition: transform .34s var(--md-sys-motion-emphasized); z-index: 9; display: flex; flex-direction: column; }
+.m3-aux { position: absolute; top: 0; right: var(--rail-w, 0px); height: 100%; width: var(--aux-panel-w); max-width: 100%; background: var(--chrome-bg); box-shadow: var(--shadow-panel); transform: translateX(100%); transition: transform .34s var(--md-sys-motion-emphasized); z-index: 9; display: flex; flex-direction: column; }
 .m3-app.aux-open .m3-aux { transform: none; }
 .m3-app.aux-push { --aux-w: var(--aux-panel-w); }
 .m3-scrim { position: absolute; inset: 0; background: rgba(0,0,0,0.42); opacity: 0; pointer-events: none; transition: opacity .3s var(--md-sys-motion-standard); z-index: 8; }
-.m3-app.aux-modal.aux-open .m3-scrim { opacity: 1; pointer-events: auto; }
+/* A FLOATING aux is modal, so the scrim must cover the util rail (z-index 10) too — otherwise the
+   rail stays clickable behind a dialog and a tool opens a second panel over the first. .aux-floating
+   is set by openAux(); the media queries below only decide whether there is room to push. */
+.m3-app.aux-open.aux-floating .m3-scrim { opacity: 1; pointer-events: auto; z-index: 11; }
+.m3-app.aux-open.aux-floating .m3-aux { z-index: 12; }
 /* below 900px there's no room to push — fall back to overlay */
-@media (max-width: 900px){ .m3-app.aux-push { --aux-w: 0; } .m3-app.aux-push.aux-open .m3-scrim { opacity: 1; pointer-events: auto; } }
-@media (max-width: 560px){ .m3-app { --aux-panel-w: 100vw; } }
+@media (max-width: 900px){ .m3-app.aux-push { --aux-w: 0; } }
+
+/* SIZE VARIANT — openAux({ size: 'wide' }).
+   Reading-length content (the category drill) needs a measure the 440px panel cannot give: at
+   392px of text every rubric question wraps to two lines and the panel runs 1306px deep.
+   A pushed panel may not starve the primary, so this follows the SAME rule the default panel
+   already follows at 900px, pitched at its own width: push where the primary keeps a legible
+   column, float where it would not. 720 + nav 260 + rail 72 + a 620px primary = 1672, so 1680
+   (a real monitor width) is the switch. Below it the panel floats over a scrim at full width
+   instead of squeezing the page to 388px — which is the crush this redesign set out to remove. */
+.m3-app.aux-wide { --aux-panel-w: min(720px, calc(100vw - 72px)); }
+@media (max-width: 1679px){
+  .m3-app.aux-wide.aux-push { --aux-w: 0; }
+}
+@media (max-width: 560px){ .m3-app, .m3-app.aux-wide { --aux-panel-w: 100vw; } }   /* full-bleed wins over any size variant on a phone */
 @media (prefers-reduced-motion: reduce){ .m3-aux { transition: none; } }
 
 /* ============================================================
@@ -383,14 +437,22 @@ md-outlined-button, md-filled-button, md-text-button, md-filled-tonal-button { -
    ============================================================ */
 /* --drill-w is a calc() LENGTH, never 1fr: grid-template-columns only interpolates length→length,
    which is the same class of transition .aux-push already ships. A 1fr track would step, not glide. */
-.m3-app.drill-open { --drill-w: calc(100% - var(--nav-w) - var(--compact-w) - var(--aux-w, 0px) - var(--rail-w, 0px)); }
+/* ⚠ --compact-w GOES TO ZERO. The drill used to leave the parent page visible at
+   clamp(300px,26vw,360px), on the theory that it stayed a "live compact master index".
+   At 360px it was not an index — the hero headline truncated mid-word and the thesis
+   became a ribbon of two-word lines nobody reads. The drill now takes the full width and
+   the sibling list moves INSIDE it, as the rail, where it has room to be legible.
+   .is-compact is still applied (the drill gate asserts it, and it still governs the
+   primary's own padding) — it simply has no width to narrow into any more. */
+.m3-app.drill-open { --compact-w: 0px;
+  --drill-w: calc(100% - var(--nav-w) - var(--aux-w, 0px) - var(--rail-w, 0px)); }
 .m3-drill {
   position: absolute; top: 0; height: 100%;
   right: calc(var(--rail-w, 0px) + var(--aux-w, 0px));
   /* the ELEMENT's width is the open geometry at all times — deliberately NOT var(--drill-w).
      If it tracked the grid var it would snap to 0px the instant .drill-open is removed and the
      slide-out would never render. Only the GRID TRACK animates 0 → this width. */
-  width: calc(100% - var(--nav-w) - var(--compact-w) - var(--aux-w, 0px) - var(--rail-w, 0px));
+  width: calc(100% - var(--nav-w) - var(--aux-w, 0px) - var(--rail-w, 0px));
   max-width: 100%;
   background: var(--md-sys-color-surface);
   border-left: 1px solid var(--md-sys-color-outline-variant);
@@ -404,10 +466,67 @@ md-outlined-button, md-filled-button, md-text-button, md-filled-tonal-button { -
 .drill-scroll { flex: 1; min-height: 0; overflow-y: auto; overflow-anchor: none; display: flex; flex-direction: column; }
 .drill-body { padding: 24px clamp(22px, 3.6vw, 52px) 72px; }
 .drill-body > .brief { margin: 0; }
-/* the drill is ONE column — the classic's right-hand contents rail becomes an inline block at the top */
-.drill-body .drill-toc:empty { display: none; }
-.drill-body .drill-toc-inner { margin: 18px 0 26px; padding: 12px 4px; border-radius: 14px; background: var(--md-sys-color-surface-container); }
-.drill-body .drill-toc-lab { font-size: 11px; letter-spacing: .5px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); padding: 0 12px 6px; }
+
+/* ── THE UNIFIED RAIL ──────────────────────────────────────────────────────
+   One list for both levels of navigation: every sibling document, with the ACTIVE
+   one opening in place to reveal its own sections. Read top to bottom it mirrors how
+   the content is actually organised, which is why there is nowhere left for an "On
+   this page" card to exist — it was a second copy of the lower half of this list,
+   printed above the fold, directly under a meta line that already said "7 sections".
+
+   STICKY, not a second scroller. The rail scrolls with the document until it reaches
+   the top and then holds. That keeps ONE scroll container in the drill, so the
+   masthead's scroll-linked minify and the section scroll-spy both keep working
+   against the same element they always did. */
+/* only a drill that SUPPLIES a rail becomes two columns — a category or founder drill,
+   which has no siblings to list, keeps the single reading column it always had */
+.drill-body-inner { display: grid; grid-template-columns: var(--drill-rail-w, 272px) minmax(0, 1fr);
+  gap: clamp(24px, 3vw, 48px); align-items: start; }
+.drill-main { min-width: 0; }
+/* ⚠ THE RAIL PARKS BELOW THE MASTHEAD, not at the top of the scroller. Both are sticky
+   inside the SAME scroll container, and the masthead wins on z-index — so at top:8px the
+   rail slid underneath it and the first two workstreams were simply gone once you scrolled.
+   --drill-mh-h is published by a ResizeObserver in initShell and tracks the masthead's live
+   height through the whole collapse, so the rail never passes behind it at any point of the
+   animation, not just at the two ends. */
+.drill-rail { position: sticky; top: calc(var(--drill-mh-h, 120px) + 12px);
+  max-height: calc(100vh - var(--drill-mh-h, 120px) - 44px); overflow-y: auto;
+  padding: 6px 0 20px; margin-left: -10px;
+  scrollbar-width: thin; overscroll-behavior: contain; }
+.drill-rail-lab { padding: 8px 12px 8px; font-size: 10px; font-weight: 500; letter-spacing: .11em;
+  text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); }
+.drill-rail .dr-i { display: block; width: 100%; text-align: left; background: none; border: 0;
+  font: inherit; cursor: pointer; padding: 9px 12px; font-size: 13px; line-height: 1.35;
+  color: var(--md-sys-color-on-surface-variant); border-left: 2px solid transparent; }
+.drill-rail .dr-i:hover { color: var(--md-sys-color-on-surface);
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 5%, transparent); }
+.drill-rail .dr-i.on { color: var(--brand-affirm, var(--md-sys-color-primary)); font-weight: 500;
+  border-left-color: var(--brand-affirm, var(--md-sys-color-primary));
+  background: color-mix(in srgb, var(--brand-affirm, var(--md-sys-color-primary)) 10%, transparent); }
+.drill-rail .dr-i .dr-tag { font-family: var(--font-mono, 'Roboto Mono', monospace); font-size: 10px;
+  letter-spacing: .06em; color: var(--md-sys-color-outline); margin-left: 6px; }
+.drill-rail .dr-i:focus-visible { outline: 2px solid var(--md-sys-color-primary); outline-offset: -2px; }
+/* the active document's own sections, nested one step in */
+.drill-rail .dr-secs { padding: 2px 0 8px; }
+.drill-rail .dr-s { display: block; width: 100%; text-align: left; background: none; border: 0;
+  font: inherit; cursor: pointer; padding: 6px 12px 6px 26px; font-size: 12.5px; line-height: 1.35;
+  color: var(--md-sys-color-on-surface-variant); border-left: 2px solid transparent; }
+.drill-rail .dr-s:hover { color: var(--md-sys-color-on-surface-variant); }
+.drill-rail .dr-s.on { color: var(--md-sys-color-on-surface);
+  border-left-color: var(--brand-affirm, var(--md-sys-color-primary)); }
+.drill-rail .dr-s:focus-visible { outline: 2px solid var(--md-sys-color-primary); outline-offset: -2px; }
+/* the rail replaces the inline contents card outright */
+.drill-body .drill-toc { display: none; }
+
+/* ⚠ AFTER the rail rules above, not before. At equal specificity source order wins, and
+   this block sat earlier in the file, so `position: static` lost to `position: sticky` and the
+   rail stayed pinned on a phone where it is supposed to collapse above the text. */
+@media (max-width: 1080px) {
+  /* no room for a rail beside the text — it becomes a collapsed list above it */
+  .drill-body-inner { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .drill-rail { position: static; max-height: none; margin-left: 0;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant); padding-bottom: 10px; }
+}
 .drill-body .art-meta { margin-top: 4px; }
 @media (max-width: 640px){ .drill-body .doc-pager { grid-template-columns: 1fr; } }
 /* A drill has no navigation drawer of its own to open, and it does not navigate back via its crumb —
@@ -461,6 +580,12 @@ md-outlined-button, md-filled-button, md-text-button, md-filled-tonal-button { -
    their 1440px size: .shell-body 51.84px + .brief 28px per side would leave ~160px of content.
    Compact collapses the inner gutters and keeps ONE outer gutter. */
 .shell-main.is-compact { padding-left: 16px; padding-right: 16px; }
+/* with the drill full-bleed the primary has no width, and 16px either side of nothing
+   still painted a 32px sliver of page between the nav rail and the drill */
+/* ⚠ padding only — NOT overflow:hidden. Clamping the overflow reset the primary's
+   scrollTop (2957 → 670 in the gate), so closing the drill dropped you somewhere else on
+   the page you came from. The zero-width track already hides it; nothing needs clipping. */
+.m3-app.drill-open .shell-main.is-compact { padding-left: 0; padding-right: 0; }
 .shell-main.is-compact .shell-body { padding-left: 0; padding-right: 0; }
 .shell-main.is-compact .brief { padding-left: 0; padding-right: 0; }
 /* wide tables can't live at 300–360px → de-tabularise to stacked rows (never h-scroll: block layout
@@ -530,7 +655,7 @@ md-outlined-button, md-filled-button, md-text-button, md-filled-tonal-button { -
 
 /* ---- Utility rail (right icon rail) — persistent tooling; opens the aux panel ---- */
 .m3-app.has-utilrail { --rail-w: 72px; }
-.m3-utilrail { grid-column: 5; background: var(--md-sys-color-surface-container-low); box-shadow: var(--shadow-rail); display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 0; z-index: 10; }
+.m3-utilrail { grid-column: 5; background: var(--chrome-bg); box-shadow: var(--shadow-rail); display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 0; z-index: 10; }
 .urail-item { width: 46px; height: 46px; border-radius: 13px; border: none; background: transparent; color: var(--md-sys-color-on-surface-variant); cursor: pointer; display: grid; place-items: center; position: relative; transition: background .15s; }
 .urail-spacer { flex: 1 1 auto; }   /* pushes the meta cluster (view settings · help) + overflow kebab to the foot */
 .urail-item:hover { background: var(--md-sys-color-surface-container-high); }

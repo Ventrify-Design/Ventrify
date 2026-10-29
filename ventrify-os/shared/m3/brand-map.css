@@ -1,0 +1,362 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   BRAND → MATERIAL 3
+   The product's second dialect.
+
+   `assets/brand.css` is the canonical layer: palettes, glass, type, motion.
+   The websites consume it through `sites/shared/brand-map.css`, which speaks
+   an --ink/--paper vocabulary. The product speaks Material 3, so it consumes
+   the SAME tokens through this file, which speaks --md-sys-color-*.
+
+   One brand, two dialects. Nothing here invents a colour: every value below
+   resolves to something defined in brand.css, so re-skinning the identity
+   (or adding a fourth) never touches the product's 249KB render layer.
+
+   LOAD ORDER (it matters): this file goes LAST.
+       brand.css → theme.css → ds.css → assess-editorial.css → brand-map.css
+   The :root variables would resolve from anywhere — custom properties are
+   substituted at computed-value time, so their position is irrelevant. The
+   handful of real SELECTORS here are not: at equal specificity ds.css simply
+   wins if it loads later, which silently cost this file its chrome rules and
+   its breadcrumb fix until the order was corrected.
+   theme.css still ships the real M3 scheme; this overrides the roles that
+   carry identity and leaves the rest of M3's machinery — state layers,
+   elevation, shape, the type ramp — exactly as it was.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+
+  /* ── GROUND ───────────────────────────────────────────────────────────────
+     M3's tonal container ladder maps onto the brand's surface ladder one for
+     one. Both are "how far off the page is this", so the translation is
+     direct rather than approximate. */
+
+  --md-sys-color-surface:                   var(--surface-ground);
+  --md-sys-color-surface-dim:               var(--surface-sunken);
+  --md-sys-color-surface-container-lowest:  var(--surface-sunken);
+  --md-sys-color-surface-container-low:     var(--surface-base);
+  --md-sys-color-surface-container:         var(--surface-base);
+  --md-sys-color-surface-container-high:    var(--surface-raised);
+  --md-sys-color-surface-container-highest: var(--surface-floating);
+  --md-sys-color-surface-bright:            var(--surface-floating);
+  --md-sys-color-background:                var(--surface-ground);
+  --md-sys-color-on-background:             var(--text-1);
+
+  /* ── TEXT ─────────────────────────────────────────────────────────────────
+     M3 has two on-surface roles where the brand has four. The two it has take
+     the brand's first two; the quieter pair stays available to components
+     that already reach for it. */
+
+  --md-sys-color-on-surface:         var(--text-1);
+  --md-sys-color-on-surface-variant: var(--text-2);
+
+  /* ── LINES ────────────────────────────────────────────────────────────────
+     M3's `outline` is the visible border and `outline-variant` the hairline
+     divider — the brand's --line-2 and --line-1 respectively. Mapping them
+     the other way round is the usual mistake and makes every divider shout. */
+
+  --md-sys-color-outline:         var(--line-2);
+  --md-sys-color-outline-variant: var(--line-1);
+
+  /* ── IDENTITY ─────────────────────────────────────────────────────────────
+     The ONLY roles that change between Ventrify, VerdictScore and
+     VentureStack. Everything above is shared ground, which is why all three
+     products can look like one family and still be told apart instantly.
+     `--brand-accent` is re-declared per [data-brand] in brand.css, so these
+     follow automatically. */
+
+  /* `primary` is a TEXT and icon colour in a dark scheme — it paints the
+     active tab, the breadcrumb tail and every accent label. M3's own dark
+     default is #D0BCFF, near-white, for exactly that reason.
+
+     Mapping it to the saturated brand blue (#0B6CFF) looked right and
+     measured 3.72:1 against the masthead — under AA for 14px and 11px text,
+     on two of the most-read labels on the page. The LIGHT step of the ramp
+     is the text colour; the saturated one is a fill, and it keeps that job
+     through `inverse-primary` and the containers. */
+  --md-sys-color-primary:               var(--brand-accent-2);
+  --md-sys-color-on-primary:            var(--text-on-accent);
+  --md-sys-color-primary-container:     var(--brand-tint);
+  --md-sys-color-on-primary-container:  var(--text-1);
+  --md-sys-color-inverse-primary:       var(--brand-accent);
+
+  --md-sys-color-secondary:             var(--text-2);
+  --md-sys-color-on-secondary:          var(--text-on-accent);
+  --md-sys-color-secondary-container:   var(--surface-raised);
+  --md-sys-color-on-secondary-container: var(--text-1);
+
+  --md-sys-color-tertiary:              var(--brand-accent-2);
+  --md-sys-color-on-tertiary:           var(--text-on-accent);
+  --md-sys-color-tertiary-container:    var(--surface-floating);
+  --md-sys-color-on-tertiary-container: var(--text-1);
+
+
+  /* ── STATUS ───────────────────────────────────────────────────────────────
+     A verdict's colour must NEVER be the brand's colour: on VentureStack the
+     accent is green, and a green "good" chip beside green chrome stops
+     reading as a judgement and starts reading as decoration. brand.css picks
+     status hues measured for distance from all three accents — --ok is lime,
+     not emerald, for exactly that reason. */
+
+  --md-sys-color-error:                var(--risk);
+  --md-sys-color-on-error:             var(--risk-ink);
+  --md-sys-color-error-container:      var(--risk-film);
+  --md-sys-color-on-error-container:   var(--text-1);
+
+  /* ── AFFIRMATION TAKES THE BRAND COLOUR ───────────────────────────────────
+     EVALUATING. These three used to resolve to --ok (the lime), giving the UI four
+     chromatic families at once: brand, green, amber, red.
+
+     The argument for the change is that most of what was painted green in this product
+     was never a SUCCESS STATE. An inventory of the 35 sites found four different kinds:
+       · affirmation — "the case FOR", an operator's sign-off: one side of an argument
+       · completion  — a lifecycle step done, a diligence check cleared
+       · a fact      — a founder verified, a gap closed
+       · a verdict   — "Investment ready", "Cleared to wire"
+     Only the last is a judgement. Green on the other three was borrowing alarm-language
+     for things that are not alarms, and it left red and amber competing with a third
+     saturated hue for attention.
+
+     With affirmation on the brand colour, the ONLY saturated non-brand things on a page
+     are amber and red — which is exactly where the eye should go.
+
+     ⚠ THE RISK, and the thing to judge on screen: the accent now carries two meanings —
+     "this is the product" (tabs, eyebrows, the dial) and "this is affirmative" (ticks,
+     the sign-off). Watch the Verdict hero, where an accent eyebrow, an accent dial and
+     an accent band all meet. If it reads as decoration there, this is wrong.
+
+     Revert = point these three back at --ok / --ok-ink / --ok-film. */
+  /* ⚠ --brand-affirm, NOT --brand-accent-2. The two accent steps are inverted on the
+     parent brand — Ventrify's accent-2 is a MID grey (#9CA3AF) where the product brands'
+     is a LIGHT tint — so keying affirmation off accent-2 measured 3.81:1 for "Verdict
+     ready" over the masthead photo, under AA. --brand-affirm is declared per identity as
+     the step that is legible on dark, which is the only property this role needs. */
+  --success:            var(--brand-affirm);
+  --on-success:         var(--brand-ink);
+  --success-container:  color-mix(in srgb, var(--brand-affirm) 20%, transparent);
+  --on-success-container: var(--brand-affirm);
+  --warning:            var(--warn);
+  --on-warning:         var(--warn-ink);
+  --warning-container:  var(--warn-film);
+
+  --md-sys-color-inverse-surface:    var(--text-1);
+  --md-sys-color-inverse-on-surface: var(--surface-ground);
+  --md-sys-color-scrim:              var(--black);
+  --md-sys-color-shadow:             var(--black);
+
+  /* ── PRODUCT-LOCAL CHROME TOKENS ──────────────────────────────────────────
+     theme.css defines a few surfaces outside the M3 role set — the masthead
+     is the visible one, and it was still carrying M3's violet #231F2E, which
+     is why the top of the page read purple against a correctly-branded body.
+     Widths and shape stay as they are; only colour is translated. */
+
+  --masthead-bg:     color-mix(in srgb, var(--surface-base) 72%, transparent);
+  --masthead-border: var(--line-1);
+  --masthead-shadow: var(--glass-cast-1);
+
+  /* ── TYPE ─────────────────────────────────────────────────────────────────
+     The product shipped on Roboto because that is M3's default, not because
+     anything chose it. The brand's faces replace it; the M3 SIZE ramp is
+     untouched, so nothing reflows. */
+
+  --md-ref-typeface-brand: var(--font-display);
+  --md-ref-typeface-plain: var(--font-text);
+
+  /* ── SHAPE ────────────────────────────────────────────────────────────────
+     M3's corner scale against the brand's radius scale. */
+
+  --md-sys-shape-corner-extra-small: var(--r-xs);
+  --md-sys-shape-corner-small:       var(--r-sm);
+  --md-sys-shape-corner-medium:      var(--r-md);
+  --md-sys-shape-corner-large:       var(--r-lg);
+  --md-sys-shape-corner-extra-large: var(--r-xl);
+}
+
+/* ── THE APP ICON ───────────────────────────────────────────────────────────
+   A brand asset, so it lives in the brand layer beside the accents rather than in
+   theme.css. Set as a background-image so the preview switcher can change identity with
+   no re-render; the bolt glyph underneath is the fallback for the parent brand and for
+   any identity with no icon yet.
+
+   ⚠ These are SELECTORS, so they must sit outside :root. Nested inside a declaration
+   block they parse as garbage and are dropped without warning — which is exactly what
+   happened on the first attempt, and the only symptom was backgroundImage: "none".
+   Paths are relative to THIS file. */
+/* ../../assets, not ../../../assets. EVERY url() in this file has to resolve
+   INSIDE ventrify-os, because os.ventrify.io deploys with Root Directory =
+   ventrify-os and anything above it is simply not in the bundle. The old
+   paths climbed one level too far, to the repo-root assets/ folder: they
+   resolve when the tree is served from the parent (which is how the
+   *-brand.html previews were always opened) and 404 the moment this ships.
+   MEASURED before vendoring: /assets/brand.css → 404 from the OS root.
+   tools/brand-sync.mjs now fails the build on any url() that escapes. */
+/* --brand-logo and the whole background-image slot are GONE. They pointed at
+   verdictscore-icon.png: a raster of the mark only, with the wordmark beside it
+   faked in the UI typeface. A background-image is an opaque resource — it cannot
+   read a custom property — so that mark carried a frozen copy of the palette and
+   could never answer --brand-accent, which is the one thing the brand layer is
+   for. The real lockup is inline SVG now (shared/m3/brand-lockup.js), its fills
+   ARE the tokens, and it is vector. The PNG is deleted; brand-sync would have
+   failed the build on a url() left pointing at it.
+
+   SIZE is the only dial, and it is set here because this is the brand layer.
+   --brand-lockup-h is the height; the width follows from the artwork's own
+   aspect so the gap to whatever sits beside it never drifts when the size
+   changes. Two crops, one asset: see brand-lockup.js on preserveAspectRatio. */
+.brand-lockup {
+  --lockup-h: var(--brand-lockup-h, 22px);
+  /* 546 x 108 is the measured artwork box (getBBox, not guessed) */
+  height: var(--lockup-h);
+  width: calc(var(--lockup-h) * 546 / 108);
+  display: block;
+  color: var(--text-1, currentColor);   /* the "Verdict" half + the chevron's dark face */
+  overflow: visible;
+}
+/* one lockup per identity, all rendered, CSS picks — same mechanism as .wm-for,
+   and for the same reason (the preview switcher flips [data-brand] with no re-render). */
+.m3-drawer .bl-for { display: none; }
+[data-brand="verdictscore"] .m3-drawer .bl-for[data-for="verdictscore"] { display: block; }
+
+/* The product's own signature at the foot of the drawer (see drawer() in ds.js
+   for why it is not at the head). Deliberately the quietest thing in the
+   chrome: small, dimmed, and it lifts to full strength only on hover, the way
+   a signature should. The hairline above separates it from the account chip,
+   which IS a control. */
+.drawer-product { padding: 12px 16px 16px; border-top: 1px solid var(--line-1, var(--md-sys-color-outline-variant)); }
+.drawer-product .brand-lockup { --lockup-h: 15px; opacity: .55; transition: opacity .15s ease; }
+.m3-drawer:hover .drawer-product .brand-lockup { opacity: .9; }
+/* collapsed rail: the mark alone, centred on the 24px nav-icon axis like every other lead */
+.m3-app.rail .drawer-product { display: flex; justify-content: center; padding-inline: 0; }
+
+/* COLLAPSED RAIL — the mark alone. Narrowing the element is the whole switch:
+   preserveAspectRatio="xMinYMid slice" makes the height govern, so the wordmark
+   falls outside the box instead of shrinking the mark to fit. 140.2 x 108 is the
+   measured extent of paths 0-2. */
+.m3-app.rail .brand-lockup { width: calc(var(--lockup-h) * 140.2 / 108); }
+
+
+/* The breadcrumb separator takes its colour from `outline`, which is a BORDER
+   token — 16% white. As a border that is correct; as a 14px glyph it measured
+   1.65:1 and was effectively invisible. Decorative, so not an AA failure, but
+   there is no reason for it to be unreadable. */
+.mh-orient .orient-sep { color: var(--text-3); }   /* matches ds.css's specificity, which loads after this file */
+
+/* The faces themselves. M3 sets font-family on body and on its type classes,
+   so both have to be told. */
+body,
+.md-typescale-body-large, .md-typescale-body-medium, .md-typescale-body-small,
+.md-typescale-label-large, .md-typescale-label-medium, .md-typescale-label-small {
+  font-family: var(--font-text);
+}
+h1, h2, h3, h4,
+.md-typescale-display-large, .md-typescale-display-medium, .md-typescale-display-small,
+.md-typescale-headline-large, .md-typescale-headline-medium, .md-typescale-headline-small,
+.md-typescale-title-large, .md-typescale-title-medium {
+  font-family: var(--font-display);
+  letter-spacing: var(--tr-display, -0.02em);
+}
+
+/* ── PHOTOGRAPHY ────────────────────────────────────────────────────────────
+   The sites stand their glass on landscape. The product cannot: this is a
+   screen somebody reads numbers on for an hour, and a picture behind a data
+   table is a legibility problem wearing a nice coat.
+
+   So photography is admitted to ONE band — behind the masthead, which is the
+   venture's identity strip and already a contained area — and nowhere near
+   the reading column. That also gives the glass chrome something to refract,
+   which is the only reason glass is there at all.
+
+   It is held deliberately far back: --product-photo-dim is the single number
+   that controls how present it is, and it is low on purpose. Measured
+   against the masthead text, not chosen by eye.                             */
+
+:root {
+  --product-photo:      url("../../assets/brand/verdictscore-02-snowpeak-1600.webp");
+  --product-photo-dim:  .30;    /* opacity of the whole band */
+  --product-photo-grade: grayscale(.28) saturate(.9) brightness(.78) contrast(1.03);
+}
+[data-brand="verdictscore"] {
+  --product-photo: url("../../assets/brand/verdictscore-02-snowpeak-1600.webp");
+}
+[data-brand="venturestack"] {
+  /* VentureStack photography deferred with the identity — see the logo note above. */
+  --product-photo: url("../../assets/brand/verdictscore-02-snowpeak-1600.webp");
+}
+
+/* NO `overflow: hidden` here. It makes the masthead a scroll container, and a
+   scroll container's automatic minimum size is 0 in its grid parent — the
+   whole header collapsed from 265px to 25px. The band cannot overflow anyway:
+   the pseudo is inset:0. `isolation` gives the negative-z layers a stacking
+   context to sit in, above the masthead's own background and below its text. */
+.masthead { isolation: isolate; }
+
+.masthead::before {
+  content: "";
+  position: absolute; inset: 0; z-index: -2;
+  background-image: var(--product-photo);
+  background-size: cover;
+  background-position: 50% 42%;
+  filter: var(--product-photo-grade);
+  opacity: var(--product-photo-dim);
+  pointer-events: none;
+}
+
+/* The scrim. Two jobs: hold contrast under the title and breadcrumb, and
+   land the band on the page colour at its lower edge so the photograph ends
+   rather than being cut off by the border. */
+.masthead::after {
+  content: "";
+  position: absolute; inset: 0; z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(to bottom,
+      color-mix(in srgb, var(--surface-ground) 46%, transparent) 0%,
+      color-mix(in srgb, var(--surface-ground) 68%, transparent) 55%,
+      var(--surface-ground) 100%),
+    linear-gradient(to right,
+      color-mix(in srgb, var(--surface-ground) 55%, transparent) 0%,
+      transparent 62%);
+}
+
+/* Compact (scrolled) masthead: the band is a sliver by then, and a sliver of
+   photograph behind a pinned title is noise. Fade it out as it minifies. */
+.masthead.is-compact::before { opacity: calc(var(--product-photo-dim) * .45); }
+
+@media (prefers-reduced-transparency: reduce) {
+  .masthead::before { display: none; }
+}
+
+/* ── GLASS ──────────────────────────────────────────────────────────────────
+   The product's chrome — the rails and the sticky masthead — is exactly what
+   the design system calls tier-1 glass: enumerable, persistent, and sitting
+   over content that keeps moving underneath. The same recipe the sites use,
+   named by tier rather than restated.
+
+   Not applied to the reading column. Glass under long-form text is the one
+   place the design system rules out, and a verdict memo is long-form text. */
+.m3-drawer,
+.m3-utilrail,
+.masthead {
+  backdrop-filter: var(--glass-fx-1);
+  -webkit-backdrop-filter: var(--glass-fx-1);
+}
+
+/* The side nav and the util rail glass over the PAGE, which is flat and still — so their tint
+   is --chrome-bg (theme.css), the one dial that says how far chrome rises off the page. The
+   masthead glasses over PHOTOGRAPHY that scrolls beneath it, which is the job tier-1 glass was
+   designed for, so it keeps the full --surface-base tint. Same recipe, two tints, one reason. */
+/* The glass is 72% opaque, so a tint mixed at the dial lands on screen at only 0.72x the dial
+   once the page shows through — which is why these read flatter than the solid aux panel at the
+   same --chrome-lift. Dividing the tint's lift by the alpha cancels that exactly, so the dial
+   means the same thing on a glass surface as on a solid one. Keep the two 72%s in step. */
+.m3-drawer,
+.m3-utilrail {
+  background-color: color-mix(in srgb,
+    color-mix(in srgb, var(--surface-base) calc(var(--chrome-lift) / 0.72), var(--surface-ground))
+    72%, transparent);
+}
+.masthead    { background-color: color-mix(in srgb, var(--surface-base) 72%, transparent); }
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .m3-drawer, .m3-utilrail { background-color: var(--chrome-bg); }
+  .masthead { background-color: var(--surface-base); }
+}

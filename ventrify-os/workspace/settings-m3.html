@@ -1,17 +1,29 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-brand="verdictscore">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Settings — Ventrify OS</title>
-<script>try{if(localStorage.getItem("ventrify-theme")==="light")document.documentElement.classList.add("light")}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" rel="stylesheet">
+<!-- BRAND LAYER. Order is load-bearing and brand-map.css documents why:
+     the :root variables would resolve from anywhere, but the handful of real
+     SELECTORS in brand-map lose to ds.css at equal specificity if ds.css
+     loads later. brand.css FIRST (the tokens everything else resolves
+     against), brand-map LAST (the M3 role overrides). -->
+<link rel="stylesheet" href="../assets/brand/brand.css">
 <link rel="stylesheet" href="../shared/m3/theme.css">
 <link rel="stylesheet" href="../shared/m3/ds.css">
+<!-- The EDITORIAL layer (section-hero, statement/book/coverage lockups, the .mrow row
+     system, the eyebrow). Named for the assessment because that is where it was written,
+     but it is the shared reading language of the product — the Portfolio already loads it
+     and is not an assessment. Without it these pages can only draw boxes: the components
+     exist in ds.js and render, but land unstyled. That, not taste, is why they read thin. -->
+<link rel="stylesheet" href="../shared/m3/assess-editorial.css">
 <link rel="stylesheet" href="../shared/m3/transitions.css">
 <link rel="stylesheet" href="../shared/m3/workspace-chrome.css">
+<link rel="stylesheet" href="../shared/m3/brand-map.css">
 </head>
 <body>
 <div id="app"></div>
@@ -21,6 +33,7 @@
 <script type="module">
   import * as DS from '../shared/m3/ds.js';
   import { wsNavConfig, wsBrandConfig, wsAccountConfig, mountOrgSwitcherM3 } from './workspace-m3.js';
+  import { workspaceHero, brandPreview, brandSwatches } from '../shared/m3/workspace-cards.js';
 
   await window.WORKSPACE_READY;
   const W = window.WORKSPACE;
@@ -30,7 +43,13 @@
 
   if (!org) {
     document.getElementById('app').outerHTML = DS.pageShell({ active: 'settings', nav: wsNavConfig(), brand: wsBrandConfig(), account: wsAccountConfig(), masthead: DS.masthead({ eyebrow: 'Settings', headline: 'No organisation configured' }), body: `<div class="brief"><div class="m3-card" style="text-align:center;padding:48px">Contact your administrator for Workspace access.</div></div>` });
-    DS.initShell(); mountOrgSwitcherM3(); throw new Error('halt-render');
+    DS.initShell(); mountOrgSwitcherM3();
+    // Halts by never resolving, not by throwing — see the same idiom in
+    // admin-m3.html, and app.js's three `return new Promise(() => {})` guards.
+    // A throw here is a real uncaught Error in the console, indistinguishable
+    // from a page that actually broke; this one fired for anyone
+    // whose account has no organisation configured.
+    await new Promise(() => {});
   }
 
   // ---- persist a brand patch (VERBATIM /api/update-org from settings.html) ----
@@ -49,7 +68,12 @@
     const nameEl = document.querySelector('.drawer-brand .wm-name');
     if (logo && patch.primaryColor) logo.style.background = patch.primaryColor;
     if (nameEl && patch.name !== undefined) nameEl.textContent = patch.name;
-    if (logo && patch.logoUrl !== undefined) logo.innerHTML = patch.logoUrl ? `<img src="${esc(patch.logoUrl)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">` : `<span style="font-size:13px;font-weight:700;color:#fff">${esc(initialsOf(org.name))}</span>`;
+    if (logo && patch.logoUrl !== undefined) logo.innerHTML = patch.logoUrl ? `<img src="${esc(patch.logoUrl)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">` : `<span style="font-size:13px;font-weight:700">${esc(initialsOf(org.name))}</span>`;
+    // The hero is a PREVIEW of exactly this, so it repaints from the same patch
+    // and through the same component — re-rendered, never patched by hand, so
+    // the preview cannot drift from what brandPreview() would draw on reload.
+    const prev = document.querySelector('.brand-prev');
+    if (prev) prev.outerHTML = brandPreview(org);
   }
   function saveOrgPatch(patch) {
     Object.assign(org, patch); applyBrandM3(patch);
@@ -72,21 +96,23 @@
   };
 
   const SW = ['#0036FF', '#7A3FFF', '#00B8A0', '#FF3F7A', '#FF7A3F', '#141414'];
-  const cur = (org.primaryColor || '#0036FF').toUpperCase();
+  // The picker used to default to #0036FF with nothing saved, while the drawer
+  // mark and the hero preview both fell back to the theme primary — so the page
+  // showed two different "current" colours at once. An unset colour is now unset
+  // everywhere: no swatch ringed, no hex, and the preview on the theme default.
+  const cur = (org.primaryColor || '').toUpperCase();
+  // The "where it shows" sentence moved to the hero's coda — repeating it here
+  // put the same 26 words twice on one screen.
   const brandCard = `<div class="m3-card" style="padding:22px">
-    <div class="title-l" style="margin-bottom:4px">Brand kit</div>
-    <div class="body-m variant" style="margin-bottom:18px">Your name, colour and logo render across the Workspace and every Studio in your org. Changes apply live and save instantly.</div>
-    <div style="margin-bottom:18px;max-width:360px">${DS.formField({ label: 'Organisation name', id: 'b-name', value: org.name || '' })}</div>
-    <div style="margin-bottom:18px"><div class="overline" style="margin-bottom:8px">Primary colour</div>
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-        ${SW.map(c => `<span class="b-swatch" data-color="${c}" style="width:32px;height:32px;border-radius:9px;cursor:pointer;background:${c};box-shadow:0 0 0 2px ${c.toUpperCase() === cur ? 'var(--md-sys-color-on-surface)' : 'transparent'}"></span>`).join('')}
-        <span style="display:inline-flex;align-items:center;gap:6px;margin-left:6px"><input type="color" id="b-pick" value="${cur}" style="width:34px;height:34px;border:none;background:none;cursor:pointer"><input type="text" id="b-hex" value="${cur}" maxlength="7" class="field-in" style="width:96px"></span>
-      </div>
+    <div class="title-l" style="margin-bottom:18px">Brand kit</div>
+    <div style="margin-bottom:22px;max-width:380px">${DS.formField({ label: 'Organisation name', id: 'b-name', value: org.name || '' })}</div>
+    <div style="margin-bottom:22px"><div class="overline" style="margin-bottom:10px">Primary colour</div>
+      ${brandSwatches(SW, cur)}
     </div>
-    <div><div class="overline" style="margin-bottom:8px">Logo</div>
-      <div style="display:flex;align-items:center;gap:14px;padding:14px;border:1px dashed var(--md-sys-color-outline-variant);border-radius:12px;max-width:420px">
-        <div id="b-logo" style="width:48px;height:48px;border-radius:11px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:${esc(org.primaryColor || 'var(--md-sys-color-primary)')};color:#fff;font-weight:700">${org.logoUrl ? `<img src="${esc(org.logoUrl)}" alt="" style="width:100%;height:100%;object-fit:cover">` : `<span>${esc(initialsOf(org.name))}</span>`}</div>
-        <div style="flex:1"><div class="body-m" style="font-weight:500">${org.logoUrl ? 'Replace logo' : 'Upload a logo'}</div><div class="body-s variant">PNG or SVG. Square works best.</div></div>
+    <div><div class="overline" style="margin-bottom:10px">Logo</div>
+      <div style="display:flex;align-items:center;gap:14px;padding:14px;border:1px dashed var(--md-sys-color-outline-variant);border-radius:12px;flex-wrap:wrap">
+        <div id="b-logo" style="width:48px;height:48px;border-radius:11px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:${esc(org.primaryColor || 'var(--md-sys-color-primary)')};color:${org.primaryColor ? DS.inkOn(org.primaryColor) : 'var(--md-sys-color-on-primary)'};font-weight:700">${org.logoUrl ? `<img src="${esc(org.logoUrl)}" alt="" style="width:100%;height:100%;object-fit:cover">` : `<span>${esc(initialsOf(org.name))}</span>`}</div>
+        <div style="flex:1 1 150px"><div class="body-m" style="font-weight:500">${org.logoUrl ? 'Replace logo' : 'Upload a logo'}</div><div class="body-s variant">PNG or SVG. Square works best.</div></div>
         <span style="display:flex;gap:6px"><button class="m3-btn text" onclick="document.getElementById('b-logo-input').click()">Upload</button>${org.logoUrl ? `<button class="m3-btn text" style="color:var(--md-sys-color-error)" onclick="window.__removeLogo()">Remove</button>` : ''}</span>
         <input type="file" id="b-logo-input" accept="image/png,image/svg+xml,image/jpeg" hidden>
       </div>
@@ -95,17 +121,30 @@
 
   const Plan = window.VentrifyPlan, plan = W.plan;
   const presetDef = (Plan.PLAN_PRESETS[plan.preset] || {});
-  const row = (l, v) => `<div style="display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--md-sys-color-outline-variant)"><span class="body-m variant">${l}</span><span class="body-m">${v}</span></div>`;
+  // DS.row is the one canonical list row (21 variants were folded into it).
+  // This page had re-implemented it inline with its own padding, hairline and
+  // type — so a change to row spacing anywhere else never reached Settings.
+  // DS.row ESCAPES trail.value, so these callers hand it text, not markup. The
+  // muted tail is a real slot (`valueMuted`), not a <span> smuggled through a
+  // value — which is what the inline version was doing for "Enterprise only".
+  const row = (l, v, muted) => DS.row({ variant: 'spec', title: l,
+    trail: { kind: 'value', value: muted ? '' : v, valueMuted: muted ? v : '' } });
   function capUsage(type, label) { if (!Plan.orgCan(plan, type)) return ''; const used = Plan.usageFor(programs, type); const lim = Plan.limitFor(plan, type); return row(label, lim == null ? `${used} · unlimited` : `${used} of ${lim}`); }
-  const orgCard = `<div class="m3-card" style="padding:22px"><div class="title-l" style="margin-bottom:10px">Organisation</div>${row('Slug', esc(org.slug || '—'))}${row('Created', org.createdAt ? new Date(org.createdAt).toLocaleDateString() : '—')}${row('Custom domain', '<span class="variant">Enterprise only</span>')}</div>`;
+  const orgCard = `<div class="m3-card" style="padding:22px"><div class="title-l" style="margin-bottom:10px">Organisation</div>${row('Slug', org.slug || '—')}${row('Created', org.createdAt ? new Date(org.createdAt).toLocaleDateString() : '—')}${row('Custom domain', 'Enterprise only', true)}</div>`;
   const planCard = `<div class="m3-card" style="padding:22px"><div class="title-l" style="margin-bottom:10px">Plan &amp; usage</div>${row('Plan', Plan.planLabel(plan))}${capUsage('assessment', 'Assessments')}${capUsage('build', 'MVP builds')}${row('Operators', String(operators.length))}<div style="margin-top:14px;display:flex;gap:8px"><a class="m3-btn text" href="../pricing.html" target="_blank">View pricing</a><button class="m3-btn filled" onclick="window.__requestUpgrade&&window.__requestUpgrade()">Request upgrade</button></div></div>`;
-  const appearanceCard = `<div class="m3-card" style="padding:22px"><div class="title-l" style="margin-bottom:6px">Appearance</div><div class="body-m variant" style="margin-bottom:14px">Choose how the Workspace looks on this device. Applies instantly.</div>${DS.themeToggle()}</div>`;
   const dangerCard = `<div class="m3-card" style="padding:22px;border:1px solid color-mix(in srgb, var(--md-sys-color-error) 30%, transparent)"><div class="title-l" style="margin-bottom:6px">Danger zone</div><div class="body-m variant" style="margin-bottom:14px">Wipes every locally-stored value and returns to first-run setup.</div><button class="m3-btn outlined" style="color:var(--md-sys-color-error);border-color:color-mix(in srgb, var(--md-sys-color-error) 40%, transparent)" onclick="window.__resetWorkspace&&window.__resetWorkspace()">Clear all workspace data</button></div>`;
 
   document.getElementById('app').outerHTML = DS.pageShell({
     active: 'settings', nav: wsNavConfig(), brand: wsBrandConfig(), account: wsAccountConfig(),
-    masthead: DS.masthead({ eyebrow: 'Settings', headline: 'Workspace settings', subheading: `Organisation, brand kit and licence for ${esc(org.name)}.` }),
-    body: `<div class="brief"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px">${brandCard}${orgCard}${planCard}${appearanceCard}${dangerCard}</div></div>`
+    masthead: DS.masthead({ eyebrow: 'Settings', headline: esc(org.name) }),
+    body: `<div class="brief">
+      ${workspaceHero({ org, plan, Plan, programs, operators })}
+      <div class="ws-settings">
+        <div class="ws-stack">${brandCard}${orgCard}</div>
+        <div class="ws-stack">${planCard}</div>
+        <div class="ws-span">${dangerCard}</div>
+      </div>
+    </div>`
   });
   DS.initShell(); mountOrgSwitcherM3();
 
@@ -116,10 +155,15 @@
     if (!/^#[0-9a-fA-F]{6}$/.test(hex)) return; const up = hex.toUpperCase();
     saveOrgPatch({ primaryColor: up });
     document.getElementById('b-pick').value = up; document.getElementById('b-hex').value = up;
-    document.querySelectorAll('.b-swatch').forEach(s => s.style.boxShadow = `0 0 0 2px ${s.dataset.color.toUpperCase() === up ? 'var(--md-sys-color-on-surface)' : 'transparent'}`);
-    const lg = document.getElementById('b-logo'); if (lg && !org.logoUrl) lg.style.background = up;
+    // selection is a CLASS now, not a hand-written box-shadow per swatch — so the
+    // ring lives with the rest of the component's states in the stylesheet.
+    document.querySelectorAll('.bsw').forEach(s => s.classList.toggle('on', s.dataset.color.toUpperCase() === up));
+    const tile = document.querySelector('.bsw-custom');
+    if (tile) { tile.style.background = up; const g = tile.querySelector('.material-symbols-rounded'); if (g) g.style.color = DS.inkOn(up); }
+    const lg = document.getElementById('b-logo');
+    if (lg && !org.logoUrl) { lg.style.background = up; lg.style.color = DS.inkOn(up); }
   }
-  document.querySelectorAll('.b-swatch').forEach(s => s.addEventListener('click', () => applyColor(s.dataset.color)));
+  document.querySelectorAll('.bsw').forEach(s => s.addEventListener('click', () => applyColor(s.dataset.color)));
   document.getElementById('b-pick')?.addEventListener('input', e => applyColor(e.target.value));
   document.getElementById('b-hex')?.addEventListener('change', e => applyColor(e.target.value));
   document.getElementById('b-logo-input')?.addEventListener('change', async e => {

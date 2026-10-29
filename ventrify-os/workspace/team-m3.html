@@ -1,17 +1,29 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-brand="verdictscore">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Team — Ventrify OS</title>
-<script>try{if(localStorage.getItem("ventrify-theme")==="light")document.documentElement.classList.add("light")}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" rel="stylesheet">
+<!-- BRAND LAYER. Order is load-bearing and brand-map.css documents why:
+     the :root variables would resolve from anywhere, but the handful of real
+     SELECTORS in brand-map lose to ds.css at equal specificity if ds.css
+     loads later. brand.css FIRST (the tokens everything else resolves
+     against), brand-map LAST (the M3 role overrides). -->
+<link rel="stylesheet" href="../assets/brand/brand.css">
 <link rel="stylesheet" href="../shared/m3/theme.css">
 <link rel="stylesheet" href="../shared/m3/ds.css">
+<!-- The EDITORIAL layer (section-hero, statement/book/coverage lockups, the .mrow row
+     system, the eyebrow). Named for the assessment because that is where it was written,
+     but it is the shared reading language of the product — the Portfolio already loads it
+     and is not an assessment. Without it these pages can only draw boxes: the components
+     exist in ds.js and render, but land unstyled. That, not taste, is why they read thin. -->
+<link rel="stylesheet" href="../shared/m3/assess-editorial.css">
 <link rel="stylesheet" href="../shared/m3/transitions.css">
 <link rel="stylesheet" href="../shared/m3/workspace-chrome.css">
+<link rel="stylesheet" href="../shared/m3/brand-map.css">
 </head>
 <body>
 <div id="app"></div>
@@ -20,12 +32,12 @@
 <script type="module" src="app.js"></script>
 <script type="module">
   import * as DS from '../shared/m3/ds.js';
-  import { personCard } from '../shared/m3/workspace-cards.js';
+  import { personCard, operatorsHero, teamMetrics } from '../shared/m3/workspace-cards.js';
   import { wsNavConfig, wsBrandConfig, wsAccountConfig, mountOrgSwitcherM3 } from './workspace-m3.js';
 
   await window.WORKSPACE_READY;
   const W = window.WORKSPACE;
-  const { operators, org, helpers } = W;
+  const { operators, org, programs, helpers } = W;
   const isLive = W.mode === 'live';
   const orgName = (org && org.name) || 'your workspace';
   const me = (helpers.currentOperator && helpers.currentOperator()) || {};
@@ -72,27 +84,43 @@
     } catch (e) { window.__toast(String(e.message || e), true); }
   };
 
+  // One card per operator. The aside carries the LOAD — the count as a figure and
+  // the ventures by name — because "who is actually carrying what" is the only
+  // question this page exists to answer, and it previously read as a grey line of
+  // run-together names with no weight at all.
   function operatorCard(op) {
     const assigned = helpers.programsForOperator(op.id);
-    const names = assigned.map(p => esc(p.name)).join(' · ') || '<span class="variant">No engagements assigned</span>';
-    const canRemove = canManage && isLive && !op.isCurrentUser && String(op.email || '').toLowerCase() !== ownerEmail && operators.length > 1;
+    const isOwner = ownerEmail !== '' && String(op.email || '').toLowerCase() === ownerEmail;
+    const canRemove = canManage && isLive && !op.isCurrentUser && !isOwner && operators.length > 1;
+    const names = assigned.length
+      ? `<div class="op-load-names">${assigned.map(p => `<span>${esc(p.name)}</span>`).join('')}</div>`
+      : `<div class="op-load-none">Nothing assigned yet</div>`;
     return personCard({
       avatar: op.avatar, avatarColor: op.avatarColor, name: op.name, sub: op.email,
-      badge: op.isCurrentUser ? DS.statusPill({ kind: 'ok', label: 'You' }) : '',
+      badge: op.isCurrentUser ? DS.statusPill({ kind: 'ok', label: 'You' }) : (isOwner ? DS.statusPill({ kind: 'info', label: 'Owner' }) : ''),
       pill: DS.statusPill({ kind: 'info', label: op.role }),
       action: canRemove ? `<button class="m3-btn text" style="color:var(--md-sys-color-error)" onclick="window.__removeOperator('${esc(op.email)}')">Remove</button>` : '',
-      aside: `<div><div class="overline" style="margin-bottom:6px">Assigned · ${assigned.length}</div><div class="body-m variant">${names}</div></div>`,
+      aside: `<div class="op-load">
+        <div class="op-load-n${assigned.length ? '' : ' dim'}">${assigned.length}</div>
+        <div class="op-load-b"><div class="op-load-l">${assigned.length === 1 ? 'venture carried' : 'ventures carried'}</div>${names}</div>
+      </div>`,
     });
   }
 
+  // Ranked heaviest-first, so the hero's claim about the load and the order of the
+  // roster below it are the same statement read twice — not two orders to reconcile.
+  const m = teamMetrics(operators, programs, org);
+  const roster = m.ranked.map(r => r.op);
   const body = `<div class="brief">
-    <div class="ws-stats" style="grid-template-columns:repeat(1,minmax(0,320px))">${DS.statCard({ n: String(operators.length), l: 'Active operators', sub: 'with workspace access' })}</div>
-    ${operators.length ? `<div class="ws-grid">${operators.map(operatorCard).join('')}</div>` : `<div class="m3-card" style="text-align:center;padding:40px;color:var(--md-sys-color-on-surface-variant)">No operators yet.</div>`}
+    ${operatorsHero(operators, programs, org)}
+    ${operators.length
+      ? `<div class="ws-grid">${roster.map(operatorCard).join('')}</div>`
+      : `<div class="m3-card" style="text-align:center;padding:40px;color:var(--md-sys-color-on-surface-variant)">No operators yet.</div>`}
   </div>`;
 
   document.getElementById('app').outerHTML = DS.pageShell({
     active: 'team', nav: wsNavConfig(), brand: wsBrandConfig(), account: wsAccountConfig(),
-    masthead: DS.masthead({ eyebrow: 'Team', headline: `Operators on ${orgName}`, subheading: 'Everyone with Workspace access for your organisation.', actions: canManage ? [{ variant: 'filled', icon: 'person_add', label: 'Invite operator', onclick: 'window.__inviteOperator()' }] : [] }),
+    masthead: DS.masthead({ eyebrow: 'Team', headline: orgName, actions: canManage ? [{ variant: 'filled', icon: 'person_add', label: 'Invite operator', onclick: 'window.__inviteOperator()' }] : [] }),
     body
   });
   DS.initShell();

@@ -31,7 +31,7 @@
     <div class="tab-panel active">${DS.verdictMemo(A, S)}</div>
     <div class="tab-panel"><div class="brief">${DS.investabilityHero(S, A)}<hr class="rule">${DS.investabilityComposition(S, 'openInvest')}<hr class="rule">${DS.strengthProfile(S, 'openInvest')}</div></div>
     <div class="tab-panel">${DS.marketMemo(A)}</div>
-    <div class="tab-panel">${DS.teamMemo(A)}</div>
+    <div class="tab-panel">${DS.teamMemo(A, S)}</div>
     <div class="tab-panel">${DS.diligenceEditorial(A)}</div>
     <div class="tab-panel">${DS.researchMemo(A, S)}</div>`;
 
@@ -47,7 +47,7 @@
   });
   DS.initShell();
   DS.initTabs({ names: ['verdict', 'investability', 'market', 'team', 'diligence', 'research'] });
-  window.openInvest = (key) => { const d = DS.categoryDetail(S, key); window.openAux({ mode: 'push', title: d.title, subtitle: d.subtitle, body: d.body }); };
+  window.openInvest = (key) => { const d = DS.categoryDetail(S, key); window.openAux({ mode: 'push', ...d }); };
   window.openPeek = () => {};
   window.RAIL_PANELS = { sources: () => DS.sourcesPanel(A) };
   window.openSources = () => window.openAux({ mode: 'push', ...DS.sourcesPanel(A) });

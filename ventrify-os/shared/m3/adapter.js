@@ -310,7 +310,8 @@ const PERSON_KINDS = new Set(['own-materials', 'press-corroboration', 'employmen
 export function linkGapsToMembers(members, gaps) {
   const person = gaps.filter(g => PERSON_KINDS.has(g.checkKind) || /^team\./.test(g.signals[0] || ''));
   return members.map(m => {
-    const nm = String(m.name || '').split('—')[0].trim().toLowerCase();
+    // prefer the unglued `person` field; the split is the fallback for a pre-`person` snapshot
+    const nm = String(m.person || String(m.name || '').split('—')[0]).trim().toLowerCase();
     const toks = nm.split(/\s+/).filter(t => t.length > 2);
     if (!toks.length) return m;
     const hit = person.find(g => {
@@ -382,7 +383,11 @@ export function adaptEngagement(p = {}) {
   const tm = a.team || {};
   const team = {
     summary: tm.summary || '',
-    members: (tm.members || []).map(m => ({ i: initials(m.name), name: `${m.name} — ${m.role}`, bg: m.background || '', signal: m.signal === 'positive' ? 'positive' : m.signal === 'flag' ? 'flag' : 'neutral' })),
+    // ⚠ `name` is the JOINED display string the editorial rows have always rendered, kept so a
+    // stored snapshot still renders. `person` + `role` carry the runner's own two fields through
+    // UNGLUED — three call sites were each splitting the joined string back apart on an em-dash,
+    // and benchLockup's exec/board tiering needs the role to be a field, not a substring.
+    members: (tm.members || []).map(m => ({ i: initials(m.name), name: `${m.name} — ${m.role}`, person: m.name || '', role: m.role || '', bg: m.background || '', signal: m.signal === 'positive' ? 'positive' : m.signal === 'flag' ? 'flag' : 'neutral' })),
     gaps: tm.gaps || [],
     gapKill: (tm.gaps && tm.gaps[0]) ? { tag: 'The critical gap', label: '', headline: firstSentence(tm.gaps[0]), text: tm.gaps[0] } : null
   };

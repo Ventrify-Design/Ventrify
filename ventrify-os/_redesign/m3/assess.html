@@ -38,7 +38,7 @@
     <div class="tab-panel active">${DS.verdictMemo(A, S)}</div>
     <div class="tab-panel"><div class="brief">${DS.investabilityHero(S, A)}${DS.scoreMovement(A.filings)}<hr class="rule">${DS.investabilityComposition(S, 'openInvest')}<hr class="rule">${DS.strengthProfile(S, 'openInvest')}</div></div>
     <div class="tab-panel">${DS.marketMemo(A)}</div>
-    <div class="tab-panel">${DS.teamMemo(A)}</div>
+    <div class="tab-panel">${DS.teamMemo(A, S)}</div>
     <div class="tab-panel">${DS.diligenceEditorial(A)}</div>
     <div class="tab-panel">${DS.researchMemo(A, S)}</div>`;
 
@@ -70,7 +70,7 @@
   // A signal we scored down because our RESEARCH missed something also offers the file-evidence trigger.
   window.openInvest = (key) => {
     const d = DS.categoryDetail(S, key, A.gapBySlug || {});
-    window.openAux({ mode: 'push', title: d.title, subtitle: d.subtitle, body: d.body });
+    window.openAux({ mode: 'push', ...d });
   };
 
   // ---- the evidence gap: every trigger opens the SAME filing panel (roster · signal row · diligence row) ----

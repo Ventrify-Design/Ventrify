@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en" data-brand="verdictscore">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Score composition — making it add up</title>
+<meta name="description" content="Exploration: a composition graphic whose figures actually sum to the headline score.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter+Tight:wght@500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/brand/brand.css">
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="ds.css">
+<link rel="stylesheet" href="assess-editorial.css">
+<link rel="stylesheet" href="../../shared/m3/brand-map.css">
+<script src="_preview-brand-switch.js" defer></script>
+<style>
+  body { margin:0; background:var(--surface-ground); color:var(--text-1);
+         font:400 15px/1.6 var(--font-text); -webkit-font-smoothing:antialiased; }
+  .pg { max-width:1500px; margin:0 auto; padding:64px 40px 160px; }
+  h1 { font:600 clamp(2rem,4vw,2.9rem)/1.05 var(--font-display); letter-spacing:-.02em; margin:0 0 .5rem; }
+  .sub { color:var(--text-2); max-width:74ch; margin:0 0 .4rem; }
+  .fine { color:var(--text-4); font-size:13px; max-width:82ch; }
+  .fine b { color:var(--text-2); }
+  .cx { margin:58px 0 0; padding-top:32px; border-top:1px solid var(--line-1); }
+  .cx-h { display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; }
+  .cx-n { font:500 12px/1 var(--font-mono); color:var(--brand-accent-2); letter-spacing:.1em; }
+  .cx-t { font:600 1.35rem/1.2 var(--font-display); letter-spacing:-.01em; }
+  .cx-d { color:var(--text-2); max-width:80ch; margin:.3rem 0 0; font-size:14px; }
+  .cx-w { color:var(--text-4); max-width:80ch; margin:.5rem 0 0; font-size:13px; }
+  .stage { margin-top:22px; padding:32px 34px; background:var(--surface-base);
+           border:1px solid var(--line-1); border-radius:var(--r-lg); }
+
+  /* the wider-column arrangement, chip tucked into the gauge's opening */
+  .stage .section-hero { grid-template-columns:.8fr 1px 1.5fr !important; }
+  .stage .score-lockup .sl-top {
+    display:grid; grid-template-columns:auto minmax(0,1fr);
+    column-gap:clamp(18px,2.4vw,38px); align-items:start;
+  }
+  .stage .score-lockup .sl-dial { width:clamp(170px,16vw,236px); grid-column:1; grid-row:1; }
+  .stage .score-lockup .sl-mid { padding-bottom:0; }
+  .stage .score-lockup .lockup-num { flex-direction:column; align-items:center; gap:0;
+        font-size:clamp(50px,5.2vw,78px); letter-spacing:-3px; line-height:.84; }
+  .stage .score-lockup .lockup-num small { font-size:clamp(13px,1.2vw,17px); margin:3px 0 0; }
+  .stage .score-lockup .sl-aside { grid-column:1; grid-row:2; align-items:center;
+        gap:5px; margin-top:calc(-1 * clamp(36px,3.8vw,54px)); text-align:center; }
+  .stage .score-lockup .sl-head { font-size:11.5px; white-space:nowrap; }
+  .stage .comp { grid-column:2; grid-row:1 / span 2; min-width:0; }
+
+  .comp-h { display:flex; justify-content:space-between; align-items:baseline; gap:10px;
+            font-size:10.5px; letter-spacing:.09em; text-transform:uppercase;
+            color:var(--md-sys-color-on-surface-variant); margin-bottom:11px; }
+  .comp-h em { font-style:normal; text-transform:none; letter-spacing:.02em; font-size:11.5px; }
+  .comp-t { display:grid; gap:0; }
+  .comp-t .r { display:grid; align-items:center; gap:12px; padding:5px 0; }
+  .comp-lb { font-size:12.5px; color:var(--md-sys-color-on-surface);
+             overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+  .comp-v { font:500 12.5px/1 var(--font-mono); text-align:right; color:var(--md-sys-color-on-surface); white-space:nowrap; }
+  /* a muted suffix, not <s> — that element means "no longer accurate" and
+     ships with a strikethrough, which is how /100 ended up crossed out. */
+  .comp-v u, .comp-sum .v u { text-decoration:none; color:var(--md-sys-color-on-surface-variant); font-size:11px; }
+  .comp-sum { display:grid; align-items:center; gap:12px; margin-top:7px; padding-top:9px;
+              border-top:1px solid var(--md-sys-color-outline-variant); }
+  .comp-sum .k { font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+                 color:var(--md-sys-color-on-surface-variant); }
+  .comp-sum .v { font:600 15px/1 var(--font-mono); text-align:right; white-space:nowrap; }
+
+  /* pips */
+  .pips { display:flex; gap:4px; }
+  .pips i { width:17px; height:7px; border-radius:2px; background:var(--md-sys-color-outline-variant);
+            position:relative; overflow:hidden; }
+  .pips i span { position:absolute; inset:0 auto 0 0; display:block; }
+
+  /* weighted track — the track itself is as wide as the category's weight */
+  .wt { height:9px; border-radius:4px; background:var(--md-sys-color-outline-variant); overflow:hidden; }
+  .wt span { display:block; height:100%; border-radius:4px; }
+  .wtwrap { min-width:0; }
+
+  /* one 100-point bar */
+  .bar100 { display:flex; gap:3px; height:46px; margin-bottom:10px; }
+  .bar100 .sg { position:relative; border-radius:4px; background:var(--md-sys-color-outline-variant);
+                overflow:hidden; min-width:0; }
+  .bar100 .sg span { position:absolute; inset:auto 0 0 0; display:block; }
+  .lg100 { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:3px 18px; }
+  .lg100 .r { display:grid; grid-template-columns:9px minmax(0,1fr) auto; gap:8px; align-items:center;
+              font-size:11.5px; color:var(--md-sys-color-on-surface-variant); }
+  .lg100 .r i { width:9px; height:9px; border-radius:2px; }
+  .lg100 .r b { color:var(--md-sys-color-on-surface); font-weight:500; overflow:hidden;
+                white-space:nowrap; text-overflow:ellipsis; }
+  .lg100 .r em { font-style:normal; font-family:var(--font-mono); }
+</style>
+</head>
+<body>
+<div class="pg">
+  <h1>Making it add up</h1>
+  <p class="sub">A score of 80 with seven bars beside it that sum to something else is worse than no breakdown at all — the reader does the arithmetic, gets a different answer, and stops trusting the number.</p>
+  <p class="fine">The <b>x/5</b> figures do not reconcile, and they fail quietly: at 80 they happen to sum to exactly <b>80.0</b>, so it looks correct; at 55 they sum to <b>52.9</b> against a headline of 55. What does reconcile is each category's <b>contribution</b> — its weight × its score — because that is literally how the composite is built. One honest wrinkle remains: the headline is that sum <b>rounded</b>, so MoneyGym's parts total <b>54.5</b> and the headline reads <b>55</b>. The total row says so rather than pretending otherwise. Shown at 80 and 55.</p>
+  <div id="out"></div>
+</div>
+
+<script type="module">
+import * as DS from './ds.js';
+import { ASSESSMENT as RAW_A, SCORE as RAW_S } from './data.js';
+import { strongAssessment, strongScore } from './data-strong.js';
+
+const BAND_TONE = { 'Investment ready':'good', 'Promising':'mid', 'High risk':'bad', 'Potential decline':'bad' };
+const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+const ink = f => f >= 0.8 ? 'var(--success)' : f >= 0.5 ? 'var(--warning)' : 'var(--md-sys-color-error)';
+const n1 = v => (Math.round(v * 10) / 10).toFixed(1);
+/* the ONE figure that reconciles: weight × score, exactly how the composite is built */
+const contrib = c => c.weightPct * c.frac;
+const total = s => s.categories.reduce((t, c) => t + contrib(c), 0);
+
+const header = (s, right) => `<div class="comp-h"><span>What makes the ${s.composite}</span><em>${right}</em></div>`;
+/* The headline is the weighted sum ROUNDED — 54.5 shows as 55, 80.0 as 80.
+   So the parts can never sum to the displayed figure on a .5, and a reader
+   adding them up finds a 0.5 gap. Rather than hide that (or fudge the parts
+   until they fit), the total states the exact sum and says what it rounds
+   to. The arithmetic is then checkable, which was the whole point. */
+const sumRow = (s, cols) => {
+  const t = Math.round(total(s) * 10) / 10;
+  const rounds = Math.round(t) !== t;
+  return `<div class="comp-sum" style="grid-template-columns:${cols}">
+    <span class="k">Total${rounds ? ` <span style="text-transform:none;letter-spacing:0;opacity:.75">— rounds to ${Math.round(t)}</span>` : ''}</span>
+    <span></span><span class="v">${n1(t)}<u> / 100</u></span></div>`;
+};
+
+/* ── D · PIPS + CONTRIBUTION ──────────────────────────────────────────────
+   The pips keep what B was good at — the SHAPE of each category at a glance.
+   The figure beside them is the contribution, not the x/5, so the column
+   sums to the headline. `/20` shows the weight, which is the missing piece
+   that explains why a 4/5 in Team is worth more than a 4/5 in Evidence. */
+function pipsContrib(s) {
+  const COLS = 'minmax(0,1fr) auto 76px';
+  const rows = s.categories.map(c => {
+    const n = c.frac * 5;
+    const pips = Array.from({ length: 5 }, (_, i) => {
+      const f = Math.max(0, Math.min(1, n - i));
+      return `<i>${f > 0 ? `<span style="width:${(f*100).toFixed(0)}%;background:${ink(c.frac)}"></span>` : ''}</i>`;
+    }).join('');
+    return `<div class="r" style="grid-template-columns:${COLS}">
+      <span class="comp-lb">${esc(c.label)}</span>
+      <span class="pips">${pips}</span>
+      <span class="comp-v">${n1(contrib(c))}<u> / ${c.weightPct}</u></span></div>`;
+  }).join('');
+  return `<div class="comp">${header(s, 'points of 100')}
+    <div class="comp-t">${rows}</div>${sumRow(s, COLS)}</div>`;
+}
+
+/* ── E · WEIGHTED TRACK ───────────────────────────────────────────────────
+   The track is as wide as the category's weight, so the row LENGTH is what
+   the category is worth and the fill is what it earned. The seven tracks
+   together are the 100. */
+function weightedTrack(s) {
+  const COLS = 'minmax(0,150px) minmax(0,1fr) 76px';
+  const max = Math.max(...s.categories.map(c => c.weightPct));
+  const rows = s.categories.map(c => `<div class="r" style="grid-template-columns:${COLS}">
+      <span class="comp-lb">${esc(c.label)}</span>
+      <span class="wtwrap"><span class="wt" style="width:${(c.weightPct / max * 100).toFixed(1)}%">
+        <span style="width:${(c.frac*100).toFixed(0)}%;background:${ink(c.frac)}"></span></span></span>
+      <span class="comp-v">${n1(contrib(c))}<u> / ${c.weightPct}</u></span></div>`).join('');
+  return `<div class="comp">${header(s, 'track length = weight')}
+    <div class="comp-t">${rows}</div>${sumRow(s, COLS)}</div>`;
+}
+
+/* ── F · ONE 100-POINT BAR ────────────────────────────────────────────────
+   The whole bar is the 100. Each segment is a category, as wide as its
+   weight, filled to what it earned. The score is the filled proportion. */
+function bar100(s) {
+  const segs = s.categories.map(c => `<div class="sg" style="flex:${c.weightPct}" title="${esc(c.label)}">
+      <span style="height:${(c.frac*100).toFixed(0)}%;background:${ink(c.frac)}"></span></div>`).join('');
+  const lg = s.categories.map(c => `<div class="r"><i style="background:${ink(c.frac)}"></i>
+      <b>${esc(c.label)}</b><em>${n1(contrib(c))}/${c.weightPct}</em></div>`).join('');
+  return `<div class="comp">${header(s, 'the bar is the 100')}
+    <div class="bar100">${segs}</div><div class="lg100">${lg}</div>
+    ${sumRow(s, 'minmax(0,1fr) auto 76px')}</div>`;
+}
+
+function stage(A, S) {
+  const tone = BAND_TONE[S.band] || 'mid';
+  return DS.sectionHero({
+    eyebrow: 'The verdict', eyebrowIcon: 'balance', tone,
+    headline: A.verdictLine, headlineEm: A.verdictEm,
+    facts: [
+      { k: 'Conviction', v: `${A.conviction} <span class="conv">${Array.from({length:5},(_,i)=>`<i class="${i<({High:4,Medium:3,Low:2})[A.conviction]?'on':''}"></i>`).join('')}</span>` },
+      { k: 'The ask', v: `${A.askAmount} <small>${A.askRest}</small>` },
+    ],
+    score: { label:'Investability score', score:S.composite, max:100, band:S.band, tone,
+             now:S.composite, potential:S.potential, draws:S.draws },
+    thesis: '',
+  });
+}
+
+const A80 = strongAssessment(RAW_A), S80 = strongScore(RAW_S);
+const V = [
+  { n:'D', t:'Pips + contribution', fn:pipsContrib,
+    d:'The pips keep what you liked about B — the shape of each category at a glance. The figure beside them is the contribution, so the column sums to the headline, and the “/20” shows the weight.',
+    w:'Two scales in one row: the pips are out of 5, the number is out of the weight. That is honest — a 4/5 in Team really is worth more than a 4/5 in Evidence — but it is the one thing a reader has to be told once.' },
+  { n:'E', t:'Weighted track', fn:weightedTrack,
+    d:'The track is as long as the category is worth, and the fill is what it earned. The seven tracks together are the 100.',
+    w:'One scale, no explanation needed: longer row = matters more. Loses the five-signal structure the pips expose, and the 5% row is a stub.' },
+  { n:'F', t:'One 100-point bar', fn:bar100,
+    d:'The whole bar is the 100. Each segment is a category as wide as its weight, filled to what it earned. The score is literally the filled proportion.',
+    w:'The most direct answer to “how does this make 80” — you can see the shortfall as empty space. Needs the legend underneath, which costs the height the bar saves.' },
+];
+
+document.getElementById('out').innerHTML = V.map(v => `
+  <section class="cx">
+    <div class="cx-h"><span class="cx-n">${v.n}</span><span class="cx-t">${v.t}</span></div>
+    <p class="cx-d">${v.d}</p>
+    <p class="cx-w">${v.w}</p>
+    <div class="stage" data-v="${v.n}" data-s="80">${stage(A80, S80)}</div>
+    <div class="stage" data-v="${v.n}" data-s="55" style="margin-top:16px">${stage(RAW_A, RAW_S)}</div>
+  </section>`).join('');
+
+const BY = { D: pipsContrib, E: weightedTrack, F: bar100 };
+const SC = { '80': S80, '55': RAW_S };
+document.querySelectorAll('.stage').forEach(st => {
+  const top = st.querySelector('.sl-top');
+  if (top) top.insertAdjacentHTML('beforeend', BY[st.dataset.v](SC[st.dataset.s]));
+});
+
+/* Prove it rather than assert it: compare each printed total with the headline. */
+const bad = [];
+[['80', S80], ['55', RAW_S]].forEach(([k, s]) => {
+  const t = Math.round(total(s) * 10) / 10;
+  if (Math.round(t) !== s.composite) bad.push(`${k}: total ${t} does not round to headline ${s.composite}`);
+});
+console.log(bad.length ? 'RECONCILE FAIL ' + bad.join(' · ') : 'RECONCILE OK — totals match the headline at both states');
+</script>
+</body>
+</html>

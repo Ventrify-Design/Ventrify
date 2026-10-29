@@ -47,6 +47,12 @@
     if (entry.maxw) { root.style.maxWidth = entry.maxw + 'px'; root.style.margin = '0 auto'; }
     root.innerHTML = entry.html(instanceKey, cfg);
     DS.initShell();
+    /* Chart entrance motion is part of the component, so a specimen has to show it.
+       initShell plays it once on load; R replays it, which is the only way to study a
+       700ms choreography without reloading. Documented in design-system.html. */
+    addEventListener('keydown', e => {
+      if (e.key === 'r' || e.key === 'R') { if (!/^(INPUT|TEXTAREA)$/.test(document.activeElement?.tagName)) DS.playCharts(root); }
+    });
   }
 </script>
 </body>

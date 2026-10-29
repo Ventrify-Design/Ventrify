@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en" data-brand="verdictscore">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Score mark — the persistent score in the masthead</title>
+<meta name="description" content="Exploration: six ways to carry the investability score in the masthead tab row, so it stays visible on every tab.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter+Tight:wght@500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/brand/brand.css">
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="ds.css">
+<link rel="stylesheet" href="assess-editorial.css">
+<link rel="stylesheet" href="../../shared/m3/brand-map.css">
+<script src="_preview-brand-switch.js" defer></script>
+<style>
+  body { margin:0; background:var(--surface-ground); color:var(--text-1);
+         font:400 15px/1.6 var(--font-text); -webkit-font-smoothing:antialiased; }
+  .pg { max-width:1240px; margin:0 auto; padding:64px 40px 160px; }
+  h1 { font:600 clamp(2rem,4vw,2.9rem)/1.05 var(--font-display); letter-spacing:-.02em; margin:0 0 .5rem; }
+  .sub { color:var(--text-2); max-width:76ch; margin:0 0 .4rem; }
+  .fine { color:var(--text-4); font-size:13px; max-width:88ch; }
+  .cx { margin:56px 0 0; padding-top:30px; border-top:1px solid var(--line-1); }
+  .cx-h { display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; }
+  .cx-n { font:500 12px/1 var(--font-mono); color:var(--brand-accent-2); letter-spacing:.1em; }
+  .cx-t { font:600 1.35rem/1.2 var(--font-display); letter-spacing:-.01em; }
+  .cx-d { color:var(--text-2); max-width:86ch; margin:.3rem 0 0; font-size:14px; }
+  .cx-need { margin:.6rem 0 0; font:500 11px/1.5 var(--font-mono); letter-spacing:.05em; }
+  .cx-need.ok { color:var(--brand-accent-2); } .cx-need.warn { color:#e0a33a; }
+
+  /* the stage frames a REAL masthead at the real content width, so each mark is
+     judged against the tabs it has to live beside rather than on a blank card */
+  .stage { margin-top:22px; border-radius:var(--r-lg); overflow:hidden; border:1px solid var(--line-1); }
+  .stage .masthead { position:static; }
+  .row2 { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; margin-top:16px; }
+  .mini { border:1px solid var(--line-1); border-radius:var(--r-lg); overflow:hidden; }
+  .mini-t { font:500 10.5px/1 var(--font-mono); letter-spacing:.09em; color:var(--text-4);
+            padding:12px 14px 0; }
+  .mini .masthead { position:static; padding-left:18px; padding-right:18px; }
+
+  /* ─── the tab row becomes a two-part row: tabs scroll, the mark does not ───
+     .m3-tabs is full-bleed and overflow-x:auto — at 390px the tabs scroll, so a
+     mark placed INSIDE it would scroll off. Every concept therefore sits in a
+     sibling that is flex:none. */
+  .mh-tabrow { display:flex; align-items:stretch; gap:20px; }
+  .mh-tabrow .m3-tabs { flex:1 1 auto; min-width:0; }
+  .mh-mark { flex:none; display:flex; align-items:center; align-self:center; gap:10px;
+             padding-bottom:3px; cursor:pointer; }
+
+  /* shared dial */
+  .sm-dial { position:relative; flex:none; }
+  .sm-dial svg { display:block; width:100%; height:100%; }
+  .sm-track { stroke:var(--md-sys-color-surface-container-highest); }
+  .sm-pot   { stroke:color-mix(in srgb, var(--md-sys-color-primary) 34%, transparent); }
+  .sm-now   { stroke:var(--md-sys-color-primary); }
+  .sm-num   { font:500 22px/1 var(--font-display); letter-spacing:-.6px; color:var(--md-sys-color-on-surface);
+              font-variant-numeric:tabular-nums; }
+  .sm-num small { font-size:11px; font-weight:400; color:var(--md-sys-color-on-surface-variant);
+                  letter-spacing:0; margin-left:1px; }
+  .sm-lab { font:500 9.5px/1.25 var(--font-mono); letter-spacing:.1em; text-transform:uppercase;
+            color:var(--md-sys-color-outline); display:block; }
+
+  /* 01 — dial + numeral */
+  .c1 .sm-dial { width:30px; height:30px; }
+  /* 02 — dial only, number inside */
+  .c2 .sm-dial { width:40px; height:40px; }
+  .c2 .in { position:absolute; inset:0; display:grid; place-items:center;
+            font:600 12px/1 var(--font-display); letter-spacing:-.2px;
+            color:var(--md-sys-color-on-surface); font-variant-numeric:tabular-nums; }
+  /* 03 — quiet chip */
+  .c3 { padding:6px 13px 6px 8px; border-radius:999px;
+        background:var(--md-sys-color-surface-container-high); gap:9px; }
+  .c3 .sm-dial { width:26px; height:26px; }
+  .c3 .sm-num { font-size:17px; }
+  .c3 .bandw { font:500 11px/1 var(--font-text); color:var(--md-sys-color-on-surface-variant);
+               padding-left:9px; border-left:1px solid var(--md-sys-color-outline-variant); }
+  /* 04 — numeral + linear micro-track */
+  .c4-bar { width:58px; height:5px; border-radius:3px; position:relative; overflow:hidden;
+            background:var(--md-sys-color-surface-container-highest); }
+  .c4-bar i { position:absolute; inset:0 auto 0 0; border-radius:3px; }
+  .c4-bar i.pot { background:color-mix(in srgb, var(--md-sys-color-primary) 34%, transparent); }
+  .c4-bar i.now { background:var(--md-sys-color-primary); }
+  /* 05 — bare numeral + tone rule */
+  .c5 { flex-direction:column; align-items:flex-end; gap:3px; }
+  .c5 .rule { width:100%; height:2px; border-radius:2px; background:var(--md-sys-color-primary); opacity:.85; }
+  /* 06 — dial + numeral + headroom */
+  .c6 .sm-dial { width:30px; height:30px; }
+  .c6 .head { font:500 10.5px/1 var(--font-mono); letter-spacing:.04em;
+              color:var(--md-sys-color-primary); }
+
+  .forming .sm-num, .forming .in { color:var(--md-sys-color-on-surface-variant); }
+</style>
+</head>
+<body>
+<div class="pg">
+  <h1>The score, kept in view</h1>
+  <p class="sub">The investability score is the point of the whole assessment, and today it is only visible on two of six tabs. These put a small, permanent mark in the masthead's tab row so it travels with you — quoting the dial rather than restating the lockup.</p>
+  <p class="fine"><b>Two constraints shaped all six.</b> First, <code>.m3-tabs</code> is full-bleed and <code>overflow-x:auto</code> — at 390px the tabs scroll sideways, so a mark placed inside that container would scroll off the screen. Every concept here sits in a sibling that does not scroll. Second, the masthead <b>minifies on scroll</b> (<code>--mh-p</code>): the hero collapses and the tab row stays, which is exactly why this row is the right home for something that must always be visible. Each concept is shown at rest, minified, at 390px, and with the three score states a real run produces.</p>
+  <p class="fine" style="margin-top:12px">The brand switcher now lives in the left drawer (and bottom-left on pages like this one that have no shell), so nothing floats over the corner these marks occupy.</p>
+  <div id="out"></div>
+</div>
+
+<script type="module">
+import * as DS from './ds.js';
+import { ASSESSMENT as A, SCORE as S } from './data.js';
+
+/* the 270° dial, shrunk. Same geometry as scoreDial() in ds.js — same sweep, same
+   start angle, same two arcs — so the mark is the lockup's dial and not a lookalike. */
+function dial(now, pot, max, sw = 13) {
+  const R = 86, C = 2 * Math.PI * R, SWEEP = 0.75;
+  const len = v => Math.max(0, Math.min(1, (v || 0) / max)) * SWEEP * C;
+  const da = v => `${len(v).toFixed(1)} ${C.toFixed(1)}`;
+  return `<svg viewBox="0 0 200 200" aria-hidden="true"><g transform="rotate(135 100 100)" fill="none" stroke-linecap="round">
+    <circle cx="100" cy="100" r="${R}" class="sm-track" stroke-width="${sw}" stroke-dasharray="${da(max)}"/>
+    ${pot > now ? `<circle cx="100" cy="100" r="${R}" class="sm-pot" stroke-width="${sw}" stroke-dasharray="${da(pot)}"/>` : ''}
+    <circle cx="100" cy="100" r="${R}" class="sm-now" stroke-width="${sw}" stroke-dasharray="${da(now)}"/>
+  </g></svg>`;
+}
+const num = d => d.forming
+  ? `<span class="sm-num">—<small>/100</small></span>`
+  : `<span class="sm-num">${d.now}<small>/${d.max}</small></span>`;
+
+/* ═════ the six marks. Each takes {now, pot, max, band, forming}. ═════ */
+const C1 = d => `<div class="mh-mark c1${d.forming ? ' forming' : ''}">
+  <span class="sm-dial">${dial(d.now, d.pot, d.max)}</span>
+  <span><span class="sm-lab">Investability</span>${num(d)}</span></div>`;
+
+const C2 = d => `<div class="mh-mark c2${d.forming ? ' forming' : ''}">
+  <span class="sm-dial">${dial(d.now, d.pot, d.max, 15)}<span class="in">${d.forming ? '—' : d.now}</span></span></div>`;
+
+const C3 = d => `<div class="mh-mark c3${d.forming ? ' forming' : ''}">
+  <span class="sm-dial">${dial(d.now, d.pot, d.max, 15)}</span>${num(d)}
+  <span class="bandw">${d.forming ? 'Forming' : d.band}</span></div>`;
+
+const C4 = d => `<div class="mh-mark c4${d.forming ? ' forming' : ''}">
+  <span><span class="sm-lab">Investability</span>${num(d)}</span>
+  <span class="c4-bar"><i class="pot" style="width:${(d.pot / d.max * 100).toFixed(0)}%"></i><i class="now" style="width:${(d.now / d.max * 100).toFixed(0)}%"></i></span></div>`;
+
+const C5 = d => `<div class="mh-mark c5${d.forming ? ' forming' : ''}">
+  <span class="sm-lab">Investability</span>${num(d)}<span class="rule"></span></div>`;
+
+const C6 = d => `<div class="mh-mark c6${d.forming ? ' forming' : ''}">
+  <span class="sm-dial">${dial(d.now, d.pot, d.max)}</span>
+  <span><span class="sm-lab">Investability</span>${num(d)}</span>
+  ${!d.forming && d.pot > d.now ? `<span class="head">+${d.pot - d.now}</span>` : ''}</div>`;
+
+/* ═════ a real masthead, with the mark injected into the tab row ═════ */
+const LIVE    = { now: S.composite, pot: S.potential, max: 100, band: S.band, forming: false };
+const WEAK    = { now: 24, pot: 61, max: 100, band: 'Weak', forming: false };
+const STRONG  = { now: 88, pot: 92, max: 100, band: 'Investment ready', forming: false };
+const FORMING = { now: 0, pot: 0, max: 100, band: 'Forming', forming: true };
+
+function mh(markHtml, opts = {}) {
+  const html = DS.masthead({
+    breadcrumb: { label: 'Portfolio', href: '#' }, crumbTail: A.name,
+    avatar: A.initials, headline: A.name, status: A.status,
+    subheading: A.stageLine, compact: A.name,
+    tabs: ['Verdict', 'Investability', 'Market', 'Team', { label: 'Diligence', badge: 3 }, 'Research'],
+    activeTab: opts.active || 0,
+  });
+  const el = document.createElement('div');
+  el.innerHTML = html;
+  // wrap the tablist + the mark in one row — the tablist keeps its own overflow
+  const tabs = el.querySelector('.m3-tabs');
+  const row = document.createElement('div');
+  row.className = 'mh-tabrow';
+  tabs.parentNode.insertBefore(row, tabs);
+  row.appendChild(tabs);
+  row.insertAdjacentHTML('beforeend', markHtml);
+  if (opts.minified) {
+    const m = el.querySelector('.masthead');
+    m.classList.add('minified'); m.style.setProperty('--mh-p', '1');
+  }
+  return el.innerHTML;
+}
+
+const CONCEPTS = [
+  { n:'01', f:C1, t:'Dial + numeral',
+    need:['ok','the dial is scoreDial() geometry at 30px — same sweep, same two arcs'],
+    d:'The lockup\'s own dial, shrunk to 30px, with the numeral beside it and a micro label above. The <b>only colour is the 3px arc</b> — the number stays in the body hue — so the mark reads as quiet furniture until you look straight at it. The ghost arc behind the solid one keeps the headroom visible without a second figure.' },
+  { n:'02', f:C2, t:'Dial only',
+    need:['ok','the most compact — 40px square, no horizontal cost'],
+    d:'The number inside the ring, nothing beside it. Reads almost as a mark or a badge, and takes the least room of the six, which matters at 1100px where the tabs are already wide. The cost is legibility: 12px inside a 40px ring is the smallest the score is ever rendered anywhere in the product.' },
+  { n:'03', f:C3, t:'Quiet chip',
+    need:['warn','widest of the six — the band word is 7 to 16 characters depending on the verdict'],
+    d:'A pill carrying the dial, the number and the band word. The most informative and the most <em>present</em> — a filled container in a row of plain text tabs pulls the eye. It also has the worst width behaviour: “Investment ready” is more than twice the width of “Weak”, so the tab row shifts between assessments.' },
+  { n:'04', f:C4, t:'Numeral + micro-track',
+    need:['ok','ships today, but abandons the dial'],
+    d:'The number with a 58px linear track showing now against potential. Easier to read a proportion off than a 30px arc, and the headroom is plainer. But the dial is the score\'s signature across the product, and a bar here means the masthead and the Verdict tab stop looking like the same idea.' },
+  { n:'05', f:C5, t:'Bare numeral',
+    need:['ok','the quietest possible — two lines of type and a 2px rule'],
+    d:'No chart at all: the label, the number, and a tone-coloured rule under it. Absolutely not overbearing, and absolutely no homage either — it could be any metric on any dashboard. Included as the floor, to judge the others against.' },
+  { n:'06', f:C6, t:'Dial + headroom',
+    need:['ok','01 plus the one figure the dial cannot state precisely'],
+    d:'Concept 01 with the headroom spelled out — <b>+21</b> — in the accent. The strongest argument for it is that headroom is the number an operator acts on; the argument against is that it puts a second coloured figure in a row that is meant to stay calm.' },
+];
+
+document.getElementById('out').innerHTML = CONCEPTS.map(c => `
+  <section class="cx">
+    <div class="cx-h"><span class="cx-n">${c.n}</span><span class="cx-t">${c.t}</span></div>
+    <p class="cx-d">${c.d}</p>
+    <p class="cx-need ${c.need[0]}">${c.need[0] === 'ok' ? '●' : '▲'} ${c.need[1]}</p>
+    <div class="stage">${mh(c.f(LIVE), { active: 3 })}</div>
+    <div class="row2">
+      <div class="mini"><div class="mini-t">MINIFIED · scrolled</div>${mh(c.f(LIVE), { minified: true, active: 3 })}</div>
+      <div class="mini"><div class="mini-t">A WEAK DEAL · 24, headroom to 61</div>${mh(c.f(WEAK), { active: 3 })}</div>
+      <div class="mini"><div class="mini-t">INVESTMENT READY · 88</div>${mh(c.f(STRONG), { active: 3 })}</div>
+      <div class="mini"><div class="mini-t">FORMING · nothing scored yet</div>${mh(c.f(FORMING), { active: 3 })}</div>
+    </div>
+  </section>`).join('');
+</script>
+</body>
+</html>

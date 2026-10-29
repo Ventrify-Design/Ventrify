@@ -8,7 +8,9 @@
  * rather than just a UI gate — a hand-crafted Firestore write can't bypass it.
  *
  * Body: { idToken, engagement }  — `engagement` is the full record the wizard
- * builds (workspace/new-engagement.html → persistAndLaunch).
+ * builds (the removed workspace/new-engagement.html wizard → persistAndLaunch;
+ * VerdictScore is assessment-only, so nothing in the UI creates one any more —
+ * the `build` branch below is kept because existing build engagements still read it).
  * Env: FIREBASE_SERVICE_ACCOUNT (already set on the Vercel project).
  */
 

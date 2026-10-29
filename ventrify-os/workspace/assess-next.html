@@ -1,19 +1,25 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-brand="verdictscore">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Assessment — Ventrify OS</title>
 <meta name="description" content="The Material-3 operator assessment detail, on live engagement data.">
-<script>try{if(localStorage.getItem("ventrify-theme")==="light")document.documentElement.classList.add("light")}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" rel="stylesheet">
+<!-- BRAND LAYER. Order is load-bearing and brand-map.css documents why:
+     the :root variables would resolve from anywhere, but the handful of real
+     SELECTORS in brand-map lose to ds.css at equal specificity if ds.css
+     loads later. brand.css FIRST (the tokens everything else resolves
+     against), brand-map LAST (the M3 role overrides). -->
+<link rel="stylesheet" href="../assets/brand/brand.css">
 <link rel="stylesheet" href="../shared/m3/theme.css">
 <link rel="stylesheet" href="../shared/m3/ds.css">
 <link rel="stylesheet" href="../shared/m3/assess-editorial.css">
 <link rel="stylesheet" href="../shared/m3/transitions.css">
 <link rel="stylesheet" href="../shared/m3/workspace-chrome.css">
+<link rel="stylesheet" href="../shared/m3/brand-map.css">
 </head>
 <body>
 <div id="app"></div>
@@ -48,7 +54,12 @@
       body: `<div class="brief"><div class="m3-card" style="text-align:center;padding:48px 24px"><div class="title-l">No engagement loaded</div><div class="body-m variant" style="margin-top:6px">Open one from your <a href="dashboard-m3.html">portfolio</a>.</div></div></div>`
     });
     DS.initShell(); mountOrgSwitcherM3();
-    throw new Error('halt-render');
+    // Halts by never resolving, not by throwing — see the same idiom in
+    // admin-m3.html, and app.js's three `return new Promise(() => {})` guards.
+    // A throw here is a real uncaught Error in the console, indistinguishable
+    // from a page that actually broke; this one fired whenever an
+    // engagement URL no longer resolved.
+    await new Promise(() => {});
   }
 
   // ── mutable live data (refreshed after actions / on subscription tick) ──
@@ -404,7 +415,7 @@
       <div class="tab-panel active">${slim}${DS.missingDocs(A) ? `<div class="brief" style="padding-bottom:0">${DS.missingDocs(A)}</div>` : ''}${DS.verdictMemo(A, S)}</div>
       <div class="tab-panel"><div class="brief">${DS.investabilityHero(S, A)}${DS.scoreProvenance(invSnapshots)}${DS.scoreMovement(A.filings)}<hr class="rule">${DS.investabilityComposition(S, 'openInvest')}<hr class="rule">${DS.strengthProfile(S, 'openInvest')}</div></div>
       <div class="tab-panel">${DS.marketMemo(A)}</div>
-      <div class="tab-panel">${DS.teamMemo(A)}</div>
+      <div class="tab-panel">${DS.teamMemo(A, S)}</div>
       <div class="tab-panel">${DS.diligenceEditorial(A)}</div>
       <div class="tab-panel">${DS.researchMemo(A, S)}</div>`;
   }
@@ -471,7 +482,7 @@
 
   // the per-category drill also carries the gap triggers: a signal we scored down because our RESEARCH
   // missed something offers the file-evidence chip in its (otherwise empty) evidence slot.
-  window.openInvest = (key) => { const d = DS.categoryDetail(S, key, A.gapBySlug); window.openAux({ mode: 'push', title: d.title, subtitle: d.subtitle, body: d.body }); };
+  window.openInvest = (key) => { const d = DS.categoryDetail(S, key, A.gapBySlug); window.openAux({ mode: 'push', ...d }); };
   // "Read the full competitive teardown / founder diligence" now open the FULL document as a drill page,
   // rendered through renderArticle (real GFM). They previously showed a one-line summary through mdToHtml,
   // which silently deleted every table, rule, code block and heading.

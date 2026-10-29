@@ -65,7 +65,7 @@
   // the investability drill still works mid-run — the categories are there, just unrated
   window.openInvest = (key) => {
     const d = DS.categoryDetail(S, key);
-    window.openAux({ mode: 'push', title: d.title, subtitle: d.subtitle, body: d.body });
+    window.openAux({ mode: 'push', ...d });
   };
 
   // Stop — confirm first. Nothing is published until the very END of a run, so stopping saves nothing:

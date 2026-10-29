@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en" data-brand="verdictscore">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Score graphic — concepts</title>
+<meta name="description" content="Exploration: six ways the investability score could carry more and say more than a number, a bar and a pill.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter+Tight:wght@500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/brand/brand.css">
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="../../shared/m3/brand-map.css">
+<script src="_preview-brand-switch.js" defer></script>
+<style>
+  /* Exploration page only — none of this layout ships. The CONCEPTS inside it
+     are written as pure render functions so whichever one wins can move into
+     ds.js and registry.js unchanged. */
+  body { margin:0; background:var(--surface-ground); color:var(--text-1);
+         font:400 15px/1.6 var(--font-text); -webkit-font-smoothing:antialiased; }
+  .pg { max-width:1240px; margin:0 auto; padding:72px 32px 140px; }
+  h1 { font:600 clamp(2rem,4vw,3rem)/1.05 var(--font-display); letter-spacing:-.02em; margin:0 0 .6rem; }
+  .sub { color:var(--text-2); max-width:62ch; margin:0 0 .4rem; }
+  .fine { color:var(--text-4); font-size:13px; max-width:70ch; }
+  .cx { margin:72px 0 0; padding-top:40px; border-top:1px solid var(--line-1); }
+  .cx-h { display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; margin-bottom:6px; }
+  .cx-n { font:500 12px/1 var(--font-mono); color:var(--brand-accent-2); letter-spacing:.1em; }
+  .cx-t { font:600 1.4rem/1.2 var(--font-display); letter-spacing:-.01em; }
+  .cx-d { color:var(--text-2); max-width:68ch; margin:.2rem 0 0; font-size:14px; }
+  .cx-w { color:var(--text-4); max-width:68ch; margin:.5rem 0 0; font-size:13px; }
+  .row { display:grid; grid-template-columns:repeat(3,1fr); gap:26px; margin-top:30px; }
+  @media (max-width:1000px){ .row { grid-template-columns:1fr; } }
+  /* min-width:0 — a grid item defaults to min-content width, so one wide
+     child (the contribution bar's labels) pushed the whole row past the page. */
+  .cell { background:var(--surface-base); border:1px solid var(--line-1); border-radius:var(--r-lg);
+          padding:30px 26px; display:flex; flex-direction:column; align-items:flex-start; gap:4px;
+          min-width:0; overflow:hidden; }
+  .cell-cap { margin-top:16px; font:500 11px/1 var(--font-mono); color:var(--text-4); letter-spacing:.08em; }
+
+  /* ── shared score-graphic primitives ──────────────────────────────────── */
+  .sg-eyebrow { font:600 11px/1 var(--font-text); letter-spacing:.11em; text-transform:uppercase;
+                color:var(--brand-accent-2); margin-bottom:14px; }
+  .sg-band { display:inline-flex; align-items:center; gap:6px; padding:5px 11px; border-radius:999px;
+             font:600 12px/1 var(--font-text); }
+  .sg-band .material-symbols-rounded { font-size:15px; }
+  .tone-good { color:var(--ok);   background:var(--ok-film); }
+  .tone-mid  { color:var(--warn); background:var(--warn-film); }
+  .tone-bad  { color:var(--risk); background:var(--risk-film); }
+  /* fill/stroke are SVG properties. A DOM element painted with
+     `background:currentColor` needs `color` set — using the fill class there
+     left every bar and pip inheriting white, which is what happened. */
+  .sg-ink-good { color:var(--ok); }  .sg-ink-mid { color:var(--warn); }  .sg-ink-bad { color:var(--risk); }
+  .sg-stroke-good { stroke:var(--ok); }  .sg-fill-good { fill:var(--ok); }
+  .sg-stroke-mid  { stroke:var(--warn); } .sg-fill-mid  { fill:var(--warn); }
+  .sg-stroke-bad  { stroke:var(--risk); } .sg-fill-bad  { fill:var(--risk); }
+  .sg-num { font:600 var(--n,4.6rem)/0.88 var(--font-display); letter-spacing:-.04em; font-variant-numeric:tabular-nums; }
+  .sg-num small { font:500 1.1rem/1 var(--font-text); color:var(--text-3); letter-spacing:0; margin-left:4px; }
+  .sg-meta { font-size:12.5px; color:var(--text-3); }
+  .sg-meta b { color:var(--text-1); font-weight:600; }
+
+  /* 01 arc */
+  .c-arc { position:relative; width:100%; max-width:260px; }
+  .c-arc .mid { position:absolute; inset:0; display:flex; flex-direction:column;
+                align-items:center; justify-content:center; gap:9px; padding-bottom:16px; }
+  /* 02 ring */
+  .c-ring { position:relative; width:100%; max-width:250px; }
+  .c-ring .mid { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px; }
+  .c-ring-lg { display:grid; grid-template-columns:auto 1fr auto; gap:3px 10px; margin-top:18px; width:100%;
+                font-size:12px; color:var(--text-3); }
+  .c-ring-lg i { width:9px; height:9px; border-radius:2px; align-self:center; }
+  .c-ring-lg b { color:var(--text-2); font-weight:500; }
+  .c-ring-lg span { font-variant-numeric:tabular-nums; color:var(--text-4); }
+  /* 03 field */
+  .c-field { display:grid; grid-template-columns:repeat(7,1fr); gap:5px; width:100%; max-width:300px; }
+  .c-field i { aspect-ratio:1; border-radius:3px; background:var(--line-1); position:relative; overflow:hidden; }
+  .c-field i.half::after, .c-field i.full::after { content:""; position:absolute; inset:auto 0 0 0; }
+  .c-field i.half::after { height:50%; }
+  .c-field i.full::after { height:100%; }
+  .c-field-rows { display:grid; gap:5px; width:100%; max-width:300px; }
+  .c-field-row { display:grid; grid-template-columns:76px 1fr; gap:11px; align-items:center; }
+  .c-field-row .lb { font-size:11px; color:var(--text-4); text-align:right; letter-spacing:.02em; }
+  .c-field-row .cells { display:grid; grid-template-columns:repeat(5,1fr); gap:5px; }
+  .c-field-row .cells i { aspect-ratio:1; border-radius:3px; background:var(--line-1);
+                          position:relative; overflow:hidden; display:block; }
+  .c-field-row .cells i::after { content:""; position:absolute; inset:auto 0 0 0; background:var(--c); }
+  .c-field-row .cells i.half::after { height:50%; }
+  .c-field-row .cells i.full::after { height:100%; }
+  /* 04 contribution */
+  .c-contrib { width:100%; }
+  .c-contrib .bar { display:flex; gap:3px; height:54px; width:100%; }
+  /* A flex item will not shrink below its content without min-width:0 — the
+     narrow segments' labels were forcing the whole card past its column. */
+  .c-contrib .seg { position:relative; border-radius:4px; background:var(--line-1); overflow:hidden; min-width:0; }
+  .c-contrib .seg span { position:absolute; inset:auto 0 0 0; display:block; }
+  .c-contrib .ax { display:flex; gap:3px; margin-top:9px; }
+  .c-contrib .ax em { font:500 10px/1.3 var(--font-text); font-style:normal; color:var(--text-4);
+                      text-transform:uppercase; letter-spacing:.06em; min-width:0;
+                      overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+  /* 05 stability */
+  .c-stab { width:100%; }
+  .c-stab .ln { position:relative; height:46px; width:100%; }
+  .c-stab .rail { position:absolute; top:21px; left:0; right:0; height:3px; border-radius:2px; background:var(--line-1); }
+  .c-stab .spread { position:absolute; top:16px; height:13px; border-radius:7px; opacity:.3; }
+  .c-stab .tick { position:absolute; top:10px; width:3px; height:25px; border-radius:2px; background:var(--text-4); }
+  .c-stab .pin { position:absolute; top:4px; width:4px; height:37px; border-radius:3px; }
+  .c-stab .sc { display:flex; justify-content:space-between; margin-top:2px; font:500 10px/1 var(--font-mono); color:var(--text-4); }
+  /* 06 numeral */
+  .c-fill { position:relative; display:inline-block; }
+  .c-fill svg { display:block; overflow:visible; }
+</style>
+</head>
+<body>
+<div class="pg">
+  <h1>Score graphic — six concepts</h1>
+  <p class="sub">The score is the most looked-at object in both products. Today it is a number, a bar and a pill: it states a result but carries none of the reasoning that produced it.</p>
+  <p class="fine">Every concept below renders from the real contract — composite, potential, band tone, seven weighted categories, thirty-five signals — so each is a working graphic, not a picture of one. Each is shown at three real states so you can see it hold up: <b>80 Investment ready</b>, <b>55 Promising</b>, <b>34 High risk</b>. Use the Preview switcher to check both identities.</p>
+  <div id="out"></div>
+</div>
+
+<script type="module">
+import { SCORE as RAW } from './data.js';
+import { strongScore } from './data-strong.js';
+
+/* ── three real states ──────────────────────────────────────────────────── */
+const weak = (S) => ({
+  ...S,
+  composite: 34, potential: 58, band: 'High risk',
+  categories: S.categories.map((c, i) => ({ ...c, frac: [0.4,0.3,0.5,0.1,0.3,0.1,0.6][i], pot: [0.8,0.6,0.8,0.7,0.6,0.6,0.9][i],
+    subs: c.subs.map((s, j) => ({ ...s, score: [[1,.5,.5,0,0],[.5,.5,.5,0,0],[1,1,.5,0,0],[.5,0,0,0,0],[1,.5,0,0,0],[.5,0,0,0,0],[1,1,1,0,0]][i][j] })) })),
+});
+const STATES = [
+  { s: strongScore(RAW),  tone: 'good', label: 'Investment ready' },
+  { s: RAW,               tone: 'mid',  label: 'Promising' },
+  { s: weak(RAW),         tone: 'bad',  label: 'High risk' },
+];
+const ICON = { good: 'trending_up', mid: 'trending_flat', bad: 'trending_down' };
+const esc = (t) => String(t).replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+
+/* ── 01 · ARC ────────────────────────────────────────────────────────────
+   A 270° gauge. The sweep is the score; a ghosted continuation is the
+   headroom, so "where it is" and "where it could get to" are one shape
+   instead of two widgets. */
+function arcGauge({ score, potential, band, tone, max = 100, label = 'Investability score' }) {
+  const R = 86, C = 2 * Math.PI * R, SWEEP = 0.75;            // 270° of the circle
+  const dash = (f) => `${(f * SWEEP * C).toFixed(1)} ${C}`;
+  return `<div class="c-arc">
+    <svg viewBox="0 0 200 200" role="img" aria-label="${esc(label)}: ${score} of ${max}, ${esc(band)}">
+      <g transform="rotate(135 100 100)" fill="none" stroke-linecap="round">
+        <circle cx="100" cy="100" r="${R}" stroke="var(--line-1)" stroke-width="13" stroke-dasharray="${dash(1)}"/>
+        <circle cx="100" cy="100" r="${R}" stroke="var(--brand-accent-2)" stroke-width="13"
+                stroke-dasharray="${dash(potential / max)}" opacity=".26"/>
+        <circle cx="100" cy="100" r="${R}" class="sg-stroke-${tone}" stroke-width="13"
+                stroke-dasharray="${dash(score / max)}"/>
+      </g>
+    </svg>
+    <div class="mid">
+      <div class="sg-num" style="--n:3.5rem">${score}<small>/${max}</small></div>
+      <span class="sg-band tone-${tone}"><span class="material-symbols-rounded">${ICON[tone]}</span>${esc(band)}</span>
+      <div class="sg-meta">Potential <b>${potential}</b></div>
+    </div>
+  </div>`;
+}
+
+/* ── 02 · WEIGHTED RING ──────────────────────────────────────────────────
+   Seven arcs round one circle. Each arc's LENGTH is the category's weight
+   and its fill is that category's score, so a full ring is literally 100 and
+   the gaps are the missing points — the graphic states the score and shows
+   where it went at the same time. */
+function weightedRing({ score, categories, band, tone, max = 100, label = 'Investability score' }) {
+  const R = 84, C = 2 * Math.PI * R, GAP = 1.4;
+  let at = 0, segs = '', legend = '';
+  categories.forEach((c) => {
+    const span = (c.weightPct / 100) * C;
+    const lenF = Math.max(0, span * c.frac - GAP);
+    segs += `<circle cx="100" cy="100" r="${R}" stroke="var(--line-2)" stroke-width="15"
+               stroke-dasharray="${(span - GAP).toFixed(2)} ${C}" stroke-dashoffset="${(-at).toFixed(2)}" opacity=".5"/>`;
+    segs += `<circle cx="100" cy="100" r="${R}" class="sg-stroke-${tone}" stroke-width="15"
+               stroke-dasharray="${lenF.toFixed(2)} ${C}" stroke-dashoffset="${(-at).toFixed(2)}"/>`;
+    legend += `<i style="background:${c.frac < .5 ? 'var(--risk)' : c.frac < .8 ? 'var(--warn)' : 'var(--ok)'}"></i>`
+            + `<b>${esc(c.label)}</b><span>${(c.frac * 5).toFixed(1)}/5 · ${c.weightPct}%</span>`;
+    at += span;
+  });
+  return `<div class="c-ring">
+    <svg viewBox="0 0 200 200" role="img" aria-label="${esc(label)}: ${score} of ${max}, ${esc(band)}">
+      <g transform="rotate(-90 100 100)" fill="none">${segs}</g>
+    </svg>
+    <div class="mid">
+      <div class="sg-num" style="--n:3.4rem">${score}</div>
+      <span class="sg-band tone-${tone}">${esc(band)}</span>
+    </div>
+  </div>
+  <div class="c-ring-lg">${legend}</div>`;
+}
+
+/* ── 03 · SIGNAL FIELD ───────────────────────────────────────────────────
+   One cell per signal, seven rows of five. The score stops being an opinion
+   and becomes a count you can audit at a glance — and "35 of 35 rated",
+   which the product already claims in words, becomes visible. */
+function signalField({ score, categories, band, tone, max = 100 }) {
+  const rows = categories.map(c => `<div class="c-field-row">
+      <span class="lb">${esc(c.short || c.label)}</span>
+      <div class="cells">${c.subs.map(s => {
+        const k = s.score === 1 ? 'full' : s.score >= 0.5 ? 'half' : '';
+        return `<i class="${k}" style="--c:var(--${tone === 'good' ? 'ok' : tone === 'mid' ? 'warn' : 'risk'})"></i>`;
+      }).join('')}</div></div>`).join('');
+  const n = categories.flatMap(c => c.subs).filter(s => s.score === 1).length;
+  const h = categories.flatMap(c => c.subs).filter(s => s.score === 0.5).length;
+  return `<div style="display:flex;align-items:baseline;gap:14px;margin-bottom:16px">
+      <div class="sg-num" style="--n:3.4rem">${score}<small>/${max}</small></div>
+      <span class="sg-band tone-${tone}">${esc(band)}</span>
+    </div>
+    <div class="c-field-rows">${rows}</div>
+    <div class="sg-meta" style="margin-top:14px"><b>${n}</b> signals clear · <b>${h}</b> partial · <b>${35 - n - h}</b> missing</div>`;
+}
+
+/* ── 04 · CONTRIBUTION BAR ───────────────────────────────────────────────
+   One bar, seven segments, each as wide as its weight and filled to its
+   score. The widest segment is the one that matters most — which is the
+   thing a weighted score hides behind a single number. */
+function contributionBar({ score, categories, band, tone, max = 100 }) {
+  const segs = categories.map(c => `<div class="seg" style="flex:${c.weightPct}">
+      <span class="sg-ink-${tone}" style="background:currentColor;height:${(c.frac * 100).toFixed(0)}%"></span>
+    </div>`).join('');
+  const ax = categories.map(c => `<em style="flex:${c.weightPct}">${esc(c.short || c.label)}</em>`).join('');
+  return `<div style="display:flex;align-items:baseline;gap:14px;margin-bottom:20px">
+      <div class="sg-num" style="--n:3.6rem">${score}<small>/${max}</small></div>
+      <span class="sg-band tone-${tone}">${esc(band)}</span>
+    </div>
+    <div class="c-contrib"><div class="bar">${segs}</div><div class="ax">${ax}</div></div>`;
+}
+
+/* ── 05 · STABILITY ──────────────────────────────────────────────────────
+   Every signal is drawn three times blind and the median taken. That is the
+   product's actual claim and nothing on screen shows it. Here the score is a
+   point and the spread of the draws is a band around it: a tight band means
+   "this number is solid", a wide one means "treat it as indicative" — which
+   the product currently has to say in a sentence. */
+function stability({ score, potential, draws, band, tone, max = 100 }) {
+  const lo = Math.min(...draws), hi = Math.max(...draws);
+  const pc = (v) => (v / max) * 100;
+  return `<div style="display:flex;align-items:baseline;gap:14px;margin-bottom:6px">
+      <div class="sg-num" style="--n:3.6rem">${score}<small>/${max}</small></div>
+      <span class="sg-band tone-${tone}">${esc(band)}</span>
+    </div>
+    <div class="sg-meta" style="margin-bottom:16px">${hi - lo <= 3
+      ? `Three blind draws landed within <b>${hi - lo}</b> points — the number is stable.`
+      : `Three blind draws spread <b>${hi - lo}</b> points — treat as indicative.`}</div>
+    <div class="c-stab"><div class="ln">
+      <div class="rail"></div>
+      <div class="spread sg-ink-${tone}" style="background:currentColor;left:${pc(lo)}%;width:${pc(hi - lo)}%"></div>
+      ${draws.map(d => `<div class="tick" style="left:${pc(d)}%"></div>`).join('')}
+      <div class="pin sg-ink-${tone}" style="background:currentColor;left:${pc(score)}%"></div>
+    </div>
+    <div class="sc"><span>0</span><span>draws ${draws.join(' · ')}</span><span>${max}</span></div></div>`;
+}
+
+/* ── 06 · NUMERAL-LED ────────────────────────────────────────────────────
+   The number IS the graphic: filled to its own value like a level, with the
+   headroom marked on the rim. Nothing but type and one line — the quietest
+   option, and the one that scales down to a list row without redrawing. */
+function numeralLed({ score, potential, band, tone, max = 100 }) {
+  const id = 'clip' + Math.random().toString(36).slice(2, 7);
+  const fill = (score / max) * 100;
+  return `<div class="c-fill">
+    <svg viewBox="0 0 220 120" width="260" role="img" aria-label="${score} of ${max}, ${esc(band)}">
+      <defs><clipPath id="${id}"><rect x="0" y="${(120 - 120 * fill / 100).toFixed(1)}" width="220" height="120"/></clipPath></defs>
+      <text x="0" y="98" font-family="Space Grotesk, sans-serif" font-size="118" font-weight="600"
+            letter-spacing="-6" fill="var(--line-2)">${score}</text>
+      <text x="0" y="98" font-family="Space Grotesk, sans-serif" font-size="118" font-weight="600"
+            letter-spacing="-6" class="sg-fill-${tone}" clip-path="url(#${id})">${score}</text>
+      <line x1="0" y1="112" x2="220" y2="112" stroke="var(--line-1)" stroke-width="2"/>
+      <line x1="0" y1="112" x2="${(220 * potential / max).toFixed(1)}" y2="112" stroke="var(--brand-accent-2)" stroke-width="2" opacity=".5"/>
+      <line x1="0" y1="112" x2="${(220 * score / max).toFixed(1)}" y2="112" class="sg-stroke-${tone}" stroke-width="2"/>
+    </svg>
+    <div style="display:flex;align-items:center;gap:10px;margin-top:10px">
+      <span class="sg-band tone-${tone}">${esc(band)}</span>
+      <span class="sg-meta">headroom <b>+${potential - score}</b></span>
+    </div>
+  </div>`;
+}
+
+/* ── render ─────────────────────────────────────────────────────────────── */
+const CONCEPTS = [
+  { n: '01', t: 'Arc', fn: arcGauge,
+    d: 'A 270° gauge: the sweep is the score, the ghost behind it is the headroom. One shape says where it is and where it could get to.',
+    w: 'Reads instantly and scales to any size. But it is the most familiar option here — every dashboard has one — and it carries no more information than today’s bar.' },
+  { n: '02', t: 'Weighted ring', fn: weightedRing,
+    d: 'Seven arcs on one circle. Each arc is as long as its category’s weight and filled to its score, so a complete ring is literally 100.',
+    w: 'States the score and explains it in the same object. Densest of the six — needs the legend, and two adjacent weak categories can read as one gap.' },
+  { n: '03', t: 'Signal field', fn: signalField,
+    d: 'One cell per signal, seven rows of five. The score becomes a count you can audit rather than a figure you have to trust.',
+    w: 'The most defensible and the most ownable — nobody else shows the evidence as the graphic. Needs the most vertical room, and is the least glanceable at speed.' },
+  { n: '04', t: 'Contribution bar', fn: contributionBar,
+    d: 'One bar, seven segments, each as wide as its weight and filled to its score. The widest segment is the one that matters most.',
+    w: 'Compact and immediately legible; works in a row or a header. Two real limits: the 5–10% segments are too narrow to label (they truncate below), and it is the least “statement” of the six.' },
+  { n: '05', t: 'Stability', fn: stability,
+    d: 'Every signal is drawn three times blind and the median taken. Here the spread of those draws is a band around the score.',
+    w: 'The only concept that shows the product’s real differentiator. Draws are not currently stored on the snapshot — the numbers here are illustrative and the runner would need to persist them.' },
+  { n: '06', t: 'Numeral-led', fn: numeralLed,
+    d: 'The numeral is the graphic — filled to its own value, with the headroom marked on the rim beneath it.',
+    w: 'Quietest and most typographic; the only one that survives being shrunk into a list row. Carries the least information.' },
+];
+
+const DRAWS = { good: [78, 81, 80], mid: [49, 61, 55], bad: [31, 46, 34] };
+
+document.getElementById('out').innerHTML = CONCEPTS.map(c => `
+  <section class="cx">
+    <div class="cx-h"><span class="cx-n">${c.n}</span><span class="cx-t">${c.t}</span></div>
+    <p class="cx-d">${c.d}</p>
+    <p class="cx-w">${c.w}</p>
+    <div class="row">${STATES.map(st => `<div class="cell">${c.fn({
+      score: st.s.composite, potential: st.s.potential, categories: st.s.categories,
+      band: st.label, tone: st.tone, draws: DRAWS[st.tone],
+    })}<div class="cell-cap">${st.s.composite} · ${st.label.toUpperCase()}</div></div>`).join('')}</div>
+  </section>`).join('');
+
+
+</script>
+</body>
+</html>

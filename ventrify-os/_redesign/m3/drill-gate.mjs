@@ -24,6 +24,9 @@ const state = () => p.evaluate(() => {
     ariaModal: surf && surf.getAttribute('aria-modal'),
     ariaHidden: surf && surf.getAttribute('aria-hidden'),
     primaryInert: main.hasAttribute('inert'),
+    railItems: document.querySelectorAll('.drill-rail .dr-i').length,
+    railStatic: (() => { const r = document.querySelector('.drill-rail'); return !!r && getComputedStyle(r).position === 'static'; })(),
+    tocCard: !!document.querySelector('.drill-toc-inner'),
     hOverflow: de.scrollWidth > de.clientWidth + 1,
     shellMainIsPrimary: document.querySelector('.shell-main') === main,
     mastheadFirstIsPrimary: document.querySelector('.masthead') === main.querySelector('.masthead'),
@@ -71,31 +74,43 @@ ok('open: ≤1 filled across BOTH mastheads', s.filled <= 1, `filled=${s.filled}
 ok('open: drill scrolled to top', s.drillScroll === 0);
 ok('open: primary kept its scroll (200)', s.mainScroll === 200, `mainScroll=${s.mainScroll}`);
 ok('open: wide table de-tabularised', s.tableStacked);
-ok('split: role=region, NOT modal', s.role === 'region' && !s.ariaModal);
-ok('split: primary NOT inert (stays live)', !s.primaryInert);
-const gap = s.drillBox.l - s.primaryBox.r;
-ok('split: drill sits beside primary, no overlap', gap >= -1 && gap <= 2, `gap=${gap}px primary=${s.primaryBox.w} drill=${s.drillBox.w}`);
-ok('split: primary narrowed to ~360', Math.abs(s.primaryBox.w - 360) <= 2, `primary=${s.primaryBox.w}`);
-ok('split: drill is a real page (>600px)', s.drillBox.w > 600, `drill=${s.drillBox.w}`);
+/* ⚠ THE SPLIT IS GONE, and these four checks changed with it. The drill used to leave the
+   primary visible at ~360px and keep it live so Tab flowed between two pages. At 360px that
+   column was not a master index — the hero truncated mid-word — so the drill is now
+   full-bleed and the sibling list lives in its rail. An invisible page must not be tabbable,
+   hence inert at every width; the old assertions would now be asserting a defect. */
+ok('full-bleed: role=dialog + aria-modal', s.role === 'dialog' && s.ariaModal === 'true');
+ok('full-bleed: covered primary IS inert', s.primaryInert);
+ok('full-bleed: primary has no width', s.primaryBox.w <= 2, `primary=${s.primaryBox.w}`);
+ok('full-bleed: drill takes the remaining width (>900px)', s.drillBox.w > 900, `drill=${s.drillBox.w}`);
+/* the rail is supplied per drill (researchDrillBody does; a category or founder drill has no
+   siblings to list), and this fixture supplies none — so assert the CONTRACT, not its presence:
+   if a rail is rendered it must carry siblings, and the retired card must never come back. */
+ok('full-bleed: rail, when present, lists siblings', s.railItems === 0 || s.railItems >= 2, `items=${s.railItems}`);
+ok('full-bleed: the "On this page" card is gone', !s.tocCard);
 
 // ─────────── lateral swap (the 7-sibling browse) ───────────
-await p.click('[data-drill="ws-4"]');
+/* ⚠ evaluate-click, not p.click(). The primary is covered and inert now, so a real mouse
+   cannot reach it — which is correct, and is what the rail replaced. What these checks are
+   actually about is the SWAP: that it replaces rather than stacks history, and that the
+   geometry holds. Driving it directly keeps that under test. */
+await p.evaluate(() => document.querySelector('[data-drill="ws-4"]').click());
 await wait(500);
 s = await state();
-ok('lateral: primary still interactive → swapped page', /Workstream four/.test(s.title), `title=${s.title}`);
-ok('lateral: still open, geometry unchanged', s.drillOpen && Math.abs(s.primaryBox.w - 360) <= 2);
+ok('lateral: swap exchanges the page', /Workstream four/.test(s.title), `title=${s.title}`);
+ok('lateral: still open, geometry unchanged', s.drillOpen && s.primaryBox.w <= 2);
 const histLen1 = await p.evaluate(() => history.length);
-await p.click('[data-drill="ws-5"]');
+await p.evaluate(() => document.querySelector('[data-drill="ws-5"]').click());
 await wait(400);
 const histLen2 = await p.evaluate(() => history.length);
 ok('lateral: swap REPLACES history (one Back closes)', histLen2 === histLen1, `${histLen1}→${histLen2}`);
 
 // ─────────── deeper ───────────
-await p.click('[data-deeper]');
+await p.evaluate(() => document.querySelector('[data-deeper]').click());
 await wait(500);
 s = await state();
 ok('deeper: swapped to tertiary page', /Tertiary page/.test(s.title));
-ok('deeper: no third column (geometry constant)', Math.abs(s.primaryBox.w - 360) <= 2);
+ok('deeper: no third column (geometry constant)', s.primaryBox.w <= 2);
 await p.goBack(); await wait(600);
 s = await state();
 ok('deeper: Back steps up ONE level (still open)', s.drillOpen && /Workstream five/.test(s.title), `title=${s.title}`);
@@ -216,8 +231,9 @@ ok('≤1080: closed aux does NOT paint over the drill', !slivers.auxOnTop, `auxZ
 await p.setViewport({ width: 1440, height: 900 });
 await wait(700);
 s = await state();
-ok('resize back: region semantics restored', s.role === 'region' && !s.ariaModal);
-ok('resize back: primary no longer inert', !s.primaryInert);
+// the drill is full-bleed at every width now, so these no longer flip on resize
+ok('resize back: still dialog semantics', s.role === 'dialog' && s.ariaModal === 'true');
+ok('resize back: primary still inert while covered', s.primaryInert);
 ok('resize back: .rail still asserted', s.rail);
 
 // ─────────── aux over drill (no layout crush) ───────────

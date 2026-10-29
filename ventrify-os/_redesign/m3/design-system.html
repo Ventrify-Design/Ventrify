@@ -110,6 +110,13 @@
     <div class="ds-row" id="tok-elev"></div>
     <div class="ds-gt">Shadow roles (theme-aware · violet self-shadow ink on light)</div>
     <div class="ds-row" id="tok-shadow"></div>
+    <div class="ds-gt">App chrome</div>
+    <div class="sw-grid" id="tok-chrome"></div>
+    <div id="tok-chrome-note"></div>
+    <div class="ds-gt">Panel &amp; drill surfaces</div>
+    <div id="tok-surfaces"></div>
+    <div class="ds-gt">Chart entrance motion</div>
+    <div id="tok-motion"></div>
     </section>
 
     <!-- ==================== ATOMIC LEVELS (rendered) ==================== -->
@@ -142,12 +149,90 @@
     ['--shadow-drawer','drawer ▸'],['--shadow-rail','◂ rail'],['--shadow-panel','◂ panel'],['--shadow-mh-min','masthead ▾'],['--shadow-bar','bar ▴']
   ].map(t => `<div class="elev" style="box-shadow:var(${t[0]})">${t[1]}</div>`).join('');
 
+  // ---------- Foundations: app chrome ----------
+  // The drawer, the aux panel and the util rail are NOT elevated cards, so they stopped
+  // borrowing surface-container-low (which also means "card") and took their own token.
+  document.getElementById('tok-chrome').innerHTML = [
+    ['--md-sys-color-surface','page'],['--chrome-bg','chrome-bg'],['--md-sys-color-surface-container-low','container-low (cards)']
+  ].map(t => swatch(t[0], t[1])).join('');
+  document.getElementById('tok-chrome-note').innerHTML = `<p class="ds-sub" style="margin-top:10px">
+    <b>--chrome-lift</b> is the one dial: how far the chrome rises off whatever the page colour happens to be,
+    0% flush to 100% the old card colour. <b>--chrome-bg</b> is derived from it, never a hex — so it stays the
+    right hue and the right distance on every theme <i>and</i> every brand identity, each of which re-points the
+    page and card colours at its own ink. Currently <b>14%</b>.<br>
+    The branded nav and rail render that tint as tier-1 glass at 72% opacity. Glass passes only 0.72&times; the
+    dial once the page shows through, so the tint divides by the alpha to cancel it — without that the same dial
+    reads a third flatter on a glass surface than on the solid aux panel. Keep the two 72%s in step.</p>`;
+
+  // ---------- Foundations: panel & drill surfaces ----------
+  // One table, because these three surfaces share one rule: a surface may not starve the primary.
+  const SURF = [
+    ['Aux panel · default', 'clamp(320px, 30vw, 440px)', 'Pushes a grid column; floats over a scrim below 900px.'],
+    ['Aux panel · wide',    'min(720px, 100vw - 72px)',  'openAux({size:\'wide\'}) — for reading-length content. Pushes only at ≥1680px, where the primary still keeps ~620px; below that it floats at full width rather than squeezing the page to 388px. categoryDetail() asks for it itself.'],
+    ['Drill surface',       'full bleed',                'Replaces the primary entirely and carries its own sticky section rail; the primary is made inert, not merely hidden.'],
+    ['Floating behaviour',  '.aux-floating',             'ONE class set by openAux() owns scrim, stacking and dialog semantics however the panel came to float — narrow viewport, explicit overlay, or no room to push. Re-synced on resize. It raises the scrim above the util rail, which would otherwise stay clickable behind a dialog.'],
+    ['Table alignment',     '.tbl / .eng-table / .dtbl', 'Governed centrally, never per table. A header only takes the default left alignment when it has no align attribute (<code>th:not([align])</code>), so a markdown column written <code>|---:|</code> keeps its right-aligned heading over right-aligned figures; right- and centre-aligned cells also get tabular numerals so digits line up. Before this, a stylesheet rule beat markdown\'s presentation attribute and every numeric heading sat left of its column.'],
+    ['Row separation',      '--zebra',                   'ONE mechanism for every list and table: a tint on alternate rows, <b>no stroke at all</b>. Replaced per-component hairlines that had drifted to different tokens — .eng-table and .tbl drew <code>surface-container-highest</code> while group captions drew <code>outline-variant</code>, so two weights alternated down a single list. Covers .tbl, .dtbl, .eng-table, .mrow lists and .src. A TABLE can stripe with <code>:nth-of-type</code> because its children are uniformly &lt;tr&gt;; a DIV list cannot — a caption div before the rows silently flips the parity — so those rows carry a <code>.zebra</code> class the component emits from its own index. Totals and group captions never stripe.'],
+    ['Portfolio band',      'portfolioBand(rows)',       'What opens the portfolio: the count at display size, the figures an operator acts on, and the book\'s distribution across the runner\'s four guidance bands. It NAMES the stamped band and never recomputes it from the score — the runner owns that decision, gates included. Scales by stacking (wrap-reverse), so a long band grows upward instead of pushing the page down.'],
+    ['Brand logo slot',     '--brand-logo-size',         'Boxless artwork, not a tile: no fill, no radius, background-size:contain (cover would crop the mark), and the slot carries the ART\'s aspect so the gap to the wordmark does not grow with the size. In the collapsed rail it is re-centred on the 24px nav-icon axis, since it is the one lead that is not 24px wide; --logo-nudge is an optional per-asset optical trim.'],
+  ];
+  document.getElementById('tok-surfaces').innerHTML =
+    `<table style="width:100%;border-collapse:collapse;font-size:12.5px">` +
+    SURF.map(([n, w, how]) => `<tr style="border-top:1px solid var(--md-sys-color-outline-variant)">
+      <td style="padding:9px 10px 9px 0;vertical-align:top;white-space:nowrap;color:var(--md-sys-color-on-surface);font-weight:500">${n}</td>
+      <td style="padding:9px 10px 9px 0;vertical-align:top;color:var(--md-sys-color-on-surface-variant);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;white-space:nowrap">${w}</td>
+      <td style="padding:9px 0;vertical-align:top;color:var(--md-sys-color-on-surface-variant);line-height:1.5">${how}</td>
+    </tr>`).join('') + `</table>`;
+
+  // ---------- Foundations: chart entrance motion ----------
+  // Documented here rather than per-component because it is ONE layer (ds.css) driven
+  // by ONE function (DS.playCharts) across every graph in the product — a note on each
+  // of the seven lockups would be seven copies of the same contract.
+  const MOTION = [
+    ['Radar',              '.rad-grid / .rad-data / .rad-dots', 'grid fades, the shape inflates out of the chart centre along its spokes, vertices land', '0 → 710ms'],
+    ['Score dial',         '.sl-now / .sl-pot',                 'the arcs sweep on (stroke-dashoffset from --arc, published by scoreDial)',             '60 → 760ms'],
+    ['Stability strip',    '.sl-span / .sl-tick',               'the draw span grows from the left, the markers pop',                                   '220 → 780ms'],
+    ['Value bars',         '.mrow-bar / .cd-track / .m3-prog',  'scaleX from the left, staggered by row; the ghost leads the solid by 50ms',             '0 → 510ms +stagger'],
+    ['Composition pips',   '.bd-pips .p-on',                    'grow sideways — a part-filled pip is half a signal, so width is the measurement',       '60 → 440ms +stagger'],
+    ['Severity segments',  '.segrow i / .conv i',               'discrete counters, so they pop rather than grow',                                       '0 → 300ms +stagger'],
+    ['Valuation axis',     '.v1-band / .v1-ask / .v1-over',     'left to right, as the argument reads: the defensible band grows, the ask drops onto it, then the overshoot and its figure — the gap is the conclusion, so it lands last', '0 → 1120ms'],
+    ['The bench',          '.sigtier-h / .sigtier-row b',       'tier by tier, header then pills — people are discrete, so a pill pops; growing one to a width would imply a quantity', '0 → 740ms'],
+    ['Clearance grid',     '.ugrid i / .ug-leg .ug-k',          'one cell per check, popping in DOM order — which is severity order, so the blockers land first; the legend follows', '60 → 940ms'],
+    ['Provenance figures', '.lockup-prov .unit',                'the Research tab has no graph — its counted figures are its data marks, and without this it was the one dead tab', '120 → 740ms'],
+  ];
+  const RULES = [
+    ['Nothing is hidden in base CSS', 'Every start state lives in a <code>@keyframes from</code>. A chart renders complete when the animation never runs — reduced motion, an old browser, a failed script, a print.'],
+    ['No overshoot on a measurement', 'The house easing is springy. A spring on a bar draws a 4.0 as a 4.4 for ~80ms. Data marks decelerate and stop; only decorative marks may overshoot.'],
+    ['transform and opacity', 'scaleX, never width — these sit in tables of 7 to 40 rows. The one exception is the dial, which reads as a sweep, and sweeping is stroke-dashoffset.'],
+    ['Replays on every landing', '<code>DS.playCharts(el)</code> restarts the layer whenever a region becomes visible: a tab switch, first paint, the aux drill opening.'],
+    ['A mark that stands for a paragraph says so', 'A seat in the bench and a cell in the clearance grid are 40px of glyph standing for a named role or a named check. <code>DS.initTips()</code> gives any element with <code>data-tip</code> a styled hover tooltip — one delegated listener, one floating node on <code>&lt;body&gt;</code>, so marks rendered later are covered with no re-wiring. Not the native <code>title</code>: that waits a second, cannot wrap, and shows nothing on touch. Build them with <code>DS.tipAttrs({title, body, kind})</code>.'],
+    ['Icons are ligatures, so they are hidden', 'A Material Symbol\'s text content is the token — a screen reader reads <code>person_add</code>, not the glyph. <code>DS.icon()</code> emits them <code>aria-hidden</code>, and <code>DS.normaliseIcons()</code> sweeps anything already rendered, naming icon-only controls and hiding the rest.'],
+  ];
+  document.getElementById('tok-motion').innerHTML = `
+    <div>
+      <div>
+        <table style="width:100%;border-collapse:collapse;font-size:12.5px">
+          ${MOTION.map(([n, sel, what, t]) => `<tr style="border-top:1px solid var(--md-sys-color-outline-variant)">
+            <td style="padding:9px 10px 9px 0;vertical-align:top;white-space:nowrap;color:var(--md-sys-color-on-surface);font-weight:500">${n}</td>
+            <td style="padding:9px 10px 9px 0;vertical-align:top;color:var(--md-sys-color-on-surface-variant)">${what}
+              <div style="font-family:'Roboto Mono',monospace;font-size:11px;color:var(--md-sys-color-outline);margin-top:3px">${sel}</div></td>
+            <td style="padding:9px 0;vertical-align:top;white-space:nowrap;font-family:'Roboto Mono',monospace;font-size:11px;color:var(--md-sys-color-outline)">${t}</td>
+          </tr>`).join('')}
+        </table>
+        <div style="margin-top:18px;display:grid;gap:10px">
+          ${RULES.map(([h, b]) => `<div style="font-size:12.5px;line-height:1.5;color:var(--md-sys-color-on-surface-variant)">
+            <b style="color:var(--md-sys-color-on-surface);font-weight:600">${h}.</b> ${b}</div>`).join('')}
+        </div>
+      </div>
+    </div>
+    <a class="deep-link" href="specimen.html?id=radarLockup"><span class="material-symbols-rounded">play_circle</span>Watch it on a live molecule — every specimen replays on load, and on R →</a>`;
+
   // ---------- catalog cards ----------
   const ICONS = {
     button:'smart_button', icon:'emoji_symbols', chip:'label', statusPill:'check_circle', recPill:'verified', avatar:'account_circle', progress:'linear_scale', conviction:'signal_cellular_alt', textfield:'text_fields', switchAtom:'toggle_on', divider:'horizontal_rule',
-    navItem:'list', brand:'bolt', themeToggle:'contrast', accountChip:'badge', searchField:'search', breadcrumb:'arrow_back', ventureHeader:'business', stat:'numbers', listRow:'view_list', cardHeader:'title', callout:'campaign', keyFigure:'bar_chart',
+    navItem:'list', brand:'bolt', accountChip:'badge', searchField:'search', breadcrumb:'arrow_back', ventureHeader:'business', stat:'numbers', listRow:'view_list', cardHeader:'title', callout:'campaign', keyFigure:'bar_chart',
     navigationDrawer:'space_dashboard', masthead:'toolbar', engagementTable:'table_rows', queueItem:'checklist',
-    verdictMemo:'article', sectionHero:'gavel', investabilityHero:'insights', marketHero:'query_stats', teamHero:'groups', researchHero:'manage_search', statementLockup:'title', scoreLockup:'speed', progressLockup:'checklist', profileLockup:'donut_small', valuationLockup:'price_check', coverageLockup:'fact_check', metricRow:'view_stream', strengthProfile:'insights', investabilityComposition:'radar', categoryDetail:'zoom_in', caseEditorial:'balance', conditionsKill:'rule', diligenceEditorial:'playlist_add_check', verdictSignoff:'verified_user',
+    verdictMemo:'article', sectionHero:'gavel', investabilityHero:'insights', marketHero:'query_stats', teamHero:'groups', researchHero:'manage_search', statementLockup:'title', scoreLockup:'speed', progressLockup:'checklist', radarLockup:'radar', benchLockup:'groups_3', signalTier:'label', clearanceLockup:'lock_open', unitGrid:'grid_view', valuationLockup:'price_check', coverageLockup:'fact_check', metricRow:'view_stream', strengthProfile:'insights', investabilityComposition:'table_rows', categoryDetail:'zoom_in', caseEditorial:'balance', conditionsKill:'rule', diligenceEditorial:'playlist_add_check', verdictSignoff:'verified_user',
     marketMemo:'query_stats', teamMemo:'groups', researchMemo:'menu_book', compScan:'compare_arrows', founderRoster:'badge', teamGaps:'person_search', exitLedger:'exit_to_app', researchRow:'article', researchIndex:'toc', provLine:'verified', sourcesPanel:'source', lifecycleStrip:'timeline', evidenceIntegrity:'shield', confidenceReconciliation:'balance', signalRows:'checklist',
     verdictCard:'gavel', marketSizing:'query_stats', dealValuation:'payments', benchmarkTable:'table_chart', exitReturns:'exit_to_app', srcRow:'draft', primerStrip:'route', portfolioEmpty:'rocket_launch', assessRunningPage:'hourglass_top', missingDocs:'report',  formingLockup:'hourglass_empty', runSequence:'format_list_numbered', inputManifest:'inventory_2', assessingMemo:'hourglass_top', canStopRun:'stop_circle', formField:'text_fields', wizardSteps:'linear_scale', iconBtn:'radio_button_unchecked', linearProgress:'linear_scale', docDropzone:'drive_folder_upload', deckDropzone:'upload_file', assessmentWizard:'add_task', runBanner:'autorenew',
     uiShell:'space_dashboard', drillPage:'right_panel_open', portfolioPage:'dashboard', portfolioEmptyPage:'rocket_launch', assessSetupPage:'add_task', assessmentPage:'fact_check', queuePage:'checklist', researchPage:'menu_book'

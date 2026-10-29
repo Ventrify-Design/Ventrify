@@ -90,16 +90,36 @@
 .heat-card .note { font-size: 13px; color: var(--md-sys-color-on-surface-variant); font-style: italic; line-height: 1.45; }
 
 /* ---- tables (deal, benchmark) ---- */
+/* ══ TABLE COLUMN ALIGNMENT — one rule for every table in the system ══════════
+   A HEADER BELONGS TO ITS COLUMN, so it takes that column's alignment.
+
+   .tbl, .eng-table and .dtbl each hardcoded `th { text-align: left }`. That is a
+   stylesheet rule, and a stylesheet rule beats the `align` presentation attribute —
+   which is exactly what Markdown emits for a `|---:|` column. So every research
+   document with a numeric table rendered right-aligned figures under left-aligned
+   headings, and the stylesheet was overruling the document's own declared alignment.
+
+   Left stays the DEFAULT, because it is right for the common text column. It simply
+   yields now instead of winning. Fixing it on the three components together rather
+   than on the one table that showed the symptom: the other two are data-driven and
+   emit no align attribute today, so they had the same bug latent rather than visible.
+
+   Right- and centre-aligned cells also get tabular numerals: a column is right-aligned
+   precisely so figures can be compared down it, and proportional digits make the
+   decimal edge wobble. */
+.tbl th:not([align]), .eng-table th:not([align]), .dtbl th:not([align]) { text-align: left; }
+.tbl [align="right"],  .eng-table [align="right"],  .dtbl [align="right"],
+.tbl [align="center"], .eng-table [align="center"], .dtbl [align="center"] { font-variant-numeric: tabular-nums; }
+
 .tbl { width: 100%; border-collapse: collapse; font-size: 14px; }
-.tbl th { text-align: left; font-size: 11px; font-weight: 500; letter-spacing: .5px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); padding: 12px; border-bottom: 1px solid var(--md-sys-color-surface-container-highest); white-space: nowrap; }
+.tbl th { font-size: 11px; font-weight: 500; letter-spacing: .5px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); padding: 12px; border-bottom: 1px solid var(--md-sys-color-surface-container-highest); white-space: nowrap; }
 /* HAIRLINE RULE (see .mrow in assess-editorial.css): the highlighted `.me` row rounds its end cells
    into a pill, and a border-bottom would follow that radius and curl. Draw the row divider as a
    straight 1px pseudo-element so the pill's corners never bend it. */
 .tbl td { position: relative; padding: 14px 12px; vertical-align: top; }
-.tbl td::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: var(--md-sys-color-surface-container-highest); pointer-events: none; }
+/* .tbl's row hairline is gone — zebra separates rows now (see ZEBRA below). */
 .tbl tr.me td { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
 /* the highlighted row IS its own separator — a hairline drawn across the pill just dirties it */
-.tbl tr.me td::after { content: none; }
 .tbl tr.me td:first-child { border-radius: 8px 0 0 8px; } .tbl tr.me td:last-child { border-radius: 0 8px 8px 0; }
 .val-tbl td { padding: 10px 12px; font-size: 13px; }
 .see-research { margin-top: 8px; }
@@ -119,12 +139,100 @@
 .search { width: 100%; margin: 12px 0; }
 md-outlined-text-field { --md-outlined-text-field-container-shape: 999px; --md-outlined-text-field-top-space:8px; --md-outlined-text-field-bottom-space:8px; }
 .table-wrap { padding: 0; overflow-x: auto; }
+
+
+/* ══ ZEBRA ══════════════════════════════════════════════════════════════════════════
+   Every table in the product separates rows the same way: a tint on alternate rows and no
+   stroke at all. ONE definition, three tables (.tbl, .eng-table, .dtbl) — each used to draw
+   its own hairline and they had drifted to different tokens, so two weights alternated down
+   a single list. A tint cannot misalign with itself.
+   The grouped engagement table is the one special case: its caption is the first <tr> of each
+   <tbody class="et-grp">, so data rows start at type 2 and the alternation must start on EVEN
+   for the first row under every caption to be striped. */
+.tbl tbody tr:nth-of-type(odd) > *,
+.dtbl tbody tr:nth-of-type(odd) > *,
+.eng-table tbody:not(.et-grp) tr:nth-of-type(odd) > *,
+.eng-table .et-grp .et-gh ~ tr:nth-of-type(even) > * { background: var(--zebra); }
+/* rounded ends, so a striped row reads as one object rather than a full-bleed band */
+.tbl tbody tr > *:first-child, .dtbl tbody tr > *:first-child,
+.eng-table tbody tr > *:first-child { border-radius: var(--md-sys-shape-corner-sm) 0 0 var(--md-sys-shape-corner-sm); }
+.tbl tbody tr > *:last-child, .dtbl tbody tr > *:last-child,
+.eng-table tbody tr > *:last-child { border-radius: 0 var(--md-sys-shape-corner-sm) var(--md-sys-shape-corner-sm) 0; }
+/* a caption row is not a data row: it never stripes and never rounds */
+.eng-table .et-gh > * { background: none; border-radius: 0; }
+.tbl tbody tr:hover > *, .dtbl tbody tr:hover > * { background: var(--zebra-hover); }
+/* the "me" row is a highlight, not a stripe — it has to survive the zebra that now follows it */
+.tbl tbody tr.me > * { background: var(--md-sys-color-primary-container); }
+
+/* portfolioBand — headline figures + the book's score distribution. */
+/* align-items:end — the distribution's captions sit on the same baseline as the hero's
+   need-you / in-flight / scored figures, so the band reads as one row, not two stacked blocks. */
+.pb { display: grid; grid-template-columns: minmax(200px, auto) minmax(0, 1fr); gap: clamp(44px, 6.5vw, 96px);
+      align-items: end; margin: 0 0 32px; }
+.pb-n { font: 600 clamp(54px, 5.8vw, 76px)/.86 var(--font-display); letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+.pb-n small { display: block; font: 400 14px/1.3 var(--font-text); letter-spacing: 0;
+              color: var(--md-sys-color-on-surface-variant); margin-top: 11px; }
+.pb-subs { display: flex; gap: 26px; margin-top: 22px; }
+.pb-s b { display: block; font: 600 28px/1 var(--font-display); letter-spacing: -.025em; font-variant-numeric: tabular-nums; }
+.pb-s b.warn { color: var(--warning); }
+.pb-s em { font-style: normal; font-size: 13px; color: var(--md-sys-color-on-surface-variant); display: block; margin-top: 6px; }
+.pb-dh { display: flex; align-items: baseline; gap: 10px; margin: 0 0 14px; }
+.pb-dh .l { font: 500 12px/1 var(--font-mono); letter-spacing: .11em; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); }
+.pb-dh .m { margin-left: auto; font-size: 13px; color: var(--md-sys-color-on-surface-variant); }
+.pb-cols { display: grid; grid-template-columns: repeat(var(--pb-n, 4), 1fr); gap: 10px; align-items: end; }
+.pb-col { display: flex; flex-direction: column; justify-content: flex-end; }
+/* wrap-reverse so a long band grows UPWARD from the caption, never pushing it down the page */
+.pb-cells { display: flex; flex-wrap: wrap-reverse; gap: 3px; align-content: flex-end; min-height: 14px; }
+.pb-cells i { width: 14px; height: 14px; border-radius: var(--r-mark); }
+.pb-cap { margin-top: 9px; padding-top: 9px; border-top: 1px solid var(--md-sys-color-outline-variant); }
+.pb-cap b { font: 600 24px/1 var(--font-display); letter-spacing: -.025em; font-variant-numeric: tabular-nums; }
+.pb-cap em { font-style: normal; display: block; font-size: 13px; color: var(--md-sys-color-on-surface-variant); margin-top: 6px; line-height: 1.3; }
+.pb-cells.t-good i { background: var(--md-sys-color-primary); }
+.pb-cells.t-mid  i { background: color-mix(in srgb, var(--md-sys-color-primary) 42%, transparent); }
+/* four bands, four readings — high risk is a WARNING and potential decline is a FAILURE, so they
+   cannot share a colour in the one chart whose job is to tell the bands apart. */
+.pb-cells.t-warn i { background: color-mix(in srgb, var(--warning) 62%, transparent); }
+.pb-cells.t-bad  i { background: color-mix(in srgb, var(--md-sys-color-error) 55%, transparent); }
+.pb-cells.t-form i { background: color-mix(in srgb, var(--md-sys-color-on-surface) 16%, transparent); }
+@media (max-width: 900px){ .pb { grid-template-columns: 1fr; gap: 26px; } .pb-cols { gap: 7px; } }
+/* the project floor is 14px on a phone, and the band's captions and eyebrow sit below it on desktop
+   by design; lift them rather than let the smallest type land on the smallest screen. */
+@media (max-width: 640px){
+  .pb-dh .l, .pb-dh .m, .pb-s em, .pb-cap em, .pb-n small { font-size: 14px; }
+  .pb-cols { grid-template-columns: repeat(2, 1fr); row-gap: 18px; }
+}
+
+/* figureStrip — counts ON the page, not in tiles. Hairlines top and bottom, one between each figure;
+   the first cell loses its left rule and its padding so the strip starts on the page's text edge. */
+.figstrip { display: grid; grid-template-columns: repeat(var(--fs-cols, 4), 1fr); margin: 0 0 30px;
+            border-top: 1px solid var(--md-sys-color-outline-variant);
+            border-bottom: 1px solid var(--md-sys-color-outline-variant); }
+.fs-f { padding: 16px 20px 15px; border-left: 1px solid var(--md-sys-color-outline-variant); min-width: 0; }
+.fs-f:first-child { border-left: none; padding-left: 0; }
+.fs-v { font: 600 30px/1 var(--font-display); letter-spacing: -.025em; font-variant-numeric: tabular-nums; }
+.fs-v.dim { color: var(--md-sys-color-on-surface-variant); }
+.fs-l { font-size: 12px; color: var(--md-sys-color-on-surface-variant); margin-top: 7px; }
+@media (max-width: 900px){ .figstrip { grid-template-columns: repeat(2, 1fr); }
+  .fs-f:nth-child(odd) { border-left: none; padding-left: 0; }
+  .fs-f:nth-child(n+3) { border-top: 1px solid var(--md-sys-color-outline-variant); } }
+
+/* engagementTable, grouped — a caption band over the same columns, not a separate table. */
+.eng-table .et-gh th { text-align: left; font-weight: 400; padding: 26px 0 10px;
+                       /* a group caption is a sentence, not a column label — drop the th ramp it inherits.
+                          No underline: zebra-only means the caption separates on space and on the striped
+                          row beneath it, not on another stroke. */
+                       text-transform: none; letter-spacing: normal; font-size: inherit; color: inherit; border-bottom: none; }
+.eng-table .et-grp:first-child .et-gh th { padding-top: 2px; }
+.et-gh .g { font: 500 13px/1 var(--font-text); color: var(--md-sys-color-on-surface); }
+.et-gh .c { margin-left: 9px; font: 500 12.5px/1 var(--font-mono); color: var(--md-sys-color-on-surface-variant); }
+.et-gh .why { float: right; font-size: 13px; color: var(--md-sys-color-on-surface-variant); font-weight: 400; }
+@media (max-width: 640px){ .et-gh .why { display: none; } .et-gh .g, .et-gh .c { font-size: 14px; } }
 .eng-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-.eng-table th { text-align: left; font-size: var(--row-eyebrow); font-weight: 500; letter-spacing: .5px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); padding: 14px 20px; border-bottom: 1px solid var(--md-sys-color-surface-container-highest); white-space: nowrap; }
-.eng-table td { padding: 16px 20px; border-bottom: 1px solid var(--md-sys-color-surface-container-highest); vertical-align: middle; }
+.eng-table th { font-size: var(--row-eyebrow); font-weight: 500; letter-spacing: .5px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); padding: 14px 20px; border-bottom: 1px solid var(--md-sys-color-surface-container-highest); white-space: nowrap; }
+.eng-table td { padding: 16px 20px; vertical-align: middle; }
 .eng-table tbody tr { cursor: pointer; transition: background .15s; }
-.eng-table tbody tr:hover td { background: var(--md-sys-color-surface-container-high); }
-.eng-table tbody tr:last-child td { border-bottom: none; }
+.eng-table tbody tr:hover td { background: var(--zebra-hover); }
+
 .et-v { display: flex; align-items: center; gap: 14px; }
 .et-av { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; font-weight: 500; font-size: 14px; flex: none; }
 .et-name { font-size: var(--row-title); font-weight: 500; line-height: 20px; }
@@ -169,11 +277,13 @@ md-outlined-text-field { --md-outlined-text-field-container-shape: 999px; --md-o
 .art-body ul li .material-symbols-rounded { font-size: 20px; color: var(--md-sys-color-primary); flex: none; margin-top: 1px; }
 .art-meta { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; color: var(--md-sys-color-on-surface-variant); font-size: 13px; }
 .dtbl { width: 100%; border-collapse: collapse; font-size: 14px; margin: 4px 0 16px; }
-.dtbl th { text-align: left; font-size: 11px; letter-spacing: .5px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); font-weight: 500; padding: 10px 12px; border-bottom: 1px solid var(--md-sys-color-surface-container-highest); }
-.dtbl td { padding: 10px 12px; border-bottom: 1px solid var(--md-sys-color-surface-container-highest); }
+.dtbl th { font-size: 11px; letter-spacing: .5px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); font-weight: 500; padding: 10px 12px; border-bottom: 1px solid var(--md-sys-color-surface-container-highest); }
+.dtbl td { padding: 10px 12px; }
 .dtbl .bad { color: var(--md-sys-color-error); }
 .dtbl .good { color: var(--success); }
-.src { display: flex; gap: 12px; padding: 12px 0; border-top: 1px solid var(--md-sys-color-surface-container-highest); font-size: 14px; }
+/* the sources list is a scannable row list, so it takes the same zebra as the tables */
+.src { display: flex; gap: 12px; padding: 12px 10px; font-size: 14px; border-radius: var(--md-sys-shape-corner-sm); }
+.src:nth-of-type(odd) { background: var(--zebra); }
 .src:first-of-type { border-top: none; }
 .src .n { color: var(--md-sys-color-primary); font-weight: 500; flex: none; width: 20px; }
 .src .dom { color: var(--md-sys-color-on-surface-variant); font-size: 13px; }
@@ -241,7 +351,7 @@ md-outlined-text-field { --md-outlined-text-field-container-shape: 999px; --md-o
 .art-body.art-prose hr { border: 0; height: 1px; background: var(--md-sys-color-surface-container-highest); margin: 34px 0; }
 .art-body.art-prose blockquote { margin: 0 0 16px; padding: 2px 0 2px 16px; border-left: 3px solid var(--md-sys-color-primary); color: var(--md-sys-color-on-surface-variant); }
 .art-body.art-prose blockquote p:last-child { margin-bottom: 0; }
-.art-body.art-prose code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .88em; padding: 2px 5px; border-radius: 5px; background: var(--md-sys-color-surface-container-high); }
+.art-body.art-prose code { font-family: var(--font-mono); font-size: .88em; padding: 2px 5px; border-radius: 5px; background: var(--md-sys-color-surface-container-high); }
 .art-body.art-prose pre { overflow-x: auto; padding: 14px 16px; border-radius: 12px; background: var(--md-sys-color-surface-container); margin: 0 0 18px; -webkit-overflow-scrolling: touch; }
 .art-body.art-prose pre code { padding: 0; background: none; font-size: 13px; line-height: 1.6; }
 .art-body.art-prose img { max-width: 100%; height: auto; border-radius: 12px; margin: 4px 0 18px; }
@@ -296,7 +406,7 @@ md-outlined-text-field { --md-outlined-text-field-container-shape: 999px; --md-o
 /* ---- aux panel demo (specimen only) ---- */
 .aux-modeswitch { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .aux-modeswitch .seg-group { display: inline-flex; gap: 2px; background: var(--md-sys-color-surface-container-high); border-radius: 999px; padding: 3px; }
-.aux-modeswitch button { border: none; background: transparent; color: var(--md-sys-color-on-surface-variant); height: 34px; padding: 0 14px; border-radius: 999px; font-family: 'Roboto', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.aux-modeswitch button { border: none; background: transparent; color: var(--md-sys-color-on-surface-variant); height: 34px; padding: 0 14px; border-radius: 999px; font-family: var(--font-text); font-size: 13px; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
 .aux-modeswitch button .material-symbols-rounded { font-size: 18px; }
 .aux-modeswitch button.on { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
 .aux-card { display: flex; align-items: center; gap: 16px; cursor: pointer; transition: background .15s; }
@@ -428,7 +538,7 @@ md-outlined-text-field { --md-outlined-text-field-container-shape: 999px; --md-o
 .md-list { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
 .md-list li { font-size: 14px; line-height: 1.55; color: var(--md-sys-color-on-surface-variant); }
 .md-q { margin: 4px 0; padding: 8px 14px; border-left: 3px solid var(--md-sys-color-primary); background: var(--md-sys-color-surface-container); border-radius: 0 8px 8px 0; font-size: 14px; color: var(--md-sys-color-on-surface-variant); }
-.md-doc code { font-family: ui-monospace, monospace; font-size: 12.5px; background: var(--md-sys-color-surface-container-highest); padding: 1px 5px; border-radius: 5px; }
+.md-doc code { font-family: var(--font-mono); font-size: 12.5px; background: var(--md-sys-color-surface-container-highest); padding: 1px 5px; border-radius: 5px; }
 .md-doc a { color: var(--md-sys-color-primary); }
 
 
@@ -572,7 +682,7 @@ md-outlined-text-field { --md-outlined-text-field-container-shape: 999px; --md-o
 .chat-prop-d { font-size: 12px; line-height: 1.45; color: var(--md-sys-color-on-surface-variant); }
 .chat-prop-l { font-size: 11.5px; line-height: 1.5; color: var(--md-sys-color-on-surface-variant);
   background: var(--md-sys-color-surface-container-lowest); padding: 7px 9px; border-radius: 8px;
-  overflow-wrap: anywhere; width: 100%; box-sizing: border-box; font-family: ui-monospace, monospace; }
+  overflow-wrap: anywhere; width: 100%; box-sizing: border-box; font-family: var(--font-mono); }
 .chat-prop-go { min-height: 36px; margin-top: 2px; }
 .chat-prop-done { display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600;
   color: var(--on-success-container, var(--md-sys-color-primary)); }
@@ -602,3 +712,202 @@ md-outlined-text-field { --md-outlined-text-field-container-shape: 999px; --md-o
   border-left: 3px solid var(--md-sys-color-error); font-size: 12.5px; line-height: 1.55;
   color: var(--md-sys-color-on-surface); }
 .cd-wobble .material-symbols-rounded { font-size: 18px; flex: none; color: var(--md-sys-color-error); }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   TOOLTIP — the shared affordance for a chart mark that stands for something
+   with a name and a paragraph behind it. Driven by initTips() in ds.js.
+
+   It lives on <body> at position:fixed so no ancestor's overflow can clip it —
+   a hero column is 364px wide and every one of these marks sits inside one.
+   ════════════════════════════════════════════════════════════════════════════ */
+.m3-tip {
+  position: fixed; z-index: 1200; pointer-events: none;
+  max-width: min(320px, calc(100vw - 24px));
+  padding: 11px 13px; border-radius: 11px;
+  background: var(--md-sys-color-surface-container-highest);
+  box-shadow: var(--md-elev-3, 0 8px 28px rgba(0,0,0,.45));
+  font-size: 12.5px; line-height: 1.5; color: var(--md-sys-color-on-surface-variant);
+  opacity: 0; transform: translateY(3px); visibility: hidden;
+}
+.m3-tip.on { opacity: 1; transform: none; visibility: visible; }
+@media (prefers-reduced-motion: no-preference) {
+  .m3-tip { transition: opacity 120ms cubic-bezier(0.2,0,0,1), transform 120ms cubic-bezier(0.2,0,0,1); }
+}
+.m3-tip b { display: block; margin-bottom: 4px; font-weight: 600; color: var(--md-sys-color-on-surface); }
+/* the severity accent the mark itself carries, so the tip reads as that mark's own */
+.m3-tip.err b  { color: var(--md-sys-color-error); }
+.m3-tip.warn b { color: var(--warning); }
+/* the arrow tracks the mark via --tip-x, which stays correct after the body is
+   clamped to the viewport edge and is no longer centred on what it points at */
+.m3-tip::after {
+  content: ''; position: absolute; left: var(--tip-x, 50%); transform: translateX(-50%);
+  border: 6px solid transparent; border-top-color: var(--md-sys-color-surface-container-highest); top: 100%;
+}
+.m3-tip.below::after { top: auto; bottom: 100%; border-top-color: transparent;
+                       border-bottom-color: var(--md-sys-color-surface-container-highest); }
+/* a mark that has something to say should look like it does */
+[data-tip] { cursor: help; }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   CHART ENTRANCE MOTION
+
+   Every graph in the product draws itself in when its tab is opened. One family
+   with the rest of the shell: cubic-bezier(0.2,0,0,1), ~300ms per step, the
+   whole choreography under 700ms.
+
+   TWO RULES THIS LAYER OBEYS, AND THEY ARE THE WHOLE DESIGN:
+
+   1 · NOTHING IS HIDDEN IN BASE CSS. Every start state lives inside a @keyframes
+       `from`, never in a plain rule. So a chart renders complete when the
+       animation never runs — reduced-motion, an old browser, a JS failure, a
+       print, a screenshot. A layer that hides data and relies on JS to reveal it
+       is one broken script away from a blank page.
+
+   2 · NO OVERSHOOT ON ANYTHING THAT CARRIES A VALUE. The house easing is springy,
+       and a spring on a bar means that for ~80ms it draws a 4.0 as a 4.4. A
+       decorative element may overshoot; a measurement may not. Data marks
+       decelerate into place and stop.
+
+   Re-triggered by playCharts() — see ds.js — which toggles .charts-in on the
+   panel that just became visible.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: no-preference) {
+
+  /* stagger: --i is the item's index within its group, set by playCharts().
+     Capped at 10 so a 40-row table still finishes with everything else rather
+     than trickling in for two seconds. */
+  .charts-in { --ch-ease: cubic-bezier(0.2, 0, 0, 1); --ch-step: 32ms; }
+
+  @keyframes ch-fade  { from { opacity: 0; } }
+  @keyframes ch-growx { from { transform: scaleX(0); } }
+  @keyframes ch-grow  { from { transform: scale(0); opacity: 0; } }
+  @keyframes ch-pop   { from { transform: scale(.4); opacity: 0; } }
+  @keyframes ch-sweep { from { stroke-dashoffset: var(--arc, 0); } }
+
+  /* ── the radar ───────────────────────────────────────────────────────────
+     grid first, then the shape inflates out of the centre along the spokes,
+     then the vertices land and the labels arrive. */
+  /* THE PIVOT. radar() emits every coordinate centred on user (0,0), so the chart
+     centre IS the origin and `0 0` is the whole answer. This was briefly a computed
+     offset from the viewBox corner, on the theory that transform-box:view-box measures
+     from there; measured on a real frame, the pivot landed 240px away and the shape
+     slid in diagonally. The test that catches it is a one-liner: a scale transform has
+     exactly one fixed point, so map user (0,0) to the screen at two different scales
+     and the drift must be zero. */
+  .charts-in .rad-grid   { animation: ch-fade 300ms var(--ch-ease) both; }
+  .charts-in .rad-data   { transform-box: view-box; transform-origin: 0 0;
+                           animation: ch-grow 560ms var(--ch-ease) 60ms both; }
+  /* opacity ONLY — the dots are inside .rad-data and already ride its growth. Anything
+     with a transform here would fight that one and pull them off the vertices. */
+  .charts-in .rad-dots   { animation: ch-fade 260ms var(--ch-ease) 400ms both; }
+  .charts-in .rad-labels { animation: ch-fade 300ms var(--ch-ease) 260ms both; }
+
+  /* ── the score dial ──────────────────────────────────────────────────────
+     stroke-dashoffset is the one property here that is neither transform nor
+     opacity. A dial reads as a SWEEP, and sweeping is what dashoffset does;
+     faking it with a rotating wedge mask would cost a clip path and a second
+     element to animate the same 2 arcs. It triggers paint, not layout. */
+  .charts-in .sl-track { animation: ch-fade 280ms var(--ch-ease) both; }
+  .charts-in .sl-pot   { animation: ch-sweep 620ms var(--ch-ease) 120ms both; }
+  .charts-in .sl-now   { animation: ch-sweep 700ms var(--ch-ease) 60ms both; }
+
+  /* ── the stability strip (three blind draws) ─────────────────────────────── */
+  .charts-in .sl-span { transform-origin: left center; animation: ch-growx 420ms var(--ch-ease) 220ms both; }
+  .charts-in .sl-tick,
+  .charts-in .sl-med  { animation: ch-pop 260ms var(--ch-ease) 520ms both; }
+
+  /* ── horizontal value bars ───────────────────────────────────────────────
+     scaleX, never width: width is layout, and these sit in a 7-to-40 row table.
+     `.pot` is the ghost behind `.now`, so it leads by a hair. */
+  .charts-in .mrow-bar .pot,
+  .charts-in .mrow-bar .now,
+  .charts-in .cd-track .pot,
+  .charts-in .cd-track .now,
+  .charts-in .m3-prog:not(.indeterminate) > span {
+    transform-origin: left center;
+    animation: ch-growx 460ms var(--ch-ease) calc(min(var(--i, 0), 10) * var(--ch-step)) both;
+  }
+  .charts-in .mrow-bar .pot { animation-delay: calc(min(var(--i, 0), 10) * var(--ch-step)); }
+  .charts-in .mrow-bar .now { animation-delay: calc(min(var(--i, 0), 10) * var(--ch-step) + 50ms); }
+  .charts-in .mrow-bar .tick {
+    animation: ch-pop 260ms var(--ch-ease) calc(min(var(--i, 0), 10) * var(--ch-step) + 360ms) both;
+  }
+
+  /* ── the valuation axis ──────────────────────────────────────────────────
+     Choreographed as the argument reads, left to right: here is the scale,
+     here is where the price should be, here is where it actually is, and here
+     is the distance between them. The overshoot and its dimension come LAST,
+     because the gap is the conclusion, not the premise.
+
+     Everything grows from the LEFT — the axis runs that way, so a region that
+     grew from its own centre would travel against the scale it sits on. */
+  @keyframes ch-growy { from { transform: scaleY(0); } }
+  .charts-in .v1-track { animation: ch-fade 280ms var(--ch-ease) both; }
+  .charts-in .vz-lab   { animation: ch-fade 280ms var(--ch-ease) 40ms both; }
+  /* the defensible band — the recommendation, so it lands before the problem does */
+  .charts-in .v1-band  { transform-origin: left center; animation: ch-growx 440ms var(--ch-ease) 120ms both; }
+  /* then the ask marker drops onto it */
+  .charts-in .v1-ask   { transform-origin: center bottom; animation: ch-growy 300ms var(--ch-ease) 430ms both; }
+  /* and only then the overshoot, and the figure measuring it */
+  .charts-in .v1-over  { transform-origin: left center; animation: ch-growx 380ms var(--ch-ease) 560ms both; }
+  .charts-in .v1-gap .bar { transform-origin: left center; animation: ch-growx 320ms var(--ch-ease) 700ms both; }
+  .charts-in .v1-gap .cap { animation: ch-fade 260ms var(--ch-ease) 860ms both; }
+  /* the ticks arrive with the track they measure, staggered along it */
+  .charts-in .vz-axis i,
+  .charts-in .vz-axis span { animation: ch-fade 240ms var(--ch-ease) calc(200ms + min(var(--i, 0), 10) * 40ms) both; }
+
+  /* ── pip + segment rows ──────────────────────────────────────────────────
+     The composition pips grow sideways because that is what they measure (a
+     part-filled pip is a half signal); severity segments and conviction pips
+     are discrete, so they pop. */
+  .charts-in .bd-pips .p-on {
+    transform-origin: left center;
+    animation: ch-growx 380ms var(--ch-ease) calc(min(var(--i, 0), 10) * var(--ch-step) + 60ms) both;
+  }
+  .charts-in .segrow i,
+  .charts-in .conv i,
+  .charts-in .profile-strip .seg {
+    animation: ch-pop 300ms var(--ch-ease) calc(min(var(--i, 0), 10) * 26ms) both;
+  }
+  /* the weighted strip is a continuous bar cut into segments, not a row of
+     counters — it grows rather than pops */
+  .charts-in .profile-strip .seg {
+    transform-origin: left center;
+    animation-name: ch-growx;
+  }
+
+  /* ── provenance figures (coverageLockup / bookLockup) ────────────────────
+     The Research tab is the one tab with no graph on it — its hero is a
+     numeral over a row of counted figures. Those figures ARE its data marks,
+     so they arrive like every other tab's, left to right. Without this the
+     tab was the only dead one in the product. */
+  .charts-in .lockup-prov .unit {
+    animation: ch-fade 300ms var(--ch-ease) calc(min(var(--i, 0), 10) * var(--ch-step) + 120ms) both;
+  }
+
+  /* ── the clearance grid ──────────────────────────────────────────────────
+     One cell is one check — discrete, so they POP in rather than grow; a cell
+     widening to a size would imply a quantity, and a check is not a quantity.
+     Severity order is the DOM order, so the blockers land first and the read
+     is "here is what stops you, then here is the rest". The legend follows the
+     cells it explains. */
+  .charts-in .ugrid i {
+    animation: ch-pop 280ms var(--ch-ease) calc(min(var(--i, 0), 14) * 26ms + 60ms) both;
+  }
+  .charts-in .ug-leg .ug-k {
+    animation: ch-fade 260ms var(--ch-ease) calc(min(var(--i, 0), 10) * 50ms + 420ms) both;
+  }
+
+  /* ── the bench ───────────────────────────────────────────────────────────
+     Reads top-down, the order the argument is made: the people running the
+     company, then the people advising them, then the seats nobody is in. Each
+     tier's header arrives before its pills, and the pills land one after the
+     next — they are discrete people, so they POP rather than grow; a pill
+     sliding to a width would imply a quantity, and a person is not a quantity.
+     --i is per-tier for the headers and per-pill within a tier (playCharts). */
+  .charts-in .sigtier-h { animation: ch-fade 280ms var(--ch-ease) calc(min(var(--i, 0), 10) * 90ms) both; }
+  .charts-in .sigtier-row b {
+    animation: ch-pop 300ms var(--ch-ease) calc(var(--tier, 0) * 90ms + min(var(--i, 0), 10) * 34ms + 90ms) both;
+  }
+}

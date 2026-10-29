@@ -123,13 +123,27 @@ export function renderVSSScorecard(snap, opts = {}) {
   const ratedLine = (snap.status === 'forming' || band === 'forming')
     ? `${esc(ratedCount)} of 35 signals rated &middot; grows as the venture builds`
     : `${esc(ratedCount)} of 35 signals rated${pendingCount ? ` &middot; ${esc(pendingCount)} not assessable here` : ''}`;
+  /* MOVED UP, from 16 lines below. It was defined after the hero and used only to
+     gate the v3-only chrome — while the hero carried the one line that makes a
+     PROVENANCE claim, unconditionally. A pre-v3 snapshot is a /35-or-/27 raw sum;
+     v3 is a weighted mean out of 100 (see shared/vss-rubric.js, which says so in
+     as many words). Printing "VSS v3 · weighted" over a raw sum is a false
+     statement about how the number was produced, on an investor-facing artefact —
+     and it was the one piece of chrome the guard below did not cover. */
+  const isV3Scale = Number(snap.maxPossible) === 100 && Number(snap.composite) > 0 && Number(snap.composite) <= 100 && ratedCount > 0;
+  /* The CC BY line stays in BOTH: the 7x5 STRUCTURE is what is adapted from TDK,
+     and v2 borrows it just as v3 does. Only the method claim changes. */
+  const TDK = 'structure adapted under CC BY from TDK Ventures&rsquo; Investment Scorecard, modified';
+  const attribution = isV3Scale
+    ? `VSS v3 &middot; weighted &middot; ${TDK}`
+    : `VSS v2 &middot; raw sum, not weighted &middot; scored before the v3 cutover &mdash; re-run to rescore &middot; ${TDK}`;
   const hero = opts.headline === false ? '' : `<div class="vss-hero" style="border-left:4px solid ${cc};">
       <div class="vss-hero-number">${esc(snap.composite)}<span class="vss-hero-suffix"> / ${esc(max)}</span></div>
       <div class="vss-hero-body">
         <span class="vss-band-pill" style="color:${cc};background:${bandTint(snap.band)};">${esc(bandWord)}</span>
         <div class="vss-band-label">${esc(snap.bandLabel || '')}</div>
         <div class="vss-hero-meta">${ratedLine}</div>
-        <div class="vss-attribution">VSS v3 &middot; weighted &middot; structure adapted under CC BY from TDK Ventures&rsquo; Investment Scorecard, modified</div>
+        <div class="vss-attribution">${attribution}</div>
       </div>
     </div>`;
 
@@ -154,7 +168,6 @@ export function renderVSSScorecard(snap, opts = {}) {
   // (contributions that sum to ~88 under a "25 / 35" total, or "Now 25 / Potential ~84").
   // Detect a genuine 0–100 scored snapshot and gate the v3-only chrome on it — the hero,
   // the category breakdown, the radar's "now" shape and the gap list always render.
-  const isV3Scale = Number(snap.maxPossible) === 100 && Number(snap.composite) > 0 && Number(snap.composite) <= 100 && ratedCount > 0;
 
   // ── Priority gaps we surface — ranked by lift, then by category weight (so the
   //    "top" are the genuinely impactful fixes). Shared by BOTH the potential overlay

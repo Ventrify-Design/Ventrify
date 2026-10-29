@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en" data-brand="verdictscore">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Score lockup — making the dial bigger</title>
+<meta name="description" content="Exploration: four ways to rearrange the verdict hero so the score dial can be substantially larger.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter+Tight:wght@500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/brand/brand.css">
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="ds.css">
+<link rel="stylesheet" href="assess-editorial.css">
+<link rel="stylesheet" href="../../shared/m3/brand-map.css">
+<script src="_preview-brand-switch.js" defer></script>
+<style>
+  body { margin:0; background:var(--surface-ground); color:var(--text-1);
+         font:400 15px/1.6 var(--font-text); -webkit-font-smoothing:antialiased; }
+  .pg { max-width:1500px; margin:0 auto; padding:64px 40px 160px; }
+  h1 { font:600 clamp(2rem,4vw,2.9rem)/1.05 var(--font-display); letter-spacing:-.02em; margin:0 0 .5rem; }
+  .sub { color:var(--text-2); max-width:70ch; margin:0 0 .4rem; }
+  .fine { color:var(--text-4); font-size:13px; max-width:78ch; }
+  .cx { margin:62px 0 0; padding-top:34px; border-top:1px solid var(--line-1); }
+  .cx-h { display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; }
+  .cx-n { font:500 12px/1 var(--font-mono); color:var(--brand-accent-2); letter-spacing:.1em; }
+  .cx-t { font:600 1.35rem/1.2 var(--font-display); letter-spacing:-.01em; }
+  .cx-d { color:var(--text-2); max-width:76ch; margin:.3rem 0 0; font-size:14px; }
+  .cx-m { color:var(--text-4); font:500 11px/1 var(--font-mono); margin:.6rem 0 0; letter-spacing:.06em; }
+  .stage { margin-top:26px; padding:34px 36px; background:var(--surface-base);
+           border:1px solid var(--line-1); border-radius:var(--r-lg); }
+
+  /* ═══ VARIANT 01 · chip in the dial's gap ═══════════════════════════════
+     A 270° gauge leaves an opening at the bottom that is doing nothing. Put
+     the band chip in it and the whole column width is free for the dial. */
+  .v-gap .score-lockup .sl-top { display:block; }
+  .v-gap .score-lockup .sl-dial { width:min(100%, 340px); margin-inline:auto; }
+  .v-gap .score-lockup .sl-mid { padding-bottom:0; }
+  .v-gap .score-lockup .lockup-num { flex-direction:column; align-items:center; gap:0;
+        font-size:clamp(64px,7.4vw,104px); letter-spacing:-4px; line-height:.84; }
+  .v-gap .score-lockup .lockup-num small { font-size:clamp(15px,1.5vw,20px); margin:4px 0 0; }
+  .v-gap .score-lockup .sl-aside { align-items:center; margin-top:-46px; }
+
+  /* ═══ VARIANT 02 · dial left, everything stacked right ══════════════════ */
+  .v-side .score-lockup .sl-top { align-items:center; gap:26px; }
+  .v-side .score-lockup .sl-dial { width:min(46%, 290px); }
+  .v-side .score-lockup .lockup-num { flex-direction:column; align-items:center; gap:0;
+        font-size:clamp(52px,6vw,86px); letter-spacing:-3px; line-height:.84; }
+  .v-side .score-lockup .lockup-num small { font-size:clamp(14px,1.3vw,18px); margin:3px 0 0; }
+  .v-side .score-lockup .sl-mid { padding-bottom:0; }
+  .v-side .score-lockup .sl-strip { margin-top:0; flex:1; min-width:0; }
+  .v-side .score-lockup .sl-aside { gap:14px; flex:1; min-width:0; }
+
+  /* ═══ VARIANT 03 · score takes the wider column ═════════════════════════
+     The hero is 1.05fr / .95fr today. Flip it: the verdict line is short and
+     the dial is the thing we want large. */
+  /* three columns: left | 1px divider | right. Overriding with two dropped
+     the right column out of the grid entirely. */
+  .v-wide .section-hero { grid-template-columns:.92fr 1px 1.34fr !important; }
+  .v-wide .score-lockup .sl-dial { width:min(100%, 320px); }
+  .v-wide .score-lockup .sl-top { align-items:center; gap:30px; }
+  .v-wide .score-lockup .lockup-num { flex-direction:column; align-items:center; gap:0;
+        font-size:clamp(60px,6.8vw,96px); letter-spacing:-4px; line-height:.84; }
+  .v-wide .score-lockup .lockup-num small { font-size:clamp(15px,1.4vw,19px); margin:4px 0 0; }
+  .v-wide .score-lockup .sl-mid { padding-bottom:0; }
+
+  /* ═══ VARIANT 04 · full-width band under the verdict ════════════════════
+     The score stops being a column and becomes a band across the hero: the
+     biggest dial of the four, and the strip gets the full page width. */
+  .v-band .section-hero { display:block !important; }
+  .v-band .section-hero > .divide { display:none; }
+  .v-band .section-hero > .left { max-width:68ch; }
+  .v-band .section-hero > .right { margin-top:38px; padding-top:30px; border-top:1px solid var(--line-1); }
+  .v-band .score-lockup .sl-top { align-items:center; gap:40px; }
+  .v-band .score-lockup .sl-dial { width:min(34%, 300px); }
+  .v-band .score-lockup .lockup-num { flex-direction:column; align-items:center; gap:0;
+        font-size:clamp(58px,6.6vw,96px); letter-spacing:-4px; line-height:.84; }
+  .v-band .score-lockup .lockup-num small { font-size:clamp(15px,1.4vw,19px); margin:4px 0 0; }
+  .v-band .score-lockup .sl-mid { padding-bottom:0; }
+  .v-band .score-lockup .sl-strip { margin-top:0; flex:1; min-width:0; }
+  .v-band .score-lockup .sl-aside { gap:14px; }
+
+  /* ═══ VARIANT 05 · 01 + 03 ═════════════════════════════════════════════
+     Chip in the gap AND the wider column. The two gains compound. */
+  .v-max .section-hero { grid-template-columns:.92fr 1px 1.34fr !important; }
+  .v-max .score-lockup .sl-top { display:block; }
+  .v-max .score-lockup .sl-dial { width:min(100%, 380px); margin-inline:auto; }
+  .v-max .score-lockup .sl-mid { padding-bottom:0; }
+  .v-max .score-lockup .lockup-num { flex-direction:column; align-items:center; gap:0;
+        font-size:clamp(70px,8vw,118px); letter-spacing:-5px; line-height:.84; }
+  .v-max .score-lockup .lockup-num small { font-size:clamp(16px,1.6vw,22px); margin:4px 0 0; }
+  .v-max .score-lockup .sl-aside { align-items:center; margin-top:-52px; }
+</style>
+</head>
+<body>
+<div class="pg">
+  <h1>Making the dial bigger</h1>
+  <p class="sub">The dial is small because the chip and the headroom line sit beside it, taking roughly half the column. Four ways to give that width back.</p>
+  <p class="fine">All four stack the <b>/100</b> under the numeral, which is what lets the number grow. Measured dial diameter is printed under each so the gain is a number, not an impression. Today's is <b>200px</b>. Rendered with the real component and the real verdict beside it — switch brands to check both.</p>
+  <div id="out"></div>
+</div>
+
+<script type="module">
+import * as DS from './ds.js';
+import { ASSESSMENT as RAW_A, SCORE as RAW_S } from './data.js';
+import { strongAssessment, strongScore } from './data-strong.js';
+
+const A = strongAssessment(RAW_A), S = strongScore(RAW_S);
+const BAND_TONE = { 'Investment ready':'good', 'Promising':'mid', 'High risk':'bad', 'Potential decline':'bad' };
+
+const hero = () => DS.sectionHero({
+  eyebrow: 'The verdict', eyebrowIcon: 'balance', tone: BAND_TONE[S.band] || 'mid',
+  headline: A.verdictLine, headlineEm: A.verdictEm,
+  facts: [
+    { k: 'Conviction', v: `${A.conviction} <span class="conv"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span>` },
+    { k: 'The ask', v: `${A.askAmount} <small>${A.askRest}</small>` },
+  ],
+  score: { label:'Investability score', score:S.composite, max:100, band:S.band,
+           tone: BAND_TONE[S.band] || 'mid', now:S.composite, potential:S.potential, draws:S.draws },
+  thesis: '',
+});
+
+const V = [
+  { n:'01', k:'v-gap',  t:'Chip in the gap',
+    d:'The 270° gauge leaves an opening at the bottom doing nothing. The band chip drops into it, and the dial gets the entire column width. Biggest numeral of the four.' },
+  { n:'02', k:'v-side', t:'Dial left, strip right',
+    d:'The strip moves up beside the dial instead of under it, so the lockup is one row rather than two. Shortest of the four, and the dial still nearly doubles.' },
+  { n:'03', k:'v-wide', t:'Score takes the wider column',
+    d:'The hero is 1.05fr / .95fr today, favouring the verdict. The verdict line is short — flip the ratio and give the width to the thing we want large.' },
+  { n:'05', k:'v-max',  t:'Chip in the gap + wider column (01 + 03)',
+    d:'The two that work, combined. The chip frees the dial from sharing its row, and the wider column gives it more to grow into — the gains compound.' },
+  { n:'04', k:'v-band', t:'Full-width band',
+    d:'The score stops being a column and becomes a band under the verdict. Largest dial, and the strip finally gets real width — at the cost of pushing the thesis further down.' },
+];
+
+document.getElementById('out').innerHTML = V.map(v => `
+  <section class="cx">
+    <div class="cx-h"><span class="cx-n">${v.n}</span><span class="cx-t">${v.t}</span></div>
+    <p class="cx-d">${v.d}</p>
+    <div class="stage ${v.k}" data-k="${v.k}">${hero()}</div>
+    <p class="cx-m" data-m="${v.k}">measuring…</p>
+  </section>`).join('');
+
+/* Print the real rendered diameter rather than claiming one. */
+/* 02 only: the strip is a SIBLING of .sl-top, so no amount of flex puts it
+   beside the dial — it has to move in the DOM. Done here for the prototype;
+   if this wins, the component grows a `layout` option instead. */
+document.querySelectorAll('.v-side .score-lockup').forEach(sl => {
+  const top = sl.querySelector('.sl-top'), strip = sl.querySelector('.sl-strip');
+  if (top && strip) top.appendChild(strip);
+});
+
+requestAnimationFrame(() => {
+  document.querySelectorAll('.stage').forEach(st => {
+    const d = st.querySelector('.sl-dial');
+    const out = document.querySelector(`[data-m="${st.dataset.k}"]`);
+    const num = st.querySelector('.lockup-num');
+    if (d && out) out.textContent =
+      `DIAL ${Math.round(d.getBoundingClientRect().width)}px  ·  NUMERAL ${Math.round(parseFloat(getComputedStyle(num).fontSize))}px  ·  TODAY 200px / 66px`;
+  });
+});
+</script>
+</body>
+</html>

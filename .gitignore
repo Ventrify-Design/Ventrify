@@ -13,3 +13,11 @@ workflow new/
 
 # Vercel
 .vercel/
+
+# OS visual baselines — a local review aid, regenerable in a minute with
+# `node tools/visual-baseline.mjs --save`. _baselines/numbers.json is NOT
+# ignored: that one is the gate that protects produced assessments, and a
+# gate whose baseline only exists on one machine is not a gate.
+ventrify-os/_baselines/visual/
+ventrify-os/_baselines/visual-current/
+ventrify-os/_baselines/visual-compare.png

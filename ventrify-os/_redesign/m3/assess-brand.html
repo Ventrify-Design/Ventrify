@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en" data-brand="verdictscore">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Assessment · MoneyGym · VerdictScore (brand preview)</title>
+<meta name="description" content="Brand preview — the assessment screens rendered through the Ventrify brand layer, in the strong/READY state. Fabricated figures.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter+Tight:wght@500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" rel="stylesheet">
+<script>try{if(localStorage.getItem("ventrify-theme")==="light")document.documentElement.classList.add("light")}catch(e){}</script>
+<link rel="stylesheet" href="../../assets/brand/brand.css">
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="ds.css">
+<link rel="stylesheet" href="assess-editorial.css">
+<link rel="stylesheet" href="transitions.css">
+<link rel="stylesheet" href="../../shared/m3/brand-map.css">
+<script src="_preview-brand-switch.js" defer></script>
+</head>
+<body>
+<div id="app"></div>
+<script type="module">
+  import * as DS from './ds.js';
+  import { ASSESSMENT as RAW, SCORE as RAW_SCORE, withGaps } from './data.js';
+  import { strongAssessment, strongScore } from './data-strong.js';
+
+  // ⚠️ FABRICATED. The real MoneyGym assessment scores 55 / PROMISING. This page
+  //    renders the same venture in its READY state so the green verdict treatment
+  //    — band chip, conviction, bull-weighted case — can actually be reviewed.
+  //    See the header of data-strong.js. Never present this as a result.
+  const BASE = strongAssessment(RAW);
+  const S    = strongScore(RAW_SCORE);
+  import { resolveActions } from '../../shared/actions.js';
+
+  // ?state=gaps — THE EVIDENCE GAPS. What the assessment looked for and could not find, and therefore
+  // docked the venture for. Our miss, not the venture's. The gaps land on the DILIGENCE tab (where "what
+  // must still be checked before money moves" already lives), each row opens the filing aux panel, and the
+  // re-score movement lands on Investability. Driven through the real adapter — see data.js withGaps().
+  const state = new URLSearchParams(location.search).get('state');
+  const A = state === 'gaps' ? withGaps(BASE, S) : BASE;
+  // visible-taxonomy scope: no approval state passed → no workflow primary yet (the rulebook encodes
+  // Submit/Approve·Reject/Finalise per role×state; wiring that is the deferred "full" build).
+  const acts = resolveActions({ page: 'assess' });
+
+  // ── Editorial assessment — a single scrolling verdict MEMO on the Verdict tab, with the
+  //    deep-dives kept as their own tabs. The memo, strength profile and diligence are
+  //    data-driven editorial components (ds.js); Market/Team/Research reuse the card views. ──
+  const body = `
+    <div class="tab-panel active">${DS.verdictMemo(A, S)}</div>
+    <div class="tab-panel"><div class="brief">${DS.investabilityHero(S, A)}${DS.scoreMovement(A.filings)}<hr class="rule">${DS.investabilityComposition(S, 'openInvest')}<hr class="rule">${DS.strengthProfile(S, 'openInvest')}</div></div>
+    <div class="tab-panel">${DS.marketMemo(A)}</div>
+    <div class="tab-panel">${DS.teamMemo(A, S)}</div>
+    <div class="tab-panel">${DS.diligenceEditorial(A)}</div>
+    <div class="tab-panel">${DS.researchMemo(A, S)}</div>`;
+
+  document.getElementById('app').outerHTML = DS.pageShell({
+    active: 'portfolio',
+    aux: {}, auxMode: 'push', drill: true, rail: acts.rail, railOverflow: acts.overflow,
+    masthead: DS.masthead({
+      breadcrumb: { label: 'Portfolio', href: 'portfolio.html' },
+      crumbTail: A.name,
+      avatar: A.initials,
+      headline: A.name,
+      status: A.status,
+      subheading: A.stageLine,
+      compact: A.name,
+      actions: acts.decision.length ? acts.decision : (acts.primary ? [acts.primary] : []),
+      tabs: ['Verdict', 'Investability', 'Market', 'Team',
+        // DS.gapNeedsAction — the SAME derivation the live page and the row pills use. It counted every gap
+        // before, so a gap already answered kept nagging from the tab. `g.status` never becomes 'closed'.
+        { label: 'Diligence', badge: (A.gaps || []).filter(g => DS.gapNeedsAction(g)).length || null }, 'Research'],
+      activeTab: 0
+    }),
+    body
+  });
+  DS.initShell();
+  DS.initTabs({ names: ['verdict', 'investability', 'market', 'team', 'diligence', 'research'] });
+
+  // investability drill-down — clicking a category (bar row or contribution row) opens its
+  // full breakdown in the aux panel: figures + the sub-signals that would lift the score.
+  // A signal we scored down because our RESEARCH missed something also offers the file-evidence trigger.
+  window.openInvest = (key) => {
+    const d = DS.categoryDetail(S, key, A.gapBySlug || {});
+    window.openAux({ mode: 'push', ...d });
+  };
+
+  // ---- the evidence gap: every trigger opens the SAME filing panel (roster · signal row · diligence row) ----
+  // The demo is inert (no /api, no Firestore behind it) — but the panel, the honesty copy, the receipt states
+  // and the "the score can go down" warning are the real DS components, so they are gated like everything else.
+  window.__gapFiles = [];
+  window.openGap = (id) => {
+    const g = (A.gapById || {})[id];
+    if (!g) return;
+    const d = DS.gapPanel(g, g.filing);
+    window.openAux({ mode: 'push', title: d.title, subtitle: d.subtitle, body: d.body, footer: d.footer });
+  };
+  window.__gapPick = () => window.__toast('Upload the artefact — the assessment reads the file itself, never its name.');
+  window.__gapClearFile = () => {};
+  window.__gapDirty = () => DS.gapArmCTA(false);   // same DS helper the live page uses — no second copy to drift
+  // Same DS behaviour the live page wires. The demo must exercise these or the conformance gate never sees them
+  // — which is precisely how the last duplicated handler drifted to a no-op here without anyone noticing.
+  window.__gapAddUrl = () => { DS.gapAddUrl(); window.__gapDirty(); };
+  window.__gapRemoveUrl = (btn) => { DS.gapRemoveUrl(btn); window.__gapDirty(); };
+  window.__gapFile = () => window.__toast('Filing evidence needs the live workspace — this is the design system.');
+  window.__gapRescore = () => window.__toast('Re-scoring needs the live workspace — this is the design system.');
+
+  // ---- deep research: every document opens as its own DRILL PAGE, rendered in full ----
+  // The reading room is rebuilt from A.reading (every doc with a body — nothing filtered). Keys are the
+  // deduped canonical slugs, so ?drill=<slug> deep-links and the pager stay stable across re-runs.
+  const room = DS.researchRoom(A.reading && A.reading.length ? A.reading : A.research);
+  window.__room = room;
+  window.DRILL_PAGES = window.DRILL_PAGES || {};
+  room.all.forEach(d => { window.DRILL_PAGES[d.slug] = () => DS.researchDrillOpts(d, room); });
+  window.openResearchDrill = slug => {
+    const o = window.DRILL_PAGES[slug];
+    if (o) window.openDrill({ key: slug, source: document.activeElement, ...o() });
+  };
+
+  // "Read the full competitive teardown / founder diligence" now open the FULL document, not a one-liner.
+  const findDoc = re => room.all.find(d => re.test(d.slug) || re.test(d.title.toLowerCase()));
+  window.openPeek = (kind, i) => {
+    if (kind === 'research') { const d = room.all[i]; return d && window.openResearchDrill(d.slug); }
+    const d = kind === 'benchmark' ? findDoc(/benchmark|competitor|competitive/) : findDoc(/team|diligence/);
+    if (d) return window.openResearchDrill(d.slug);
+  };
+
+  // ---- Sources rail panel — the engagement's inputs + lifecycle + re-run (the "Sources" utility) ----
+  // authored content for the rail's 'sources' tool; also openable inline (from the Research data-room card).
+  window.RAIL_PANELS = { sources: () => DS.sourcesPanel(A) };
+  window.openSources = () => window.openAux({ mode: 'push', ...DS.sourcesPanel(A) });
+  window.__toast = (msg) => {
+    let t = document.getElementById('__toast');
+    if (!t) { t = document.createElement('div'); t.id = '__toast';
+      t.style.cssText = 'position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(12px);z-index:9999;background:var(--md-sys-color-inverse-surface,#2a2b30);color:var(--md-sys-color-inverse-on-surface,#eaeaea);padding:12px 18px;border-radius:12px;font:500 13px/1.4 Roboto,sans-serif;box-shadow:0 8px 28px rgba(0,0,0,.45);opacity:0;transition:opacity .2s ease,transform .2s ease;pointer-events:none;max-width:88vw;';
+      document.body.appendChild(t); }
+    t.textContent = msg; requestAnimationFrame(() => { t.style.opacity = '1'; t.style.transform = 'translateX(-50%) translateY(0)'; });
+    clearTimeout(window.__toastT); window.__toastT = setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(-50%) translateY(12px)'; }, 2600);
+  };
+  window.rerunAssessment = () => window.__toast('Re-running the assessment on the latest v3 rubric…');
+  window.addDocuments = () => window.__toast('Add documents — the founder uploads re-trigger the assessment.');
+</script>
+</body>
+</html>

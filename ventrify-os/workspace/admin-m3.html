@@ -1,17 +1,29 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-brand="verdictscore">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Admin — Ventrify OS</title>
-<script>try{if(localStorage.getItem("ventrify-theme")==="light")document.documentElement.classList.add("light")}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" rel="stylesheet">
+<!-- BRAND LAYER. Order is load-bearing and brand-map.css documents why:
+     the :root variables would resolve from anywhere, but the handful of real
+     SELECTORS in brand-map lose to ds.css at equal specificity if ds.css
+     loads later. brand.css FIRST (the tokens everything else resolves
+     against), brand-map LAST (the M3 role overrides). -->
+<link rel="stylesheet" href="../assets/brand/brand.css">
 <link rel="stylesheet" href="../shared/m3/theme.css">
 <link rel="stylesheet" href="../shared/m3/ds.css">
+<!-- The EDITORIAL layer (section-hero, statement/book/coverage lockups, the .mrow row
+     system, the eyebrow). Named for the assessment because that is where it was written,
+     but it is the shared reading language of the product — the Portfolio already loads it
+     and is not an assessment. Without it these pages can only draw boxes: the components
+     exist in ds.js and render, but land unstyled. That, not taste, is why they read thin. -->
+<link rel="stylesheet" href="../shared/m3/assess-editorial.css">
 <link rel="stylesheet" href="../shared/m3/transitions.css">
 <link rel="stylesheet" href="../shared/m3/workspace-chrome.css">
+<link rel="stylesheet" href="../shared/m3/brand-map.css">
 </head>
 <body>
 <div id="app"></div>
@@ -21,6 +33,7 @@
 <script type="module">
   import * as DS from '../shared/m3/ds.js';
   import { wsNavConfig, wsBrandConfig, wsAccountConfig, mountOrgSwitcherM3 } from './workspace-m3.js';
+  import { orgsHero } from '../shared/m3/workspace-cards.js';
 
   await window.WORKSPACE_READY;
   const W = window.WORKSPACE;
@@ -29,7 +42,12 @@
   const isSuper = !!W.isSuperAdmin;
   const isOwner = !!(W.org && String(W.org.ownerEmail || '').toLowerCase() === myEmail);
   const PLAN = window.VentrifyPlan;
-  if (!isSuper && !isOwner) { location.href = 'dashboard-m3.html'; throw new Error('halt'); }
+  // Access guard. Halts by never resolving, not by throwing — app.js does the
+  // same thing in three places with `return new Promise(() => {})`, and this is
+  // that idiom at module top level, where `return` is not available. Throwing
+  // put a real uncaught Error in the console of every non-admin who landed
+  // here, which is indistinguishable from a page that actually broke.
+  if (!isSuper && !isOwner) { location.href = 'dashboard-m3.html'; await new Promise(() => {}); }
   const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
   // ---- plan picker + /api/admin (VERBATIM from admin.html) ----
@@ -97,23 +115,35 @@
   function orgCard(o) {
     const ops = o.operatorEmails || []; const owner = String(o.ownerEmail || '').toLowerCase();
     const sp = PLAN.planSummary(PLAN.resolvePlan(o));
-    return `<div class="m3-card" style="padding:20px;margin-bottom:16px">
-      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:14px">
-        <div><div class="title-l">${esc(o.name)}</div><div class="body-s variant" style="font-family:monospace">${esc(o.id)} · owner ${esc(o.ownerEmail || '—')}</div></div>
-        <div style="display:flex;gap:8px;align-items:center">
+    // The meta line used to read "· owner alex@…": a separator joining the org
+    // id to the owner, printed even when there is no id to join. Each part is
+    // now emitted only if it exists, and they are joined, not concatenated.
+    const meta = [o.id ? `<code>${esc(o.id)}</code>` : '', o.ownerEmail ? `owner ${esc(o.ownerEmail)}` : 'no owner set']
+      .filter(Boolean).join(' · ');
+    const opRow = e => {
+      const isOwner = owner === e.toLowerCase();
+      return `<div class="org-op">
+        <span class="org-op-e">${esc(e)}</span>
+        ${isOwner ? DS.statusPill({ kind: 'info', label: 'Owner' }) : `<button class="m3-btn text" onclick="window.__removeOperator('${esc(o.id)}','${esc(e)}')">Remove</button>`}
+      </div>`;
+    };
+    return `<div class="m3-card org-card">
+      <div class="org-hd">
+        <div class="org-id"><div class="title-l">${esc(o.name)}</div><div class="org-meta${o.ownerEmail ? '' : ' warn'}">${meta}</div></div>
+        <div class="org-pills">
           ${DS.statusPill({ kind: 'info', label: sp.label, title: sp.detail || sp.label })}
           ${DS.statusPill({ kind: '', label: `${ops.length} operator${ops.length === 1 ? '' : 's'}` })}
           ${(isSuper && o.id !== 'default') ? `<button class="m3-btn text" style="color:var(--md-sys-color-error)" onclick="window.__deleteOrg('${esc(o.id)}')">Delete org</button>` : ''}
         </div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
-        ${ops.map(e => `<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 12px;background:var(--md-sys-color-surface-container-high);border-radius:8px"><span class="body-m">${esc(e)}${owner === e.toLowerCase() ? ' <span class="overline">OWNER</span>' : ''}</span>${owner === e.toLowerCase() ? '' : `<button class="m3-btn text" onclick="window.__removeOperator('${esc(o.id)}','${esc(e)}')">Remove</button>`}</div>`).join('')}
+      <div class="org-sec"><div class="overline">Who can sign in</div>
+        ${ops.length ? `<div class="org-ops">${ops.map(opRow).join('')}</div>` : `<div class="org-empty">Nobody can sign in to this org yet.</div>`}
+        <div class="org-add"><input id="addop-${esc(o.id)}" class="field-in" type="email" placeholder="operator@email.com"><button class="m3-btn filled" onclick="window.__addOperator('${esc(o.id)}')">Add operator</button></div>
       </div>
-      <div style="display:flex;gap:8px"><input id="addop-${esc(o.id)}" class="field-in" type="email" placeholder="operator@email.com" style="flex:1"><button class="m3-btn filled" onclick="window.__addOperator('${esc(o.id)}')">Add operator</button></div>
-      ${isSuper ? `<div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--md-sys-color-outline-variant)"><div class="overline" style="margin-bottom:6px">Plan</div>${planFieldHTML('plan-' + o.id, PLAN.resolvePlan(o))}<div style="margin-top:12px"><button class="m3-btn outlined" onclick="window.__setOrgPlan('${esc(o.id)}')">Save plan</button></div></div>` : ''}
+      ${isSuper ? `<div class="org-sec"><div class="overline">Licence</div>${planFieldHTML('plan-' + o.id, PLAN.resolvePlan(o))}<div style="margin-top:12px"><button class="m3-btn outlined" onclick="window.__setOrgPlan('${esc(o.id)}')">Save plan</button></div></div>` : ''}
     </div>`;
   }
-  const createOrg = isSuper ? `<div style="margin-bottom:24px"><div class="overline" style="margin-bottom:10px">Create a client org</div><div class="m3-card" style="padding:20px">
+  const createOrg = isSuper ? `<div style="margin-bottom:28px"><div class="overline" style="margin-bottom:10px">Create a client org</div><div class="m3-card" style="padding:22px">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
       ${DS.formField({ label: 'Organisation name', id: 'org-name', placeholder: 'Acme Accelerator' })}
       ${DS.formField({ label: 'Slug', optional: true, id: 'org-slug', placeholder: 'acme' })}
@@ -125,8 +155,15 @@
 
   document.getElementById('app').outerHTML = DS.pageShell({
     active: 'admin', nav: wsNavConfig(), brand: wsBrandConfig(), account: wsAccountConfig(),
-    masthead: DS.masthead({ eyebrow: isSuper ? 'Platform admin' : 'Operators', headline: isSuper ? 'Organisations & operators' : 'Your operators', subheading: isSuper ? 'Create client orgs and manage who operates each one.' : `Add or remove operators for ${esc(W.org.name)}.` }),
-    body: `<div class="brief">${createOrg}<div class="overline" style="margin-bottom:10px">${isSuper ? 'All organisations' : esc(W.org.name)}</div>${loadError ? `<div class="m3-card" style="padding:24px"><div class="title-l">Couldn’t load organisations</div><div class="body-m variant" style="margin:6px 0 12px">The request failed — this isn’t an empty list.</div><button class="m3-btn outlined" onclick="location.reload()">Retry</button></div>` : orgs.length ? orgs.map(orgCard).join('') : '<div class="m3-card" style="text-align:center;padding:32px;color:var(--md-sys-color-on-surface-variant)">No organisations yet.</div>'}</div>`
+    masthead: DS.masthead({ eyebrow: isSuper ? 'Platform admin' : 'Operators', headline: isSuper ? 'Every organisation' : esc(W.org.name) }),
+    body: `<div class="brief">
+      ${loadError ? '' : orgsHero({ orgs, isSuper, org: W.org, operators: W.operators, Plan: PLAN })}
+      ${createOrg}
+      ${isSuper ? '<div class="overline" style="margin-bottom:10px">All organisations</div>' : ''}
+      ${loadError
+        ? `<div class="m3-card" style="padding:24px"><div class="title-l">Couldn’t load organisations</div><div class="body-m variant" style="margin:6px 0 12px">The request failed — this isn’t an empty list.</div><button class="m3-btn outlined" onclick="location.reload()">Retry</button></div>`
+        : orgs.length ? orgs.map(orgCard).join('') : '<div class="m3-card" style="text-align:center;padding:32px;color:var(--md-sys-color-on-surface-variant)">No organisations yet.</div>'}
+    </div>`
   });
   DS.initShell(); mountOrgSwitcherM3();
 </script>

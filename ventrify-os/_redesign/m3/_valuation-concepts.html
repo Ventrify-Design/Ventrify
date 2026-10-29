@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en" data-brand="verdictscore">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Valuation — replacing the verdict chart</title>
+<meta name="description" content="Exploration: five replacements for the Market tab's valuation chart, each tested against what the live runner actually emits.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter+Tight:wght@500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/brand/brand.css">
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="ds.css">
+<link rel="stylesheet" href="assess-editorial.css">
+<link rel="stylesheet" href="../../shared/m3/brand-map.css">
+<script src="_preview-brand-switch.js" defer></script>
+<style>
+  body { margin:0; background:var(--surface-ground); color:var(--text-1);
+         font:400 15px/1.6 var(--font-text); -webkit-font-smoothing:antialiased; }
+  .pg { max-width:1180px; margin:0 auto; padding:64px 40px 160px; }
+  h1 { font:600 clamp(2rem,4vw,2.9rem)/1.05 var(--font-display); letter-spacing:-.02em; margin:0 0 .5rem; }
+  .sub { color:var(--text-2); max-width:74ch; margin:0 0 .4rem; }
+  .fine { color:var(--text-4); font-size:13px; max-width:86ch; }
+  .cx { margin:58px 0 0; padding-top:32px; border-top:1px solid var(--line-1); }
+  .cx-h { display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; }
+  .cx-n { font:500 12px/1 var(--font-mono); color:var(--brand-accent-2); letter-spacing:.1em; }
+  .cx-t { font:600 1.35rem/1.2 var(--font-display); letter-spacing:-.01em; }
+  .cx-d { color:var(--text-2); max-width:84ch; margin:.3rem 0 0; font-size:14px; }
+  .cx-need { margin:.6rem 0 0; font:500 11px/1.5 var(--font-mono); letter-spacing:.05em; }
+  .cx-need.ok   { color:var(--brand-accent-2); }
+  .cx-need.warn { color:#e0a33a; }
+  .stage { margin-top:24px; width:1020px; max-width:100%; box-sizing:border-box;
+           padding:34px 36px; background:var(--surface-base);
+           border:1px solid var(--line-1); border-radius:var(--r-lg); }
+  .deg { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:22px; margin-top:20px; }
+  .deg > div { padding:20px 22px; background:var(--surface-base); border:1px solid var(--line-1); border-radius:var(--r-lg); }
+  .deg-t { font:500 10.5px/1 var(--font-mono); letter-spacing:.09em; color:var(--text-4); margin-bottom:14px; }
+
+  /* The family numeral is clamp(96px…150px). At that size "60M pre" overflows a 364px
+     hero column outright, and even "3.75" crowds the chart it is supposed to introduce
+     — the same call already taken on radarLockup, so the same ramp. */
+  .stage .valuation-lockup .lockup-num, .deg .valuation-lockup .lockup-num {
+    font-size: clamp(42px, 5.6vw, 78px); letter-spacing: -3px; line-height: .84; margin-top: 10px; }
+  .stage .valuation-lockup .lockup-num small, .deg .valuation-lockup .lockup-num small {
+    font-size: clamp(13px, 1.6vw, 21px); margin-top: 5px; }
+
+  /* ─── shared chart chrome for every concept ─────────────────────────────── */
+  .vz { --accent: var(--md-sys-color-primary); --over: var(--warning); }
+  .vz-lab { display:flex; align-items:baseline; justify-content:space-between; gap:12px;
+            font-size:12.5px; color:var(--md-sys-color-on-surface-variant); }
+  .vz-lab b { color:var(--md-sys-color-on-surface); font-weight:600; }
+  .vz-axis { position:relative; height:20px; margin-top:7px; }
+  .vz-axis i { position:absolute; top:0; width:1px; height:5px; background:var(--md-sys-color-outline-variant); }
+  .vz-axis span { position:absolute; top:7px; transform:translateX(-50%); white-space:nowrap;
+                  font:500 10px/1 var(--font-mono); letter-spacing:.05em; color:var(--md-sys-color-outline); }
+  .vz-note { margin-top:14px; font-size:12.5px; line-height:1.55; color:var(--md-sys-color-on-surface-variant); }
+  .vz-note b { color:var(--md-sys-color-on-surface); font-weight:600; }
+  .vz-note .over { color:var(--warning); font-weight:600; }
+  .vz-none { margin-top:14px; font-size:12.5px; color:var(--md-sys-color-outline); font-style:italic; }
+
+  /* 01 — measured axis */
+  .v1-track { position:relative; height:34px; border-radius:8px; margin-top:16px;
+              background:var(--md-sys-color-surface-container-highest); overflow:hidden; }
+  .v1-band { position:absolute; top:0; bottom:0; background:color-mix(in srgb, var(--accent) 34%, transparent);
+             border-left:2px solid var(--accent); border-right:2px solid var(--accent); }
+  .v1-over { position:absolute; top:0; bottom:0;
+             background:repeating-linear-gradient(135deg, color-mix(in srgb, var(--over) 26%, transparent) 0 6px, transparent 6px 12px); }
+  .v1-ask { position:absolute; top:-5px; bottom:-5px; width:3px; border-radius:2px; background:var(--over); }
+  .v1-gap { position:relative; height:17px; margin-top:4px; }
+  .v1-gap .bar { position:absolute; top:7px; height:1px; background:var(--over); opacity:.75; }
+  .v1-gap .cap { position:absolute; top:0; transform:translateX(-50%); padding:0 6px; white-space:nowrap;
+                 background:var(--surface-base); font:600 10.5px/1.5 var(--font-mono); color:var(--over); }
+
+  /* 02 — two bars */
+  .v2 { margin-top:16px; display:grid; gap:13px; }
+  .v2-row { display:grid; grid-template-columns:76px minmax(0,1fr) auto; gap:12px; align-items:center; }
+  .v2-k { font:500 10.5px/1 var(--font-mono); letter-spacing:.07em; color:var(--md-sys-color-on-surface-variant); }
+  .v2-t { position:relative; height:22px; border-radius:6px; background:var(--md-sys-color-surface-container-highest); }
+  .v2-t i { position:absolute; top:0; bottom:0; left:0; border-radius:6px; }
+  /* The ask is not a warning — the part of it ABOVE the ceiling is. Painting the whole
+     bar amber said "this round is wrong"; it says "this much of it is". */
+  .v2-t i.ask { background:color-mix(in srgb, var(--accent) 55%, transparent); }
+  .v2-t i.askover { background:var(--over); border-radius:0 6px 6px 0; }
+  .v2-t i.rng { background:color-mix(in srgb, var(--accent) 48%, transparent); border-radius:6px; }
+  .v2-v { font:600 13px/1 var(--font-mono); color:var(--md-sys-color-on-surface); white-space:nowrap; }
+
+  /* 03 — reprice gauge */
+  .v3 { position:relative; margin-top:12px; }
+  .v3 svg { width:100%; max-width:300px; margin:0 auto; display:block; overflow:visible; }
+  .v3-mid { position:absolute; inset:0; display:grid; place-content:center; text-align:center; pointer-events:none; }
+  /* kept small deliberately: at 58px "−$25M" is 180px wide and runs straight through
+     the needle, which sits ~75–100px out from the centre */
+  .v3-num { font:300 clamp(26px,3vw,38px)/.86 var(--font-display); letter-spacing:-1.4px; color:var(--md-sys-color-on-surface); }
+  .v3-num u { display:block; text-decoration:none; font:500 10px/1 var(--font-mono);
+              letter-spacing:.12em; color:var(--md-sys-color-on-surface-variant); margin-top:8px; }
+
+  /* 04 — vertical ladder */
+  .v4 { position:relative; margin-top:16px; height:220px; }
+  .v4-rail { position:absolute; left:84px; top:0; bottom:0; width:10px; border-radius:6px;
+             background:var(--md-sys-color-surface-container-highest); }
+  .v4-band { position:absolute; left:84px; width:10px; border-radius:6px; background:var(--accent); }
+  .v4-mark { position:absolute; left:0; right:0; height:0; }
+  .v4-mark .ln { position:absolute; left:84px; right:0; height:1px; background:var(--md-sys-color-outline-variant); }
+  .v4-mark .ln.ask { background:var(--over); }
+  .v4-mark .v { position:absolute; left:0; width:76px; text-align:right; transform:translateY(-50%);
+                font:600 12px/1 var(--font-mono); color:var(--md-sys-color-on-surface); }
+  .v4-mark .l { position:absolute; left:104px; transform:translateY(-50%); font-size:11.5px; color:var(--md-sys-color-on-surface-variant); }
+  .v4-arrow { position:absolute; left:120px; width:1px; background:var(--over); opacity:.5; }
+  .v4-arrow .t { position:absolute; left:10px; top:50%; transform:translateY(-50%); white-space:nowrap;
+                 font:600 10.5px/1 var(--font-mono); color:var(--over); }
+
+  /* 05 — comps ladder */
+  .v5 { margin-top:16px; display:grid; gap:9px; }
+  .v5-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:12px; align-items:center;
+            font-size:12.5px; color:var(--md-sys-color-on-surface-variant); }
+  .v5-bar { position:relative; height:16px; border-radius:5px; background:var(--md-sys-color-surface-container-highest); }
+  .v5-bar i { position:absolute; left:0; top:0; bottom:0; border-radius:5px;
+              background:color-mix(in srgb, var(--accent) 42%, transparent); }
+  .v5-row.self .v5-bar i { background:var(--over); }
+  .v5-nm { font-size:11.5px; }
+  .v5-row.self .v5-nm { color:var(--md-sys-color-on-surface); font-weight:600; }
+</style>
+</head>
+<body>
+<div class="pg">
+  <h1>Replacing the valuation chart</h1>
+  <p class="sub">Today's Market hero draws an 8px track with a green band, a red overshoot and an unlabelled tick. It has no axis, so the one number that matters — <em>how far over</em> the ask is — has to be read from the caption. Five replacements.</p>
+  <p class="fine"><b>Read the data line under each concept first.</b> I checked what the live adapter actually emits before designing: <code>asked</code> is parsed out of the ask string, <code>defensibleLo/Hi</code> are regex-matched out of the valuation note and are <b>null when the note doesn't phrase them as "$A–$B pre"</b>, <code>multiple</code> is <b>usually null</b> (the comment in adapter.js says the runner emits none, so it is suppressed rather than faked), and <code>comps</code> carry names and prose but <b>no numbers</b>. A concept that needs more than that cannot ship today, and I have said so rather than drawing it with invented figures. Every concept is also rendered in the two degraded states at the bottom.</p>
+  <div id="out"></div>
+</div>
+
+<script type="module">
+import * as DS from './ds.js';
+import { ASSESSMENT as A } from './data.js';
+
+const V = A.valuation || {};
+const money = v => v == null ? '—' : (v >= 1000 ? `$${+(v / 1000).toFixed(2)}B` : `$${+v.toFixed(v % 1 ? 1 : 0)}M`);
+
+/* Axis ticks on a 1 / 2 / 2.5 / 5 ladder — derived from the range, never a fixed set,
+   because a $60M seed and a $900M growth round land on this same component. */
+function ticks(max, target = 4) {
+  const raw = max / target, mag = Math.pow(10, Math.floor(Math.log10(raw || 1)));
+  const step = [1, 2, 2.5, 5, 10].map(m => m * mag).find(s => s >= raw) || 10 * mag;
+  const out = []; for (let v = 0; v <= max + 1e-9; v += step) out.push(+v.toFixed(4));
+  return out;
+}
+const axis = max => `<div class="vz-axis">${ticks(max).map(v => {
+  const pc = (v / max) * 100;
+  return `<i style="left:${pc}%"></i><span style="left:${pc}%">${money(v)}</span>`;
+}).join('')}</div>`;
+
+/* The shared read: what the numbers mean, in words, derived not written. Every concept
+   closes with this so the chart never has to carry the whole argument alone. */
+function note(d) {
+  if (d.asked == null) return `<p class="vz-none">No pre-money figure on this round yet.</p>`;
+  if (d.hi == null) return `<p class="vz-note">Asked <b>${money(d.asked)}</b> pre. No defensible band has been established for this round.</p>`;
+  const over = d.asked - d.hi, x = d.asked / d.hi;
+  return over > 0
+    ? `<p class="vz-note">Asked <b>${money(d.asked)}</b> pre — <span class="over">${money(over)} above</span> the top of a defensible <b>${money(d.lo)}–${money(d.hi)}</b>, or <span class="over">${x.toFixed(1)}×</span> the ceiling.</p>`
+    : `<p class="vz-note">Asked <b>${money(d.asked)}</b> pre, inside a defensible <b>${money(d.lo)}–${money(d.hi)}</b>.</p>`;
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   THE FIVE CONCEPTS. Each takes the same shape: {asked, lo, hi, multiple,
+   multipleSuffix, verdict, tone, scaleMax}. None of them reads prose.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* 01 · MEASURED AXIS — today's bar, given a scale and the gap called out. */
+function c01(d) {
+  const max = d.scaleMax || (d.asked ? d.asked * 1.15 : 1);
+  const pc = v => Math.max(0, Math.min(100, (v / max) * 100));
+  const hasBand = d.lo != null && d.hi != null;
+  const over = hasBand && d.asked > d.hi;
+  return `<div class="vz">
+    <div class="vz-lab"><span>Defensible ${hasBand ? `<b>${money(d.lo)}–${money(d.hi)}</b>` : '<b>—</b>'}</span><span>Asked <b>${money(d.asked)}</b></span></div>
+    <div class="v1-track">
+      ${hasBand ? `<span class="v1-band" style="left:${pc(d.lo)}%;width:${pc(d.hi) - pc(d.lo)}%"></span>` : ''}
+      ${over ? `<span class="v1-over" style="left:${pc(d.hi)}%;width:${pc(d.asked) - pc(d.hi)}%"></span>` : ''}
+      ${d.asked != null ? `<span class="v1-ask" style="left:calc(${pc(d.asked)}% - 1.5px)"></span>` : ''}
+    </div>
+    ${over ? `<div class="v1-gap">
+      <span class="bar" style="left:${pc(d.hi)}%;width:${pc(d.asked) - pc(d.hi)}%"></span>
+      <span class="cap" style="left:${(pc(d.hi) + pc(d.asked)) / 2}%">+${money(d.asked - d.hi)} over</span>
+    </div>` : ''}
+    ${axis(max)}${note(d)}
+  </div>`;
+}
+
+/* 02 · TWO BARS — the ask against the band, same scale, nothing else. */
+function c02(d) {
+  const max = d.scaleMax || (d.asked ? d.asked * 1.15 : 1);
+  const pc = v => Math.max(0, Math.min(100, (v / max) * 100));
+  const hasBand = d.lo != null && d.hi != null;
+  return `<div class="vz"><div class="v2">
+    <div class="v2-row"><span class="v2-k">ASKED</span>
+      <div class="v2-t"><i class="ask" style="width:${pc(d.asked)}%"></i>${
+        hasBand && d.asked > d.hi ? `<i class="askover" style="left:${pc(d.hi)}%;width:${pc(d.asked) - pc(d.hi)}%"></i>` : ''}</div>
+      <span class="v2-v">${money(d.asked)}</span></div>
+    ${hasBand ? `<div class="v2-row"><span class="v2-k">DEFENSIBLE</span>
+      <div class="v2-t"><i class="rng" style="left:${pc(d.lo)}%;width:${pc(d.hi) - pc(d.lo)}%"></i></div>
+      <span class="v2-v">${money(d.lo)}–${money(d.hi)}</span></div>` : ''}
+  </div>${axis(max)}${note(d)}</div>`;
+}
+
+/* 03 · REPRICE GAUGE — the same 270° dial family the Verdict tab uses, re-pointed
+   at price: the sweep is $0→scale, the defensible band is an arc, the ask a needle. */
+function c03(d) {
+  const max = d.scaleMax || (d.asked ? d.asked * 1.15 : 1);
+  const R = 86, C = 2 * Math.PI * R, SWEEP = 0.75;
+  const frac = v => Math.max(0, Math.min(1, v / max));
+  const arc = (from, to) => {
+    const a0 = frac(from) * SWEEP * C, a1 = frac(to) * SWEEP * C;
+    return `stroke-dasharray="${(a1 - a0).toFixed(2)} ${C.toFixed(2)}" stroke-dashoffset="${(-a0).toFixed(2)}"`;
+  };
+  /* The arc group is rotate(135), so the sweep starts at 135° and runs 270° clockwise.
+     The needle sits OUTSIDE that group, so it needs the absolute angle — this was
+     -135 + … and parked the needle at six o'clock, nowhere near the ask. */
+  const needle = a => { const t = (135 + frac(a) * 270) * Math.PI / 180;
+    return `<line x1="${(100 + Math.cos(t) * (R - 13)).toFixed(1)}" y1="${(100 + Math.sin(t) * (R - 13)).toFixed(1)}"
+      x2="${(100 + Math.cos(t) * (R + 13)).toFixed(1)}" y2="${(100 + Math.sin(t) * (R + 13)).toFixed(1)}"
+      stroke="var(--warning)" stroke-width="3.5" stroke-linecap="round"/>`; };
+  const hasBand = d.lo != null && d.hi != null;
+  /* The centre carries the GAP, not the headline again — the lockup already prints the
+     multiple two inches above, and a dial repeating it is a number rendered twice. */
+  const over = hasBand && d.asked > d.hi ? d.asked - d.hi : null;
+  const big = over != null ? `−${money(over)}` : (hasBand ? 'in band' : '—');
+  const small = over != null ? 'TO THE CEILING' : (hasBand ? 'NO REPRICE NEEDED' : 'NO BAND SET');
+  return `<div class="vz"><div class="v3">
+    <svg viewBox="0 0 200 200" aria-hidden="true">
+      <g transform="rotate(135 100 100)" fill="none" stroke-linecap="butt">
+        <circle cx="100" cy="100" r="${R}" stroke="var(--md-sys-color-surface-container-highest)" stroke-width="13"
+          stroke-dasharray="${(SWEEP * C).toFixed(2)} ${C.toFixed(2)}"/>
+        ${hasBand ? `<circle cx="100" cy="100" r="${R}" stroke="var(--md-sys-color-primary)" stroke-width="13" ${arc(d.lo, d.hi)}/>` : ''}
+      </g>
+      ${d.asked != null ? needle(d.asked) : ''}
+    </svg>
+    <div class="v3-mid"><div class="v3-num"${over != null ? ' style="color:var(--warning)"' : ''}>${big}<u>${small}</u></div></div>
+  </div>${note(d)}</div>`;
+}
+
+/* 04 · THE LADDER — vertical, because the instruction is "come down to here". */
+function c04(d) {
+  const max = d.scaleMax || (d.asked ? d.asked * 1.15 : 1);
+  const y = v => `${(100 - (v / max) * 100).toFixed(1)}%`;
+  const hasBand = d.lo != null && d.hi != null;
+  return `<div class="vz"><div class="v4">
+    <div class="v4-rail"></div>
+    ${hasBand ? `<div class="v4-band" style="top:${y(d.hi)};height:${(((d.hi - d.lo) / max) * 100).toFixed(1)}%"></div>` : ''}
+    ${d.asked != null ? `<div class="v4-mark" style="top:${y(d.asked)}">
+      <span class="ln ask"></span><span class="v">${money(d.asked)}</span><span class="l">asked</span></div>` : ''}
+    ${hasBand ? `<div class="v4-mark" style="top:${y(d.hi)}"><span class="ln"></span>
+        <span class="v">${money(d.hi)}</span><span class="l">defensible ceiling</span></div>
+      <div class="v4-mark" style="top:${y(d.lo)}"><span class="ln"></span>
+        <span class="v">${money(d.lo)}</span><span class="l">floor</span></div>
+      ${d.asked > d.hi ? `<div class="v4-arrow" style="top:${y(d.asked)};height:${(((d.asked - d.hi) / max) * 100).toFixed(1)}%">
+        <span class="t">−${money(d.asked - d.hi)}</span></div>` : ''}` : ''}
+  </div>${note(d)}</div>`;
+}
+
+/* 05 · COMPS LADDER — the ask placed among the rounds it is actually being compared
+   with. NOT SHIPPABLE TODAY: comps carry a name, a stage and a prose detail, and no
+   number at all, so the bars below are drawn from figures I typed in to show the form.
+   One additive field on each comp — `pre` — and this becomes real. */
+const DEMO_COMPS = [
+  { name: 'Carta seed median', stage: 'Q3 2025', pre: 16 },
+  { name: 'Truebill', stage: 'Seed 2016', pre: 10 },
+  { name: 'Copilot Money', stage: 'Series A 2024', pre: 30 },
+  { name: 'Carta Series-A median', stage: 'Q3 2025', pre: 49.3 },
+];
+function c05(d) {
+  const rows = [...DEMO_COMPS, { name: 'MoneyGym', stage: 'this ask', pre: d.asked, self: true }]
+    .filter(r => r.pre != null).sort((a, b) => a.pre - b.pre);
+  const max = Math.max(...rows.map(r => r.pre)) * 1.08;
+  return `<div class="vz">
+    <div style="margin:0 0 10px;display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 9px;border-radius:999px;
+                background:color-mix(in srgb, var(--warning) 16%, transparent);
+                font:600 9.5px/1 var(--font-mono);letter-spacing:.09em;color:var(--warning)">
+      <span class="material-symbols-rounded" style="font-size:13px">warning</span> ILLUSTRATIVE FIGURES — NOT FROM THE RUN</div>
+    <div class="v5">
+    ${rows.map(r => `<div class="v5-row${r.self ? ' self' : ''}">
+      <div><div class="v5-nm">${r.name} <span style="color:var(--md-sys-color-outline)">· ${r.stage}</span></div>
+        <div class="v5-bar" style="margin-top:4px"><i style="width:${((r.pre / max) * 100).toFixed(1)}%"></i></div></div>
+      <span class="v2-v">${money(r.pre)}</span></div>`).join('')}
+  </div>${note(d)}</div>`;
+}
+
+/* ── the molecule wrapper, matching the lockup family (eyebrow → numeral → chart) ── */
+function wrap(d, chart, withNum = true) {
+  const big = d.multiple != null
+    ? `<div class="lockup-num">${d.multiple}<small>${d.multipleSuffix || '× median'}</small></div>`
+    : `<div class="lockup-num">${money(d.asked).replace(/^\$/, '')}<small>pre</small></div>`;
+  return `<div class="valuation-lockup">
+    <span class="eyebrow accent">Valuation verdict</span>
+    ${withNum ? big : ''}
+    ${d.verdict ? `<span class="lockup-band ${d.tone || 'mid'}"><span class="material-symbols-rounded">trending_flat</span> ${d.verdict}</span>` : ''}
+    ${chart}
+  </div>`;
+}
+
+const FULL = { asked: V.asked, lo: V.defensibleLo, hi: V.defensibleHi, multiple: V.multiple,
+               multipleSuffix: V.multipleSuffix, verdict: V.verdict, tone: 'mid', scaleMax: V.scaleMax };
+/* the two states a REAL assessment lands in — see the adapter notes at the top */
+const NOMULT = { ...FULL, multiple: null };
+const BARE   = { ...FULL, multiple: null, lo: null, hi: null };
+
+const h = (A.heroes && A.heroes.market) || {};
+const hero = chart => DS.sectionHero({
+  eyebrow: h.eyebrow, eyebrowIcon: h.eyebrowIcon, headline: h.headline, headlineEm: h.headlineEm, facts: h.facts,
+  right: chart, thesis: h.thesis,
+});
+
+const C = [
+  { n: '01', f: c01, t: 'Measured axis',
+    need: ['ok', 'ships today · asked + band, degrades to a bare ask'],
+    d: 'Today’s idea with the two things it was missing: a labelled money axis, so the chart is readable without the caption, and the overshoot dimensioned on the chart itself rather than described underneath. The band is the accent; only the overshoot is amber, because the overshoot is the only part that is a warning.' },
+  { n: '02', f: c02, t: 'Two bars',
+    need: ['ok', 'ships today · asked alone is enough'],
+    d: 'The ask and the band as two bars on one scale. No region to decode, no marker to find — the comparison is the chart. The most legible of the five and the one that survives the worst data, because a single bar still says something.' },
+  { n: '03', f: c03, t: 'Reprice gauge',
+    need: ['warn', 'ships today, but the big numeral is the multiple — usually null on a real run, so it falls back to the ask'],
+    d: 'The Verdict tab’s dial re-pointed at price: the sweep is the money scale, the defensible band an arc on it, the ask a needle past the end. Strongest family resemblance of the five. Weakest at precision — you can see it is over, not by how much, so the sentence underneath does the real work.' },
+  { n: '04', f: c04, t: 'The ladder',
+    need: ['ok', 'ships today · asked + band'],
+    d: 'Vertical, because the instruction this chart is giving is “come down to here”. The ask sits at the top, the band below it, and the drop is dimensioned between them. The only orientation where the recommended action and the direction of the graphic agree.' },
+  { n: '05', f: c05, t: 'Comps ladder',
+    need: ['warn', 'NOT shippable — comps have no numbers; needs one additive field (`pre`) per comp'],
+    d: 'The ask placed among the rounds it is being compared against, which is the argument the valuation note actually makes in prose. It is the most persuasive of the five and the only one that answers “compared with what”. <b>The bars below are drawn from figures I typed in</b> — the adapter maps comps as name, stage and free text, so this cannot be fed today.' },
+];
+
+document.getElementById('out').innerHTML = C.map(c => `
+  <section class="cx">
+    <div class="cx-h"><span class="cx-n">${c.n}</span><span class="cx-t">${c.t}</span></div>
+    <p class="cx-d">${c.d}</p>
+    <p class="cx-need ${c.need[0]}">${c.need[0] === 'ok' ? '●' : '▲'} ${c.need[1]}</p>
+    <div class="stage">${hero(wrap(FULL, c.f(FULL)))}</div>
+    <div class="deg">
+      <div><div class="deg-t">NO MULTIPLE · the common real case</div>${wrap(NOMULT, c.f(NOMULT))}</div>
+      <div><div class="deg-t">NO BAND EITHER · note not parseable</div>${wrap(BARE, c.f(BARE))}</div>
+      <div><div class="deg-t">TODAY, FOR COMPARISON</div>${DS.valuationLockup({
+        label: 'Valuation verdict', multiple: V.multiple, multipleSuffix: V.multipleSuffix,
+        band: V.verdict, tone: 'mid', asked: V.asked, defensibleLo: V.defensibleLo,
+        defensibleHi: V.defensibleHi, scaleMax: V.scaleMax })}</div>
+    </div>
+  </section>`).join('');
+</script>
+</body>
+</html>

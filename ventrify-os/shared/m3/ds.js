@@ -7,6 +7,7 @@
 
 // Canonical VSS sub-signal questions — reused from the shared workspace renderer so
 // the assess drill-down and the live scorecard never diverge (keep-DS-in-sync).
+import { brandLockup, hasLockup } from './brand-lockup.js';
 import { SUB_Q } from '../investability-view.js';
 
 // Full HTML escaper — text AND attribute-safe (quotes escaped so a value can't break out of
@@ -22,27 +23,171 @@ export const recPill = (kind, label, icon, extra = '') => `<span class="rec ${ki
 export const overline = t => `<span class="overline">${esc(t)}</span>`;
 const convSeg = conv => { const on = conv === 'High' ? 4 : conv === 'Medium' ? 3 : 2; return `<span class="seg">${[1,2,3,4,5].map(n => `<i class="${n <= on ? 'on' : ''}"></i>`).join('')}</span>`; };
 
-// ---- 7-axis radar (now solid, potential dashed) — computed from data ----
-const AXES = ['team', 'market', 'product', 'moat', 'financial', 'execution', 'evidence'];
-const AXLABEL = { team: 'TEAM', market: 'MARKET', product: 'PRODUCT', moat: 'MOAT', financial: 'FINANCIAL', execution: 'EXEC', evidence: 'EVIDENCE' };
-function poly(byKey, R) {
-  return AXES.map((k, i) => { const a = -Math.PI / 2 + i * (2 * Math.PI / 7); const v = byKey[k] != null ? byKey[k] : 0; return `${(150 + Math.cos(a) * R * v).toFixed(1)},${(150 + Math.sin(a) * R * v).toFixed(1)}`; }).join(' ');
+// ---- RADAR — the category profile, derived from score.categories --------------------
+/* WHAT CHANGED AND WHY. The old chart hardcoded a seven-key axis list and a label map,
+   so a rubric of any other shape drew phantom axes at zero and a renamed category lost
+   its label. And it reserved a FIXED label gutter whether the labels needed it or not,
+   which spent 48% of the SVG box on empty margin — the reason it only ever drew a 202px
+   web inside a 948px band.
+
+   Now: axes are the categories it is handed, in the order handed, and the viewBox is
+   computed from the labels it actually draws. Same slot, a 229px web with a rating on
+   every axis — and the legend retired, because each label carries its own number.
+
+   Geometry is in CENTRED coordinates (origin 0,0); the viewBox moves, not the shapes. */
+const RAD_R = 118;          // the web's outer radius — every other length scales to it
+/* RAD_CHW is MEASURED, not assumed: 7.27px per glyph for the 10.5px mono axis label at
+   .09em tracking, in both the loaded Roboto Mono and the ui-monospace fallback the
+   unbranded pages get. Rounded UP, because an estimate that runs short pushes the label
+   past the computed frame. RAD_PAD is the breathing room between the longest label and
+   the edge of the column — at 3 the type sat exactly on the boundary. */
+const RAD_CHW = 7.3;
+const RAD_PAD = 6;
+const RAD_LINE = 13;        // the label's line box
+
+/* signalCount — rated / total across the whole rubric, and whether NOTHING is rated yet.
+   One derivation, because two surfaces ask the same question: the research hero's
+   evidence base and the radar's caption. A brand-new assessment has seven categories at
+   zero, which is NOT "7 gaps" — it is nothing scored, and saying "gaps" accuses the
+   venture of our own not having run yet. */
+export function signalCount(score) {
+  const cats = (score && score.categories) || [];
+  const total = cats.reduce((n, c) => n + (c.subs ? c.subs.length : 0), 0);
+  const rated = cats.reduce((n, c) => n + (c.subs ? c.subs.filter(x => x.score != null).length : 0), 0);
+  return { rated, total, forming: total > 0 && rated === 0 };
 }
-export function radar(score, { max = 360 } = {}) {
-  const nowF = {}, potF = {}; score.categories.forEach(c => { nowF[c.key] = c.frac; potF[c.key] = c.pot != null ? c.pot : c.frac; });
-  const R = 115, gridR = [1, 0.5];
-  const grids = gridR.map(g => `<polygon points="${poly(Object.fromEntries(AXES.map(k => [k, g])), R)}" fill="none" stroke="var(--md-sys-color-surface-container-highest)"/>`).join('');
-  const axes = AXES.map((k, i) => { const a = -Math.PI / 2 + i * (2 * Math.PI / 7); return `<line x1="150" y1="150" x2="${(150 + Math.cos(a) * R).toFixed(1)}" y2="${(150 + Math.sin(a) * R).toFixed(1)}" stroke="var(--md-sys-color-surface-container-highest)"/>`; }).join('');
-  const nowPts = poly(nowF, R), potPts = poly(potF, R);
-  const dots = AXES.map((k, i) => { const a = -Math.PI / 2 + i * (2 * Math.PI / 7); const v = nowF[k]; return `<circle cx="${(150 + Math.cos(a) * R * v).toFixed(1)}" cy="${(150 + Math.sin(a) * R * v).toFixed(1)}" r="3.4" fill="var(--md-sys-color-primary)"/>`; }).join('');
-  const labels = AXES.map((k, i) => { const a = -Math.PI / 2 + i * (2 * Math.PI / 7), LR = 138; let x = 150 + Math.cos(a) * LR, y = 150 + Math.sin(a) * LR; let anc = 'middle'; if (Math.cos(a) > 0.3) anc = 'start'; else if (Math.cos(a) < -0.3) anc = 'end'; const dy = Math.sin(a) > 0.3 ? 10 : Math.sin(a) < -0.3 ? -4 : 4; return `<text x="${x.toFixed(0)}" y="${(y + dy).toFixed(0)}" text-anchor="${anc}">${AXLABEL[k]}</text>`; }).join('');
-  return `<svg viewBox="-42 -20 388 346" style="width:100%;max-width:${max}px;margin:0 auto;display:block;">
-    ${grids}<g>${axes}</g>
-    <polygon points="${potPts}" fill="none" stroke="var(--success)" stroke-width="1.5" stroke-dasharray="4 4"/>
-    <polygon points="${nowPts}" fill="var(--md-sys-color-primary)" fill-opacity="0.28" stroke="var(--md-sys-color-primary)" stroke-width="2"/>
-    ${dots}
-    <g fill="var(--md-sys-color-on-surface-variant)" font-family="Roboto" font-size="11" font-weight="500" letter-spacing="0.5">${labels}</g>
-  </svg>`;
+
+function radarAxes(score) {
+  const cats = (score && score.categories) || [];
+  const n = cats.length || 1;
+  return cats.map((c, i) => ({
+    key: c.key,
+    label: String(c.short || c.label || c.key || '').replace(/^the\s+/i, '').toUpperCase(),
+    frac: c.frac || 0,
+    pot: (c.pot != null ? c.pot : c.frac) || 0,
+    w: c.weightPct || 0,
+    num: parseFloat(c.num != null ? c.num : (c.frac || 0) * 5) || 0,
+    a: -Math.PI / 2 + i * (2 * Math.PI / n),
+  }));
+}
+
+export function radar(score, opts = {}) {
+  /* `hole` — the inner radius that 0 maps to, drawn as the innermost grid ring so the
+     baseline is declared rather than quietly shifted. It exists because at hole 0 a
+     venture with nothing rated collapses to a single point and the chart says nothing;
+     16 of 118 keeps that case legible while costing 13% of the radial range. Callers
+     putting a numeral in the middle pass a hole big enough to clear the type. */
+  const { hole = 48, labels = true, weightDots = false } = opts;
+  const ax = radarAxes(score);
+  if (!ax.length) return '';
+  const { forming } = signalCount(score);
+  const R = RAD_R, R0 = Math.max(0, hole);
+  const rOf = v => R0 + Math.max(0, Math.min(1, v)) * (R - R0);
+  const px = (a, r) => [Math.cos(a) * r, Math.sin(a) * r];
+  const pt = (a, r) => px(a, r).map(n => n.toFixed(1)).join(',');
+  const poly = key => ax.map(x => pt(x.a, rOf(x[key]))).join(' ');
+  const GRID = 'var(--md-sys-color-surface-container-highest)', ACC = 'var(--md-sys-color-primary)';
+
+  /* Zero is simply the INNERMOST GRID RING. rOf() is linear from R0, so adding 0 to the
+     ring steps gives five evenly spaced rings and the floor needs no special marker —
+     it was a dashed circle before, which read as a stray dot in the middle of the web
+     rather than as the baseline it is. */
+  const web = [0, 0.25, 0.5, 0.75, 1].map(g =>
+    `<polygon points="${ax.map(x => pt(x.a, rOf(g))).join(' ')}" fill="none" stroke="${GRID}" stroke-width="1"/>`).join('');
+  const spokes = ax.map(x => { const [x1, y1] = px(x.a, R0), [x2, y2] = px(x.a, R);
+    return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${GRID}" stroke-width="1"/>`; }).join('');
+  // headroom: omitted entirely at the ceiling — a dashed line tracing the solid one says nothing
+  const anyHeadroom = ax.some(x => x.pot > x.frac + 0.001);
+  const pot = anyHeadroom ? `<polygon points="${poly('pot')}" fill="none" stroke="${ACC}" stroke-opacity=".5" stroke-width="1.5" stroke-dasharray="4 4"/>` : '';
+  const now = `<polygon points="${poly('frac')}" fill="${ACC}" fill-opacity=".26" stroke="${ACC}" stroke-width="2" stroke-linejoin="round"/>`;
+  const maxW = Math.max(...ax.map(x => x.w)) || 1;
+  const dots = ax.map(x => { const [cx, cy] = px(x.a, rOf(x.frac));
+    return `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${weightDots ? (2.6 + 4.4 * (x.w / maxW)).toFixed(1) : '3.6'}" fill="${ACC}"/>`; }).join('');
+
+  /* Labels are NAME over VALUE. Side by side, the horizontal gutter is the name plus the
+     number; stacked, it is the longer of the two — which is most of the size this chart
+     gained. An unrated signal prints "–", never a 0.0 it was never given. */
+  let minX = -R - 4, minY = -R - 4, maxX = R + 4, maxY = R + 4;
+  const labHtml = !labels ? '' : ax.map(x => {
+    const [lx, ly] = px(x.a, R + 14);
+    const anc = Math.cos(x.a) > 0.3 ? 'start' : Math.cos(x.a) < -0.3 ? 'end' : 'middle';
+    const y = ly + (Math.sin(x.a) > 0.3 ? 12 : Math.sin(x.a) < -0.3 ? -8 : 0);
+    const val = forming ? '–' : x.num.toFixed(1);
+    const w = Math.max(x.label.length, val.length) * RAD_CHW;
+    const x0 = anc === 'start' ? lx : anc === 'end' ? lx - w : lx - w / 2;
+    minX = Math.min(minX, x0); maxX = Math.max(maxX, x0 + w);
+    minY = Math.min(minY, y - 10); maxY = Math.max(maxY, y + RAD_LINE + 4);
+    return `<text class="rad-l" x="${lx.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="${anc}">${esc(x.label)}<tspan class="rad-v" x="${lx.toFixed(1)}" dy="${RAD_LINE}">${val}</tspan></text>`;
+  }).join('');
+  const P = RAD_PAD, vb = `${(minX - P).toFixed(0)} ${(minY - P).toFixed(0)} ${(maxX - minX + P * 2).toFixed(0)} ${(maxY - minY + P * 2).toFixed(0)}`;
+  /* The entrance animation inflates the data out of the chart centre along each spoke,
+     so it has to scale about that centre — and because every coordinate above is
+     CENTRED, the centre IS user (0,0) and the pivot is simply `transform-origin: 0 0`
+     (set in ds.css). An earlier version computed the centre's offset from the viewBox
+     corner and passed it here; measured, that pivoted 240px away and the shape slid in
+     diagonally instead of growing. Nothing to compute — see the note in ds.css.
+
+     The dots live INSIDE .rad-data so they ride the same transform and stay welded to
+     the vertices; a sibling group with its own scale left them floating off the shape
+     for the first 400ms. Their own animation is opacity only, which cannot displace. */
+  return `<svg class="rad-svg" viewBox="${vb}" aria-hidden="true"><g class="rad-grid">${web}${spokes}</g><g class="rad-data">${pot}${now}<g class="rad-dots">${dots}</g></g><g class="rad-labels">${labHtml}</g></svg>`;
+}
+
+/* radarLockup — MOLECULE. Sibling to scoreLockup / coverageLockup: the category profile
+   as a chart rather than a strip. Reads in the order the whole family reads in — eyebrow,
+   the number, the graphic that explains it, the caption. Fronts the Investability tab.
+
+   It REPLACES profileLockup, which said the same three things (the numeral, the
+   strong/mixed/gap split, now→potential) in a form that could not be read per category —
+   and the radar it replaces was sitting 1000px further down in a 948px band that was two
+   thirds empty. One chart, one place, at the top where the eye lands.
+
+   Generic: pass any `categories`. Seven is not assumed anywhere. */
+export function radarLockup(opts = {}) {
+  const {
+    label = 'Category profile', score = 0, max = 100, now, potential,
+    categories = [], rated, total, hole = 16, weightDots = false,
+  } = opts;
+  const s = { categories, composite: score, potential };
+  const cnt = (rated != null && total != null) ? { rated, total, forming: total > 0 && rated === 0 } : signalCount(s);
+  const val = now != null ? now : score;
+  const pot = potential != null ? potential : val;
+  const delta = pot - val;
+
+  const c = { strong: 0, mixed: 0, gap: 0 };
+  categories.forEach(x => { c[sevOf(x.frac || 0)]++; });
+  const split = cnt.forming
+    // nothing scored is not seven gaps — see signalCount()
+    ? `<span class="rl-forming">${cnt.total ? `0 of ${cnt.total} signals rated` : 'Not yet scored'}</span>`
+    : [c.strong && `<span><b>${c.strong}</b> strong</span>`,
+       c.mixed && `<span><b>${c.mixed}</b> mixed</span>`,
+       c.gap && `<span><b>${c.gap}</b> gap${c.gap > 1 ? 's' : ''}</span>`].filter(Boolean).join('');
+  const partial = !cnt.forming && cnt.total > 0 && cnt.rated < cnt.total
+    ? `<em class="rl-part">${cnt.rated} of ${cnt.total} rated</em>` : '';
+  // No headroom → "At ceiling", the same words the contributions table uses on a row
+  // that cannot move. "Potential 55" beside a 55 restates the score and says nothing.
+  const right = cnt.forming
+    ? '<span class="rl-wait">Scored when the run completes</span>'
+    : `${partial}<span>${delta > 0
+        ? `Potential <b>${esc(String(pot))}</b> <span class="up">+${delta}</span>`
+        : 'At ceiling'}</span>`;
+
+  /* The numeral sits ABOVE the chart, not in it — the order every other lockup in this
+     family reads in: eyebrow → the number → the graphic that explains it → the caption.
+     Two things follow from having it out of the middle. The hole no longer has to clear
+     54px of type, so it drops from 48 to 16 and the web gets 104px of radial range
+     instead of 70 — more room to tell a 3.0 from a 4.0. And the number is read at the
+     lockup's own size rather than at whatever the hole allowed. */
+  /* Everything that can be READ stacks at the top — eyebrow, the numeral, then the split
+     and the headroom — and the chart closes the lockup. The caption is a second line of
+     the headline, not a footnote to the graphic: "80 · 6 strong, 1 mixed · potential 85"
+     is the whole story in one block, and the web then shows you where it sits. */
+  return `<div class="radar-lockup">
+    <span class="eyebrow accent">${esc(label)}</span>
+    <div class="lockup-num${cnt.forming ? ' is-forming' : ''}">${esc(String(val))}<small>/${esc(String(max))}</small></div>
+    <div class="rl-cap"><span class="rl-split">${split}</span><span class="rl-right">${right}</span></div>
+    <div class="rl-chart">${radar(s, { hole, weightDots })}</div>
+  </div>`;
 }
 
 // ---- shell: drawer / masthead / tabs / theme toggle ----
@@ -72,6 +217,77 @@ const samePage = (href) => {
   const norm = h => String(h || '').split(/[?#]/)[0].replace(/\.html$/, '');
   return norm(href) === norm(location.pathname.split('/').pop());   // clean-URL safe (/workspace/dashboard-m3)
 };
+/* brandMark — the product identity in the drawer head.
+
+   The wordmarks below are the FALLBACK, for an identity with no lockup artwork
+   (VentureStack, whose product is not built and whose assets are deliberately
+   not vendored — same position brand-map.css takes on its --brand-logo). All of
+   them are RENDERED and CSS shows the one matching [data-brand]: that looks
+   redundant and is deliberate, because the preview switcher flips the attribute
+   at runtime with no re-render, so a single server-chosen string would freeze on
+   whichever brand loaded first. The hidden ones are display:none, which
+   assistive tech skips, so nothing is read twice.
+
+   Where real artwork EXISTS it wins, and it is inline SVG rather than the
+   background-image PNG this replaced — see brand-lockup.js for why that
+   distinction is not cosmetic (a background-image cannot read a token, so the
+   mark carried a frozen palette). */
+const PRODUCTS = [
+  { key: 'ventrify',     lead: 'Ventrify', tail: '',      sub: 'OS' },
+  { key: 'verdictscore', lead: 'Verdict',  tail: 'Score', sub: '' },
+  { key: 'venturestack', lead: 'Venture',  tail: 'Stack', sub: '' },
+];
+export function brandMark() {
+  const parts = PRODUCTS.map(p => hasLockup(p.key)
+    ? brandLockup({ brand: p.key, cls: `bl-for`, label: `${p.lead}${p.tail}` }).replace('<svg ', `<svg data-for="${p.key}" `)
+    : `<span class="wm-for" data-for="${p.key}">${esc(p.lead)}${
+        p.tail ? `<em>${esc(p.tail)}</em>` : ''}${p.sub ? ` <small>${esc(p.sub)}</small>` : ''}</span>`);
+  const arts  = parts.filter(x => x.startsWith('<svg')).join('');
+  const words = parts.filter(x => !x.startsWith('<svg')).join('');
+  return `${arts}${words ? `<span class="wm">${words}</span>` : ''}`;
+}
+
+/* ── inkOn(bg) — pick legible ink for a background we do not control ──────
+   Org and operator avatars are filled with a colour the CUSTOMER chooses,
+   in setup.html's brand picker. The ink over it was hardcoded `#fff` in two
+   places, so a pale brand colour simply erased the initials. MEASURED on
+   the live sample data: 2.09:1 for the org mark, 2.51:1 for an operator
+   avatar — both well under AA, and no token can fix it because the
+   background is user data, not part of the palette.
+
+   THE THRESHOLD IS SOLVED, NOT PICKED, and so is the ink. The crossover is
+   where white and the dark ink give the same ratio; below it white wins,
+   above it the dark one does. Where the dark ink sits decides whether a
+   DEAD BAND exists — a range of backgrounds that NO ink can carry at 4.5:1,
+   because the best either can manage at the crossover is the ceiling for
+   that colour. Solved for three candidates:
+
+       ink        crossover at bg L    best achievable there
+       #10131A         0.1936                4.31:1   dead band
+       #0A0A0C         0.1861                4.45:1   dead band
+       #000000         0.1791                4.58:1   none
+
+   So the ink is pure black, and not for taste: it is the only value that
+   leaves no colour a customer could pick unable to carry its own initials.
+   --brand-ink would have looked more correct and quietly failed a band of
+   mid-tone brand colours. */
+export function inkOn(bg) {
+  const m = String(bg || '').trim();
+  let r, g, b;
+  const hex = m.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+  if (hex) {
+    const h = hex[1].length === 3 ? hex[1].replace(/./g, c => c + c) : hex[1];
+    [r, g, b] = [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16));
+  } else {
+    const n = (m.match(/[\d.]+/g) || []).slice(0, 3).map(Number);
+    if (n.length < 3) return '#fff';          // unparseable (a var(), a gradient) — leave as-is
+    [r, g, b] = /^color\(/.test(m) ? n.map(v => v * 255) : n;
+  }
+  const lin = c => { c /= 255; return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
+  const L = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+  return L > 0.1791 ? '#000' : '#fff';
+}
+
 export function drawer(active = 'portfolio', opts = {}) {
   const badges = opts.badges || {};
   const items = Array.isArray(opts.nav) && opts.nav.length ? opts.nav : NAV;
@@ -88,22 +304,38 @@ export function drawer(active = 'portfolio', opts = {}) {
   const canSwitch = b && Array.isArray(b.orgs) && b.orgs.length > 1;
   const brandHtml = b
     ? `<div class="drawer-brand${canSwitch ? ' switch' : ''}"${canSwitch ? ' role="button" tabindex="0" onclick="window.__wsOrgSwitch&&window.__wsOrgSwitch(this)"' : ''}>
-      <span class="logo"${b.color ? ` style="background:${esc(b.color)}"` : ''}>${b.logo ? `<img src="${esc(b.logo)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">` : `<span style="font-size:13px;font-weight:700;color:#fff">${esc(b.initials || 'V')}</span>`}</span>
+      <span class="logo"${b.color ? ` style="background:${esc(b.color)}"` : ''}>${b.logo ? `<img src="${esc(b.logo)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">` : `<span style="font-size:13px;font-weight:700;color:${inkOn(b.color)}">${esc(b.initials || 'V')}</span>`}</span>
       <span class="wm"><span class="wm-name">${esc(b.name || 'Ventrify')}</span><small>${esc(b.sub || 'Workspace')}</small></span>${canSwitch ? '<span class="material-symbols-rounded drawer-brand-caret">unfold_more</span>' : ''}
     </div>`
-    : `<div class="drawer-brand"><span class="logo"><span class="material-symbols-rounded" style="font-size:20px">bolt</span></span><span class="wm">Ventrify <small>OS</small></span></div>`;
+    : `<div class="drawer-brand">${brandMark()}</div>`;
   const ac = opts.account;
   const footHtml = ac
     ? `<div class="drawer-foot account"><span class="av"${ac.color ? ` style="background:${esc(ac.color)}"` : ''}>${esc(ac.initials || '—')}</span><span class="nm">${esc(ac.name || '')}<small>${esc(ac.role || '')}</small></span><button class="drawer-foot-signout" title="Sign out" aria-label="Sign out" onclick="window.__signOut&&window.__signOut()"><span class="material-symbols-rounded">logout</span></button></div>`
     : `<div class="drawer-foot"><span class="av">AC</span><span class="nm">Apex Capital<small>Partner workspace</small></span></div>`;
+  /* THE PRODUCT MARK, and why it is at the FOOT and not the head.
+     On the live workspace the drawer head belongs to the TENANT — their name,
+     their colour, their logo (wsBrandConfig). That is correct and must not be
+     competed with: the operator works for Mercer Ventures, not for us. Which
+     left the product with no mark anywhere in the live chrome at all — the
+     identity was carried only by the accent and the masthead photograph, and
+     brandMark(), the thing that draws the lockup, renders solely on the demo
+     pages where no tenant is passed. The foot is the one place a white-label
+     product can sign its own work without taking the tenant's position, and
+     it is below the account chip because it is the quietest thing here, not
+     a control. Omitted entirely when the head is already the product's own
+     mark, so it can never print twice. */
+  const productHtml = b ? `<div class="drawer-product">${brandMark()}</div>` : '';
   return `<nav class="m3-drawer" id="m3-drawer">
     <button class="nav-toggle" onclick="__navButton&&__navButton()" aria-label="Collapse navigation"><span class="material-symbols-rounded">menu</span></button>
     ${brandHtml}
     ${out}
     ${footHtml}
+    ${productHtml}
   </nav>`;
 }
-export const themeToggle = () => `<div class="theme-toggle"><button data-set="light"><span class="material-symbols-rounded">light_mode</span> Light</button><button data-set="dark" class="on"><span class="material-symbols-rounded">dark_mode</span> Dark</button></div>`;
+// themeToggle REMOVED — the workspace is dark-only (see theme.css). It offered a
+// Light button that produced a page measuring 1.00:1 in places, which is worse
+// than offering nothing.
 // The ONE real masthead. Emits the same new structure as mastheadPlaceholder() (mh-bar/mh-hero/
 // mh-medrow/mh-compact so --mh-p can collapse it) but with real, per-page content slots.
 // opts: { breadcrumb:{label,href}|false, crumbTail, eyebrow, headline, headlineMeta, compact,
@@ -331,6 +563,85 @@ export function railPanel(id, label) {
 // ---- stat card ----
 export const statCard = s => `<div class="m3-card stat"><div class="n">${s.n}</div><div class="l">${esc(s.l)}</div>${s.sub ? `<div class="sub">${esc(s.sub)}</div>` : ''}</div>`;
 
+// figureStrip — MOLECULE. The same counts as statCard, de-carded: figures sit ON the page between two
+// rules, divided by hairlines, the way every figure strip in the assessment reads. A boxed tile says
+// "this is a thing"; a count of engagements is not a thing, it is a measurement of the list below it.
+// A zero is dimmed rather than hidden — "0 awaiting a deck" is an answer, and dropping the cell would
+// make the strip's width jump between loads.
+export const figureStrip = (stats = []) => `<div class="figstrip">${stats.map(s =>
+  `<div class="fs-f"><div class="fs-v${String(s.n) === '0' ? ' dim' : ''}">${esc(s.n)}</div><div class="fs-l">${esc(s.l)}</div></div>`).join('')}</div>`;
+
+// GUIDANCE_BANDS, as the runner stamps them (shared/vss-rubric.js). The runner DECIDES the band —
+// including gates the composite score alone cannot see — so the UI names it and never recomputes it.
+// `min` exists only as a fallback for snapshots written before the band field, and is never preferred.
+const BOOK_BANDS = [
+  { k: 'READY',             label: 'Investment ready',  tone: 'good', min: 80 },
+  { k: 'PROMISING',         label: 'Promising',         tone: 'mid',  min: 60 },
+  { k: 'HIGH_RISK',         label: 'High risk',         tone: 'warn', min: 40 },
+  { k: 'POTENTIAL_DECLINE', label: 'Potential decline', tone: 'bad',  min: 0  },
+];
+const bookBandOf = r => (r.band && BOOK_BANDS.find(b => b.k === r.band))
+  || BOOK_BANDS.find(b => Number(r.rec && r.rec.score) >= b.min) || BOOK_BANDS[BOOK_BANDS.length - 1];
+
+// portfolioBand — ORGANISM. What opens the portfolio: the headline count at display size, the two or
+// three figures an operator acts on, and the book's score distribution across the runner's four
+// guidance bands. Replaces four equal-weight boxed counts, which gave the same emphasis to "how many
+// exist" and "how many need me" and said nothing about whether the book is any good.
+// Scales by STACKING, not by shrinking: one cell per venture inside its band, so 24 ventures draw 24
+// cells and the columns simply grow. Nothing is averaged, and an empty band still shows its zero.
+export function portfolioBand(rows = []) {
+  const inFlight = r => r.runState && ['queued', 'running', 'partial'].includes(r.runState.status);
+  const needs = r => (r.status && (r.status.kind === 'err' || r.status.kind === 'warn'))
+                  || (r.runState && r.runState.status === 'idle') || r.danger;
+  const scored = rows.filter(r => r.rec);
+  const nNeed = rows.filter(needs).length;
+  // Every engagement is represented, not just the scored ones: a distribution that showed 3 cells
+  // for 11 engagements left the operator to wonder where the other 8 went. The unscored get their
+  // own final column — they have no band yet, and putting them in one would be inventing a verdict.
+  // The four bands are the SCALE, so they always render — an empty "Potential decline" is a reading,
+  // and dropping it would silently rescale the chart between loads. "Still forming" is not a band but
+  // a state, so it only appears while something is actually unscored.
+  const forming = rows.filter(r => !r.rec);
+  const cols = [...BOOK_BANDS.map(b => ({ ...b, rows: scored.filter(r => bookBandOf(r).k === b.k) })),
+                ...(forming.length ? [{ k: 'FORMING', label: 'Still forming', tone: 'form', rows: forming }] : [])];
+  const fig = (n, l, warn) => `<div class="pb-s"><b${warn && n ? ' class="warn"' : ''}>${n}</b><em>${esc(l)}</em></div>`;
+  return `<section class="pb">
+    <div class="pb-hero">
+      <div class="pb-n">${rows.length}<small>Active engagements</small></div>
+      <div class="pb-subs">${fig(nNeed, 'need you', true)}${fig(rows.filter(inFlight).length, 'in flight')}${fig(scored.length, 'scored')}</div>
+    </div>
+    <div class="pb-dist">
+      <div class="pb-dh"><span class="l">How the book scores</span><span class="m">all ${rows.length} engagements</span></div>
+      <div class="pb-cols" style="--pb-n:${cols.length}" role="img" aria-label="Score distribution across ${rows.length} engagements: ${cols.map(c => `${c.rows.length} ${c.label}`).join(', ')}.">
+        ${cols.map(c => `<div class="pb-col">
+          <div class="pb-cells t-${c.tone}" aria-hidden="true">${c.rows.map(r => `<i title="${esc(r.name)}${r.rec ? ` · ${esc(r.rec.score)}` : ' · not yet scored'}"></i>`).join('')}</div>
+          <div class="pb-cap"><b>${c.rows.length}</b><em>${esc(c.label)}</em></div>
+        </div>`).join('')}
+      </div>
+    </div>
+  </section>`;
+}
+
+// triageGroups — the portfolio's reading order. A flat list answers "what exists"; an operator opening
+// this page is asking "what needs me". Derived from the row data, never a hand-kept list, so a venture
+// moves group the moment its state changes. Exported because the live workspace dashboard renders the
+// same rows through the same table and must group them the same way.
+// Order matters: a row falls into the FIRST group it qualifies for, so a stuck row that is also
+// mid-assessment reads as blocked rather than as busy.
+export function triageGroups(rows = []) {
+  const inFlight = r => r.runState && ['queued', 'running', 'partial'].includes(r.runState.status);
+  const needs = r => (r.status && (r.status.kind === 'err' || r.status.kind === 'warn'))
+                  || (r.runState && r.runState.status === 'idle') || r.danger;
+  const busy  = r => inFlight(r) || (r.status && r.status.label === 'Assessment');
+  const taken = new Set();
+  const take = pred => rows.filter(r => !taken.has(r) && pred(r)).map(r => (taken.add(r), r));
+  return [
+    { key: 'needs',   title: 'Needs you',  why: 'blocked, flagged, or waiting on a document', rows: take(needs) },
+    { key: 'flight',  title: 'In flight',  why: 'assessment running or queued',               rows: take(busy) },
+    { key: 'settled', title: 'Settled',    why: 'on track — nothing to decide today',         rows: take(() => true) },
+  ].filter(g => g.rows.length);
+}
+
 // ---- verdict card (recommendation) ----
 export function verdictCard(a, score) {
   return `<div class="m3-card">
@@ -383,16 +694,79 @@ const BAND_TONE = {
 
 // scoreLockup — MOLECULE. The headline-score lockup: eyebrow label · big number/max · a tone-coloured band
 // chip · an optional now→potential bar. Generic + defaults; drops into any surface that needs a headline score.
+/* The DIAL. A 270° sweep for the score with the headroom ghosted behind it —
+   one shape for "where it is" and "where it could get to", where the old bar
+   needed two rows and a caption to say the same thing. */
+function scoreDial(score, potential, max, tone) {
+  const R = 86, C = 2 * Math.PI * R, SWEEP = 0.75;
+  const len = v => Math.max(0, Math.min(1, v / max)) * SWEEP * C;
+  const da = v => `${len(v).toFixed(2)} ${C.toFixed(2)}`;
+  /* --arc is the drawn length of each arc, published so the entrance animation can
+     sweep it on from stroke-dashoffset:var(--arc) to 0. The length is already computed
+     here for the dasharray; the alternative is JS measuring getTotalLength() at runtime
+     on an element the renderer already knows the geometry of. */
+  /* ⚠ a zero-length arc is OMITTED, not drawn. stroke-linecap:round turns a 0-length dash into a
+     DOT, so a forming assessment — nothing rated, score 0 — was painting a stray pip on the rim
+     of an otherwise empty dial, on the Verdict lockup as well as the masthead mark. Nothing is
+     not a very small something. */
+  return `<svg class="sl-dial-svg" viewBox="0 0 200 200" aria-hidden="true">
+    <g transform="rotate(135 100 100)" fill="none" stroke-linecap="round">
+      <circle cx="100" cy="100" r="${R}" class="sl-track" stroke-width="13" stroke-dasharray="${da(max)}"/>
+      ${potential > score && len(potential) > 0.5 ? `<circle cx="100" cy="100" r="${R}" class="sl-pot" stroke-width="13" stroke-dasharray="${da(potential)}" style="--arc:${len(potential).toFixed(2)}"/>` : ''}
+      ${len(score) > 0.5 ? `<circle cx="100" cy="100" r="${R}" class="sl-now" stroke-width="13" stroke-dasharray="${da(score)}" style="--arc:${len(score).toFixed(2)}"/>` : ''}
+    </g></svg>`;
+}
+
+/* The STABILITY STRIP. Every signal is drawn three times blind and the median
+   published; this is the only place that fact is visible. It is a WINDOW on
+   the draws, never a second 0–100 rail: three draws inside three points are
+   one invisible dot at full scale, and the whole picture zoomed in. The dial
+   already carries the 0–100 placement, so the strip does not repeat it.
+
+   With no draws on the snapshot it says so rather than inventing a spread —
+   which is what today's runs render, because the runner publishes the median
+   and keeps nothing else. */
+function stabilityStrip(draws, score) {
+  if (!Array.isArray(draws) || draws.length < 2) {
+    return `<div class="sl-strip is-empty"><div class="sl-strip-lab"><span>Stability</span></div>
+      <p class="sl-none">Draw spread not recorded for this run.</p></div>`;
+  }
+  const lo = Math.min(...draws), hi = Math.max(...draws), d = hi - lo;
+  const win = Math.max(10, d * 1.9);            // never closes below 10pts, so tight reads as tight
+  const c = (lo + hi) / 2, a = c - win / 2, b = c + win / 2;
+  const pc = v => (((v - a) / (b - a)) * 100).toFixed(1);
+  return `<div class="sl-strip">
+    <div class="sl-strip-lab"><span>Three blind draws</span>
+      <em>${d <= 5 ? `within ${d} pts · solid` : `spread ${d} pts · indicative`}</em></div>
+    <div class="sl-rail">
+      <span class="sl-span" style="left:${pc(lo)}%;width:${(pc(hi) - pc(lo)).toFixed(1)}%"></span>
+      ${draws.filter(v => v !== score).map(v => `<span class="sl-tick" style="left:${pc(v)}%"></span>`).join('')}
+      <span class="sl-med" style="left:${pc(score)}%"></span>
+    </div>
+    <div class="sl-sc"><span>${Math.round(a)}</span>
+      <span>${draws.slice().sort((x, y) => x - y).join(' · ')}</span><span>${Math.round(b)}</span></div>
+  </div>`;
+}
+
 export function scoreLockup(opts = {}) {
-  const { label = 'Investability score', score = 72, max = 100, band = 'Strong', tone = 'good', bandIcon, now, potential } = opts;
+  const { label = 'Investability score', score = 72, max = 100, band = 'Strong', tone = 'good',
+          bandIcon, now, potential, draws = null } = opts;
   const icon = bandIcon || SCORELK_ICON[tone] || 'trending_flat';
-  const hasBar = now != null && potential != null;
-  const delta = hasBar ? potential - now : 0;
-  return `<div class="score-lockup">
+  const val = now != null ? now : score;
+  const pot = potential != null ? potential : val;
+  const delta = pot - val;
+  return `<div class="score-lockup tone-${tone}">
     <span class="eyebrow accent">${esc(label)}</span>
-    <div class="lockup-num">${esc(String(score))}<small>/${esc(String(max))}</small></div>
-    ${band ? `<span class="lockup-band ${tone}"><span class="material-symbols-rounded">${icon}</span> ${esc(band)}</span>` : ''}
-    ${hasBar ? `<div class="score-lockup-bar"><div class="track"><span class="pot" style="width:${Math.round(potential / max * 100)}%"></span><span class="now" style="width:${Math.round(now / max * 100)}%"></span></div><div class="cap"><span>Now <b>${esc(String(now))}</b></span><span>Potential <b>${esc(String(potential))}</b>${delta > 0 ? ` <span class="up">+${delta}</span>` : ''}</span></div></div>` : ''}
+    <div class="sl-top">
+      <div class="sl-dial">${scoreDial(val, pot, max, tone)}
+        <div class="sl-mid"><div class="lockup-num">${esc(String(val))}<small>/${esc(String(max))}</small></div></div>
+      </div>
+      <div class="sl-aside">
+        ${band ? `<span class="lockup-band ${tone}"><span class="material-symbols-rounded">${icon}</span> ${esc(band)}</span>` : ''}
+        ${delta > 0 ? `<div class="sl-head">Potential <b>${esc(String(pot))}</b> · headroom <b class="up">+${delta}</b></div>` : ''}
+      </div>
+    </div>
+    ${stabilityStrip(draws, val)}
   </div>`;
 }
 
@@ -428,64 +802,104 @@ const SEV_TONE = { strong: 'good', mixed: 'mid', gap: 'bad' };   // sevOf() resu
 const VAL_ICON = { good: 'check_circle', mid: 'trending_flat', bad: 'warning' };
 const COV_ICON = { good: 'verified', mid: 'shield', bad: 'gpp_maybe' };
 
-// profileLockup — MOLECULE. Sibling to scoreLockup: the same big numeral, re-expressed as the SHAPE of the
-// score — a split of tone chips (strong/mixed/gap) + a weighted severity strip (one segment per category,
-// width ∝ weight, tone by severity) + a now→potential caption. Fronts the Investability tab. Pass
-// `categories` (SCORE.categories) to derive the split + strip live, or hand-drive with `split`/`segments`.
-export function profileLockup(opts = {}) {
-  const { label = 'Category profile', score = 64, max = 100, now = 64, potential = 82, categories, split, segments } = opts;
-  let sp = split, sg = segments;
-  if (categories && categories.length) {
-    const c = { strong: 0, mixed: 0, gap: 0 };
-    categories.forEach(x => { c[sevOf(x.frac)]++; });
-    sp = sp || [
-      { tone: 'good', count: c.strong, label: c.strong === 1 ? 'strong' : 'strong' },
-      { tone: 'mid', count: c.mixed, label: 'mixed' },
-      { tone: 'bad', count: c.gap, label: c.gap === 1 ? 'gap' : 'gaps' }
-    ];
-    sg = sg || [...categories].sort((a, b) => b.frac - a.frac).map(x => ({ tone: SEV_TONE[sevOf(x.frac)], w: x.weightPct || 1 }));
-  }
-  sp = sp || [{ tone: 'good', count: 2, label: 'strong' }, { tone: 'mid', count: 4, label: 'mixed' }, { tone: 'bad', count: 1, label: 'gap' }];
-  sg = sg || [{ tone: 'good', w: 20 }, { tone: 'mid', w: 25 }, { tone: 'mid', w: 15 }, { tone: 'mid', w: 15 }, { tone: 'bad', w: 10 }, { tone: 'mid', w: 10 }, { tone: 'bad', w: 5 }];
-  const delta = potential - now;
-  return `<div class="profile-lockup">
-    <span class="eyebrow accent">${esc(label)}</span>
-    <div class="lockup-num">${esc(String(score))}<small>/${esc(String(max))}</small></div>
-    <div class="profile-split">${sp.filter(x => x.count).map(x => `<span class="lockup-band ${x.tone}"><b>${esc(String(x.count))}</b> ${esc(x.label)}</span>`).join('')}</div>
-    <div class="profile-strip">${sg.map(x => `<span class="seg ${x.tone}" style="flex:${x.w || 1} 1 0"></span>`).join('')}</div>
-    <div class="lockup-cap"><span>Now <b>${esc(String(now))}</b></span><span>Potential <b>${esc(String(potential))}</b>${delta > 0 ? ` <span class="up">+${delta}</span>` : ''}</span></div>
-  </div>`;
+/* profileLockup — RETIRED. It re-expressed the score as a split of tone chips plus a
+   weighted severity strip, and fronted the Investability tab. radarLockup() now says the
+   same three things (the numeral, the strong/mixed/gap split, now→potential) AND says
+   them per category, so keeping both would have left two molecules for one job — the
+   exact drift the DS audit exists to catch. The weight each category carries, which the
+   strip encoded and the equal-angle web does not, is stated on every row of the
+   contributions table below the hero. See radarLockup() at the top of this file. */
+
+/* valuationLockup — MOLECULE. Sibling to scoreLockup expressing a CORRECTIVE premium:
+   the ask, the defensible band, and the overshoot between them — on a MEASURED AXIS.
+
+   WHAT THE AXIS IS FOR. The first version of this was an 8px track with a coloured band
+   and an unlabelled tick: you could see that the ask was high but not against what, so
+   the one number that matters — how far over — had to be read out of the caption. The
+   ticks below the bar put a money scale under the whole thing, and the overshoot is
+   dimensioned ON the chart rather than described underneath it.
+
+   TICKS ARE DERIVED, never a fixed set: a 1 / 2 / 2.5 / 5 ladder chosen from the range,
+   because a $60M seed and a $900M growth round land on this same component.
+
+   DEGRADES, because most assessments are not MoneyGym. adapter.js regex-matches the band
+   out of the valuation note and emits null when the note does not phrase it as "$A–$B
+   pre", and it emits no `multiple` at all on a real run. So: no multiple → the numeral
+   falls back to the ask itself; no band → the bar keeps the ask and says plainly that no
+   band has been set, rather than drawing an empty range.
+
+   Money values are in $M, as the adapter's parseMoney() produces them. */
+const vMoney = v => v == null ? '—'
+  : v >= 1000 ? `$${+(v / 1000).toFixed(2)}B`
+  : `$${+Number(v).toFixed(Number(v) % 1 ? 1 : 0)}M`;
+
+/* a 1 / 2 / 2.5 / 5 tick ladder for the range — so the axis reads in round money at any
+   scale, instead of five arbitrary fifths of whatever the maximum happens to be. */
+function vTicks(max, target = 4) {
+  const raw = max / target, mag = Math.pow(10, Math.floor(Math.log10(raw || 1)));
+  const step = [1, 2, 2.5, 5, 10].map(m => m * mag).find(s => s >= raw) || 10 * mag;
+  const out = [];
+  for (let v = 0; v <= max + 1e-9; v += step) out.push(+v.toFixed(4));
+  return out;
 }
 
-// valuationLockup — MOLECULE. Sibling to scoreLockup expressing a CORRECTIVE premium: a big multiple + a
-// tone verdict chip + a reprice bar (defensible band + overshoot + a marker at the ask). The inverse of
-// scoreLockup's grow-up bar — reprice DOWN into a band. Fronts the Market tab. Explicit numeric opts only.
 export function valuationLockup(opts = {}) {
   const {
     label = 'Valuation verdict', multiple = null, multipleSuffix = '× median',
     band = 'Fairly priced', tone = 'good', bandIcon,
     asked = 0, defensibleLo = null, defensibleHi = null, scaleMax,
-    captionLo = 'Defensible', captionHi = 'Asked', askedNote = 'pre'
+    askedLabel = 'Asked', bandLabel = 'Defensible',
   } = opts;
   const icon = bandIcon || VAL_ICON[tone] || 'check_circle';
   const lo = Number(defensibleLo) || 0, hi = Number(defensibleHi) || 0;
-  const hasBand = lo > 0 || hi > 0;   // a real reprice band was parsed — otherwise omit (don't render "$0–0M")
-  const max = scaleMax || (Math.max(asked, hi) * 1.15) || 1;
-  const pc = v => Math.max(0, Math.min(100, v / max * 100));
-  const bandL = pc(lo), bandW = pc(hi) - pc(lo);
-  const overW = Math.max(0, pc(asked) - pc(hi));
+  const ask = Number(asked) || 0;
+  const hasBand = lo > 0 || hi > 0;        // a real band was parsed — never render "$0–0M"
+  const hasAsk = ask > 0;
+  const max = scaleMax || (Math.max(ask, hi) * 1.15) || 1;
+  const pc = v => Math.max(0, Math.min(100, (v / max) * 100));
+  const over = hasBand && hasAsk && ask > hi ? ask - hi : 0;
+
+  /* A tick label is centred on its tick — EXCEPT within a few percent of either end, where
+     centring would hang it off the chart. Decided per tick from its actual position rather
+     than with :first-of-type / :last-of-type, because the last TICK is not the end of the
+     SCALE: the ladder stops at the last round number below max, so on this fixture the final
+     tick sits at 86%, and right-aligning it there would just put it in the wrong place. */
+  const axis = `<div class="vz-axis">${vTicks(max).map(v => {
+    const x = pc(v);
+    const tr = x < 4 ? 'none' : x > 96 ? 'translateX(-100%)' : 'translateX(-50%)';
+    return `<i style="left:${x}%"></i><span style="left:${x}%;transform:${tr}">${esc(vMoney(v))}</span>`;
+  }).join('')}</div>`;
+
+  const chart = (hasAsk || hasBand) ? `
+    <div class="vz-lab"><span>${esc(bandLabel)} <b>${hasBand ? `${esc(vMoney(lo))}–${esc(vMoney(hi))}` : '—'}</b></span>
+      <span>${esc(askedLabel)} <b>${esc(vMoney(ask))}</b></span></div>
+    <div class="v1-track">
+      ${hasBand ? `<span class="v1-band" style="left:${pc(lo)}%;width:${(pc(hi) - pc(lo)).toFixed(1)}%"></span>` : ''}
+      ${over > 0 ? `<span class="v1-over" style="left:${pc(hi)}%;width:${(pc(ask) - pc(hi)).toFixed(1)}%"></span>` : ''}
+      ${hasAsk ? `<span class="v1-ask${over > 0 ? '' : ' ok'}" style="left:calc(${pc(ask)}% - 1.5px)"></span>` : ''}
+    </div>
+    ${over > 0 ? `<div class="v1-gap">
+      <span class="bar" style="left:${pc(hi)}%;width:${(pc(ask) - pc(hi)).toFixed(1)}%"></span>
+      <span class="cap" style="left:${((pc(hi) + pc(ask)) / 2).toFixed(1)}%">+${esc(vMoney(over))} over</span>
+    </div>` : ''}
+    ${axis}` : '';
+
+  // the read, derived — never written, so it cannot drift from the numbers beside it
+  const read = !hasAsk ? `<p class="vl-none">No pre-money figure on this round yet.</p>`
+    : !hasBand ? `<p class="vl-read">Asked <b>${esc(vMoney(ask))}</b> pre. No defensible band has been established for this round.</p>`
+    : over > 0 ? `<p class="vl-read">Asked <b>${esc(vMoney(ask))}</b> pre — <span class="over">${esc(vMoney(over))} above</span> a defensible <b>${esc(vMoney(lo))}–${esc(vMoney(hi))}</b>, or <span class="over">${(ask / hi).toFixed(1)}×</span> the ceiling.</p>`
+    : `<p class="vl-read">Asked <b>${esc(vMoney(ask))}</b> pre, inside a defensible <b>${esc(vMoney(lo))}–${esc(vMoney(hi))}</b>.</p>`;
+
+  // no multiple on a real run → the ask carries the numeral rather than leaving it blank
+  const numHtml = multiple != null
+    ? `<div class="lockup-num">${esc(String(multiple))}<small>${esc(multipleSuffix)}</small></div>`
+    : hasAsk ? `<div class="lockup-num">${esc(vMoney(ask).replace(/^\$/, ''))}<small>pre</small></div>` : '';
+
   return `<div class="valuation-lockup">
     <span class="eyebrow accent">${esc(label)}</span>
-    ${multiple != null ? `<div class="lockup-num">${esc(String(multiple))}<small>${esc(multipleSuffix)}</small></div>` : ''}
+    ${numHtml}
     ${band ? `<span class="lockup-band ${tone}"><span class="material-symbols-rounded">${icon}</span> ${esc(band)}</span>` : ''}
-    ${hasBand ? `<div class="valuation-bar">
-      <div class="track">
-        <span class="band" style="left:${bandL}%;width:${bandW}%"></span>
-        ${overW > 0 ? `<span class="over" style="left:${pc(hi)}%;width:${overW}%"></span>` : ''}
-        <span class="tick" style="left:${pc(asked)}%"></span>
-      </div>
-      <div class="lockup-cap"><span>${esc(captionLo)} <b>$${esc(String(lo))}–${esc(String(hi))}M</b></span><span class="over-lab">${esc(captionHi)} <b>$${esc(String(asked))}M</b>${askedNote ? ` ${esc(askedNote)}` : ''}</span></div>
-    </div>` : ''}
+    ${chart}${read}
   </div>`;
 }
 
@@ -496,6 +910,12 @@ export function coverageLockup(opts = {}) {
   const {
     label = 'Evidence base', rated = 35, total = 35, ratedLabel = 'signals rated', numeral,
     confidence = 'High', tone = 'good', confidenceIcon,
+    /* The band read "<confidence> confidence" with the noun welded on, which is
+       right for the assessment and wrong everywhere else — Team wants "Fully
+       covered", not "Fully covered confidence". Defaulted, so every existing
+       caller is byte-identical; passed as '' by the callers that state their
+       own whole phrase. Generalising the one component beats forking it. */
+    bandSuffix = ' confidence',
     facts = [{ v: '18', k: 'documents' }, { v: '32', k: 'sources cited' }, { v: '7', k: 'workstreams' }]
   } = opts;
   const icon = confidenceIcon || COV_ICON[tone] || 'verified';
@@ -504,15 +924,16 @@ export function coverageLockup(opts = {}) {
   return `<div class="coverage-lockup">
     <span class="eyebrow accent">${esc(label)}</span>
     <div class="lockup-num">${numHtml}</div>
-    ${confidence ? `<span class="lockup-band ${tone}"><span class="material-symbols-rounded">${icon}</span> ${esc(confidence)} confidence</span>` : ''}
+    ${confidence ? `<span class="lockup-band ${tone}"><span class="material-symbols-rounded">${icon}</span> ${esc(confidence)}${esc(bandSuffix)}</span>` : ''}
     ${facts.length ? `<div class="lockup-prov">${facts.map(f => `<span class="unit"><b>${esc(f.v)}</b> ${esc(f.k)}</span>`).join('')}</div>` : ''}
   </div>`;
 }
 
-// bookLockup — MOLECULE. profileLockup's sibling for a whole PORTFOLIO read as a verdict: a positive-anchored
-// on-plan numeral + a derived verdict band + the health mix as split chips + a weighted strip (one pip per
-// venture up to pipMax, then a weighted 3-tone strip so 40 ventures never render 40 hairlines) + profileLockup's
-// now→potential cap where +delta is exactly the ventures needing the operator. Everything derives from
+// bookLockup — MOLECULE. A whole PORTFOLIO read as a verdict: a positive-anchored on-plan numeral + a derived
+// verdict band + the health mix as split chips + a weighted strip (one pip per venture up to pipMax, then a
+// weighted 3-tone strip so 40 ventures never render 40 hairlines) + a now→potential cap where +delta is exactly
+// the ventures needing the operator. It is the last owner of .profile-split / .profile-strip (profileLockup,
+// which introduced them, is retired) — so those two rules stay in the stylesheet. Everything derives from
 // health{onTrack,attention,stuck}; every override is optional. Fronts the Portfolio screen.
 export function bookLockup(opts = {}) {
   const {
@@ -581,6 +1002,17 @@ export function fitHeadline(text, fallback = '', maxWords = HEADLINE_MAX_WORDS) 
 
 export function statementLockup(opts = {}) {
   const {
+    // tone — 'brand' | 'good' | 'mid' | 'bad'. The emphasised word in the
+    // headline and the conviction pips take their colour from it.
+    //
+    // The default is 'brand', NOT 'mid'. A hero that carries no verdict has
+    // nothing to caution about, and defaulting to amber painted every such
+    // headline in the warning colour: the Research hero's "rebuilt from
+    // source" — a strength — read as a problem, purely because nobody passed
+    // a tone. Only Verdict, Investability and Diligence derive one; Market,
+    // Team and Research do not, and should not have to in order to avoid
+    // looking alarmed.
+    tone = 'brand',
     eyebrow = 'The verdict', eyebrowIcon = 'balance',
     headline = 'A balanced call — proceed to diligence, not to a cheque.',
     headlineEm = 'proceed to diligence',
@@ -590,7 +1022,7 @@ export function statementLockup(opts = {}) {
   const safe = fitHeadline(headline, opts.headlineFallback || '');
   const hl = headlineEm && safe.includes(headlineEm) ? esc(safe).replace(esc(headlineEm), `<em>${esc(headlineEm)}</em>`) : esc(safe);
   const factsHtml = facts.map(f => `<div class="fact"><div class="k">${esc(f.k)}</div><div class="v">${f.v}</div></div>`).join('');
-  return `<div class="statement-lockup">
+  return `<div class="statement-lockup tone-${esc(tone)}">
     ${eyebrow ? `<span class="statement-lockup-eyebrow">${eyebrowIcon ? `<span class="material-symbols-rounded">${eyebrowIcon}</span> ` : ''}${esc(eyebrow)}</span>` : ''}
     <h1 class="statement-lockup-headline">${hl}</h1>
     ${facts.length ? `<div class="statement-lockup-facts">${factsHtml}</div>` : ''}
@@ -612,11 +1044,25 @@ export function sectionHero(opts = {}) {
   const leftHtml = left != null ? left : statementLockup(statement);
   const rightHtml = right != null ? right : scoreLockup(score);
   const single = !String(leftHtml).trim() || !String(rightHtml).trim();   // one slot empty → single-column, no divider
+  /* The thesis sits INSIDE the left column, under the statement.
+     The right slot is the tall one — the score lockup is a dial, a chip and
+     a stability strip — while the statement above is three lines and a pair
+     of facts, so the left column was running half empty and the thesis was
+     stranded in full width underneath. In the column it fills that space and
+     reads at a sensible measure instead of spanning the whole page.
+     `single` heroes used to drop it BELOW the section instead, on the grounds
+     that there was no column to sit in. There is: in single mode .left is the
+     only column, and it is now capped to a readable measure rather than being
+     let run the width of the page. Keeping the thesis outside only bought it
+     the section's bottom padding plus .lead's own margin — 82px of gap on the
+     owner view of Admin, against 20px in the two-column case. One path now. */
+  const thesisHtml = thesis
+    ? `<p class="lead"><span class="drop">${esc(thesisLabel)}</span> ${esc(thesis)}</p>` : '';
   return `<section class="sec section-hero${single ? ' single' : ''}">
-      <div class="left">${leftHtml}</div>
+      <div class="left">${leftHtml}${thesisHtml}</div>
       <div class="divide"></div>
       <div class="right">${rightHtml}</div>
-    </section>${thesis ? `<p class="lead"><span class="drop">${esc(thesisLabel)}</span> ${esc(thesis)}</p>` : ''}`;
+    </section>`;
 }
 
 // ---- portfolio hero (the editorial section-hero for the Portfolio screen — same organism as the assess tabs) ----
@@ -705,14 +1151,16 @@ export function portfolioHero(programs = [], ctx = {}) {
 // researchRow, signalRows, founderRoster, …) become thin wrappers that translate their args to row()
 // — so a change to row spacing/type/affordance happens in ONE place.
 //   variant: 'metric'|'funnel'|'research'|'signal'|'lever'|'roster'|'figure'|'doc'|'numbered'|'marker'|'check'|'citation'|'spec'
-//   lead:    { kind:'none'|'dot'|'chip'|'numeral'|'glyph'|'tile'|'avatar', ... } — the leading cell (per-variant DOM)
+//   lead:    { kind:'none'|'chip'|'numeral'|'glyph'|'tile'|'avatar', ... } — the leading cell (per-variant DOM)
 //   title, sub, sub2, cap · bar:{now,pot,tick} (metric/funnel MID) · clause (full-bleed) ·
 //   trail:   { kind:'chevron'|'value'|'chip'|'word', value, valueMuted, delta:{text,tone}, ... }
 //   density: 'reading'|'compact' (defaulted per variant) · onDrill, key, foot, cls
 // ============================================================
 const ROW_COMPACT = new Set(['roster', 'figure', 'doc', 'numbered', 'marker', 'check', 'citation', 'spec']);
 // leading atoms — pure fns → the leading element. Two tone axes stay separate (verdict vs workstream-type).
-function leadDot(sev) { return sev ? `<span class="mrow-dot ${sev}"></span>` : ''; }
+// leadDot RETIRED: its only caller was the strength profile, where the dot restated what the bar,
+// the number and the footer's strong/mixed/gap split already said — and its ramp didn't even order
+// (gap, the worst band, drew as a PALE BRAND tint while mixed drew grey). No row leads with a dot now.
 function leadTile(icon, wtype) { return `<span class="rlead" style="background:${RTONE[wtype] || RTONE.p}"><span class="material-symbols-rounded" style="color:${RCOL[wtype] || RCOL.p}">${esc(icon || 'article')}</span></span>`; }
 // trailing atoms
 function trailValue(value, valueMuted, delta) {
@@ -750,8 +1198,20 @@ export function row(opts = {}) {
   // BODY assembly is per-variant: metric/funnel nest the dot inside .mrow-nm within .mrow-lab.
   if (variant === 'metric' || variant === 'funnel') {
     return `<div class="${cl}"${act}>
-    <div class="mrow-lab"><div class="mrow-nm">${leadDot(lead.sev)}${esc(title)}${unsettledMark}</div>${sub ? `<div class="mrow-sub">${esc(sub)}</div>` : ''}</div>
+    <div class="mrow-lab"><div class="mrow-nm">${esc(title)}${unsettledMark}</div>${sub ? `<div class="mrow-sub">${esc(sub)}</div>` : ''}</div>
     ${mid}${tr}${rowChev(clickable)}
+  </div>`;
+  }
+  // spec: label + a value that SIZES TO ITSELF. The variant was named in the
+  // contract above and in ROW_COMPACT from the start, but never given a branch,
+  // so anything wanting a plain label/value row had to borrow `metric` — whose
+  // value column is a fixed 104px because it holds scores like "64/100".
+  // Settings borrowed it and got "mercer-ventures", "Full platform licence" and
+  // "Enterprise only" each broken over two lines in a 104px gutter.
+  if (variant === 'spec') {
+    return `<div class="${cl}"${act}>
+    <div class="mrow-lab"><div class="mrow-nm">${esc(title)}</div>${sub ? `<div class="mrow-sub">${esc(sub)}</div>` : ''}</div>
+    ${trailValue(trail.value, trail.valueMuted, trail.delta)}${rowChev(clickable)}
   </div>`;
   }
   // research: a leading tile beside a text stack, trailing chip + chevron
@@ -766,13 +1226,13 @@ export function row(opts = {}) {
 
 // metricRow — thin wrapper over row() (public signature byte-identical, so strengthProfile /
 // investabilityComposition and the radar arithmetic are untouched). sub2 = the trailing delta.
-// opts: { key, label, sub, dot:'strong'|'mixed'|'gap'|null, bar:{now:0..1, pot:0..1, tick},
+// opts: { key, label, sub, bar:{now:0..1, pot:0..1, tick},
 //         value, valueMuted, sub2:{text, tone:'up'|'flat'}, onDrill, foot }
 export function metricRow(opts = {}) {
-  const { key, label, sub, dot, bar = {}, value, valueMuted = '', sub2, onDrill = '', foot = false, cls = '', unsettled = 0 } = opts;
+  const { key, label, sub, bar = {}, value, valueMuted = '', sub2, onDrill = '', foot = false, cls = '', unsettled = 0 } = opts;
   return row({
     variant: (cls && /funnel/.test(cls)) ? 'funnel' : 'metric',
-    key, title: label, unsettled, sub, lead: { kind: 'dot', sev: dot || null }, bar,
+    key, title: label, unsettled, sub, lead: { kind: 'none' }, bar,
     trail: { kind: 'value', value, valueMuted, delta: sub2 },
     onDrill, foot, cls: cls.replace(/\bfunnel\b/, '').trim(),
   });
@@ -783,16 +1243,17 @@ export function metricRow(opts = {}) {
 export function strengthProfile(s, onDrill = '') {
   const cats = [...s.categories].sort((a, b) => b.frac - a.frac);
   const count = { strong: 0, mixed: 0, gap: 0 };
-  const rows = cats.map(c => {
+  const rows = cats.map((c, i) => {
     const k = sevOf(c.frac); count[k]++;
     const headroom = c.pot > c.frac + 0.001;
     return metricRow({
-      key: c.key, label: c.label, dot: k,
+      key: c.key, label: c.label,
       sub: `${c.weightPct}% weight${k === 'gap' ? ' · gap' : ''}`,
       bar: { now: c.frac, pot: c.pot, tick: headroom },
       value: parseFloat(c.num).toFixed(1),
       sub2: headroom ? { text: `→ ${(c.pot * 5).toFixed(1)}`, tone: 'up' } : { text: 'at ceiling', tone: 'flat' },
       unsettled: c.unsettled || 0,
+      cls: i % 2 === 0 ? 'zebra' : '',
       onDrill
     });
   }).join('');
@@ -814,18 +1275,22 @@ export function strengthProfile(s, onDrill = '') {
   </section>`;
 }
 
-// score composition — the now-vs-potential RADAR (the centrepiece) + a per-category
-// contributions breakdown. Contribution = frac × weightPct (each category's share of the
-// 100 points); the bar shows points earned, the ghost the headroom to potential.
-// onDrill (optional): each row opens the per-category aux breakdown.
+// score composition — the per-category contributions table. Contribution = frac × weightPct
+// (each category's share of the 100 points); the bar shows points earned, the ghost the
+// headroom to potential. onDrill (optional): each row opens the per-category aux breakdown.
+//
+// The radar USED to sit on top of this table as a centred band. It drew a 202px web in a
+// 948px row — two thirds of that row was empty — and it was the second thing on the page to
+// say what the hero had already said. It now fronts the hero as radarLockup(), and this is
+// the full-width table it was crowding. One chart, one place.
 export function investabilityComposition(s, onDrill = '', head = {}) {
   const delta = s.potential - s.composite;
   const maxW = Math.max(...s.categories.map(c => c.weightPct));   // bar scale = the heaviest category's ceiling
   const rows = s.categories
     .map(c => ({ ...c, contrib: c.frac * c.weightPct, potContrib: c.pot * c.weightPct, headroom: c.pot > c.frac + 0.001 }))
     .sort((a, b) => b.contrib - a.contrib)
-    .map(c => metricRow({
-      key: c.key, label: c.label, dot: null,
+    .map((c, i) => metricRow({
+      key: c.key, label: c.label, cls: i % 2 === 0 ? 'zebra' : '',
       sub: `${c.weightPct}% weight · rated ${parseFloat(c.num).toFixed(1)}/5`,
       bar: { now: c.contrib / maxW, pot: c.potContrib / maxW, tick: false },
       value: `+${c.contrib.toFixed(1)}`,
@@ -837,11 +1302,8 @@ export function investabilityComposition(s, onDrill = '', head = {}) {
   return `<section class="sec">
     <div class="sec-head"><span class="eyebrow accent">${esc(head.eyebrow || 'Composition')}</span><span class="t">${esc(head.title || `How the ${s.composite} composes`)}</span><span class="meta">${esc(head.meta || '7 × 5 · weighted 0–100')}</span></div>
     <div class="compose">
-      <div class="radar-wrap">${radar(s, { max: 340 })}
-        <div class="radar-legend"><span class="key"><span class="sw-now"></span> Now <b>${s.composite}</b></span><span class="key"><span class="sw-pot dash"></span> Potential <b>${s.potential}</b> <span class="up">+${delta}</span></span></div>
-      </div>
       <div class="contrib">
-        <div class="contrib-cap">Each category's share of the <b>100</b> points — the bar is points earned, the ghost the headroom left. ${onDrill ? 'Click a row to break it down.' : ''}</div>
+        <div class="contrib-cap">Each category's share of the <b>100</b> points — the bar is points earned, the ghost the headroom left.${delta > 0 ? ` <b>+${delta}</b> of headroom is still available.` : ''} ${onDrill ? 'Click a row to break it down.' : ''}</div>
         ${rows}${foot}
       </div>
     </div>
@@ -861,17 +1323,23 @@ const cdChip = sc => sc === 1 ? '<span class="cd-chip g">1</span>' : sc === 0.5 
 // gapBySlug (optional): a map of DOTTED rubric slug → gap. Where a signal was scored down because the
 // research MISSED something, the empty trailing evidence slot becomes the file-evidence trigger instead of
 // staying blank. A signal with a real citation keeps its citation — a gap never displaces evidence.
-export function signalRows(subs = [], gapBySlug = {}, catKey = '') {
+// opts.lift — show each signal's available lift (+1.0 / +0.5) on the row itself. OPT-IN, because
+// the Research evidenceIntegrity surface shows the same five rows with no notion of headroom.
+export function signalRows(subs = [], gapBySlug = {}, catKey = '', opts = {}) {
   return subs.map(x => {
     const { note, ref } = cdSplitRef(x.note);
     const cls = x.score == null ? 'na' : x.score === 1 ? 'g' : x.score === 0.5 ? 'y' : 'r';
     const g = gapBySlug[`${catKey}.${x.slug}`] || gapBySlug[x.slug];
     const trail = ref ? `<span class="cd-ev" title="${esc(ref)}">${esc(ref)}</span>` : (g ? gapChip(g) : '');
+    // The lift rides on the signal that earned it. Brand-coloured, not amber: headroom is an
+    // opportunity, and amber/red are reserved for warnings and risks.
+    const lift = (opts.lift && x.score != null && x.score < 1)
+      ? `<span class="cd-liftv" title="Closing this signal is worth +${(1 - x.score).toFixed(1)} of 5 to the category.">+${(1 - x.score).toFixed(1)}</span>` : '';
     // UNSETTLED: the three blind draws split 2-1 here, so this value is one vote from its opposite. Marked
     // on the signal itself because the verdict's warning says a fifth of the score is unsettled without
     // saying WHICH fifth — and the operator's next question is always which.
     const un = x.unsettled ? `<span class="cd-unsettled material-symbols-rounded" title="The three independent reads split on this signal — it was decided by a single vote. More evidence would settle it.">balance</span>` : '';
-    return `<div class="cd-sig ${cls}${x.unsettled ? ' unsettled' : ''}">${cdChip(x.score)}<div class="bd"><div class="q">${esc(SUB_Q[x.slug] || x.slug)}${un}</div><div class="nt${note ? '' : ' muted'}">${note ? esc(note) : 'Not yet scored — assessed when the research run completes.'}</div></div>${trail}</div>`;
+    return `<div class="cd-sig ${cls}${x.unsettled ? ' unsettled' : ''}">${cdChip(x.score)}<div class="bd"><div class="q">${esc(SUB_Q[x.slug] || x.slug)}${un}</div><div class="nt${note ? '' : ' muted'}">${note ? esc(note) : 'Not yet scored — assessed when the research run completes.'}</div></div>${trail}${lift}</div>`;
   }).join('');
 }
 const cdOrd = n => n === 1 ? '1st' : n === 2 ? '2nd' : n === 3 ? '3rd' : `${n}th`;
@@ -904,20 +1372,19 @@ export function categoryDetail(s, key, gapBySlug = {}) {
   const cnt = { green: 0, yellow: 0, red: 0 };
   subs.forEach(x => { if (x.score != null) cnt[x.score === 1 ? 'green' : x.score === 0.5 ? 'yellow' : 'red']++; });
   const spread = `${cnt.green} strong · ${cnt.yellow} mixed · ${cnt.red} gap${pending ? ` · ${pending} pending` : ''}`;
-  const signals = `<div class="cd-block"><div class="cd-h"><span class="lab">The five signals</span><span class="sub">${spread}</span></div>${signalRows(subs, gapBySlug, key)}</div>`;
-
-  // ── 4 · what would lift it ──
-  let lifts;
-  if (forming) {
-    lifts = `<div class="cd-block"><div class="cd-h"><span class="lab">What would lift it</span></div><p class="cd-note">Rate the 5 signals to reveal what would lift the score — up to +${c.weightPct} available.</p></div>`;
-  } else if (!headroom) {
-    lifts = `<div class="cd-block"><div class="cd-h"><span class="lab">What would lift it</span></div><p class="cd-note">At its ceiling — contributing its full <b>+${contrib}</b>; no diligence headroom.</p></div>`;
-  } else {
-    const ranked = subs.filter(x => x.score === 0 || x.score === 0.5).map(x => ({ ...x, lift: 1 - x.score })).sort((a, b) => b.lift - a.lift);
-    lifts = `<div class="cd-block"><div class="cd-h"><span class="lab">What would lift it</span><span class="sub warn">+${compLift} to the score</span></div>
-      ${ranked.map(x => { const { note } = cdSplitRef(x.note); return `<div class="cd-lever">${cdChip(x.score)}<div class="bd"><div class="q">${esc(SUB_Q[x.slug] || x.slug)}</div>${note ? `<div class="nt">${esc(note)}</div>` : ''}</div><span class="cd-liftv">+${x.lift === 0.5 ? '0.5' : '1.0'}</span></div>`; }).join('')}
-      <p class="cd-foot">Closing these lifts the category from <b>${now.toFixed(1)}</b> → <b>${pot.toFixed(1)}</b>.</p></div>`;
-  }
+  // ── 3+4 · ONE spine. "The five signals" and "What would lift it" used to be the same list
+  // printed twice — same questions, same notes, re-sorted by lift — which doubled the panel's
+  // length and said nothing new the second time. The lift now rides on the signal that earned
+  // it, and the sentence that closed the old block becomes this one's footnote. One fact, once.
+  const open = subs.filter(x => x.score != null && x.score < 1).length;
+  const lifted = headroom ? `<span class="sub">+${compLift} available</span>` : '';
+  const signals = `<div class="cd-block"><div class="cd-h"><span class="lab">The five signals</span><span class="sub">${spread}</span>${lifted}</div>
+    ${signalRows(subs, gapBySlug, key, { lift: headroom })}
+    <p class="cd-foot">${forming
+      ? `Rate the 5 signals to reveal what would lift the score — up to <b>+${c.weightPct}</b> available.`
+      : !headroom
+        ? `At its ceiling — contributing its full <b>+${contrib}</b>; no diligence headroom.`
+        : `Closing the ${NUMWORD[open] || open} marked ${open === 1 ? 'signal' : 'signals'} carries the category from <b>${now.toFixed(1)}</b> to <b>${pot.toFixed(1)}</b> — <b>+${compLift}</b> on the score.`}</p></div>`;
 
   // ── 5 · contribution & standing ──
   const rankW = [...s.categories].sort((a, b) => b.weightPct - a.weightPct).findIndex(x => x.key === key) + 1;
@@ -934,7 +1401,9 @@ export function categoryDetail(s, key, gapBySlug = {}) {
   const un = c.unsettled
     ? `<div class="cd-wobble"><span class="material-symbols-rounded">balance</span><div><strong>${c.unsettled} of these 5 signals ${c.unsettled === 1 ? 'was' : 'were'} decided by a single vote.</strong> The three independent reads disagreed and a majority of one settled ${c.unsettled === 1 ? 'it' : 'them'} — marked below. The evidence does not support a firm call, so this category could score differently on a re-run. Adding documents that speak to ${c.unsettled === 1 ? 'that signal' : 'those signals'} is what would fix it.</div></div>`
     : '';
-  return { title: c.label, subtitle: `${CD_SB_WORD[cb]} · ${c.weightPct}% weight · L2 · Investability`, body: `${standfirst}${figures}${un}${signals}${lifts}${standing}` };
+  // size travels WITH the content: a rubric question needs a reading measure, so this panel asks
+  // for the wide variant itself rather than every call site remembering to request it.
+  return { size: 'wide', title: c.label, subtitle: `${CD_SB_WORD[cb]} · ${c.weightPct}% weight · L2 · Investability`, body: `${standfirst}${figures}${un}${signals}${standing}` };
 }
 
 // the case, argued both ways — two grouped lists (the one place cards earn elevation)
@@ -972,16 +1441,128 @@ export function conditionsKill(a) {
   </section>`;
 }
 
+/* ── the clearance family: a unit grid, and the lockup that fronts the Diligence tab ─────────── */
+
+// SEVERITY is the ONE place a check's kind becomes a colour, a glyph and a word. The adapter emits
+// err/warn/info today; `order` drives sorting and the legend, and an unknown kind falls through to
+// the neutral row rather than disappearing — a runner that starts emitting a fourth severity gets
+// drawn, uncoloured, instead of silently vanishing from the chart.
+// `plural` is spelled out rather than derived: "3 blockers" is right and "3 keys" / "3 standards"
+// are not — these labels are adjectives, not nouns, so an -s rule would be wrong twice out of three.
+const SEVERITY = {
+  err:  { order: 0, label: 'Blocker',  plural: 'blockers', glyph: 'lock',          gates: true },
+  warn: { order: 1, label: 'Key',      plural: 'key',      glyph: 'priority_high', gates: false },
+  info: { order: 2, label: 'Standard', plural: 'standard', glyph: 'remove',        gates: false },
+};
+const sevOfKind = k => SEVERITY[k]
+  || { order: 9, label: String(k || 'Other'), plural: String(k || 'other').toLowerCase(), glyph: 'remove', gates: false };
+
+// unitGrid — MOLECULE. One cell per discrete thing, tinted by kind, with a state glyph. The unit is
+// the item, so nothing is averaged: nine checks draw nine cells, and three draw three. Generic over
+// [{kind, done, title}]; past `max` the final cell carries the remainder so a 40-item list stays a
+// chart rather than becoming a wall.
+//
+// a11y: a grid of 9 cells is a CHART, and reading nine cell labels aloud would duplicate the
+// checklist that sits directly below it. So the grid carries one role="img" + a summary label, and
+// the cells are hidden. `title` still gives a sighted user the item on hover.
+export function unitGrid(opts = {}) {
+  const { items = [], max = 24, label = '' } = opts;
+  if (!items.length) return '';
+  const sorted = [...items].sort((a, b) => sevOfKind(a.kind).order - sevOfKind(b.kind).order);
+  const over = Math.max(0, sorted.length - max);
+  const shown = sorted.slice(0, over ? max - 1 : max);
+  const cell = it => {
+    const s = sevOfKind(it.kind);
+    // ⚠ this used to be a native `title`, which waits a second, cannot wrap and shows the note not
+    // at all. The shared tip carries the severity + the check's own title as the heading and its
+    // full note as the body — the whole reason a cell is only a glyph is that the detail lives here.
+    const tip = {
+      title: `${s.label}${it.done ? ' · cleared' : ''} — ${it.title || 'Check'}`,
+      body: it.note || 'No further detail recorded for this check.',
+      kind: it.done ? '' : (SEVERITY[it.kind] ? it.kind : ''),
+    };
+    return `<i class="${esc(SEVERITY[it.kind] ? it.kind : 'info')}${it.done ? ' done' : ''}"${tipAttrs(tip)} aria-hidden="true">${
+      icon(it.done ? 'check' : s.glyph)}</i>`;
+  };
+  return `<div class="ugrid" role="img" aria-label="${esc(label || `${items.length} items`)}">
+    ${shown.map(cell).join('')}
+    ${over ? `<i class="more" aria-hidden="true">+${over}</i>` : ''}
+  </div>`;
+}
+
+// clearanceLockup — MOLECULE. Fronts the Diligence tab: how many checks still BLOCK a wire, the gate
+// chip, the unit grid of every check, and a derived legend.
+//
+// ⚠ THE NUMERAL IS BLOCKERS, NOT CHECKS. It used to read "0 / 9 cleared", which says all nine must
+// clear before money moves — and diligenceEditorial's own `gateOpen` has never believed that: the
+// gate is a function of BLOCKERS alone. The hero was contradicting the rule it sits on top of.
+// (Worth knowing while reading this: nothing in the OS currently writes `done` — the adapter
+// hardcodes false — so the cleared state below is built and correct but cannot yet be reached.)
+export function clearanceLockup(opts = {}) {
+  const { label = 'Pre-wire clearance', labelTone = 'accent', items = [], maxCells = 24 } = opts;
+  const gating = items.filter(d => sevOfKind(d.kind).gates);
+  const openGating = gating.filter(d => !d.done).length;
+  const gateOpen = !items.length || !gating.length || openGating === 0;
+  const total = items.length, done = items.filter(d => d.done).length;
+
+  const numeral = !total
+    ? `<div class="lockup-num">0<small>to clear</small></div>`
+    : gating.length
+      ? `<div class="lockup-num">${openGating}<small>/${gating.length} blocking</small></div>`
+      : `<div class="lockup-num">${total - done}<small>to work</small></div>`;
+  const band = `<span class="lockup-band ${gateOpen ? 'good' : 'bad'}">${icon(gateOpen ? 'lock_open' : 'lock')} ${
+    !total ? 'Nothing to clear' : gateOpen ? 'Cleared to wire' : 'Do not wire'}</span>`;
+
+  // the legend derives from what is PRESENT — a clean assessment with only standard checks shows
+  // one entry, not three with two zeroes in them.
+  const present = [...new Set(items.map(d => d.kind))].sort((a, b) => sevOfKind(a).order - sevOfKind(b).order);
+  const legend = present.map(k => {
+    const g = items.filter(d => d.kind === k), nd = g.filter(d => d.done).length;
+    return `<span class="ug-k ${esc(SEVERITY[k] ? k : 'info')}"><s aria-hidden="true"></s>${
+      esc(sevOfKind(k).label.toUpperCase())} ${nd ? `${nd}/${g.length}` : g.length}</span>`;
+  }).join('');
+
+  const summary = !total ? 'No open diligence'
+    : `${total} check${total === 1 ? '' : 's'}: ${present.map(k => {
+        const n = items.filter(d => d.kind === k).length, s = sevOfKind(k);
+        return `${n} ${n === 1 ? s.label.toLowerCase() : s.plural}`;
+      }).join(', ')}${done ? ` — ${done} cleared` : ' — none cleared'}`;
+
+  // ⚠ the remaining work is the OPEN non-gating checks, not every non-gating check. Counting the
+  // total made "everything cleared" still report "6 non-gating checks still to work".
+  const openRest = items.filter(d => !sevOfKind(d.kind).gates && !d.done).length;
+  const pl = (n, one, many) => n === 1 ? one : many;
+  const checks = n => `${n} check${n === 1 ? '' : 's'}`;
+  const read = !total
+    ? `<p class="ug-read"><b>No open diligence.</b> Nothing stands between this and a wire.</p>`
+    : !gating.length
+      ? (openRest
+        ? `<p class="ug-read">No blockers — the gate is <b class="ok">open</b>. <b>${checks(openRest)}</b> to work through in diligence.</p>`
+        : `<p class="ug-read">No blockers, and <b class="ok">every check is cleared</b>.</p>`)
+      : openGating === 0
+        ? (openRest
+          ? `<p class="ug-read">All <b>${gating.length}</b> ${pl(gating.length, 'blocker', 'blockers')} cleared — the gate is <b class="ok">open</b>, with <b>${openRest}</b> non-gating ${pl(openRest, 'check', 'checks')} still to work.</p>`
+          : `<p class="ug-read"><b class="ok">Every check cleared</b> — the gate is open and nothing is outstanding.</p>`)
+        : `<p class="ug-read"><b class="bad">${openGating} of ${gating.length} ${pl(gating.length, 'blocker', 'blockers')}</b> ${pl(openGating, 'still stands', 'still stand')} between this and a wire${openRest ? `. <b>${openRest}</b> further ${pl(openRest, 'check does', 'checks do')} not gate it` : ''}.</p>`;
+
+  return `<div class="clearance-lockup">
+    <span class="eyebrow ${labelTone}">${esc(label)}</span>
+    ${numeral}${band}
+    ${unitGrid({ items, max: maxCells, label: summary })}
+    ${legend ? `<div class="ug-leg">${legend}</div>` : ''}
+    ${read}
+  </div>`;
+}
+
 // pre-wire diligence — the whole Diligence tab: a Section hero (diligence statement + the pre-wire
-// CLEARANCE progress lockup) atop the severity-grouped checklist. Mirrors verdictMemo's structure —
-// the hero carries the gate (status chip + segmented bar), the checklist carries the detail. All derived.
+// CLEARANCE unit grid) atop the severity-grouped checklist. Mirrors verdictMemo's structure —
+// the hero carries the gate (status chip + the grid), the checklist carries the detail. All derived.
 export function diligenceEditorial(a) {
   const items = a.diligence || [];
   const of = k => items.filter(d => d.kind === k);
-  const nBlock = of('err').length, nKey = of('warn').length, nStd = of('info').length;
-  const cleared = items.filter(d => d.done).length, total = items.length;
+  const nBlock = of('err').length;
+  const total = items.length;
   const rowCls = k => k === 'err' ? ' err' : k === 'warn' ? ' warn' : '';
-  const sub = [nBlock && `${nBlock} blocker${nBlock > 1 ? 's' : ''}`, nKey && `${nKey} key`, nStd && `${nStd} standard`].filter(Boolean).join(' · ');
   const blockersDone = nBlock > 0 && of('err').every(d => d.done);
   const cap = w => String(w).charAt(0).toUpperCase() + String(w).slice(1);
   const blk = `${cap(NUMWORD[nBlock] || nBlock)} blocker${nBlock !== 1 ? 's' : ''}`;
@@ -998,21 +1579,14 @@ export function diligenceEditorial(a) {
   const hero = sectionHero({
     left: statementLockup({
       eyebrow: 'Pre-wire diligence', eyebrowIcon: 'fact_check',
+      tone: gateOpen ? 'good' : 'mid',
       headline, headlineEm,
-      facts: [
-        { k: 'Gate', v: gateOpen ? 'Open' : 'Locked' },
-        { k: 'To clear', v: `${total} check${total !== 1 ? 's' : ''}` }
-      ]
+      // ⚠ a "Gate: Locked" fact used to sit here, one inch from a "Do not wire" chip that says the
+      // same thing — the clearance lockup owns the gate now. What is left is only additive: the
+      // numeral counts BLOCKERS, so the total is worth stating, and only when it differs.
+      facts: [total > nBlock ? { k: 'To clear in all', v: `${total} check${total !== 1 ? 's' : ''}` } : null].filter(Boolean)
     }),
-    right: progressLockup({
-      label: 'Pre-wire clearance', done: cleared, total,
-      status: total === 0 ? 'Nothing to clear' : nBlock === 0 ? 'No blockers — proceed' : blockersDone ? 'Cleared to proceed' : 'Do not wire',
-      statusIcon: gateOpen ? 'lock_open' : 'lock',
-      tone: gateOpen ? 'good' : 'bad',
-      segments: items.map(d => ({ kind: d.kind, done: !!d.done })),
-      capLeft: `<b>${cleared}</b> of ${total} cleared`,
-      capRight: sub
-    }),
+    right: clearanceLockup({ label: 'Pre-wire clearance', items }),
     thesis: ''
   });
 
@@ -1507,6 +2081,77 @@ export function verdictSignoff(a) {
   return `<section class="sec" style="padding-bottom:0">${card}${provLine(a.confidence)}</section>`;
 }
 
+
+/* scoreBreakdown — SECTION. What the headline score is actually made of.
+   A full-width section BELOW the verdict hero, not a panel inside it: the
+   hero's right column is ~408px, which starved the category labels (104px
+   against the 170 they need) and pushed the verdict headline to four lines.
+   Full width it has room, and the two-column hero every tab shares is left
+   exactly as it is.
+
+   Three things make it worth showing:
+
+   · It RECONCILES. The per-category x/5 figures do not — at 80 they happen
+     to sum to exactly 80.0 and look right, at 55 they sum to 52.9 against a
+     headline of 55. What reconciles is each category's CONTRIBUTION,
+     weightPct × frac, because that is how the composite is computed. The
+     `/20` then answers what the pips cannot: a 4/5 in Team is worth more
+     than a 4/5 in Evidence because Team carries 25 points and Evidence 5.
+
+   · It is HONEST about rounding. The headline is that sum rounded, so
+     MoneyGym's parts total 54.5 against a displayed 55. The total says so
+     rather than fudging the parts until they fit.
+
+   · The pips are the REAL sub-signals, not a bar redrawn as dots — five
+     signals, five pips, each 0 / 0.5 / 1 exactly as scored. A category with
+     a different number of signals renders that number, so this does not
+     assume the 7×5 rubric and works for any assessment.
+
+   Related: investabilityComposition() on the Investability tab shows the
+   same decomposition in depth — radar, headroom per category, drill-through.
+   This is the glanceable version that sits with the verdict; that is the one
+   you open to work in. */
+export function scoreBreakdown(s, head = {}) {
+  const cats = (s && s.categories) || [];
+  if (!cats.length) return '';
+  const n1 = v => (Math.round(v * 10) / 10).toFixed(1);
+  const rows = cats.map(c => {
+    const contrib = (c.weightPct || 0) * (c.frac || 0);
+    const subs = Array.isArray(c.subs) && c.subs.length
+      ? c.subs.map(x => x.score)
+      : Array.from({ length: 5 }, (_, i) => Math.max(0, Math.min(1, (c.frac || 0) * 5 - i)));
+    /* Every pip is the accent. A category scoring 3.0/5 is not a warning —
+       it is a lower score, and the two empty pips already say so. Colouring
+       the weak rows amber put a caution colour on an ordinary number and
+       made one row shout among six that were only slightly higher. */
+    const pips = subs.map(v =>
+      `<i>${v > 0 ? `<span class="p-on" style="width:${(Math.min(1, v) * 100).toFixed(0)}%"></span>` : ''}</i>`
+    ).join('');
+    return `<div class="bd-r">
+      <span class="bd-lb">${esc(c.label || c.key || '')}</span>
+      <span class="bd-pips">${pips}</span>
+      <span class="bd-w">${esc(String(c.weightPct ?? ''))}% weight</span>
+      <span class="bd-v">${n1(contrib)}<u> / ${esc(String(c.weightPct ?? ''))}</u></span>
+    </div>`;
+  }).join('');
+  const total = cats.reduce((t, c) => t + (c.weightPct || 0) * (c.frac || 0), 0);
+  const t1 = Math.round(total * 10) / 10;
+  const rounded = Math.round(t1);
+  return `<section class="sec score-breakdown">
+    <div class="sec-head">
+      <span class="eyebrow accent">${esc(head.eyebrow || 'Composition')}</span>
+      <span class="t">${esc(head.title || `What makes the ${s.composite}`)}</span>
+      <span class="meta">${esc(head.meta || 'points of 100')}</span>
+    </div>
+    <div class="bd-t">${rows}</div>
+    <div class="bd-sum">
+      <span class="bd-k">Total${rounded !== t1 ? ` <em>— rounds to ${rounded}</em>` : ''}</span>
+      <span></span><span></span>
+      <span class="bd-tv">${n1(t1)}<u> / 100</u></span>
+    </div>
+  </section>`;
+}
+
 // the whole Verdict-tab memo, composed (sectionHero → case → conditions → sign-off).
 // The hero is the reusable sectionHero organism, fed the MoneyGym verdict + score.
 export function verdictMemo(a, s) {
@@ -1514,14 +2159,17 @@ export function verdictMemo(a, s) {
     ${s.wobbleNote ? `<div class="verdict-wobble"><span class="material-symbols-rounded">balance</span><div><strong>Treat this number as indicative.</strong> ${esc(s.wobbleNote)}</div></div>` : ''}
     ${sectionHero({
       eyebrow: 'The verdict', eyebrowIcon: 'balance',
+      tone: BAND_TONE[s.band] || 'mid',
       headline: a.verdictLine || a.recommendation, headlineEm: a.verdictEm,
       facts: [
         { k: 'Conviction', v: `${esc(a.conviction)} ${convPips(a.conviction)}` },
         { k: 'The ask', v: `${esc(a.askAmount)} <small>${esc(a.askRest)}</small>` }
       ],
-      score: { label: 'Investability score', score: s.composite, max: 100, band: s.band, tone: BAND_TONE[s.band] || 'mid', now: s.composite, potential: s.potential },
+      score: { label: 'Investability score', score: s.composite, max: 100, band: s.band, tone: BAND_TONE[s.band] || 'mid', now: s.composite, potential: s.potential, draws: s.draws || null },
       thesis: a.thesis
     })}
+    <hr class="rule">
+    ${scoreBreakdown(s)}
     <hr class="rule">
     ${caseEditorial(a)}
     <hr class="rule">
@@ -1535,12 +2183,17 @@ export function verdictMemo(a, s) {
 //    the left, editorial copy from a.heroes[tab]) + a per-tab metric molecule on the right, DERIVED from
 //    structured data. Same frame as verdictMemo/diligenceEditorial, molecules swapped per what the tab says. ──
 
-// Investability tab hero — statement + profileLockup (the 55 re-expressed as its severity shape).
+// Investability tab hero — statement + radarLockup (the score as the SHAPE of its seven categories).
 export function investabilityHero(s, a = {}) {
   const h = (a.heroes && a.heroes.investability) || {};
   return sectionHero({
+    // Same band, same tone as the Verdict tab. Without this the two heroes of
+    // one assessment disagreed: the verdict read green and the score that
+    // produced it read amber, one tab apart.
+    tone: BAND_TONE[s.band] || 'mid',
     eyebrow: h.eyebrow, eyebrowIcon: h.eyebrowIcon, headline: h.headline, headlineEm: h.headlineEm, facts: h.facts,
-    right: profileLockup({ label: 'Category profile', score: s.composite, max: 100, now: s.composite, potential: s.potential, categories: s.categories }),
+    // The radar lives HERE now, not in a band 1000px down the page. See radarLockup().
+    right: radarLockup({ label: 'Category profile', score: s.composite, max: 100, now: s.composite, potential: s.potential, categories: s.categories }),
     thesis: h.thesis
   });
 }
@@ -1643,20 +2296,29 @@ export function marketHero(a = {}) {
   });
 }
 
-// Team tab hero — statement + progressLockup recycled as a signal spread (verified/neutral/flagged).
-export function teamHero(a = {}) {
-  const h = (a.heroes && a.heroes.team) || {}, members = (a.team && a.team.members) || [];
-  const verified = members.filter(m => m.signal === 'positive').length;
-  const neutral = members.filter(m => m.signal === 'neutral').length;
-  const flagged = members.filter(m => m.signal === 'flag').length;
-  const rank = { positive: 0, neutral: 1, flag: 2 }, segTone = { positive: 'good', neutral: 'warn', flag: 'err' };
-  const segments = [...members].sort((x, y) => rank[x.signal] - rank[y.signal]).map(m => ({ kind: segTone[m.signal] || 'info', done: true }));
+// Team tab hero — statement + benchLockup (the cast, split by who has to build the thing).
+// Takes the score as a second argument, like researchMemo/investabilityHero already do, so the
+// numeral can be the team's OWN category score rather than a count of who we could look up.
+// Degrades to a scoreless bench when no snapshot is passed.
+export function teamHero(a = {}, s = {}) {
+  const h = (a.heroes && a.heroes.team) || {}, t = a.team || {};
+  const cat = ((s && s.categories) || []).find(c => c.key === 'team') || {};
+  const rated = (cat.subs || []).some(x => x.score != null);
+  const score = rated && cat.num != null ? cat.num : null;
+  // ⚠ The lockup now prints the team's category score as its numeral, and the runner's hero facts
+  // very often restate it ("Founder–market fit · 3.0 / 5 · heaviest signal") — the same figure
+  // twice in one hero, two feet apart. Drop a fact that LEADS with that exact N / 5 and nothing
+  // else; a fact that merely mentions the number in a sentence is left alone, because it is then
+  // making an argument rather than repeating a readout.
+  const facts = score == null ? h.facts : (h.facts || []).filter(f => {
+    const v = String(f && f.v || '').replace(/<[^>]*>/g, ' ');
+    return !new RegExp(`^\\s*${Number(score)}(\\.0)?\\s*/\\s*${Number(cat.max) || 5}\\b`).test(v);
+  });
   return sectionHero({
-    eyebrow: h.eyebrow, eyebrowIcon: h.eyebrowIcon, headline: h.headline, headlineEm: h.headlineEm, facts: h.facts,
-    right: progressLockup({
-      label: 'Team signal', unit: 'verified', done: verified, total: members.length,
-      status: `${flagged} flagged · ${neutral} to verify`, statusIcon: 'flag', tone: 'mid',
-      segments, capLeft: `Verified ${verified} · Neutral ${neutral} · Flagged ${flagged}`, capRight: ''
+    eyebrow: h.eyebrow, eyebrowIcon: h.eyebrowIcon, headline: h.headline, headlineEm: h.headlineEm, facts,
+    right: benchLockup({
+      label: 'Team signal', members: t.members || [], gaps: t.gaps || [],
+      score, weightPct: cat.weightPct || null,
     }),
     thesis: h.thesis
   });
@@ -1664,9 +2326,8 @@ export function teamHero(a = {}) {
 
 // Research tab hero — statement + coverageLockup (evidence completeness + provenance).
 export function researchHero(a = {}, s = {}) {
-  const h = (a.heroes && a.heroes.research) || {}, cats = s.categories || [], cf = a.confidence || {};
-  const total = cats.reduce((n, c) => n + (c.subs ? c.subs.length : 0), 0);
-  const rated = cats.reduce((n, c) => n + (c.subs ? c.subs.filter(x => x.score != null).length : 0), 0);
+  const h = (a.heroes && a.heroes.research) || {}, cf = a.confidence || {};
+  const { rated, total } = signalCount(s);   // ONE derivation, shared with the radar caption
   const wsCount = (a.research || []).length;
   const tone = total === 0 ? 'mid' : /high/i.test(cf.level) ? 'good' : /med/i.test(cf.level) ? 'mid' : 'bad';
   // a forming/absent snapshot has no rated signals — show "Forming", not a giant "0/0"
@@ -1695,7 +2356,7 @@ export function marketSizing(m) {
   const tiers = [['TAM', m.tam, 'Total addressable'], ['SAM', m.sam, 'Serviceable addressable'], ['SOM', m.som, 'Obtainable addressable']]
     .filter(([, d]) => d && d.value != null && d.value !== '');
   if (!tiers.length) return '';
-  const bars = tiers.map(([k, d, sub]) => metricRow({ label: k, sub, bar: { now: d.v }, value: d.value, cls: 'funnel' })).join('');
+  const bars = tiers.map(([k, d, sub], i) => metricRow({ label: k, sub, bar: { now: d.v }, value: d.value, cls: `funnel${i % 2 === 0 ? ' zebra' : ''}` })).join('');
   return `<section class="sec">
     <div class="sec-head"><span class="eyebrow accent">The market, at honest scale</span><span class="t">Sized bottom-up, not top-down</span><span class="meta">corrected</span></div>
     <p class="lead"><span class="drop">${esc(m.sizingDrop || 'Genuinely')}</span> ${esc(m.sizingLead || m.note)}</p>
@@ -1739,16 +2400,19 @@ export function dealValuation(v, rounds = []) {
   </section>`;
 }
 
-// The field — an editorial standfirst lifted OFF the card, then the dense 5×6 matrix in the ONE card that
-// earns its container (column cross-read), then the structural-edge callout. The single earned card on the tab.
+// The field — an editorial standfirst, then the dense 5×6 matrix, then the structural-edge callout.
+// ⚠ The matrix used to sit in an .m3-card, on the argument that a cross-read table "earns its
+// container". It does not: a filled, shadowed panel in the middle of a memo reads as a widget
+// pasted into an argument, and the table's own header rule and row hairlines already do every
+// job the card was doing. It now sits on the background, flush with the prose above it.
 export function benchmarkTable(b, onOpen = '') {
   if (!b || !(b.rows || []).length) return '';   // live verdicts can ship without a benchmark (mirrors the classic guard)
   const standfirst = `<section class="sec">
     <div class="sec-head"><span class="eyebrow accent">The field</span><span class="t">Everyone else already shipped</span></div>
     <p class="lead"><span class="drop">${esc(b.leadDrop || 'MoneyGym')}</span> ${esc(b.lead || b.note)}</p>
   </section>`;
-  const matrix = `<section class="m3-card" style="overflow-x:auto;margin-top:6px">
-    <table class="tbl"><thead><tr>${b.cols.map(c => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${b.rows.map(r => `<tr ${r.me ? 'class="me"' : ''}>${r.cells.map((c, i) => `<td>${i === 0 && r.me ? '<b>' + esc(c) + '</b>' : esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>
+  const matrix = `<section class="sec matrix-sec">
+    <div class="tbl-scroll"><table class="tbl tbl-bare"><thead><tr>${b.cols.map(c => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${b.rows.map(r => `<tr ${r.me ? 'class="me"' : ''}>${r.cells.map((c, i) => `<td>${i === 0 && r.me ? '<b>' + esc(c) + '</b>' : esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
     <div class="see-research"><button class="m3-btn text trail" ${onOpen ? `onclick="${onOpen}('benchmark')"` : ''}><span class="material-symbols-rounded">arrow_forward</span>Read the full competitive teardown</button></div></section>`;
   const edge = b.edge ? `<div class="fact" style="margin-top:24px"><div class="k">The edge</div><div class="v">${esc(b.edge)}</div></div>` : '';
   return `${standfirst}${matrix}${edge}`;
@@ -1772,19 +2436,152 @@ const SIGCOL = { positive: 's', flag: 'err', neutral: 'n' };
 const SIGCHIP = { positive: { kind: 'ok', label: 'Verified' }, flag: { kind: 'err', label: 'Flag' }, neutral: { kind: 'info', label: 'Neutral' } };
 const SIG_WORD = { positive: 'Verified', flag: 'Flag', neutral: 'To verify' };
 
+// memberParts — a member's PERSON and ROLE as two strings. The runner emits them separately, the
+// adapter used to glue them into one `name` ("Jonathan Corner — CEO / Founder"), and THREE call
+// sites then each split that back apart with their own regex. The adapter now carries them
+// structured as well, so this prefers the real fields and falls back to the split only for a
+// fixture (or a stored snapshot) written before they existed.
+export function memberParts(m = {}) {
+  const joined = String(m.name || '');
+  const [first, ...rest] = joined.split('—');
+  return { person: m.person || first.trim() || joined, role: m.role || rest.join('—').trim() };
+}
+
+// Who has to BUILD the thing, vs who advises them. On a surprising number of assessments the split
+// IS the finding — a board that checks out sitting above an executive team that does not — and an
+// undifferentiated headcount averages that away. Matched on the ROLE, which every member carries,
+// so it stays venture-agnostic; anything unmatched counts as executive, because the default
+// assumption for an unlabelled person on a cap table is that they work there.
+const BOARD_RE = /\b(ned|non[- ]?exec\w*|advis\w*|chair\w*|board|observer|investor|mentor)\b/i;
+export const isBoardRole = role => BOARD_RE.test(String(role || ''));
+
+// signalTier — MOLECULE. One labelled band of signal-tinted people-pills: a tier label, a derived
+// count on the right, and the pills. Generic over any [{i, label, signal, icon}] set — `signal`
+// picks the tint (positive/neutral/flag) and an item with an `icon` and no label renders as an
+// empty-seat pill. A tier with nothing in it renders NOTHING, so a board-less team leaves no
+// dangling header.
+//
+// `meta` takes EITHER a plain string or [{text, tone}] parts, so a caller can colour the clause
+// that is a warning ("2 flagged") while the clause that is only a tally ("0 of 3 verified") stays
+// in the reading hue. One string would force the whole line to be one or the other.
+export function signalTier(opts = {}) {
+  const { label = '', items = [], meta = '', metaTone = '' } = opts;
+  if (!items.length) return '';
+  const pills = items.map(it => {
+    // `kind` wins when a caller needs the outline treatment on a pill that DOES carry a label
+    // (the "+3 more seats" overflow); otherwise icon-only means seat, and a signal means a person.
+    const cls = it.kind || (it.icon && !it.label ? 'seat' : (SIGCOL[it.signal] ? it.signal : 'neutral'));
+    // ⚠ an icon is a LIGATURE — its text content is the token, so without a real label beside it a
+    // screen reader announces "person_add". icon() hides the glyph; `alt` is what gets read instead.
+    const body = it.icon && !it.label
+      ? `${icon(it.icon)}${srOnly(it.alt || 'Empty seat')}`
+      : `${it.i ? `<s aria-hidden="true">${esc(it.i)}</s>` : ''}${esc(it.label || '')}`;
+    return `<b class="${esc(cls)}"${tipAttrs(it.tip)}>${body}</b>`;
+  }).join('');
+  const parts = Array.isArray(meta) ? meta : (meta ? [{ text: meta, tone: metaTone }] : []);
+  const metaHtml = parts.length
+    ? `<em>${parts.map(p => `<span class="${p.tone === 'bad' ? 'bad' : ''}">${esc(p.text)}</span>`).join('<i>·</i>')}</em>`
+    : '';
+  // the tier label is the house .eyebrow atom, not a second uppercase-label treatment
+  return `<div class="sigtier">
+    <div class="sigtier-h"><span class="eyebrow">${esc(label)}</span>${metaHtml}</div>
+    <div class="sigtier-row">${pills}</div>
+  </div>`;
+}
+
+// benchLockup — MOLECULE. The Team hero's chart: the cast arranged as a BENCH — who runs the
+// company, who advises it, and the seats nobody is in — under the team's own category score.
+//
+// It replaced progressLockup, which this hero had been borrowing from the diligence clearance
+// metric. That molecule printed one numeral ("2") that was a count of the people we could look up,
+// which is diligence hygiene rather than a judgement on the team, and it sat beside a hero fact
+// reading 3.0 / 5; two different numbers, two different meanings, one inch apart. Worse, flattening
+// everyone into a single row of pips averages away the only pattern on this tab that changes a
+// decision — a verified BOARD above an unverified EXECUTIVE team.
+//
+// Seats are drawn UNLABELLED on purpose: `gaps` is free prose ("No ML / AI lead on the cap table or
+// board — …") and not every entry is even a role, so the count is honest where a parsed role name
+// would sometimes be fiction. The gaps are named in full in teamGaps() further down the tab.
+export function benchLockup(opts = {}) {
+  const {
+    label = 'Team signal', labelTone = 'accent',
+    members = [], gaps = [], score = null, max = 5, weightPct = null,
+    execLabel = 'Running the company', boardLabel = 'Board & advisory', seatLabel = 'Seats nobody is in',
+    maxSeats = 7,
+  } = opts;
+  const exec = members.filter(m => !isBoardRole(memberParts(m).role));
+  const board = members.filter(m => isBoardRole(memberParts(m).role));
+  // the pill's label is the role, trimmed to its first clause ("CTO / Co-Founder" → "CTO"), because
+  // a hero pill has room for a title and not a job description; a member with no role shows the name.
+  const pill = m => {
+    const { person, role } = memberParts(m);
+    return { i: m.i, label: (role.split('/')[0] || '').trim() || person, signal: m.signal };
+  };
+  const tier = (lab, ms) => {
+    const v = ms.filter(m => m.signal === 'positive').length, f = ms.filter(m => m.signal === 'flag').length;
+    // Clause by clause, because they are not the same kind of statement. "N of M verified" is a
+    // tally and reads in the body hue — EXCEPT when none of a multi-person tier checks out, which
+    // is the finding this chart exists to surface. "N flagged" is always a warning.
+    return signalTier({
+      label: lab, items: ms.map(pill),
+      meta: [
+        { text: `${v} of ${ms.length} verified`, tone: v === 0 && ms.length > 1 ? 'bad' : '' },
+        f ? { text: `${f} flagged`, tone: 'bad' } : null,
+      ].filter(Boolean),
+    });
+  };
+  // a team missing twenty roles would otherwise draw twenty seats and swamp the tiers above it;
+  // past the cap the last seat carries the remainder, so the row stays short and still adds up.
+  const over = Math.max(0, gaps.length - maxSeats);
+  // A seat is drawn unlabelled because `gaps` is free prose and a parsed role name would sometimes
+  // be fiction — but the prose itself always says which role is missing, so hovering a seat shows
+  // it verbatim. The em-dash split is PRESENTATIONAL only: both halves are shown either way, so
+  // nothing is hidden and nothing is invented when a gap happens not to have one.
+  const seatTip = g => {
+    const s = String(g), cut = s.search(/\s[—–]\s/);
+    return cut > 0 && cut < 80
+      ? { title: s.slice(0, cut).trim(), body: s.slice(cut + 3).trim(), kind: 'err' }
+      : { body: s, kind: 'err' };
+  };
+  const seats = gaps.length ? signalTier({
+    label: seatLabel,
+    // an unfilled seat is an absence the venture is being marked down for, not a tally
+    meta: [{ text: `${gaps.length} to hire`, tone: 'bad' }],
+    items: gaps.slice(0, over ? maxSeats - 1 : maxSeats)
+      .map((g, i) => ({ icon: 'person_add', alt: `Unfilled seat ${i + 1} of ${gaps.length}: ${g}`, tip: seatTip(g) }))
+      .concat(over ? [{
+        label: `+${over}`, kind: 'seat', alt: `${over} further unfilled seats`,
+        tip: { title: `${over} more seats to fill`, body: gaps.slice(maxSeats - 1).join(' · '), kind: 'err' },
+      }] : []),
+  }) : '';
+  const body = `${tier(execLabel, exec)}${tier(boardLabel, board)}${seats}`;
+  const numeral = score == null
+    ? `<div class="lockup-num"><span class="lockup-forming">Forming</span></div>`
+    : `<div class="lockup-num">${esc(String(score))}<small>/${esc(String(max))}</small></div>`;
+  // the caption carries the one thing the tiers cannot: how much of the whole score this tab moves.
+  const cap = score == null
+    ? `<div class="bl-cap"><span class="bl-wait">Scored when the run completes</span></div>`
+    : weightPct
+      ? `<div class="bl-cap"><span><b>${esc(String(weightPct))}%</b> of the score</span><span class="bl-part">the heaviest category</span></div>`
+      : '';
+  return `<div class="bench-lockup">
+    <span class="eyebrow ${labelTone}">${esc(label)}</span>
+    ${numeral}${cap}
+    ${body ? `<div class="bl-bench">${body}</div>` : `<div class="bl-cap"><span class="bl-wait">No team named on this assessment yet.</span></div>`}
+  </div>`;
+}
 
 // founderRoster — ORGANISM. The founder cast as signal-tinted editorial rows on the background — the detail
-// behind teamHero's signal spread. The scannable signal column survives as a tinted monogram + a trailing
+// behind teamHero's bench. The scannable signal column survives as a tinted monogram + a trailing
 // signal word, not a card border. Reuses memberBg + the hairline-row grid.
 export function founderRoster(team, onOpen = '') {
   const members = team.members || [];
   const nV = members.filter(m => m.signal === 'positive').length, nF = members.filter(m => m.signal === 'flag').length;
   const rows = members.map(m => {
-    const [nm, ...rest] = String(m.name).split('—');
-    const role = rest.join('—').trim();
+    const { person: nm, role } = memberParts(m);
     return `<div class="frow">
       <div class="mono" style="${memberBg(m.signal)}">${esc(m.i)}</div>
-      <div class="frow-bd"><div class="frow-nm">${esc(nm.trim())}</div>${role ? `<div class="frow-role">${esc(role)}</div>` : ''}<div class="frow-bg">${esc(m.bg)}</div></div>
+      <div class="frow-bd"><div class="frow-nm">${esc(nm)}</div>${role ? `<div class="frow-role">${esc(role)}</div>` : ''}<div class="frow-bg">${esc(m.bg)}</div></div>
       <div class="frow-sig ${esc(m.signal)}">${m.gapId ? gapChip(m.gapId, 'Not found') : esc(SIG_WORD[m.signal] || 'To verify')}</div>
     </div>`;
   }).join('');
@@ -1833,9 +2630,9 @@ export const exitReturns = e => `<section class="m3-card"><div class="card-hd">$
   <p class="body-l"><b>Returns:</b> ${esc(e.returns)}</p></section>`;
 
 // teamMemo — the whole Team tab as one editorial .brief: hero → roster → gaps → exit.
-export function teamMemo(a) {
+export function teamMemo(a, s) {
   // filter/join like marketMemo/researchMemo — a self-omitting section (no gaps / no exit) never leaves a dangling rule
-  const secs = [teamHero(a), founderRoster(a.team, 'openPeek'), teamGaps(a.team), exitLedger(a.exit)].filter(Boolean);
+  const secs = [teamHero(a, s), founderRoster(a.team, 'openPeek'), teamGaps(a.team), exitLedger(a.exit)].filter(Boolean);
   return `<div class="brief">${secs.join('\n    <hr class="rule">\n    ')}</div>`;
 }
 
@@ -1848,7 +2645,7 @@ const RCOL = { p: 'var(--md-sys-color-primary)', s: 'var(--success)', w: 'var(--
 // aux peek: a tinted workstream marker + title + one-line finding · a depth/status chip · a drill chevron.
 export function researchRow(r, i, onOpen = '') {
   const act = onOpen ? ` role="button" tabindex="0" onclick="${onOpen}('research',${i})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();${onOpen}('research',${i})}"` : '';
-  return `<div class="mrow research${onOpen ? ' drill' : ''}"${act}>
+  return `<div class="mrow research${i % 2 === 0 ? ' zebra' : ''}${onOpen ? ' drill' : ''}"${act}>
     <div class="mrow-lab"><span class="rlead" style="background:${RTONE[r.tone] || RTONE.p}"><span class="material-symbols-rounded" style="color:${RCOL[r.tone] || RCOL.p}">${esc(r.icon || 'article')}</span></span><div class="mrow-txt"><div class="mrow-nm">${esc(r.title)}</div>${r.note ? `<div class="mrow-sub">${esc(r.note)}</div>` : ''}</div></div>
     <div class="mrow-val">${r.tag ? `<span class="status ${r.tagKind || 'info'}">${esc(r.tag)}</span>` : ''}</div>
     ${onOpen ? '<span class="material-symbols-rounded mrow-chev">chevron_right</span>' : '<span class="mrow-chev"></span>'}
@@ -2270,9 +3067,9 @@ export function provenanceStrip({ docs = 0, words = 0, sources = 0 } = {}) {
 export function researchReadingIndex(room) {
   if (!room || !room.all.length) return '';
   const open = slug => `window.openResearchDrill&&window.openResearchDrill('${esc(slug)}')`;
-  const row = d => {
+  const row = (d, i) => {
     const meta = [d.readTime, d.sources ? `${d.sources} source${d.sources === 1 ? '' : 's'}` : '', d.sections ? `${d.sections} sections` : ''].filter(Boolean).join(' · ');
-    return `<div class="mrow research drill" role="button" tabindex="0"
+    return `<div class="mrow research drill${i % 2 === 0 ? ' zebra' : ''}" role="button" tabindex="0"
         onclick="${open(d.slug)}"
         onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();${open(d.slug)}}">
       <div class="mrow-lab">
@@ -2314,21 +3111,62 @@ export function drillPager(doc, room) {
   return `<div class="doc-pager">${side(nb.prev, 'prev')}${side(nb.next, 'next')}</div>`;
 }
 
-// scroll-spy for the drill's inline TOC (the drill has no reading rail — it is one column)
+/* drillRail — the drill's ONE navigation surface: every sibling document, and the active
+   one opened in place to show its own sections.
+
+   Two levels in one list, because that is how the content is organised — a workstream
+   contains sections. Splitting them into a sibling list plus an "On this page" card meant
+   printing the lower half twice, once above the fold, under a meta line that already said
+   how many sections there were.
+
+   The sections slot is filled in a SECOND phase (fillResearchDrill), because the headings
+   only exist once the markdown has been parsed, and that parse is async. */
+export function drillRail(opts = {}) {
+  const { label = '', items = [], activeKey = '', onPick = '' } = opts;
+  if (!items.length) return '';
+  const row = it => {
+    const on = it.key === activeKey;
+    const go = onPick && !on ? ` onclick="${onPick}('${esc(it.key)}')"` : '';
+    return `<button type="button" class="dr-i${on ? ' on' : ''}"${go}${on ? ' aria-current="true"' : ''}>${
+      esc(it.label)}${it.tag ? `<span class="dr-tag">${esc(it.tag)}</span>` : ''}</button>${
+      on ? '<div class="dr-secs" data-rail-secs></div>' : ''}`;
+  };
+  return `<nav class="drill-rail" aria-label="${esc(label || 'Contents')}">${
+    label ? `<div class="drill-rail-lab">${esc(label)}</div>` : ''}${items.map(row).join('')}</nav>`;
+}
+
+/* the section list for the active document, rendered into the rail's slot */
+export function drillRailSections(sections = []) {
+  if (sections.length < 2) return '';      // a one-section document has nothing to navigate
+  return sections.map(s =>
+    `<button type="button" class="dr-s" data-sec="${esc(s.id)}">${esc(s.label)}</button>`).join('');
+}
+
+/* scroll-spy — now drives the SECTIONS INSIDE THE RAIL rather than the retired inline card.
+   Click-to-scroll is delegated here too, so the rail owns its own behaviour. */
 export function wireDrillSpy() {
   const root = document.querySelector('.m3-drill .drill-scroll');
-  const links = [...document.querySelectorAll('.m3-drill .drill-toc .toc a')];
-  if (!root || !links.length) return;
+  const rail = document.querySelector('.m3-drill .drill-rail');
+  if (!root || !rail) return;
+  const links = [...rail.querySelectorAll('.dr-s')];
+  if (!links.length) return;
   if (root.__spy) root.__spy.disconnect();
   const io = new IntersectionObserver(entries => {
     entries.forEach(e => {
       if (!e.isIntersecting) return;
-      const id = '#' + e.target.id;
-      links.forEach(a => a.classList.toggle('on', a.getAttribute('href') === id));
+      links.forEach(a => a.classList.toggle('on', a.dataset.sec === e.target.id));
     });
   }, { root, rootMargin: '-96px 0px -70% 0px' });
   document.querySelectorAll('.m3-drill .art-body h2[id]').forEach(h => io.observe(h));
   root.__spy = io;
+  if (!rail.__wired) {
+    rail.__wired = true;
+    rail.addEventListener('click', e => {
+      const s = e.target.closest('.dr-s'); if (!s) return;
+      const h = document.getElementById(s.dataset.sec);
+      if (h) h.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
 }
 
 // fillResearchDrill — PHASE 2. openDrill() calls render() synchronously and assigns innerHTML, so the real
@@ -2344,9 +3182,10 @@ export async function fillResearchDrill(doc, room) {
   art.innerHTML = html;
   art.removeAttribute('data-fill');
 
+  // the section list now lands in the RAIL, beneath the active document
   const h2 = sections.filter(s => s.level === 2);
-  const toc = document.querySelector('.m3-drill [data-toc]');
-  if (toc && h2.length >= 2) toc.innerHTML = `<div class="drill-toc-inner"><div class="drill-toc-lab">On this page</div>${tocRail(h2)}</div>`;
+  const slot = document.querySelector('.m3-drill [data-rail-secs]');
+  if (slot) slot.innerHTML = drillRailSections(h2);
 
   const pager = document.querySelector('.m3-drill [data-pager]');
   if (pager) pager.innerHTML = drillPager(doc, room);
@@ -2358,10 +3197,17 @@ export async function fillResearchDrill(doc, room) {
 // of them resolves through DRILL_PAGES[key]() → render().
 export function researchDrillBody(doc, room) {
   if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => fillResearchDrill(doc, room));
-  return `${articleMeta(doc)}
-    <div class="drill-toc" data-toc></div>
+  // the rail is rendered SYNCHRONOUSLY with the sibling list — only the section slot waits
+  // for the markdown parse, so the reader never sees navigation pop in late.
+  const rail = drillRail({
+    label: `Evidence · ${(room.all || []).length} workstreams`,
+    items: (room.all || []).map(d => ({ key: d.slug, label: d.title, tag: d.tag })),
+    activeKey: doc.slug,
+    onPick: 'window.openResearchDrill',
+  });
+  return `<div class="drill-body-inner">${rail}<div class="drill-main">${articleMeta(doc)}
     <div class="art-body art-prose" data-fill="${esc(doc.slug)}">${researchSkeleton()}</div>
-    <div data-pager></div>`;
+    <div data-pager></div></div></div>`;
 }
 
 // researchDrillOpts — the full openDrill() opts for ONE document. No filled action (the ≤1-primary rule).
@@ -2505,9 +3351,15 @@ export async function renderArticle(md) {
 //     groups[0] is the primary chip row; groups[1..] render as labelled sub-rows. Each chip carries
 //     data-<dim>="<k>" and .selected on the active key, so a page's delegated handlers stay unchanged.
 export function filterBar(config = [], placeholder = 'Search') {
-  const searchEl = (s = {}) => `<label class="m3-search"${s.max ? ` style="max-width:${s.max}"` : ''}><span class="material-symbols-rounded">search</span><input type="search"${s.id ? ` id="${esc(s.id)}"` : ' class="search"'} placeholder="${esc(s.placeholder || placeholder)}"></label>`;
+  // A capped search still has flex:1, so it competes with the spacer and lands narrower than its cap.
+  // Giving it a flex-basis as well as a max pins it at the width asked for and lets the spacer take
+  // the rest — which is what puts the chips left and the search right.
+  const searchEl = (s = {}) => `<label class="m3-search"${s.max ? ` style="max-width:${s.max};flex:0 1 ${s.max}"` : ''}><span class="material-symbols-rounded">search</span><input type="search"${s.id ? ` id="${esc(s.id)}"` : ' class="search"'} placeholder="${esc(s.placeholder || placeholder)}"></label>`;
   if (Array.isArray(config)) {
-    return `<div class="filters">${config.map((c, i) => `<button class="m3-chip${i === 0 ? ' selected' : ''}">${esc(c)}</button>`).join('')}${searchEl({ placeholder })}</div>`;
+    // The search is flex:1, so without a spacer and a cap it eats the whole row. The config form
+    // below already solved this; the legacy array form had not, which is the only reason the two
+    // rendered differently. Same spacer, same cap — the chips stay left, the search stays right.
+    return `<div class="filters">${config.map((c, i) => `<button class="m3-chip${i === 0 ? ' selected' : ''}">${esc(c)}</button>`).join('')}<div class="ws-filter-spacer"></div>${searchEl({ placeholder, max: '320px' })}</div>`;
   }
   const { groups = [], sort, search } = config;
   const chipRow = g => (g.chips || []).map(c => `<button class="m3-chip${c.k === g.active ? ' selected' : ''}" data-${esc(g.dim)}="${esc(c.k)}">${esc(c.l)}</button>`).join('');
@@ -2547,9 +3399,23 @@ export function engagementTable(rows, opts = {}) {
     ? `<td class="et-act"><button class="m3-icon-btn danger" data-id="${esc(r.id)}" aria-label="Delete ${esc(r.name)}" title="Delete" onclick="event.stopPropagation();${opts.onDelete}(this.dataset.id)" onkeydown="event.stopPropagation()"><span class="material-symbols-rounded">delete</span></button></td>`
     : '';
   const go = r => { const h = r.href || 'assess.html'; return ` tabindex="0" role="link" onclick="__drill(this,'${h}')" onkeydown="if(event.key==='Enter'){__drill(this,'${h}')}"`; };
-  return `<div class="m3-card table-wrap"><table class="eng-table"><thead><tr><th>Venture</th><th>Stage</th><th>Status</th><th>Progress / signal</th><th>Last activity</th>${opts.onDelete ? '<th class="et-act"><span class="sr-only">Actions</span></th>' : ''}</tr></thead><tbody>${rows.map(r => `<tr${go(r)}>
+  const tr = r => `<tr${go(r)}>
     <td><div class="et-v"><span class="et-av" style="background:${AVAC[r.avatar]}">${esc(r.i)}</span><div><div class="et-name">${esc(r.name)}</div><div class="et-sub">${esc(r.sub)}</div></div></div></td>
-    <td class="et-stage">${esc(r.stage)}</td><td>${statusPill(r.status)}</td>${cell(r)}<td class="et-when">${r.when || '1h ago'}</td>${del(r)}</tr>`).join('')}</tbody></table></div>`;
+    <td class="et-stage">${esc(r.stage)}</td><td>${statusPill(r.status)}</td>${cell(r)}<td class="et-when">${r.when || '1h ago'}</td>${del(r)}</tr>`;
+  const cols = 5 + (opts.onDelete ? 1 : 0);
+  const head = `<thead><tr><th>Venture</th><th>Stage</th><th>Status</th><th>Progress / signal</th><th>Last activity</th>${opts.onDelete ? '<th class="et-act"><span class="sr-only">Actions</span></th>' : ''}</tr></thead>`;
+  // opts.groups: [{title, why, rows}] — one table, banded. NOT one table per group: a group heading is a
+  // caption over the same columns, and separate tables would let the columns drift apart between bands.
+  const body = opts.groups
+    ? opts.groups.map(g => `<tbody class="et-grp"><tr class="et-gh"><th scope="rowgroup" colspan="${cols}">
+          <span class="g">${esc(g.title)}</span><span class="c">${g.rows.length}</span>${g.why ? `<span class="why">${esc(g.why)}</span>` : ''}
+        </th></tr>${g.rows.map(tr).join('')}</tbody>`).join('')
+    : `<tbody>${rows.map(tr).join('')}</tbody>`;
+  // No .m3-card: the table sits ON the page, like every other table in the product. The wrapper stays
+  // for the horizontal scroll a narrow viewport still needs.
+  // Grouped mode hides the column header row visually — each group caption is doing that work for the
+  // eye — but keeps it in the accessibility tree, or the columns are announced as unlabelled data.
+  return `<div class="table-wrap"><table class="eng-table${opts.groups ? ' is-grouped' : ''}">${opts.groups ? head.replace('<thead>', '<thead class="sr-only">') : head}${body}</table></div>`;
 }
 
 // ============ PORTFOLIO EMPTY STATE (first-run launchpad) + ASSESSMENT WIZARD ============
@@ -3157,6 +4023,23 @@ export function queueBoard(items = [], opts = {}) {
   return groups.length ? groups.join('') : allClear;
 }
 
+/* trackDrillMasthead — publish the drill masthead's LIVE height as --drill-mh-h.
+   The sticky rail parks directly beneath it, and the masthead's height is not a constant:
+   it animates from ~209px to ~115px as --mh-p runs 0→1. Reading it once would leave the
+   rail either overlapped at rest or floating low when minified, and hardcoding the
+   minified height would break the first time the masthead gains or loses a row.
+   ResizeObserver fires through the whole transition, so the rail tracks it continuously. */
+function trackDrillMasthead(surf) {
+  const mh = surf.querySelector('.masthead');
+  if (!mh || typeof ResizeObserver === 'undefined') return;
+  if (surf.__mhRO) surf.__mhRO.disconnect();
+  const set = () => surf.style.setProperty('--drill-mh-h', `${Math.round(mh.getBoundingClientRect().height)}px`);
+  set();
+  const ro = new ResizeObserver(set);
+  ro.observe(mh);
+  surf.__mhRO = ro;
+}
+
 // wireMinify — bind ONE masthead to its nearest scroll ancestor. Idempotent (safe to call again on a
 // masthead created after initShell, e.g. the drill's). Drives --mh-p 0→1 as content scrolls under it.
 function wireMinify(mh) {
@@ -3220,15 +4103,15 @@ export function initShell() {
   window.toggleNav = () => { const app = app0(); (app && app.classList.contains('nav-open')) ? window.closeNav() : window.openNav(); };
   window.__navButton = () => mqCompact.matches ? window.toggleNav() : window.__toggleRail();
   window.closeOverlay = () => { const app = app0(); (app && app.classList.contains('nav-open')) ? window.closeNav() : (window.closeAux && window.closeAux()); };
-  const set = t => { document.documentElement.classList.toggle('light', t === 'light'); try { localStorage.setItem('ventrify-theme', t); } catch (e) {} document.querySelectorAll('.theme-toggle button').forEach(b => b.classList.toggle('on', b.dataset.set === t)); try { window.dispatchEvent(new CustomEvent('ventrify-theme', { detail: t })); } catch (e) {} };
-  document.querySelectorAll('.theme-toggle button').forEach(b => b.addEventListener('click', () => set(b.dataset.set)));
-  set(document.documentElement.classList.contains('light') ? 'light' : 'dark');
 
   // masthead: scroll-linked minify — drives --mh-p (0→1) continuously as content scrolls under it.
   // Idempotent + reusable: the drill's masthead is created after initShell, so openDrill() calls it too.
   document.querySelectorAll('.masthead').forEach(wireMinify);
 
   // ---- auxiliary panel API ----
+  // the two "no room to push an aux" breakpoints, mirroring theme.css
+  const mqAuxPush = window.matchMedia('(max-width: 900px)');        // default 440px panel
+  const mqAuxPushWide = window.matchMedia('(max-width: 1679px)');   // wide 720px panel
   window.openAux = (opts = {}) => {
     const app = document.querySelector('.m3-app'); if (!app) return;
     window.closeNav && window.closeNav();
@@ -3239,17 +4122,38 @@ export function initShell() {
     set('.aux-sub', opts.subtitle || '');
     set('.aux-body', opts.body || '', true);
     set('.aux-foot', opts.footer || '', true);
-    app.classList.remove('aux-push', 'aux-modal');
+    app.classList.remove('aux-push', 'aux-modal', 'aux-wide');
+    // size: 'wide' → the 720px reading panel (see .m3-app.aux-wide in theme.css). Any panel may
+    // ask for it; only content with a reading measure should.
+    if (opts.size === 'wide') app.classList.add('aux-wide');
     app.classList.add('aux-open', opts.mode === 'overlay' ? 'aux-modal' : 'aux-push');
-    if (mqCompact.matches) {
+    // the category drill carries its own bars — same moment, same motion
+    playCharts(app.querySelector(".aux-body")); normaliseIcons(app.querySelector(".aux-body"));
+    // A panel that FLOATS is modal however it got there — narrow viewport, an explicit overlay,
+    // or a wide panel with no room to push. This mirrors the two "no room to push" media queries
+    // in theme.css rather than reading the layout back, because a custom property's computed value
+    // is an UNEVALUATED token string: --aux-w reads as "min(720px, calc(100vw - 72px))", so it
+    // cannot be measured with parseFloat. Same idiom as mqSplit for the drill.
+    const aux = app.querySelector('.m3-aux');
+    const noRoomToPush = (opts.size === 'wide' ? mqAuxPushWide : mqAuxPush).matches;
+    const floating = opts.mode === 'overlay' || mqCompact.matches || noRoomToPush;
+    // ONE class for "this panel is floating, not pushing". theme.css used to say that three
+    // separate ways (the 900px fallback, the wide 1680px fallback, and .aux-modal) and each had
+    // to re-state the scrim on its own; now they only decide the WIDTH and this decides the
+    // BEHAVIOUR — scrim up, chrome beneath it, dialog semantics.
+    app.classList.toggle('aux-floating', floating);
+    if (floating) {
       lastFocused = lastFocused || document.activeElement;
       document.body.classList.add('overlay-lock');
-      const aux = app.querySelector('.m3-aux'); if (aux) { aux.setAttribute('role', 'dialog'); aux.setAttribute('aria-modal', 'true'); const c = aux.querySelector('.aux-close'); if (c) c.focus(); }
+      if (aux) { aux.setAttribute('role', 'dialog'); aux.setAttribute('aria-modal', 'true'); const c = aux.querySelector('.aux-close'); if (c) c.focus(); }
+    } else if (aux) {
+      aux.removeAttribute('role'); aux.removeAttribute('aria-modal');
     }
   };
   window.closeAux = () => {
     const app = document.querySelector('.m3-app'); if (!app) return;
-    app.classList.remove('aux-open', 'aux-push', 'aux-modal');
+    app.classList.remove('aux-open', 'aux-push', 'aux-modal', 'aux-wide', 'aux-floating');
+    const a = app.querySelector('.m3-aux'); if (a) { a.removeAttribute('role'); a.removeAttribute('aria-modal'); }
     app.querySelectorAll('.urail-item.on').forEach(b => b.classList.remove('on'));
     if (!app.classList.contains('nav-open') && !app.classList.contains('drill-open')) document.body.classList.remove('overlay-lock');
     if (lastFocused && lastFocused.focus) { lastFocused.focus(); lastFocused = null; }
@@ -3276,16 +4180,16 @@ export function initShell() {
     const app = app0(); if (!app || !app.classList.contains('drill-open')) return;
     const surf = app.querySelector('.m3-drill'); const primary = app.querySelector('.shell-main');
     if (!surf || !primary) return;
+    /* ⚠ THE PRIMARY IS NOW COVERED AT EVERY WIDTH. It used to stay visible beside the
+       drill above 1080px — a "live compact master index" — and the split kept it live so
+       Tab could flow between the two pages. That index is gone: the drill is full-bleed
+       and the sibling list moved into its rail. An element nobody can see must not be in
+       the tab order or the a11y tree, so the covered branch now applies unconditionally
+       and the width check only decides how loudly we say it is modal. */
     primary.classList.add('is-compact');
-    if (mqSplit.matches) {
-      surf.setAttribute('role', 'dialog'); surf.setAttribute('aria-modal', 'true');
-      primary.setAttribute('inert', ''); primary.setAttribute('aria-hidden', 'true');
-      document.body.classList.add('overlay-lock');
-    } else {
-      surf.setAttribute('role', 'region'); surf.removeAttribute('aria-modal');
-      primary.removeAttribute('inert'); primary.removeAttribute('aria-hidden');
-      if (!app.classList.contains('nav-open') && !app.classList.contains('aux-open')) document.body.classList.remove('overlay-lock');
-    }
+    primary.setAttribute('inert', ''); primary.setAttribute('aria-hidden', 'true');
+    document.body.classList.add('overlay-lock');
+    surf.setAttribute('role', 'dialog'); surf.setAttribute('aria-modal', 'true');
   };
 
   window.openDrill = (opts = {}) => {
@@ -3326,6 +4230,7 @@ export function initShell() {
     const bar = surf.querySelector('.mh-bar');
     if (bar) bar.insertAdjacentHTML('beforeend', drillClose());
     wireMinify(surf.querySelector('.masthead'));
+    trackDrillMasthead(surf);
 
     app.classList.add('rail', 'drill-open');         // nav → rail + open the gutter, one frame
     syncDrillModal();
@@ -3441,6 +4346,23 @@ export function initShell() {
     syncDrillModal();
   }));
 
+  // The aux width fallbacks live in CSS so they track a resize on their own, but .aux-floating is
+  // set once at open time — so an open panel that crosses its breakpoint has to be re-synced, or
+  // it keeps a scrim it no longer needs (or loses one it does). Mirrors the two media queries in
+  // theme.css: 900px for the default panel, 1680px for the wide one.
+  [mqAuxPush, mqAuxPushWide].forEach(mq => mq.addEventListener('change', () => {
+    const app = app0(); if (!app || !app.classList.contains('aux-open')) return;
+    const aux = app.querySelector('.m3-aux');
+    const floats = app.classList.contains('aux-modal') || mqCompact.matches
+      || (app.classList.contains('aux-wide') ? mqAuxPushWide.matches : mqAuxPush.matches);
+    app.classList.toggle('aux-floating', floats);
+    if (aux) {
+      if (floats) { aux.setAttribute('role', 'dialog'); aux.setAttribute('aria-modal', 'true'); document.body.classList.add('overlay-lock'); }
+      else { aux.removeAttribute('role'); aux.removeAttribute('aria-modal');
+             if (!app.classList.contains('nav-open') && !app.classList.contains('drill-open')) document.body.classList.remove('overlay-lock'); }
+    }
+  }));
+
   // cold deep-link: ?drill=<key>. Deferred a frame so a page can assign DRILL_PAGES after initShell().
   requestAnimationFrame(() => {
     const k = new URLSearchParams(location.search).get('drill');
@@ -3487,11 +4409,207 @@ export function initShell() {
   });
   const onMq = () => { const app = app0(); if (!app) return; if (mqCompact.matches) app.classList.remove('rail'); else { window.closeNav(); document.body.classList.remove('overlay-lock'); } };
   mqCompact.addEventListener ? mqCompact.addEventListener('change', onMq) : mqCompact.addListener(onMq);
+
+  /* Draw the graphs in on first paint. On a tabbed page this resolves to the panel
+     that is already active and initTabs re-fires it a moment later — harmless, the
+     class just restarts. On Portfolio / Setup / Running, which have no tabs, this is
+     the only thing that runs it. */
+  initTips();
+  requestAnimationFrame(() => {
+    playCharts(); normaliseIcons();
+  });
 }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   ICON ACCESSIBILITY — one pass, because the problem is 87 call sites deep.
+
+   A Material Symbols icon is a LIGATURE: the element's text content is the
+   literal token, and the font draws a glyph over it. A screen reader does not
+   see the glyph — it reads the token. Measured on the Team tab before this
+   existed, the bench announced itself as:
+
+       "SEATS NOBODY IS IN · 5 to hire · person_add · person_add · person_add…"
+
+   and across one page 86 of 87 icons were read aloud that way.
+
+   Fixing it at every call site means editing 87 template literals and hoping
+   the 88th remembers. So new code uses icon() below — correct at source — and
+   this pass normalises everything already rendered, including anything a future
+   component forgets. It is idempotent and runs after each render.
+
+   The rule it applies is the standard one, and the two branches are not
+   interchangeable:
+     · an icon that is the ONLY content of a control is that control's NAME →
+       it needs a label, and hiding it would leave the button silent;
+     · every other icon sits beside text that already says the same thing →
+       aria-hidden, or the label is announced twice.
+   ════════════════════════════════════════════════════════════════════════════ */
+const ICON_WORDS = s => String(s).trim().replace(/_/g, ' ').replace(/^./, c => c.toUpperCase());
+export function normaliseIcons(root = document) {
+  if (!root || !root.querySelectorAll) return;
+  root.querySelectorAll('.material-symbols-rounded:not([data-a11y])').forEach(el => {
+    el.setAttribute('data-a11y', '1');                       // idempotent: never processed twice
+    const host = el.parentElement;
+    const alone = host && !host.innerText.replace(el.textContent, '').trim();
+    // does anything in the first few ancestors already name this control?
+    let named = false;
+    for (let n = host, i = 0; n && i < 3; n = n.parentElement, i++) {
+      if (n.getAttribute('aria-label') || n.getAttribute('title') || n.querySelector('.sr-only')) { named = true; break; }
+    }
+    const control = host && (host.matches('button, a, [role="button"], [role="tab"], [tabindex]'));
+    if (alone && control && !named) {
+      // the glyph IS the button's name. Humanising the ligature is imperfect, but an
+      // imperfect name beats an unlabelled control, and a real label here always wins.
+      host.setAttribute('aria-label', ICON_WORDS(el.textContent));
+      el.setAttribute('aria-hidden', 'true');
+    } else {
+      el.setAttribute('aria-hidden', 'true');
+    }
+  });
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   TOOLTIPS — one implementation, every chart mark that has something to say.
+
+   A chart mark is necessarily terse: a seat in the bench is a 40px outline, a
+   cell in the clearance grid is one glyph. Both stand for something with a
+   name and a paragraph behind it, and until now that paragraph was only
+   reachable by scrolling to the list below. Hovering the mark should just
+   tell you.
+
+   WHY NOT THE NATIVE `title`. It waits about a second, cannot be styled or
+   wrapped, shows nothing on touch, and renders one unbroken line — a 200-char
+   diligence note becomes a stripe across the screen. The grid shipped with
+   `title` as a stopgap; this replaces it.
+
+   HOW IT WORKS. One floating element on <body>, positioned fixed, driven by
+   DELEGATED listeners — so a mark rendered later (a tab panel, the aux drill,
+   a re-render after a run) is covered with no re-wiring and no leaked handlers.
+
+   a11y. The tip is aria-hidden and purely a pointer affordance. The marks are
+   deliberately NOT in the tab order and the chart keeps its role="img" summary,
+   because the authoritative copy of this content — every gap, every check, with
+   its full note — is the list that sits directly beneath the hero. Adding nine
+   to thirty duplicate tab stops above it would make keyboard navigation worse,
+   not better, so the keyboard path is the list, and this is the shortcut.
+   ════════════════════════════════════════════════════════════════════════════ */
+let _tipEl = null, _tipFor = null;
+function _tip() {
+  if (_tipEl && document.body.contains(_tipEl)) return _tipEl;
+  _tipEl = document.createElement('div');
+  _tipEl.className = 'm3-tip';
+  _tipEl.setAttribute('aria-hidden', 'true');   // decorative: the same text is in the list below
+  document.body.appendChild(_tipEl);
+  return _tipEl;
+}
+function _hideTip() { if (_tipEl) _tipEl.classList.remove('on'); _tipFor = null; }
+function _showTip(host) {
+  const body = host.getAttribute('data-tip');
+  if (!body) return;
+  const el = _tip(), title = host.getAttribute('data-tip-title'), kind = host.getAttribute('data-tip-kind');
+  el.className = 'm3-tip' + (kind ? ' ' + kind : '');
+  el.innerHTML = `${title ? `<b>${esc(title)}</b>` : ''}<span>${esc(body)}</span>`;
+  el.classList.add('on');
+  _tipFor = host;
+  // measured AFTER the content is in, because the height depends on how the text wrapped
+  const h = host.getBoundingClientRect(), t = el.getBoundingClientRect();
+  const GAP = 10, EDGE = 8;
+  let top = h.top - t.height - GAP;
+  el.classList.toggle('below', top < EDGE);
+  if (top < EDGE) top = h.bottom + GAP;                              // flip under the mark
+  let left = h.left + h.width / 2 - t.width / 2;
+  left = Math.max(EDGE, Math.min(left, window.innerWidth - t.width - EDGE));   // clamp to viewport
+  el.style.top = `${Math.round(top)}px`;
+  el.style.left = `${Math.round(left)}px`;
+  // the arrow tracks the mark even once the body has been clamped away from it
+  el.style.setProperty('--tip-x', `${Math.round(h.left + h.width / 2 - left)}px`);
+}
+export function initTips() {
+  if (window.__tipsOn) return;            // idempotent: initShell may run twice on a re-mount
+  window.__tipsOn = true;
+  const host = e => e.target && e.target.closest && e.target.closest('[data-tip]');
+  document.addEventListener('mouseover', e => { const h = host(e); if (h && h !== _tipFor) _showTip(h); });
+  document.addEventListener('mouseout', e => { const h = host(e); if (h && h === _tipFor && !h.contains(e.relatedTarget)) _hideTip(); });
+  document.addEventListener('focusin', e => { const h = host(e); if (h) _showTip(h); else _hideTip(); });
+  // touch: tap the mark to show, tap anywhere else to dismiss
+  document.addEventListener('click', e => { const h = host(e); if (h) { h === _tipFor ? _hideTip() : _showTip(h); } else _hideTip(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') _hideTip(); });
+  // a fixed tip would drift away from its mark on scroll, so it goes rather than follows
+  window.addEventListener('scroll', _hideTip, true);
+  // ⚠ resize REPOSITIONS, it does not dismiss. Hiding here looked harmless and was not: a resize
+  // fires for things the pointer knows nothing about — a mobile URL bar collapsing, a devtools
+  // dock, a window snap — and the tip would vanish while the cursor had never left the mark.
+  // (It also made the tooltip impossible to screenshot, which is how this surfaced.)
+  window.addEventListener('resize', () => {
+    if (_tipFor && document.body.contains(_tipFor)) _showTip(_tipFor); else _hideTip();
+  });
+}
+
+/* tipAttrs — the ONE way a component marks something as having a tooltip, so the attribute
+   names live in a single place rather than being spelled out at each call site. */
+export function tipAttrs(tip) {
+  if (!tip || !tip.body) return '';
+  return ` data-tip="${esc(tip.body)}"${tip.title ? ` data-tip-title="${esc(tip.title)}"` : ''}${tip.kind ? ` data-tip-kind="${esc(tip.kind)}"` : ''}`;
+}
+
+/* icon — the ONE way new components emit a Material Symbol. Always aria-hidden, because a
+   decorative glyph beside text is the overwhelmingly common case; anything that needs a name
+   pairs it with srOnly() rather than letting the ligature leak through as the name. */
+export const icon = (name, cls = '') =>
+  `<span class="material-symbols-rounded${cls ? ' ' + cls : ''}" aria-hidden="true">${esc(name)}</span>`;
+/* srOnly — visible to assistive tech, not to the eye. `.sr-only` lives in theme.css. */
+export const srOnly = text => `<span class="sr-only">${esc(text)}</span>`;
 
 // ---- tab switching for masthead .m3-tabs ↔ .tab-panel (call once after render) ----
 // opts.names: slug per tab (e.g. ['verdict','investability',...]) enables #hash deep-linking
 // so a back-link like assess.html#research lands on the right tab.
+/* playCharts — run the chart entrance animation on a region that has just become
+   visible. See the CHART ENTRANCE MOTION block in ds.css for the choreography.
+
+   WHY A FUNCTION AND NOT JUST CSS. Tab panels are display:none when inactive, and
+   a CSS animation on a hidden element has already finished by the time anyone sees
+   it; re-showing the panel does not reliably replay it. So the class comes off, the
+   layout is flushed, and the class goes back on — the standard restart, and the only
+   reason this needs script at all.
+
+   It also numbers the staggered groups. --i is the item's index within its own
+   parent, so a 7-row table and a 40-row one both stagger correctly and neither has
+   to know its length at render time. Capped in the CSS, not here.
+
+   Safe to call on anything: with no marks inside, it sets a class and returns. */
+const CH_STAGGER = ['.mrow', '.bd-r', '.segrow i', '.conv i', '.profile-strip .seg', '.vz-axis i', '.vz-axis span', '.sigtier', '.sigtier-row b', '.lockup-prov .unit', '.ugrid i', '.ug-leg .ug-k'];
+export function playCharts(root) {
+  const host = (root && root.nodeType === 1)
+    ? root
+    : (document.querySelector('.tab-panel.active') || document.querySelector('.shell-body') || document.body);
+  if (!host) return;
+  CH_STAGGER.forEach(sel => {
+    const byParent = new Map();
+    host.querySelectorAll(sel).forEach(el => {
+      const arr = byParent.get(el.parentElement) || [];
+      arr.push(el); byParent.set(el.parentElement, arr);
+    });
+    byParent.forEach(arr => arr.forEach((el, i) => el.style.setProperty('--i', i)));
+  });
+  // the bar lives inside .mrow-bar but the stagger index is on the row — hand it down
+  host.querySelectorAll('.mrow').forEach(r => {
+    const i = r.style.getPropertyValue('--i');
+    r.querySelectorAll('.mrow-bar > *').forEach(b => b.style.setProperty('--i', i));
+  });
+  // the bench staggers on TWO axes: which tier, then which pill inside it. The pills already
+  // carry their own --i from the pass above; this hands each tier's index down as --tier so a
+  // pill's delay is (its tier) + (its place in that tier), and the three bands arrive in order.
+  host.querySelectorAll('.sigtier').forEach(t => {
+    const i = t.style.getPropertyValue('--i');
+    const h = t.querySelector('.sigtier-h');
+    if (h) h.style.setProperty('--i', i);
+    t.querySelectorAll('.sigtier-row b').forEach(b => b.style.setProperty('--tier', i));
+  });
+  host.classList.remove('charts-in');
+  void host.offsetWidth;                 // flush, so the animations restart rather than resume
+  host.classList.add('charts-in');
+}
+
 export function initTabs(opts = {}) {
   const tablist = document.querySelector('.m3-tabs');
   const tabEls = tablist ? [...tablist.querySelectorAll('.m3-tab')] : [];
@@ -3501,6 +4619,7 @@ export function initTabs(opts = {}) {
   const select = i => {
     tabEls.forEach((t, n) => { t.classList.toggle('active', n === i); t.setAttribute('aria-selected', n === i); });
     panels.forEach((p, n) => p.classList.toggle('active', n === i));
+    playCharts(panels[i]); normaliseIcons(panels[i]);   // graphs draw in, and any icon this panel rendered gets named
   };
   const active = () => tabEls.findIndex(t => t.classList.contains('active'));
   const wanted = () => {

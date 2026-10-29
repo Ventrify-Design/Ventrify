@@ -43,15 +43,12 @@
 
   const FILTERS = ['All', 'On track', 'Needs attention', 'Stuck', 'Assessment'];
   const emptyFilter = DS.noteCard({ center: true, text: `<div class="title-l">No engagements match</div><div class="body-m variant" style="margin-top:6px">Try a different filter or clear the search.</div>` });
-  // bridge nudge for a deck-less row — the run is gated on a pitch deck (dispatch-run.js)
-  const idle = rows.find(r => r.runState && r.runState.status === 'idle');
-  const bridge = idle ? `<div class="callout warn" style="margin-bottom:16px"><span class="material-symbols-rounded">upload_file</span><div><b>Upload the deck to run ${idle.name}.</b> The assessment can’t start until a pitch deck is added.</div></div>` : '';
 
   const body = empty
     ? DS.portfolioEmpty()
     : lean
-      ? `${bridge}<div id="eng-host">${DS.engagementTable(rows)}</div>`
-      : `<div class="grid-4">${stats.map(DS.statCard).join('')}</div>${bridge}${DS.filterBar(FILTERS, 'Search ventures or founders')}<div id="eng-host">${DS.engagementTable(rows)}</div>`;
+      ? `<div id="eng-host">${DS.engagementTable(rows)}</div>`
+      : `${DS.portfolioBand(rows)}${DS.filterBar(FILTERS, 'Search ventures or founders')}<div id="eng-host">${DS.engagementTable(rows, { groups: DS.triageGroups(rows) })}</div>`;
 
   document.getElementById('app').outerHTML = DS.pageShell({
     active: 'portfolio',
@@ -79,7 +76,8 @@
     const apply = () => {
       const q = query.trim().toLowerCase();
       const r = rows.filter(e => (activeFilter === 'All' || e.status.label === activeFilter) && (!q || `${e.name} ${e.sub}`.toLowerCase().includes(q)));
-      host.innerHTML = r.length ? DS.engagementTable(r) : emptyFilter;
+      // a filtered view is already an answer to "which ones", so it drops the triage grouping
+      host.innerHTML = r.length ? DS.engagementTable(r, (q || activeFilter !== 'All') ? {} : { groups: DS.triageGroups(r) }) : emptyFilter;
     };
     const chips = [...document.querySelectorAll('.m3-chip')];
     chips.forEach(c => c.addEventListener('click', () => { chips.forEach(x => x.classList.toggle('selected', x === c)); activeFilter = c.textContent.trim(); apply(); }));
