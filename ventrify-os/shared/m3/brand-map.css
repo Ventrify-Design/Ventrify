@@ -246,8 +246,15 @@
    needs to sit clear of the hamburger AND clear of the switcher, and loading it
    all onto drawer-product would push the mark down toward the thing it is
    supposed to be separate from. */
-.drawer-product { padding: var(--s-4, 16px) var(--s-4, 16px) var(--s-6, 32px); }
+.drawer-product { padding: var(--s-6, 32px) var(--s-4, 16px) var(--s-6, 32px); }
 .drawer-brand { padding-top: var(--s-5, 24px); }
+/* Air between the tenant switcher and the first nav group.
+   ⚠ It goes on the SECTION LABEL, not on .drawer-brand's bottom padding, because
+   .drawer-brand is a role="button" — padding there would grow its hit area and a
+   click 30px below the org name would open the switcher. The label is inert, so
+   the gap costs nothing. Scoped with the adjacent sibling so only the FIRST group
+   gets it: MANAGE keeps its own rhythm and simply rides down. */
+.drawer-brand + .drawer-section { padding-top: var(--s-6, 32px); }
 /* 30px at the head: the mark is now a primary identity element rather than a
    signature, and 30px matches the drawer-brand logo tile it sits above. */
 .drawer-product .brand-lockup { --lockup-h: 30px; }
