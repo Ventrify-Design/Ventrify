@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-brand="verdictscore">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,8 +9,19 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" rel="stylesheet">
 <script>try{if(localStorage.getItem("ventrify-theme")==="light")document.documentElement.classList.add("light")}catch(e){}</script>
+<!-- BRAND LAYER, in the same load-bearing order as every live page (see
+     dashboard-m3.html). The catalogue previously loaded theme.css + ds.css ONLY,
+     so every swatch and component on it rendered in Material's stock palette —
+     --tone-good resolved to #D0BCFF, not the brand's purple. A design system that
+     documents a palette the product does not ship is worse than none: it is a
+     reference that quietly disagrees with reality. brand.css FIRST, brand-map LAST. -->
+<link rel="stylesheet" href="/assets/brand/brand.css">
 <link rel="stylesheet" href="theme.css">
 <link rel="stylesheet" href="ds.css">
+<link rel="stylesheet" href="assess-editorial.css">
+<link rel="stylesheet" href="transitions.css">
+<link rel="stylesheet" href="/shared/m3/workspace-chrome.css">
+<link rel="stylesheet" href="/shared/m3/brand-map.css">
 <style>
   .ds-shell { display: grid; grid-template-columns: 244px 1fr; min-height: 100vh; }
   .ds-side { position: sticky; top: 0; height: 100vh; padding: 18px 12px; background: var(--md-sys-color-surface-container-low); display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
@@ -84,7 +95,9 @@
     <a class="sec" href="#Organisms"><span class="material-symbols-rounded">dashboard_customize</span> Organisms <span class="ct" data-ct="Organisms"></span></a>
     <a class="sec" href="#Templates"><span class="material-symbols-rounded">space_dashboard</span> Templates <span class="ct" data-ct="Templates"></span></a>
     <a class="sec" href="#Pages"><span class="material-symbols-rounded">web</span> Pages <span class="ct" data-ct="Pages"></span></a>
-    <div class="theme-toggle" style="margin-top:auto"><button data-set="light"><span class="material-symbols-rounded">light_mode</span> Light</button><button data-set="dark" class="on"><span class="material-symbols-rounded">dark_mode</span> Dark</button></div>
+    <!-- The Light/Dark toggle was removed with light mode itself (theme.css: NO LIGHT
+         SCHEME). It was still offered here, so the catalogue advertised a mode the product
+         does not have and the button did nothing. -->
   </aside>
 
   <main class="ds-main">
@@ -97,7 +110,7 @@
 
     <!-- ==================== FOUNDATIONS ==================== -->
     <section class="ds-sec"><h2 class="ds-h2" id="foundations">Foundations</h2>
-    <p class="ds-sub">The design tokens beneath the atoms — the M3 colour scheme (violet primary), product semantic roles, type scale, shape and elevation. These re-tint live between light and dark.</p>
+    <p class="ds-sub">The design tokens beneath the atoms — the M3 colour scheme (violet primary), product semantic roles, type scale, shape and elevation. Dark only — light mode was retired, and these are the branded values the live product actually ships, not Material defaults.</p>
 
     <div class="ds-gt">Colour roles</div>
     <div class="sw-grid" id="tok-color"></div>
