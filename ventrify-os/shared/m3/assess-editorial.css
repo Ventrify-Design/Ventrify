@@ -551,14 +551,22 @@
   }
 
   /* ---- thesis lead paragraph — editorial, wide, breathing on the bg ---- */
-  .lead { font-size: 18px; line-height: 1.62; color: var(--md-sys-color-on-surface); max-width: 74ch; margin-top: 34px; font-weight: 300; }
+  /* 400, not 300. Inter Light at 18px is a display weight, and the thesis is the
+     longest piece of continuous prose in the product — three or four lines of
+     reasoning the operator actually has to READ. Light also pays a penalty on dark
+     that it does not pay on white: light-on-dark strokes bloom and thin out, so 300
+     here rendered noticeably frailer than the same weight on a white page. Regular
+     is the body weight the rest of the page already uses. */
+  .lead { font-size: 18px; line-height: 1.62; color: var(--md-sys-color-on-surface); max-width: 74ch; margin-top: 34px; font-weight: 400; }
   /* The thesis .lead trails a section hero as a loose sibling, then an <hr class="rule">, then the next
      .sec (padding-top 48px). Without this the lead hugs the rule (0px above) while the content sits 48px
      below it — visibly lopsided. Match the .sec padding so the hero-to-rule gap equals rule-to-content.
      Adjacency-scoped so it only affects a lead that follows a hero (not the confidence-coda lead). */
   .section-hero + .lead { margin-bottom: 48px; }
-  .lead b { font-weight: 500; }
-  .lead .drop { color: var(--md-sys-color-primary); font-weight: 500; }
+  /* The "Thesis." label and the brand-coloured drop both step up with the body, so
+     the label keeps the same two-step lead over the prose it had at 300/500. */
+  .lead b { font-weight: 600; }
+  .lead .drop { color: var(--md-sys-color-primary); font-weight: 600; }
 
   /* ============ STRENGTH PROFILE — the radar alternative ============ */
   .legend { display: flex; gap: 22px; align-items: center; font-size: 12.5px; color: var(--md-sys-color-on-surface-variant); }
@@ -759,7 +767,7 @@
   .mbt-grid:not(:has(.kill)) { grid-template-columns: minmax(0, 720px); }
   .must { display: flex; gap: 18px; padding: 18px 0; border-top: 1px solid var(--md-sys-color-outline-variant); }
   .must:first-of-type { border-top: none; padding-top: 0; }
-  .must .idx { flex: none; font-size: 26px; font-weight: 300; line-height: 1; color: var(--md-sys-color-primary); font-variant-numeric: tabular-nums; width: 30px; }
+  .must .idx { flex: none; font-size: 26px; font-weight: 400; line-height: 1; color: var(--md-sys-color-primary); font-variant-numeric: tabular-nums; width: 30px; }
   .must p { margin: 0; font-size: var(--row-prose-lg); line-height: 1.55; color: var(--md-sys-color-on-surface); }
 
   /* ============ THE RUN PLAN (assessing screen) ============
