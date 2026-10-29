@@ -236,7 +236,13 @@
    as disabled chrome, and it is the one element on the page that should never look
    provisional. Full strength, always, hover or not — there is no hover rule here
    and there should not be one. */
-.drawer-product { padding: 2px 16px 14px; }
+/* Spacing comes off the brand scale (--s-* in brand.css), not from stray px.
+   The head is three separate things stacked — a control (hamburger), an identity
+   (the mark) and a control (the org switcher) — so the mark needs air on BOTH
+   sides or the identity reads as attached to whichever control it is nearer.
+   s-3 above puts ~18px under the hamburger; s-5 below gives ~40px down to the
+   switcher tile, which is the gap that was doing the squashing. */
+.drawer-product { padding: var(--s-3, 12px) var(--s-4, 16px) var(--s-5, 24px); }
 /* 30px at the head: the mark is now a primary identity element rather than a
    signature, and 30px matches the drawer-brand logo tile it sits above. */
 .drawer-product .brand-lockup { --lockup-h: 30px; }
