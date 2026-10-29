@@ -335,7 +335,7 @@ export const CATALOG = {
   },
   queueItem: {
     level: 'organism', group: 'Organisms', domain: 'Action queue', title: 'Queue item', sig: 'queueItem(item)',
-    blurb: 'A single actionable card — urgency-coloured icon, what/why, and primary + secondary action.',
+    blurb: 'A single actionable ROW — urgency-coloured icon tile, what/why, and primary + secondary action. Editorial: a hairline between rows, no card background (the queue is a list, not a stack of tubs).',
     maxw: 820, pad: true,
     html: () => QUEUE.slice(0, 3).map(DS.queueItem).join(''),
     props: [{ name: 'urgency', type: "'high'|'med'|'low'" }, { name: 'icon', type: 'string' }, { name: 'title / desc / meta', type: 'string' }, { name: 'action', type: 'string' }],

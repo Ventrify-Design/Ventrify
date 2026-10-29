@@ -84,8 +84,8 @@
 .heat-card.y { border-left-color: var(--warning); }
 .heat-card .h { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
 .heat-card .cat { font-size: 11px; letter-spacing:.5px; text-transform: uppercase; color: var(--md-sys-color-on-surface-variant); }
-.heat-card .lift { font-size: 11px; font-weight: 500; color: var(--md-sys-color-error); background: rgba(255,180,171,0.14); padding: 2px 7px; border-radius: 6px; }
-.heat-card.y .lift { color: var(--warning); background: rgba(247,192,103,0.14); }
+.heat-card .lift { font-size: 11px; font-weight: 500; color: var(--tone-bad); background: color-mix(in srgb, var(--tone-bad) 14%, transparent); padding: 2px 7px; border-radius: 6px; }
+.heat-card.y .lift { color: var(--tone-warn); background: color-mix(in srgb, var(--tone-warn) 14%, transparent); }
 .heat-card .slug { font-size: 15px; font-weight: 500; margin: 6px 0 4px; }
 .heat-card .note { font-size: 13px; color: var(--md-sys-color-on-surface-variant); font-style: italic; line-height: 1.45; }
 
@@ -187,12 +187,12 @@ md-outlined-text-field { --md-outlined-text-field-container-shape: 999px; --md-o
 .pb-cap { margin-top: 9px; padding-top: 9px; border-top: 1px solid var(--md-sys-color-outline-variant); }
 .pb-cap b { font: 600 24px/1 var(--font-display); letter-spacing: -.025em; font-variant-numeric: tabular-nums; }
 .pb-cap em { font-style: normal; display: block; font-size: 13px; color: var(--md-sys-color-on-surface-variant); margin-top: 6px; line-height: 1.3; }
-.pb-cells.t-good i { background: var(--md-sys-color-primary); }
-.pb-cells.t-mid  i { background: color-mix(in srgb, var(--md-sys-color-primary) 42%, transparent); }
+.pb-cells.t-good i { background: var(--tone-good); }
+.pb-cells.t-mid  i { background: color-mix(in srgb, var(--tone-mid) 62%, transparent); }
 /* four bands, four readings — high risk is a WARNING and potential decline is a FAILURE, so they
    cannot share a colour in the one chart whose job is to tell the bands apart. */
-.pb-cells.t-warn i { background: color-mix(in srgb, var(--warning) 62%, transparent); }
-.pb-cells.t-bad  i { background: color-mix(in srgb, var(--md-sys-color-error) 55%, transparent); }
+.pb-cells.t-warn i { background: color-mix(in srgb, var(--tone-warn) 62%, transparent); }
+.pb-cells.t-bad  i { background: color-mix(in srgb, var(--tone-bad) 55%, transparent); }
 .pb-cells.t-form i { background: color-mix(in srgb, var(--md-sys-color-on-surface) 16%, transparent); }
 @media (max-width: 900px){ .pb { grid-template-columns: 1fr; gap: 26px; } .pb-cols { gap: 7px; } }
 /* the project floor is 14px on a phone, and the band's captions and eyebrow sit below it on desktop
@@ -253,7 +253,12 @@ md-outlined-text-field { --md-outlined-text-field-container-shape: 999px; --md-o
 /* ---- action queue ---- */
 .group-head { display: flex; align-items: baseline; gap: 10px; margin: 24px 0 4px; }
 .group-sub { color: var(--md-sys-color-on-surface-variant); font-size: 14px; line-height: 20px; letter-spacing: 0.25px; margin-bottom: 12px; }
-.qitem { display: flex; align-items: center; gap: 16px; padding: 16px 20px; margin-bottom: 16px; }
+/* Editorial list row (see queueItem in ds.js). A hairline BETWEEN rows, never under
+   the last one, and no background — the icon tile carries the urgency. The row still
+   lights on hover so it reads as actionable without a permanent container. */
+.qitem { display: flex; align-items: center; gap: 16px; padding: 18px 4px; border-bottom: 1px solid var(--md-sys-color-outline-variant); transition: background-color .15s ease; }
+.qitem:last-child { border-bottom: none; }
+.qitem:hover { background: color-mix(in srgb, var(--md-sys-color-on-surface) 4%, transparent); }
 .q-ic { width: 44px; height: 44px; border-radius: 999px; display: grid; place-items: center; flex: none; }
 .q-ic .material-symbols-rounded { font-size: 24px; }
 .qitem.high .q-ic { background: var(--md-sys-color-error-container); color: var(--md-sys-color-on-error-container); }

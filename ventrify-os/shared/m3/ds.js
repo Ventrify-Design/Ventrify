@@ -312,25 +312,28 @@ export function drawer(active = 'portfolio', opts = {}) {
   const footHtml = ac
     ? `<div class="drawer-foot account"><span class="av"${ac.color ? ` style="background:${esc(ac.color)}"` : ''}>${esc(ac.initials || '—')}</span><span class="nm">${esc(ac.name || '')}<small>${esc(ac.role || '')}</small></span><button class="drawer-foot-signout" title="Sign out" aria-label="Sign out" onclick="window.__signOut&&window.__signOut()"><span class="material-symbols-rounded">logout</span></button></div>`
     : `<div class="drawer-foot"><span class="av">AC</span><span class="nm">Apex Capital<small>Partner workspace</small></span></div>`;
-  /* THE PRODUCT MARK, and why it is at the FOOT and not the head.
-     On the live workspace the drawer head belongs to the TENANT — their name,
-     their colour, their logo (wsBrandConfig). That is correct and must not be
-     competed with: the operator works for Mercer Ventures, not for us. Which
-     left the product with no mark anywhere in the live chrome at all — the
-     identity was carried only by the accent and the masthead photograph, and
-     brandMark(), the thing that draws the lockup, renders solely on the demo
-     pages where no tenant is passed. The foot is the one place a white-label
-     product can sign its own work without taking the tenant's position, and
-     it is below the account chip because it is the quietest thing here, not
-     a control. Omitted entirely when the head is already the product's own
-     mark, so it can never print twice. */
+  /* THE PRODUCT MARK, and why it is at the HEAD, above the tenant.
+     It used to sit at the foot, below the account chip, on the reasoning that the
+     drawer head belongs to the TENANT and a white-label product should not take
+     their position. That reasoning predated the org switcher. Once the tenant row
+     became a CONTROL — a button that opens a list of organisations — the foot
+     placement stopped working for two reasons: the mark read as a footnote to the
+     account chip rather than as the product, and it was dimmed to half opacity to
+     keep it quiet, which is not a thing you do to your own logo.
+
+     The order now reads as a sentence: this is VerdictScore (fixed) · you are in
+     THIS organisation (switchable) · here is what you can do (nav) · here is who
+     you are (account). Product above tenant is the correct hierarchy when the
+     tenant row is a control, because the mark is the one thing on the rail that
+     never changes. Still omitted when the head is already the product's own mark,
+     so it can never print twice. */
   const productHtml = b ? `<div class="drawer-product">${brandMark()}</div>` : '';
   return `<nav class="m3-drawer" id="m3-drawer">
     <button class="nav-toggle" onclick="__navButton&&__navButton()" aria-label="Collapse navigation"><span class="material-symbols-rounded">menu</span></button>
+    ${productHtml}
     ${brandHtml}
     ${out}
     ${footHtml}
-    ${productHtml}
   </nav>`;
 }
 // themeToggle REMOVED — the workspace is dark-only (see theme.css). It offered a
@@ -687,9 +690,14 @@ const SCORELK_ICON = { good: 'trending_up', mid: 'trending_flat', bad: 'trending
 // Tone keys off the LABEL the adapter produced. 'Investment ready' is the only one that reads as good;
 // 'High risk' and 'Potential decline' must read as bad, which they would NOT have done while every
 // unmapped code fell through to 'Promising'.
+/* Band label → tone. MUST agree with the BANDS table above, which is the scoring
+   source of truth: READY good · PROMISING mid · HIGH_RISK warn · POTENTIAL_DECLINE bad.
+   It did not — 'High risk' mapped to 'bad', collapsing the bottom two bands onto one
+   colour and leaving the 'warn' step with nothing pointing at it. Four bands, four
+   tones; see the tone ramp in theme.css for why mid is brand and not amber. */
 const BAND_TONE = {
-  'Investment ready': 'good', 'Promising': 'mid', 'High risk': 'bad', 'Potential decline': 'bad',
-  Strong: 'good', Weak: 'bad', Uninvestable: 'bad', Forming: 'mid',
+  'Investment ready': 'good', 'Promising': 'mid', 'High risk': 'warn', 'Potential decline': 'bad',
+  Strong: 'good', Weak: 'warn', Uninvestable: 'bad', Forming: 'mid',
 };
 
 // scoreLockup — MOLECULE. The headline-score lockup: eyebrow label · big number/max · a tone-coloured band
@@ -2638,8 +2646,13 @@ export function teamMemo(a, s) {
 
 
 // ---- research + data room ----
-const RTONE = { p: 'rgba(208,188,255,0.14)', s: 'rgba(111,219,180,0.14)', w: 'rgba(247,192,103,0.14)' };
+/* RCOL is the icon colour, RTONE the tile behind it — the same colour at 14%.
+   RTONE used to be three frozen rgba() literals carrying M3's stock lavender
+   (#D0BCFF), a mint green and an amber, so the tiles kept the default palette
+   while the icons on top of them followed the brand. Derived from RCOL now, so
+   the pair can never drift again. */
 const RCOL = { p: 'var(--md-sys-color-primary)', s: 'var(--success)', w: 'var(--warning)' };
+const RTONE = Object.fromEntries(Object.entries(RCOL).map(([k, v]) => [k, `color-mix(in srgb, ${v} 14%, transparent)`]));
 
 // researchRow — MOLECULE. One editorial evidence-index row, a bar-less sibling of metricRow drilling to the
 // aux peek: a tinted workstream marker + title + one-line finding · a depth/status chip · a drill chevron.
@@ -4005,7 +4018,13 @@ export function queueItem(item) {
   const secondary = item.href2 ? `<a class="m3-btn text" href="${esc(item.href2)}">${esc(secLabel)}</a>` : `<button class="m3-btn text">${esc(secLabel)}</button>`;
   const body = item.desc || item.detail || '';
   const meta = item.meta != null ? esc(item.meta) : [item.typeLabel, item.programName, item.age].filter(Boolean).map(esc).join(' · ');
-  return `<div class="m3-card filled qitem ${item.urgency}"><div class="q-ic"><span class="material-symbols-rounded">${esc(item.icon)}</span></div>
+  /* EDITORIAL ROW, not a card. Each action used to be an `m3-card filled` — a filled
+     tub with its own background — which stacked three heavy slabs down a page whose
+     whole language is hairlines and type. The card bought nothing: these items are a
+     LIST, and a list is held together by a rule between its rows, not by giving every
+     row a container. The urgency tint survives on the icon tile, which is where it was
+     doing the work anyway. */
+  return `<div class="qitem ${item.urgency}"><div class="q-ic"><span class="material-symbols-rounded">${esc(item.icon)}</span></div>
     <div class="q-body"><div class="title-m">${esc(item.title)}</div><div class="body-m variant">${esc(body)}</div><div class="q-meta">${meta}</div></div>
     <div class="q-act">${primary}${secondary}</div></div>`;
 }

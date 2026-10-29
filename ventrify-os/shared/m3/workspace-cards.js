@@ -298,7 +298,10 @@ export function orgsHero({ orgs = [], isSuper = false, org = {}, operators = [],
 // optional meta pill row, a trailing action, and an optional aside. badge/pill/action/aside are trusted
 // HTML (statusPill/button markup); name/sub/avatar are escaped here.
 export function personCard({ avatar, avatarColor, name, sub, badge = '', pill = '', action = '', aside = '' } = {}) {
-  return `<div class="m3-card pc">
+  /* EDITORIAL ROW, not a card — same move as queueItem. The roster is a list of
+     people; a hairline between them says that, and a filled tub per person does not.
+     Only Team renders personCard, so the change is contained to that screen. */
+  return `<div class="pc">
     <div class="pc-head">
       <div class="pc-identity"><div class="pc-avatar" style="background:${esc(avatarColor) || 'var(--md-sys-color-primary)'}${avatarColor ? `;color:${inkOn(avatarColor)}` : ''}">${esc(avatar)}</div>
         <div><div class="pc-name">${esc(name)}${badge ? ' ' + badge : ''}</div><div class="pc-founder">${esc(sub)}</div></div></div>

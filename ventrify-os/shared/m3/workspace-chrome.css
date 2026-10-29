@@ -17,11 +17,15 @@
 .ws-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; }
 @media (max-width: 720px) { .ws-grid { grid-template-columns: 1fr; } }
 
-.pc { display: flex; flex-direction: column; gap: 14px; padding: 20px; text-decoration: none; color: inherit; transition: box-shadow .15s ease, transform .12s ease; }
-.pc:hover { box-shadow: var(--md-elev-2); transform: translateY(-2px); }
+/* Editorial roster row (see personCard in workspace-cards.js). Hairline between
+   people, none under the last; no background and no lift-on-hover — a row in a list
+   is not a tile you pick up. */
+.pc { display: flex; flex-direction: column; gap: 14px; padding: 18px 4px; border-bottom: 1px solid var(--md-sys-color-outline-variant); text-decoration: none; color: inherit; transition: background-color .15s ease; }
+.pc:last-child { border-bottom: none; }
+.pc:hover { background: color-mix(in srgb, var(--md-sys-color-on-surface) 4%, transparent); }
 .pc-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .pc-identity { display: flex; align-items: center; gap: 12px; min-width: 0; }
-.pc-avatar { flex: none; width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; color: #fff; letter-spacing: .02em; }
+.pc-avatar { flex: none; width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; color: var(--white, #FFFFFF); letter-spacing: .02em; }
 .pc-name { font-size: var(--row-title); font-weight: 600; color: var(--md-sys-color-on-surface); line-height: 1.3; }
 .pc-founder { font-size: var(--row-sub); color: var(--md-sys-color-on-surface-variant); margin-top: 2px; }
 .pc-badges { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; flex: none; }
@@ -38,8 +42,8 @@
 .pc-reason { display: flex; align-items: flex-start; gap: 8px; font-size: 12.5px; line-height: 1.45; padding: 10px 12px; border-radius: 10px; background: var(--md-sys-color-surface-container-highest); color: var(--md-sys-color-on-surface); }
 .pc-reason .material-symbols-rounded { font-size: 17px; flex: none; margin-top: 1px; }
 .pc-reason.stuck { color: var(--md-sys-color-error); }
-.pc-reason.attention .material-symbols-rounded { color: var(--warning, #C77700); }
-.pc-reason.stuck .material-symbols-rounded { color: var(--md-sys-color-error); }
+.pc-reason.attention .material-symbols-rounded { color: var(--tone-warn); }
+.pc-reason.stuck .material-symbols-rounded { color: var(--tone-bad); }
 
 /* founder-facing stats trio */
 .pc-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding-top: 4px; }
@@ -53,10 +57,10 @@
 
 /* assessment card — verdict-led */
 .pc-verdict { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
-.pc-rec { font-size: 13px; font-weight: 600; padding: 5px 12px; border-radius: 999px; color: #fff; letter-spacing: .01em; }
-.pc-rec.invest { background: var(--success, #00A368); }
-.pc-rec.pass { background: var(--md-sys-color-error); }
-.pc-rec.consider { background: var(--warning, #C77700); }
+.pc-rec { font-size: 13px; font-weight: 600; padding: 5px 12px; border-radius: 999px; color: var(--white, #FFFFFF); letter-spacing: .01em; }
+.pc-rec.invest { background: var(--tone-good); }
+.pc-rec.pass { background: var(--tone-bad); }
+.pc-rec.consider { background: var(--tone-warn); }
 .pc-score { font-size: 22px; font-weight: 700; font-family: var(--font-display); color: var(--md-sys-color-on-surface); line-height: 1; }
 .pc-score .band { font-size: 12.5px; font-weight: 500; color: var(--md-sys-color-on-surface-variant); }
 .pc-thesis { font-size: 13px; line-height: 1.55; color: var(--md-sys-color-on-surface-variant); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
@@ -260,7 +264,7 @@ body.signin::after {
 
 /* ---------- plan-gate banner ---------- */
 .ws-plangate { display: flex; align-items: center; gap: 14px; padding: 14px 18px; margin-bottom: 20px; }
-.ws-plangate .material-symbols-rounded { color: var(--warning, #C77700); }
+.ws-plangate .material-symbols-rounded { color: var(--tone-warn); }
 .ws-plangate-cta { background: none; border: none; padding: 0; color: var(--md-sys-color-primary); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
 
 /* ---------- queue board ---------- */
@@ -290,17 +294,24 @@ body.signin::after {
 /* ---------- org switcher panel (M3-native; the live panel CSS lives in workspace/styles.css, not loaded here) ---------- */
 .drawer-brand.switch { cursor: pointer; }
 .drawer-brand-caret { margin-left: auto; color: var(--md-sys-color-on-surface-variant); font-size: 20px; transition: transform .15s ease; }
-.ws-orgswitch-panel { position: fixed; z-index: 1200; min-width: 240px; max-width: 320px; padding: 8px; border-radius: 14px; background: var(--md-sys-color-surface-container-high); box-shadow: var(--md-elev-3); border: 1px solid var(--md-sys-color-outline-variant); }
+/* LAYOUT ONLY — the surface (film, blur, edge, bevel, cast, radius) is .glass-3 from
+   brand.css, applied in workspace-m3.js. Do not re-declare background/border/shadow
+   here: that is what made this read as stock Material instead of brand chrome. */
+.ws-orgswitch-panel { position: fixed; z-index: 1200; min-width: 240px; max-width: 320px; padding: 8px; }
 .ws-orgswitch-panel[hidden] { display: none; }
 .ws-orgswitch-lab { font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase; font-weight: 700; color: var(--md-sys-color-on-surface-variant); padding: 6px 10px 8px; }
 .ws-orgswitch-item { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 9px 10px; border-radius: 9px; border: none; background: none; font: inherit; font-size: 13.5px; color: var(--md-sys-color-on-surface); cursor: pointer; }
 .ws-orgswitch-item:hover { background: color-mix(in srgb, var(--md-sys-color-on-surface) 6%, transparent); }
-.ws-orgswitch-item.active { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
-.ws-orgswitch-mark { width: 26px; height: 26px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; flex: none; }
+/* Same recipe as .nav-item.active in theme.css — the switcher sits in the rail, so
+   "selected" must look identical to selected in the nav directly below it. */
+.ws-orgswitch-item.active { background: color-mix(in srgb, var(--brand-affirm, var(--md-sys-color-primary)) 16%, transparent); color: var(--md-sys-color-on-surface); }
+.ws-orgswitch-mark { width: 26px; height: 26px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: var(--white, #FFFFFF); flex: none; }
 .ws-orgswitch-item .material-symbols-rounded { margin-left: auto; font-size: 18px; color: var(--md-sys-color-primary); }
 /* ≤840px: the trigger lives inside the off-canvas drawer, so the panel becomes an inline accordion (no topbar to anchor to) */
 @media (max-width: 840px) {
-  .ws-orgswitch-panel { position: static; width: 100%; max-width: none; margin: 6px 0 2px; box-shadow: none; }
+  /* Inlined into the drawer on mobile — an accordion, not a floating menu, so the
+     glass cast and blur are dropped and it sits flat on the rail. */
+  .ws-orgswitch-panel { position: static; width: 100%; max-width: none; margin: 6px 0 2px; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; background-image: none; }
 }
 
 /* account foot sign-out affordance */

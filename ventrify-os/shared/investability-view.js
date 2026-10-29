@@ -18,20 +18,32 @@ import { esc as _esc } from './util.js';
 
 // band ('green'|'yellow'|'red') OR composite band ('approved'|'feedback'|'rework'|'pass')
 // → a DS band token. One colour map for every surface.
+/* ⚠ NO LITERAL COLOURS BELOW THIS LINE. These two functions used to carry hex and
+   rgba() fallbacks (#00A368, #C77700, rgba(199,119,0,.13) …). A var() fallback is not
+   a safety net here — it is a SECOND palette that silently takes over wherever the
+   token is missing, and because it renders rather than erroring, nothing catches it.
+   Both now resolve through the tone ramp in theme.css, which is the same ramp the
+   score dial and band pills use, so every band-coloured thing on every surface moves
+   together when a brand changes. */
+/* Three layers render this component and they do not share a stylesheet, so each tone
+   is a CHAIN, not a single token:
+     --tone-*      the M3 ramp (theme.css)  — the live workspace
+     --band-*      the classic ramp (shared/ds.css) — workspace/program.html
+     --success etc the base palette (studio/styles.css) — studio/investability.html
+   Every link is a token and the chain terminates in one that each context defines, so
+   there is no literal anywhere and no surface silently falls back to a stray palette. */
 export function bandColor(band) {
   const b = String(band || '').toLowerCase();
-  if (b === 'green' || b === 'approved' || b === 'strong') return 'var(--band-strong, #00A368)';
-  if (b === 'red' || b === 'pass' || b === 'weak' || b === 'rework') return 'var(--band-weak, #C42233)';
-  if (b === 'forming' || b === 'unrated' || b === 'na') return 'var(--text-subtle, #888888)'; // neutral — nothing scored yet
-  return 'var(--band-mid, #C77700)'; // yellow / feedback / mid
+  if (b === 'green' || b === 'approved' || b === 'strong') return 'var(--tone-good, var(--band-strong, var(--success)))';
+  if (b === 'red' || b === 'pass' || b === 'uninvestable') return 'var(--tone-bad, var(--band-weak, var(--danger)))';
+  if (b === 'weak' || b === 'rework') return 'var(--tone-warn, var(--band-mid, var(--warning)))';
+  if (b === 'forming' || b === 'unrated' || b === 'na') return 'var(--md-sys-color-on-surface-variant, var(--muted))'; // neutral — nothing scored yet
+  return 'var(--tone-mid, var(--band-mid, var(--warning)))'; // feedback / mid
 }
-// Soft tint of the band colour, for chip/pill backgrounds.
+// Soft tint of the band colour, for chip/pill backgrounds. Mixed FROM the same ramp,
+// so a tint can never drift away from the colour it is supposed to be a tint of.
 export function bandTint(band) {
-  const b = String(band || '').toLowerCase();
-  if (b === 'green' || b === 'approved' || b === 'strong') return 'rgba(0,163,104,0.12)';
-  if (b === 'red' || b === 'pass' || b === 'weak' || b === 'rework') return 'rgba(196,34,51,0.10)';
-  if (b === 'forming' || b === 'unrated' || b === 'na') return 'rgba(0,0,0,0.05)';
-  return 'rgba(199,119,0,0.13)';
+  return `color-mix(in srgb, ${bandColor(band)} 14%, transparent)`;
 }
 
 // Canonical rubric metadata (mirrors reference_venture_sentiment_score.md) so a

@@ -465,7 +465,12 @@ export function mountOrgSwitcherM3() {
   if (!panel) {
     panel = document.createElement('div');
     panel.id = 'ws-orgswitch-panel';
-    panel.className = 'ws-orgswitch-panel';
+    /* glass-3 is the brand's ready-made MENU material (brand.css § MATERIALS: "modals,
+       menus, popovers"). It carries film + blur + edge + bevel + cast as one recipe.
+       This panel previously hand-assembled a surface out of raw M3 role tokens, which
+       is the exact thing that class exists to stop — it resolved to a flat neutral
+       container that read as stock Material next to a chrome made of glass. */
+    panel.className = 'ws-orgswitch-panel glass-3';
     panel.hidden = true;
     panel.setAttribute('role', 'menu');
     document.body.appendChild(panel);

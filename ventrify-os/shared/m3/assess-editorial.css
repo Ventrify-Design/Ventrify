@@ -69,9 +69,10 @@
    Amber and red stay on `mid` and `bad` — a caution is still a caution. */
 .statement-lockup { --tone: var(--md-sys-color-primary); }   /* no verdict → brand, never a caution */
 .statement-lockup.tone-brand { --tone: var(--md-sys-color-primary); }
-.statement-lockup.tone-good  { --tone: var(--md-sys-color-primary); }
-.statement-lockup.tone-mid   { --tone: var(--warning); }
-.statement-lockup.tone-bad   { --tone: var(--md-sys-color-error); }
+.statement-lockup.tone-good  { --tone: var(--tone-good); }
+.statement-lockup.tone-mid   { --tone: var(--tone-mid); }
+.statement-lockup.tone-warn  { --tone: var(--tone-warn); }
+.statement-lockup.tone-bad   { --tone: var(--tone-bad); }
 /* Always the accent, never the tone: an eyebrow names the section, it does
    not judge it. Following --tone made "The market" render amber, which reads
    as a warning about a heading. The emphasised word in the headline and the
@@ -127,9 +128,10 @@
      more like a stamp anyway, the way a highlighter does. Amber and red already worked
      this way, so the three now share one construction. */
   .lockup-band { font-weight: 600; }
-  .lockup-band.good { background: var(--brand-affirm); color: var(--brand-ink); }
-  .lockup-band.mid  { background: var(--warning); color: var(--on-warning, #30230A); }
-  .lockup-band.bad  { background: var(--md-sys-color-error); color: var(--md-sys-color-on-error); }
+  .lockup-band.good { background: var(--tone-good); color: var(--md-sys-color-on-primary); }
+  .lockup-band.mid  { background: var(--tone-mid); color: var(--on-success, var(--brand-ink)); }
+  .lockup-band.warn { background: var(--tone-warn); color: var(--on-warning, #30230A); }
+  .lockup-band.bad  { background: var(--tone-bad); color: var(--md-sys-color-on-error); }
 
   /* ============ SCORE LOCKUP — label · big number/max · tone band · optional now→potential bar ============ */
   .score-lockup { text-align: left; }
@@ -446,9 +448,14 @@
   .frow-role { font-size: var(--row-cap); color: var(--md-sys-color-on-surface-variant); margin-top: 1px; }
   .frow-bg { font-size: var(--row-sub-lg); line-height: 1.5; color: var(--md-sys-color-on-surface-variant); margin-top: 7px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .frow-sig { font-size: var(--row-eyebrow); font-weight: 600; letter-spacing: .8px; text-transform: uppercase; white-space: nowrap; padding-top: 3px; }
-  .frow-sig.positive { color: var(--success); }
-  .frow-sig.neutral { color: var(--warning); }
-  .frow-sig.flag { color: var(--md-sys-color-error); }
+  /* positive / neutral / flag — NOT good / warn / bad. "Neutral" means the finding is
+     simply not yet verified; painting it amber made every unverified line look like a
+     problem and spent the alarm colour on an absence of information. It now reads as
+     muted text, which is what "we have not got to this yet" should look like. The flag
+     keeps the error colour, because that one IS a problem. */
+  .frow-sig.positive { color: var(--tone-good); }
+  .frow-sig.neutral  { color: var(--md-sys-color-on-surface-variant); }
+  .frow-sig.flag     { color: var(--tone-bad); }
 
   /* ============ EXIT LEDGER — labelled editorial prose blocks (Team exit) ============================== */
   .exit-note { margin-top: 22px; }
@@ -1094,8 +1101,8 @@
   color: var(--md-sys-color-primary);
 }
 .gap-chip.gc-resolved {
-  background: var(--success-container, color-mix(in srgb, #2e7d5b 22%, transparent));
-  color: var(--on-success-container, #7ee2b8);
+  background: color-mix(in srgb, var(--tone-good) 22%, transparent);
+  color: var(--tone-good);
 }
 .gap-chip.gc-contradicted {
   background: color-mix(in srgb, var(--warning) 16%, transparent);
@@ -1106,11 +1113,11 @@
   color: var(--md-sys-color-error);
 }
 /* the aux-panel standing band tracks the same state */
-.cd-band.green { background: var(--success-container, color-mix(in srgb, #2e7d5b 22%, transparent)); color: var(--on-success-container, #7ee2b8); }
+.cd-band.green { background: color-mix(in srgb, var(--tone-good) 22%, transparent); color: var(--tone-good); }
 .cd-band.amber { background: color-mix(in srgb, var(--warning) 16%, transparent); color: var(--warning); }
 /* the gap's own signal held, but the COLD re-score moved the composite through other signals. He can see the
    number changed, so the pill must say so — "No change" was a lie told to a man watching 75 become 76. */
-.gap-chip.gc-moved-up   { background: var(--success-container, color-mix(in srgb, #2e7d5b 22%, transparent)); color: var(--on-success-container, #7ee2b8); }
+.gap-chip.gc-moved-up   { background: color-mix(in srgb, var(--tone-good) 22%, transparent); color: var(--tone-good); }
 .gap-chip.gc-moved-down { background: color-mix(in srgb, var(--warning) 16%, transparent); color: var(--warning); }
 
 /* ═══ SCORE LOCKUP — dial + stability strip ═════════════════════════════════
@@ -1124,9 +1131,10 @@
    numeral is re-sized, because here it sits inside a dial. */
 
 .score-lockup { --sl-tone: var(--warning); }
-.score-lockup.tone-good { --sl-tone: var(--md-sys-color-primary); }   /* dial, strip, median */
-.score-lockup.tone-mid  { --sl-tone: var(--warning); }
-.score-lockup.tone-bad  { --sl-tone: var(--md-sys-color-error); }
+.score-lockup.tone-good { --sl-tone: var(--tone-good); }   /* dial, strip, median */
+.score-lockup.tone-mid  { --sl-tone: var(--tone-mid); }
+.score-lockup.tone-warn { --sl-tone: var(--tone-warn); }
+.score-lockup.tone-bad  { --sl-tone: var(--tone-bad); }
 
 .score-lockup .sl-top { display: flex; align-items: center; gap: clamp(16px, 2.4vw, 30px); margin-top: 16px; }
 

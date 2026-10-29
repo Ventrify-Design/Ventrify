@@ -138,7 +138,13 @@
     ['--md-sys-color-on-surface','on-surface'],['--md-sys-color-on-surface-variant','on-surface-variant'],['--md-sys-color-outline-variant','outline-variant']
   ].map(t => swatch(t[0], t[1])).join('');
   document.getElementById('tok-product').innerHTML = [
-    ['--success','success'],['--success-container','success-container'],['--warning','warning'],['--warning-container','warning-container'],['--masthead-bg','masthead-bg']
+    ['--success','success'],['--success-container','success-container'],['--warning','warning'],['--warning-container','warning-container'],['--masthead-bg','masthead-bg'],
+    // The TONE RAMP — the four assessment bands. Every band-coloured thing (score dial,
+    // band pill, statement lockup, phase cells, contribution bars, heat lifts) resolves
+    // through these four and nothing else. good/mid are two steps of the BRAND; only
+    // warn/bad are saturated non-brand, so amber and red always mean "look here".
+    ['--tone-good','tone-good · Investment ready'],['--tone-mid','tone-mid · Promising'],
+    ['--tone-warn','tone-warn · High risk'],['--tone-bad','tone-bad · Potential decline']
   ].map(t => swatch(t[0], t[1])).join('');
   document.getElementById('tok-type').innerHTML = [['display-s','Display'],['headline-m','Headline'],['title-l','Title large'],['title-m','Title medium'],['body-l','Body large'],['body-m','Body medium'],['label-l','Label'],['overline','OVERLINE']]
     .map(t => `<div class="type-row"><span class="l">.${t[0]}</span><span class="${t[0]}">${t[1]} — MoneyGym</span></div>`).join('');

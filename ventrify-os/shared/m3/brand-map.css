@@ -228,19 +228,25 @@
 [data-brand="verdictscore"] .m3-drawer .bl-for[data-for="verdictscore"] { display: block; }
 [data-brand="venturestack"] .m3-drawer .bl-for[data-for="venturestack"] { display: block; }
 
-/* The product's own signature at the foot of the drawer (see drawer() in ds.js
-   for why it is not at the head). Deliberately the quietest thing in the
-   chrome: small, dimmed, and it lifts to full strength only on hover, the way
-   a signature should. The hairline above separates it from the account chip,
-   which IS a control. */
-.drawer-product { padding: 12px 16px 16px; border-top: 1px solid var(--line-1, var(--md-sys-color-outline-variant)); }
-/* The foot is a signature, so it carries the WHOLE lockup, not a bare chevron —
-   and at 26px, which clears the optical floor the 15px it shipped at did not.
-   There is room: 26px gives a 131px lockup in a 204px column. */
-.drawer-product .brand-lockup { --lockup-h: 26px; opacity: .5; transition: opacity .15s ease; }
-.m3-drawer:hover .drawer-product .brand-lockup { opacity: .9; }
+/* The product's mark at the HEAD of the drawer, directly under the hamburger and
+   above the organisation switcher (see drawer() in ds.js for the ordering argument).
+
+   ⚠ NEVER DIM THIS. It shipped at opacity .5, lifting to .9 on hover, from when it
+   was a footer signature. A logo that is half-strength until you point at it reads
+   as disabled chrome, and it is the one element on the page that should never look
+   provisional. Full strength, always, hover or not — there is no hover rule here
+   and there should not be one. */
+.drawer-product { padding: 2px 16px 14px; }
+/* 30px at the head: the mark is now a primary identity element rather than a
+   signature, and 30px matches the drawer-brand logo tile it sits above. */
+.drawer-product .brand-lockup { --lockup-h: 30px; }
 /* collapsed rail: the mark alone, centred on the 24px nav-icon axis like every other lead */
 .m3-app.rail .drawer-product { display: flex; justify-content: center; padding-inline: 0; }
+
+/* The account chip is now the last thing in the rail, so it takes the hairline that
+   used to sit above the product mark — otherwise it floats against the nav list with
+   nothing marking it as a different KIND of thing (you, not a destination). */
+.drawer-foot { border-top: 1px solid var(--line-1, var(--md-sys-color-outline-variant)); padding-top: 14px; }
 
 /* COLLAPSED RAIL — the mark alone. Narrowing the element is the whole switch:
    preserveAspectRatio="xMinYMid slice" makes the height govern, so the wordmark

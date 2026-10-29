@@ -93,6 +93,31 @@
   --success-container: var(--md-sys-color-primary-container);  --on-success-container: var(--md-sys-color-on-primary-container);
   --warning: #F7C067;  --on-warning: #402D00;  --warning-container: #5B4300;  --on-warning-container: #FFDEA8;
 
+  /* ── THE TONE RAMP — ONE source for the four assessment bands ──────────────
+     Every band-coloured thing (score dial, band pill, statement lockup, phase
+     cells, contribution bars) resolves through these four and nothing else.
+
+     WHY IT EXISTS. The ramp was previously re-declared per component, and the
+     declarations disagreed: ds.css painted `mid` as a 42% tint of PRIMARY and
+     kept amber for `warn`, while assess-editorial.css sent `mid` straight to
+     --warning. So the same 73 rendered a brand-tinted phase bar and an AMBER
+     dial on one page. One ramp, consumed everywhere, is the fix.
+
+     WHY `mid` IS A BRAND STEP AND NOT AMBER. "Promising" (60-79) is not an
+     alarm — it is the second-best thing the rubric can say. brand-map.css sets
+     the rule this follows: the only saturated non-brand colours on a page are
+     amber and red, "which is exactly where the eye should go". Spending amber
+     on a positive band both miscommunicates it and devalues the real warnings
+     two bands below. good and mid are therefore two steps of the brand; warn
+     and bad are the two alarms.
+
+     Branding overrides the INPUTS (--md-sys-color-primary, --success,
+     --warning), so these four follow each identity automatically. */
+  --tone-good: var(--md-sys-color-primary);
+  --tone-mid:  var(--success);
+  --tone-warn: var(--warning);
+  --tone-bad:  var(--md-sys-color-error);
+
   /* shape scale */
   --md-sys-shape-corner-sm: 8px;
   --md-sys-shape-corner-md: 12px;

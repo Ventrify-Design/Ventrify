@@ -38,6 +38,11 @@
   --border-strong: rgba(0,0,0,0.12);
   --danger: #C0392B;
   --success: #00B8A0;
+  /* --warning completes the band vocabulary this page needs. investability-view.js
+     resolves its mid/warn bands through a token chain that ends here; without this
+     the amber band had no token on the Studio side and was carrying a literal hex
+     inside the JS instead. */
+  --warning: #C77700;
 
   --font-heading: 'Inter', sans-serif;
   --font-body: 'Inter', sans-serif;
