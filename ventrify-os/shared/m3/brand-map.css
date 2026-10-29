@@ -240,9 +240,14 @@
    The head is three separate things stacked — a control (hamburger), an identity
    (the mark) and a control (the org switcher) — so the mark needs air on BOTH
    sides or the identity reads as attached to whichever control it is nearer.
-   s-3 above puts ~18px under the hamburger; s-5 below gives ~40px down to the
-   switcher tile, which is the gap that was doing the squashing. */
-.drawer-product { padding: var(--s-3, 12px) var(--s-4, 16px) var(--s-5, 24px); }
+   s-4 above puts ~22px under the hamburger; s-6 below, plus s-5 on the switcher's
+   own top edge, opens the identity↔tenant gap to ~56px. The two paddings are
+   deliberately split across both elements rather than piled onto one: the mark
+   needs to sit clear of the hamburger AND clear of the switcher, and loading it
+   all onto drawer-product would push the mark down toward the thing it is
+   supposed to be separate from. */
+.drawer-product { padding: var(--s-4, 16px) var(--s-4, 16px) var(--s-6, 32px); }
+.drawer-brand { padding-top: var(--s-5, 24px); }
 /* 30px at the head: the mark is now a primary identity element rather than a
    signature, and 30px matches the drawer-brand logo tile it sits above. */
 .drawer-product .brand-lockup { --lockup-h: 30px; }
