@@ -203,18 +203,30 @@
    aspect so the gap to whatever sits beside it never drifts when the size
    changes. Two crops, one asset: see brand-lockup.js on preserveAspectRatio. */
 .brand-lockup {
-  --lockup-h: var(--brand-lockup-h, 22px);
-  /* 546 x 108 is the measured artwork box (getBBox, not guessed) */
+  /* 30px, not the 22px this shipped at first. The chevron is a layered form with
+     a counter cut out of it, and at 22px those layers close up into a smudge —
+     the PNG it replaced stood 34px tall and showed the mark ALONE, so dropping
+     to a 22px full lockup shrank the mark by a third without anyone choosing to.
+     brand-lockup.js states the optical floor; this is the dial. */
+  --lockup-h: var(--brand-lockup-h, 30px);
   height: var(--lockup-h);
-  width: calc(var(--lockup-h) * 546 / 108);
+  /* NO hardcoded aspect. The two identities have different viewBox widths (546
+     vs 564) because their wordmarks differ, so the width comes from the art's
+     own box — one rule that cannot be wrong for either, or for the next one. */
+  width: auto;
   display: block;
   color: var(--text-1, currentColor);   /* the "Verdict" half + the chevron's dark face */
-  overflow: visible;
+  /* overflow MUST stay hidden (the UA default for an outermost <svg>). It was
+     set to `visible` here, which silently defeated the whole mark-only crop:
+     `slice` does not shrink the art, it relies on the box CLIPPING what falls
+     outside — so with overflow visible the collapsed rail and the drawer foot
+     both kept painting their wordmark straight out past a 28px box. */
 }
 /* one lockup per identity, all rendered, CSS picks — same mechanism as .wm-for,
    and for the same reason (the preview switcher flips [data-brand] with no re-render). */
 .m3-drawer .bl-for { display: none; }
 [data-brand="verdictscore"] .m3-drawer .bl-for[data-for="verdictscore"] { display: block; }
+[data-brand="venturestack"] .m3-drawer .bl-for[data-for="venturestack"] { display: block; }
 
 /* The product's own signature at the foot of the drawer (see drawer() in ds.js
    for why it is not at the head). Deliberately the quietest thing in the
@@ -222,7 +234,10 @@
    a signature should. The hairline above separates it from the account chip,
    which IS a control. */
 .drawer-product { padding: 12px 16px 16px; border-top: 1px solid var(--line-1, var(--md-sys-color-outline-variant)); }
-.drawer-product .brand-lockup { --lockup-h: 15px; opacity: .55; transition: opacity .15s ease; }
+/* The foot is a signature, so it carries the WHOLE lockup, not a bare chevron —
+   and at 26px, which clears the optical floor the 15px it shipped at did not.
+   There is room: 26px gives a 131px lockup in a 204px column. */
+.drawer-product .brand-lockup { --lockup-h: 26px; opacity: .5; transition: opacity .15s ease; }
 .m3-drawer:hover .drawer-product .brand-lockup { opacity: .9; }
 /* collapsed rail: the mark alone, centred on the 24px nav-icon axis like every other lead */
 .m3-app.rail .drawer-product { display: flex; justify-content: center; padding-inline: 0; }
@@ -230,7 +245,8 @@
 /* COLLAPSED RAIL — the mark alone. Narrowing the element is the whole switch:
    preserveAspectRatio="xMinYMid slice" makes the height govern, so the wordmark
    falls outside the box instead of shrinking the mark to fit. 140.2 x 108 is the
-   measured extent of paths 0-2. */
+   measured extent of paths 0-2, and it is the SAME chevron in both identities —
+   the one dimension the two lockups share (see LOCKUP_MARK_W). */
 .m3-app.rail .brand-lockup { width: calc(var(--lockup-h) * 140.2 / 108); }
 
 
