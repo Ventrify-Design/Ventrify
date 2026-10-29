@@ -7,7 +7,12 @@
   <meta name="description" content="Sign in to VerdictScore. Evidence-led venture assessment for angels, networks, VCs and accelerators.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <!-- The brand's faces. These MUST match what --font-text / --font-display name in
+     brand.css: the page used to fetch Roboto (M3's default, which brand-map.css
+     overrides) and never fetch Inter at all, so the product rendered in Inter only
+     on machines that happened to have it installed locally. tools/font-sync.mjs
+     now fails the build if a page stops fetching a family its tokens name. -->
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" rel="stylesheet">
   <!-- BRAND LAYER, in the load-bearing order brand-map.css documents: brand.css
        FIRST (the tokens everything resolves against), brand-map LAST (the M3 role
