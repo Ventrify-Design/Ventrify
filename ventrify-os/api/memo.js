@@ -177,18 +177,45 @@ module.exports = async (req, res) => {
           // existing result, or unlock the full assessment") rather than a dead end: a false positive
           // blocks a genuine new venture, and that costs far more than the $1.60 a false negative does.
           const EN = await import('../shared/entitlements.js');
+
+          // THIS engagement, already scored. The sibling scan below excludes self, so without this a
+          // second press of Run re-scored the same venture for free — the cheapest possible way round
+          // the rule, and reachable by accident rather than by malice. It mirrors entitlements.rescore
+          // (false at prescreen tier), which is what the UI already tells the user; an endpoint that
+          // disagrees with its own button is not a rule, it is a suggestion. Unlocking clears it,
+          // because a full-tier engagement is paid for and re-scores through the normal path.
+          if (engData.prescreen && (engData.tier || 'prescreen') === 'prescreen') {
+            res.status(409).json({ error: 'already_prescreened', reason: 'self', engagementId, name: engData.name });
+            return;
+          }
+
           const fp = EN.deckFingerprint(corpus.text);
           const vk = EN.ventureKey({ name: engData.name, website: engData.website, founder: engData.founderName });
           const sibs = await db.collection('engagements').where('orgId', '==', orgId).get();
+
+          // A prior counts if it FINISHED (`prescreenRanAt`, permanent) or is STILL IN FLIGHT — a claim
+          // taken at warm time and good for CLAIM_LEASE_MS. Without the lease, abandoning a run before
+          // finalise left no trace, so the same deck could be re-run under a new engagement forever,
+          // spending on every attempt. A lease rather than a permanent claim because a run that dies on
+          // our side (a 502 from the model) must not burn the user's one free look at that venture:
+          // the claim simply expires and they may try again.
+          const CLAIM_LEASE_MS = 30 * 60 * 1000;
+          const millis = v => (v && typeof v.toMillis === 'function') ? v.toMillis() : (v ? Date.parse(v) || 0 : 0);
+          const now = Date.now();
           const priors = sibs.docs
-            .filter(d => d.id !== engagementId && d.data().prescreenRanAt)
+            .filter(d => {
+              if (d.id === engagementId) return false;
+              const x = d.data();
+              if (x.prescreenRanAt) return true;
+              return (now - millis(x.prescreenClaimedAt)) < CLAIM_LEASE_MS;
+            })
             .map(d => ({ id: d.id, name: d.data().name, ventureKey: d.data().prescreenVentureKey, fingerprint: d.data().prescreenFingerprint || [] }));
           const hit = EN.matchesExistingVenture({ ventureKey: vk, fingerprint: fp }, priors);
           if (hit.match) {
             res.status(409).json({ error: 'already_prescreened', reason: hit.reason, engagementId: hit.prior.id, name: hit.prior.name });
             return;
           }
-          await engRef.set({ prescreenVentureKey: vk, prescreenFingerprint: fp }, { merge: true });
+          await engRef.set({ prescreenVentureKey: vk, prescreenFingerprint: fp, prescreenClaimedAt: FieldValue.serverTimestamp() }, { merge: true });
 
           const warm = await PS.warmCache(corpus.text, apiKey);
           // Reported, not assumed. If `wrote` is 0 across runs a silent invalidator is loose and every

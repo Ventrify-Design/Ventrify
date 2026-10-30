@@ -30,8 +30,8 @@ function slugify(s) {
 // is the source of truth: clients can suggest a plan, but it's normalised here
 // before it touches Firestore so a tampered request can't grant extra scope.
 const SERVER_PLAN_PRESETS = {
-  'self-serve': { capabilities: { assess: true, build: false }, limits: { assessments: 0,    builds: 0,    prescreens: 3 } },
-  'one-off':    { capabilities: { assess: true, build: false }, limits: { assessments: 1,    builds: 0,    prescreens: 5 } },
+  'self-serve': { capabilities: { assess: true, build: false }, limits: { assessments: 0,    builds: 0,    prescreens: null } },
+  'one-off':    { capabilities: { assess: true, build: false }, limits: { assessments: 1,    builds: 0,    prescreens: null } },
   'assess':     { capabilities: { assess: true, build: false }, limits: { assessments: null, builds: 0,    prescreens: null } },
   'full':       { capabilities: { assess: true, build: true },  limits: { assessments: null, builds: null, prescreens: null } },
 };

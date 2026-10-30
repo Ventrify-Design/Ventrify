@@ -289,12 +289,31 @@ twenty pre-screens, sort by ceiling, promote three.
 > full-assessment credit on triage discourages exactly the behaviour that saves us compute. Give it its own
 > `limits.prescreens`, generous or null.
 
-### 8.6 One free scored pre-screen per venture, per account
+### 8.6 One free scored pre-screen per venture — but unlimited ventures
 
+**AMENDED 2026-10-30.** The original build also capped a free account at 3 pre-screens total. That was
+the wrong shape and has been removed: every preset now has `prescreens: null`. A quota capped how many
+*companies* you may look at, when the only thing worth capping is how many times you may look at the
+*same* one. Triage volume is the hook — rationing it rations the thing that converts.
+
+- **Ventures: unlimited.** Pre-screen as many companies as you like, free.
 - **Room re-scan: free and unlimited.** $0, instant, and it is the engagement loop — add documents, watch
   coverage fill and the range narrow.
-- **Scored pre-screen: once.** Re-scoring requires the upgrade. This resolves §9.4's "obvious cost leak":
-  the addictive loop is the free one, the expensive one is earned.
+- **Scored pre-screen: once per venture.** Re-scoring requires the upgrade. This resolves §9.4's "obvious
+  cost leak": the addictive loop is the free one, the expensive one is earned.
+
+**What now bounds the spend.** With the quota gone the per-venture rule is the *only* enforcement, so it
+has to hold on its own. Two holes it did not previously cover — both of which the quota had been quietly
+absorbing — are closed in `prescreen-warm`:
+
+1. **Re-running the same engagement.** The sibling scan excludes self, so a second press of Run re-scored
+   the same venture free. Refused with `reason: 'self'` while the engagement is still at prescreen tier,
+   mirroring `entitlements.rescore`, which is what the UI already tells the user.
+2. **Abandoned runs.** `prescreenRanAt` is written only at finalise, so quitting before the end left no
+   trace and the same deck could be re-run under a new engagement indefinitely. Warm now takes a
+   **30-minute claim** (`prescreenClaimedAt`) and a prior counts if it finished *or* holds a live claim.
+   A lease and not a permanent mark, so a run that dies on our side does not burn the user's one free
+   look at that venture.
 
 **Deck-reuse guardrail.** Fingerprint on the **normalised extracted text**, not the file bytes —
 `ingest-docs.js` already produces the text, so re-exporting, re-compressing or editing metadata does not
@@ -358,7 +377,8 @@ check: free, instant, genuinely useful, and it buys the entire rest of the run.
 | Range construction, median of 3 draws, band suppression | `api/_prescreen.js` | Built. 28 offline checks in `tools/prescreen-logic.mjs`. |
 | Fast-mode probe, cache warm-up, structured outputs | `api/_prescreen.js` | Built. **Never run against the real API.** |
 | Server-side scoring + storage + compose | `api/memo.js` (`prescreen-warm` / `-category` / `-finalise`) | Built. No score crosses the client. |
-| One free pre-screen per venture | `prescreen-warm` + `shared/entitlements.js` | Built. Soft refusal, org-scoped. |
+| One free pre-screen per venture | `prescreen-warm` + `shared/entitlements.js` | Built. Soft refusal, org-scoped. Self-re-run and abandoned-run holes closed 2026-10-30 (§8.6). |
+| Unlimited pre-screens per account | `workspace/plan.js` + `api/admin.js` | Built. `prescreens: null` on every preset; the per-venture rule is the only cap. |
 | Browser orchestration + live reveal | `workspace/prescreen.js`, `DS.prescreenRunning` | Built. Fan-out 4, **unmeasured**. |
 | Create screen runs it | `window.__wsRunPrescreen` | Built. |
 | Range / Data room tabs, unlock | `assess-next.html`, `api/memo.js` (`prescreen-unlock`) | Built. |

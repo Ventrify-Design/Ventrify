@@ -24,8 +24,8 @@ function ensureAdmin() {
 // Licence presets — MUST mirror workspace/plan.js PLAN_PRESETS and the copy in
 // api/admin.js. Keep the three in sync if a preset's capabilities/limits change.
 const SERVER_PLAN_PRESETS = {
-  'self-serve': { capabilities: { assess: true, build: false }, limits: { assessments: 0,    builds: 0,    prescreens: 3 } },
-  'one-off':    { capabilities: { assess: true, build: false }, limits: { assessments: 1,    builds: 0,    prescreens: 5 } },
+  'self-serve': { capabilities: { assess: true, build: false }, limits: { assessments: 0,    builds: 0,    prescreens: null } },
+  'one-off':    { capabilities: { assess: true, build: false }, limits: { assessments: 1,    builds: 0,    prescreens: null } },
   'assess':     { capabilities: { assess: true, build: false }, limits: { assessments: null, builds: 0,    prescreens: null } },
   'full':       { capabilities: { assess: true, build: true },  limits: { assessments: null, builds: null, prescreens: null } },
 };

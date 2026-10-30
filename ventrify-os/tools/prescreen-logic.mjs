@@ -110,6 +110,30 @@ const warm = P.requestBody(null, c1.text, { warm: true });
 ok(warm.max_tokens === 0, 'the warm-up generates nothing (max_tokens: 0)');
 ok(JSON.stringify(warm.system) === JSON.stringify(b.system), 'the warm-up writes exactly the prefix the probes read');
 
+console.log('\n11. ENTITLEMENT — unlimited ventures, each scored once');
+const PLAN = await import(new URL('../workspace/plan.js', import.meta.url));
+// The quota was removed 2026-10-30 (spec §8.6). A per-ACCOUNT cap rationed the hook; the
+// per-VENTURE rule is what bounds the spend. If any preset grows a number again, the free
+// account silently starts hitting a wall on its 4th company and nobody finds out for weeks.
+for (const [name, def] of Object.entries(PLAN.PLAN_PRESETS)) {
+  ok(def.limits.prescreens === null, `preset "${name}" has unlimited pre-screens`);
+}
+// The behaviour that matters, not just the table: a free account on its 10th venture.
+const freePlan = PLAN.resolvePlan({ plan: { preset: 'self-serve' } });
+const nine = Array.from({ length: 9 }, () => ({ engagementType: 'assessment', tier: 'prescreen' }));
+ok(PLAN.canCreate(freePlan, nine, 'assessment', 'prescreen').allowed, 'a free account may pre-screen a 10th venture');
+ok(!PLAN.canCreate(freePlan, [], 'assessment', 'full').allowed, 'a free account still may NOT create a full assessment');
+ok(!PLAN.canCreate(freePlan, [], 'build').allowed, 'a free account still may not build');
+// planSummary suppresses unlimited pre-screens only when something else prints.
+ok(/pre-screen/.test(PLAN.planSummary(freePlan).detail), `free badge says what it allows: "${PLAN.planSummary(freePlan).detail}"`);
+ok(!/pre-screen/.test(PLAN.planSummary(PLAN.resolvePlan({ plan: { preset: 'full' } })).detail), 'a full licence does not repeat unlimited pre-screens');
+
+console.log('\n12. ENFORCEMENT — the per-venture rule carries the weight alone now');
+const memo = await (await import('node:fs/promises')).readFile(new URL('../api/memo.js', import.meta.url), 'utf8');
+ok(/reason: 'self'/.test(memo), 'prescreen-warm refuses a re-run of an already-scored engagement');
+ok(/prescreenClaimedAt/.test(memo), 'warm takes a claim, so an abandoned run still holds the venture');
+ok(/CLAIM_LEASE_MS/.test(memo), 'the claim is a lease, not permanent — our 502 must not burn their free look');
+
 console.log(fails ? `\n${fails} FAILED\n` : '\nall checks passed\n');
 process.exit(fails ? 1 : 0);
 })();

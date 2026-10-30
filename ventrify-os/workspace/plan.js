@@ -25,22 +25,29 @@
 // keep the two in sync if you change a preset's capabilities or limits.
 // ============================================================
 
-// `prescreens` is an ABUSE VALVE, not the product rule. The real rule — one free scored
-// pre-screen per VENTURE — is enforced by venture identity + deck fingerprint in
-// shared/entitlements.js. Paying subscribers get unlimited triage (that IS the feature);
-// a free self-serve account and a single one-off purchase get a ceiling.
+// `prescreens` is unlimited on every preset, INCLUDING the free one. The product rule is
+// one free scored pre-screen per VENTURE — enforced by venture identity + deck fingerprint
+// in shared/entitlements.js — and that rule is what bounds the spend: look at as many
+// companies as you like, score each of them once.
+//
+// A per-ACCOUNT ceiling was the wrong shape. It capped how many companies you may look at,
+// when the only thing worth capping is how many times you may look at the SAME one. Triage
+// volume is the hook; rationing it rations the thing that converts.
+//
+// The key stays, and normLimit still honours it, so an admin can set a ceiling on one
+// specific org via 'custom' if one ever needs containing.
 export const PLAN_PRESETS = {
   'self-serve': {
     label: 'Free account',
     blurb: 'Pre-screen a venture free and see the range. Full assessments are bought per venture.',
     capabilities: { assess: true, build: false },
-    limits: { assessments: 0, builds: 0, prescreens: 3 },
+    limits: { assessments: 0, builds: 0, prescreens: null },
   },
   'one-off': {
     label: 'One-off assessment',
     blurb: 'A single venture assessment — upload one deck + supporting docs, get one verdict.',
     capabilities: { assess: true, build: false },
-    limits: { assessments: 1, builds: 0, prescreens: 5 },
+    limits: { assessments: 1, builds: 0, prescreens: null },
   },
   'assess': {
     label: 'Assessment licence',
@@ -150,22 +157,29 @@ export function planLabel(plan) {
 // assessments", "Build + Assess · unlimited". Used for badges.
 //
 // A ZERO allowance is omitted, never printed. A free account's badge must read
-// "3 pre-screens", not "0 assessments" — the second states a plan's shape as a
+// "unlimited pre-screens", not "0 assessments" — the second states a plan's shape as a
 // deficiency, which is the same mistake §3 of the pre-screen spec guards against.
-// Unlimited pre-screens are omitted too: for a licensee that is a non-event.
+//
+// Unlimited pre-screens are normally omitted: for a licensee who also has unlimited
+// assessments, saying it twice is noise. But a free account has NOTHING else to say —
+// suppressing it there left the badge blank, which reads as a broken plan rather than a
+// generous one. So it is omitted only when some other allowance survived to be printed.
 export function planSummary(plan) {
   const lbl = planLabel(plan);
   const fmt = (type, tier, noun) => {
     if (!orgCan(plan, type)) return null;
     const lim = limitFor(plan, type, tier);
     if (lim === 0) return null;
-    if (lim == null) return tier === 'prescreen' ? null : `unlimited ${noun}s`;
+    if (lim == null) return `unlimited ${noun}s`;
     return `${lim} ${noun}${lim === 1 ? '' : 's'}`;
   };
-  const parts = [
+  const others = [
     fmt('build', 'full', 'build'),
     fmt('assessment', 'full', 'assessment'),
-    fmt('assessment', 'prescreen', 'pre-screen'),
   ].filter(Boolean);
+  const pre = fmt('assessment', 'prescreen', 'pre-screen');
+  // Keep an unlimited pre-screen line only when it is the only thing left to say.
+  const keepPre = pre && (others.length === 0 || limitFor(plan, 'assessment', 'prescreen') != null);
+  const parts = keepPre ? [...others, pre] : others;
   return { label: lbl, detail: parts.join(' · ') };
 }
