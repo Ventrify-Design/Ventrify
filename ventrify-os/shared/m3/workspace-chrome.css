@@ -564,11 +564,12 @@ body.signin::after {
    full-width tab the same rule made "Request these from the founder" a 1300px slab. */
 .brief .rc-act { align-items: flex-start; }
 .brief .rc-act .m3-btn { width: auto; }
-/* The room section carries the panel's block padding, which left a dead band above the rule here. */
-.brief #dr-slot .sec { padding-bottom: 0; }
+/* The room section carries the panel's block padding, which left a dead band above the rule here.
+   LAST CHILD ONLY — #dr-slot now opens with the hero, and stripping ITS bottom padding jammed the scan
+   banner straight under the hero's divider. */
+.brief #dr-slot > .sec:last-child { padding-bottom: 0; }
+.brief #dr-slot > .section-hero + .rule { margin-top: 4px; margin-bottom: 26px; }
 .brief #dr-slot + .rule { margin-top: 26px; }
-.dr-prog { font-size: 12.5px; color: var(--md-sys-color-on-surface-variant); }
-.dr-prog[hidden] { display: none; }
 .dr-add { padding-block: 0; }
 .dr-add-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 30px; align-items: start; }
 .dr-add-col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
@@ -581,7 +582,6 @@ body.signin::after {
 
 /* The Range tab's two routes out. Equal weight columns — the free one is first in reading order,
    the paid one carries the filled button. */
-.rng-next { padding-block: 0; }
 .rng-next-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 30px; align-items: start; }
 .rng-next-c { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; min-width: 0; }
 .rng-next-c .rng-ic { font-size: 26px; color: var(--md-sys-color-primary); }
@@ -590,3 +590,40 @@ body.signin::after {
 .rng-next-c .m3-btn { margin-top: 4px; }
 @media (max-width: 900px) { .rng-next-grid { grid-template-columns: minmax(0, 1fr); gap: 26px; } }
 @media (max-width: 640px) { .rng-next-c .m3-btn { width: 100%; justify-content: center; min-height: 44px; } }
+
+/* The scan banner. One line of grey text could not carry a 46-document read — this is the same
+   information at the weight the wait actually has. */
+.rsb { padding-block: 0; margin-bottom: 22px; display: flex; flex-direction: column; gap: 12px; }
+.rsb-top { display: flex; align-items: center; gap: 14px; }
+.rsb-ic { font-size: 24px; color: var(--md-sys-color-primary); flex: none; }
+.rsb-txt { min-width: 0; flex: 1; }
+.rsb-h { font-size: 15px; font-weight: 600; color: var(--md-sys-color-on-surface); }
+.rsb-sub { font-size: 13px; color: var(--md-sys-color-on-surface-variant); margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rsb-found { flex: none; text-align: right; line-height: 1.2; }
+.rsb-found b { display: block; font-family: var(--font-display, inherit); font-size: 22px; font-weight: 600; color: var(--tone-good); font-variant-numeric: tabular-nums; }
+.rsb-found span { font-size: 11.5px; color: var(--md-sys-color-on-surface-variant); }
+@media (max-width: 640px) { .rsb-sub { white-space: normal; } }
+
+/* "What narrows this" sat hard against the rule above it. */
+.rng-next { padding-block: 0; margin-top: 30px; }
+
+/* ---- ROOM LOCKUP (dataRoomHero's figure) ----
+   One segment per document class, in the same order as the rows below, so the figure and the list are
+   the same fact at two zoom levels. ⚠ .score-lockup .lockup-num sets flex-direction:column (it stacks a
+   score under its dial); carry BOTH classes to outrank it, exactly as .range-lockup does — moving this
+   below that rule instead is what the next edit would silently undo. */
+.score-lockup.room-lockup .rml-num {
+  flex-direction: row; align-items: baseline; justify-content: flex-start; gap: 2px;
+  font-size: clamp(46px, 5.6vw, 78px); letter-spacing: -2px; line-height: .9;
+}
+.score-lockup.room-lockup .rml-num small { font-size: clamp(15px, 1.6vw, 20px); margin: 0 0 0 5px; color: var(--md-sys-color-on-surface-variant); }
+.rml-track { display: flex; gap: 6px; margin-top: 20px; }
+.rml-track i { flex: 1; height: 12px; border-radius: 999px; background: var(--md-sys-color-surface-container-highest); }
+.rml-track i.on { background: var(--tone-good); }
+.room-lockup.tone-mid .rml-track i.on { background: var(--tone-mid, var(--md-sys-color-primary)); }
+.rml-cap { margin-top: 14px; font-size: 13.5px; line-height: 1.5; color: var(--md-sys-color-on-surface-variant); }
+.rml-cap b { color: var(--md-sys-color-on-surface); font-weight: 600; }
+@media (max-width: 640px) {
+  .score-lockup.room-lockup .rml-num { font-size: clamp(38px, 12vw, 56px); letter-spacing: -1px; }
+  .rml-track i { height: 10px; }
+}

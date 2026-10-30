@@ -7,7 +7,7 @@
 // NO app.js edits, no pipeline touch. Pure read + present.
 // ============================================================
 
-import { _esc as esc, docDropzone, roomCheck, initDropzones } from '../shared/m3/ds.js';
+import { _esc as esc, docDropzone, roomCheck, roomPreview, initDropzones } from '../shared/m3/ds.js';
 // The seven category LABELS, so the score column can list every category from the start and fill each one
 // in place. Listing only what has landed makes the column grow and shove the page down seven times.
 import { VSS_RUBRIC } from '../shared/vss-rubric.js';
@@ -246,35 +246,50 @@ window.__naReadRoom = async () => {
   naBusy(true);
   try {
     const programId = await naEnsureEngagement(f);
-    const { auth } = await import('../firebase/firebase.js');
-    const idToken = await auth.currentUser.getIdToken();
     const EA = await import('./engagement-actions.js');
 
     const deckFail = await naIngestDeck(EA, programId);
     if (deckFail) { window.__toast('The pitch deck didn’t upload: ' + deckFail, true); naBusy(false); naProg(null); return; }
 
-    // ONE copy of the Drive read, in engagement-actions — the Data Room tab performs the identical act
-    // and the error mapping below (Drive cannot distinguish "missing" from "not shared") must not fork.
+    // THE SAME routine the Data Room tab uses — same banner, same list ticking as evidence lands. This
+    // screen and that tab are the same act on the same room, and a pre-screened assessment has to behave
+    // identically wherever it is driven from and whatever licence the org holds.
+    const slot = () => document.getElementById('na-room');
+    let scan = { done: 0, total: 0, current: '', label: 'Reading your data room', found: null, of: null };
+    let last = null, fresh = [];
+    const paint = () => { const el = slot(); if (el) el.innerHTML = DS_PRESCREEN.roomScanBanner(scan) + (last ? roomCheck(last, { justFound: fresh }) : ''); };
+    paint();
+
     let dr;
     try {
-      dr = await EA.readDriveFolder({ engagementId: programId, folderUrl: f.driveUrl, onProgress: m => naProg(m) });
+      dr = await EA.addToRoom({
+        engagementId: programId, folderUrl: f.driveUrl,
+        onProgress: (text, m) => {
+          scan = { ...scan, done: (m && m.done) || 0, total: (m && m.total) || scan.total, current: (m && m.current) || text };
+          naProg(text); paint();
+        },
+        onRoom: (check) => {
+          const was = new Set(((last && last.classes) || []).filter(c => c.found).map(c => c.key));
+          fresh = (check.classes || []).filter(c => c.found && !was.has(c.key)).map(c => c.key);
+          last = check;
+          scan = { ...scan, found: (check.classes || []).filter(c => c.found).length, of: (check.classes || []).length };
+          paint();
+          setTimeout(() => { fresh = []; }, 900);
+        },
+      });
     } catch (err) {
-      window.__toast((err && err.message) || 'Could not read the folder.', true); naBusy(false); naProg(null); return;
+      window.__toast((err && err.message) || 'Could not read the folder.', true); naBusy(false); naProg(null);
+      const el = slot(); if (el) el.innerHTML = last ? roomCheck(last) : roomPreview({});
+      return;
     }
-    NA.driveFiles = dr.files;
-    const skipped = dr.skipped, failed = dr.failed, list = { folderName: dr.folderName };
 
-    naProg('Checking what the score will look for…');
-    const cr = await fetch('/api/ingest-docs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken, engagementId: programId, action: 'room-check' }) });
-    const check = await cr.json().catch(() => ({}));
-    const slot = document.getElementById('na-room');
-    if (slot && cr.ok) slot.innerHTML = roomCheck(check);
+    const el = slot(); if (el) el.innerHTML = last ? roomCheck(last) : roomPreview({});
+    NA.driveFiles = Array.from({ length: dr.total });
     NA.roomRead = true;
     const again = document.querySelector('.na-drive-again'); if (again) again.hidden = false;
     naBusy(false); naProg(null);
     naSyncCta();
-    const read = NA.driveFiles.length - failed;
-    window.__toast(`Read ${read} document${read === 1 ? '' : 's'} from ${list.folderName}` + (skipped ? ` · ${skipped} skipped` : '') + (failed ? ` · ${failed} failed` : ''));
+    window.__toast(`Read ${dr.ingested} of ${dr.total} document${dr.total === 1 ? '' : 's'} from ${dr.folderName || 'Drive'}` + (dr.skipped ? ` · ${dr.skipped} skipped` : '') + (dr.failed ? ` · ${dr.failed} failed` : ''));
   } catch (e) {
     naBusy(false); naProg(null);
     window.__toast('Could not read the data room: ' + ((e && e.message) || e), true);

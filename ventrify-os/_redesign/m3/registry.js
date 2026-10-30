@@ -1155,6 +1155,40 @@ export const CATALOG = {
     props: [{ name: 'range', type: '{floor,ceiling,evidencedWeight,categories}' }, { name: 'opts.docCount', type: 'number' }],
     variants: [{ label: 'Wide', note: 'deck only' }, { label: 'Settled', note: 'complete room, width 0' }], usedIn: ['assess-prescreen.html'], adaptive: noAdapt
   },
+  roomLockup: {
+    level: 'molecule', group: 'Molecules', domain: 'Assessment', title: 'Room coverage figure', sig: 'roomLockup({classes, docCount, label})',
+    blurb: 'The Data Room hero\'s right-hand figure, and a MAP OF THE LIST BELOW IT rather than a new abstraction: one segment per document class, in the same order the rows appear, lit when the class is present. A dial or a percentage would have been a prettier graphic and a worse one \u2014 there is no continuous quantity here, there are six yes/no answers, and inventing a 50% out of them implies a precision the check does not have. The count is of what we were GIVEN, and the caption says so.',
+    maxw: 420, pad: true,
+    html: () => `<div class="brief" style="padding:20px 28px;max-width:420px">${DS.roomLockup({ docCount: 3, classes: [
+      { key: 'a', label: 'Financial model', found: true }, { key: 'b', label: 'Unit economics', found: false },
+      { key: 'c', label: 'Ownership / cap table', found: true }, { key: 'd', label: 'Corporate / legal', found: false },
+      { key: 'e', label: 'Observed metrics', found: false } ] })}</div>`,
+    props: [{ name: 'classes', type: 'roomCheck classes, or null for the unread state' }, { name: 'docCount', type: 'number' }],
+    variants: [{ name: 'Unread', label: 'Unread', note: 'null classes \u2014 prints an em dash, not a zero' }, { label: 'Partial' }, { label: 'Complete' }],
+    usedIn: ['dataRoomHero'], adaptive: noAdapt
+  },
+  dataRoomHero: {
+    level: 'organism', group: 'Organisms', domain: 'Assessment', title: 'Data room hero', sig: 'dataRoomHero(check, {isPrescreen, stagedCount})',
+    blurb: 'The Data Room tab\'s opening statement, on the SAME sectionHero as Verdict, Investability and Range. This tab opened cold into a list of six rows \u2014 the one surface the customer ACTS ON was the only one in the assessment with nothing at the top telling them where they stood. The headline states the room\'s condition as a CONSEQUENCE and never as a verdict on the venture: "not seen" is a fact about us, not about them. It renders in both tab sets, so a pre-screened venture and a fully assessed one get the same opening.',
+    maxw: null, pad: true,
+    html: () => `<div class="brief" style="padding:20px 28px">${DS.dataRoomHero({ docCount: 3, classes: [
+      { key: 'a', label: 'Financial model', found: true, seenIn: 'Financial model v4.xlsx' }, { key: 'b', label: 'Unit economics', found: false, want: 'w' },
+      { key: 'c', label: 'Ownership / cap table', found: true, seenIn: 'Cap table.xlsx' }, { key: 'd', label: 'Corporate / legal', found: false, want: 'w' },
+      { key: 'e', label: 'Observed metrics', found: false, want: 'w' } ] }, { isPrescreen: true })}</div>`,
+    props: [{ name: 'check', type: 'roomCheck result, or null before anything has been read' }, { name: 'isPrescreen', type: 'boolean \u2014 changes only the settled-room thesis' }],
+    variants: [{ label: 'Unread', note: '"We have not read your data room yet."' }, { label: 'Gaps' }, { label: 'Complete' }],
+    usedIn: ['dataRoomTab \u00b7 both tab sets'], adaptive: noAdapt
+  },
+  roomScanBanner: {
+    level: 'molecule', group: 'Molecules', domain: 'Assessment', title: 'Room scan progress', sig: 'roomScanBanner({done, total, current, found, of, label})',
+    blurb: 'What a data-room scan looks like WHILE it is happening. The Drive read used to report itself in one line of 12.5px grey text beside a button while 46 documents went through, and the first real user nearly missed that anything was running. Determinate is honest here, unlike the pre-screen run: the folder is listed before the first file is read, so the denominator is a real count. The found tally climbs as the free room check re-runs between files \u2014 that is the part that says the scan is DOING something rather than merely running.',
+    maxw: 680, pad: true,
+    html: () => `<div class="brief" style="padding:20px 28px;max-width:680px">${DS.roomScanBanner({ done: 16, total: 46, current: 'DebtFit Founder Stock Agreement - Kevin Lancaster.pdf', found: 3, of: 6 })}</div>`,
+    props: [{ name: 'done / total', type: 'real counts \u2014 never an estimate' }, { name: 'current', type: 'filename being read' },
+            { name: 'found / of', type: 'room classes found so far' }, { name: 'label', type: 'string' }],
+    variants: [{ label: 'Listing', note: 'no total yet \u2014 indeterminate' }, { label: 'Reading', note: 'determinate, found climbing' }],
+    usedIn: ['dataRoomTab', 'createScreen \u00b7 live rail'], adaptive: noAdapt
+  },
   dataRoomTab: {
     level: 'template', group: 'Templates', domain: 'Assessment', title: 'Data room tab', sig: 'dataRoomTab({check, docCount, deck, busy, canRescan, isPrescreen, driveUrl, staged, justFound})',
     blurb: 'The one surface in the product the customer ACTS ON \u2014 and until now the only thing it could do was re-read what was already there. A customer who has just been told which document types are missing had nowhere on this screen to supply one. Both ways in are here now: drop files, or link a Drive folder; either one uploads and then re-scans automatically, because adding a document and being asked to press a second button to find out whether it helped is the loop made tedious at the moment it should feel immediate. The outcome line is honest about the split the product is built on \u2014 re-READING is free and unlimited, re-SCORING is the full assessment.',
@@ -1167,9 +1201,12 @@ export const CATALOG = {
         { key: 'captable', label: 'Ownership / cap table', found: true, seenIn: 'Cap table.xlsx', want: '' },
         { key: 'legal', label: 'Corporate / legal', found: false, want: 'Any one of: incorporation document, company number, articles' },
         { key: 'metrics', label: 'Observed metrics', found: false, want: 'At least one MEASURED number \u2014 not a forecast' } ],
-        strengtheners: [] },
+        strengtheners: [
+          { label: 'A signed LOI, pilot or customer contract', why: 'Demand validation scores highest when a counterparty outside the company has paid or committed in writing' },
+          { label: 'A cohort or retention chart', why: 'One measured curve settles two signals the deck can only assert' } ] },
       justFound: ['captable'],
       staged: [{ title: 'Board minutes Q3.pdf', status: 'Stored' }],
+      scan: { done: 16, total: 46, current: 'DebtFit Founder Stock Agreement.pdf', found: 2, of: 5, label: 'Reading your data room' },
     })}</div>`,
     props: [{ name: 'check', type: 'roomCheck result or null' }, { name: 'isPrescreen', type: 'boolean \u2014 drives the outcome line + unlock' },
             { name: 'driveUrl', type: 'string \u2014 prefills the folder field' }, { name: 'staged', type: '[{title,status}] added from this tab' },

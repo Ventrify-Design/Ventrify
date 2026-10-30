@@ -2011,7 +2011,7 @@ export function roomCheck(check = {}, opts = {}) {
   })).join('');
 
   const strengthen = extras.length ? `<div class="rc-extra">
-      <div class="rc-extra-h">Would strengthen the assessment</div>
+      <div class="rc-extra-h"><span class="material-symbols-rounded">auto_awesome</span>Would strengthen the assessment</div>
       ${extras.map(e => `<div class="rc-extra-i"><b>${esc(e.label)}</b><span>${esc(e.why)}</span></div>`).join('')}
     </div>` : '';
 
@@ -2528,6 +2528,108 @@ export function prescreenStage(opts = {}) {
   </div>`;
 }
 
+// roomLockup — the Data Room tab's right-hand figure.
+//
+// IT IS A MAP OF THE LIST BELOW IT, not a new abstraction. One segment per document class, lit when the
+// class is present, in the same order the rows appear underneath — so the figure and the list are the
+// same fact at two zoom levels and a reader can check one against the other. A dial or a percentage
+// would have been a prettier graphic and a worse one: there is no continuous quantity here, there are
+// six yes/no answers, and inventing a 50% out of them implies a precision the check does not have.
+//
+// NEVER A GRADE. "3 of 6" is a count of what we were given, and the caption says so. The whole tab
+// rests on the distinction between a venture scoring badly and a room we could not read.
+export function roomLockup(opts = {}) {
+  const { classes = null, docCount = 0, label = 'Room coverage' } = opts;
+  const list = classes || ROOM_CLASSES.map(c => ({ ...c, found: false }));
+  const found = classes ? list.filter(c => c.found).length : null;
+  const of = list.length;
+  const tone = found == null ? 'idle' : found === of ? 'good' : found === 0 ? 'gap' : 'mid';
+  const segs = list.map(c => `<i class="${classes && c.found ? 'on' : 'off'}" title="${esc(c.label)}${classes ? (c.found ? ' · present' : ' · not seen') : ''}"></i>`).join('');
+  return `<div class="score-lockup room-lockup tone-${tone}">
+    <span class="eyebrow accent">${esc(label)}</span>
+    <div class="lockup-num rml-num">${found == null ? '—' : esc(String(found))}<small>/${esc(String(of))}</small></div>
+    <div class="rml-track" role="img" aria-label="${found == null ? 'Room not read yet' : `${found} of ${of} document types present`}">${segs}</div>
+    <div class="rml-cap">${found == null
+      ? 'Not read yet · scanning is free and takes a second'
+      : found === of
+        ? `Every type the score counts is present · ${docCount} document${docCount === 1 ? '' : 's'} read`
+        : `<b>${of - found}</b> of ${of} still missing · ${docCount} document${docCount === 1 ? '' : 's'} read`}</div>
+  </div>`;
+}
+
+// dataRoomHero — the tab's opening statement, on the SAME sectionHero as Verdict, Investability and
+// Range. The tab opened straight into a list of six rows: the one surface the customer acts on was the
+// only one in the assessment with nothing at the top telling them where they stood.
+//
+// The headline states the room's condition as a CONSEQUENCE and never as a verdict on the venture —
+// same rule the rows follow. "Not seen" is a fact about us, not about them.
+export function dataRoomHero(check = null, opts = {}) {
+  const { isPrescreen = false, stagedCount = 0 } = opts;
+  const classes = check ? (check.classes || []) : null;
+  const of = classes ? classes.length : ROOM_CLASSES.length;
+  const found = classes ? classes.filter(c => c.found).length : null;
+  const missing = found == null ? null : of - found;
+  const docCount = check ? (check.docCount || 0) : stagedCount;
+
+  // SHORT ON PURPOSE. fitHeadline caps a headline at HEADLINE_MAX_WORDS and will cut a longer one at a
+  // clause boundary — the first draft of this ran to thirteen words and shipped as "…are not in." The
+  // count-of-total belongs in the facts row underneath, which already says "2 of 5"; repeating it in the
+  // headline bought nothing and cost the end of the sentence.
+  const WORDS = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten'];
+  const word = n => WORDS[n] || String(n);
+  const headline = found == null
+    ? 'We have not read your data room yet.'
+    : missing === 0
+      ? 'Your room answers everything the score looks for.'
+      : `${word(missing)} document type${missing === 1 ? '' : 's'} the score counts ${missing === 1 ? 'is' : 'are'} missing.`;
+
+  const thesis = found == null
+    ? 'Scanning reads what is already uploaded and tells you which of the document types the score counts it can find. It is free, it takes about a second, and it never moves your score on its own.'
+    : missing === 0
+      ? (isPrescreen
+        ? 'There is nothing left to add for coverage. What is still holding the range open is the depth of the reading, not the evidence — and that is what the full assessment buys.'
+        : 'Nothing the rubric asks for is absent. Anything further you file is strengthening a specific answer rather than closing a hole.')
+      : 'A type shown as missing is not a mark against the venture — it is a question we were not given the evidence to answer, so the score has to assume the worst of it. Supply it and the floor moves up to meet what you can already prove.';
+
+  return sectionHero({
+    eyebrow: 'Data room', eyebrowIcon: 'folder_open',
+    headline,
+    facts: [
+      { k: 'Document types present', v: found == null ? `0 of ${of}` : `${found} of ${of}` },
+      { k: 'Documents read', v: String(docCount) },
+      ...(missing ? [{ k: 'Still missing', v: String(missing) }] : []),
+    ],
+    right: roomLockup({ classes, docCount }),
+    thesisLabel: found == null ? 'What this does.' : missing === 0 ? 'Where that leaves you.' : 'What missing means.',
+    thesis,
+  });
+}
+
+// roomScanBanner — WHAT A SCAN LOOKS LIKE WHILE IT IS HAPPENING.
+//
+// The Drive read reported itself in one line of 12.5px grey text beside a button, and a 46-document scan
+// ran for most of a minute behind it. The first real user nearly missed that anything was happening at
+// all. This is the same information given the weight the wait actually has.
+//
+// DETERMINATE IS HONEST HERE, unlike the pre-screen run: the folder is listed before the first file is
+// read, so `total` is a real count and not an estimate. `found` counts up as the free room check re-runs
+// between files, which is the part that says the scan is DOING something rather than merely running.
+export function roomScanBanner(opts = {}) {
+  const { done = 0, total = 0, current = '', found = null, of = null, label = 'Reading your data room' } = opts;
+  const pct = total ? Math.round((done / total) * 100) : null;
+  return `<section class="sec rsb" aria-live="polite">
+    <div class="rsb-top">
+      <span class="material-symbols-rounded rsb-ic">plagiarism</span>
+      <div class="rsb-txt">
+        <div class="rsb-h">${esc(label)}${total ? ` · ${done} of ${total}` : ''}</div>
+        <div class="rsb-sub">${current ? esc(String(current).slice(0, 72)) : 'Opening the folder…'}</div>
+      </div>
+      ${found != null && of != null ? `<div class="rsb-found"><b>${found}</b><span>of ${of} found</span></div>` : ''}
+    </div>
+    ${linearProgress(total ? { value: pct } : { indeterminate: true })}
+  </section>`;
+}
+
 // dataRoomTab — the one surface in the product the customer ACTS ON.
 //
 // Everything else here is us talking at them: a verdict, a score, research we did. This is the thing they
@@ -2544,8 +2646,17 @@ export function prescreenStage(opts = {}) {
 // the score looks for, which is useful on its own and never reads as a grade.
 export function dataRoomTab(opts = {}) {
   const { check = null, docCount = 0, deck = false, busy = false, canRescan = false,
-          isPrescreen = false, driveUrl = '', staged = [], justFound = [] } = opts;
-  const body = check ? roomCheck(check, { justFound }) : roomPreview({ docCount, deck });
+          isPrescreen = false, driveUrl = '', staged = [], justFound = [], scan = null } = opts;
+  // While a scan is running the banner sits ABOVE the list and the list keeps ticking beneath it — the
+  // two together are the feedback. Putting the progress at the bottom beside a button is what made a
+  // 46-document read look like nothing was happening.
+  // The hero opens the tab the way Verdict, Investability and Range open theirs — this was the only
+  // surface in the assessment that began cold with a list of rows. It renders in BOTH tab sets, so a
+  // pre-screened venture and a fully assessed one get the same opening.
+  const body = dataRoomHero(check, { isPrescreen, stagedCount: docCount })
+    + '<hr class="rule">'
+    + (scan ? roomScanBanner(scan) : '')
+    + (check ? roomCheck(check, { justFound }) : roomPreview({ docCount, deck }));
 
   // THE TAB HAD NO VERB ON IT. Its own header calls this "the one surface the customer ACTS ON", and it
   // shipped with a single button that re-reads what was already there. A customer who has just been told
@@ -2603,7 +2714,6 @@ export function dataRoomTab(opts = {}) {
       <button class="m3-btn ${check ? 'tonal' : 'filled'}" type="button" ${busy ? 'disabled' : ''} onclick="window.__drCheck&&window.__drCheck()">
         <span class="material-symbols-rounded">${check ? 'refresh' : 'plagiarism'}</span>${check ? 'Re-scan the room' : 'Check my data room'}
       </button>
-      <span class="dr-prog" id="dr-prog" hidden></span>
     </div>
     ${outcome}
   </div>`;

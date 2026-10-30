@@ -976,8 +976,24 @@
 /* roomCheck — the pre-run data-room playback. Reuses .sec / .profile / .mrow wholesale; only the
    "would strengthen" block is its own, and it is deliberately quieter than the six classes above it:
    those are what the score counts, these are optional upside. */
-.rc .rc-extra { margin-top: 14px; padding: 13px 15px; border-radius: 10px; background: var(--md-sys-color-surface-container); display: flex; flex-direction: column; gap: 9px; }
-.rc .rc-extra-h { font-size: var(--row-note, 13px); font-weight: 600; color: var(--md-sys-color-on-surface); }
+/* "Would strengthen the assessment" is the only ADVISORY on this surface — everything around it reports
+   what is, this one says what would help. In a neutral container it read as one more panel. It is tinted
+   with the IDENTITY accent rather than a fixed violet: --md-sys-color-primary resolves to --brand-accent-2,
+   so VerdictScore gets violet and VentureStack aqua from the same rule, and a new identity is one token
+   away rather than one more hardcoded hex. */
+.rc .rc-extra {
+  margin-top: 20px; padding: 16px 18px 16px 20px; border-radius: 14px;
+  background: color-mix(in srgb, var(--md-sys-color-primary) 9%, var(--md-sys-color-surface));
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-primary) 24%, transparent);
+  box-shadow: inset 3px 0 0 0 var(--md-sys-color-primary);
+  display: flex; flex-direction: column; gap: 11px;
+}
+.rc .rc-extra-h {
+  display: flex; align-items: center; gap: 8px;
+  font-size: var(--row-note, 13px); font-weight: 600; letter-spacing: .2px;
+  color: var(--md-sys-color-primary);
+}
+.rc .rc-extra-h .material-symbols-rounded { font-size: 18px; }
 .rc .rc-extra-i { display: flex; flex-direction: column; gap: 1px; }
 .rc .rc-extra-i b { font-size: var(--row-note, 13px); font-weight: 500; color: var(--md-sys-color-on-surface); }
 .rc .rc-extra-i span { font-size: 12.5px; line-height: 1.45; color: var(--md-sys-color-on-surface-variant); }

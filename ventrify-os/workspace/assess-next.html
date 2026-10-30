@@ -215,31 +215,61 @@
   // Shared by the picker and the drop, because they are the same act and forking them is how one of
   // them quietly stops uploading.
   const DR_ACCEPT = '.pdf,.docx,.xlsx,.xls,.xlsm,.txt,.md,.csv,.zip';
+
+  // ONE ingest routine for BOTH sources. Uploaded files and a linked Drive folder are the same act — put
+  // something new in front of the score — and the thing that must not differ between them is the feedback,
+  // which is the whole reason this was rewritten.
+  async function drIngest({ files = [], folderUrl = '', label, stagedBase = null }) {
+    if (!live) { window.__toast('Adding documents needs the live workspace.', true); return null; }
+    drBusy(true);
+    drScan = { done: 0, total: files.length, current: '', label,
+               found: roomCheckResult ? (roomCheckResult.classes || []).filter(c => c.found).length : null,
+               of: roomCheckResult ? (roomCheckResult.classes || []).length : null };
+    paintRoomTab();
+    try {
+      const r = await EA.addToRoom({
+        engagementId: p.id, files, folderUrl,
+        onProgress: (text, m) => {
+          drScan = { ...drScan, done: (m && m.done) || 0, total: (m && m.total) || drScan.total, current: (m && m.current) || text };
+          paintRoomTab();
+        },
+        // The list ticks DURING the scan, not after it. Each pass carries only what newly flipped, so the
+        // tick animation plays on the lines that just changed rather than on all of them every time.
+        onRoom: (check) => {
+          drJustFound = drDiff(check);
+          roomCheckResult = check;
+          drScan = { ...drScan, found: (check.classes || []).filter(c => c.found).length, of: (check.classes || []).length };
+          paintRoomTab();
+          setTimeout(() => { drJustFound = []; }, 900);
+        },
+        // A staged row says "Reading…" until its file has actually landed. Marking them all Stored the
+        // instant they were chosen is a status that cannot be wrong because it is not a measurement.
+        onFile: ({ index, ok }) => {
+          if (stagedBase == null || !drStaged[stagedBase + index]) return;
+          drStaged[stagedBase + index].status = ok ? 'Stored' : 'Failed';
+          paintRoomTab();
+        },
+      });
+      drScan = null; drBusy(false); paintRoomTab();
+      return r;
+    } catch (e) {
+      drScan = null; drBusy(false); paintRoomTab();
+      window.__toast((e && e.message) || 'Could not read those documents.', true);
+      return null;
+    }
+  }
+
   async function drAdd(files) {
-    if (!live) { window.__toast('Adding documents needs the live workspace.', true); return; }
     const ok = files.filter(f => DR_ACCEPT.split(',').includes('.' + String(f.name || '').split('.').pop().toLowerCase()));
     if (ok.length < files.length) window.__toast(`Ignored ${files.length - ok.length} file(s) we cannot read.`, true);
     if (!ok.length) return;
     const base = drStaged.length;
-    drStaged = drStaged.concat(ok.map(f => ({ title: f.name, status: 'Uploading…' })));
-    paintRoomTab(); drBusy(true);
-    let stored = 0;
-    for (let i = 0; i < ok.length; i++) {
-      drProg(`Reading ${i + 1} of ${ok.length} · ${String(ok[i].name).slice(0, 40)}`);
-      try {
-        const r = await EA.ingestDocs({ engagementId: p.id, files: [ok[i]], docType: 'dataroom', onProgress: m => drProg(m) });
-        const failed = (r && r.skipped || []).length;
-        drStaged[base + i].status = failed ? 'Failed' : 'Stored';
-        if (!failed) stored++;
-      } catch (e) { drStaged[base + i].status = 'Failed'; }
-      paintRoomTab();
-    }
-    drBusy(false); drProg(null);
-    if (!stored) { window.__toast('Nothing could be read from those files.', true); return; }
-    // RE-SCAN AUTOMATICALLY. Adding a document and then being asked to press a second button to find out
-    // whether it helped is the whole loop made tedious at the one moment it should feel immediate.
-    window.__toast(`Added ${stored} document${stored === 1 ? '' : 's'} — re-scanning the room…`);
-    await window.__drCheck();
+    drStaged = drStaged.concat(ok.map(f => ({ title: f.name, status: 'Reading…' })));
+    const r = await drIngest({ files: ok, label: 'Reading your documents', stagedBase: base });
+    if (!r) return;
+    window.__toast(r.ingested
+      ? `Added ${r.ingested} document${r.ingested === 1 ? '' : 's'}${r.failed ? ` · ${r.failed} could not be read` : ''}.`
+      : 'Nothing could be read from those files.', !r.ingested);
   }
   window.__drPick = () => {
     fileInput.dataset.docType = 'dr-add';
@@ -252,20 +282,13 @@
   // LINK (or re-read) a Drive folder from this tab. readDataRoom stores the folder on the engagement, so
   // the "Pull new files" affordance appears on the next paint without a reload.
   window.__drLinkDrive = async () => {
-    if (!live) { window.__toast('Linking a folder needs the live workspace.', true); return; }
     const url = ((document.getElementById('dr-drive') || {}).value || '').trim();
     if (!url) { window.__toast('Paste the Google Drive folder link first.', true); return; }
-    drBusy(true); drProg('Opening the folder…');
-    try {
-      const r = await EA.readDriveFolder({ engagementId: p.id, folderUrl: url, onProgress: m => drProg(m) });
-      p.dataRoom = { ...(p.dataRoom || {}), folderUrl: url };
-      drProg(null); drBusy(false);
-      window.__toast(`Read ${(r && r.ingested) || 0} document${((r && r.ingested) || 0) === 1 ? '' : 's'} from Drive — re-scanning…`);
-      await window.__drCheck();
-    } catch (e) {
-      drProg(null); drBusy(false);
-      window.__toast('Could not read that folder: ' + ((e && e.message) || e), true);
-    }
+    const r = await drIngest({ folderUrl: url, label: 'Reading your data room' });
+    if (!r) return;
+    p.dataRoom = { ...(p.dataRoom || {}), folderUrl: url };
+    paintRoomTab();
+    window.__toast(`Read ${r.ingested} of ${r.total} document${r.total === 1 ? '' : 's'} from ${r.folderName || 'Drive'}${r.skipped ? ` · ${r.skipped} skipped` : ''}.`);
   };
 
   // STOP — a TRUE stop: cancels the actual GitHub Actions job, then clears runState so the page falls back
@@ -567,6 +590,7 @@
       driveUrl: (p.dataRoom && p.dataRoom.folderUrl) || '',
       staged: drStaged,
       justFound: drJustFound,
+      scan: drScan,
     });
   }
   let roomCheckResult = null;
@@ -575,6 +599,8 @@
   // attached but is not yet stored is the worst of both.
   let drStaged = [];
   let drJustFound = [];
+  // Non-null only while an ingest is in flight — {done,total,current,found,of} drives roomScanBanner.
+  let drScan = null;
 
   // Repaint the WHOLE data-room panel, not just #dr-slot. The slot was the only thing that ever changed
   // before; now the staged list, the Drive field and the button labels all move with it, and repainting
@@ -586,12 +612,6 @@
   }
   function drBusy(b) {
     document.querySelectorAll('#dr-slot ~ .dr-act .m3-btn, .dr-add .m3-btn').forEach(el => { el.disabled = b; });
-  }
-  function drProg(text) {
-    const el = document.getElementById('dr-prog');
-    if (!el) return;
-    if (text == null) { el.hidden = true; return; }
-    el.hidden = false; el.textContent = text;
   }
   // Which classes flipped to found since the last read — the whole point of adding a document is to see
   // that happen, and without the diff it is six words changing in a list nobody is watching.

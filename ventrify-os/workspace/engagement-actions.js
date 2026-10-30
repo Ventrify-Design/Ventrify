@@ -227,16 +227,25 @@ export async function roomCheck({ engagementId } = {}) {
   return d;
 }
 
-// readDriveFolder — LINK a Google Drive folder and ingest everything readable in it.
+// addToRoom — THE ONE WAY ANYTHING ENTERS A DATA ROOM. Uploaded files, a linked Drive folder, or both.
 //
-// Lifted here from workspace-m3.js, which had it inlined. The Data Room tab now needs exactly the same
-// act — list the folder, ingest one file at a time, report honestly — and the part most worth having in
-// one place is the ERROR MAPPING: Drive answers identically for "no such folder" and "not shared with
-// us", and a second copy of that sentence would drift from this one the first time either is improved.
+// WHY IT EXISTS. The Drive read ingested all 46 documents and only then ran the room check, so the ticks
+// all appeared together at the very end and the only sign of life in between was one line of small grey
+// text. For most of a minute the screen looked broken. The room check is FREE — regex over text that is
+// already ingested, no model, no cost — so there is no reason to run it once at the end. Run it as the
+// evidence arrives and the list ticks itself.
 //
-// ONE FILE PER REQUEST on purpose: each stays inside the serverless budget, and the caller gets real
-// progress instead of a spinner for three minutes.
-export async function readDriveFolder({ engagementId, folderUrl, onProgress } = {}) {
+// IT IS SHARED ON PURPOSE. The create screen, the Data Room tab's uploader and the Data Room tab's Drive
+// field all call this. A pre-screened assessment has to behave identically wherever it is driven from and
+// whatever licence the org holds — three copies of "ingest then check" is exactly how one of them ends up
+// silent again.
+//
+//   onProgress(text, {done, total, current})   real counts, never a fabricated percentage
+//   onRoom(check, {done, total})               fires every `roomEvery` files AND once at the end
+//   onFile({index, name, ok})                  per-file outcome, so a staged list can tell the truth
+//                                              about which ones actually landed rather than all of them
+//                                              claiming "Stored" the moment they were chosen
+export async function addToRoom({ engagementId, files = [], folderUrl = '', onProgress, onRoom, onFile, roomEvery = null } = {}) {
   const prog = onProgress || (() => {});
   const token = await idToken();
   const post = (body) => fetch('/api/ingest-docs', {
@@ -244,29 +253,70 @@ export async function readDriveFolder({ engagementId, folderUrl, onProgress } = 
     body: JSON.stringify({ idToken: token, engagementId, ...body }),
   });
 
-  prog('Opening the Drive folder…');
-  const lr = await post({ action: 'drive-list', folderUrl });
-  const list = await lr.json().catch(() => ({}));
-  if (!lr.ok) {
-    throw new Error(list.error === 'drive_not_shared'
-      ? 'Could not open that folder. Check the link, and that it is shared — either “anyone with the link can view”, or with dataroom-reader@ventrify-os.iam.gserviceaccount.com as Viewer.'
-      : list.error === 'bad_folder_link' ? 'That does not look like a Google Drive folder link.'
-      : list.error === 'drive_not_configured' ? 'The Drive reader is not configured on this environment yet.'
-      : (list.detail || list.error || 'Could not read the folder.'));
+  // Resolve the Drive folder into a list first, so `total` is REAL before the first file is read. A
+  // progress bar that does not know its denominator is a spinner wearing a bar's clothes.
+  let drive = [], folderName = '', skipped = 0;
+  if (folderUrl) {
+    prog('Opening the Drive folder…', { done: 0, total: 0 });
+    const lr = await post({ action: 'drive-list', folderUrl });
+    const list = await lr.json().catch(() => ({}));
+    if (!lr.ok) {
+      throw new Error(list.error === 'drive_not_shared'
+        ? 'Could not open that folder. Check the link, and that it is shared — either “anyone with the link can view”, or with dataroom-reader@ventrify-os.iam.gserviceaccount.com as Viewer.'
+        : list.error === 'bad_folder_link' ? 'That does not look like a Google Drive folder link.'
+        : list.error === 'drive_not_configured' ? 'The Drive reader is not configured on this environment yet.'
+        : (list.detail || list.error || 'Could not read the folder.'));
+    }
+    drive = list.files || [];
+    folderName = list.folderName || '';
+    skipped = (list.skipped || []).length;
+    if (!drive.length && !files.length) throw new Error('That folder has no readable documents in it.');
   }
 
-  const files = list.files || [];
-  const skipped = (list.skipped || []).length;
-  if (!files.length) throw new Error('That folder has no readable documents in it.');
+  const units = [
+    ...files.map(f => ({ name: f.name, local: f })),
+    ...drive.map(d => ({ name: d.name, drive: d })),
+  ];
+  const total = units.length;
+  // The cadence is BOUNDED, not fixed. Every 4 files is right for a 46-document room (a dozen updates);
+  // on a 300-document room it would be 75 extra round trips to tell someone the same thing. Roughly a
+  // dozen updates whatever the size, and never less often than every 4 files.
+  const every = roomEvery || Math.max(4, Math.ceil(total / 12));
+  let failed = 0, lastCheck = null;
 
-  let failed = 0;
-  for (let i = 0; i < files.length; i++) {
-    const d = files[i];
-    prog(`Reading the data room · ${i + 1} of ${files.length} · ${String(d.name).slice(0, 44)}`);
-    const r = await post({ docType: 'dataroom', file: { name: d.name, driveId: d.driveId, exportMime: d.exportMime, driveModified: d.modifiedTime } });
-    if (!r.ok) failed++;
+  const check = async (done) => {
+    try {
+      const r = await post({ action: 'room-check' });
+      if (!r.ok) return;
+      const c = await r.json().catch(() => null);
+      if (c) { lastCheck = c; onRoom && onRoom(c, { done, total }); }
+    } catch (e) { /* a failed free check must never abort an ingest that is working */ }
+  };
+
+  for (let i = 0; i < units.length; i++) {
+    const u = units[i];
+    prog(`Reading ${i + 1} of ${total} · ${String(u.name).slice(0, 44)}`, { done: i, total, current: u.name });
+    let ok = true;
+    try {
+      if (u.local) {
+        const r = await ingestDocs({ engagementId, files: [u.local], docType: 'dataroom' });
+        ok = !((r && r.skipped || []).length);
+      } else {
+        const d = u.drive;
+        const r = await post({ docType: 'dataroom', file: { name: d.name, driveId: d.driveId, exportMime: d.exportMime, driveModified: d.modifiedTime } });
+        ok = r.ok;
+      }
+    } catch (e) { ok = false; }
+    if (!ok) failed++;
+    onFile && onFile({ index: i, name: u.name, ok, local: !!u.local });
+    // Tick the list as the evidence lands, not once at the end. Batched because the check is a round
+    // trip: every single file would spend more time checking than reading.
+    if ((i + 1) % every === 0 && i + 1 < total) await check(i + 1);
   }
-  return { files, folderName: list.folderName, ingested: files.length - failed, failed, skipped };
+
+  prog('Checking what the score can see…', { done: total, total });
+  await check(total);
+  return { total, ingested: total - failed, failed, skipped, folderName, check: lastCheck };
 }
 
 // unlockFull — promote a pre-screened engagement to the paid tier. With BILLING_ENFORCED false this is
