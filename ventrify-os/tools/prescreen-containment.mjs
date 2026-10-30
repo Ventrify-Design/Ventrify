@@ -25,6 +25,36 @@ const require = createRequire(import.meta.url);
 // needing the caller to remember `set -a; . ./.env.local`. Hand-rolled because this repo has no dotenv
 // and a gate should not add a dependency. Real environment variables always win — a CI secret must never
 // be silently overridden by a file someone left on disk.
+// `vercel env pull` writes a pretty-printed service-account JSON into a double-quoted value, and it
+// collapses EVERY newline to a literal \n — both the formatting ones between JSON tokens and the ones
+// already escaped inside private_key. Escaping alone can no longer tell them apart, so a blanket
+// unescape turns the key's newlines into real control characters inside a string literal and the parse
+// dies at "Bad control character" ~170 characters in. (It also dies the other way, unescaping nothing:
+// a literal \n BETWEEN tokens is not valid JSON either.)
+//
+// Tracking whether we are inside a JSON string resolves it exactly: outside a string a \n is only
+// formatting and becomes a space; inside one it must stay exactly as written. Values that are not JSON
+// take the ordinary single-pass route, because an API key has no business being treated as a document.
+function unquote(src) {
+  const looksJson = src.trimStart().startsWith('{');
+  let out = '', inStr = false;
+  for (let i = 0; i < src.length; i++) {
+    const ch = src[i];
+    if (looksJson && ch === '"') { inStr = !inStr; out += ch; continue; }
+    if (ch === '\\' && i + 1 < src.length) {
+      const c = src[++i];
+      if (looksJson && inStr) { out += '\\' + c; continue; }           // keep the escape verbatim
+      out += c === 'n' ? (looksJson ? ' ' : '\n')
+           : c === 'r' ? (looksJson ? ' ' : '\r')
+           : c === 't' ? (looksJson ? ' ' : '\t')
+           : c === '"' ? '"' : c === '\\' ? '\\' : '\\' + c;
+      continue;
+    }
+    out += ch;
+  }
+  return out;
+}
+
 (() => {
   const f = new URL('../.env.local', import.meta.url);
   if (!existsSync(f)) return;
@@ -32,8 +62,11 @@ const require = createRequire(import.meta.url);
     const m = line.match(/^\s*(?:export\s+)?([A-Z0-9_]+)\s*=\s*(.*)$/);
     if (!m) continue;
     let v = m[2].trim();
-    // strip ONE matching pair of surrounding quotes; a service-account JSON is quoted and must survive
-    if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) v = v.slice(1, -1);
+    if (v.startsWith("'") && v.endsWith("'")) {
+      v = v.slice(1, -1);                 // single quotes are literal — nothing to unescape
+    } else if (v.startsWith('"') && v.endsWith('"')) {
+      v = unquote(v.slice(1, -1));
+    }
     if (process.env[m[1]] === undefined) process.env[m[1]] = v;
   }
   console.log('loaded ventrify-os/.env.local\n');
@@ -105,7 +138,14 @@ for (const doc of engs.docs) {
   const snap = snaps.docs[0].data();
   // Pre-v3 snapshots are on a /35 scale and cannot be compared with a 0-100 range. Skipping them is
   // correct; silently comparing them would manufacture failures that say nothing about the pre-screen.
-  if (snap.status !== 'scored' || (snap.maxPossible || 0) !== 100) continue;
+  //
+  // A PUBLISHED SNAPSHOT CARRIES NO `status`. Only buildFormingSnapshot() sets one ('forming'); the
+  // runner stamps none, which is why snapshotSummary() in shared/vss-rubric.js reads
+  // `status: snap.status || 'scored'`. Testing for status === 'scored' therefore matched nothing, and
+  // this gate reported "no subjects" against thirteen perfectly good scored engagements — a filter that
+  // silently excludes everything looks exactly like an empty database.
+  if ((snap.status || 'scored') !== 'scored' || (snap.maxPossible || 0) !== 100) continue;
+  if (typeof snap.composite !== 'number') continue;
   const fd = await doc.ref.collection('founderDocs').get();
   const corpus = PS.buildCorpus(fd.docs.map(d => { const x = d.data(); return { name: x.name, text: x.text || '', docType: x.docType }; }));
   if (!corpus.included) continue;
