@@ -5,7 +5,9 @@
 > This is normative throughout: the scoring construction, the cost/latency budget, the containment gate,
 > and — as of 2026-10-30 — the user flow in §8. What remains open is listed in §9.
 >
-> Status: READY TO BUILD. The M3 / VerdictScore design migration is live and signed off.
+> Status: BUILT, NOT YET MEASURED (2026-10-30). The engine, the UI and the flow are in; §7's containment
+> gate has never been run, so nothing here has met a real model or a real engagement. Treat every latency
+> and cost figure below as predicted until that gate reports.
 
 ---
 
@@ -349,6 +351,20 @@ check: free, instant, genuinely useful, and it buys the entire rest of the run.
 4. **Vercel plan.** `api/` is at exactly 12 deployed functions — the Hobby cap. The pre-screen folds into
    `memo.js` and fits. **Stripe's webhook will not.** The operator intends to upgrade the project before
    Stripe is wired; remind them at that point. See `os_vercel_function_cap`.
+
+### Built, and what is still missing
+
+| Piece | Where | State |
+|---|---|---|
+| Range construction, median of 3 draws, band suppression | `api/_prescreen.js` | Built. 28 offline checks in `tools/prescreen-logic.mjs`. |
+| Fast-mode probe, cache warm-up, structured outputs | `api/_prescreen.js` | Built. **Never run against the real API.** |
+| Server-side scoring + storage + compose | `api/memo.js` (`prescreen-warm` / `-category` / `-finalise`) | Built. No score crosses the client. |
+| One free pre-screen per venture | `prescreen-warm` + `shared/entitlements.js` | Built. Soft refusal, org-scoped. |
+| Browser orchestration + live reveal | `workspace/prescreen.js`, `DS.prescreenRunning` | Built. Fan-out 4, **unmeasured**. |
+| Create screen runs it | `window.__wsRunPrescreen` | Built. |
+| Range / Data room tabs, unlock | `assess-next.html`, `api/memo.js` (`prescreen-unlock`) | Built. |
+| **§8.3 — the range as snapshot zero** | `scoreProvenance` | **NOT BUILT.** The range is stored on the engagement but is not yet written into `investabilitySnapshots`, so a full run will not show "Pre-screen 48–71 → measured 63". |
+| **§7 — containment** | `tools/prescreen-containment.mjs` | Written, **never run.** Needs credentials and a budget. |
 
 ### Resolved since the first draft
 
