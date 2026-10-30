@@ -95,7 +95,7 @@ module.exports = async (req, res) => {
     const action = String(body.action || '');
     if (!idToken) { res.status(401).json({ error: 'no_token' }); return; }
     if (!engagementId) { res.status(400).json({ error: 'engagement_required' }); return; }
-    const ACTIONS = ['share', 'revoke-share', 'sign', 'revoke-sign', 'decide', 'revoke-decision', 'chat'];
+    const ACTIONS = ['share', 'revoke-share', 'sign', 'revoke-sign', 'decide', 'revoke-decision', 'chat', 'prescreen-warm', 'prescreen-category'];
     if (!ACTIONS.includes(action)) { res.status(400).json({ error: 'bad_action' }); return; }
 
     ensureAdmin();
@@ -121,6 +121,73 @@ module.exports = async (req, res) => {
     const ops = ((orgSnap.exists && orgSnap.data().operatorEmails) || []).map(e => String(e).toLowerCase());
     const supers = ((cfgSnap.exists && cfgSnap.data().superAdminEmails) || []).map(e => String(e).toLowerCase());
     if (!ops.includes(caller) && !supers.includes(caller)) { res.status(403).json({ error: 'forbidden' }); return; }
+
+    // ---- pre-screen -------------------------------------------------------------------------------
+    // Hosted here for the same reason as the chat below: the OS project sits at exactly its 12-function
+    // Vercel cap, so a new api/*.js file fails the whole deploy. See design/prescreen-spec.md §6.
+    //
+    // THE BROWSER ORCHESTRATES, and it has to. Hobby caps one invocation at 60s and the whole run is
+    // longer, so the page warms the cache once and then fans out one invocation per category. The
+    // constraint produces the better UX anyway — results arrive live instead of behind a spinner.
+    //
+    // Both actions rebuild the corpus from Firestore rather than accepting it from the client: the cache
+    // prefix must be byte-identical across all 22 calls, and a client-supplied corpus could not be
+    // trusted to be (nor trusted at all — it is the thing the score is computed from).
+    if (action === 'prescreen-warm' || action === 'prescreen-category') {
+      const apiKey = process.env.ANTHROPIC_API_KEY;
+      if (!apiKey) { res.status(503).json({ error: 'model_not_configured' }); return; }
+      const PS = require('./_prescreen.js');
+
+      // LOAD THE RUBRIC FIRST, BEFORE ANYTHING IS SPENT. This is the only dynamic ESM import in any
+      // deployed function, so whether Vercel's tracer bundles shared/vss-rubric.js is unproven until it
+      // runs here. Doing it up front — even for the warm action, which does not need it — means a
+      // bundling failure costs nothing instead of surfacing after a ~$0.40 cache write.
+      let VSS_RUBRIC;
+      try { ({ VSS_RUBRIC } = await import('../shared/vss-rubric.js')); }
+      catch (e) { res.status(500).json({ error: 'rubric_unavailable', detail: String(e.message || e) }); return; }
+
+      const fdSnap = await engRef.collection('founderDocs').get();
+      const corpus = PS.buildCorpus(fdSnap.docs.map(d => {
+        const x = d.data();
+        return { name: x.name, text: x.text || '', docType: x.docType };
+      }));
+      // dispatch-run refuses to start without an ingested deck, and so does this: a pre-screen with no
+      // evidence would return a 0-60 range that says nothing about the venture.
+      if (!corpus.included) { res.status(400).json({ error: 'no_evidence', reason: 'nothing ingested yet' }); return; }
+
+      try {
+        if (action === 'prescreen-warm') {
+          const warm = await PS.warmCache(corpus.text, apiKey);
+          // Reported, not assumed. If `wrote` is 0 across runs a silent invalidator is loose and every
+          // probe is paying full price - a ~5x cost bug that is otherwise completely invisible.
+          res.status(200).json({ ok: true, corpus: { tokens: corpus.tokens, included: corpus.included, total: corpus.total, dropped: corpus.dropped }, cache: warm });
+          return;
+        }
+
+        const cat = VSS_RUBRIC.find(c => c.key === String(body.category || ''));
+        if (!cat) { res.status(400).json({ error: 'bad_category' }); return; }
+
+        const probe = await PS.probeCategory(cat, corpus.text, apiKey);
+        if (!probe.draws.length) {
+          // Every draw failed. Say so with the upstream status rather than publishing a category of
+          // zeros, which would read as a judgement on the venture instead of a failure of ours.
+          res.status(502).json({ error: 'probe_failed', category: cat.key, detail: probe.errors.slice(0, 3) });
+          return;
+        }
+        res.status(200).json({
+          ok: true, category: cat.key, label: cat.label, weight: cat.weight,
+          signals: PS.consolidate(cat, probe.draws),
+          drawsUsed: probe.draws.length, errors: probe.errors, usage: probe.usage,
+        });
+        return;
+      } catch (e) {
+        // A 429 is surfaced WITH its retry-after and never silently downgraded to standard speed:
+        // switching speed invalidates the prompt cache, so the rest of the run would pay full price.
+        const status = e.status === 429 ? 429 : 502;
+        res.status(status).json({ error: e.status === 429 ? 'rate_limited' : 'model_error', retryAfter: e.retryAfter || null, detail: e.detail || String(e.message || e) });
+        return;
+      }
+    }
 
     // ---- assessment chat ----------------------------------------------------------------------------
     // Hosted here rather than in its own file because the OS project sits at its 12-function Vercel cap
