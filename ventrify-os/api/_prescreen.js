@@ -80,7 +80,9 @@ const MAX_PER_SIGNAL = 5;
 // Priority uses _roomcheck's OWN filename patterns, so "the documents that matter" means exactly what
 // the scorer means by it and cannot drift into a second opinion. Ordering stays fully deterministic —
 // the prompt cache matches byte for byte, so a nondeterministic corpus would silently cost 5x.
-const GOVERNANCE = /(board.?resolution|bylaw|incorporat|articles|written.?consent|minutes|certificate|par.?value|stock.?purchase|share.?issuance|director|resignation)/i;
+// Administrative paperwork a room must hold and a scorer learns nothing from. MoneyGym's room spent
+// 2,470 tokens of a 40,000 budget reading an EIN confirmation letter as though it were evidence.
+const GOVERNANCE = /(board.?resolution|bylaw|incorporat|articles|written.?consent|minutes|certificate|par.?value|stock.?purchase|share.?issuance|director|resignation|\bein\b|confirmation.?letter|tax|registration|filing.?receipt|\bnda\b|invoice|insurance|engagement.?letter)/i;
 const EVIDENCE_VALUE = [
   // A deck that was uploaded into the data room rather than tagged ${docType:'pitch'} is still the
   // single most evidence-dense document a venture has. MoneyGym 2's room holds exactly that: its

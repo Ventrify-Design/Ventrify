@@ -603,7 +603,10 @@
       scan: drScan,
     });
   }
-  let roomCheckResult = null;
+  // Seeded from the LAST check the server stored — run by the pre-screen, the create screen or this
+  // tab, it does not matter which. Without this the tab opened cold and claimed nothing had been read,
+  // minutes after the customer watched the same six types tick to Present during their run.
+  let roomCheckResult = (p.roomCheck && Array.isArray(p.roomCheck.classes)) ? p.roomCheck : null;
   // Documents added from THIS tab, with their live ingest state. They are uploaded immediately rather
   // than queued: there is no "run" on this tab to queue them for, and a file that sits there looking
   // attached but is not yet stored is the worst of both.

@@ -234,6 +234,26 @@ ok(/export function rangeStale/.test(ds), 'rangeStale exists');
 ok(/roomDocs/.test(memo), 'finalise records how big the room WAS');
 ok(/rangeStale\(/.test(an), 'the Range tab renders it');
 
+console.log('\n19. THE DECK KEEPS ITS PLACE, and the room remembers it was read');
+const ing = await fsp.readFile(new URL('../api/ingest-docs.js', import.meta.url), 'utf8');
+// A founder's deck is almost always inside the Drive folder as well as attached. Writes are idempotent
+// by name, so the folder's copy was overwriting docType:'pitch' with 'dataroom' — the engagement kept
+// its pitchDoc pointer so nothing looked broken, while the scorer lost the deck's guaranteed first
+// place and read the densest file in the room as an ordinary document (truncated, on MoneyGym).
+ok(/priorType === 'pitch' \? 'pitch' : docType/.test(ing), 'ingest can never demote a deck to a data-room file');
+ok(/finalType === 'pitch'/.test(ing), 'and pitchDoc is stamped from the type actually written');
+ok(/x\.docType === 'pitch' \|\| \(deckName && x\.name === deckName\)/.test(memo),
+   'the corpus recovers a deck already demoted, without re-ingesting the room');
+// The room check is free and derived; throwing it away is what made the tab claim nothing was read.
+ok(/roomCheck: \{ \.\.\.check/.test(ing), 'every room check is persisted, whoever ran it');
+ok(/p\.roomCheck && Array\.isArray\(p\.roomCheck\.classes\)/.test(an), 'the data-room tab seeds from it');
+ok(/— of \$\{of\}/.test(ds), 'an untaken measurement prints a dash, never 0');
+// Deck first in the corpus, by docType.
+const withDeck = P.buildCorpus([
+  mkDoc('MoneyGym-Market-Sizing.docx'), { name: 'Deck.pdf', text: 'd'.repeat(9000), docType: 'pitch' }, mkDoc('Team_Bios.docx'),
+]);
+ok(withDeck.text.indexOf('Deck.pdf') < withDeck.text.indexOf('Team_Bios.docx'), 'a tagged deck is read first');
+
 console.log(fails ? `\n${fails} FAILED\n` : '\nall checks passed\n');
 process.exit(fails ? 1 : 0);
 })();

@@ -167,7 +167,18 @@ module.exports = async (req, res) => {
     if (action === 'room-check') {
       const snap = await db.collection('engagements').doc(engagementId).collection('founderDocs').get();
       const docs = snap.docs.map(d => ({ name: d.data().name, text: d.data().text || '' }));
-      res.status(200).json({ ok: true, ...checkRoom(docs) });
+      const check = checkRoom(docs);
+      // PERSISTED, because it was being thrown away. The pre-screen runs this during every run and the
+      // customer watches the six types tick to Present — then opens the Data Room tab afterwards and is
+      // told "we have not read your data room yet" with 0 of 6 present. The check is free and derived,
+      // so caching the last result costs nothing and is the difference between a tab that remembers
+      // what it just showed you and one that appears to have forgotten.
+      // Best-effort: a failed cache write must never fail the check the caller asked for.
+      try {
+        await db.collection('engagements').doc(engagementId)
+          .set({ roomCheck: { ...check, at: new Date().toISOString() } }, { merge: true });
+      } catch (e) {}
+      res.status(200).json({ ok: true, ...check });
       return;
     }
 
@@ -240,8 +251,16 @@ module.exports = async (req, res) => {
     }
 
     const hasOriginal = !!(rawChunks || storagePath);
+    // A DECK MAY NEVER BE DEMOTED TO A DATA-ROOM FILE. Writes here are idempotent by name, so when the
+    // same file arrives again as part of a Drive folder — and a founder's deck is almost always IN the
+    // folder as well as attached — the second write replaced docType:'pitch' with 'dataroom'. The
+    // engagement kept its pitchDoc pointer, so nothing looked wrong, but the scorer lost the deck's
+    // guaranteed first place in the corpus and read it as an ordinary document: on MoneyGym it was
+    // truncated, which is the single most evidence-dense file in the room losing 1,300 tokens.
+    const priorType = (await docRef.get()).data()?.docType;
+    const finalType = priorType === 'pitch' ? 'pitch' : docType;
     await docRef.set({
-      name, docType, chars: text.length, truncated, text,
+      name, docType: finalType, chars: text.length, truncated, text,
       driveId: file.driveId || null, driveModified: file.driveModified || null,
       extraction, extractionDetail,
       storagePath: storagePath || null,
@@ -261,7 +280,7 @@ module.exports = async (req, res) => {
 
     const engUpdate = {};
     if (isNewDoc) engUpdate.founderDocCount = admin.firestore.FieldValue.increment(1);
-    if (docType === 'pitch') engUpdate.pitchDoc = { name, at: admin.firestore.FieldValue.serverTimestamp() };
+    if (finalType === 'pitch') engUpdate.pitchDoc = { name, at: admin.firestore.FieldValue.serverTimestamp() };
     if (Object.keys(engUpdate).length) await db.collection('engagements').doc(engagementId).set(engUpdate, { merge: true });
     // Reading a file OUT of the linked room is what answers the watcher's "unread documents" flag, so clear
     // it here rather than on re-run — a run started without reading them would score the old document set

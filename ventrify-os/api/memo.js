@@ -158,9 +158,15 @@ module.exports = async (req, res) => {
       catch (e) { res.status(500).json({ error: 'rubric_unavailable', detail: String(e.message || e) }); return; }
 
       const fdSnap = await engRef.collection('founderDocs').get();
+      // THE ENGAGEMENT'S pitchDoc IS THE TRUTH about which file is the deck. ingest-docs now refuses to
+      // demote a deck that arrives a second time inside a Drive folder, but engagements ingested before
+      // that fix already hold the deck as docType:'dataroom', and re-ingesting their rooms to repair a
+      // field is not something a customer should have to do. Recover it by name.
+      const deckName = (engData.pitchDoc && engData.pitchDoc.name) || null;
       const corpus = PS.buildCorpus(fdSnap.docs.map(d => {
         const x = d.data();
-        return { name: x.name, text: x.text || '', docType: x.docType };
+        const isDeck = x.docType === 'pitch' || (deckName && x.name === deckName);
+        return { name: x.name, text: x.text || '', docType: isDeck ? 'pitch' : x.docType };
       }));
       // dispatch-run refuses to start without an ingested deck, and so does this: a pre-screen with no
       // evidence would return a 0-60 range that says nothing about the venture.

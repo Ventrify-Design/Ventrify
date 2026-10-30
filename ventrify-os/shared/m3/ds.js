@@ -2693,8 +2693,10 @@ export function dataRoomHero(check = null, opts = {}) {
     eyebrow: 'Data room', eyebrowIcon: 'folder_open',
     headline,
     facts: [
-      { k: 'Document types present', v: found == null ? `0 of ${of}` : `${found} of ${of}` },
-      { k: 'Documents read', v: String(docCount) },
+      // NOT "0 of 6" when unread. Zero is a measurement; this is the absence of one, and printing the
+      // former told a customer who had just uploaded 46 documents that none of them counted.
+      { k: 'Document types present', v: found == null ? `— of ${of}` : `${found} of ${of}` },
+      { k: docCount ? 'Documents in the room' : 'Documents read', v: String(docCount) },
       ...(missing ? [{ k: 'Still missing', v: String(missing) }] : []),
     ],
     right: roomLockup({ classes, docCount }),
