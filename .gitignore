@@ -21,3 +21,9 @@ workflow new/
 ventrify-os/_baselines/visual/
 ventrify-os/_baselines/visual-current/
 ventrify-os/_baselines/visual-compare.png
+
+# Secrets. NEVER commit these. The containment gate and any local API work read
+# credentials from .env.local; `git add -A` would otherwise sweep them straight in.
+.env
+.env.*
+!.env.example
