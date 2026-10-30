@@ -40,9 +40,30 @@ if (!process.env.FIREBASE_SERVICE_ACCOUNT) {
 // The gate runs on a laptop, not on Vercel, so it reads the model key the same way it reads the Firebase
 // and Drive ones — from the secrets directory, never from the repo. Drop the key in that file and this runs
 // for real; leave it out and it self-tests the graders instead.
+//
+// SPENDING IS OPT-IN. This gate sends the WHOLE assessment corpus (up to 140,000 tokens, see
+// api/_chat.js CORPUS_MAX_TOKENS) with every question, for every engagement that has a recommendation.
+// That is roughly a dollar an engagement and double figures for a full pass.
+//
+// It used to pick the key up from the secrets file and simply go. On 2026-10-30 it was included in a
+// routine `for g in tools/*` sweep while checking an unrelated plan-limits change, ran for about seven
+// minutes, and took an estimated $10-14 of the operator's API credits — which then hit their spend cap
+// mid-test and blocked the thing they were actually trying to do. It measured nothing relevant to the
+// change. A gate that can quietly spend real money on an unrelated run is a liability, not a check.
+//
+// So the key alone is no longer consent: pass --spend. Without it this self-tests the graders, which is
+// free and is what a sweep wants anyway. (tools/prescreen-containment.mjs has always worked this way —
+// it needs --live. This is that rule, applied to the gate that lacked it.)
+const SPEND = process.argv.includes('--spend');
 const KEY_FILE = path.join(SECRETS, 'anthropic-key.txt');
-if (!process.env.ANTHROPIC_API_KEY && fs.existsSync(KEY_FILE)) {
+if (SPEND && !process.env.ANTHROPIC_API_KEY && fs.existsSync(KEY_FILE)) {
   process.env.ANTHROPIC_API_KEY = fs.readFileSync(KEY_FILE, 'utf8').trim();
+}
+if (!SPEND) {
+  delete process.env.ANTHROPIC_API_KEY;   // an env key is not consent either
+  console.log('\n  grounding: running the FREE self-test. This gate costs real money (~$1 per');
+  console.log('  engagement, double figures for a full pass) because it sends the whole assessment');
+  console.log('  corpus with every question. Re-run with --spend when you actually want to measure.\n');
 }
 const admin = require(path.join(ROOT, 'node_modules/firebase-admin'));
 const chat = require(path.join(ROOT, 'api/_chat.js'));
