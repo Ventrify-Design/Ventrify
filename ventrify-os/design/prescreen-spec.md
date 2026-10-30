@@ -5,9 +5,8 @@
 > This is normative throughout: the scoring construction, the cost/latency budget, the containment gate,
 > and — as of 2026-10-30 — the user flow in §8. What remains open is listed in §9.
 >
-> Status: BUILT, NOT YET MEASURED (2026-10-30). The engine, the UI and the flow are in; §7's containment
-> gate has never been run, so nothing here has met a real model or a real engagement. Treat every latency
-> and cost figure below as predicted until that gate reports.
+> Status: BUILT AND FIRST-MEASURED (2026-10-30). §7's containment gate has run against real engagements
+> and FAILED at 60% — see §10, which supersedes the cost, latency and model figures in §5.
 
 ---
 
@@ -372,3 +371,73 @@ check: free, instant, genuinely useful, and it buys the entire rest of the run.
   both the data-room loop and the provenance story (§8.3).
 - Anonymous or signed-in → **signed-in**.
 - Re-run policy → **§8.6**.
+
+
+---
+
+## 10. What the first containment replay actually measured — 2026-10-30
+
+§5 was written before anything met the API. Three of its assumptions were wrong, and the gate found all
+three on its first real run. **Where this section and §5 disagree, this one is right.**
+
+### Fast mode is not available
+
+```
+rate limit of 0 fast mode input tokens per minute (model: claude-opus-5-5)
+```
+
+It is a research preview with its own allocation and this organisation has none. Waiting does not help —
+it is a capability answer, not back-pressure.
+
+**DECIDED with the operator: run at STANDARD speed.** Half the price ($4/$20 rather than $8/$40) and
+roughly twice the wall-clock. The promise becomes "under three minutes", not "about a minute". Speed is
+chosen once per run, before anything is cached, and never switched mid-run — switching invalidates the
+prompt cache and reprices every remaining probe.
+
+### The account's token rate limit, not the model, sets the floor on latency
+
+```
+rate limit of 500,000 input tokens per minute
+```
+
+One pre-screen on a full corpus is ~880,000 input tokens (one 40K cache write + 21 probes × 40K), so
+**~1.8 minutes is a hard throughput floor** on the largest rooms regardless of fan-out. FANOUT is 2, not
+4: one category is ~120,000 tokens, so four sat exactly on the ceiling, which is where throttling starts
+rather than where it is safe.
+
+Two consequences, neither solved by tuning:
+
+- **Concurrency.** Two simultaneous pre-screens demand 1.76M tokens/minute. The second throttles. A
+  self-serve product needs the account limit raised, or a server-side queue.
+- **A structural alternative, unmeasured:** the corpus is re-sent 21 times because the spec scores one
+  category per call. All seven categories in one call is 3 calls rather than 21 — a 7× throughput
+  reduction. The three draws must stay (they are what makes the median stable). The cost is focus, and
+  that is measurable rather than arguable.
+
+Small rooms are unaffected: a deck plus five documents is ~220,000 tokens total and finishes inside a
+minute. **The customers most likely to hit this are the best-prepared ones.**
+
+### Containment failed at 60%, because of WHICH DOCUMENTS WE READ
+
+```
+✓ 0X Labs       33–60 vs 53     ✗ KreditMate   42–54 vs 62
+✓ Holoclara     42–60 vs 46     ✗ MoneyGym 2   41–56 vs 76
+✓ KreditMate 3  43–55 vs 47
+```
+
+Both misses read LOW — commercially the safe direction, but wrong, and **§7's remedy of widening the
+floor would not have touched either.** The ceiling was the problem.
+
+`buildCorpus` sorted deck-first then **alphabetically**. On MoneyGym's 53-document room that spent the
+whole 40,000-token budget on board minutes, incorporation papers and third-party benchmark PDFs —
+including a single 47,000-token industry report — and dropped the financial model, the unit economics and
+the market sizing. The paid run read all 53 and published 76; we predicted 41–56 having never opened the
+financials.
+
+Fixed: selection is rubric-led (using `_roomcheck`'s own filename patterns, so it cannot drift into a
+second opinion about what matters), oversized documents are truncated rather than skipped (MoneyGym's
+financial model is ~50,000 tokens on its own and could never fit), and coverage goes breadth-first —
+one document per class, then the venture's others, then second copies.
+
+**Still open:** ordering within the unclassified set is alphabetical, so market analysis can crowd out
+team CVs. Whether that matters is a question for the next replay, not another round of guessing.
