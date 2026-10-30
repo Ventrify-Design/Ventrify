@@ -7,7 +7,10 @@
 // NO app.js edits, no pipeline touch. Pure read + present.
 // ============================================================
 
-import { _esc as esc, docDropzone, roomCheck } from '../shared/m3/ds.js';
+import { _esc as esc, docDropzone, roomCheck, initDropzones } from '../shared/m3/ds.js';
+// The seven category LABELS, so the score column can list every category from the start and fill each one
+// in place. Listing only what has landed makes the column grow and shove the page down seven times.
+import { VSS_RUBRIC } from '../shared/vss-rubric.js';
 import * as DS_PRESCREEN from '../shared/m3/ds.js';   // the live-reveal component, named apart so the targeted imports above stay readable   // ONE real HTML escaper + the dropzone molecule (repainting staged files) + the data-room playback. The FORM markup now lives in DS.createScreen().
 function initials(name) {
   return String(name || '').trim().split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || 'V';
@@ -44,13 +47,13 @@ const naDeckOpts = {
   icon: 'upload_file', prompt: 'Drop the pitch deck here',
   sub: 'PDF · the assessment runs from it. Optional: financial model, founder letter.',
   note: 'Pitch deck · uploads when you run',
-  onPick: "window.__naPick('deck')", onClear: 'window.__naClearDeck()',
+  onPick: "window.__naPick('deck')", onClear: 'window.__naClearDeck()', onDrop: '__naDropDeck',
 };
 const naDocsOpts = {
   status: '', icon: 'folder_open', prompt: 'Add data-room documents',
   sub: 'Financials, cap table, contracts, metrics — PDF, DOCX, XLSX, CSV, TXT, MD or ZIP. The agents read these alongside the deck.',
   note: 'Data room · uploads when you run', addLabel: 'Add more documents',
-  onPick: "window.__naPick('docs')", onClear: 'window.__naClearDoc',
+  onPick: "window.__naPick('docs')", onClear: 'window.__naClearDoc', onDrop: '__naDropDocs',
 };
 const naPaintDeck = () => {
   const el = document.getElementById('na-deck');
@@ -103,6 +106,33 @@ window.__naPick = (kind) => {
 window.__naClearDeck = () => { NA.deck = null; naPaintDeck(); };
 window.__naClearDoc = (i) => { NA.docs.splice(i, 1); naPaintDocs(); };
 
+// ---- DROPPED files ------------------------------------------------------------------------------
+// The picker constrains types with `accept`; a drop has no such gate, so the same rule is applied here.
+// A rejected file is NAMED rather than silently ignored — a file that vanishes on drop reads as a bug in
+// the dropzone, and the person tries it again.
+const extOf = f => '.' + String(f.name || '').split('.').pop().toLowerCase();
+const DECK_ACCEPT = '.pdf,.docx';
+function filterDropped(files, accept, label) {
+  const ok = accept.split(',');
+  const keep = files.filter(f => ok.includes(extOf(f)));
+  const drop = files.filter(f => !ok.includes(extOf(f)));
+  if (drop.length) window.__toast(`${drop.length === 1 ? `“${drop[0].name}” is not` : `${drop.length} files are not`} a file type ${label} can read (${accept.replace(/\./g, '').replace(/,/g, ', ')}).`, true);
+  return keep;
+}
+window.__naDropDeck = (files) => {
+  if (NA.busy) return;
+  const keep = filterDropped(files, DECK_ACCEPT, 'the deck');
+  if (!keep.length) return;
+  if (keep.length > 1) window.__toast('The pitch deck is one file — using the first and ignoring the rest.');
+  NA.deck = keep[0]; naPaintDeck();
+};
+window.__naDropDocs = (files) => {
+  if (NA.busy) return;
+  const keep = filterDropped(files, DOC_ACCEPT, 'the data room');
+  if (!keep.length) return;
+  NA.docs = NA.docs.concat(keep); naPaintDocs();
+};
+
 // Navigate to the create screen. The plan/tier gate lives THERE, not here: the check now depends on which
 // tier is being created, and duplicating that decision at every call site is how the two drift apart.
 export function openNewAssessment() {
@@ -122,6 +152,7 @@ window.openNewAssessment = openNewAssessment;
 // Resets first — a browser Back onto this page must not inherit the last visit's staged files.
 export function initCreateScreen() {
   resetNewAssessment();
+  initDropzones();
   const i = document.getElementById('na-name');
   if (i) {
     i.focus();
@@ -222,31 +253,16 @@ window.__naReadRoom = async () => {
     const deckFail = await naIngestDeck(EA, programId);
     if (deckFail) { window.__toast('The pitch deck didn’t upload: ' + deckFail, true); naBusy(false); naProg(null); return; }
 
-    naProg('Opening the Drive folder…');
-    const lr = await fetch('/api/ingest-docs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken, engagementId: programId, action: 'drive-list', folderUrl: f.driveUrl }) });
-    const list = await lr.json().catch(() => ({}));
-    if (!lr.ok) {
-      // Drive answers the same way for "no such folder" and "not shared with us", so the message covers both.
-      const msg = list.error === 'drive_not_shared'
-        ? 'Could not open that folder. Check the link, and that it is shared — either “anyone with the link can view”, or with dataroom-reader@ventrify-os.iam.gserviceaccount.com as Viewer.'
-        : list.error === 'bad_folder_link' ? 'That does not look like a Google Drive folder link.'
-        : list.error === 'drive_not_configured' ? 'The Drive reader is not configured on this environment yet.'
-        : (list.detail || list.error || 'Could not read the folder.');
-      window.__toast(msg, true); naBusy(false); naProg(null); return;
+    // ONE copy of the Drive read, in engagement-actions — the Data Room tab performs the identical act
+    // and the error mapping below (Drive cannot distinguish "missing" from "not shared") must not fork.
+    let dr;
+    try {
+      dr = await EA.readDriveFolder({ engagementId: programId, folderUrl: f.driveUrl, onProgress: m => naProg(m) });
+    } catch (err) {
+      window.__toast((err && err.message) || 'Could not read the folder.', true); naBusy(false); naProg(null); return;
     }
-    NA.driveFiles = list.files || [];
-    const skipped = (list.skipped || []).length;
-    if (!NA.driveFiles.length) { window.__toast('That folder has no readable documents in it.', true); naBusy(false); naProg(null); return; }
-
-    // Ingest one at a time: each request stays inside the serverless budget, and the operator sees honest
-    // progress rather than a spinner for three minutes.
-    let failed = 0;
-    for (let i = 0; i < NA.driveFiles.length; i++) {
-      const d = NA.driveFiles[i];
-      naProg(`Reading the data room · ${i + 1} of ${NA.driveFiles.length} · ${d.name.slice(0, 44)}`);
-      const r = await fetch('/api/ingest-docs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken, engagementId: programId, docType: 'dataroom', file: { name: d.name, driveId: d.driveId, exportMime: d.exportMime, driveModified: d.modifiedTime } }) });
-      if (!r.ok) failed++;
-    }
+    NA.driveFiles = dr.files;
+    const skipped = dr.skipped, failed = dr.failed, list = { folderName: dr.folderName };
 
     naProg('Checking what the score will look for…');
     const cr = await fetch('/api/ingest-docs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken, engagementId: programId, action: 'room-check' }) });
@@ -326,22 +342,64 @@ window.__wsRunPrescreen = async () => {
   const W = window.WORKSPACE || {};
   if (W.mode !== 'live') { window.__toast('The pre-screen needs the live workspace.', true); return; }
 
-  const slot = () => document.getElementById('na-room');
-  const paint = (html) => { const el = slot(); if (el) el.innerHTML = html; };
+  // THE FORM GOES. The instant Run is pressed every field is locked and nothing in it can be changed, so
+  // it is a dead half-screen of controls sitting on top of the only thing the person now cares about.
+  // It is replaced by the full-width run stage — three columns, no scrolling between them.
   const landed = [];
-  let phaseText = 'Starting…', roomRead = null;
-  // The room check STAYS on screen while the categories land beneath it. It arrives in about a second,
-  // it is the most immediately useful thing we have, and it is the reason the rest of the wait feels
-  // like progress — replacing it with the run's own panel would throw that away one second in.
-  const repaint = () => paint(
-    (roomRead ? roomCheck(roomRead) + '<hr class="rule">' : '')
-    + DS_PRESCREEN.prescreenRunning({ phase: phaseText, landed })
-  );
+  // Captured BEFORE the swap: #na-name is gone the moment the stage mounts, so reading it at paint time
+  // would blank the heading on the very first repaint.
+  const stageName = f.name || '';
+  let phaseText = 'Starting…', roomRead = null, justFound = [], step = 0;
+  const catList = (VSS_RUBRIC || []).map(c => ({ key: c.key, label: c.label }));
+
+  const host = () => {
+    let h = document.getElementById('ps-host');
+    if (h) return h;
+    const screen = document.querySelector('.na-screen');
+    if (!screen) return null;
+    h = document.createElement('div');
+    h.id = 'ps-host';
+    screen.replaceWith(h);
+    // The masthead still read "Attach the deck and the data room" with no form left to attach it to.
+    // What replaces it is the one thing a waiting person needs to know and cannot guess: the run is
+    // orchestrated FROM THIS TAB (Vercel caps one invocation at 60s, so the browser fans the categories
+    // out), which means closing it stops the run. Nothing on screen said so.
+    const sub = document.querySelector('.mh-sub');
+    if (sub) sub.textContent = 'About three minutes. Keep this tab open — the run is driven from your browser, so closing it stops the run.';
+    // The stage opens at its own head. Without this the page keeps whatever scroll offset the form had,
+    // which on a long form means landing halfway down a screen that just changed underneath you.
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return h;
+  };
+  const fileRows = () => ({
+    deck: NA.deck ? { name: NA.deck.name, status: NA.deckStatus || 'Waiting',
+                      state: NA.deckStatus === 'Read' ? 'done' : NA.deckStatus === 'Failed' ? 'fail' : 'idle' } : null,
+    docs: NA.docs.map((f, i) => {
+      const st = (NA.docStatus || {})[i] || 'Waiting';
+      return { name: f.name, status: st, key: 'doc' + i,
+               state: st === 'Stored' ? 'done' : st === 'Failed' ? 'fail' : 'idle' };
+    }),
+  });
+  const repaint = () => {
+    const h = host(); if (!h) return;
+    const f = fileRows();
+    h.innerHTML = DS_PRESCREEN.prescreenStage({
+      name: stageName,
+      phase: phaseText, step,
+      deck: f.deck, docs: f.docs,
+      room: roomRead, justFound,
+      categories: catList, landed, total: catList.length || 7,
+    });
+  };
 
   naBusy(true);
   try {
     const programId = await naEnsureEngagement(f, 'prescreen');
     const EA = await import('./engagement-actions.js');
+    // Mount the stage BEFORE the first upload, so the person sees where their files went the moment
+    // they commit — not after the slowest step in the run has already finished.
+    phaseText = 'Reading your documents…';
+    repaint();
 
     // The deck is the hard gate here too — a pre-screen with no evidence returns a 0-60 range that says
     // nothing about the venture, which is worse than refusing.
@@ -356,11 +414,21 @@ window.__wsRunPrescreen = async () => {
     }
 
     const { runPrescreen } = await import('./prescreen.js');
-    repaint();
+    step = 1; phaseText = 'Checking your data room…'; repaint();
     await runPrescreen({
       engagementId: programId,
       onPhase: (t) => { phaseText = t; naProg(t); repaint(); },
-      onRoom: (check) => { roomRead = check; repaint(); },
+      // EVERY class found on the first read is "just found" — a second ago the list was six hollow
+      // circles. That is precisely the change the first user said they missed because it happened in a
+      // column they were not looking at.
+      onRoom: (check) => {
+        const was = new Set(((roomRead && roomRead.classes) || []).filter(c => c.found).map(c => c.key));
+        justFound = (check.classes || []).filter(c => c.found && !was.has(c.key)).map(c => c.key);
+        roomRead = check; step = 2; repaint();
+        // The highlight is a one-shot: clear it so the next repaint does not replay the animation on
+        // every category that lands afterwards.
+        setTimeout(() => { justFound = []; }, 900);
+      },
       onCategory: (c) => { landed.push(c); repaint(); },
     });
 

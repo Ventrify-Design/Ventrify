@@ -1172,8 +1172,15 @@ const ROW_COMPACT = new Set(['roster', 'figure', 'doc', 'numbered', 'marker', 'c
 // (gap, the worst band, drew as a PALE BRAND tint while mixed drew grey). No row leads with a dot now.
 function leadTile(icon, wtype) { return `<span class="rlead" style="background:${RTONE[wtype] || RTONE.p}"><span class="material-symbols-rounded" style="color:${RCOL[wtype] || RCOL.p}">${esc(icon || 'article')}</span></span>`; }
 // trailing atoms
-function trailValue(value, valueMuted, delta) {
-  return `<div class="mrow-val"><span class="v">${esc(value)}${valueMuted ? `<span class="out">${esc(valueMuted)}</span>` : ''}</span>${delta ? `<span class="s ${delta.tone === 'up' ? 'up' : 'flat'}">${esc(delta.text)}</span>` : ''}</div>`;
+// `mark` is an optional STATE GLYPH in the trailing cell — { icon, tone }. It exists because the metric
+// row has no lead dot (leadDot is retired) and so had NO visual channel for found/not-found: roomCheck was
+// passing `lead:{sev}` that nothing rendered, leaving "Present" and "Not seen" as text of identical weight.
+// A reader scanning a list of six cannot see a state change in a word. They can see a tick appear.
+function trailValue(value, valueMuted, delta, mark) {
+  const glyph = mark && mark.icon
+    ? `<span class="material-symbols-rounded mrow-mk${mark.tone ? ' ' + esc(mark.tone) : ''}">${esc(mark.icon)}</span>`
+    : '';
+  return `<div class="mrow-val">${glyph}<span class="v">${esc(value)}${valueMuted ? `<span class="out">${esc(valueMuted)}</span>` : ''}</span>${delta ? `<span class="s ${delta.tone === 'up' ? 'up' : 'flat'}">${esc(delta.text)}</span>` : ''}</div>`;
 }
 const rowChev = clickable => clickable ? '<span class="material-symbols-rounded mrow-chev">chevron_right</span>' : '<span class="mrow-chev"></span>';
 
@@ -1202,7 +1209,7 @@ export function row(opts = {}) {
 
   // trailing cell
   let tr = '';
-  if (trail.kind === 'value' || (variant === 'metric' || variant === 'funnel')) tr = trailValue(trail.value, trail.valueMuted, trail.delta);
+  if (trail.kind === 'value' || (variant === 'metric' || variant === 'funnel')) tr = trailValue(trail.value, trail.valueMuted, trail.delta, trail.mark);
 
   // BODY assembly is per-variant: metric/funnel nest the dot inside .mrow-nm within .mrow-lab.
   if (variant === 'metric' || variant === 'funnel') {
@@ -1978,8 +1985,12 @@ export function gapRemoveUrl(btn) {
 // another document, so a keyword read can produce a false absence — and sending an operator to chase a cap
 // table the founder already supplied is worse than staying quiet. The wording carries that uncertainty, and
 // the panel offers to run anyway in the same breath.
-export function roomCheck(check = {}) {
+export function roomCheck(check = {}, opts = {}) {
   const classes = check.classes || [], extras = check.strengtheners || [];
+  // Keys that flipped to found on THIS paint. The room read lands all at once after the deck is parsed, so
+  // without a transient highlight the change from "Not seen" to "Present" happens off-screen in a list the
+  // reader is not looking at yet — which is exactly what the first real user reported.
+  const fresh = new Set(opts.justFound || []);
   const unseen = classes.filter(c => !c.found);
   const head = unseen.length
     ? `${unseen.length} of ${classes.length} document types could not be found in the room`
@@ -1989,10 +2000,14 @@ export function roomCheck(check = {}) {
   // reading ramp wraps the trailing state onto two lines there.
   const lines = classes.map(c => row({
     variant: 'metric', key: c.key, density: 'compact',
-    lead: { sev: c.found ? 'strong' : 'gap' },
+    // `lead` is NOT passed: the metric row has no lead dot (leadDot is retired), so the sev it used to carry
+    // rendered nothing at all and found/not-found were two words of identical weight. The state lives in the
+    // trailing mark now, which is the one column the eye is already scanning down.
+    cls: ['rcl', c.found ? 'is-found' : 'is-gap', fresh.has(c.key) ? 'just-found' : ''].filter(Boolean).join(' '),
     title: c.label,
     sub: c.found ? `Seen in ${c.seenIn || 'the room'}` : c.want,
-    trail: { kind: 'value', value: c.found ? 'Present' : 'Not seen' },
+    trail: { kind: 'value', value: c.found ? 'Present' : 'Not seen',
+             mark: { icon: c.found ? 'check_circle' : 'radio_button_unchecked', tone: c.found ? 'good' : 'idle' } },
   })).join('');
 
   const strengthen = extras.length ? `<div class="rc-extra">
@@ -2044,10 +2059,14 @@ export function roomPreview(opts = {}) {
   const staged = docCount || deck;
   // No `lead` — leadDot is retired, and no trailing word either: six identical "Looks for" chips would be
   // noise. The empty trail cell keeps the column, so nothing shifts when the real check replaces this.
+  // Deliberately the same row shape, mark and columns as roomCheck's. When the read lands, the list does
+  // not redraw into a different component — each line's hollow circle becomes a tick in place, which is the
+  // only way a state change is legible to someone who was looking somewhere else a second ago.
   const lines = ROOM_CLASSES.map(c => row({
-    variant: 'metric', key: c.key, density: 'compact',
+    variant: 'metric', key: c.key, density: 'compact', cls: 'rcl is-idle',
     title: c.label, sub: c.want,
-    trail: { kind: 'value', value: '' },
+    trail: { kind: 'value', value: staged ? 'Not read yet' : '',
+             mark: { icon: 'radio_button_unchecked', tone: 'idle' } },
   })).join('');
   const head = staged
     ? `${docCount} document${docCount === 1 ? '' : 's'} staged${deck ? ' · pitch deck attached' : ''}`
@@ -2369,6 +2388,33 @@ export function rangeHero(range = {}, opts = {}) {
   });
 }
 
+// rangeNext — the two ways OUT of the Range tab.
+//
+// The tab explained at length why the range is as wide as it is and then offered nothing to do about it:
+// the first real customer read the width, went looking for somewhere to add the missing documents, and
+// found no field and no button on either tab. A screen that says "we could not see X" has to say where to
+// put X. The free route is named first and named plainly, because it is the one we want them taking.
+export function rangeNext() {
+  return `<hr class="rule"><section class="sec rng-next">
+    <div class="sec-head"><span class="eyebrow accent">What narrows this</span><span class="t">Two ways to close the gap</span>
+      <span class="meta">one is free</span></div>
+    <div class="rng-next-grid">
+      <div class="rng-next-c">
+        <span class="material-symbols-rounded rng-ic">folder_open</span>
+        <div class="rng-next-h">Give it more to read</div>
+        <p class="rng-next-p">Add documents or link your Drive folder, then re-scan. Free, instant and as often as you like — it updates what we can see and shrinks what the range is guessing at.</p>
+        <a class="m3-btn tonal" href="#dataroom"><span class="material-symbols-rounded">upload_file</span>Open the data room</a>
+      </div>
+      <div class="rng-next-c">
+        <span class="material-symbols-rounded rng-ic">lock_open</span>
+        <div class="rng-next-h">Replace it with one number</div>
+        <p class="rng-next-p">The full assessment reads everything properly, researches the market and the team, and returns a single measured score with the reasoning and a deal memo behind it.</p>
+        <button class="m3-btn filled" type="button" onclick="window.__eaUnlock&&window.__eaUnlock()"><span class="material-symbols-rounded">bolt</span>Unlock the full assessment</button>
+      </div>
+    </div>
+  </section>`;
+}
+
 // emptyState — ATOM. "Nothing here yet", editorially.
 //
 // Every empty state in this product used to be a centred filled card, and the operator's instruction was
@@ -2380,34 +2426,106 @@ export function emptyState(opts = {}) {
   return `<div class="empty-state"><div class="title-l">${esc(title)}</div>${text ? `<div class="body-m variant">${esc(text)}</div>` : ''}${ctaHtml}</div>`;
 }
 
-// prescreenRunning — the live reveal while a pre-screen is in flight.
+// prescreenStage — THE RUN SCREEN. Full width, three columns, nothing above the fold but the run.
 //
-// DESIGN THE PERCEIVED WAIT, NOT THE REAL ONE. The room check is on screen in under a second and the
-// first category lands around twenty; the run finishes near fifty. Shown as one spinner that is a long
-// wait, and shown as a page filling up it is not — so each category appears the moment it lands, with
-// the count of signals the evidence actually supported.
+// WHY IT REPLACES THE FORM RATHER THAN SITTING BESIDE IT. The first real user ran a pre-screen and spent the
+// whole wait scrolling: the form held the left column and the live read was a 380px rail on the right, so
+// "what is being scanned", "what was found" and "which categories have landed" were never on screen at once.
+// The moment Run is pressed the form is also DEAD — every field is locked and nothing in it can be changed —
+// so it is spending the entire viewport on controls that no longer do anything.
 //
-// NEVER A FABRICATED PERCENTAGE. `phase` is the real stage the run is in. A progress bar that is really
-// a timer is the single easiest way to turn a 50-second wait into a broken-looking one.
-export function prescreenRunning(opts = {}) {
-  const { phase = 'Starting…', landed = [], total = 7 } = opts;
-  const rows = landed.map(c => {
-    const seen = (c.signals || []).filter(s => s.evidenced).length;
-    const of = (c.signals || []).length;
+// So it goes. The three things a waiting person actually asks get a column each, side by side:
+//   what are you reading · what did you find in my room · how far through the score are you
+// Nothing to scroll to, and each column answers in place as the run moves.
+//
+// NEVER A FABRICATED PERCENTAGE — same rule as before. `phase` is the real stage; the step rail marks a
+// stage done only when it is done. The only bar on screen is indeterminate.
+export function prescreenStage(opts = {}) {
+  const {
+    name = '', phase = 'Starting…', step = 0,
+    deck = null, docs = [], room = null, justFound = [],
+    categories = [], landed = [], total = 7,
+  } = opts;
+
+  const STEPS = ['Reading your documents', 'Checking the data room', 'Scoring the seven categories'];
+  const steps = STEPS.map((t, i) => `<li class="ps-step${i < step ? ' done' : i === step ? ' now' : ''}">
+    <span class="material-symbols-rounded">${i < step ? 'check_circle' : i === step ? 'progress_activity' : 'radio_button_unchecked'}</span>${esc(t)}</li>`).join('');
+
+  // COLUMN 1 — the evidence, with each file's real ingest state. A file that failed says so here and is not
+  // quietly dropped: the score is computed from what was read, so what was read has to be visible.
+  const fileRow = (f) => row({
+    variant: 'metric', key: f.key || f.name, density: 'compact',
+    cls: ['rcl', f.state === 'done' ? 'is-found' : f.state === 'fail' ? 'is-fail' : 'is-idle'].filter(Boolean).join(' '),
+    title: f.name, sub: f.kind || '',
+    trail: { kind: 'value', value: f.status || '',
+             mark: { icon: f.state === 'done' ? 'check_circle' : f.state === 'fail' ? 'error' : 'radio_button_unchecked',
+                     tone: f.state === 'done' ? 'good' : f.state === 'fail' ? 'bad' : 'idle' } },
+  });
+  const evidence = [
+    ...(deck ? [fileRow({ ...deck, kind: 'Pitch deck' })] : []),
+    ...docs.map(d => fileRow({ ...d, kind: 'Data room' })),
+  ].join('');
+
+  // COLUMN 2 — the room. Idle rows until the check lands, then the SAME rows with ticks (see roomPreview).
+  const roomBody = room
+    ? `<div class="profile">${(room.classes || []).map(c => row({
+        variant: 'metric', key: c.key, density: 'compact',
+        cls: ['rcl', c.found ? 'is-found' : 'is-gap', justFound.includes(c.key) ? 'just-found' : ''].filter(Boolean).join(' '),
+        title: c.label, sub: c.found ? `Seen in ${c.seenIn || 'the room'}` : c.want,
+        trail: { kind: 'value', value: c.found ? 'Present' : 'Not seen',
+                 mark: { icon: c.found ? 'check_circle' : 'radio_button_unchecked', tone: c.found ? 'good' : 'idle' } },
+      })).join('')}</div>`
+    : `<div class="profile">${ROOM_CLASSES.map(c => row({
+        variant: 'metric', key: c.key, density: 'compact', cls: 'rcl is-idle',
+        title: c.label, sub: c.want,
+        trail: { kind: 'value', value: 'Checking…', mark: { icon: 'radio_button_unchecked', tone: 'idle' } },
+      })).join('')}</div>`;
+  const foundN = room ? (room.classes || []).filter(c => c.found).length : 0;
+  const roomMeta = room ? `${foundN} of ${(room.classes || []).length} found` : 'reading…';
+
+  // COLUMN 3 — the score. Every category is listed from the start, so the column does not grow and shove
+  // the page around as results arrive; each one fills in place.
+  const byKey = Object.fromEntries(landed.map(c => [c.category, c]));
+  const cats = (categories.length ? categories : landed.map(c => ({ key: c.category, label: c.label })));
+  const catBody = cats.map(c => {
+    const hit = byKey[c.key];
+    const seen = hit ? (hit.signals || []).filter(x => x.evidenced).length : 0;
+    const of = hit ? (hit.signals || []).length : 5;
     return row({
-      variant: 'metric', key: c.category, density: 'compact',
+      variant: 'metric', key: c.key, density: 'compact',
+      cls: ['rcl', hit ? 'is-found just-found' : 'is-idle'].filter(Boolean).join(' '),
       title: c.label,
-      sub: seen === of ? `All ${of} signals evidenced` : `${seen} of ${of} signals evidenced`,
-      trail: { kind: 'value', value: seen === of ? 'complete' : `${of - seen} unread` },
+      // Short on purpose: the trailing cell already states the outcome, and in a 330px column a
+      // nine-word sub pushes the title onto a third line to say the same thing twice.
+      sub: hit ? `${seen} of ${of} evidenced` : 'Waiting its turn',
+      trail: { kind: 'value', value: hit ? (seen === of ? 'complete' : `${of - seen} unread`) : '',
+               mark: { icon: hit ? 'check_circle' : 'radio_button_unchecked', tone: hit ? 'good' : 'idle' } },
     });
   }).join('');
-  return `<section class="sec rc">
-    <div class="sec-head"><span class="eyebrow accent">Pre-screening</span><span class="t">${esc(phase)}</span>
-      <span class="meta">${landed.length} of ${total} categories</span></div>
-    ${landed.length ? `<div class="profile">${rows}</div>` : ''}
-    ${landed.length < total ? linearProgress({ indeterminate: true }) : ''}
-    <div class="profile-foot"><span>Three independent reads per signal, and the middle one is published — a single read of the same evidence can move a score by several points without making it more right.</span></div>
+
+  const col = (eyebrow, title, meta, body, foot) => `<section class="ps-col">
+    <div class="sec-head"><span class="eyebrow accent">${esc(eyebrow)}</span><span class="t">${esc(title)}</span><span class="meta">${esc(meta)}</span></div>
+    ${body}
+    ${foot ? `<div class="profile-foot"><span>${foot}</span></div>` : ''}
   </section>`;
+
+  return `<div class="ps-stage">
+    <header class="ps-head">
+      <span class="eyebrow accent"><span class="material-symbols-rounded">bolt</span>Pre-screening${name ? ' · ' + esc(name) : ''}</span>
+      <h2 class="ps-h">${esc(phase)}</h2>
+      ${linearProgress({ indeterminate: true })}
+      <ol class="ps-steps">${steps}</ol>
+    </header>
+    <div class="ps-grid">
+      ${col('What we are reading', 'Your evidence', `${(deck ? 1 : 0) + docs.length} file${(deck ? 1 : 0) + docs.length === 1 ? '' : 's'}`,
+            evidence ? `<div class="profile">${evidence}</div>` : `<div class="profile-foot"><span>Nothing attached.</span></div>`,
+            'Each file is read before the score starts. Anything that fails to parse is named here rather than dropped quietly.')}
+      ${col('Your data room', 'What the score looks for', roomMeta, roomBody,
+            'Free and unlimited to re-run. A type shown as not seen is not a mark against the venture — it is evidence we were not given.')}
+      ${col('The score', 'Seven categories', `${landed.length} of ${total} landed`, `<div class="profile">${catBody}</div>`,
+            'Three independent reads per signal, and the middle one is published — a single read of the same evidence can move a score by several points without making it more right.')}
+    </div>
+  </div>`;
 }
 
 // dataRoomTab — the one surface in the product the customer ACTS ON.
@@ -2425,17 +2543,69 @@ export function prescreenRunning(opts = {}) {
 // opts: { check } — a real api/_roomcheck result once one has been run; until then roomPreview() says what
 // the score looks for, which is useful on its own and never reads as a grade.
 export function dataRoomTab(opts = {}) {
-  const { check = null, docCount = 0, deck = false, busy = false, canRescan = false } = opts;
-  const body = check ? roomCheck(check) : roomPreview({ docCount, deck });
+  const { check = null, docCount = 0, deck = false, busy = false, canRescan = false,
+          isPrescreen = false, driveUrl = '', staged = [], justFound = [] } = opts;
+  const body = check ? roomCheck(check, { justFound }) : roomPreview({ docCount, deck });
+
+  // THE TAB HAD NO VERB ON IT. Its own header calls this "the one surface the customer ACTS ON", and it
+  // shipped with a single button that re-reads what was already there. A customer who has just been told
+  // which six document types are missing has nowhere on this screen to supply one — they would have to
+  // start a new assessment. So the two ways in are here: drop files, or link the folder.
+  const add = `<section class="sec dr-add">
+    <div class="sec-head"><span class="eyebrow accent">Add to the room</span><span class="t">Give the score more to read</span>
+      <span class="meta">free — re-reading never costs anything</span></div>
+    <div class="dr-add-grid">
+      <div class="dr-add-col">
+        <span class="na-lab">Upload documents</span>
+        ${docDropzone(staged, {
+          status: '', icon: 'folder_open', prompt: 'Drop documents here',
+          sub: 'Financials, cap table, contracts, metrics — PDF, DOCX, XLSX, CSV, TXT, MD or ZIP.',
+          note: 'Data room', addLabel: 'Add more documents',
+          onPick: 'window.__drPick&&window.__drPick()', onClear: 'window.__drClear', onDrop: '__drDrop', locked: busy,
+        })}
+      </div>
+      <div class="dr-add-col">
+        <span class="na-lab">Or link a Google Drive folder</span>
+        ${formField({ id: 'dr-drive', type: 'url', value: driveUrl,
+          placeholder: 'https://drive.google.com/drive/folders/…',
+          hint: 'Shared with anyone who has the link, or with dataroom-reader@ventrify-os.iam.gserviceaccount.com' })}
+        <div class="dr-add-btns">
+          <button class="m3-btn tonal" type="button" ${busy ? 'disabled' : ''} onclick="window.__drLinkDrive&&window.__drLinkDrive()">
+            <span class="material-symbols-rounded">cloud_download</span>${driveUrl ? 'Re-read this folder' : 'Read this folder'}
+          </button>
+          ${canRescan ? `<button class="m3-btn text" type="button" ${busy ? 'disabled' : ''} onclick="window.__drRescanDrive&&window.__drRescanDrive()"><span class="material-symbols-rounded">cloud_sync</span>Pull new files</button>` : ''}
+        </div>
+      </div>
+    </div>
+  </section>`;
+
+  // WHAT ADDING EVIDENCE ACTUALLY DOES, STATED HONESTLY. Re-reading the room is free and changes the
+  // coverage picture; it does NOT re-score, because one scored pre-screen per venture is the rule the
+  // product is built on. Saying "add documents and re-run" without that distinction would promise a free
+  // re-roll and then refuse it at the one moment the customer is most invested.
+  const outcome = isPrescreen
+    ? `<div class="dr-act">
+        <button class="m3-btn filled" type="button" onclick="window.__drUnlock&&window.__drUnlock()"><span class="material-symbols-rounded">lock_open</span>Unlock the full assessment</button>
+        <span class="dr-act-x"><b>Re-reading the room is free and unlimited</b> — it updates what we can see and narrows what the range is guessing at. Re-<i>scoring</i> on the new evidence is the full assessment, which reads everything here properly and returns one measured number.</span>
+      </div>`
+    : `<div class="dr-act">
+        <span class="dr-act-x">Free, and as often as you like — scanning the room costs nothing and never changes your score on its own. File evidence against a specific gap from the Diligence tab to move the score.</span>
+      </div>`;
+
+  // ORDER IS THE ARGUMENT: here is what we found → here is how to change it → here is what that buys.
+  // Re-scan sat ABOVE the add block, which asked the reader to re-read the room before they had been
+  // given anywhere to put anything new in it.
   return `<div class="brief">
     <div id="dr-slot">${body}</div>
-    <div class="dr-act">
+    <hr class="rule">
+    ${add}
+    <div class="dr-act dr-act-scan">
       <button class="m3-btn ${check ? 'tonal' : 'filled'}" type="button" ${busy ? 'disabled' : ''} onclick="window.__drCheck&&window.__drCheck()">
         <span class="material-symbols-rounded">${check ? 'refresh' : 'plagiarism'}</span>${check ? 'Re-scan the room' : 'Check my data room'}
       </button>
-      ${canRescan ? `<button class="m3-btn text" type="button" onclick="window.__drRescanDrive&&window.__drRescanDrive()"><span class="material-symbols-rounded">cloud_sync</span>Pull new files from Drive</button>` : ''}
-      <span class="dr-act-x">Free, and as often as you like — scanning the room costs nothing and never changes your score on its own.</span>
+      <span class="dr-prog" id="dr-prog" hidden></span>
     </div>
+    ${outcome}
   </div>`;
 }
 
@@ -3744,20 +3914,72 @@ export function docDropzone(files = [], opts = {}) {
   const {
     icon = 'upload_file', prompt = 'Drop files here', sub = '', fileIcon = 'description',
     note = '', status = 'stored', clearLabel = 'Remove', addLabel = 'Add more',
-    single = false, onPick = '', onClear = '',
+    single = false, onPick = '', onClear = '', onDrop = '',
   } = opts;
   const list = (files || []).filter(Boolean);
-  if (!list.length) return `<button class="deckdrop" onclick="${onPick}">
+  // REAL DRAG AND DROP. This component has said "Drop the pitch deck here" since it was written and has
+  // never accepted a drop — it was a <button>, click only. An affordance the UI names and does not honour
+  // is worse than no affordance: the user tries it, nothing happens, and they distrust the next one.
+  //
+  // `onDrop` is a bare GLOBAL FUNCTION NAME (not an expression like onPick) because the delegated listener
+  // in initDropzones() resolves and calls it with the FileList — there is nothing sensible to inline.
+  // Dropping is accepted on the empty zone AND on an already-attached zone, because "add more" by drag is
+  // the same gesture and refusing it there would be the same broken promise one step later.
+  const drop = onDrop && !opts.locked ? ` data-drop="${esc(onDrop)}"` : '';
+  if (!list.length) return `<button class="deckdrop" type="button"${drop} onclick="${onPick}">
     <span class="material-symbols-rounded dd-ic">${esc(icon)}</span>
     <span class="dd-nm">${esc(prompt)}</span>
     <span class="dd-sub">${esc(sub)}</span>
+    ${drop ? '<span class="dd-drop"><span class="material-symbols-rounded">download</span>Drop to attach</span>' : ''}
   </button>`;
   // a file may carry its OWN status/tag (e.g. 'Uploading…' / 'Failed' while the panel ingests) — falls back
   // to the zone-level status, so existing callers are unchanged.
   const row = (f, i) => `<div class="deckdrop attached${f.busy ? ' busy' : ''}">${srcRow({ icon: f.icon || fileIcon, title: f.title, note: f.note || note, status: f.status !== undefined ? f.status : status, tag: f.tag })}
     ${opts.locked ? '' : `<button class="m3-btn text" onclick="${onClear}${single ? '' : `(${i})`}"><span class="material-symbols-rounded">close</span>${esc(clearLabel)}</button>`}</div>`;
-  if (single) return row(list[0], 0);
-  return `<div class="dd-stack">${list.map(row).join('')}${opts.locked ? '' : `<button class="m3-btn text dd-add" onclick="${onPick}"><span class="material-symbols-rounded">add</span>${esc(addLabel)}</button>`}</div>`;
+  // Only a zone that actually accepts drops grows a wrapper and a hint — a caller that passes no `onDrop`
+  // gets byte-identical output to before, which is what deckDropzone's contract promises.
+  const hint = t => drop ? `<span class="dd-drop"><span class="material-symbols-rounded">download</span>Drop to ${t}</span>` : '';
+  if (single) return drop ? `<div class="dd-one"${drop}>${row(list[0], 0)}${hint('replace')}</div>` : row(list[0], 0);
+  return `<div class="dd-stack"${drop}>${list.map(row).join('')}${opts.locked ? '' : `<button class="m3-btn text dd-add" type="button" onclick="${onPick}"><span class="material-symbols-rounded">add</span>${esc(addLabel)}</button>`}${hint('add')}</div>`;
+}
+
+// initDropzones — ONE delegated listener set for every [data-drop] on the page, ever.
+//
+// Delegated and not per-element on purpose: these zones are re-rendered from strings on every state change
+// (naPaintDeck / naPaintDocs run on each attach, clear and status tick), so handlers bound to an element
+// would be thrown away seconds after being attached and the second drop would silently do nothing.
+//
+// It also swallows file drags that MISS a zone. Without that, dropping a deck slightly off-target makes the
+// browser navigate away from the page to render the PDF — losing a half-filled form.
+let dropsBound = false;
+export function initDropzones() {
+  if (dropsBound || typeof document === 'undefined') return;
+  dropsBound = true;
+  const hasFiles = e => !!(e.dataTransfer && [...(e.dataTransfer.types || [])].includes('Files'));
+  const zoneOf = e => (e.target && e.target.closest) ? e.target.closest('[data-drop]') : null;
+  let active = null;
+  const lit = z => { if (z === active) return; if (active) active.classList.remove('is-drop'); active = z; if (z) z.classList.add('is-drop'); };
+
+  document.addEventListener('dragover', e => {
+    if (!hasFiles(e)) return;           // a text or element drag is none of our business
+    e.preventDefault();                 // inside the document, never let the browser open the file
+    const z = zoneOf(e);
+    lit(z);
+    if (e.dataTransfer) e.dataTransfer.dropEffect = z ? 'copy' : 'none';
+  });
+  // Leaving the window entirely reports no relatedTarget. Moving BETWEEN zones is already handled by
+  // dragover, which fires continuously and re-evaluates the target.
+  document.addEventListener('dragleave', e => { if (!e.relatedTarget) lit(null); });
+  document.addEventListener('drop', e => {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    const z = zoneOf(e);
+    lit(null);
+    if (!z) return;
+    const files = [...((e.dataTransfer && e.dataTransfer.files) || [])];
+    const fn = typeof window !== 'undefined' && window[z.getAttribute('data-drop')];
+    if (files.length && typeof fn === 'function') fn(files);
+  });
 }
 
 // deckDropzone — the single-file PITCH-DECK preset of docDropzone (the hard gate — mirrors dispatch-run.js
@@ -3903,11 +4125,11 @@ export function createScreen(opts = {}) {
         <div class="na-block-h"><span class="eyebrow accent">The evidence</span><span class="t">What we read</span></div>
         <div class="na-sec">
           <span class="na-lab">Pitch deck <span class="na-hint">required</span></span>
-          <div id="na-deck">${docDropzone([], { single: true, status: '', clearLabel: 'Replace', fileIcon: 'slideshow', icon: 'upload_file', prompt: 'Drop the pitch deck here', sub: 'PDF · the assessment runs from it.', note: 'Pitch deck · uploads when you run', onPick: "window.__naPick('deck')", onClear: 'window.__naClearDeck()' })}</div>
+          <div id="na-deck">${docDropzone([], { single: true, status: '', clearLabel: 'Replace', fileIcon: 'slideshow', icon: 'upload_file', prompt: 'Drop the pitch deck here', sub: 'PDF · the assessment runs from it.', note: 'Pitch deck · uploads when you run', onPick: "window.__naPick('deck')", onClear: 'window.__naClearDeck()', onDrop: '__naDropDeck' })}</div>
         </div>
         <div class="na-sec">
           <span class="na-lab">Data room <span class="field-opt">optional</span></span>
-          <div id="na-docs">${docDropzone([], { status: '', icon: 'folder_open', prompt: 'Add data-room documents', sub: 'Financials, cap table, contracts, metrics — PDF, DOCX, XLSX, CSV, TXT, MD or ZIP.', note: 'Data room · uploads when you run', addLabel: 'Add more documents', onPick: "window.__naPick('docs')", onClear: 'window.__naClearDoc' })}</div>
+          <div id="na-docs">${docDropzone([], { status: '', icon: 'folder_open', prompt: 'Add data-room documents', sub: 'Financials, cap table, contracts, metrics — PDF, DOCX, XLSX, CSV, TXT, MD or ZIP.', note: 'Data room · uploads when you run', addLabel: 'Add more documents', onPick: "window.__naPick('docs')", onClear: 'window.__naClearDoc', onDrop: '__naDropDocs' })}</div>
           <div class="na-drive">
             <div class="na-drive-row">
               ${formField({ label: 'Or link a Google Drive folder', id: 'na-drive', optional: true, type: 'url', placeholder: 'https://drive.google.com/drive/folders/…', hint: 'Shared with anyone who has the link, or with dataroom-reader@ventrify-os.iam.gserviceaccount.com' })}

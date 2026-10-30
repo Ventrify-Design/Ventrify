@@ -493,3 +493,100 @@ body.signin::after {
 .na-run-wrap { display: inline-flex; flex-direction: column; align-items: center; gap: 5px; }
 .na-run-cost { font-size: 11.5px; letter-spacing: .3px; color: var(--md-sys-color-on-surface-variant); white-space: nowrap; }
 @media (max-width: 640px) { .na-run-wrap { width: 100%; } .na-run-wrap .m3-btn { width: 100%; } }
+
+/* ============================================================
+   CREATE SCREEN — BREATHING ROOM
+   The two evidence targets and the Drive field were separated by the same 10px as two text
+   inputs, so "attach a deck", "add a room" and "or link a folder" read as one undifferentiated
+   run of controls. They are three different decisions and now sit apart like it.
+   ============================================================ */
+.na-screen .na-sec { gap: 14px; padding-top: 26px; }
+.na-screen .na-block { gap: 18px; }
+.na-screen .na-lab { font-size: 13.5px; }
+/* The Drive link is an ALTERNATIVE to the upload above it, not the next field down. The rule and the
+   lead-in word carry that; without them the eye runs straight from the dropzone into a URL box. */
+.na-screen .na-drive { gap: 14px; padding-top: 20px; margin-top: 4px; border-top: 1px dashed var(--md-sys-color-outline-variant); }
+.na-screen .na-drive-row { gap: 12px; }
+.na-screen .na-drive-btns { padding-top: 2px; }
+
+/* ============================================================
+   PRE-SCREEN RUN STAGE (prescreenStage)
+   Replaces the form the instant Run is pressed. Three columns, because the three questions a
+   waiting person asks — what are you reading, what did you find, how far through are you — were
+   previously stacked in a 380px rail and could not be on screen at the same time.
+   ============================================================ */
+.ps-stage { display: flex; flex-direction: column; gap: 30px; }
+.ps-head { display: flex; flex-direction: column; gap: 12px; }
+.ps-head .eyebrow { display: inline-flex; align-items: center; gap: 6px; }
+.ps-head .eyebrow .material-symbols-rounded { font-size: 17px; }
+.ps-h { font-family: var(--font-display, inherit); font-size: clamp(22px, 2.4vw, 30px); font-weight: 600; letter-spacing: -.02em; margin: 0; color: var(--md-sys-color-on-surface); }
+/* The step rail states the real shape of the wait. A stage is marked done only when it is done —
+   there is no timer dressed up as progress anywhere on this screen. */
+.ps-steps { display: flex; flex-wrap: wrap; gap: 8px 22px; list-style: none; margin: 4px 0 0; padding: 0; }
+.ps-step { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: var(--md-sys-color-on-surface-variant); }
+.ps-step .material-symbols-rounded { font-size: 18px; }
+.ps-step.done { color: var(--md-sys-color-on-surface); }
+.ps-step.done .material-symbols-rounded { color: var(--tone-good); font-variation-settings: 'FILL' 1; }
+.ps-step.now { color: var(--md-sys-color-on-surface); font-weight: 600; }
+.ps-step.now .material-symbols-rounded { color: var(--md-sys-color-primary); animation: psSpin 1.4s linear infinite; }
+@keyframes psSpin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .ps-step.now .material-symbols-rounded { animation: none; } }
+
+.ps-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 34px; align-items: start; }
+.ps-col { display: flex; flex-direction: column; min-width: 0; }
+.ps-col .sec-head { margin-bottom: 12px; }
+/* The want-sentences run to five lines in a column this narrow, which made the middle column twice the
+   height of the other two and reintroduced the scrolling this screen exists to remove. Two lines here;
+   the full sentence is on the Data Room tab, which is where you act on it. */
+.ps-col .mrow-sub { -webkit-line-clamp: 2; }
+.ps-col .profile-foot { margin-top: 14px; }
+/* The middle column is the one people read, so it keeps the rule on both sides to anchor the triptych. */
+.ps-grid > .ps-col + .ps-col { padding-left: 34px; border-left: 1px solid var(--md-sys-color-outline-variant); }
+
+@media (max-width: 1100px) {
+  .ps-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 26px; }
+  .ps-grid > .ps-col + .ps-col { padding-left: 0; border-left: none; }
+  .ps-grid > .ps-col:nth-child(n+2) { padding-top: 22px; border-top: 1px solid var(--md-sys-color-outline-variant); }
+  .ps-grid > .ps-col:last-child { grid-column: 1 / -1; }
+}
+@media (max-width: 760px) {
+  .ps-grid { grid-template-columns: minmax(0, 1fr); }
+  .ps-grid > .ps-col:last-child { grid-column: auto; }
+}
+
+/* ============================================================
+   DATA ROOM TAB — the add block
+   The tab could only ever re-read what was already there. These are the two ways to put
+   something new in front of the score.
+   ============================================================ */
+.dr-act-scan { flex-direction: row; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 4px; }
+/* .rc-act was written for the ~390px setup panel, where a stretched button is the right answer. On a
+   full-width tab the same rule made "Request these from the founder" a 1300px slab. */
+.brief .rc-act { align-items: flex-start; }
+.brief .rc-act .m3-btn { width: auto; }
+/* The room section carries the panel's block padding, which left a dead band above the rule here. */
+.brief #dr-slot .sec { padding-bottom: 0; }
+.brief #dr-slot + .rule { margin-top: 26px; }
+.dr-prog { font-size: 12.5px; color: var(--md-sys-color-on-surface-variant); }
+.dr-prog[hidden] { display: none; }
+.dr-add { padding-block: 0; }
+.dr-add-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 30px; align-items: start; }
+.dr-add-col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.dr-add-btns { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+@media (max-width: 900px) { .dr-add-grid { grid-template-columns: minmax(0, 1fr); gap: 24px; } }
+@media (max-width: 640px) {
+  .dr-add-btns .m3-btn { min-height: 44px; }
+  .dr-act-scan .m3-btn { width: 100%; justify-content: center; min-height: 44px; }
+}
+
+/* The Range tab's two routes out. Equal weight columns — the free one is first in reading order,
+   the paid one carries the filled button. */
+.rng-next { padding-block: 0; }
+.rng-next-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 30px; align-items: start; }
+.rng-next-c { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; min-width: 0; }
+.rng-next-c .rng-ic { font-size: 26px; color: var(--md-sys-color-primary); }
+.rng-next-h { font-family: var(--font-display, inherit); font-size: 17px; font-weight: 600; letter-spacing: -.01em; color: var(--md-sys-color-on-surface); }
+.rng-next-p { margin: 0; font-size: 13.5px; line-height: 1.6; color: var(--md-sys-color-on-surface-variant); }
+.rng-next-c .m3-btn { margin-top: 4px; }
+@media (max-width: 900px) { .rng-next-grid { grid-template-columns: minmax(0, 1fr); gap: 26px; } }
+@media (max-width: 640px) { .rng-next-c .m3-btn { width: 100%; justify-content: center; min-height: 44px; } }

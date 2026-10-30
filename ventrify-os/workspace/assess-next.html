@@ -141,6 +141,9 @@
     // ALONE), so an operator artefact landing there would lift a founder-burden signal with nobody having
     // asserted anything. It is held in the aux panel and filed as a POINTER instead.
     if (docType === 'evidence') { window.__gapAttach(files[0]); return; }
+    // Added from the Data Room tab: uploads, repaints and re-scans in place — never a page reload,
+    // which would drop the reader back on the first tab having lost where they were.
+    if (docType === 'dr-add') { drAdd(files); return; }
     window.__toast('Uploading…');
     try {
       const { ingested, skipped } = await EA.ingestDocs({ engagementId: p.id, files, docType, onProgress: m => window.__toast(m) });
@@ -181,14 +184,17 @@
     const btn = document.querySelector('.dr-act .m3-btn');
     if (btn) { btn.disabled = true; }
     try {
-      roomCheckResult = await EA.roomCheck({ engagementId: p.id });
-      const slot = document.getElementById('dr-slot');
-      // Repaint the slot in place rather than the whole page: the reader is ON this tab, and a full
-      // repaint would throw them back to the first one.
-      if (slot) slot.outerHTML = `<div id="dr-slot">${DS.roomCheck(roomCheckResult)}</div>`;
-      const seen = (roomCheckResult.classes || []).filter(c => c.found).length;
-      const of = (roomCheckResult.classes || []).length;
-      window.__toast(`Read ${roomCheckResult.docCount || 0} documents · ${seen} of ${of} evidence types found.`);
+      const next = await EA.roomCheck({ engagementId: p.id });
+      drJustFound = drDiff(next);
+      roomCheckResult = next;
+      // Repaint this PANEL rather than the whole page: the reader is ON this tab, and a full repaint
+      // would throw them back to the first one.
+      paintRoomTab();
+      const seen = (next.classes || []).filter(c => c.found).length;
+      const of = (next.classes || []).length;
+      window.__toast(drJustFound.length
+        ? `${drJustFound.length} new evidence type${drJustFound.length === 1 ? '' : 's'} found — ${seen} of ${of} present.`
+        : `Read ${next.docCount || 0} documents · ${seen} of ${of} evidence types found.`);
     } catch (e) {
       window.__toast('Could not read the room: ' + ((e && e.message) || e), true);
     }
@@ -198,10 +204,67 @@
     if (!live) { window.__toast('Re-scanning needs the live workspace.', true); return; }
     const r = await EA.rescanDataRoom({ engagementId: p.id, onBusy: busy });
     if (r && r.check) {
+      drJustFound = drDiff(r.check);
       roomCheckResult = r.check;
-      const slot = document.getElementById('dr-slot');
-      if (slot) slot.outerHTML = `<div id="dr-slot">${DS.roomCheck(r.check)}</div>`;
+      paintRoomTab();
       window.__toast(EA.rescanSummary(r));
+    }
+  };
+
+  // ---- ADDING to the room, from the room tab -----------------------------------------------------
+  // Shared by the picker and the drop, because they are the same act and forking them is how one of
+  // them quietly stops uploading.
+  const DR_ACCEPT = '.pdf,.docx,.xlsx,.xls,.xlsm,.txt,.md,.csv,.zip';
+  async function drAdd(files) {
+    if (!live) { window.__toast('Adding documents needs the live workspace.', true); return; }
+    const ok = files.filter(f => DR_ACCEPT.split(',').includes('.' + String(f.name || '').split('.').pop().toLowerCase()));
+    if (ok.length < files.length) window.__toast(`Ignored ${files.length - ok.length} file(s) we cannot read.`, true);
+    if (!ok.length) return;
+    const base = drStaged.length;
+    drStaged = drStaged.concat(ok.map(f => ({ title: f.name, status: 'Uploading…' })));
+    paintRoomTab(); drBusy(true);
+    let stored = 0;
+    for (let i = 0; i < ok.length; i++) {
+      drProg(`Reading ${i + 1} of ${ok.length} · ${String(ok[i].name).slice(0, 40)}`);
+      try {
+        const r = await EA.ingestDocs({ engagementId: p.id, files: [ok[i]], docType: 'dataroom', onProgress: m => drProg(m) });
+        const failed = (r && r.skipped || []).length;
+        drStaged[base + i].status = failed ? 'Failed' : 'Stored';
+        if (!failed) stored++;
+      } catch (e) { drStaged[base + i].status = 'Failed'; }
+      paintRoomTab();
+    }
+    drBusy(false); drProg(null);
+    if (!stored) { window.__toast('Nothing could be read from those files.', true); return; }
+    // RE-SCAN AUTOMATICALLY. Adding a document and then being asked to press a second button to find out
+    // whether it helped is the whole loop made tedious at the one moment it should feel immediate.
+    window.__toast(`Added ${stored} document${stored === 1 ? '' : 's'} — re-scanning the room…`);
+    await window.__drCheck();
+  }
+  window.__drPick = () => {
+    fileInput.dataset.docType = 'dr-add';
+    fileInput.accept = DR_ACCEPT; fileInput.multiple = true; fileInput.click();
+  };
+  window.__drDrop = (files) => drAdd([...files]);
+  window.__drClear = (i) => { drStaged.splice(i, 1); paintRoomTab(); };
+  window.__drUnlock = () => window.__eaUnlock && window.__eaUnlock();
+
+  // LINK (or re-read) a Drive folder from this tab. readDataRoom stores the folder on the engagement, so
+  // the "Pull new files" affordance appears on the next paint without a reload.
+  window.__drLinkDrive = async () => {
+    if (!live) { window.__toast('Linking a folder needs the live workspace.', true); return; }
+    const url = ((document.getElementById('dr-drive') || {}).value || '').trim();
+    if (!url) { window.__toast('Paste the Google Drive folder link first.', true); return; }
+    drBusy(true); drProg('Opening the folder…');
+    try {
+      const r = await EA.readDriveFolder({ engagementId: p.id, folderUrl: url, onProgress: m => drProg(m) });
+      p.dataRoom = { ...(p.dataRoom || {}), folderUrl: url };
+      drProg(null); drBusy(false);
+      window.__toast(`Read ${(r && r.ingested) || 0} document${((r && r.ingested) || 0) === 1 ? '' : 's'} from Drive — re-scanning…`);
+      await window.__drCheck();
+    } catch (e) {
+      drProg(null); drBusy(false);
+      window.__toast('Could not read that folder: ' + ((e && e.message) || e), true);
     }
   };
 
@@ -487,7 +550,7 @@
   function prescreenTabs() {
     const r = p.prescreen || null;
     const range = r
-      ? `<div class="brief">${DS.rangeHero(r, { docCount: r.docCount })}</div><hr class="rule">${DS.rangeCoverage(r.categories || [])}`
+      ? `<div class="brief">${DS.rangeHero(r, { docCount: r.docCount })}<hr class="rule">${DS.rangeCoverage(r.categories || [])}${DS.rangeNext()}</div>`
       : `<div class="brief">${DS.emptyState({ title: 'Not pre-screened yet', text: 'Attach a pitch deck and run the free pre-screen to see a range in about a minute.' })}</div>`;
     return `<div class="tab-panel active">${range}</div>
       <div class="tab-panel">${dataRoomBody()}</div>`;
@@ -500,9 +563,42 @@
       docCount: (A.inputs && A.inputs.docs && A.inputs.docs.length) || 0,
       deck: !!p.pitchDoc,
       canRescan: !!(p.dataRoom && p.dataRoom.folderUrl),
+      isPrescreen: (p.tier || 'full') === 'prescreen',
+      driveUrl: (p.dataRoom && p.dataRoom.folderUrl) || '',
+      staged: drStaged,
+      justFound: drJustFound,
     });
   }
   let roomCheckResult = null;
+  // Documents added from THIS tab, with their live ingest state. They are uploaded immediately rather
+  // than queued: there is no "run" on this tab to queue them for, and a file that sits there looking
+  // attached but is not yet stored is the worst of both.
+  let drStaged = [];
+  let drJustFound = [];
+
+  // Repaint the WHOLE data-room panel, not just #dr-slot. The slot was the only thing that ever changed
+  // before; now the staged list, the Drive field and the button labels all move with it, and repainting
+  // one of four surfaces is how a screen starts contradicting itself.
+  function paintRoomTab() {
+    const panels = document.querySelectorAll('.tab-panel');
+    const panel = [...panels].find(el => el.querySelector('#dr-slot'));
+    if (panel) panel.innerHTML = dataRoomBody();
+  }
+  function drBusy(b) {
+    document.querySelectorAll('#dr-slot ~ .dr-act .m3-btn, .dr-add .m3-btn').forEach(el => { el.disabled = b; });
+  }
+  function drProg(text) {
+    const el = document.getElementById('dr-prog');
+    if (!el) return;
+    if (text == null) { el.hidden = true; return; }
+    el.hidden = false; el.textContent = text;
+  }
+  // Which classes flipped to found since the last read — the whole point of adding a document is to see
+  // that happen, and without the diff it is six words changing in a list nobody is watching.
+  function drDiff(next) {
+    const was = new Set(((roomCheckResult && roomCheckResult.classes) || []).filter(c => c.found).map(c => c.key));
+    return (next.classes || []).filter(c => c.found && !was.has(c.key)).map(c => c.key);
+  }
 
   function verdictTabs(st) {
     const slim = (st.active || st.flagged) ? `<div class="brief" style="padding-bottom:0;margin-bottom:4px" id="ea-status">${DS.runBanner(st.rs)}</div>` : '<span id="ea-status"></span>';
@@ -560,6 +656,8 @@
       const sb = main.querySelector('.shell-body'); if (sb) sb.innerHTML = bodyHtml;
     }
     if (tabs) DS.initTabs({ names: pre ? ['range', 'dataroom'] : ['verdict', 'investability', 'market', 'team', 'diligence', 'research', 'dataroom'] });
+    // The Data Room tab's upload zone accepts drops. Delegated, so it survives paintRoomTab().
+    DS.initDropzones();
     wireResearchDrill();   // paint() swaps .shell-body — rebuild the reading room + DRILL_PAGES every time
     lastVerdict = st.hasVerdict;
   }

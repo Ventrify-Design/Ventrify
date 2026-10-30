@@ -227,6 +227,48 @@ export async function roomCheck({ engagementId } = {}) {
   return d;
 }
 
+// readDriveFolder — LINK a Google Drive folder and ingest everything readable in it.
+//
+// Lifted here from workspace-m3.js, which had it inlined. The Data Room tab now needs exactly the same
+// act — list the folder, ingest one file at a time, report honestly — and the part most worth having in
+// one place is the ERROR MAPPING: Drive answers identically for "no such folder" and "not shared with
+// us", and a second copy of that sentence would drift from this one the first time either is improved.
+//
+// ONE FILE PER REQUEST on purpose: each stays inside the serverless budget, and the caller gets real
+// progress instead of a spinner for three minutes.
+export async function readDriveFolder({ engagementId, folderUrl, onProgress } = {}) {
+  const prog = onProgress || (() => {});
+  const token = await idToken();
+  const post = (body) => fetch('/api/ingest-docs', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ idToken: token, engagementId, ...body }),
+  });
+
+  prog('Opening the Drive folder…');
+  const lr = await post({ action: 'drive-list', folderUrl });
+  const list = await lr.json().catch(() => ({}));
+  if (!lr.ok) {
+    throw new Error(list.error === 'drive_not_shared'
+      ? 'Could not open that folder. Check the link, and that it is shared — either “anyone with the link can view”, or with dataroom-reader@ventrify-os.iam.gserviceaccount.com as Viewer.'
+      : list.error === 'bad_folder_link' ? 'That does not look like a Google Drive folder link.'
+      : list.error === 'drive_not_configured' ? 'The Drive reader is not configured on this environment yet.'
+      : (list.detail || list.error || 'Could not read the folder.'));
+  }
+
+  const files = list.files || [];
+  const skipped = (list.skipped || []).length;
+  if (!files.length) throw new Error('That folder has no readable documents in it.');
+
+  let failed = 0;
+  for (let i = 0; i < files.length; i++) {
+    const d = files[i];
+    prog(`Reading the data room · ${i + 1} of ${files.length} · ${String(d.name).slice(0, 44)}`);
+    const r = await post({ docType: 'dataroom', file: { name: d.name, driveId: d.driveId, exportMime: d.exportMime, driveModified: d.modifiedTime } });
+    if (!r.ok) failed++;
+  }
+  return { files, folderName: list.folderName, ingested: files.length - failed, failed, skipped };
+}
+
 // unlockFull — promote a pre-screened engagement to the paid tier. With BILLING_ENFORCED false this is
 // the whole "purchase": the server flips the tier and the caller dispatches the run. When Stripe lands,
 // a payment confirmation calls the same endpoint and nothing else about the flow changes.

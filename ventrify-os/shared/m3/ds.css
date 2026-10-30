@@ -452,6 +452,11 @@ md-outlined-text-field { --md-outlined-text-field-container-shape: 999px; --md-o
    ============================================================ */
 
 /* ---- buttons (m3-btn: filled / outlined / text) ---- */
+/* [hidden] is a UA display:none, and ANY display rule with class specificity beats it — so every
+   `<button class="m3-btn" hidden>` in the product rendered anyway. The create screen's "Check for new
+   files" was permanently on screen next to "Read data room", offering to re-check a folder that had
+   never been read. Fixed on the component, not at the one call site. */
+.m3-btn[hidden] { display: none; }
 .m3-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 22px; border-radius: 999px; border: none; font: inherit; font-size: 14px; font-weight: 500; letter-spacing: .1px; cursor: pointer; white-space: nowrap; text-decoration: none; transition: box-shadow .12s ease, background .12s ease, opacity .12s ease; -webkit-appearance: none; }
 .m3-btn .material-symbols-rounded { font-size: 18px; }
 .m3-btn:focus-visible { outline: 2px solid var(--md-sys-color-primary); outline-offset: 2px; }
@@ -598,6 +603,58 @@ md-outlined-text-field { --md-outlined-text-field-container-shape: 999px; --md-o
 .dd-stack { display: flex; flex-direction: column; gap: 8px; }
 .dd-stack .dd-add { align-self: flex-start; }
 .m3-aux .deckdrop { padding: 26px 18px; }
+
+/* ---- DRAG AND DROP (initDropzones) ----
+   The zone wore "Drop the pitch deck here" long before it could accept one. `.is-drop` is applied by the
+   delegated listener while a FILE drag is over the zone — only transform/opacity animate, per the motion
+   rules, so a drag over a long list cannot cause layout work on every pointer move. */
+.dd-drop { display: none; }
+[data-drop].is-drop { border-color: var(--md-sys-color-primary); background: color-mix(in srgb, var(--md-sys-color-primary) 10%, var(--md-sys-color-surface-container-low)); }
+.deckdrop[data-drop].is-drop { border-style: dashed; }
+/* The attached states are not dashed boxes, so they need an outline of their own to read as a target. */
+.dd-one, .dd-stack { position: relative; border-radius: 16px; }
+.dd-one[data-drop].is-drop, .dd-stack[data-drop].is-drop { outline: 2px dashed var(--md-sys-color-primary); outline-offset: 4px; }
+[data-drop].is-drop .dd-drop {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 13px; font-weight: 600; color: var(--md-sys-color-primary);
+}
+.dd-one[data-drop].is-drop .dd-drop, .dd-stack[data-drop].is-drop .dd-drop {
+  position: absolute; inset: 0; justify-content: center;
+  background: color-mix(in srgb, var(--md-sys-color-primary) 12%, var(--md-sys-color-surface));
+  border-radius: 16px;
+}
+.dd-drop .material-symbols-rounded { font-size: 18px; }
+/* A file dragged anywhere must never be opened by the browser instead of attached. */
+[data-drop].is-drop * { pointer-events: none; }
+
+/* ---- ROW STATE GLYPH (trail.mark) ----
+   The metric row has no lead dot, so found / not-found had no visual channel and read as two words of
+   equal weight in a list of six. The glyph is the channel. */
+.mrow-mk { font-size: 19px; line-height: 1; flex: none; }
+.mrow-mk.good { color: var(--tone-good); font-variation-settings: 'FILL' 1; }
+.mrow-mk.bad  { color: var(--tone-bad); }
+.mrow-mk.idle { color: var(--md-sys-color-outline); opacity: .65; }
+.mrow-val { display: flex; align-items: center; gap: 8px; }
+/* The arrival of evidence is the one moment this product has worth animating: a row the reader was not
+   looking at changes state. Transform and opacity only. */
+@keyframes rowLands { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@keyframes markPops { 0% { transform: scale(.4); opacity: 0; } 60% { transform: scale(1.15); } 100% { transform: scale(1); opacity: 1; } }
+.mrow.rcl.just-found { animation: rowLands .34s cubic-bezier(0.34,1.56,0.64,1) both; }
+.mrow.rcl.just-found .mrow-mk { animation: markPops .42s cubic-bezier(0.34,1.56,0.64,1) both; }
+.mrow.rcl.is-idle .mrow-nm { color: var(--md-sys-color-on-surface-variant); }
+/* STATE ROWS CARRY NO BAR, so the shared 4-column grid (label | bar | 104px | chev) put the value in the
+   BAR's 1fr slot and the chevron in the value's fixed 104px. The value then had ~77px of usable width once
+   the glyph was in it, which is why "2 unread" broke across two lines and "Not seen" across two more.
+   Three columns, the value sized to itself. */
+.mrow.rcl { grid-template-columns: minmax(0, 1fr) auto 22px; gap: 16px; }
+/* In a three-up column the row's default 12px side padding and 24px gap are width the TITLE needs —
+   without this "Team & Founder-Market Fit" wraps to three lines beside an empty 24px gutter. */
+.ps-col .mrow.rcl, .dr-add .mrow.rcl { padding-inline: 0; gap: 12px; }
+.mrow.rcl .mrow-val { justify-content: flex-end; white-space: nowrap; }
+.mrow.rcl .mrow-val .v { white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) {
+  .mrow.rcl.just-found, .mrow.rcl.just-found .mrow-mk { animation: none; }
+}
 
 /* ---- run banner (runBanner) ---- */
 /* ============ RUN BANNER ============ */
