@@ -30,7 +30,11 @@ const c1 = P.buildCorpus(docs);
 const c2 = P.buildCorpus([docs[2], docs[0], docs[1]]);          // same docs, different query order
 ok(c1.text === c2.text, 'same documents in a different order produce an identical corpus');
 ok(c1.text.indexOf('Deck.pdf') < c1.text.indexOf('Alpha'), 'the pitch deck is always first');
-ok(c1.text.indexOf('Alpha') < c1.text.indexOf('Zebra'), 'the rest are alphabetical');
+// Was "the rest are alphabetical". The alphabet is not a ranking, and ordering by it is what let
+// `Cost_of_Delay_Briefing` be read while `MoneyGym_Seed_Investor_Memo` was not (§17). The invariant
+// that mattered was DETERMINISM, which the line above tests directly; the order itself is now evidence
+// value, so traction metrics outrank a cap table.
+ok(c1.text.indexOf('Zebra') < c1.text.indexOf('Alpha'), 'the rest rank by evidence value, not by name');
 
 console.log('\n2. CORPUS — the 40K-token cap holds and reports what it dropped');
 const big = Array.from({ length: 40 }, (_, i) => ({ name: `doc-${String(i).padStart(2,'0')}.pdf`, text: 'x'.repeat(20000), docType: 'dataroom' }));
@@ -193,6 +197,42 @@ ok(/trackMastheadHeight\(mainSurf, '--mh-h'\)/.test(ds), 'the main shell publish
 ok(/\.na-side \{[^}]*top: calc\(var\(--mh-h/.test(wcss), 'the live panel parks below the masthead, not behind it');
 ok(/\.na-side \{[^}]*max-height: calc\(100dvh - var\(--mh-h/.test(wcss), 'and scrolls within itself rather than being clipped');
 ok(/--drill-mh-h, 120px/.test(tcss), 'the drill rail still has its own value, so the two cannot fight');
+
+console.log('\n17. SELECTION — the budget is spent on what SCORES, not on what the checklist names');
+// MoneyGym's room: the old ordering read a director's resignation and a truncated spreadsheet and
+// never reached the market analysis, then reported "No market growth rates appear".
+const mkDoc = (name, tok = 2000) => ({ name, text: 'x'.repeat(tok * 4), docType: undefined });
+const room = [
+  { name: 'Deck.pdf', text: 'd'.repeat(8000), docType: 'pitch' },
+  mkDoc('Copy of Board_Resolution_Fixing_Number_of_Directors.docx'),
+  mkDoc('NG Founder_Stock_Purchase_IP_Repurchase_Agreement.pdf'),
+  mkDoc('MoneyGym_Seed_Investor_Memo_updated.pdf'),
+  mkDoc('MoneyGym_Seed_Investor_Memo_updated.docx'),
+  mkDoc('MoneyGym-Market-Sizing-TAM-SAM-SOM.docx'),
+  mkDoc('Team_Bios_and_Org_Chart.docx'),
+];
+const built = P.buildCorpus(room);
+const at = n => built.text.indexOf(n);
+ok(at('Team_Bios_and_Org_Chart.docx') > -1, 'team evidence is read');
+ok(at('MoneyGym-Market-Sizing-TAM-SAM-SOM.docx') > -1, 'market sizing is read');
+ok(at('MoneyGym_Seed_Investor_Memo_updated.pdf') > -1 || at('MoneyGym_Seed_Investor_Memo_updated.docx') > -1, 'the investor memo is read');
+ok(!(at('MoneyGym_Seed_Investor_Memo_updated.pdf') > -1 && at('MoneyGym_Seed_Investor_Memo_updated.docx') > -1),
+   'the SAME memo is not read twice as .pdf and .docx');
+ok(at('MoneyGym_Seed_Investor_Memo_updated.docx') < at('Copy of Board_Resolution_Fixing_Number_of_Directors.docx')
+   || at('MoneyGym_Seed_Investor_Memo_updated.pdf') < at('Copy of Board_Resolution_Fixing_Number_of_Directors.docx'),
+   'a cross-cutting investor memo outranks governance paperwork');
+ok(at('Team_Bios_and_Org_Chart.docx') < at('Copy of Board_Resolution_Fixing_Number_of_Directors.docx'),
+   'team bios outrank a board resolution');
+// Three differently-named stock agreements are three people, not one document: never merged.
+const three = P.buildCorpus([{ name: 'Deck.pdf', text: 'd'.repeat(8000), docType: 'pitch' },
+  mkDoc('NG Founder_Stock_Purchase.pdf', 300), mkDoc('2nd NG Founder_Stock_Purchase.pdf', 300), mkDoc('JC Founder_Stock_Purchase.pdf', 300)]);
+ok(three.included === 4, `three different founders' agreements all survive dedupe (included ${three.included})`);
+ok(P.PER_DOC_MAX ? P.PER_DOC_MAX <= P.CORPUS_MAX_TOKENS * 0.21 : true, 'no single document may take more than a fifth of the budget');
+
+console.log('\n18. STALENESS — the range says when the room has moved on without it');
+ok(/export function rangeStale/.test(ds), 'rangeStale exists');
+ok(/roomDocs/.test(memo), 'finalise records how big the room WAS');
+ok(/rangeStale\(/.test(an), 'the Range tab renders it');
 
 console.log(fails ? `\n${fails} FAILED\n` : '\nall checks passed\n');
 process.exit(fails ? 1 : 0);

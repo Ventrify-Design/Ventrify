@@ -63,7 +63,7 @@ const c = PS.buildCorpus(all);
 console.log(`CORPUS  ${c.included} of ${c.total} documents · ${c.tokens} tokens${(c.truncated || []).length ? ` · ${c.truncated.length} truncated` : ''}`);
 for (const d of PS.orderForBudget(all.slice().sort((x, y) => x.name.localeCompare(y.name)))) {
   const st = (c.truncated || []).includes(d.name) ? 'TRUNC' : c.dropped.includes(d.name) ? '  ·  ' : '  ✓  ';
-  console.log(`  ${st} p${PS.docPriority(d)} ${String(Math.round(d.text.length / 4)).padStart(6)}t  ${d.name.slice(-62)}`);
+  console.log(`  ${st} ${String(PS.evidenceTag(d.name).k).padEnd(10)} ${String(Math.round(d.text.length / 4)).padStart(6)}t  ${d.name.slice(-56)}`);
 }
 
 // the per-category results the run stored server-side

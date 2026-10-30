@@ -648,3 +648,23 @@ body.signin::after {
 .rf-cat-h span { font-family: var(--font-text, inherit); font-size: 12px; font-weight: 400; letter-spacing: .2px; color: var(--md-sys-color-on-surface-variant); white-space: nowrap; }
 /* The note is the useful part and often two lines; never clamp it to one. */
 .rf-cat .mrow-sub, .sec > .profile .mrow.rcl .mrow-sub { -webkit-line-clamp: 3; }
+
+/* ---- STALE RANGE (rangeStale) ----
+   The one place the product admits a number is older than the evidence behind it. Tinted on the
+   identity accent like the data room's advisory, because it is the same kind of statement: not an
+   error, something you can act on. */
+.rstale { padding-block: 0; margin-top: 22px; }
+.rstale-in {
+  display: flex; gap: 14px; align-items: flex-start;
+  padding: 18px 20px; border-radius: 14px;
+  background: color-mix(in srgb, var(--md-sys-color-primary) 9%, var(--md-sys-color-surface));
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-primary) 24%, transparent);
+  box-shadow: inset 3px 0 0 0 var(--md-sys-color-primary);
+}
+.rstale-in > .material-symbols-rounded { font-size: 22px; color: var(--md-sys-color-primary); flex: none; margin-top: 1px; }
+.rstale-b { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.rstale-h { font-size: 15px; font-weight: 600; letter-spacing: -.01em; color: var(--md-sys-color-on-surface); }
+.rstale-p { margin: 0; font-size: 13.5px; line-height: 1.6; color: var(--md-sys-color-on-surface-variant); }
+.rstale-p b { color: var(--md-sys-color-on-surface); font-weight: 600; }
+.rstale-b .m3-btn { margin-top: 2px; }
+@media (max-width: 640px) { .rstale-b .m3-btn { width: 100%; justify-content: center; min-height: 44px; } }

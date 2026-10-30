@@ -2388,6 +2388,33 @@ export function rangeHero(range = {}, opts = {}) {
   });
 }
 
+// rangeStale — SAY SO WHEN THE ROOM HAS MOVED ON WITHOUT THE SCORE.
+//
+// The range is composed once, at the end of a run, and never recomposed — one scored pre-screen per
+// venture is the rule the free tier is built on. That is deliberate. What was NOT deliberate is that
+// nothing on screen admitted it: the first real customer scored a deck, uploaded 48 documents, watched
+// the coverage ticks climb, came back to this tab and found the same number. The product looked broken
+// when it was in fact working exactly as designed and failing to say so.
+//
+// Compares what the room held when the score was taken against what it holds now. `roomDocs` is only on
+// snapshots taken after 2026-10-30; `docCount` (what was read) is the fallback, which understates the
+// old room and so can only ever under-report staleness — never invent it.
+export function rangeStale(snapshot = {}, liveDocs = 0) {
+  const then = snapshot.roomDocs != null ? snapshot.roomDocs : snapshot.docCount;
+  if (then == null || !(liveDocs > then)) return '';
+  const added = liveDocs - then;
+  return `<section class="sec rstale">
+    <div class="rstale-in">
+      <span class="material-symbols-rounded">history</span>
+      <div class="rstale-b">
+        <div class="rstale-h">This range was scored on ${then} document${then === 1 ? '' : 's'}. Your room now holds ${liveDocs}.</div>
+        <p class="rstale-p">The ${added} you added since ${added === 1 ? 'has' : 'have'} updated what we can <b>see</b> — the coverage below reflects them — but the score itself is composed once and not recomputed. Re-scoring on the new evidence is the full assessment.</p>
+        <button class="m3-btn tonal" type="button" onclick="window.__eaUnlock&&window.__eaUnlock()"><span class="material-symbols-rounded">bolt</span>Score it on everything</button>
+      </div>
+    </div>
+  </section>`;
+}
+
 // rangeFindings — THE 35 THINGS THE RUN ACTUALLY FOUND.
 //
 // The pre-screen writes a specific, sourced observation for every one of the 35 signals, and stores all

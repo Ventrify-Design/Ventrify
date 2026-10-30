@@ -236,7 +236,11 @@ module.exports = async (req, res) => {
           const range = PS.composeRange(cats);
           const snapshot = {
             ...range, ...PS.rangeBand(range.floor, range.ceiling),
-            docCount: corpus.included, corpusTokens: corpus.tokens,
+            // docCount is what was READ; roomDocs is what was THERE. The two differ whenever the room
+            // is larger than the 40K corpus, and the difference is the only way a later page can tell
+            // that documents were added after the score was composed — which is invisible otherwise,
+            // and was the first thing a real customer noticed ("I added a data room and nothing changed").
+            docCount: corpus.included, roomDocs: fdSnap.size, corpusTokens: corpus.tokens,
             at: new Date().toISOString(), model: PS.MODEL, draws: PS.DRAWS,
           };
           await engRef.set({

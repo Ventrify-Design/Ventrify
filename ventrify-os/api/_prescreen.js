@@ -47,7 +47,14 @@ const estTokens = (s) => Math.round(String(s || '').length / 4);
 const CORPUS_MAX_TOKENS = 40000;
 // No single document may take more than this share of the budget. One oversized spreadsheet would
 // otherwise consume everything left and starve every document behind it.
-const PER_DOC_MAX = Math.round(CORPUS_MAX_TOKENS * 0.35);
+//
+// 0.35 → 0.20, MEASURED. On MoneyGym's 39-document room the 50,000-token finance base case took its
+// full 35% — 14,000 tokens — as a truncated head, and two more documents took 19,000 between them, so
+// three files held 33,000 of the 40,000 budget and the investor memo, market analysis, market sizing
+// and all four competitor benchmarks were never read. A spreadsheet's first 14,000 tokens are column
+// headers and early rows; this is a TRIAGE read scoring seven categories, and breadth across them beats
+// depth in one. 20% still admits a meaningful head of any document while guaranteeing at least five.
+const PER_DOC_MAX = Math.round(CORPUS_MAX_TOKENS * 0.20);
 // Below this there is no point including a fragment — it costs budget and evidences nothing.
 const MIN_USEFUL = 400;
 
@@ -73,52 +80,95 @@ const MAX_PER_SIGNAL = 5;
 // Priority uses _roomcheck's OWN filename patterns, so "the documents that matter" means exactly what
 // the scorer means by it and cannot drift into a second opinion. Ordering stays fully deterministic —
 // the prompt cache matches byte for byte, so a nondeterministic corpus would silently cost 5x.
-const { CLASSES: ROOM_CLASS_PATTERNS } = require('./_roomcheck.js');
-// A downloaded industry report is not this venture's evidence. _roomcheck excludes these from
-// `observed_metrics` for the same reason; here they simply queue behind the founder's own documents.
-const THIRD_PARTY = /(benchmark|industry|state.?of|market.?report|insights.?report|whitepaper|white.?paper|multiples)/i;
+const GOVERNANCE = /(board.?resolution|bylaw|incorporat|articles|written.?consent|minutes|certificate|par.?value|stock.?purchase|share.?issuance|director|resignation)/i;
+const EVIDENCE_VALUE = [
+  // A deck that was uploaded into the data room rather than tagged ${docType:'pitch'} is still the
+  // single most evidence-dense document a venture has. MoneyGym 2's room holds exactly that: its
+  // 'FINAL VC Seed Round Pitch Deck' came in untagged and ranked as 'other', sixth.
+  [9, 'memo',      /(pitch.?deck|investor.?deck|seed.?round.*deck|investor.?memo|seed.?memo|executive.?summary|one.?.?pager|business.?plan|thesis)/i],
+  [8, 'team',      /(team|founder|cv|r[eé]sum|bio|advisor|org.?chart|hiring|people)/i],
+  [7, 'market',    /(market|tam|sam|som|sizing|segment|opportunity|user.?insight|customer|demand|competitiv)/i],
+  [6, 'product',   /(product|roadmap|feature|overview|spec|demo|architect|technolog|\bip\b|patent|moat|defensib|differentiat)/i],
+  [5, 'execution', /(traction|metric|kpi|cohort|retention|growth|pilot|po[cv]|launch|milestone|engagement)/i],
+  [4, 'financial', /(financ|unit.?econ|revenue|pricing|forecast|burn|runway|cost|margin|valuation|cap.?table|p.?and.?l|balance.?sheet)/i],
+];
+function evidenceTag(name) {
+  const n = String(name || '');
+  if (GOVERNANCE.test(n)) return { v: 1, k: 'governance' };
+  for (const [v, k, re] of EVIDENCE_VALUE) if (re.test(n)) return { v, k };
+  return { v: 3, k: 'other' };   // unrecognised — above governance, below anything we can name
+}
+const evidenceValue = name => evidenceTag(name).v;
 
-function docPriority(d) {
-  if (d.docType === 'pitch') return 0;                                   // the one document always required
-  if (THIRD_PARTY.test(d.name)) return 3;                                // someone else's research, last
-  if (ROOM_CLASS_PATTERNS.some(c => c.files.test(d.name))) return 1;     // names a rubric artefact class
-  return 2;
+// THE SAME DOCUMENT TWICE IS NOT TWICE THE EVIDENCE.
+//
+// Rooms exported from Drive routinely hold both renderings of a file. MoneyGym's holds
+// `MoneyGym_Seed_Investor_Memo_updated.pdf` AND `.docx` — ~4,800 tokens, 12% of the budget, for one
+// document, read twice and scored as if corroborated.
+//
+// Only the EXTENSION and the copy markers are stripped. "NG Founder_Stock_Purchase…",
+// "2nd NG Founder_Stock_Purchase…" and "JC Founder_Stock_Purchase…" are three different people's
+// agreements and must stay three documents; over-normalising here would silently delete evidence,
+// which is far worse than reading something twice.
+function dedupeKey(name) {
+  return String(name || '')
+    .replace(/\.[a-z0-9]{1,5}$/i, '')          // extension
+    .replace(/^copy of\s+/i, '')
+    .replace(/\s*\(\d+\)\s*$/, '')            // " (1)"
+    .replace(/[\s_\-]+/g, ' ')
+    .trim().toLowerCase();
 }
 
-// COVER EVERY CLASS BEFORE TAKING A SECOND DOCUMENT FROM ANY ONE OF THEM.
+
+// SPREAD THE BUDGET ACROSS THE RUBRIC, HIGHEST-VALUE CATEGORY FIRST.
 //
-// Ranking by priority alone was still wrong. MoneyGym's room has eleven board resolutions, incorporation
-// papers and share-purchase agreements — all genuinely priority 1 — and taken in filename order they
-// consumed 20,000 tokens before the financials were reached, so the financial model could only be read
-// as a truncated head and the unit economics were dropped entirely. Eleven documents proving the same
-// two classes, at the cost of two classes proved by nothing.
+// This used to round-robin the SIX DATA-ROOM CLASSES, on the reasoning that "the range's width IS the
+// count of classes we could not evidence". That reasoning was wrong, and it is the deepest cause of the
+// pre-screen failing to discriminate between ventures:
 //
-// The range's width IS the count of classes we could not evidence, so the budget should be spent
-// widening coverage, not deepening it. One document per class, then a second per class, and so on.
+//   · The width is the count of unevidenced RUBRIC SIGNALS (35, across 7 weighted categories), not of
+//     room classes (6, leaning financial and legal).
+//   · The room check never reads this corpus. api/ingest-docs.js `room-check` runs over EVERY ingested
+//     document independently, so ordering the scoring corpus by room classes bought coverage that was
+//     already free, and paid for it in evidence the score actually needed.
+//
+// Measured on MoneyGym's 39-document room: the class round-robin spent its first slots on a director's
+// resignation and two share-purchase agreements, and the budget ran out before the investor memo, the
+// market analysis, the market sizing or any of the four competitor benchmarks. The scorer then reported
+// "No market growth rates appear" with the market sizing document sitting unread.
+//
+// So: group by the rubric category a document can speak to, order those groups by weight, and take one
+// from each before a second from any. Governance is in the list and always last — it is necessary
+// paperwork that evidences almost nothing the rubric scores.
 function orderForBudget(clean) {
   const deck = clean.filter(d => d.docType === 'pitch');
-  const rest = clean.filter(d => d.docType !== 'pitch');
-  const byClass = new Map(), unclassified = [], thirdParty = [];
-  for (const d of rest) {
-    if (THIRD_PARTY.test(d.name)) { thirdParty.push(d); continue; }
-    const cls = ROOM_CLASS_PATTERNS.find(c => c.files.test(d.name));
-    if (!cls) { unclassified.push(d); continue; }
-    if (!byClass.has(cls.key)) byClass.set(cls.key, []);
-    byClass.get(cls.key).push(d);
+  // Drop duplicate renderings before anything is ranked, keeping the LONGEST text of each — the PDF and
+  // the DOCX of one memo rarely extract identically and the fuller extraction is the better evidence.
+  const best = new Map();
+  for (const d of clean.filter(x => x.docType !== 'pitch')) {
+    const k = dedupeKey(d.name);
+    const prev = best.get(k);
+    if (!prev || String(d.text || '').length > String(prev.text || '').length) best.set(k, d);
   }
-  const keys = ROOM_CLASS_PATTERNS.map(c => c.key).filter(k => byClass.has(k));
-  const round = n => keys.map(k => byClass.get(k)[n]).filter(Boolean);
 
-  // ONE per class, THEN the venture's other documents, THEN second copies of each class.
-  //
-  // The six classes are the data-room completeness check and they lean financial; the rubric scores
-  // seven broader categories, and market sizing, CVs, the product overview and the architecture spec
-  // are all "unclassified" by that taxonomy. Round-robining the classes to exhaustion covered
-  // `financial` beautifully and starved `market`, `team` and `product` — the opposite imbalance to the
-  // alphabetical one, and no better. One of each first guarantees breadth across both taxonomies.
-  const extras = [];
-  for (let n = 1; ; n++) { const r = round(n); if (!r.length) break; extras.push(...r); }
-  return [...deck, ...round(0), ...unclassified, ...extras, ...thirdParty];
+  const groups = new Map();
+  for (const d of best.values()) {
+    const { v, k } = evidenceTag(d.name);
+    if (!groups.has(k)) groups.set(k, { v, docs: [] });
+    groups.get(k).docs.push(d);
+  }
+  // Stable throughout: the corpus must be byte-identical across all 22 calls or the prompt cache misses
+  // and the run costs ~5x. Equal value falls back to the name; never to query order.
+  const keys = [...groups.keys()].sort((a, b) => (groups.get(b).v - groups.get(a).v) || a.localeCompare(b));
+  for (const k of keys) groups.get(k).docs.sort((a, b) => String(a.name).localeCompare(String(b.name)));
+
+  const out = [...deck];
+  for (let n = 0; ; n++) {
+    const round = keys.map(k => groups.get(k).docs[n]).filter(Boolean);
+    if (!round.length) break;
+    out.push(...round);
+  }
+  return out;
 }
 
 function buildCorpus(docs = []) {
@@ -406,6 +456,6 @@ function rangeBand(floor, ceiling) {
 
 module.exports = {
   MODEL, FAST_BETA, DEFAULT_SPEED, DRAWS, PAR, MAX_PER_SIGNAL, CORPUS_MAX_TOKENS, isFastUnavailable,
-  estTokens, buildCorpus, docPriority, orderForBudget, systemBlock, categoryPrompt, schemaFor, requestBody,
+  estTokens, buildCorpus, evidenceTag, orderForBudget, systemBlock, categoryPrompt, schemaFor, requestBody,
   warmCache, probeCategory, medianOf, consolidate, composeRange, bandOf, rangeBand, BAND_ORDER,
 };
