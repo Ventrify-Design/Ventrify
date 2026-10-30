@@ -140,6 +140,49 @@
   .score-lockup-bar .track { position: relative; height: 10px; border-radius: 999px; background: var(--md-sys-color-surface-container-highest); overflow: hidden; }
   .score-lockup-bar .track .pot { position: absolute; inset: 0 auto 0 0; border-radius: 999px; background: color-mix(in srgb, var(--md-sys-color-primary) 24%, transparent); }
   .score-lockup-bar .track .now { position: absolute; inset: 0 auto 0 0; border-radius: 999px; background: var(--md-sys-color-primary); }
+
+  /* ============ RANGE LOCKUP — the pre-screen's refusal to collapse to one number ============ */
+  /* Sibling of .score-lockup and deliberately sharing its eyebrow, numeral and band chip, so a range and
+     a score read as two states of one product rather than two products. */
+  /* The numeral is SMALLER than .lockup-num's 150px: "48–71/100" is three times the glyphs of "72/100",
+     and at the score size it wrapped mid-number, which turns the one fact the page is about into a
+     puzzle. Still the largest thing on the page, which is the part that matters. */
+  /* ⚠ .score-lockup .lockup-num (further down this file) sets flex-direction:column and centres, so the
+     score's numeral stacks neatly UNDER its dial. A range has no dial and must read as one horizontal
+     number — "48–71" stacked into four centred lines is not a range, it is a puzzle. Equal specificity
+     loses on source order, so these carry BOTH lockup classes to outrank it rather than being moved
+     below it, where the next edit would silently undo this. */
+  .score-lockup.range-lockup .rl-num {
+    flex-direction: row; align-items: baseline; justify-content: flex-start; gap: 2px;
+    font-size: clamp(46px, 5.6vw, 78px); letter-spacing: -2px; line-height: .9;
+  }
+  .score-lockup.range-lockup .rl-num small { font-size: clamp(15px, 1.6vw, 20px); margin: 0 0 0 5px; }
+  .rl-dash { color: var(--md-sys-color-on-surface-variant); font-weight: 300; margin: 0 2px; }
+
+  /* THE TRACK IS THE ARGUMENT. A dial would have to pick an end or sweep a region; a lit span on a 0–100
+     track makes the WIDTH the most visible fact, which is exactly what the founder can change. */
+  .rl-track { position: relative; height: 12px; margin-top: 20px; border-radius: 999px; background: var(--md-sys-color-surface-container-highest); overflow: hidden; }
+  /* The span sits ABOVE the ticks. Drawn over it, a boundary tick cut the lit range into what looked
+     like two separate pills — the range is continuous, and its position against the ticks either side
+     already shows which bands it crosses. */
+  .rl-span { position: absolute; top: 0; bottom: 0; z-index: 1; border-radius: 999px; background: var(--tone-mid); }
+  .rl-span.tone-good { background: var(--tone-good); }
+  .rl-span.tone-mid  { background: var(--tone-mid); }
+  .rl-span.tone-warn { background: var(--tone-warn); }
+  .rl-span.tone-bad  { background: var(--tone-bad); }
+  /* the 40/60/80 band boundaries, so the span's position is readable against the scale it is scored on */
+  .rl-tick { position: absolute; top: 0; bottom: 0; z-index: 0; width: 1px; background: var(--md-sys-color-surface); opacity: .75; }
+
+  .rl-band { margin-top: 4px; }
+  /* The straddle sentence. Not a chip: a chip is a stamp, and the whole point of §3.1 is that we are
+     declining to stamp this one. Prose at body size says "this is a statement, not a verdict". */
+  .rl-span-txt { display: inline-block; margin-top: 16px; font-size: 14px; line-height: 1.5; color: var(--md-sys-color-on-surface-variant); }
+  .rl-span-txt b { font-weight: 600; color: var(--md-sys-color-on-surface); }
+
+  @media (max-width: 640px) {
+    .score-lockup.range-lockup .rl-num { font-size: clamp(38px, 12vw, 56px); letter-spacing: -1px; }
+    .score-lockup.range-lockup .rl-num small { font-size: 15px; }
+  }
   .score-lockup-bar .cap { display: flex; justify-content: space-between; margin-top: 10px; font-size: 12.5px; color: var(--md-sys-color-on-surface-variant); }
   .score-lockup-bar .cap b { color: var(--md-sys-color-on-surface); font-weight: 500; }
   .score-lockup-bar .cap .up { color: var(--md-sys-color-primary); font-weight: 500; }

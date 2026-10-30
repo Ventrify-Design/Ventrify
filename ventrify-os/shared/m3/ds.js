@@ -9,6 +9,7 @@
 // the assess drill-down and the live scorecard never diverge (keep-DS-in-sync).
 import { brandLockup, hasLockup } from './brand-lockup.js';
 import { SUB_Q } from '../investability-view.js';
+import { GUIDANCE_BANDS } from '../vss-rubric.js';
 
 // Full HTML escaper — text AND attribute-safe (quotes escaped so a value can't break out of
 // style="…"/src="…"/title="…"). No onclick handler in this file interpolates esc(), so quote
@@ -2252,6 +2253,119 @@ export function investabilityHero(s, a = {}) {
     // The radar lives HERE now, not in a band 1000px down the page. See radarLockup().
     right: radarLockup({ label: 'Category profile', score: s.composite, max: 100, now: s.composite, potential: s.potential, categories: s.categories }),
     thesis: h.thesis
+  });
+}
+
+// ============================================================
+// THE PRE-SCREEN RANGE — a score the product deliberately refuses to collapse to one number.
+//
+// Everything here exists to keep one promise from design/prescreen-spec.md §3: this must never read as a
+// verdict. A pre-screen reads a deck and whatever room exists; publishing "41" from that would be mostly a
+// measurement of what we did not read, delivered with the authority of what we did.
+//
+// So the two ends are rendered as what they are — what is provable now, and what this becomes if the data
+// room holds up — and the DISTANCE between them is labelled as the thing the founder can actually change.
+// ============================================================
+
+// Short band names, derived rather than retyped, so they stay the keys BAND_TONE already uses.
+const bandShort = code => (GUIDANCE_BANDS[code] || {}).short || 'Forming';
+const bandTone = code => BAND_TONE[bandShort(code)] || 'mid';
+
+// rangeLockup — MOLECULE. Sibling of scoreLockup: same eyebrow, same big-number type, same band chip, so a
+// range and a score read as two states of one thing rather than two different products.
+//
+// NO DIAL. A dial is a single value with a position on an arc; drawing a range on one would either pick an
+// end (a lie) or sweep a region (unreadable at this size). A track with the range lit is the honest shape,
+// and it is also the shape that makes the WIDTH the most visible fact on the page — which it should be.
+export function rangeLockup(opts = {}) {
+  const { label = 'Evidence readiness', floor = 0, ceiling = 0, max = 100 } = opts;
+  const lo = Math.max(0, Math.min(max, floor)), hi = Math.max(lo, Math.min(max, ceiling));
+  const band = rangeBandOf(lo, hi);
+  const tone = band.band ? bandTone(band.band) : bandTone(band.spans[1]);
+  const left = (lo / max) * 100, width = ((hi - lo) / max) * 100;
+  // A zero-width range is not a range. "67–67" reads as a rendering fault, not as "the room answered
+  // everything" — so a settled read prints the single number and rangeHero says why the spread is gone.
+  const num = lo === hi
+    ? `${esc(String(lo))}<small>/${esc(String(max))}</small>`
+    : `${esc(String(lo))}<span class="rl-dash">–</span>${esc(String(hi))}<small>/${esc(String(max))}</small>`;
+  return `<div class="score-lockup range-lockup tone-${tone}">
+    <span class="eyebrow accent">${esc(label)}</span>
+    <div class="lockup-num rl-num">${num}</div>
+    <div class="rl-track" role="img" aria-label="Range ${lo} to ${hi} out of ${max}">
+      <div class="rl-span tone-${tone}" style="left:${left.toFixed(1)}%;width:${Math.max(1.5, width).toFixed(1)}%"></div>
+      ${[40, 60, 80].map(t => `<span class="rl-tick" style="left:${t}%"></span>`).join('')}
+    </div>
+    <div class="rl-band">${band.band
+      // The whole range sits inside one band, so naming it is the true statement.
+      ? `<span class="lockup-band ${tone}"><span class="material-symbols-rounded">${SCORELK_ICON[tone] || 'trending_flat'}</span> ${esc(bandShort(band.band))}</span>`
+      // §3.1 — it straddles a boundary, so we do NOT publish a band. Both outcomes are stated, upside
+      // first because the upside is the part they can act on, and the floor immediately after so the
+      // ordering is emphasis and not concealment.
+      : `<span class="rl-span-txt"><b>${esc(bandShort(band.spans[1]))}</b> if the room holds up · <b>${esc(bandShort(band.spans[0]))}</b> if the gaps stay open</span>`
+    }</div>
+  </div>`;
+}
+
+// The band arithmetic, mirroring api/_prescreen.js rangeBand(). Thresholds are the runner's 80/60/40.
+function bandCodeOf(score) {
+  if (score >= 80) return 'READY';
+  if (score >= 60) return 'PROMISING';
+  if (score >= 40) return 'HIGH_RISK';
+  return 'POTENTIAL_DECLINE';
+}
+export function rangeBandOf(floor, ceiling) {
+  const lo = bandCodeOf(floor), hi = bandCodeOf(ceiling);
+  return lo === hi ? { band: lo, spans: null } : { band: null, spans: [lo, hi] };
+}
+
+// rangeCoverage — ORGANISM. WHY the range is as wide as it is, per category.
+//
+// This is the data room's story told in score points, which is the only currency the reader cares about.
+// A category we could not evidence is NOT scored low here — it is shown as unread, with the points it is
+// holding. "We cannot see it" and "it is weak" are different claims and must never share a row.
+export function rangeCoverage(categories = []) {
+  const rows = categories.map(c => {
+    const unread = c.of - c.evidenced;
+    const held = Math.round(c.weight * ((c.ceilingPct - c.floorPct) / 100) * 100);
+    return row({
+      variant: 'metric', key: c.key, density: 'compact',
+      title: c.label,
+      sub: unread
+        ? `${unread} of ${c.of} signals need evidence we could not find`
+        : `All ${c.of} signals evidenced`,
+      bar: { now: c.floorPct / 100, pot: c.ceilingPct / 100, tick: true },
+      trail: { kind: 'value', value: unread ? `±${held}` : 'settled', valueMuted: unread ? ' pts' : '' },
+    });
+  }).join('');
+  return `<section class="sec">
+    <div class="sec-head"><span class="eyebrow accent">Where the width comes from</span><span class="t">What we could and could not read</span>
+      <span class="meta">the lighter bar is what each category becomes if the room holds up</span></div>
+    <div class="profile">${rows}</div>
+    <div class="profile-foot"><span>A category shown as unread is not a category scored badly — it is one we were not given the evidence to score. Closing it moves the floor, not the ceiling.</span></div>
+  </section>`;
+}
+
+// rangeHero — the Range tab's opening statement. Built on the SAME sectionHero as the Verdict and
+// Investability tabs, so a pre-screened assessment and a scored one are visibly the same product.
+export function rangeHero(range = {}, opts = {}) {
+  const { floor = 0, ceiling = 0, evidencedWeight = 0, categories = [] } = range;
+  const seen = categories.filter(c => c.evidenced === c.of).length;
+  const width = ceiling - floor;
+  return sectionHero({
+    eyebrow: 'Pre-screen', eyebrowIcon: 'bolt',
+    headline: width === 0
+      ? 'Your data room answered everything the score asks for.'
+      : `This range is ${width} points wide because of what we cannot see yet.`,
+    facts: [
+      { k: 'Categories fully evidenced', v: `${seen} of ${categories.length}` },
+      { k: 'Of the weighted score', v: `${evidencedWeight}% evidenced` },
+      ...(opts.docCount != null ? [{ k: 'Documents read', v: String(opts.docCount) }] : []),
+    ],
+    right: rangeLockup({ floor, ceiling }),
+    thesisLabel: 'What this is.',
+    thesis: width === 0
+      ? 'Every signal the rubric asks for had evidence behind it, so there is no spread left to close. A full assessment replaces this with a single measured number and the reasoning behind it.'
+      : 'The low end is what your evidence proves today. The high end is what this venture scores if the documents we could not find say what you would expect them to. The full assessment closes the gap to one number.',
   });
 }
 

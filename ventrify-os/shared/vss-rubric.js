@@ -161,11 +161,14 @@ export function wobbleNote(snap, docN) {
 
 // The four guidance bands, mirroring tools/sentiment/compute.js in the runner. The runner DECIDES the
 // band — including the gates on READY — and stamps it on the snapshot; this is only how the OS names it.
+// `tone` mirrors ds.js BAND_TONE, which is the one the UI actually renders from. HIGH_RISK is 'warn',
+// not 'bad': POTENTIAL_DECLINE is the red one, and giving both the same tone drew two different verdicts
+// identically. Nothing read this field while the two disagreed — which is exactly how it stayed wrong.
 export const GUIDANCE_BANDS = {
-  READY:             { label: 'Investment ready',                            tone: 'good' },
-  PROMISING:         { label: 'Promising, with amendments or gaps to close',  tone: 'mid'  },
-  HIGH_RISK:         { label: 'High risk',                                    tone: 'bad'  },
-  POTENTIAL_DECLINE: { label: 'Potential decline',                            tone: 'bad'  },
+  READY:             { label: 'Investment ready',                            tone: 'good', short: 'Investment ready' },
+  PROMISING:         { label: 'Promising, with amendments or gaps to close',  tone: 'mid',  short: 'Promising' },
+  HIGH_RISK:         { label: 'High risk',                                    tone: 'warn', short: 'High risk' },
+  POTENTIAL_DECLINE: { label: 'Potential decline',                            tone: 'bad',  short: 'Potential decline' },
 };
 
 /** A band code → its label, old vocabulary included. Unknown codes stay unknown rather than reading well. */

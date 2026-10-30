@@ -55,6 +55,26 @@ async function demoPage(browser, w) {
   return p;
 }
 
+// ⚠ A fullPage screenshot RESIZES THE VIEWPORT, which restarts CSS animations — and the reveal
+// animation (ds.css `ch-growx`) runs with `animation-fill-mode: both` behind a staggered delay, so
+// before it starts the element holds its `from` state of scaleX(0). The capture therefore caught every
+// bar, span and meter at ZERO WIDTH: baselines of a state no user has ever seen, and a gate that could
+// not have noticed a real regression in any of them.
+//
+// Proven rather than assumed: the same bar sampled at the same point read rgb(185,167,255) in a
+// viewport capture and rgb(59,63,67) — the empty track — in a fullPage one.
+//
+// Forcing duration/delay to ~0 lands `both` on the END state immediately, which is what the page
+// settles to anyway. Disabling animations outright would work here too, but would silently change
+// anything whose resting style differs from its keyframe end.
+async function settleAnimations(p) {
+  await p.addStyleTag({ content: `*, *::before, *::after {
+    animation-duration: 1ms !important; animation-delay: 0s !important;
+    transition-duration: 1ms !important; transition-delay: 0s !important;
+  }` });
+  await new Promise(r => setTimeout(r, 120));
+}
+
 const browser = await puppeteer.launch({
   executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   headless: 'new', args: ['--no-sandbox'], protocolTimeout: 180000 });
@@ -67,6 +87,7 @@ for (const [name, path] of PAGES) {
     try {
       await p.goto(BASE + path, { waitUntil: 'networkidle0', timeout: 30000 });
       await new Promise(r => setTimeout(r, 2200));
+      await settleAnimations(p);
       await p.screenshot({ path: `${target}/${name}-${tag}.png`, fullPage: true });
     } catch { /* recorded as missing */ }
     await p.close();

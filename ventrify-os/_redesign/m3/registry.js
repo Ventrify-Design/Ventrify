@@ -23,6 +23,30 @@ import { ASSESSMENT, SCORE, ENGAGEMENTS, STATS, QUEUE, withGaps } from './data.j
 const AG = withGaps(ASSESSMENT, SCORE);
 
 const A = ASSESSMENT;
+// A realistic pre-screen result for the range components: a deck plus a thin room, which is the case the
+// feature exists for. Weights are the rubric's own, so the arithmetic on screen is the real arithmetic.
+const SAMPLE_RANGE = (() => {
+  const CATS = [
+    { key: 'market',    label: 'Market Opportunity',          weight: 0.20, of: 5, evidenced: 5 },
+    { key: 'team',      label: 'Team & Founder-Market Fit',   weight: 0.25, of: 5, evidenced: 3 },
+    { key: 'product',   label: 'Product & Solution Clarity',  weight: 0.15, of: 5, evidenced: 5 },
+    { key: 'moat',      label: 'Technical / Competitive Moat', weight: 0.15, of: 5, evidenced: 2 },
+    { key: 'financial', label: 'Financial Defensibility',     weight: 0.10, of: 5, evidenced: 1 },
+    { key: 'execution', label: 'Execution & Traction',        weight: 0.10, of: 5, evidenced: 1 },
+    { key: 'evidence',  label: 'Evidence Integrity',          weight: 0.05, of: 5, evidenced: 5 },
+  ];
+  const SCORE = 3.4;   // mean rated score on the evidenced signals
+  const categories = CATS.map(c => {
+    const f = (c.evidenced * SCORE) / (c.of * 5);
+    const ce = (c.evidenced * SCORE + (c.of - c.evidenced) * 3) / (c.of * 5);
+    return { ...c, floorPct: Math.round(f * 100), ceilingPct: Math.round(ce * 100) };
+  });
+  const floor = Math.round(categories.reduce((a, c) => a + c.weight * c.floorPct, 0));
+  const ceiling = Math.round(categories.reduce((a, c) => a + c.weight * c.ceilingPct, 0));
+  const evidencedWeight = Math.round(categories.reduce((a, c) => a + c.weight * (c.evidenced / c.of), 0) * 100);
+  return { floor, ceiling, width: ceiling - floor, evidencedWeight, categories };
+})();
+
 const noAdapt = null;
 
 // ── Slottable molecules — what can fill a sectionHero slot. Add a molecule here → it becomes
@@ -1105,6 +1129,31 @@ export const CATALOG = {
     blurb: 'THE ASSESSING STATE — "the memo, before the ink lands." A run in flight is not a loading state: it is the assessment ITSELF, mid-formation. So this is the SAME editorial surface as the finished verdict (sectionHero → reading column → .sec/.rule rhythm), with the answer\'s placeholders sitting exactly where the answer will land — "Forming" in the score\'s own slot, the eleven workstreams as a numbered table of contents in the memo\'s .must voice, the evidence named, the 7×5 composition sitting empty, and the engagement arc as a DATED record. When the verdict arrives nothing MOVES; the placeholders resolve. No tabs (there is nothing yet to switch between). THE HONESTY RULE: the step NAMES are ours (a fixed plan the runner always follows); only the POSITION comes from rs.step. Determinate bar ONLY once the runner reports a step — never a fabricated %, never a fake ETA, never a fake finding. ?state= proves every honest state, not just the flattering one: running · silent (the agent has not reported — the MOST LIKELY first state) · queued · quiet · paused · error · republish.',
     maxw: null, pad: false, html: null,
     props: [{ name: 'body', type: 'assessingMemo(a, s, rs)' }, { name: 'masthead', type: 'no tabs · Stop (outlined) when canStopRun(rs)' }, { name: 'states', type: '?state=running|silent|queued|quiet|paused|error|republish' }], variants: [], usedIn: [], adaptive: noAdapt
+  },
+  rangeLockup: {
+    level: 'molecule', group: 'Molecules', domain: 'Assessment', title: 'Range lockup', sig: 'rangeLockup({floor, ceiling})',
+    blurb: 'The pre-screen score, which the product deliberately refuses to collapse to one number. Sibling of scoreLockup — same eyebrow, numeral and band chip — so a range and a score read as two states of one thing. NO DIAL: a dial would have to pick an end (a lie) or sweep a region (unreadable), where a lit span on a 0–100 track makes the WIDTH the most visible fact, which is the part the founder can change. When the range straddles a band boundary it publishes NO band and states both outcomes instead (spec §3.1) — a chip is a stamp, and the point is that we are declining to stamp this one.',
+    maxw: 420, pad: true,
+    html: () => `<div class="brief" style="padding:24px 28px;max-width:420px">${DS.rangeLockup({ floor: 48, ceiling: 71 })}<hr class="rule" style="margin:30px 0">${DS.rangeLockup({ floor: 62, ceiling: 71 })}<hr class="rule" style="margin:30px 0">${DS.rangeLockup({ floor: 67, ceiling: 67 })}</div>`,
+    props: [{ name: 'floor', type: 'number — unevidenced signals at the bottom of the scale' }, { name: 'ceiling', type: 'number — unevidenced signals at par' }, { name: 'label', type: 'string' }],
+    variants: [{ label: 'Straddling', note: '48–71 — no band, both outcomes stated' }, { label: 'Inside one band', note: '62–71 — the band is published' }, { label: 'Settled', note: '67–67 — a complete room has no width left' }],
+    usedIn: ['rangeHero'], adaptive: noAdapt
+  },
+  rangeCoverage: {
+    level: 'organism', group: 'Organisms', domain: 'Assessment', title: 'Range coverage', sig: 'rangeCoverage(categories)',
+    blurb: 'WHY the range is as wide as it is, per category — the data room\'s story told in score points, which is the only currency the reader cares about. A category we could not evidence is shown as UNREAD with the points it is holding, never as a low score: "we cannot see it" and "it is weak" are different claims and must not share a row.',
+    maxw: 720, pad: true,
+    html: () => `<div class="brief" style="padding:22px 28px;max-width:720px">${DS.rangeCoverage(SAMPLE_RANGE.categories)}</div>`,
+    props: [{ name: 'categories', type: '[{key,label,weight,floorPct,ceilingPct,evidenced,of}]' }],
+    variants: [{ label: 'Partial', note: 'unread categories hold points' }, { label: 'Complete', note: 'every row settled' }], usedIn: ['rangeHero'], adaptive: noAdapt
+  },
+  rangeHero: {
+    level: 'organism', group: 'Organisms', domain: 'Assessment', title: 'Range hero', sig: 'rangeHero(range, {docCount})',
+    blurb: 'The Range tab\'s opening statement, built on the SAME sectionHero as the Verdict and Investability tabs so a pre-screened assessment and a scored one are visibly the same product. The headline names the width as a consequence of what we could not see — never as a property of the venture.',
+    maxw: null, pad: true,
+    html: () => `<div class="brief" style="padding:20px 28px">${DS.rangeHero(SAMPLE_RANGE, { docCount: 4 })}</div>`,
+    props: [{ name: 'range', type: '{floor,ceiling,evidencedWeight,categories}' }, { name: 'opts.docCount', type: 'number' }],
+    variants: [{ label: 'Wide', note: 'deck only' }, { label: 'Settled', note: 'complete room, width 0' }], usedIn: ['assess-prescreen.html'], adaptive: noAdapt
   },
   createScreen: {
     level: 'template', group: 'Templates', domain: 'Workspace', title: 'Create screen', sig: 'createScreen({operators, cta})',

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-brand="verdictscore">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -14,9 +14,17 @@
     if (t === 'light' || (!t && localStorage.getItem('ventrify-theme') === 'light')) document.documentElement.classList.add('light');
   } catch (e) {}
 </script>
+<!-- BRAND LAYER. Without it this page renders in Material's STOCK palette, not the
+     product's: --tone-good resolves to #D0BCFF instead of #B9A7FF, and every component
+     previewed here is shown in a colour the product never uses. Order is load-bearing —
+     brand.css first (the tokens), brand-map last (the M3 role overrides, which lose to
+     ds.css at equal specificity if ds.css loads later). -->
+<link rel="stylesheet" href="/assets/brand/brand.css">
 <link rel="stylesheet" href="theme.css">
 <link rel="stylesheet" href="ds.css">
 <link rel="stylesheet" href="assess-editorial.css">
+<link rel="stylesheet" href="workspace-chrome.css">
+<link rel="stylesheet" href="/shared/m3/brand-map.css">
 <style>
   html, body { background: var(--md-sys-color-surface); }
   .specimen { padding: clamp(16px, 4vw, 32px); }
