@@ -3879,7 +3879,9 @@ export function createScreen(opts = {}) {
   const handler = id => id === 'run_full' ? 'window.__wsCreateAssessment&&window.__wsCreateAssessment()'
     : id === 'run_prescreen' ? 'window.__wsRunPrescreen&&window.__wsRunPrescreen()'
     : 'window.__wsUnlock&&window.__wsUnlock()';
-  const btn = (a, variant) => a ? `<button class="m3-btn ${variant} na-run" type="button" disabled onclick="${handler(a.id)}"><span class="material-symbols-rounded">${esc(a.icon || 'play_arrow')}</span>${esc(a.label)}</button>` : '';
+  // The duration rides WITH the button, not in a footnote beside the pair — a reader choosing between
+  // two buttons reads the buttons.
+  const btn = (a, variant) => a ? `<span class="na-run-wrap"><button class="m3-btn ${variant} na-run" type="button" disabled onclick="${handler(a.id)}"><span class="material-symbols-rounded">${esc(a.icon || 'play_arrow')}</span>${esc(a.label)}</button>${a.cost ? `<span class="na-run-cost">${esc(a.cost)}</span>` : ''}</span>` : '';
 
   return `<div class="na-screen na-form">
     <div class="na-main">

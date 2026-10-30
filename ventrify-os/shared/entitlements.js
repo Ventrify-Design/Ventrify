@@ -107,11 +107,16 @@ export function capsFor(engagement, plan) {
 //
 // `secondary` is tonal, never filled, so the page keeps exactly ONE primary and
 // stays inside the conformance gate.
+// EVERY BUTTON SAYS WHAT IT COSTS IN TIME. The first real user of this screen was a licensee who had
+// just created a workspace called "Pre-Screen Tests", pressed the filled button, and started a
+// two-hour agentic run — because the emphasis swap is correct for a licensee and nothing on either
+// button said that one takes three minutes and the other takes two hours. That is the single most
+// decision-relevant fact about the choice, and it was the one thing missing from it.
 export function ctaPair(plan) {
-  const runPrescreen = { id: 'run_prescreen', label: 'Run free pre-screen', icon: 'bolt' };
-  const runFull      = { id: 'run_full',      label: 'Run full assessment', icon: 'play_arrow' };
+  const runPrescreen = { id: 'run_prescreen', label: 'Run free pre-screen', icon: 'bolt', cost: 'about 3 minutes · free' };
+  const runFull      = { id: 'run_full',      label: 'Run full assessment', icon: 'play_arrow', cost: 'about 2 hours' };
   return defaultTier(plan) === 'prescreen'
-    ? { primary: runPrescreen, secondary: { id: 'unlock_full', label: 'Unlock full assessment', icon: 'lock_open' } }
+    ? { primary: runPrescreen, secondary: { id: 'unlock_full', label: 'Unlock full assessment', icon: 'lock_open', cost: 'about 2 hours' } }
     : { primary: runFull,      secondary: { ...runPrescreen, label: 'Run pre-screen first' } };
 }
 

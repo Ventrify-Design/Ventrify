@@ -485,3 +485,11 @@ body.signin::after {
   /* 44px minimum touch target, and the primary reads first in the column-reverse order. */
   .na-cta .m3-btn { min-height: 44px; justify-content: center; }
 }
+
+/* The duration under each run button. A licensee's two choices are three minutes and two hours, and
+   nothing on either button said so — the first real user started a two-hour run meaning to test the
+   three-minute one. It sits under the button rather than beside the pair, because someone choosing
+   between two buttons reads the buttons. */
+.na-run-wrap { display: inline-flex; flex-direction: column; align-items: center; gap: 5px; }
+.na-run-cost { font-size: 11.5px; letter-spacing: .3px; color: var(--md-sys-color-on-surface-variant); white-space: nowrap; }
+@media (max-width: 640px) { .na-run-wrap { width: 100%; } .na-run-wrap .m3-btn { width: 100%; } }

@@ -391,6 +391,18 @@ window.__wsUnlock = async () => {
 window.__wsCreateAssessment = async () => {
   const f = naForm(); if (!f) return;
   const W = window.WORKSPACE || {};
+  // A TWO-HOUR RUN SHOULD NOT START ON ONE CLICK. The unlock path has always confirmed; this one did
+  // not, and it is the filled button for every licensee — so the first real user pressed it meaning to
+  // test the three-minute pre-screen and started the full agentic assessment instead. The pre-screen
+  // is offered here by name, because at that moment it is probably what they wanted.
+  if (W.mode === 'live') {
+    const go = await window.__confirm({
+      title: 'Run the full assessment?',
+      message: 'This is the complete agentic run — deep research, diligence, a measured score and a deal memo. It takes about two hours in the cloud.\n\nIf you want a quick read instead, cancel and choose “Run pre-screen first” — that takes about three minutes and is free.',
+      confirmLabel: 'Run full assessment',
+    });
+    if (!go) return;
+  }
   // Setup is a full page now, so landing is a navigation, not an overlay close. closeOverlay stays guarded
   // for the DS demo, which still runs this chain inside a panel.
   const land = () => { const id = NA.createdId; resetNewAssessment(); window.closeOverlay && window.closeOverlay(); location.href = '/workspace/assess-next.html?id=' + encodeURIComponent(id); };
