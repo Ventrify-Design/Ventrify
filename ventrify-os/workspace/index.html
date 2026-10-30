@@ -68,7 +68,7 @@
         <h1 class="signin-title">Check your inbox.</h1>
         <p class="signin-sub">A one-time sign-in link is on its way to <strong>${esc(addr)}</strong>.
         Open it in <em>this</em> browser to finish signing in. The link expires in about an hour.</p>
-        <p class="signin-meta">Wrong address? <a href="./">Start over</a></p>`;
+        <p class="signin-meta">Wrong address? <a href="/workspace/">Start over</a></p>`;
     }
 
     function showError(err) {
@@ -88,7 +88,10 @@
     // so the migration is presentational and the flow below is the same calls in
     // the same order — magic link out, magic link completed on return, and the
     // FIREBASE_ENABLED=false branch that lets the demo walk straight in.
-    const DASH = 'dashboard-m3.html';   // Material-3 is the only workspace UI
+    // ROOT-ABSOLUTE. vercel.json sets cleanUrls + trailingSlash:false, so this page is served at
+    // /workspace (no slash) and a bare relative page name resolves against / — sending every
+    // successful sign-in to /dashboard-m3, which 404s. This single line broke login in production.
+    const DASH = '/workspace/dashboard-m3.html';   // Material-3 is the only workspace UI
 
     function wire() {
       const form = document.getElementById('login-form');

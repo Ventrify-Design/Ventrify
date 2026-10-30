@@ -397,8 +397,8 @@ function shellNavConfig() {
   // Material-3 is the ONLY workspace UI. Emergency-only revert: set M3_ONLY = false to restore the
   // classic portfolio/queue nav (the classic pages still exist but are otherwise unreachable).
   const M3_ONLY = true;
-  const portfolioHref = M3_ONLY ? 'dashboard-m3.html' : 'dashboard.html';
-  const queueHref = M3_ONLY ? 'queue-m3.html' : 'queue.html';
+  const portfolioHref = M3_ONLY ? '/workspace/dashboard-m3.html' : '/workspace/dashboard.html';
+  const queueHref = M3_ONLY ? '/workspace/queue-m3.html' : '/workspace/queue.html';
   const showAdmin = W.isSuperAdmin || (W.org && W.helpers.currentOperator() && String(W.org.ownerEmail || '').toLowerCase() === String((W.helpers.currentOperator() || {}).email || '').toLowerCase());
   const manage = [
     { href: '/workspace/team.html', icon: '&#x25CB;', label: 'Team', badge: W.operators.length, active: active === 'team' },
