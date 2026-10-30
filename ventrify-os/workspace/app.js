@@ -260,7 +260,7 @@ function shellTopbarConfig() {
   const opAvatar = W.helpers.currentOperator();
 
   const osItem = {
-    href: 'dashboard.html', title: 'Ventrify OS', itemCls: 'topbar-lockup-os',
+    href: '/workspace/dashboard.html', title: 'Ventrify OS', itemCls: 'topbar-lockup-os',
     mark: { html: 'V', cls: 'topbar-lockup-mark-ventrify' },
     name: { html: '<span class="lockup-name-strong">VENTRIFY</span> <span class="lockup-name-weak">OS</span>' },
   };
@@ -273,7 +273,7 @@ function shellTopbarConfig() {
     ? (multiOrg
         ? { title: 'Switch workspace', itemCls: 'topbar-lockup-partner topbar-lockup-switch',
             mark: orgMark, name: { html: escHtml(orgName) + ORG_SWITCH_CHEVRON } }
-        : { href: 'dashboard.html', title: orgName, itemCls: 'topbar-lockup-partner',
+        : { href: '/workspace/dashboard.html', title: orgName, itemCls: 'topbar-lockup-partner',
             mark: orgMark, name: { text: orgName } })
     : { itemCls: 'topbar-lockup-partner topbar-lockup-empty',
         mark: { html: '?', cls: 'topbar-lockup-mark-empty' },
@@ -401,10 +401,10 @@ function shellNavConfig() {
   const queueHref = M3_ONLY ? 'queue-m3.html' : 'queue.html';
   const showAdmin = W.isSuperAdmin || (W.org && W.helpers.currentOperator() && String(W.org.ownerEmail || '').toLowerCase() === String((W.helpers.currentOperator() || {}).email || '').toLowerCase());
   const manage = [
-    { href: 'team.html', icon: '&#x25CB;', label: 'Team', badge: W.operators.length, active: active === 'team' },
-    { href: 'settings.html', icon: '&#x25C7;', label: 'Settings', active: active === 'settings' },
+    { href: '/workspace/team.html', icon: '&#x25CB;', label: 'Team', badge: W.operators.length, active: active === 'team' },
+    { href: '/workspace/settings.html', icon: '&#x25C7;', label: 'Settings', active: active === 'settings' },
   ];
-  if (showAdmin) manage.push({ href: 'admin.html', icon: '&#x2699;', label: W.isSuperAdmin ? 'Platform admin' : 'Operators', active: active === 'admin' });
+  if (showAdmin) manage.push({ href: '/workspace/admin.html', icon: '&#x2699;', label: W.isSuperAdmin ? 'Platform admin' : 'Operators', active: active === 'admin' });
   return [
     { section: 'Operate', links: [
       { href: portfolioHref, icon: '&#x25A4;', label: 'Portfolio', badge: W.programs.length, active: active === 'dashboard' },

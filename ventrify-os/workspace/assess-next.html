@@ -540,7 +540,7 @@
       : st.hasVerdict ? verdictTabs(st) : `<div class="tab-panel active">${statusBody(st)}</div>`;
     const acts = actsNow();
     const mh = DS.masthead({
-      breadcrumb: { label: 'Portfolio', href: 'dashboard-m3.html' }, crumbTail: A.name, avatar: A.initials,
+      breadcrumb: { label: 'Portfolio', href: '/workspace/dashboard-m3.html' }, crumbTail: A.name, avatar: A.initials,
       headline: A.name, status: statusPill(st), subheading: A.stageLine, compact: A.name,
       actions: mastheadActions(st), tabs, activeTab: 0
     });

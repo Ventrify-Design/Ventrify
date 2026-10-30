@@ -57,7 +57,7 @@
   const gate = Plan ? Plan.canCreate(plan, W.programs || [], 'assessment', tier) : { allowed: true };
   if (!gate.allowed) {
     mount(
-      DS.masthead({ breadcrumb: { label: 'Portfolio', href: 'dashboard-m3.html' }, crumbTail: 'New assessment',
+      DS.masthead({ breadcrumb: { label: 'Portfolio', href: '/workspace/dashboard-m3.html' }, crumbTail: 'New assessment',
         eyebrow: 'New assessment', headline: 'No allowance left on this plan',
         subheading: gate.reason === 'capability' ? 'This workspace’s licence doesn’t include assessments.' : 'You’ve used every assessment your plan allows.' }),
       `<div class="brief">${DS.noteCard({ center: true, text: gate.reason === 'capability'
@@ -73,7 +73,7 @@
 
   mount(
     DS.masthead({
-      breadcrumb: { label: 'Portfolio', href: 'dashboard-m3.html' }, crumbTail: 'New assessment',
+      breadcrumb: { label: 'Portfolio', href: '/workspace/dashboard-m3.html' }, crumbTail: 'New assessment',
       eyebrow: 'New assessment',
       headline: `Assess a venture for ${(org && org.name) || 'your workspace'}`,
       subheading: tier === 'prescreen'
