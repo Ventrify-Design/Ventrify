@@ -77,11 +77,23 @@ const PS = require('../api/_prescreen.js');
 const { VSS_RUBRIC } = await import(new URL('../shared/vss-rubric.js', import.meta.url));
 
 const LIVE = process.argv.includes('--live');
+// Fast mode is a research preview with its own allocation. An org without one is refused with
+// "rate limit of 0 fast mode input tokens per minute" — a capability answer, not back-pressure, so
+// waiting never helps. Speed is therefore decided ONCE, before the first byte is cached, and held for
+// the whole run; switching it mid-run would invalidate the prompt cache and reprice every remaining
+// probe. --standard skips the probe when you already know the answer.
+let SPEED = process.argv.includes('--standard') ? 'standard' : 'fast';
 const LIMIT = Number((process.argv.find(a => a.startsWith('--limit=')) || '').split('=')[1]) || 0;
 const CONTAINMENT_FLOOR = 0.90;
 
-// Fast mode is $8/$40 per MTok. One engagement = 1 warm write + 21 reads + ~21K output.
-const estCost = (tokens) => (tokens / 1e6 * 8 * 1.25) + (21 * tokens / 1e6 * 2) + (21 * 1000 / 1e6 * 40);
+// Opus 5.5 is $4/$20 per MTok standard, doubled to $8/$40 under fast mode. One engagement is
+// 1 cache write + 21 cache reads + ~21K output. Cache reads are assumed at 2x the standard $0.20
+// under fast mode — UNVERIFIED, and the first real run should correct this.
+const estCost = (tokens, speed = SPEED) => {
+  const inRate = speed === 'fast' ? 8 : 4, outRate = speed === 'fast' ? 40 : 20;
+  const readRate = speed === 'fast' ? 0.4 : 0.2;
+  return (tokens / 1e6 * inRate * 1.25) + (21 * tokens / 1e6 * readRate) + (21 * 1000 / 1e6 * outRate);
+};
 
 // A service-account JSON saved as a FILE is also accepted, and is the forgiving route: pasting a long
 // JSON blob into a shell variable means getting the quoting exactly right, and getting it wrong fails
@@ -166,7 +178,8 @@ if (!list.length) {
 const totalTokens = list.reduce((a, s) => a + s.corpus.tokens, 0);
 console.log(`${list.length} scored engagement(s) with a corpus:`);
 for (const s of list) console.log(`  ${s.name.padEnd(28)} published ${String(s.published).padStart(3)} · ${s.corpus.included}/${s.corpus.total} docs · ${s.corpus.tokens} tok`);
-console.log(`\nestimated live cost: $${list.reduce((a, s) => a + estCost(s.corpus.tokens), 0).toFixed(2)} (${totalTokens} corpus tokens, ${list.length * 22} calls)`);
+const priceAt = sp => list.reduce((a, s) => a + estCost(s.corpus.tokens, sp), 0).toFixed(2);
+console.log(`\nestimated live cost: $${priceAt('fast')} at fast speed, $${priceAt('standard')} at standard (${totalTokens} corpus tokens, ${list.length * 22} calls)`);
 
 if (!LIVE) {
   console.log('\nDRY RUN — the harness resolved every subject and rebuilt every corpus. No range was predicted,');
@@ -176,13 +189,29 @@ if (!LIVE) {
 
 // ---- live replay ----
 const apiKey = process.env.ANTHROPIC_API_KEY;
-let contained = 0, checked = 0;
+let contained = 0, checked = 0, lastError = null;
 const rows = [];
 for (const s of list) {
   process.stdout.write(`\n${s.name} … `);
   try {
-    const warm = await PS.warmCache(s.corpus.text, apiKey);
-    const probes = await Promise.all(VSS_RUBRIC.map(c => PS.probeCategory(c, s.corpus.text, apiKey)));
+    let warm;
+    try {
+      warm = await PS.warmCache(s.corpus.text, apiKey, SPEED);
+    } catch (e) {
+      // Decided here, before any cache exists, so the fallback costs nothing and breaks nothing.
+      if (!e.fastUnavailable) throw e;
+      console.log('\n  fast mode is not enabled on this organisation (allocation of 0).');
+      console.log('  Falling back to STANDARD speed for the whole run — same model, same scores,');
+      console.log('  roughly half the price and roughly twice the wall-clock.\n  ');
+      SPEED = 'standard';
+      warm = await PS.warmCache(s.corpus.text, apiKey, SPEED);
+    }
+    // Sequential, not Promise.all over all seven. Seven categories x 3 draws x a 40,000-token corpus is
+    // ~840,000 input tokens arriving at once, against an account ceiling of 500,000 per minute — which
+    // is why eight of thirteen engagements failed outright on the first full replay. The gate is not
+    // latency-sensitive; it only has to finish.
+    const probes = [];
+    for (const c of VSS_RUBRIC) probes.push(await PS.probeCategory(c, s.corpus.text, apiKey, SPEED));
     const cats = VSS_RUBRIC.map((c, i) => ({ ...c, signals: PS.consolidate(c, probes[i].draws) }));
     const r = PS.composeRange(cats);
     const inside = s.published >= r.floor && s.published <= r.ceiling;
@@ -191,7 +220,9 @@ for (const s of list) {
     rows.push({ ...s, ...r, inside, cacheWrote: warm.wrote, cacheRead: reads, speed: probes[0].usage.speed });
     console.log(`${r.floor}–${r.ceiling} vs ${s.published}  ${inside ? '✓ contained' : '✗ OUTSIDE'}  (cache read ${reads} tok, speed ${probes[0].usage.speed || '?'})`);
   } catch (e) {
-    console.log(`FAILED: ${e.message}${e.detail ? ' — ' + e.detail : ''}`);
+    lastError = `${e.message}${e.detail ? ' — ' + e.detail.slice(0, 200) : ''}`;
+    if (e.status === 429) lastError += '  (rate limit — the gate is now sequential, but the account ceiling still binds)';
+    console.log(`FAILED: ${lastError}`);
   }
 }
 
@@ -205,7 +236,9 @@ for (const r of rows) {
 if (!checked) {
   console.log('\nNo run completed, so containment was never measured. Nothing above is a verdict on the range.');
   const auth = rows.length === 0;
-  console.log(auth ? 'Every call failed before reaching the model — check ANTHROPIC_API_KEY in ventrify-os/.env.local.' : '');
+  // Echo the real upstream reason rather than guessing at the cause — the last version blamed the API
+  // key for a fast-mode allocation of zero, which sent the reader to fix something that was correct.
+  if (lastError) console.log('Last upstream error: ' + lastError);
   process.exit(2);
 }
 const rate = checked ? contained / checked : 0;
@@ -215,9 +248,20 @@ console.log(`\ncontainment: ${contained}/${checked} = ${(rate * 100).toFixed(0)}
 const below = rows.filter(r => !r.inside && r.published < r.floor);
 if (below.length) console.log(`\n${below.length} prediction(s) were ABOVE the real score. That is the direction that causes refunds — widen the floor.`);
 
-// Cache health, reported rather than assumed — if reads are 0 the run cost ~5x what the spec budgets.
-const zeroCache = rows.filter(r => r.cacheRead === 0);
-if (zeroCache.length) console.log(`\n${zeroCache.length} engagement(s) recorded ZERO cache reads — a silent invalidator is loose and every probe paid full price.`);
+// Cache health, reported rather than assumed — if reads are 0 on a corpus big enough to cache, a
+// silent invalidator is loose and the run cost several times its budget.
+//
+// BUT A SHORT PROMPT SIMPLY CANNOT BE CACHED. The minimum cacheable prefix is model-dependent and up
+// to ~4096 tokens, and below it the API caches nothing and says nothing. 0X Labs has a one-document
+// corpus of 1,256 tokens and tripped this warning on its first run — a warning that fires on every
+// thin data room is decoration, and decoration is what gets ignored when it finally matters.
+const MIN_CACHEABLE = 4096;
+const tooShort = rows.filter(r => r.corpus.tokens < MIN_CACHEABLE);
+const zeroCache = rows.filter(r => r.cacheRead === 0 && r.corpus.tokens >= MIN_CACHEABLE);
+if (tooShort.length) console.log(`\n${tooShort.length} corpus/corpora under ${MIN_CACHEABLE} tokens — too short to cache at all, so those probes paid full price unavoidably.`);
+if (zeroCache.length) console.log(`\n${zeroCache.length} engagement(s) recorded ZERO cache reads on a corpus large enough to cache — a silent invalidator is loose and every probe paid full price:\n  ${zeroCache.map(r => r.name).join(', ')}`);
+const cached = rows.filter(r => r.cacheRead > 0);
+if (cached.length) console.log(`\ncache working on ${cached.length}/${rows.length}: ${Math.round(cached.reduce((a, r) => a + r.cacheRead, 0) / cached.length).toLocaleString()} tokens read per engagement on average.`);
 
 console.log('');
 console.log(rate >= CONTAINMENT_FLOOR ? 'PASS — the published score falls inside the predicted range often enough to sell.' : 'FAIL — widen the floor until containment reaches 90%.');

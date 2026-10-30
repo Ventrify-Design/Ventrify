@@ -17,11 +17,19 @@
 
 import { auth } from '../firebase/firebase.js';
 
-// How many CATEGORY invocations run at once. Each one is 3 parallel model calls, so this is really a
-// concurrency of 3x — at 7-wide that is 21 simultaneous Opus calls, which may exceed account concurrency
-// (spec §6, trap 5). Four is a deliberate guess: ~2 waves, ~30s, and well inside any plausible limit.
-// UNMEASURED. Raise it once a real run reports no 429s, and lower it the moment one does.
-const FANOUT = 4;
+// How many CATEGORY invocations run at once. Each one is 3 model calls, each re-sending the whole
+// corpus, so the real unit is TOKENS PER MINUTE, not requests.
+//
+// MEASURED, not guessed any more. The containment replay hit the account's ceiling immediately:
+//   "This request would exceed your rate limit of 500,000 input tokens per minute"
+// At a 40,000-token corpus one category costs ~120,000 input tokens, so the account affords about four
+// categories a minute — and FANOUT 4 sat exactly on that line, which is where throttling starts, not
+// where it is safe. Two leaves headroom for the cache write and for a second assessment running at the
+// same time, which a real workspace will have.
+//
+// THIS IS THE BINDING CONSTRAINT ON THE LATENCY PROMISE, not the model's speed. Raising the account's
+// tokens-per-minute limit, not tuning this number, is what buys the run back under two minutes.
+const FANOUT = 2;
 
 const CATEGORIES = ['market', 'team', 'product', 'moat', 'financial', 'execution', 'evidence'];
 

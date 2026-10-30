@@ -40,6 +40,11 @@ const estTokens = (s) => Math.round(String(s || '').length / 4);
 // §9.1 — 40K tokens is roughly 60 pages. A 200-page upload would blow the latency budget on extraction
 // alone, so the cap is stated on screen rather than letting one upload decide whether we keep the promise.
 const CORPUS_MAX_TOKENS = 40000;
+// No single document may take more than this share of the budget. One oversized spreadsheet would
+// otherwise consume everything left and starve every document behind it.
+const PER_DOC_MAX = Math.round(CORPUS_MAX_TOKENS * 0.35);
+// Below this there is no point including a fragment — it costs budget and evidences nothing.
+const MIN_USEFUL = 400;
 
 const DRAWS = 3;          // §7 — three blind draws, median published. Not optional; see belowry.
 const PAR = 3;            // "at par" on the rubric's 0–5 scale
@@ -51,26 +56,97 @@ const MAX_PER_SIGNAL = 5;
 // every probe re-sends the corpus because the API is stateless. If Firestore returned these documents in a
 // different order on the second call, every probe would be a fresh prefix at full price — ~$7.50 a run
 // instead of ~$1.60, which is over budget. Sort explicitly; never trust query order.
+// WHAT THE BUDGET IS SPENT ON MATTERS MORE THAN HOW BIG IT IS.
+//
+// This used to sort deck-first then ALPHABETICALLY, which is a coin flip dressed up as an order. On
+// MoneyGym's 53-document room it spent the whole 40K budget on board minutes, incorporation papers and
+// third-party benchmark PDFs, and dropped the financial model, the unit economics and the market
+// sizing — the documents the rubric scores hardest on. The pre-screen predicted 41-56; the paid run,
+// which read everything, published 76. Containment did not fail because the floor was too high. It
+// failed because we read the wrong seventeen documents.
+//
+// Priority uses _roomcheck's OWN filename patterns, so "the documents that matter" means exactly what
+// the scorer means by it and cannot drift into a second opinion. Ordering stays fully deterministic —
+// the prompt cache matches byte for byte, so a nondeterministic corpus would silently cost 5x.
+const { CLASSES: ROOM_CLASS_PATTERNS } = require('./_roomcheck.js');
+// A downloaded industry report is not this venture's evidence. _roomcheck excludes these from
+// `observed_metrics` for the same reason; here they simply queue behind the founder's own documents.
+const THIRD_PARTY = /(benchmark|industry|state.?of|market.?report|insights.?report|whitepaper|white.?paper|multiples)/i;
+
+function docPriority(d) {
+  if (d.docType === 'pitch') return 0;                                   // the one document always required
+  if (THIRD_PARTY.test(d.name)) return 3;                                // someone else's research, last
+  if (ROOM_CLASS_PATTERNS.some(c => c.files.test(d.name))) return 1;     // names a rubric artefact class
+  return 2;
+}
+
+// COVER EVERY CLASS BEFORE TAKING A SECOND DOCUMENT FROM ANY ONE OF THEM.
+//
+// Ranking by priority alone was still wrong. MoneyGym's room has eleven board resolutions, incorporation
+// papers and share-purchase agreements — all genuinely priority 1 — and taken in filename order they
+// consumed 20,000 tokens before the financials were reached, so the financial model could only be read
+// as a truncated head and the unit economics were dropped entirely. Eleven documents proving the same
+// two classes, at the cost of two classes proved by nothing.
+//
+// The range's width IS the count of classes we could not evidence, so the budget should be spent
+// widening coverage, not deepening it. One document per class, then a second per class, and so on.
+function orderForBudget(clean) {
+  const deck = clean.filter(d => d.docType === 'pitch');
+  const rest = clean.filter(d => d.docType !== 'pitch');
+  const byClass = new Map(), unclassified = [], thirdParty = [];
+  for (const d of rest) {
+    if (THIRD_PARTY.test(d.name)) { thirdParty.push(d); continue; }
+    const cls = ROOM_CLASS_PATTERNS.find(c => c.files.test(d.name));
+    if (!cls) { unclassified.push(d); continue; }
+    if (!byClass.has(cls.key)) byClass.set(cls.key, []);
+    byClass.get(cls.key).push(d);
+  }
+  const keys = ROOM_CLASS_PATTERNS.map(c => c.key).filter(k => byClass.has(k));
+  const round = n => keys.map(k => byClass.get(k)[n]).filter(Boolean);
+
+  // ONE per class, THEN the venture's other documents, THEN second copies of each class.
+  //
+  // The six classes are the data-room completeness check and they lean financial; the rubric scores
+  // seven broader categories, and market sizing, CVs, the product overview and the architecture spec
+  // are all "unclassified" by that taxonomy. Round-robining the classes to exhaustion covered
+  // `financial` beautifully and starved `market`, `team` and `product` — the opposite imbalance to the
+  // alphabetical one, and no better. One of each first guarantees breadth across both taxonomies.
+  const extras = [];
+  for (let n = 1; ; n++) { const r = round(n); if (!r.length) break; extras.push(...r); }
+  return [...deck, ...round(0), ...unclassified, ...extras, ...thirdParty];
+}
+
 function buildCorpus(docs = []) {
   const clean = (docs || [])
     .map(d => ({ name: String(d.name || 'document'), text: String(d.text || ''), docType: String(d.docType || 'dataroom') }))
     .filter(d => d.text.trim())
-    .sort((a, b) => {
-      // the deck first — it is the one document the whole assessment is required to have
-      const ap = a.docType === 'pitch' ? 0 : 1, bp = b.docType === 'pitch' ? 0 : 1;
-      return ap - bp || a.name.localeCompare(b.name);
-    });
+    .sort((a, b) => a.name.localeCompare(b.name));   // stable base order; orderForBudget decides the real one
+  const ordered = orderForBudget(clean);
 
   const parts = [];
-  let used = 0, included = 0, dropped = [];
-  for (const d of clean) {
+  let used = 0, included = 0, dropped = [], truncated = [];
+  for (const d of ordered) {
     const head = `\n\n===== ${d.name} (${d.docType}) =====\n`;
+    const room = Math.min(CORPUS_MAX_TOKENS - used, PER_DOC_MAX) - estTokens(head);
+    if (room < MIN_USEFUL) { dropped.push(d.name); continue; }
     const cost = estTokens(head + d.text);
-    if (used + cost > CORPUS_MAX_TOKENS) { dropped.push(d.name); continue; }
-    parts.push(head + d.text);
-    used += cost; included++;
+    if (used + cost <= CORPUS_MAX_TOKENS && estTokens(d.text) <= PER_DOC_MAX) {
+      parts.push(head + d.text);
+      used += cost; included++;
+      continue;
+    }
+    // TOO BIG TO FIT IS NOT A REASON TO READ NONE OF IT. MoneyGym's financial model — the single
+    // document the rubric leans on hardest — is ~50,000 tokens on its own, larger than the whole
+    // budget, so it was skipped entirely and `financial` scored as unevidenced on a venture that had
+    // supplied it. A head is partial evidence; nothing is no evidence, and the difference is the
+    // range's whole ceiling.
+    //
+    // PER_DOC_MAX also stops one spreadsheet eating the budget: without it the base case would take
+    // everything left and the unit economics, cap table and market sizing behind it would all drop.
+    parts.push(head + d.text.slice(0, room * 4) + '\n[… truncated — this document is longer than the pre-screen reads]');
+    used += room + estTokens(head); included++; truncated.push(d.name);
   }
-  return { text: parts.join(''), tokens: used, included, dropped, total: clean.length };
+  return { text: parts.join(''), tokens: used, included, dropped, truncated, total: clean.length };
 }
 
 // ── THE PROMPT ───────────────────────────────────────────────────────────────────────────────────────
@@ -132,12 +208,18 @@ function schemaFor(cat) {
 
 // ── THE CALL ─────────────────────────────────────────────────────────────────────────────────────────
 
-function requestBody(cat, corpusText, { warm = false } = {}) {
+// `speed` is chosen ONCE, before the run starts, and never changes during it. Switching speed
+// invalidates the prompt cache, so a mid-run downgrade would make every remaining probe pay full
+// uncached price (§6, trap 4). Choosing standard UP FRONT is a different thing entirely and is safe:
+// nothing is cached yet. Fast mode is a research preview with its own allocation, and an org without
+// one is refused with "rate limit of 0 fast mode input tokens per minute" — not an error to work
+// around, just a capability to detect once.
+function requestBody(cat, corpusText, { warm = false, speed = 'fast' } = {}) {
   return {
     model: MODEL,
     // Pre-warm writes the cache without generating anything (§6, trap 3).
     max_tokens: warm ? 0 : 1500,
-    speed: 'fast',
+    ...(speed === 'fast' ? { speed: 'fast' } : {}),
     // Thinking CANNOT be disabled on Opus 5.5 — {type:'disabled'} and budget_tokens are both a 400 at every
     // effort level. Depth is controlled only by effort, whose default here is 'medium'; matching evidence
     // against a rubric we already wrote down is not hard reasoning, so it is set explicitly to 'low'.
@@ -148,6 +230,12 @@ function requestBody(cat, corpusText, { warm = false } = {}) {
     messages: [{ role: 'user', content: warm ? 'Ready.' : categoryPrompt(cat) }],
   };
 }
+
+// A fast-mode allocation of zero reads as a 429, but it is a capability answer, not back-pressure:
+// retrying or waiting will never help. Told apart here so callers can fall back once rather than
+// honour a retry-after that means nothing.
+const isFastUnavailable = (status, detail) =>
+  status === 429 && /fast mode/i.test(String(detail || ''));
 
 async function callClaude(body, apiKey) {
   const resp = await fetch(API, {
@@ -166,6 +254,7 @@ async function callClaude(body, apiKey) {
     err.status = resp.status;
     err.retryAfter = Number(resp.headers.get('retry-after')) || null;
     err.detail = detail.slice(0, 400);
+    err.fastUnavailable = isFastUnavailable(resp.status, detail);
     throw err;
   }
   return resp.json();
@@ -176,8 +265,8 @@ async function callClaude(body, apiKey) {
  * writing the cache, so all 21 would miss and the run would cost ~5× its budget (§6, trap 3).
  * Returns the usage so the caller can assert the write actually happened.
  */
-async function warmCache(corpusText, apiKey) {
-  const out = await callClaude(requestBody(null, corpusText, { warm: true }), apiKey);
+async function warmCache(corpusText, apiKey, speed = 'fast') {
+  const out = await callClaude(requestBody(null, corpusText, { warm: true, speed }), apiKey);
   const u = out.usage || {};
   return { wrote: u.cache_creation_input_tokens || 0, read: u.cache_read_input_tokens || 0, speed: u.speed || null };
 }
@@ -192,20 +281,20 @@ async function warmCache(corpusText, apiKey) {
  * fallback mid-run makes every remaining probe pay full uncached price. On a 429 we surface it with its
  * retry-after and let the caller decide; we never quietly change speed underneath the run.
  */
-async function probeCategory(cat, corpusText, apiKey) {
-  const body = requestBody(cat, corpusText);
+async function probeCategory(cat, corpusText, apiKey, speed = 'fast') {
+  const body = requestBody(cat, corpusText, { speed });
   const settled = await Promise.allSettled(
     Array.from({ length: DRAWS }, () => callClaude(body, apiKey))
   );
   const draws = [], errors = [];
-  let cacheRead = 0, cacheWrite = 0, outTokens = 0, speed = null;
+  let cacheRead = 0, cacheWrite = 0, outTokens = 0, servedSpeed = null;   // what the API SAYS it served, vs the `speed` we asked for
   for (const r of settled) {
     if (r.status === 'rejected') { errors.push({ status: r.reason.status, detail: r.reason.detail, retryAfter: r.reason.retryAfter }); continue; }
     const m = r.value, u = m.usage || {};
     cacheRead += u.cache_read_input_tokens || 0;
     cacheWrite += u.cache_creation_input_tokens || 0;
     outTokens += u.output_tokens || 0;
-    speed = u.speed || speed;
+    servedSpeed = u.speed || servedSpeed;
     // A refusal or a max_tokens cut is NOT a draw. Counting it would publish a median over partial data.
     if (m.stop_reason === 'refusal' || m.stop_reason === 'max_tokens') {
       errors.push({ status: 200, detail: 'stop_reason=' + m.stop_reason });
@@ -215,7 +304,7 @@ async function probeCategory(cat, corpusText, apiKey) {
     try { draws.push(JSON.parse(text).signals || []); }
     catch (e) { errors.push({ status: 200, detail: 'unparseable json' }); }
   }
-  return { key: cat.key, draws, errors, usage: { cacheRead, cacheWrite, outTokens, speed } };
+  return { key: cat.key, draws, errors, usage: { cacheRead, cacheWrite, outTokens, speed: servedSpeed, asked: speed } };
 }
 
 // ── MEDIAN ACROSS THE DRAWS ──────────────────────────────────────────────────────────────────────────
@@ -309,7 +398,7 @@ function rangeBand(floor, ceiling) {
 }
 
 module.exports = {
-  MODEL, FAST_BETA, DRAWS, PAR, MAX_PER_SIGNAL, CORPUS_MAX_TOKENS,
-  estTokens, buildCorpus, systemBlock, categoryPrompt, schemaFor, requestBody,
+  MODEL, FAST_BETA, DRAWS, PAR, MAX_PER_SIGNAL, CORPUS_MAX_TOKENS, isFastUnavailable,
+  estTokens, buildCorpus, docPriority, orderForBudget, systemBlock, categoryPrompt, schemaFor, requestBody,
   warmCache, probeCategory, medianOf, consolidate, composeRange, bandOf, rangeBand, BAND_ORDER,
 };

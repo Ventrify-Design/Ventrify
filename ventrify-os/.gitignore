@@ -1,1 +1,3 @@
 tools/.grounding-transcript.json
+.vercel
+.env*
