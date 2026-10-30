@@ -30,9 +30,10 @@ function slugify(s) {
 // is the source of truth: clients can suggest a plan, but it's normalised here
 // before it touches Firestore so a tampered request can't grant extra scope.
 const SERVER_PLAN_PRESETS = {
-  'one-off': { capabilities: { assess: true, build: false }, limits: { assessments: 1, builds: 0 } },
-  'assess':  { capabilities: { assess: true, build: false }, limits: { assessments: null, builds: 0 } },
-  'full':    { capabilities: { assess: true, build: true },  limits: { assessments: null, builds: null } },
+  'self-serve': { capabilities: { assess: true, build: false }, limits: { assessments: 0,    builds: 0,    prescreens: 3 } },
+  'one-off':    { capabilities: { assess: true, build: false }, limits: { assessments: 1,    builds: 0,    prescreens: 5 } },
+  'assess':     { capabilities: { assess: true, build: false }, limits: { assessments: null, builds: 0,    prescreens: null } },
+  'full':       { capabilities: { assess: true, build: true },  limits: { assessments: null, builds: null, prescreens: null } },
 };
 function normLimit(v) {
   if (v == null || v === '' || v === 'unlimited') return null;
@@ -50,7 +51,9 @@ function normalisePlan(input) {
   return {
     preset: 'custom',
     capabilities: { assess: !!c.assess, build: !!c.build },
-    limits: { assessments: normLimit(l.assessments), builds: normLimit(l.builds) },
+    // A plan stored before prescreens existed has no such key → null → unlimited triage,
+    // which is right: every org that predates this feature is a paying licensee.
+    limits: { assessments: normLimit(l.assessments), builds: normLimit(l.builds), prescreens: normLimit(l.prescreens) },
   };
 }
 

@@ -2,10 +2,10 @@
 
 > A free, ~1-minute first assessment that returns a score RANGE (never a single number), a flavour of the
 > findings, and a quality + completeness read on the data room. Its job is to earn the paid full assessment.
-> This is normative on the scoring construction, the cost/latency budget and the containment gate. The user
-> flow around it (§8) is deliberately unresolved — the operator is specifying that separately.
+> This is normative throughout: the scoring construction, the cost/latency budget, the containment gate,
+> and — as of 2026-10-30 — the user flow in §8. What remains open is listed in §9.
 >
-> Status: QUEUED. Starts after the M3 / VerdictScore design migration is live and signed off.
+> Status: READY TO BUILD. The M3 / VerdictScore design migration is live and signed off.
 
 ---
 
@@ -188,34 +188,171 @@ is protecting against. The budget headroom exists; spend it on repetition, not d
 
 ---
 
-## 8. User flow — OPEN, operator to specify
+## 8. User flow — DECIDED 2026-10-30
 
-Not designed yet. The operator is walking this through separately. Captured so far:
+Settled with the operator. Normative. The only thing still marked open is 8.5's allowance question.
 
-- A customer assessing a new venture does a **free pre-screen first**, then hits a **paywall** for the full
-  assessment. The pre-screen result is the paywall's argument.
-- The **initial assessment wizard panel needs redesigning and bringing into the screen** — detail to come.
-- Existing hard rule still stands (`os_create_in_aux_panel`): new assessment = details + deck + data room in
-  the ONE aux panel, CTA "Run assessment", never a hand-off to a second page, never the legacy build wizard.
-  The pre-screen has to fit inside that rule, not around it.
+### 8.1 Create and pre-screen are the SAME screen
+
+The aux panel is retired for this flow. `os_create_in_aux_panel` said "setup never hands off to a second
+page" — the **intent survives and the mechanism dies**. A full screen holding the whole thing is more
+faithful to that intent than the panel was. What is still forbidden: scattering setup across surfaces, and
+linking the legacy build wizard.
+
+Two columns on desktop, stacked on mobile:
+
+```
+┌─ The venture ──────────────┐  ┌─ What we can see ──────────┐
+│ name · founder · stage     │  │  (fills live as you attach) │
+│ website · assessor         │  │   coverage · named gaps     │
+├─ The evidence ─────────────┤  │   predicted range width     │
+│ pitch deck      [required] │  │                             │
+│ data room / Drive link     │  │                             │
+└────────────────────────────┘  └─────────────────────────────┘
+```
+
+The right column earns its keep **before anything has run** — `_roomcheck` is regex, $0, instant. On Run,
+this screen *becomes* the assessment page in place: masthead and tabs swap, categories land live. No
+hand-off, no spinner, no second page. `paint()` in `assess-next.html` already swaps masthead + body in
+place; reuse it rather than inventing a transition.
+
+### 8.2 Tabs by state — nothing is ever padlocked
+
+| State | Tabs | Masthead primary |
+|---|---|---|
+| **Pre-screened** | Range · Data room | **Unlock full assessment** |
+| **Assessed** | Verdict · Investability · Market · Team · Diligence · Research · **Data room** | Confirm / Decline (as today) |
+
+Six tabs with four padlocks was rejected: **a locked tab is a dead end, and four padlocks is a negative read
+of US.** It makes the free tier feel like a crippled version rather than a real thing, which is the same
+failure §3 guards against in the number. Two complete tabs instead, nothing broken.
+
+The upsell is **not a bolted-on widget**. It is the masthead primary action, where `shared/actions.js`
+already says the primary action lives, and the *argument* closes the Range tab in the customer's own
+numbers: *"48–71. The full assessment closes this to a single number across six chapters."*
+
+**Data room is a permanent tab in BOTH states.** This contradicts the comment at `assess-next.html:435`,
+which rejected a 7th tab for Diligence as "a permanent chapter about US, empty on the good deals". The data
+room survives that argument on all three counts: it is about **them**, it is **never empty**, and it is the
+only surface they **act on**. Everything else in the product is us talking at them.
+
+### 8.3 The range becomes snapshot zero
+
+`DS.scoreProvenance(invSnapshots)` already renders score history on the Investability tab. The pre-screen
+range drops in as the first entry — **`Pre-screen 48–71 → measured 63`**. Reuses a shipped component, tells
+the continuity story, and quietly proves the pre-screen was honest. It is also the customer-visible half of
+the containment gate in §7.
+
+### 8.4 Entitlements — one derivation, one flag
+
+Not scattered `if (paid)` checks. ONE module returning
+`entitlements(engagement, plan) → { canRunFull, canAssist, canFileEvidence, canExport, canShare }`,
+consumed by the `shared/actions.js` rail filter, the tab builder, and the server. Same single-source shape
+as the action model.
+
+Two independent axes:
+
+- **Org plan** (`workspace/plan.js`) — the licence. Exists, server-enforced, unchanged.
+- **Engagement tier** (`'prescreen' | 'full'`) — per venture. New field on the engagement doc.
+
+Paid-only, per the operator: **the AI assistant** (`assist` rail action), **filing evidence / answering
+diligence asks** (the whole gap flow), **deal-memo export**, **the shareable `/m/<token>` link and operator
+sign-off**, and the full run itself.
+
+**One flag: `BILLING_ENFORCED = false`.** Today "Unlock full assessment" simply runs the full assessment —
+the operator wants to keep running full assessments while Stripe is unwired. When Stripe lands the flag
+flips and the same button routes to checkout. One constant, one place, same shape as `FIREBASE_ENABLED`.
+
+### 8.5 Two audiences, two emphases — the licensed triage read
+
+A licensee with a full licence must be able to pre-screen **by choice**: a 60-second triage read to decide
+whether a deal is worth two hours of runtime. Same engine, different job — for the free tier the pre-screen
+is the *trial* and it is forced; for a licensee it is *triage* and it is chosen.
+
+**No toggle.** The consequence asymmetry is too large for a switch (seconds vs hours, $1.60 vs real
+compute), and a toggle is easy to miss. Instead: the **same two buttons, with the emphasis swapped by
+entitlement** — one component, one placement, and the hierarchy teaches each audience the right thing.
+
+| Audience | Filled (primary) | Tonal (secondary) |
+|---|---|---|
+| Free tier | Run free pre-screen | Unlock full assessment |
+| Licensed | Run full assessment | Run pre-screen first |
+
+Still legal under the conformance gate's "≤ 1 primary" — tonal is secondary, not primary.
+
+A licensee who pre-screens and then promotes **upgrades the same engagement** (tier `prescreen` → `full`);
+it never creates a second record. That makes the deal-pipeline dashboard a **pipeline of ranges**: run
+twenty pre-screens, sort by ceiling, promote three.
+
+> **OPEN:** does a licensee's pre-screen consume `limits.assessments`? Recommendation: **no** — burning a
+> full-assessment credit on triage discourages exactly the behaviour that saves us compute. Give it its own
+> `limits.prescreens`, generous or null.
+
+### 8.6 One free scored pre-screen per venture, per account
+
+- **Room re-scan: free and unlimited.** $0, instant, and it is the engagement loop — add documents, watch
+  coverage fill and the range narrow.
+- **Scored pre-screen: once.** Re-scoring requires the upgrade. This resolves §9.4's "obvious cost leak":
+  the addictive loop is the free one, the expensive one is earned.
+
+**Deck-reuse guardrail.** Fingerprint on the **normalised extracted text**, not the file bytes —
+`ingest-docs.js` already produces the text, so re-exporting, re-compressing or editing metadata does not
+dodge it. Store a shingle set (hashed overlapping word-windows) so "same deck, v3.1" still matches. Also
+fingerprint **venture identity** (normalised name + website domain + founder), which in practice is the
+stronger signal, because the rule we actually want is *one free pre-screen per venture*, not per file.
+
+Honest limits, so nobody expects more than it gives:
+
+- A rewritten deck under a fresh account defeats any fingerprint. This is a **speed bump against casual
+  re-rolling, not a wall**. The real abuse cap is sign-in + per-account rate limiting + $1.60 not being
+  worth a new email address to most people.
+- **False positives cost more than false negatives.** Blocking a genuine new venture is a terrible first
+  experience. Threshold conservatively, and make the block **soft**: *"This venture has already been
+  pre-screened — open the result, or unlock the full assessment."* A route back, not a dead end.
+- **Scope the block to the account.** A cross-account match must never be surfaced: two firms legitimately
+  pre-screening the same deck is normal, and "someone else already ran this" leaks. Keep global matches as
+  a silent abuse signal only.
+
+### 8.7 The data room is coverage, never a grade
+
+`api/_roomcheck.js` states in its own header that no number comes out of it, and §3.2 forbids arithmetic
+between the room read and the score. Both hold, and nothing the operator asked for is lost:
+
+| What was asked for | How it is rendered |
+|---|---|
+| "How good is my data room" | **Named coverage** — which of the 6 evidence classes are present, which are not, and what each unlocks. *"Cap table — not seen. Unlocks: ownership dilution, founder commitment."* |
+| "How it affects my score" | **The range width**, which already is exactly that, expressed in the only currency that matters. |
+| "Watch it improve" | The gap list shortens and the range narrows. A better progress bar than a progress bar — every tick is a named thing they did. |
+
+A percentage would be worse on four counts: people do arithmetic on two adjacent numbers; a grade punishes
+them for evidence nobody asked them for yet (undoing the module's careful "we cannot see it" voice); it is
+gameable by six well-named empty files; and coverage is **not linear in score weight** (a cap table is a
+small file and a large weight), so the two numbers would visibly disagree.
 
 ### Design the perceived wait, not the real one
 
 With progressive reveal the room check is on screen in **under a second** and the first category lands
 around 20s. Nobody experiences this as a 50-second wait — they watch a page fill up. Lead with the room
-check: it is free, instant, genuinely useful, and it buys the entire rest of the run.
+check: free, instant, genuinely useful, and it buys the entire rest of the run.
 
 ---
 
-## 9. Open questions
+## 9. Still open
 
-1. **Corpus cap policy.** 40K tokens is ~60 pages. A 200-page upload would blow the latency budget on
-   extraction alone. Cap it and say so on screen ("the pre-screen reads your deck and the first N
-   documents") rather than let one upload decide whether we keep the promise.
-2. **Where the result lives.** A `prescreen`-status snapshot on the engagement, or something lighter that
-   does not touch the engagement until they pay?
-3. **Anonymous or signed-in?** A pre-screen for prospects implies no login, and today only
-   `notify-run-complete.js` and `sweep-stuck-runs.js` are unauthenticated. Needs an abuse story — it costs
-   us $1.60 a go.
-4. **Re-run policy.** Can a founder pre-screen the same venture repeatedly as they add documents? That is a
-   great narrowing-range demo and an obvious cost leak.
+1. **Corpus cap policy.** 40K tokens is ~60 pages. A 200-page upload blows the latency budget on extraction
+   alone. Cap it and say so on screen ("the pre-screen reads your deck and the first N documents") rather
+   than let one upload decide whether we keep the promise.
+2. **Licensee pre-screen allowance** — see the OPEN note in §8.5.
+3. **Free sign-up journey.** Decided that the pre-screen is **signed-in, not anonymous** (the re-scan loop
+   needs persistence anyway, and it caps abuse on a $1.60 run). The free-account sign-up flow itself is
+   deferred until the VerdictScore marketing site is finished.
+4. **Vercel plan.** `api/` is at exactly 12 deployed functions — the Hobby cap. The pre-screen folds into
+   `memo.js` and fits. **Stripe's webhook will not.** The operator intends to upgrade the project before
+   Stripe is wired; remind them at that point. See `os_vercel_function_cap`.
+
+### Resolved since the first draft
+
+- Where the result lives → **a real engagement doc**, tier `prescreen`. The lightweight alternative breaks
+  both the data-room loop and the provenance story (§8.3).
+- Anonymous or signed-in → **signed-in**.
+- Re-run policy → **§8.6**.

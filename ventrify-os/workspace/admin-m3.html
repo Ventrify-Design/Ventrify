@@ -63,15 +63,17 @@
     const capBuild = plan ? plan.capabilities.build : true;
     const limA = (plan && plan.limits.assessments != null) ? plan.limits.assessments : '';
     const limB = (plan && plan.limits.builds != null) ? plan.limits.builds : '';
-    return `<div style="max-width:260px">${DS.formField({ id: `${prefix}-preset`, value: preset, options: ['full', 'assess', 'one-off', 'custom'].map(v => ({ v, l: PLAN.PLAN_PRESETS[v].label })), attr: ` onchange="window.__togglePlanCustom('${prefix}')"` })}</div>
+    const limP = (plan && plan.limits.prescreens != null) ? plan.limits.prescreens : '';
+    return `<div style="max-width:260px">${DS.formField({ id: `${prefix}-preset`, value: preset, options: Object.keys(PLAN.PLAN_PRESETS).map(v => ({ v, l: PLAN.PLAN_PRESETS[v].label })), attr: ` onchange="window.__togglePlanCustom('${prefix}')"` })}</div>
       <div id="${prefix}-custom" style="display:${isCustom ? 'block' : 'none'};margin-top:12px;padding:14px;background:var(--md-sys-color-surface-container-high);border-radius:10px">
         <div style="display:flex;gap:20px;margin-bottom:12px;flex-wrap:wrap">
           <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="${prefix}-cap-assess" ${capAssess ? 'checked' : ''}> Assess ventures</label>
           <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="${prefix}-cap-build" ${capBuild ? 'checked' : ''}> Build MVPs</label>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
           ${DS.formField({ label: 'Max assessments', id: `${prefix}-lim-assess`, value: limA, placeholder: 'unlimited' })}
           ${DS.formField({ label: 'Max builds', id: `${prefix}-lim-build`, value: limB, placeholder: 'unlimited' })}
+          ${DS.formField({ label: 'Max pre-screens', id: `${prefix}-lim-prescreen`, value: limP, placeholder: 'unlimited' })}
         </div>
         <div class="body-s variant" style="margin-top:8px">Leave a limit blank for unlimited.</div>
       </div>`;
@@ -83,7 +85,7 @@
     const val = id => (document.getElementById(prefix + '-' + id) || {}).value;
     const ck = id => !!(document.getElementById(prefix + '-' + id) || {}).checked;
     const num = s => (s == null || String(s).trim() === '') ? null : Math.max(0, Math.floor(Number(s)) || 0);
-    return { preset: 'custom', capabilities: { assess: ck('cap-assess'), build: ck('cap-build') }, limits: { assessments: num(val('lim-assess')), builds: num(val('lim-build')) } };
+    return { preset: 'custom', capabilities: { assess: ck('cap-assess'), build: ck('cap-build') }, limits: { assessments: num(val('lim-assess')), builds: num(val('lim-build')), prescreens: num(val('lim-prescreen')) } };
   }
   async function adminCall(payload) {
     const { auth } = await import('../firebase/firebase.js');

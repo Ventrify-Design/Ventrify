@@ -24,9 +24,10 @@ function ensureAdmin() {
 // Licence presets — MUST mirror workspace/plan.js PLAN_PRESETS and the copy in
 // api/admin.js. Keep the three in sync if a preset's capabilities/limits change.
 const SERVER_PLAN_PRESETS = {
-  'one-off': { capabilities: { assess: true, build: false }, limits: { assessments: 1, builds: 0 } },
-  'assess':  { capabilities: { assess: true, build: false }, limits: { assessments: null, builds: 0 } },
-  'full':    { capabilities: { assess: true, build: true },  limits: { assessments: null, builds: null } },
+  'self-serve': { capabilities: { assess: true, build: false }, limits: { assessments: 0,    builds: 0,    prescreens: 3 } },
+  'one-off':    { capabilities: { assess: true, build: false }, limits: { assessments: 1,    builds: 0,    prescreens: 5 } },
+  'assess':     { capabilities: { assess: true, build: false }, limits: { assessments: null, builds: 0,    prescreens: null } },
+  'full':       { capabilities: { assess: true, build: true },  limits: { assessments: null, builds: null, prescreens: null } },
 };
 function normLimit(v) {
   if (v == null || v === '' || v === 'unlimited') return null;
@@ -35,14 +36,14 @@ function normLimit(v) {
 }
 function resolvePlan(org) {
   const p = org && org.plan;
-  if (!p) return { preset: 'full', capabilities: { assess: true, build: true }, limits: { assessments: null, builds: null } };
+  if (!p) return { preset: 'full', capabilities: { assess: true, build: true }, limits: { assessments: null, builds: null, prescreens: null } };
   const preset = p.preset || 'custom';
   if (preset !== 'custom' && SERVER_PLAN_PRESETS[preset]) {
     const d = SERVER_PLAN_PRESETS[preset];
     return { preset, capabilities: { ...d.capabilities }, limits: { ...d.limits } };
   }
   const c = p.capabilities || {}, l = p.limits || {};
-  return { preset: 'custom', capabilities: { assess: !!c.assess, build: !!c.build }, limits: { assessments: normLimit(l.assessments), builds: normLimit(l.builds) } };
+  return { preset: 'custom', capabilities: { assess: !!c.assess, build: !!c.build }, limits: { assessments: normLimit(l.assessments), builds: normLimit(l.builds), prescreens: normLimit(l.prescreens) } };
 }
 
 module.exports = async (req, res) => {
@@ -79,6 +80,11 @@ module.exports = async (req, res) => {
     const orgId = orgDoc.id;
 
     const type = engagement.engagementType === 'assessment' ? 'assessment' : 'build';
+    // TIER IS SERVER-RESOLVED, never trusted from the client. A self-serve account that
+    // posts tier:'full' must still be checked against its (zero) assessment allowance —
+    // otherwise the paywall is cosmetic. Anything not explicitly 'prescreen' is 'full',
+    // matching shared/entitlements.tierOf() so client and server can't disagree.
+    const tier = engagement.tier === 'prescreen' ? 'prescreen' : 'full';
     const plan = resolvePlan(org);
 
     // Capability gate — is this engagement type licensed at all?
@@ -87,15 +93,19 @@ module.exports = async (req, res) => {
 
     // Quota gate — count existing engagements of this type in the org. Build is
     // everything that isn't an assessment (matches the client's usageFor).
-    const limKey = type === 'assessment' ? 'assessments' : 'builds';
+    // A pre-screen draws on its own allowance — it must never burn a paid assessment
+    // credit (mirrors the client's limitKey/usageFor in workspace/plan.js).
+    const limKey = type === 'assessment' ? (tier === 'prescreen' ? 'prescreens' : 'assessments') : 'builds';
     const limit = plan.limits[limKey];
     if (limit != null) {
       const all = await db.collection('engagements').where('orgId', '==', orgId).get();
       const used = all.docs.filter(d => {
-        const et = d.data().engagementType || 'build';
-        return type === 'assessment' ? et === 'assessment' : et !== 'assessment';
+        const data = d.data();
+        const et = data.engagementType || 'build';
+        if (type !== 'assessment') return et !== 'assessment';
+        return et === 'assessment' && ((data.tier === 'prescreen' ? 'prescreen' : 'full') === tier);
       }).length;
-      if (used >= limit) { res.status(403).json({ error: 'plan_limit_reached', reason: 'limit', limit, used, type }); return; }
+      if (used >= limit) { res.status(403).json({ error: 'plan_limit_reached', reason: 'limit', limit, used, type, tier }); return; }
     }
 
     // Allowed → write via Admin SDK. Force the resolved orgId (never trust the

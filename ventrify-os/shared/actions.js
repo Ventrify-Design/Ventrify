@@ -60,11 +60,11 @@ export const ACTIONS = {
   sources:       { label: 'Sources',       icon: 'source',       tier: 'aux', panel: 'sources' },
   discuss:       { label: 'Discussion',    icon: 'forum',        tier: 'aux', panel: 'discuss' },
   activity:      { label: 'Activity',      icon: 'history',      tier: 'aux', panel: 'activity' },
-  assist:        { label: 'Assist',        icon: 'auto_awesome', tier: 'aux', panel: 'assist' },
+  assist:        { label: 'Assist',        icon: 'auto_awesome', tier: 'aux', panel: 'assist', capability: 'assist' },
   research_peek: { label: 'Research',      icon: 'science',      tier: 'aux', panel: 'research' },
-  export:        { label: 'Export',        icon: 'download',     tier: 'aux', panel: 'export' },
-  deal_memo:     { label: 'Deal memo',     icon: 'download',     tier: 'aux', panel: 'deal_memo' },
-  share:         { label: 'Share',         icon: 'ios_share',    tier: 'aux', panel: 'share' },
+  export:        { label: 'Export',        icon: 'download',     tier: 'aux', panel: 'export', capability: 'export' },
+  deal_memo:     { label: 'Deal memo',     icon: 'download',     tier: 'aux', panel: 'deal_memo', capability: 'export' },
+  share:         { label: 'Share',         icon: 'ios_share',    tier: 'aux', panel: 'share', capability: 'share' },
   view_settings: { label: 'View settings', icon: 'tune',         tier: 'aux', panel: 'view', meta: true },
   help:          { label: 'Help',          icon: 'help',         tier: 'aux', panel: 'help', meta: true },
   // overflow — rail kebab (rare / restricted / destructive)
@@ -117,7 +117,11 @@ export function resolveActions({ page, role = 'operator', state, caps = {} } = {
   } else if (m.primary) {
     primary = expand(m.primary);
   }
-  // capability + authorization gate
+  // capability + authorization gate.
+  // APPLIED TO THE RAIL TOO. It used to gate only the masthead, so a capability was
+  // honoured in one surface and ignored in the other — which is exactly how the paid-only
+  // actions (assist / deal_memo / share / export) would have leaked onto a pre-screened
+  // engagement. shared/entitlements.js supplies those keys via capsFor().
   const gate = a => a && (!a.capability || caps[a.capability] !== false) && can(a.id, { role, state });
   if (!gate(primary)) primary = null;
   decision = decision.filter(gate);
@@ -125,8 +129,8 @@ export function resolveActions({ page, role = 'operator', state, caps = {} } = {
   return {
     primary,
     decision,                                // [] unless a decision-pair (Approve/Reject/…)
-    rail: (m.rail || []).map(expand),
-    overflow: (m.overflow || []).map(expand),
+    rail: (m.rail || []).map(expand).filter(gate),
+    overflow: (m.overflow || []).map(expand).filter(gate),
     state: state || null,
     pill: lc ? lc.pill : null,
   };
