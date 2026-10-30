@@ -331,7 +331,7 @@
       try {
         const data = await import('../firebase/data.js');
         await data.deleteEngagementDeep(p.id);
-        window.location.href = 'dashboard.html';
+        window.location.href = '/workspace/dashboard.html';
       } catch (e) {
         window.__toast('Could not delete the engagement: ' + ((e && (e.code || e.message)) || e), true);
       }

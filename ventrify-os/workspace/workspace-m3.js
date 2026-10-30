@@ -106,7 +106,7 @@ window.__naClearDoc = (i) => { NA.docs.splice(i, 1); naPaintDocs(); };
 // Navigate to the create screen. The plan/tier gate lives THERE, not here: the check now depends on which
 // tier is being created, and duplicating that decision at every call site is how the two drift apart.
 export function openNewAssessment() {
-  location.href = 'create-m3.html';
+  location.href = '/workspace/create-m3.html';
 }
 
 // Reset the staged state. The screen is a real page now, so a browser Back and a second visit must not
@@ -366,13 +366,13 @@ window.__wsRunPrescreen = async () => {
 
     NA.createdId = null;
     resetNewAssessment();
-    location.href = 'assess-next.html?id=' + encodeURIComponent(programId);
+    location.href = '/workspace/assess-next.html?id=' + encodeURIComponent(programId);
   } catch (e) {
     naBusy(false); naProg(null);
     // The one refusal that is not a failure: this venture has already had its free pre-screen.
     if (e && e.status === 409 && e.body && e.body.error === 'already_prescreened') {
       window.__toast(`“${e.body.name}” has already been pre-screened — opening it.`);
-      location.href = 'assess-next.html?id=' + encodeURIComponent(e.body.engagementId);
+      location.href = '/workspace/assess-next.html?id=' + encodeURIComponent(e.body.engagementId);
       return;
     }
     window.__toast('Could not run the pre-screen: ' + ((e && e.message) || e), true);
@@ -393,7 +393,7 @@ window.__wsCreateAssessment = async () => {
   const W = window.WORKSPACE || {};
   // Setup is a full page now, so landing is a navigation, not an overlay close. closeOverlay stays guarded
   // for the DS demo, which still runs this chain inside a panel.
-  const land = () => { const id = NA.createdId; resetNewAssessment(); window.closeOverlay && window.closeOverlay(); location.href = 'assess-next.html?id=' + encodeURIComponent(id); };
+  const land = () => { const id = NA.createdId; resetNewAssessment(); window.closeOverlay && window.closeOverlay(); location.href = '/workspace/assess-next.html?id=' + encodeURIComponent(id); };
 
   naBusy(true);
   try {
@@ -518,7 +518,7 @@ export function wsAccountConfig() {
 // (app.js's shared window.__switchOrg is left untouched — the classic pages depend on it.)
 window.__switchOrgM3 = function(orgId) {
   try { localStorage.setItem('workspace.activeOrg', orgId); } catch (e) {}
-  window.location.href = 'dashboard-m3.html';
+  window.location.href = '/workspace/dashboard-m3.html';
 };
 
 export function mountOrgSwitcherM3() {

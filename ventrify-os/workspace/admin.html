@@ -24,7 +24,7 @@
     const isOwner = !!(W.org && String(W.org.ownerEmail || '').toLowerCase() === myEmail);
     const PLAN = window.VentrifyPlan;
 
-    if (!isSuper && !isOwner) { window.location.href = 'dashboard.html'; throw new Error('halt'); }
+    if (!isSuper && !isOwner) { window.location.href = '/workspace/dashboard.html'; throw new Error('halt'); }
 
     const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 

@@ -52,7 +52,7 @@
   // that idiom at module top level, where `return` is not available. Throwing
   // put a real uncaught Error in the console of every non-admin who landed
   // here, which is indistinguishable from a page that actually broke.
-  if (!isSuper && !isOwner) { location.href = 'dashboard-m3.html'; await new Promise(() => {}); }
+  if (!isSuper && !isOwner) { location.href = '/workspace/dashboard-m3.html'; await new Promise(() => {}); }
   const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
   // ---- plan picker + /api/admin (VERBATIM from admin.html) ----

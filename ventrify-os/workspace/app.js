@@ -170,7 +170,7 @@ function loadDemoOrLocal() {
 
   // First-run redirect to setup when there's genuinely nothing yet.
   if (!org && !demoOn && currentPath !== 'setup.html') {
-    window.location.replace('setup.html');
+    window.location.replace('/workspace/setup.html');
     return new Promise(() => {}); // halt — navigating away
   }
 
@@ -475,7 +475,7 @@ window.__switchOrg = function(orgId) {
   try { localStorage.setItem('workspace.activeOrg', orgId); } catch (e) {}
   // Land on the new org's portfolio (the current page may reference an
   // engagement that doesn't exist in the org being switched to).
-  window.location.href = 'dashboard-m3.html';
+  window.location.href = '/workspace/dashboard-m3.html';
 };
 function mountOrgSwitcher() {
   const W = window.WORKSPACE;

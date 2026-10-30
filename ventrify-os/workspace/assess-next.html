@@ -229,7 +229,7 @@
   window.__eaDownload = () => EA.downloadMemo({ p, snap: invSnapshot, org: W.org });
   window.__eaDelete = async () => {
     if (!(await window.__confirm({ title: `Delete “${p.name}” permanently?`, message: 'This removes the assessment and all its data. This cannot be undone.', confirmLabel: 'Delete', danger: true }))) return;
-    try { await EA.deleteEngagement({ engagementId: p.id }); location.href = 'dashboard-m3.html'; }
+    try { await EA.deleteEngagement({ engagementId: p.id }); location.href = '/workspace/dashboard-m3.html'; }
     catch (e) { window.__toast('Could not delete: ' + ((e && (e.code || e.message)) || e), true); }
   };
   window.__eaSignoff = () => {
