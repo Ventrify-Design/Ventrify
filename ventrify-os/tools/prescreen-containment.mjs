@@ -50,20 +50,48 @@ const CONTAINMENT_FLOOR = 0.90;
 // Fast mode is $8/$40 per MTok. One engagement = 1 warm write + 21 reads + ~21K output.
 const estCost = (tokens) => (tokens / 1e6 * 8 * 1.25) + (21 * tokens / 1e6 * 2) + (21 * 1000 / 1e6 * 40);
 
+// A service-account JSON saved as a FILE is also accepted, and is the forgiving route: pasting a long
+// JSON blob into a shell variable means getting the quoting exactly right, and getting it wrong fails
+// later and confusingly. A file has no quoting at all.
+const SA_FILE = new URL('../service-account.json', import.meta.url);
+if (!process.env.FIREBASE_SERVICE_ACCOUNT && existsSync(SA_FILE)) {
+  process.env.FIREBASE_SERVICE_ACCOUNT = readFileSync(SA_FILE, 'utf8');
+  console.log('using ventrify-os/service-account.json\n');
+}
 if (!process.env.FIREBASE_SERVICE_ACCOUNT) {
-  console.log('FIREBASE_SERVICE_ACCOUNT is not set — this gate reads real engagements and cannot run without it.');
-  console.log('Put it in ventrify-os/.env.local (gitignored), or export it. From the OS Vercel project:');
-  console.log('  cd ventrify-os && vercel env pull --environment=production .env.local');
+  console.log('No Firebase credentials found. Either:');
+  console.log('  • run  cd ventrify-os && vercel env pull --environment=production .env.local');
+  console.log('  • or save the service-account JSON as  ventrify-os/service-account.json');
+  console.log('Both are gitignored.');
   process.exit(2);
 }
 // A quoted JSON blob that did not survive the shell is the most likely failure here, so say which one.
 try { JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT); }
-catch { console.log('FIREBASE_SERVICE_ACCOUNT is set but is not valid JSON — it needs the whole service-account object on one line.'); process.exit(2); }
+catch { console.log('The Firebase credential is not valid JSON. If you pasted it into .env.local it needs to be on ONE line in single quotes — saving it as ventrify-os/service-account.json avoids that entirely.'); process.exit(2); }
+// Valid JSON that is not a service account threw a raw firebase-admin stack trace, which tells a reader
+// nothing and looks like the tool is broken. Name the missing fields instead.
+{
+  const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+  const need = ['project_id', 'private_key', 'client_email'].filter(k => !sa[k]);
+  if (need.length) {
+    console.log(`That JSON is not a Firebase service account — it has no ${need.join(', ')}.`);
+    console.log('You want the value of FIREBASE_SERVICE_ACCOUNT from the OS Vercel project, whole.');
+    process.exit(2);
+  }
+}
 if (LIVE && !process.env.ANTHROPIC_API_KEY) {
   console.log('--live needs ANTHROPIC_API_KEY.');
   process.exit(2);
 }
-if (!admin.apps.length) admin.initializeApp({ credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)) });
+// The last credential failure a reader can hit — a well-shaped key that Firebase rejects — also threw a
+// raw stack trace. Every failure in this file now ends in a sentence, not a trace.
+try {
+  if (!admin.apps.length) admin.initializeApp({ credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)) });
+} catch (e) {
+  console.log('Firebase rejected that service account: ' + String(e.message || e).split('\n')[0]);
+  console.log('Re-copy FIREBASE_SERVICE_ACCOUNT from the OS Vercel project — a truncated private_key is the usual cause.');
+  process.exit(2);
+}
 const db = admin.firestore();
 
 console.log(`prescreen-containment — ${LIVE ? 'LIVE (this spends money)' : 'DRY RUN (no model calls)'}\n`);

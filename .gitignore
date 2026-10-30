@@ -27,3 +27,5 @@ ventrify-os/_baselines/visual-compare.png
 .env
 .env.*
 !.env.example
+service-account.json
+**/service-account.json
