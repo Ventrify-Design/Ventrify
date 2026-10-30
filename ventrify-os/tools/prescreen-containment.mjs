@@ -223,6 +223,16 @@ for (const s of list) {
     lastError = `${e.message}${e.detail ? ' — ' + e.detail.slice(0, 200) : ''}`;
     if (e.status === 429) lastError += '  (rate limit — the gate is now sequential, but the account ceiling still binds)';
     console.log(`FAILED: ${lastError}`);
+    // An ACCOUNT-LEVEL block is not a per-engagement failure, and retrying the next twelve proves
+    // nothing. A configured spend cap is the clearest example: it reports the date access returns, so
+    // stop on the first one and say that, rather than printing the same sentence thirteen times.
+    const m = /regain access on ([0-9-]+ at [0-9:]+ UTC)/.exec(e.detail || '');
+    if (m || /usage limits/i.test(e.detail || '')) {
+      console.log(`\nStopped: this is an account-level spend cap, not a problem with any engagement.`);
+      if (m) console.log(`Access returns on ${m[1]}, or raise the cap in the Anthropic Console under Settings → Limits.`);
+      console.log('Nothing was charged for the blocked requests.');
+      break;
+    }
   }
 }
 
