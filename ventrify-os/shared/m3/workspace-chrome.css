@@ -453,7 +453,13 @@ body.signin::after {
    NO TUB. It is separated by a rule, not a filled card — same decision as every other
    editorial surface in the product. A panel this tall in a container colour reads as a
    second page stapled to the first, and the content here is a list, not an alert. */
-.na-side { position: sticky; top: 24px; min-width: 0; padding-left: 36px; border-left: 1px solid var(--md-sys-color-outline-variant); }
+/* Parks BELOW the sticky masthead, not behind it. --mh-h is published by initShell and tracks the
+   masthead through its whole 209px→115px minify, so a fixed number here would be wrong at one end or
+   the other. Same mechanism .drill-rail has always used. */
+.na-side { position: sticky; top: calc(var(--mh-h, 120px) + 16px);
+  /* Pushed clear of the masthead it no longer fits the viewport, so it scrolls within itself rather
+     than having its last rows cut off — exactly what .drill-rail does for the same reason. */
+  max-height: calc(100dvh - var(--mh-h, 120px) - 44px); overflow-y: auto; overscroll-behavior: contain; min-width: 0; padding-left: 36px; border-left: 1px solid var(--md-sys-color-outline-variant); }
 .na-side-in .sec { padding-block: 0; border: none; }
 .na-side-in .sec-head { margin-bottom: 10px; }
 /* Each line's `want` sentence IS the value of this panel — it tells someone what to go and

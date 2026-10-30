@@ -259,6 +259,7 @@ window.__naReadRoom = async () => {
     let last = null, fresh = [];
     const paint = () => { const el = slot(); if (el) el.innerHTML = DS_PRESCREEN.roomScanBanner(scan) + (last ? roomCheck(last, { justFound: fresh }) : ''); };
     paint();
+    DS_PRESCREEN.revealLive('#na-room .rsb');
 
     let dr;
     try {
@@ -383,7 +384,10 @@ window.__wsRunPrescreen = async () => {
     if (sub) sub.textContent = 'About three minutes. Keep this tab open — the run is driven from your browser, so closing it stops the run.';
     // The stage opens at its own head. Without this the page keeps whatever scroll offset the form had,
     // which on a long form means landing halfway down a screen that just changed underneath you.
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    //
+    // NOT window.scrollTo: this page mounts with .app-scroll, so .shell-main scrolls internally and the
+    // document does not move at all. revealLive finds whatever is actually scrolling.
+    DS_PRESCREEN.revealLive(h, { pad: 0 });
     return h;
   };
   const fileRows = () => ({

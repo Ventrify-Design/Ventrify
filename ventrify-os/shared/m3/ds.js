@@ -2605,6 +2605,73 @@ export function dataRoomHero(check = null, opts = {}) {
   });
 }
 
+// scrollParent — the element that ACTUALLY scrolls, or window.
+//
+// Not a detail on these pages: a page mounted with `.app-scroll` is height-bound so .shell-main scrolls
+// INTERNALLY (that is what lets the masthead minify). On those pages window.scrollTo is a silent no-op —
+// it moves a document that is not the thing scrolling. wireMinify already had to work this out; this is
+// that logic named and shared, rather than a second copy that drifts.
+export function scrollParent(el) {
+  let n = el && el.parentElement;
+  while (n && n !== document.body && n !== document.documentElement) {
+    const oy = getComputedStyle(n).overflowY;
+    if (oy === 'auto' || oy === 'scroll') return n;
+    n = n.parentElement;
+  }
+  return window;
+}
+
+// revealLive — bring a live-progress region into view when work starts.
+//
+// WHY. Every scan on this product can be started from a button that is BELOW the surface that reports it:
+// the data room's "Read this folder" sits under the room list, and the banner it drives renders at the
+// top. The first real user pressed it, saw nothing move, and only found the progress bar by scrolling
+// back up. Work starting somewhere the user is not looking reads as nothing happening.
+//
+// TWO RULES, because an over-eager scroll is its own bug:
+//   · it does NOTHING when the target is already comfortably in view — yanking the page away from
+//     someone who is already watching the right thing is worse than not scrolling at all;
+//   · it offsets by the STICKY masthead's live height, or it would park the banner underneath it.
+// Honours prefers-reduced-motion by jumping instead of animating.
+export function revealLive(target, opts = {}) {
+  if (typeof document === 'undefined') return false;
+  const el = typeof target === 'string' ? document.querySelector(target) : target;
+  if (!el) return false;
+  const sc = scrollParent(el);
+  const win = sc === window;
+  const viewport = () => win
+    ? { top: 0, bottom: window.innerHeight }
+    : (r => ({ top: r.top, bottom: r.bottom }))(sc.getBoundingClientRect());
+  // The masthead MINIFIES as you scroll, so its height is only true for the scroll position you measured
+  // it at. Measuring the short one and scrolling up to where it is tall parks the target underneath it —
+  // which is what the first version did. So: aim, let it settle, re-measure, nudge. Bounded at three
+  // passes; it converges in two because the second measurement is taken where the page ends up.
+  const edge = () => {
+    const mh = document.querySelector('.masthead');
+    return viewport().top + (opts.pad == null ? 16 : opts.pad) + (mh ? mh.getBoundingClientRect().height : 0);
+  };
+  // "Already visible" is about the TOP of the region, not the whole of it. A progress banner sits above a
+  // list that is taller than the viewport, so requiring the element to fit entirely meant the test could
+  // never pass and every call scrolled again.
+  const settled = () => {
+    const r = el.getBoundingClientRect(), v = viewport();
+    return r.top >= edge() - 2 && r.top <= v.bottom - 120;
+  };
+  if (settled()) return false;   // already watching it — leave them alone
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let pass = 0;
+  const step = () => {
+    const delta = el.getBoundingClientRect().top - edge();
+    if (Math.abs(delta) < 2 || pass >= 3) return;
+    pass++;
+    const by = { top: delta, behavior: reduce ? 'auto' : 'smooth' };
+    if (win) window.scrollBy(by); else sc.scrollBy(by);
+    setTimeout(step, reduce ? 0 : 320);
+  };
+  step();
+  return true;
+}
+
 // roomScanBanner — WHAT A SCAN LOOKS LIKE WHILE IT IS HAPPENING.
 //
 // The Drive read reported itself in one line of 12.5px grey text beside a button, and a 46-document scan
@@ -4704,15 +4771,24 @@ export function queueBoard(items = [], opts = {}) {
    rail either overlapped at rest or floating low when minified, and hardcoding the
    minified height would break the first time the masthead gains or loses a row.
    ResizeObserver fires through the whole transition, so the rail tracks it continuously. */
-function trackDrillMasthead(surf) {
-  const mh = surf.querySelector('.masthead');
+function trackDrillMasthead(surf) { trackMastheadHeight(surf, '--drill-mh-h'); }
+
+/* trackMastheadHeight — the same measurement, for ANY surface with a sticky masthead.
+   The drill solved this for its own rail and nothing else got it: the create screen's live data-room
+   panel is `position: sticky; top: 24px` under a masthead up to 209px tall, so the panel the operator
+   is meant to WATCH while attaching documents sat 272px underneath it. Measured, not guessed.
+   `var` lets a caller publish under a different name; the drill keeps its own so the two rails cannot
+   fight over one value when a drill is open. */
+function trackMastheadHeight(surf, varName = '--mh-h') {
+  const mh = surf.querySelector(':scope > .masthead') || surf.querySelector('.masthead');
   if (!mh || typeof ResizeObserver === 'undefined') return;
-  if (surf.__mhRO) surf.__mhRO.disconnect();
-  const set = () => surf.style.setProperty('--drill-mh-h', `${Math.round(mh.getBoundingClientRect().height)}px`);
+  const key = '__mhRO' + varName;
+  if (surf[key]) surf[key].disconnect();
+  const set = () => surf.style.setProperty(varName, `${Math.round(mh.getBoundingClientRect().height)}px`);
   set();
   const ro = new ResizeObserver(set);
   ro.observe(mh);
-  surf.__mhRO = ro;
+  surf[key] = ro;
 }
 
 // wireMinify — bind ONE masthead to its nearest scroll ancestor. Idempotent (safe to call again on a
@@ -4720,9 +4796,8 @@ function trackDrillMasthead(surf) {
 function wireMinify(mh) {
   if (!mh || mh.__mhWired) return;
   mh.__mhWired = true;
-  let sc = mh.parentElement;
-  while (sc && sc !== document.body && sc !== document.documentElement) { const oy = getComputedStyle(sc).overflowY; if (oy === 'auto' || oy === 'scroll') break; sc = sc.parentElement; }
-  const target = (sc && sc !== document.body && sc !== document.documentElement) ? sc : window;
+  // Same question revealLive asks — "what actually scrolls here" — so it has one answer, in scrollParent.
+  const target = scrollParent(mh);
   const top = () => target === window ? window.scrollY : target.scrollTop;
   const DIST = 96; let raf = 0;
   const apply = () => { raf = 0; const p = Math.min(1, Math.max(0, top() / DIST)); mh.style.setProperty('--mh-p', p.toFixed(3)); mh.classList.toggle('minified', p > 0.5); };
@@ -4782,6 +4857,11 @@ export function initShell() {
   // masthead: scroll-linked minify — drives --mh-p (0→1) continuously as content scrolls under it.
   // Idempotent + reusable: the drill's masthead is created after initShell, so openDrill() calls it too.
   document.querySelectorAll('.masthead').forEach(wireMinify);
+  // Publish the MAIN masthead's live height as --mh-h on .shell-main, so any sticky surface beneath it
+  // can park clear of it instead of sliding underneath. The drill rail has had this since it was built;
+  // the create screen's live data-room panel never did, and sat 272px behind the masthead.
+  const mainSurf = document.querySelector('.shell-main');
+  if (mainSurf) trackMastheadHeight(mainSurf, '--mh-h');
 
   // ---- auxiliary panel API ----
   // the two "no room to push an aux" breakpoints, mirroring theme.css

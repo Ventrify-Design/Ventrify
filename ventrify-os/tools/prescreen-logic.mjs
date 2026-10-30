@@ -134,6 +134,66 @@ ok(/reason: 'self'/.test(memo), 'prescreen-warm refuses a re-run of an already-s
 ok(/prescreenClaimedAt/.test(memo), 'warm takes a claim, so an abandoned run still holds the venture');
 ok(/CLAIM_LEASE_MS/.test(memo), 'the claim is a lease, not permanent — our 502 must not burn their free look');
 
+console.log('\n13. PLAN-INDEPENDENCE — a pre-screened assessment behaves the SAME on every licence');
+// The operator's hard requirement, as a test rather than a promise: "ANY pre-screened assessment should
+// always work the same way — I don't want to find out that when I switch the type of plan on another
+// organisation, it behaves differently." The org PLAN decides how much you may create; the engagement
+// TIER decides what a created thing can do. If a plan ever leaks into the second, this fails.
+const EN = await import(new URL('../shared/entitlements.js', import.meta.url));
+const presets = Object.keys(PLAN.PLAN_PRESETS);
+const shape = pl => JSON.stringify(EN.entitlements({ tier: 'prescreen' }, PLAN.resolvePlan({ plan: { preset: pl } })));
+const base = shape(presets[0]);
+for (const pl of presets) ok(shape(pl) === base, `prescreen tier on "${pl}" grants exactly what it grants on "${presets[0]}"`);
+ok(shape('self-serve') === shape(null), 'an org with NO plan at all is no different either');
+// And the reverse: a FULL-tier engagement must differ from a pre-screened one, or the gate proves nothing.
+ok(shape('full') !== JSON.stringify(EN.entitlements({ tier: 'full' }, PLAN.resolvePlan({ plan: { preset: 'full' } }))),
+   'a full-tier engagement IS different — the comparison above is meaningful');
+
+console.log('\n14. ONE INGEST PATH — the data room reads the same way everywhere');
+// The Drive read used to be inlined per page, which is how one copy ended up silent for 46 documents
+// while the other reported progress. Both screens now call addToRoom, and nothing calls the old one.
+const fsp = await import('node:fs/promises');
+const ea = await fsp.readFile(new URL('../workspace/engagement-actions.js', import.meta.url), 'utf8');
+const wm = await fsp.readFile(new URL('../workspace/workspace-m3.js', import.meta.url), 'utf8');
+const an = await fsp.readFile(new URL('../workspace/assess-next.html', import.meta.url), 'utf8');
+ok(/export async function addToRoom/.test(ea), 'addToRoom is the single ingest routine');
+ok(!/function readDriveFolder/.test(ea), 'the superseded readDriveFolder is gone, not left beside it');
+ok(/EA\.addToRoom\(/.test(wm), 'the create screen uses it');
+ok(/EA\.addToRoom\(/.test(an), 'the data-room tab uses it');
+ok(/onRoom/.test(ea) && /roomEvery/.test(ea), 'it re-checks the room DURING the ingest, so ticks land as evidence does');
+for (const [name, src] of [['create screen', wm], ['data-room tab', an]])
+  ok(/roomScanBanner/.test(src), `${name} shows the scan banner`);
+
+console.log('\n15. REVEAL — work that starts below the fold scrolls the user to it');
+// The button that starts a scan sits BELOW the surface that reports it on every one of these screens.
+// Pressed from the bottom of the tab, the progress bar is a screen away and the product looks dead.
+// Each entry point reveals, through ONE helper — four copies of scrollIntoView is how one of them ends
+// up offsetting by the wrong masthead, or calling window.scrollTo on a page where window does not scroll.
+const ds = await fsp.readFile(new URL('../shared/m3/ds.js', import.meta.url), 'utf8');
+ok(/export function revealLive/.test(ds), 'revealLive is the single reveal helper');
+ok(/export function scrollParent/.test(ds), 'scrollParent names what actually scrolls');
+ok(!/let sc = mh\.parentElement/.test(ds), 'wireMinify shares it rather than keeping its own copy');
+ok(/already watching it/.test(ds), 'it no-ops when the target is already in view');
+ok(/prefers-reduced-motion/.test(ds), 'it honours reduced motion');
+// .app-scroll pages scroll .shell-main, not the document — a window.scrollTo there moves nothing.
+ok(!/window\.scrollTo\(/.test(wm), 'no window.scrollTo survives in the workspace (a no-op under .app-scroll)');
+const revealsIn = src => (src.match(/revealLive\(/g) || []).length;
+ok(revealsIn(an) >= 2, `the data-room tab reveals from every scan entry point (${revealsIn(an)} call sites)`);
+ok(revealsIn(wm) >= 2, `the create screen reveals for both the room read and the run stage (${revealsIn(wm)} call sites)`);
+
+console.log('\n16. STICKY SURFACES clear the masthead they sit under');
+// The create screen's live panel is sticky at the top of a page whose masthead is ALSO sticky and
+// between 115px and 209px tall depending on scroll. It was parked at top:24px — behind it. The drill
+// rail has tracked the live height since it was built; nothing else did. One tracker now, two users.
+const wcss = await fsp.readFile(new URL('../shared/m3/workspace-chrome.css', import.meta.url), 'utf8');
+const tcss = await fsp.readFile(new URL('../shared/m3/theme.css', import.meta.url), 'utf8');
+ok(/function trackMastheadHeight/.test(ds), 'one tracker publishes a masthead height');
+ok(/trackMastheadHeight\(surf, '--drill-mh-h'\)/.test(ds), 'the drill rail uses it');
+ok(/trackMastheadHeight\(mainSurf, '--mh-h'\)/.test(ds), 'the main shell publishes --mh-h too');
+ok(/\.na-side \{[^}]*top: calc\(var\(--mh-h/.test(wcss), 'the live panel parks below the masthead, not behind it');
+ok(/\.na-side \{[^}]*max-height: calc\(100dvh - var\(--mh-h/.test(wcss), 'and scrolls within itself rather than being clipped');
+ok(/--drill-mh-h, 120px/.test(tcss), 'the drill rail still has its own value, so the two cannot fight');
+
 console.log(fails ? `\n${fails} FAILED\n` : '\nall checks passed\n');
 process.exit(fails ? 1 : 0);
 })();

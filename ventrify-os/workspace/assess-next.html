@@ -183,6 +183,11 @@
     if (!live) { window.__toast('Checking the data room needs the live workspace.', true); return; }
     const btn = document.querySelector('.dr-act .m3-btn');
     if (btn) { btn.disabled = true; }
+    // Same treatment as a full ingest, deliberately. It is one round trip rather than fifty, but a
+    // re-scan pressed from the bottom of the tab is just as invisible, and two scans that behave
+    // differently is the inconsistency this pass exists to remove. No total → indeterminate bar.
+    const hadScan = !!drScan;
+    if (!hadScan) { drScan = { done: 0, total: 0, current: '', label: 'Re-scanning the room' }; paintRoomTab(); DS.revealLive('.rsb'); }
     try {
       const next = await EA.roomCheck({ engagementId: p.id });
       drJustFound = drDiff(next);
@@ -192,10 +197,12 @@
       paintRoomTab();
       const seen = (next.classes || []).filter(c => c.found).length;
       const of = (next.classes || []).length;
+      if (!hadScan) { drScan = null; paintRoomTab(); }
       window.__toast(drJustFound.length
         ? `${drJustFound.length} new evidence type${drJustFound.length === 1 ? '' : 's'} found — ${seen} of ${of} present.`
         : `Read ${next.docCount || 0} documents · ${seen} of ${of} evidence types found.`);
     } catch (e) {
+      if (!hadScan) { drScan = null; paintRoomTab(); }
       window.__toast('Could not read the room: ' + ((e && e.message) || e), true);
     }
     if (btn) { btn.disabled = false; }
@@ -226,6 +233,9 @@
                found: roomCheckResult ? (roomCheckResult.classes || []).filter(c => c.found).length : null,
                of: roomCheckResult ? (roomCheckResult.classes || []).length : null };
     paintRoomTab();
+    // The button that starts this sits BELOW the banner it drives. Without this the user presses Read
+    // and nothing in front of them moves — the progress is a screen away, above the fold they are on.
+    DS.revealLive('.rsb');
     try {
       const r = await EA.addToRoom({
         engagementId: p.id, files, folderUrl,
