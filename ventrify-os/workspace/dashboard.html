@@ -28,7 +28,9 @@
     const ALLOWED_TYPES = Plan.allowedTypes(plan);
     const ASSESS_ONLY = ALLOWED_TYPES.length === 1 && ALLOWED_TYPES[0] === 'assessment';
     const NEW_LABEL = ASSESS_ONLY ? 'New assessment' : 'New engagement';
-    const canCreateAny = ALLOWED_TYPES.some(t => Plan.canCreate(plan, programs, t).allowed);
+    // Mirrors dashboard-m3: a free account creates at the prescreen tier, which has its own allowance.
+    const _tier = (plan && plan.preset === 'self-serve') ? 'prescreen' : 'full';
+    const canCreateAny = ALLOWED_TYPES.some(t => Plan.canCreate(plan, programs, t === 'assessment' ? _tier : 'full').allowed);
 
     // Aggregate stats. Action queue is now computed by workflow-orchestrator
     // (agents.js) across the operator's own engagements — same shape as the

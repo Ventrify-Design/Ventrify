@@ -313,10 +313,16 @@ export function personCard({ avatar, avatarColor, name, sub, badge = '', pill = 
 }
 
 // ---- empty state (both classic variants + 3 explorer cards) ----
-export function workspaceEmpty({ assessOnly = false, orgName = 'your Workspace', canCreate = true } = {}) {
-  const eyebrow = assessOnly ? 'First assessment' : 'First engagement';
-  const title = assessOnly ? 'Run your first<br>assessment.' : 'Create your first<br>engagement.';
-  const sub = assessOnly
+// `prescreen` is the FREE tier's first screen. Without it a free account was shown the paid
+// assessment's four steps — "agents pressure-test the claims", "decision-grade verdict" — none of
+// which it is buying. Describing the wrong product on the very first screen is worse than saying
+// nothing, and it is the screen most likely to decide whether they ever pay.
+export function workspaceEmpty({ assessOnly = false, orgName = 'your Workspace', canCreate = true, prescreen = false } = {}) {
+  const eyebrow = prescreen ? 'First pre-screen' : assessOnly ? 'First assessment' : 'First engagement';
+  const title = prescreen ? 'Pre-screen your<br>first venture.' : assessOnly ? 'Run your first<br>assessment.' : 'Create your first<br>engagement.';
+  const sub = prescreen
+    ? 'Upload a pitch deck and whatever data room you have. In about three minutes you get a score range, a read on what your documents do and don’t cover, and a flavour of the findings — free.'
+    : assessOnly
     ? 'Click “New assessment”, then upload a pitch deck and any supporting docs. Ventrify returns a venture score, the key findings, and how to strengthen it — all here, with no founder needed.'
     : 'Click “New engagement”. A five-step wizard captures the brief. The platform sets up the workspace, seeds the agents, opens Phase 0, and slots the venture into this portfolio.';
   const buildSteps = [
@@ -334,15 +340,23 @@ export function workspaceEmpty({ assessOnly = false, orgName = 'your Workspace',
   /* Numbered editorial rows, not stacked tubs — the same .must idiom the Verdict tab
      uses for its numbered list. These four are a SEQUENCE (deck → research → score →
      verdict), and a sequence reads as numbered steps down a rule, not as four boxes. */
-  const steps = (assessOnly ? assessSteps : buildSteps)
+  // The free tier's four steps describe what the pre-screen ACTUALLY does, and say plainly where it
+  // stops. A range is not a verdict, and the screen should not imply it is.
+  const prescreenSteps = [
+    ['Deck', 'Deck & data room', 'Upload the pitch deck plus whatever supporting documents you have. Nothing is required beyond the deck.'],
+    ['Room', 'Data-room read', 'Instant, free, and as often as you like: which of the six evidence types the score looks for we can and cannot find.'],
+    ['Range', 'A score range', 'Not a single number. The low end is what your documents prove today; the high end is what they become if the gaps close.'],
+    ['Full', 'Unlock the full assessment', 'Deep research, diligence, a single measured score and a decision-grade verdict — when you are ready.'],
+  ];
+  const steps = (prescreen ? prescreenSteps : assessOnly ? assessSteps : buildSteps)
     .map(([tag, t, p], i) => `<div class="ws-step"><div class="ws-step-n">${i + 1}</div><div class="ws-step-b"><div class="ws-step-tag">${tag}</div><div class="ws-step-title">${t}</div><p>${p}</p></div></div>`).join('');
   const cta = canCreate
-    ? `<button class="m3-btn filled" style="margin-top:20px" onclick="window.openNewAssessment&&window.openNewAssessment()"><span class="material-symbols-rounded">add</span>${assessOnly ? 'Start your first assessment' : 'Start your first engagement'}</button>`
+    ? `<button class="m3-btn filled" style="margin-top:20px" onclick="window.openNewAssessment&&window.openNewAssessment()"><span class="material-symbols-rounded">${prescreen ? 'bolt' : 'add'}</span>${prescreen ? 'Run your first pre-screen' : assessOnly ? 'Start your first assessment' : 'Start your first engagement'}</button>`
     : `<div style="margin-top:20px">${planGateBanner(assessOnly ? 'New assessment' : 'New engagement')}</div>`;
   const explorers = [
-    ['tune', 'Refine your brand', 'Edit your organisation name, primary colour, or logo before your first engagement goes live.', 'settings-m3.html', 'Open settings →', ''],
-    ['dashboard', 'How the Workspace works', 'Three surfaces, three audiences. The marketing tour explains how operators, founders, and investors connect.', '../the-workspace.html', 'Read the tour →', ' target="_blank"'],
-    ['groups', 'Meet the 47 agents', 'The fleet behind every engagement — substrate keystones, Build-First 8, and the full domain breakdown.', '../agents.html', 'Explore the fleet →', ' target="_blank"'],
+    ['tune', 'Refine your brand', 'Edit your organisation name, primary colour, or logo before your first engagement goes live.', '/workspace/settings-m3.html', 'Open settings →', ''],
+    ['dashboard', 'How the Workspace works', 'Three surfaces, three audiences. The marketing tour explains how operators, founders, and investors connect.', '/the-workspace.html', 'Read the tour →', ' target="_blank"'],
+    ['groups', 'Meet the 47 agents', 'The fleet behind every engagement — substrate keystones, Build-First 8, and the full domain breakdown.', '/agents.html', 'Explore the fleet →', ' target="_blank"'],
   ].map(([ic, t, p, href, cta2, attr]) => `<a class="ws-explorer" href="${href}"${attr}>
       <div class="ws-explorer-head"><span class="ws-explorer-icon"><span class="material-symbols-rounded">${ic}</span></span><span class="ws-explorer-title">${t}</span></div>
       <p>${p}</p><span class="ws-explorer-cta">${cta2}</span>

@@ -50,7 +50,7 @@ export function adaptProgram(p, ctx = {}) {
   const { helpers, A, useLive } = ctx;
   const isAssess = p.engagementType === 'assessment';
   // assessment engagements open the fully-interactive M3 detail; builds still open the classic detail
-  const href = `${isAssess ? 'assess-next.html' : 'program.html'}?id=${encodeURIComponent(p.id)}`;
+  const href = `${isAssess ? '/workspace/assess-next.html' : '/workspace/program.html'}?id=${encodeURIComponent(p.id)}`;
   const avatar = { initials: p.founderAvatar || (p.name || 'V').slice(0, 2).toUpperCase(), color: p.founderAvatarColor || '' };
   const runState = p.runState ? (RUN[p.runState.status] || null) : null;
 
@@ -119,7 +119,7 @@ export function adaptEngagementRow(p, ctx = {}) {
   const when = p.lastActivity || '1h ago';
   const rsStatus = p.runState && p.runState.status;
   const runState = (rsStatus && rsStatus !== 'done') ? { status: rsStatus } : null;
-  const href = `${isAssess ? 'assess-next.html' : 'program.html'}?id=${encodeURIComponent(p.id)}`;
+  const href = `${isAssess ? '/workspace/assess-next.html' : '/workspace/program.html'}?id=${encodeURIComponent(p.id)}`;
 
   if (isAssess) {
     const a = p.assessment || {};

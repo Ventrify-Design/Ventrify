@@ -38,6 +38,7 @@
   import * as DS from '../shared/m3/ds.js';
   import { adaptEngagementRow } from '../shared/m3/workspace-adapter.js';
   import { workspaceEmpty, planGateBanner } from '../shared/m3/workspace-cards.js';
+  import { defaultTier } from '../shared/entitlements.js';
   import { wsNavConfig, wsBrandConfig, wsAccountConfig, mountOrgSwitcherM3 } from './workspace-m3.js';
   import * as EA from './engagement-actions.js';
 
@@ -54,8 +55,16 @@
   const plan = W.plan;
   const ALLOWED_TYPES = Plan ? Plan.allowedTypes(plan) : ['engagement'];
   const ASSESS_ONLY = ALLOWED_TYPES.length === 1 && ALLOWED_TYPES[0] === 'assessment';
-  const NEW_LABEL = ASSESS_ONLY ? 'New assessment' : 'New engagement';
-  const canCreateAny = Plan ? ALLOWED_TYPES.some(t => Plan.canCreate(plan, programs, t).allowed) : true;
+  // THE TIER THIS ORG WOULD ACTUALLY CREATE AT. A free account has limits.assessments = 0 and
+  // limits.prescreens = 3, so asking the old 3-argument canCreate() — which assumes full tier —
+  // answered "no allowance" and hid the only button that account can press. Its first screen read
+  // "Plan limit reached" before it had done anything at all.
+  const TIER = defaultTier(plan);
+  const PRESCREEN_FIRST = TIER === 'prescreen';
+  const NEW_LABEL = PRESCREEN_FIRST ? 'Pre-screen a venture' : ASSESS_ONLY ? 'New assessment' : 'New engagement';
+  const canCreateAny = Plan
+    ? ALLOWED_TYPES.some(t => Plan.canCreate(plan, programs, t === 'assessment' ? TIER : 'full').allowed)
+    : true;
 
   // ---- aggregates (mirrors dashboard.html) ----
   const useLive = (W.demoMode || 'off') === 'off';
@@ -79,7 +88,7 @@
   if (totalPrograms === 0) {
     mount(
       DS.masthead({ eyebrow: 'Portfolio', headline: `Welcome to ${org && org.name ? org.name : 'your workspace'}`, subheading: ASSESS_ONLY ? 'No assessments yet — run your first one.' : 'No engagements yet — create your first one.', actions: canCreateAny ? [newAction] : [] }),
-      `<div class="brief">${workspaceEmpty({ assessOnly: ASSESS_ONLY, orgName: (org && org.name) || 'your Workspace', canCreate: canCreateAny })}</div>`
+      `<div class="brief">${workspaceEmpty({ assessOnly: ASSESS_ONLY, prescreen: PRESCREEN_FIRST, orgName: (org && org.name) || 'your Workspace', canCreate: canCreateAny })}</div>`
     );
     // Halts by never resolving, not by throwing — see the same idiom in
     // admin-m3.html, and app.js's three `return new Promise(() => {})` guards.

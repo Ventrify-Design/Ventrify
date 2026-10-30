@@ -24,7 +24,7 @@ const ROOT = new URL('../', import.meta.url).pathname;
 // shared/ is NOT scanned for href:, only for location.*. shared/m3/ds.js carries the DS workshop's
 // default nav, and those pages live at /_redesign/m3/ where relative IS correct — absolutising them
 // would break the workshop to fix the app.
-const DIRS = ['workspace', 'studio', 'shared'];
+const DIRS = ['workspace', 'studio', 'shared', 'shared/m3'];
 const NAV = /(?:window\.)?location\.(?:href\s*=|replace\()\s*'([^']+)'/g;
 // The first fix missed this entirely: the outage was a location.href, so that is all the gate looked
 // for — while every nav link and breadcrumb in the product had exactly the same relative shape and
@@ -47,8 +47,14 @@ for (const dir of DIRS) {
   try { files = readdirSync(join(ROOT, dir)).filter(f => /\.(js|html)$/.test(f)); } catch { continue; }
   for (const f of files) {
     const src = readFileSync(join(ROOT, dir, f), 'utf8');
-    const checks = [['location', NAV]];
-    if (dir !== 'shared') { checks.push(['href', HREF]); checks.push(['bare page name', BARE]); }
+    const isWorkshop = `${dir}/${f}` === 'shared/m3/ds.js';
+    // ds.js is the DS workshop's own demo code: its pages live at /_redesign/m3/ where relative is
+    // correct, so it is exempt from ALL of these, not just the href ones.
+    const checks = isWorkshop ? [] : [['location', NAV]];
+    // Only shared/m3/ds.js is workshop code (its nav defaults belong to /_redesign/m3/, where relative
+    // is correct). Everything else under shared/ ships inside the app and must be absolute — excluding
+    // the whole directory let workspace-cards.js keep three relative links on the first-run screen.
+    if (!isWorkshop) { checks.push(['href', HREF]); checks.push(['bare page name', BARE]); }
     // A bare page name is only wrong when it is a DESTINATION. The same string is legitimately a
     // comparison or a lookup key — `currentPath !== 'setup.html'`, `{'queue.html': 'queue'}` — because
     // those read a page name rather than navigate to one, and absolutising them would break the
@@ -64,6 +70,8 @@ for (const dir of DIRS) {
         const target = m[1];
         // absolute paths, full URLs and in-page anchors are all fine
         if (/^(\/|https?:|#|mailto:)/.test(target)) continue;
+        // An interpolated value is decided at runtime; the gate cannot judge it and must not guess.
+        if (target.includes('${')) continue;
         if (kind === 'bare page name' && isRead(src, m.index)) continue;
         const line = src.slice(0, m.index).split('\n').length;
         console.log(`  ✗ ${dir}/${f}:${line}  ${kind} → '${target}'`);
