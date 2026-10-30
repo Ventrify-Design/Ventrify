@@ -633,3 +633,18 @@ body.signin::after {
   .score-lockup.room-lockup .rml-num { font-size: clamp(38px, 12vw, 56px); letter-spacing: -1px; }
   .rml-track i { height: 10px; }
 }
+
+/* ---- RANGE FINDINGS (rangeFindings) ----
+   The 35 observations the run already wrote. Grouped by category on the "proves" side so it reads as a
+   report; flat and impact-ordered on the "could not see" side because that one is an action list. */
+.rf-cat + .rf-cat { margin-top: 26px; }
+.rf-cat-h {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 16px;
+  padding-bottom: 8px; margin-bottom: 4px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  font-family: var(--font-display, inherit); font-size: 15px; font-weight: 600;
+  letter-spacing: -.01em; color: var(--md-sys-color-on-surface);
+}
+.rf-cat-h span { font-family: var(--font-text, inherit); font-size: 12px; font-weight: 400; letter-spacing: .2px; color: var(--md-sys-color-on-surface-variant); white-space: nowrap; }
+/* The note is the useful part and often two lines; never clamp it to one. */
+.rf-cat .mrow-sub, .sec > .profile .mrow.rcl .mrow-sub { -webkit-line-clamp: 3; }

@@ -2388,6 +2388,77 @@ export function rangeHero(range = {}, opts = {}) {
   });
 }
 
+// rangeFindings — THE 35 THINGS THE RUN ACTUALLY FOUND.
+//
+// The pre-screen writes a specific, sourced observation for every one of the 35 signals, and stores all
+// of them on the snapshot (composeRange puts `signals` on each category). The Range tab was rendering a
+// number, seven coverage bars and nothing else — about a tenth of what the run produced and the customer
+// paid for. The operator's words: "I don't think I would be enticed to upgrade based on just seeing this."
+// They were right, and the fix costs nothing: it is a read of data already on the page.
+//
+// TWO SECTIONS, because the signals answer two different questions:
+//   · what we could NOT see — ranked by what it is worth, because that is an action list. Each note
+//     already names the document that would close it; the model writes that unprompted.
+//   · what the evidence DOES prove — the substance behind the floor, so the number reads as earned
+//     rather than asserted.
+//
+// POINTS AT STAKE is real arithmetic, not a motivator: an unevidenced signal scores 0 at the floor and
+// PAR (3 of 5) at the ceiling, so it holds weight × 3/25 × 100 points of the 100-point scale. A Team
+// signal is worth 3.0; an Evidence Integrity signal 0.6. That ordering is the honest answer to "what
+// should I go and find first".
+export function rangeFindings(categories = []) {
+  const cats = (categories || []).filter(c => (c.signals || []).length);
+  if (!cats.length) return '';
+  const PAR = 3, MAX = 5;
+  const ptsOf = c => (c.weight * PAR / ((c.signals.length || 5) * MAX)) * 100;
+
+  // ---- what is missing, hardest-hitting first ----
+  const gaps = [];
+  for (const c of cats) for (const sg of c.signals) if (!sg.evidenced) gaps.push({ c, sg, pts: ptsOf(c) });
+  gaps.sort((a, b) => b.pts - a.pts);
+  const gapRows = gaps.map(({ c, sg, pts }) => row({
+    variant: 'metric', key: sg.slug, density: 'compact', cls: 'rcl is-gap',
+    title: subQuestion(sg.slug),
+    sub: sg.note || `${c.label} — no evidence for this was found.`,
+    trail: { kind: 'value', value: `+${pts.toFixed(1)}`, valueMuted: ' pts',
+             mark: { icon: 'radio_button_unchecked', tone: 'idle' } },
+  })).join('');
+
+  // ---- what the evidence proves, grouped by category so it reads as a report ----
+  const provenBlocks = cats.map(c => {
+    const seen = (c.signals || []).filter(sg => sg.evidenced);
+    if (!seen.length) return '';
+    const rows = seen.map(sg => row({
+      variant: 'metric', key: sg.slug, density: 'compact', cls: 'rcl is-found',
+      title: subQuestion(sg.slug),
+      sub: sg.note || '',
+      // `split` means the three blind draws disagreed and one vote decided it — the same honesty marker
+      // the full run uses. Shown, not smoothed over.
+      unsettled: sg.split ? 1 : 0,
+      trail: { kind: 'value', value: String(sg.score), valueMuted: `/${MAX}`,
+               mark: { icon: 'check_circle', tone: 'good' } },
+    })).join('');
+    return `<div class="rf-cat"><div class="rf-cat-h">${esc(c.label)}<span>${seen.length} of ${c.signals.length} evidenced</span></div>
+      <div class="profile">${rows}</div></div>`;
+  }).join('');
+
+  const totalGaps = gaps.length;
+  const totalPts = gaps.reduce((a, g) => a + g.pts, 0);
+
+  return `${gaps.length ? `<hr class="rule"><section class="sec">
+    <div class="sec-head"><span class="eyebrow accent">What we could not see</span><span class="t">${totalGaps} question${totalGaps === 1 ? '' : 's'} your evidence does not answer</span>
+      <span class="meta">worth ${totalPts.toFixed(0)} points · highest first</span></div>
+    <div class="profile">${gapRows}</div>
+    <div class="profile-foot"><span>Each line names what would answer it. These are not marks against the venture — they are questions we were not given the evidence to score, so the floor has to assume the worst of each one. The points column is what that assumption costs you.</span></div>
+  </section>` : ''}
+  ${provenBlocks ? `<hr class="rule"><section class="sec">
+    <div class="sec-head"><span class="eyebrow accent">What your evidence proves</span><span class="t">Read from the documents you supplied</span>
+      <span class="meta">${cats.reduce((a, c) => a + c.signals.filter(s => s.evidenced).length, 0)} of 35 signals</span></div>
+    ${provenBlocks}
+    <div class="profile-foot"><span>Three independent reads per signal; the middle one is published. A balance icon marks a signal where the three disagreed and one vote decided it — more evidence would settle it.</span></div>
+  </section>` : ''}`;
+}
+
 // rangeNext — the two ways OUT of the Range tab.
 //
 // The tab explained at length why the range is as wide as it is and then offered nothing to do about it:

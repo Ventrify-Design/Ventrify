@@ -1215,6 +1215,34 @@ export const CATALOG = {
     usedIn: ['assess-next.html \u00b7 both tab sets'],
     adaptive: { status: 'built', layout: { mobile: 'Single column, 44px targets.', tablet: 'Single column below 900px.', desktop: 'Upload and Drive side by side.' }, content: { mobile: 'Full.', tablet: 'Full.', desktop: 'Full.' } }
   },
+  rangeFindings: {
+    level: 'organism', group: 'Organisms', domain: 'Assessment', title: 'Range \u2014 the 35 findings', sig: 'rangeFindings(categories)',
+    blurb: 'Every pre-screen writes a specific, sourced observation for all 35 signals and stores them on the snapshot. The Range tab rendered a number, seven bars and nothing else \u2014 about a tenth of what the customer paid for, which is why the first real user said he would not upgrade on the strength of it. Costs nothing to fix: the data is already on the page. Split in two because the signals answer two questions \u2014 what we could NOT see (ranked by points at stake, because each note already names the document that would close it) and what the evidence DOES prove (grouped by category, so the floor reads as earned). Points at stake is real arithmetic: an unevidenced signal scores 0 at the floor and PAR at the ceiling, so it holds weight \u00d7 3/25 \u00d7 100 points \u2014 a Team signal is worth 3.0, an Evidence Integrity one 0.6.',
+    maxw: null, pad: true,
+    html: () => `<div class="brief" style="padding:20px 28px">${DS.rangeFindings([
+      { key: 'team', label: 'Team & Founder-Market Fit', weight: 0.25, evidenced: 2, of: 5, signals: [
+        { slug: 'ceo_vision', evidenced: true, score: 3, note: 'Deck articulates a clear \'fitness app for your finances\' vision progressing from tracking to coaching.', split: false },
+        { slug: 'talent_attraction', evidenced: false, score: 0, note: 'No team, hires or advisors appear in the deck; a team page or org chart would answer this.', split: false },
+        { slug: 'founder_market_fit', evidenced: false, score: 0, note: 'Founders are never named or described; founder bios showing fintech or behavioural-science background would answer this.', split: false },
+        { slug: 'execution_record', evidenced: true, score: 2, note: 'Self-reported UK POC claims (81% nudge engagement, CAC \u00a3148 to \u00a313) lack third-party confirmation.', split: true },
+        { slug: 'ethics_trust', evidenced: false, score: 0, note: 'Mentions compliance filter and payment guardrails, but nothing on founder conduct or governance.', split: false } ] },
+      { key: 'market', label: 'Market Opportunity', weight: 0.2, evidenced: 2, of: 5, signals: [
+        { slug: 'market_size', evidenced: true, score: 3, note: 'Deck claims \'100M Potential Target Customers\' across five US segments, but gives no pricing, so no dollar TAM can be derived.', split: false },
+        { slug: 'market_growth', evidenced: false, score: 0, note: 'No market growth rates appear; a market sizing report showing growth in the behavioural-finance category would answer this.', split: false },
+        { slug: 'why_now', evidenced: false, score: 0, note: 'The deck never explains why now (e.g. open banking rules, AI cost shifts).', split: false },
+        { slug: 'demand_validation', evidenced: true, score: 3, note: 'UK POC claims 81% nudge engagement, 60%+ weekly active users, \u00a33,000 average annual saving.', split: false },
+        { slug: 'gross_margin', evidenced: false, score: 0, note: 'There is no pricing, revenue or cost data; a unit economics model covering gross margin would answer this.', split: false } ] },
+      { key: 'evidence', label: 'Evidence Integrity', weight: 0.05, evidenced: 5, of: 5, signals: [
+        { slug: 'citation_density', evidenced: true, score: 1, note: 'Only the Problem slide cites sources (Yahoo Finance, Bankrate); POC claims are uncited.', split: false },
+        { slug: 'source_count', evidenced: true, score: 1, note: 'Two to three external sources total.', split: false },
+        { slug: 'hallucination_check', evidenced: true, score: 2, note: 'Problem slide lists 57%, $300B, $1.2T with ambiguous label mapping.', split: true },
+        { slug: 'methodology_disclosure', evidenced: true, score: 3, note: 'DebtGym interest-burn savings method and Cash Freed definition are explained.', split: false },
+        { slug: 'cross_file_consistency', evidenced: true, score: 2, note: 'Only one file; internal inconsistencies between segment names.', split: false } ] },
+    ])}</div>`,
+    props: [{ name: 'categories', type: 'prescreen.categories \u2014 already carries signals[]' }],
+    variants: [{ label: 'Gaps + proven' }, { label: 'Fully evidenced', note: 'the gap section disappears' }],
+    usedIn: ['assess-next.html \u00b7 Range tab'], adaptive: noAdapt
+  },
   rangeNext: {
     level: 'organism', group: 'Organisms', domain: 'Assessment', title: 'Range \u2014 the two ways out', sig: 'rangeNext()',
     blurb: 'The Range tab explained at length why the range is wide and then offered nothing to do about it \u2014 the first real customer read the width, went looking for somewhere to put the missing documents, and found no field and no button on either tab. The free route (add evidence, re-scan) is named first and named plainly, because it is the one we want them taking; the paid route carries the filled button.',
