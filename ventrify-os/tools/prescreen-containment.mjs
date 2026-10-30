@@ -18,7 +18,27 @@
 // Needs FIREBASE_SERVICE_ACCOUNT and (for --live) ANTHROPIC_API_KEY.
 // ============================================================
 import { createRequire } from 'node:module';
+import { readFileSync, existsSync } from 'node:fs';
 const require = createRequire(import.meta.url);
+
+// Load ventrify-os/.env.local if it is there, so the gate runs with a plain `node tools/...` rather than
+// needing the caller to remember `set -a; . ./.env.local`. Hand-rolled because this repo has no dotenv
+// and a gate should not add a dependency. Real environment variables always win — a CI secret must never
+// be silently overridden by a file someone left on disk.
+(() => {
+  const f = new URL('../.env.local', import.meta.url);
+  if (!existsSync(f)) return;
+  for (const line of readFileSync(f, 'utf8').split('\n')) {
+    const m = line.match(/^\s*(?:export\s+)?([A-Z0-9_]+)\s*=\s*(.*)$/);
+    if (!m) continue;
+    let v = m[2].trim();
+    // strip ONE matching pair of surrounding quotes; a service-account JSON is quoted and must survive
+    if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) v = v.slice(1, -1);
+    if (process.env[m[1]] === undefined) process.env[m[1]] = v;
+  }
+  console.log('loaded ventrify-os/.env.local\n');
+})();
+
 const admin = require('firebase-admin');
 const PS = require('../api/_prescreen.js');
 const { VSS_RUBRIC } = await import(new URL('../shared/vss-rubric.js', import.meta.url));
@@ -32,8 +52,13 @@ const estCost = (tokens) => (tokens / 1e6 * 8 * 1.25) + (21 * tokens / 1e6 * 2) 
 
 if (!process.env.FIREBASE_SERVICE_ACCOUNT) {
   console.log('FIREBASE_SERVICE_ACCOUNT is not set — this gate reads real engagements and cannot run without it.');
+  console.log('Put it in ventrify-os/.env.local (gitignored), or export it. From the OS Vercel project:');
+  console.log('  cd ventrify-os && vercel env pull --environment=production .env.local');
   process.exit(2);
 }
+// A quoted JSON blob that did not survive the shell is the most likely failure here, so say which one.
+try { JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT); }
+catch { console.log('FIREBASE_SERVICE_ACCOUNT is set but is not valid JSON — it needs the whole service-account object on one line.'); process.exit(2); }
 if (LIVE && !process.env.ANTHROPIC_API_KEY) {
   console.log('--live needs ANTHROPIC_API_KEY.');
   process.exit(2);
