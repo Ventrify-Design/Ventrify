@@ -29,9 +29,14 @@
 const MODEL = 'claude-opus-5-5';
 const API = 'https://api.anthropic.com/v1/messages';
 
-// Fast mode: ~2.5× the output tokens per second at 2× the price ($8/$40 per MTok). Output tokens set the
-// clock on this run, so the budget headroom converts almost directly into wall-clock, and wall-clock is
-// what the "about a minute" promise is made of. Claude API only — not Bedrock/Vertex/Foundry.
+// Fast mode doubles output speed at double the price ($8/$40 per MTok vs $4/$20). It is a research
+// preview with its own allocation, and THIS ORGANISATION HAS NONE — a request for it is refused with
+// "rate limit of 0 fast mode input tokens per minute", which is a capability answer, not back-pressure.
+//
+// DEFAULT IS STANDARD, decided with the operator on 2026-10-30: half the price, roughly twice the
+// wall-clock, identical scores. The promise is "under three minutes", not "about a minute". Pass
+// speed:'fast' explicitly if an allocation is ever granted.
+const DEFAULT_SPEED = 'standard';
 const FAST_BETA = 'fast-mode-2026-02-01';
 
 // ~4 chars/token is close enough for English prose; this exists to cap the corpus, not to bill anyone.
@@ -214,7 +219,7 @@ function schemaFor(cat) {
 // nothing is cached yet. Fast mode is a research preview with its own allocation, and an org without
 // one is refused with "rate limit of 0 fast mode input tokens per minute" — not an error to work
 // around, just a capability to detect once.
-function requestBody(cat, corpusText, { warm = false, speed = 'fast' } = {}) {
+function requestBody(cat, corpusText, { warm = false, speed = DEFAULT_SPEED } = {}) {
   return {
     model: MODEL,
     // Pre-warm writes the cache without generating anything (§6, trap 3).
@@ -244,7 +249,9 @@ async function callClaude(body, apiKey) {
       'content-type': 'application/json',
       'x-api-key': apiKey,
       'anthropic-version': '2023-06-01',
-      'anthropic-beta': FAST_BETA,
+      // The fast-mode beta header is only meaningful alongside speed:'fast'. Sending it otherwise is
+      // harmless but misleading to anyone reading the request.
+      ...(body.speed === 'fast' ? { 'anthropic-beta': FAST_BETA } : {}),
     },
     body: JSON.stringify(body),
   });
@@ -265,7 +272,7 @@ async function callClaude(body, apiKey) {
  * writing the cache, so all 21 would miss and the run would cost ~5× its budget (§6, trap 3).
  * Returns the usage so the caller can assert the write actually happened.
  */
-async function warmCache(corpusText, apiKey, speed = 'fast') {
+async function warmCache(corpusText, apiKey, speed = DEFAULT_SPEED) {
   const out = await callClaude(requestBody(null, corpusText, { warm: true, speed }), apiKey);
   const u = out.usage || {};
   return { wrote: u.cache_creation_input_tokens || 0, read: u.cache_read_input_tokens || 0, speed: u.speed || null };
@@ -281,7 +288,7 @@ async function warmCache(corpusText, apiKey, speed = 'fast') {
  * fallback mid-run makes every remaining probe pay full uncached price. On a 429 we surface it with its
  * retry-after and let the caller decide; we never quietly change speed underneath the run.
  */
-async function probeCategory(cat, corpusText, apiKey, speed = 'fast') {
+async function probeCategory(cat, corpusText, apiKey, speed = DEFAULT_SPEED) {
   const body = requestBody(cat, corpusText, { speed });
   const settled = await Promise.allSettled(
     Array.from({ length: DRAWS }, () => callClaude(body, apiKey))
@@ -398,7 +405,7 @@ function rangeBand(floor, ceiling) {
 }
 
 module.exports = {
-  MODEL, FAST_BETA, DRAWS, PAR, MAX_PER_SIGNAL, CORPUS_MAX_TOKENS, isFastUnavailable,
+  MODEL, FAST_BETA, DEFAULT_SPEED, DRAWS, PAR, MAX_PER_SIGNAL, CORPUS_MAX_TOKENS, isFastUnavailable,
   estTokens, buildCorpus, docPriority, orderForBudget, systemBlock, categoryPrompt, schemaFor, requestBody,
   warmCache, probeCategory, medianOf, consolidate, composeRange, bandOf, rangeBand, BAND_ORDER,
 };

@@ -97,9 +97,10 @@ ok(JSON.stringify(it.properties.slug.enum) === JSON.stringify(cat.subs), 'slug i
 ok(JSON.stringify(it.properties.score.enum) === '[0,1,2,3,4,5]', 'score is an enum 0–5 (numeric ranges are unsupported)');
 ok(it.additionalProperties === false, 'additionalProperties:false, as structured outputs require');
 
-console.log('\n10. REQUEST — the Fast-mode contract');
+console.log('\n10. REQUEST — the model contract');
 const b = P.requestBody(cat, c1.text);
-ok(b.speed === 'fast', 'speed:"fast" is a top-level parameter');
+ok(!('speed' in b), 'no speed parameter by default — standard, because this org has no fast allocation');
+ok(P.requestBody(cat, c1.text, { speed: 'fast' }).speed === 'fast', 'speed:"fast" is a top-level parameter when asked for');
 ok(b.model === 'claude-opus-5-5', 'model is claude-opus-5-5');
 ok(b.output_config.effort === 'low', 'effort set explicitly to low (the default is medium)');
 ok(!('thinking' in b), 'no thinking parameter — disabling it is a 400 on this model at every effort');
