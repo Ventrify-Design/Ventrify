@@ -12,7 +12,7 @@
 
 /* ---- masthead: scroll-linked collapse, driven by --mh-p (0 = full, 1 = minified) ----
    Continuous (tracks the scroll position) rather than a threshold snap. */
-.masthead { --mh-p: 0; transition: box-shadow .25s var(--md-sys-motion-standard); }
+.masthead { --mh-p: 0; --mh-hero-max: 96px; transition: box-shadow .25s var(--md-sys-motion-standard); }
 .masthead.minified { box-shadow: var(--shadow-mh-min); }
 .mh-bar { margin-bottom: 12px; align-items: center; }
 .mh-lead { display: flex; align-items: center; gap: 16px; min-width: 0; }
@@ -43,7 +43,7 @@
 /* on scroll, the BREADCRUMB (depth ≥ 2) collapses out of the minified bar — the compact title
    replaces it. The L1 section eyebrow (depth 1) stays put. */
 .masthead .mh-orient:not([data-depth="1"]) { overflow: hidden; opacity: calc(1 - var(--mh-p) * 2); max-width: max(0px, calc(600px * (1 - var(--mh-p) * 2))); }
-.masthead .mh-hero { min-width: 0; overflow: hidden; max-height: calc(96px * (1 - var(--mh-p))); opacity: calc(1 - var(--mh-p) * 1.7); transform: translateY(calc(-6px * var(--mh-p))); margin: 2px 0 calc(16px * (1 - var(--mh-p))); }
+.masthead .mh-hero { min-width: 0; overflow: hidden; max-height: calc(var(--mh-hero-max) * (1 - var(--mh-p))); opacity: calc(1 - var(--mh-p) * 1.7); transform: translateY(calc(-6px * var(--mh-p))); margin: 2px 0 calc(16px * (1 - var(--mh-p))); }
 /* headline never scales/restyles on scroll — it is headline-m at rest AND minified (the compact title is the same token) */
 
 /* masthead hero pieces (real pages): headline row with optional avatar + status pill (the eyebrow is now .mh-orient[data-depth="1"]) */
@@ -53,6 +53,13 @@
 .mh-av { width: 52px; height: 52px; border-radius: 16px; background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); display: grid; place-items: center; font-weight: 500; font-size: 18px; flex: none; }
 
 @media (prefers-reduced-motion: reduce) { .mh-compact, .mh-hero, .mh-hero .headline-m, .mh-sub { transition: none; } }
+/* The hero's uncollapsed cap was a hardcoded 96px, which is the right size for ONE line of
+   subheading at desktop width. Narrow the viewport and the headline wraps to two lines and
+   the subheading to three — ~138px of content under a 96px cap with overflow:hidden, so the
+   subheading was cut off mid-sentence on every page that has one (assess-next included, not
+   just the newest page). The cap is a token now and grows where the content does; the
+   collapse still runs to 0 at --mh-p: 1, so the scroll animation is unchanged in kind. */
+@media (max-width: 900px) { .masthead { --mh-hero-max: 190px; } }
 /* scroll-demo wrapper (used by the masthead specimen).
    overflow-anchor:none stops the browser re-adjusting scrollTop as the header collapses. */
 .mh-scroll { height: 100%; overflow-y: auto; overflow-anchor: none; background: var(--md-sys-color-surface); }

@@ -2011,6 +2011,55 @@ export function roomCheck(check = {}) {
   </section>`;
 }
 
+// ROOM_CLASSES — the six founder artefact classes the score counts, for the IDLE state of the data-room
+// panel, before anything has been uploaded and there is nothing to check yet.
+//
+// These labels are a SECOND copy of api/_roomcheck.js's CLASSES, which that file's header warns against:
+// "a checklist invented here would eventually disagree with the score, and the score is the thing being
+// sold." The objection is to DRIFT, not to a copy — and the browser cannot require a CommonJS api/ module.
+// So the copy is made safe by a gate instead of forbidden by a comment: tools/room-parity.mjs fails if the
+// keys, labels or wants here stop matching the server's. Change one, change both, or the build stops.
+export const ROOM_CLASSES = [
+  { key: 'financial_model',  label: 'Financial model',                      want: 'A projection over three or more periods with at least one revenue line and one cost line' },
+  { key: 'unit_economics',   label: 'Unit economics',                       want: 'At least two of: price or ARPU, CAC, churn or retention, LTV or payback' },
+  { key: 'cost_basis',       label: 'Cost basis',                           want: 'At least one cost line with where it comes from — a named vendor, a quoted rate, or a stated assumption' },
+  { key: 'ownership',        label: 'Ownership / cap table',                want: 'Any statement of who owns what — a cap table, equity split, share register, SAFE or option schedule' },
+  { key: 'corporate_legal',  label: 'Corporate / legal',                    want: 'Any one of: incorporation document, company number, articles, board minutes, shareholder or IP agreement' },
+  { key: 'observed_metrics', label: 'Observed metrics or primary research', want: 'At least one MEASURED number — not a forecast: pilot, waitlist, funnel, cohort, LOI, or primary interviews' },
+];
+
+// roomPreview — ORGANISM. The data-room panel BEFORE a room has been read.
+//
+// WHY IT IS NOT roomCheck WITH EVERYTHING ABSENT. Running the real component over an empty room would print
+// "6 of 6 document types could not be found", which is both true and useless: nobody has been asked for
+// anything yet. The spec's rule is that we never grade a founder on evidence we have not requested, and an
+// empty state is exactly where that rule is easiest to break. So this says what the score LOOKS FOR, in a
+// neutral voice, and it is genuinely useful on its own — it tells someone what to go and gather.
+//
+// It is also the reason the right-hand column of the create screen is never blank. The panel earns its place
+// before a single byte is uploaded, which is the whole argument for putting the data room at the centre.
+export function roomPreview(opts = {}) {
+  const { docCount = 0, deck = false } = opts;
+  const staged = docCount || deck;
+  // No `lead` — leadDot is retired, and no trailing word either: six identical "Looks for" chips would be
+  // noise. The empty trail cell keeps the column, so nothing shifts when the real check replaces this.
+  const lines = ROOM_CLASSES.map(c => row({
+    variant: 'metric', key: c.key, density: 'compact',
+    title: c.label, sub: c.want,
+    trail: { kind: 'value', value: '' },
+  })).join('');
+  const head = staged
+    ? `${docCount} document${docCount === 1 ? '' : 's'} staged${deck ? ' · pitch deck attached' : ''}`
+    : 'Nothing attached yet';
+  return `<section class="sec rc rp">
+    <div class="sec-head"><span class="eyebrow accent">Data room</span><span class="t">What the score looks for</span><span class="meta">${esc(head)}</span></div>
+    <div class="profile">${lines}</div>
+    <div class="profile-foot"><span>${staged
+      ? 'Link or upload the room and we read it in seconds — you will see which of these we can and cannot find before you spend a run.'
+      : 'Attach a pitch deck to begin. Link or upload a data room and we read it in seconds, then tell you which of these we can and cannot find — before you spend a run.'}</span></div>
+  </section>`;
+}
+
 // scoreMovement — ORGANISM. After a re-score: WHICH SIGNALS MOVED, AND WHICH WAY.
 //
 // It renders a FALL exactly as plainly as a rise — a fall is the mechanism WORKING (the source did not support
@@ -3617,6 +3666,91 @@ export function assessmentWizard(state = {}) {
 // surface — entered as a side-sheet over the current context, never a full page). Call once after initShell();
 // then window.openNewAssessment() opens the overlay and window.__wiz drives the 3-step state machine (re-rendering
 // into the aux body). Used by portfolio.html (empty + populated) and assess-setup.html. opts.onLaunch overrides
+
+// ============================================================
+// createScreen — TEMPLATE. Setting up an assessment, as a FULL PAGE rather than a side panel.
+//
+// WHY IT LEFT THE AUX PANEL. The standing rule was that setup happens end-to-end in the one panel and never
+// hands off to a second page. The INTENT of that rule — one surface, no scattering — is kept exactly; only
+// the mechanism changed, because the panel is ~390px at every viewport and the data-room read has become the
+// centre of the product rather than a footnote to it. A 390px column cannot hold a form AND a live reading
+// of what we can see, so the panel was deciding the product's shape.
+//
+// TWO COLUMNS, AND THE RIGHT ONE IS THE POINT. Left is what you type and attach. Right is what we can see,
+// filling in live. It starts as roomPreview() — never blank, useful before a single byte is uploaded — and
+// is replaced in place by the real roomCheck() the moment a room is read. That is why #na-room wraps the
+// whole right column rather than sitting under the Drive field as it did in the panel.
+//
+// EVERY ELEMENT ID IS UNCHANGED from the panel (na-name … na-room, .na-actions, .na-form). The create /
+// ingest / dispatch chain in workspace-m3.js is a working pipeline and is NOT re-implemented here — it is
+// keyed on these ids, so it drives this layout untouched. Extend that chain additively; never fork it.
+//
+// opts: { operators:[{v,l}], cta:{primary,secondary}, stages }
+// ============================================================
+export function createScreen(opts = {}) {
+  const { operators = [], cta = {}, stages = STAGES } = opts;
+  const opList = operators.length ? operators : [{ v: '', l: 'No operators' }];
+  // The handler is chosen by the action's id, so the two-button emphasis swap in
+  // shared/entitlements.ctaPair() decides placement and this decides behaviour — neither knows the other's job.
+  const handler = id => id === 'run_full' ? 'window.__wsCreateAssessment&&window.__wsCreateAssessment()'
+    : id === 'run_prescreen' ? 'window.__wsRunPrescreen&&window.__wsRunPrescreen()'
+    : 'window.__wsUnlock&&window.__wsUnlock()';
+  const btn = (a, variant) => a ? `<button class="m3-btn ${variant} na-run" type="button" disabled onclick="${handler(a.id)}"><span class="material-symbols-rounded">${esc(a.icon || 'play_arrow')}</span>${esc(a.label)}</button>` : '';
+
+  return `<div class="na-screen na-form">
+    <div class="na-main">
+      <section class="na-block">
+        <div class="na-block-h"><span class="eyebrow accent">The venture</span><span class="t">Who we are assessing</span></div>
+        ${formField({ label: 'Venture name', id: 'na-name', placeholder: 'e.g. Verdana Bio', attr: ' autocomplete="off"' })}
+        <div class="na-two">
+          ${formField({ label: 'Founder', id: 'na-founder', placeholder: 'e.g. Jane Okafor', hint: 'Who the assessment is about — the agents diligence them by name', attr: ' autocomplete="off"' })}
+          ${formField({ label: 'Founder email', id: 'na-founder-email', optional: true, type: 'email', placeholder: 'jane@acme.com', hint: 'Only needed to ask them for missing data-room documents' })}
+        </div>
+        <div class="na-two">
+          ${formField({ label: 'Website', id: 'na-site', optional: true, type: 'url', placeholder: 'acme.com' })}
+          ${formField({ label: 'Stage', id: 'na-stage', placeholder: 'Select stage', options: stages })}
+        </div>
+        ${formField({ label: 'Assessor', id: 'na-op', options: opList })}
+      </section>
+
+      <section class="na-block">
+        <div class="na-block-h"><span class="eyebrow accent">The evidence</span><span class="t">What we read</span></div>
+        <div class="na-sec">
+          <span class="na-lab">Pitch deck <span class="na-hint">required</span></span>
+          <div id="na-deck">${docDropzone([], { single: true, status: '', clearLabel: 'Replace', fileIcon: 'slideshow', icon: 'upload_file', prompt: 'Drop the pitch deck here', sub: 'PDF · the assessment runs from it.', note: 'Pitch deck · uploads when you run', onPick: "window.__naPick('deck')", onClear: 'window.__naClearDeck()' })}</div>
+        </div>
+        <div class="na-sec">
+          <span class="na-lab">Data room <span class="field-opt">optional</span></span>
+          <div id="na-docs">${docDropzone([], { status: '', icon: 'folder_open', prompt: 'Add data-room documents', sub: 'Financials, cap table, contracts, metrics — PDF, DOCX, XLSX, CSV, TXT, MD or ZIP.', note: 'Data room · uploads when you run', addLabel: 'Add more documents', onPick: "window.__naPick('docs')", onClear: 'window.__naClearDoc' })}</div>
+          <div class="na-drive">
+            <div class="na-drive-row">
+              ${formField({ label: 'Or link a Google Drive folder', id: 'na-drive', optional: true, type: 'url', placeholder: 'https://drive.google.com/drive/folders/…', hint: 'Shared with anyone who has the link, or with dataroom-reader@ventrify-os.iam.gserviceaccount.com' })}
+              <div class="na-drive-btns">
+                <button class="m3-btn tonal na-drive-go" type="button" onclick="window.__naReadRoom()">Read data room</button>
+                <button class="m3-btn text na-drive-again" type="button" onclick="window.__naCheckRoom()" hidden>Check for new files</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="na-prog" id="na-prog" hidden>
+        ${linearProgress({ indeterminate: true })}
+        <span class="na-prog-x" id="na-prog-x">Starting…</span>
+      </div>
+
+      <div class="na-actions">
+        <span class="na-gate" id="na-gate">Attach a pitch deck to begin.</span>
+        <div class="na-cta">${btn(cta.secondary, 'tonal')}${btn(cta.primary, 'filled')}</div>
+      </div>
+    </div>
+
+    <aside class="na-side">
+      <div class="na-side-in" id="na-room">${roomPreview({})}</div>
+    </aside>
+  </div>`;
+}
+
 // the staged demo (the real flow POSTs /api/create-engagement then /api/dispatch-run).
 export function initAssessmentWizard(opts = {}) {
   const state = { step: 0, name: '', deck: null,

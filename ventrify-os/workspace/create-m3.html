@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en" data-brand="verdictscore">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>New assessment · Ventrify OS</title>
+<meta name="description" content="Set up a venture assessment — details, pitch deck and data room on one screen, with a live read of what we can see in the room.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- The brand's faces. These MUST match what --font-text / --font-display name in
+     brand.css — tools/font-sync.mjs fails the build if a page stops fetching one. -->
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" rel="stylesheet">
+<!-- BRAND LAYER. Order is load-bearing: brand.css FIRST (the tokens everything
+     resolves against), brand-map LAST (the M3 role overrides, which lose to
+     ds.css at equal specificity if ds.css loads later). -->
+<link rel="stylesheet" href="../assets/brand/brand.css">
+<link rel="stylesheet" href="../shared/m3/theme.css">
+<link rel="stylesheet" href="../shared/m3/ds.css">
+<link rel="stylesheet" href="../shared/m3/assess-editorial.css">
+<link rel="stylesheet" href="../shared/m3/transitions.css">
+<link rel="stylesheet" href="../shared/m3/workspace-chrome.css">
+<link rel="stylesheet" href="../shared/m3/brand-map.css">
+</head>
+<body>
+<div id="app"></div>
+<script src="sample-data.js"></script>
+<script src="agents.js"></script>
+<script type="module" src="app.js"></script>
+<script type="module">
+  // NEW ASSESSMENT, as a full screen. Setup used to happen in the ~390px aux panel, which could only ever
+  // treat the data-room read as a footnote. Here it gets its own column and fills in live while you attach.
+  //
+  // The create / ingest / dispatch chain is NOT re-implemented here — it lives in workspace-m3.js, keyed on
+  // the element ids DS.createScreen() renders, and drives this layout untouched.
+  import * as DS from '../shared/m3/ds.js';
+  import { wsNavConfig, wsBrandConfig, wsAccountConfig, mountOrgSwitcherM3, initCreateScreen } from './workspace-m3.js';
+  import { ctaPair, defaultTier, TIERS } from '../shared/entitlements.js';
+
+  await window.WORKSPACE_READY;
+  const W = window.WORKSPACE;
+  const { org } = W;
+  const Plan = window.VentrifyPlan, plan = W.plan;
+
+  const chrome = { nav: wsNavConfig(), brand: wsBrandConfig(), account: wsAccountConfig() };
+  const tier = defaultTier(plan);
+  const cta = ctaPair(plan);
+
+  function mount(masthead, body) {
+    document.getElementById('app').outerHTML = DS.pageShell({ active: 'portfolio', aux: {}, ...chrome, masthead, body });
+    DS.initShell();
+    mountOrgSwitcherM3();
+  }
+
+  // ---- the allowance gate, tier-aware ----
+  // Checked for the tier this org would actually create. A self-serve account with no paid credits is NOT
+  // blocked here — it is allowed to pre-screen, and meets the paywall at the unlock button instead.
+  const gate = Plan ? Plan.canCreate(plan, W.programs || [], 'assessment', tier) : { allowed: true };
+  if (!gate.allowed) {
+    mount(
+      DS.masthead({ breadcrumb: { label: 'Portfolio', href: 'dashboard-m3.html' }, crumbTail: 'New assessment',
+        eyebrow: 'New assessment', headline: 'No allowance left on this plan',
+        subheading: gate.reason === 'capability' ? 'This workspace’s licence doesn’t include assessments.' : 'You’ve used every assessment your plan allows.' }),
+      `<div class="brief">${DS.noteCard({ center: true, text: gate.reason === 'capability'
+        ? 'Ask your administrator to add assessments to this organisation’s licence.'
+        : 'Ask your administrator to raise the allowance, or upgrade the organisation’s licence.' })}</div>`
+    );
+    // Halts by never resolving rather than throwing — a throw here is an uncaught Error in the console,
+    // indistinguishable from a page that actually broke. Same idiom as dashboard-m3 / admin-m3.
+    await new Promise(() => {});
+  }
+
+  const operators = (W.operators || []).map(o => ({ v: o.id, l: `${o.name} · ${o.role}` }));
+
+  mount(
+    DS.masthead({
+      breadcrumb: { label: 'Portfolio', href: 'dashboard-m3.html' }, crumbTail: 'New assessment',
+      eyebrow: 'New assessment',
+      headline: `Assess a venture for ${(org && org.name) || 'your workspace'}`,
+      subheading: tier === 'prescreen'
+        ? 'Attach the deck and we’ll give you a free range in about a minute — then you can unlock the full assessment.'
+        : 'Attach the deck and the data room. We read the room first, so you know what we can see before the run starts.',
+    }),
+    `<div class="brief">${DS.createScreen({ operators, cta })}</div>`
+  );
+  initCreateScreen();
+</script>
+</body>
+</html>

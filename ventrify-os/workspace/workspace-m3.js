@@ -7,16 +7,20 @@
 // NO app.js edits, no pipeline touch. Pure read + present.
 // ============================================================
 
-import { _esc as esc, formField, STAGES, docDropzone, linearProgress, roomCheck } from '../shared/m3/ds.js';   // ONE real HTML escaper + the single-source form-field / dropzone molecules + the shared stage list
+import { _esc as esc, docDropzone, roomCheck } from '../shared/m3/ds.js';   // ONE real HTML escaper + the dropzone molecule (repainting staged files) + the data-room playback. The FORM markup now lives in DS.createScreen().
 function initials(name) {
   return String(name || '').trim().split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || 'V';
 }
 
-// ---- New assessment (M3) — the WHOLE setup happens IN THE AUX PANEL: details + pitch deck + data room,
-// then ONE primary action: "Run assessment". It creates → ingests the deck (MANDATORY — dispatch-run refuses
-// to start without one) → ingests the data room (optional) → dispatches the run → lands on the assessment,
-// already running. No second page to do the work in, and no legacy build wizard.
-// Exposed as window.openNewAssessment. ----
+// ---- New assessment (M3) — the WHOLE setup happens on ONE SCREEN: details + pitch deck + data room, with
+// the data-room read filling in live beside it, then ONE primary action. It creates → ingests the deck
+// (MANDATORY — dispatch-run refuses to start without one) → ingests the data room (optional) → dispatches
+// the run → lands on the assessment, already running. No legacy build wizard.
+//
+// THE SURFACE MOVED, THE CHAIN DID NOT. Setup used to render into the aux panel; it now renders as
+// create-m3.html from the DS.createScreen() template. Every element id below is unchanged, which is the
+// whole reason this pipeline did not have to be rewritten to move it. Do not fork it — extend additively.
+// window.openNewAssessment now navigates there, so every call site repoints at once. ----
 const HUB_IDS = ['research', 'vision', 'strategy', 'financials', 'marketing', 'video', 'blog'];
 
 // Files staged in the panel — held in memory and uploaded only once the engagement exists (ingest
@@ -60,10 +64,12 @@ const naPaintDocs = () => {
 // one), so the button stays disabled until a deck is staged — and a disabled .m3-btn has pointer-events:none,
 // so the REASON lives in a sibling hint, never on the button.
 function naSyncCta() {
-  const b = document.querySelector('.na-actions .m3-btn.filled');
+  // `.na-run` covers BOTH actions — the create screen offers two (pre-screen / full), and gating only the
+  // filled one would leave the tonal sibling live with no deck attached.
+  const btns = document.querySelectorAll('.na-actions .na-run');
   const gate = document.getElementById('na-gate');
   const ready = !!NA.deck && !NA.busy;
-  if (b) b.disabled = !ready;
+  btns.forEach(b => { b.disabled = !ready; });
   if (gate) gate.hidden = !!NA.deck;   // once a deck is attached the hint has nothing left to say
 }
 // The progress surface. Text is the real ingest phase — never a fabricated percentage.
@@ -96,58 +102,39 @@ window.__naPick = (kind) => {
 window.__naClearDeck = () => { NA.deck = null; naPaintDeck(); };
 window.__naClearDoc = (i) => { NA.docs.splice(i, 1); naPaintDocs(); };
 
+// Navigate to the create screen. The plan/tier gate lives THERE, not here: the check now depends on which
+// tier is being created, and duplicating that decision at every call site is how the two drift apart.
 export function openNewAssessment() {
-  const W = window.WORKSPACE || {};
-  const operators = W.operators || [];
-  const Plan = window.VentrifyPlan, plan = W.plan;
-  if (Plan && !Plan.canCreate(plan, W.programs || [], 'assessment').allowed) {
-    window.openAux({ mode: 'overlay', title: 'Plan limit reached', subtitle: 'New assessment', body: `<div style="padding:4px 2px"><div class="body-m" style="color:var(--md-sys-color-on-surface-variant)">You’ve used your assessment allowance for this plan.</div><div style="margin-top:14px"><button class="m3-btn filled" onclick="window.__requestUpgrade&&window.__requestUpgrade()">Request an upgrade</button></div></div>` });
-    return;
-  }
-  NA.deck = null; NA.docs = []; NA.busy = false; NA.deckStatus = ''; NA.docStatus = {};   // fresh panel → nothing staged
-  const opList = operators.length ? operators.map(o => ({ v: o.id, l: `${o.name} · ${o.role}` })) : [{ v: '', l: 'No operators' }];
-  window.openAux({
-    mode: 'overlay', title: 'New assessment', subtitle: 'Assess a venture from its deck',
-    body: `<div class="na-form">
-      ${formField({ label: 'Venture name', id: 'na-name', placeholder: 'e.g. Verdana Bio', attr: ' autocomplete="off"' })}
-      ${formField({ label: 'Founder', id: 'na-founder', placeholder: 'e.g. Jane Okafor', hint: 'Who the assessment is about — the agents diligence them by name', attr: ' autocomplete="off"' })}
-      ${formField({ label: 'Founder email', id: 'na-founder-email', optional: true, type: 'email', placeholder: 'jane@acme.com', hint: 'Only needed to ask them for missing data-room documents' })}
-      ${formField({ label: 'Assessor', id: 'na-op', options: opList })}
-      <div class="na-two">
-        ${formField({ label: 'Website', id: 'na-site', optional: true, type: 'url', placeholder: 'acme.com' })}
-        ${formField({ label: 'Stage', id: 'na-stage', placeholder: 'Select stage', options: STAGES })}
-      </div>
-      <div class="na-sec">
-        <span class="na-lab">Pitch deck <span class="na-hint">the assessment runs from it</span></span>
-        <div id="na-deck">${docDropzone([], naDeckOpts)}</div>
-      </div>
-      <div class="na-sec">
-        <span class="na-lab">Data room <span class="field-opt">optional</span></span>
-        <div id="na-docs">${docDropzone([], naDocsOpts)}</div>
-        <div class="na-drive">
-          <div class="na-drive-row">
-            ${formField({ label: 'Or link a Google Drive folder', id: 'na-drive', optional: true, type: 'url', placeholder: 'https://drive.google.com/drive/folders/…', hint: 'Shared with anyone who has the link, or with dataroom-reader@ventrify-os.iam.gserviceaccount.com' })}
-            <div class="na-drive-btns">
-              <button class="m3-btn tonal na-drive-go" type="button" onclick="window.__naReadRoom()">Read data room</button>
-              <button class="m3-btn text na-drive-again" type="button" onclick="window.__naCheckRoom()" hidden>Check for new files</button>
-            </div>
-          </div>
-          <div id="na-room"></div>
-        </div>
-      </div>
-      <div class="na-prog" id="na-prog" hidden>
-        ${linearProgress({ indeterminate: true })}
-        <span class="na-prog-x" id="na-prog-x">Starting…</span>
-      </div>
-      <div class="na-actions">
-        <span class="na-gate" id="na-gate">Attach a pitch deck to run the assessment.</span>
-        <button class="m3-btn filled" disabled onclick="window.__wsCreateAssessment()"><span class="material-symbols-rounded">play_arrow</span>Run assessment</button>
-      </div>
-    </div>`
-  });
-  setTimeout(() => { const i = document.getElementById('na-name'); if (i) { i.focus(); i.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); window.__wsCreateAssessment(); } }); } naSyncCta(); }, 60);
+  location.href = 'create-m3.html';
 }
+
+// Reset the staged state. The screen is a real page now, so a browser Back and a second visit must not
+// inherit a half-filled NA from the last one.
+export function resetNewAssessment() {
+  NA.deck = null; NA.docs = []; NA.busy = false; NA.deckStatus = ''; NA.docStatus = {};
+  NA.driveUrl = ''; NA.driveFiles = null; NA.roomRead = false; NA.createdId = null; NA.created = null;
+}
+
 window.openNewAssessment = openNewAssessment;
+
+// Boot the create SCREEN. The panel did this inline on open; a page has to be told when its DOM exists.
+// Resets first — a browser Back onto this page must not inherit the last visit's staged files.
+export function initCreateScreen() {
+  resetNewAssessment();
+  const i = document.getElementById('na-name');
+  if (i) {
+    i.focus();
+    // Enter submits the PRIMARY action, whichever audience's it is — never a hardcoded one.
+    i.addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      const b = document.querySelector('.na-actions .m3-btn.filled.na-run');
+      if (b && !b.disabled) b.click();
+    });
+  }
+  naSyncCta();
+}
+
 
 // Gather + validate the form once. Returns null (having toasted) when something required is missing.
 function naForm() {
@@ -324,10 +311,29 @@ window.__naRequestDocs = async () => {
   }
 };
 
+// RUN A PRE-SCREEN. The free ~1-minute read that returns a range rather than a score.
+// NOT BUILT YET — the engine is the next piece (design/prescreen-spec.md §5/§6). It is wired now so the
+// create screen ships with both actions in their real positions; a button that silently did the wrong
+// thing would be worse than one that says what it is.
+window.__wsRunPrescreen = async () => {
+  window.__toast('The pre-screen engine is still being built — run the full assessment for now.', true);
+};
+
+// UNLOCK. With BILLING_ENFORCED false this simply runs the full assessment: Stripe is not wired, and the
+// operator must keep being able to run full assessments. When the flag flips, this routes to checkout and
+// nothing else about the screen changes.
+window.__wsUnlock = async () => {
+  const { unlockRoute } = await import('../shared/entitlements.js');
+  if (unlockRoute() === 'checkout') { window.__toast('Checkout is not wired up yet.', true); return; }
+  return window.__wsCreateAssessment();
+};
+
 window.__wsCreateAssessment = async () => {
   const f = naForm(); if (!f) return;
   const W = window.WORKSPACE || {};
-  const land = () => { NA.deck = null; NA.docs = []; NA.deckStatus = ''; NA.docStatus = {}; NA.driveFiles = null; NA.roomRead = false; const id = NA.createdId; NA.createdId = null; window.closeOverlay && window.closeOverlay(); location.href = 'assess-next.html?id=' + encodeURIComponent(id); };
+  // Setup is a full page now, so landing is a navigation, not an overlay close. closeOverlay stays guarded
+  // for the DS demo, which still runs this chain inside a panel.
+  const land = () => { const id = NA.createdId; resetNewAssessment(); window.closeOverlay && window.closeOverlay(); location.href = 'assess-next.html?id=' + encodeURIComponent(id); };
 
   naBusy(true);
   try {

@@ -416,3 +416,72 @@ body.signin::after {
   .na-actions { flex-direction: column; align-items: stretch; }
   .na-actions .m3-btn { width: 100%; }
 }
+
+/* ============================================================
+   NEW ASSESSMENT — FULL SCREEN (createScreen template)
+   Loaded after the .na-* panel rules above, so the two-class-equal overrides
+   (.na-screen beating .na-form's flex) resolve by order. Do not move this block
+   above them.
+
+   The panel version was ~390px at every viewport, which is why the data-room
+   read could only ever be a footnote under the Drive field. Here it gets its
+   own column and becomes what the screen is actually about.
+   ============================================================ */
+.na-screen {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 380px);
+  align-items: start;
+  gap: 40px;
+  padding: 0;
+}
+.na-main { display: flex; flex-direction: column; gap: 28px; min-width: 0; }
+
+/* A titled band rather than a card: the editorial surfaces dropped card tubs, and a
+   setup form is not more important than a verdict. Rule above, nothing around it. */
+.na-block { display: flex; flex-direction: column; gap: 14px; }
+.na-block + .na-block { padding-top: 26px; border-top: 1px solid var(--md-sys-color-outline-variant); }
+.na-block-h { display: flex; flex-direction: column; gap: 4px; margin-bottom: 2px; }
+.na-block-h .t { font-family: var(--font-display, inherit); font-size: 19px; font-weight: 600; letter-spacing: -.01em; color: var(--md-sys-color-on-surface); }
+
+/* The first .na-sec inside a block already has the block's own heading above it, so its
+   divider would draw a second line immediately under the first. */
+.na-screen .na-block > .na-sec:first-of-type { padding-top: 0; border-top: none; }
+
+/* THE LIVE COLUMN. Sticky, because the form is taller than the viewport and the whole
+   point is that you watch this change while you attach things.
+
+   NO TUB. It is separated by a rule, not a filled card — same decision as every other
+   editorial surface in the product. A panel this tall in a container colour reads as a
+   second page stapled to the first, and the content here is a list, not an alert. */
+.na-side { position: sticky; top: 24px; min-width: 0; padding-left: 36px; border-left: 1px solid var(--md-sys-color-outline-variant); }
+.na-side-in .sec { padding-block: 0; border: none; }
+.na-side-in .sec-head { margin-bottom: 10px; }
+/* Each line's `want` sentence IS the value of this panel — it tells someone what to go and
+   gather. .mrow-sub clamps to two lines everywhere else, which truncated every one of them. */
+.na-side-in .rp .mrow-sub { -webkit-line-clamp: unset; display: block; white-space: normal; }
+
+/* Two actions, not one: shared/entitlements.ctaPair() swaps which is filled by audience.
+   The inherited `.na-actions .m3-btn { margin-left: auto }` would push them apart, so the
+   group takes the auto margin and the buttons sit together. */
+.na-screen .na-actions { padding-top: 22px; }
+.na-screen .na-actions .m3-btn { margin-left: 0; }
+.na-cta { display: flex; align-items: center; gap: 10px; margin-left: auto; flex-wrap: wrap; justify-content: flex-end; }
+
+@media (max-width: 1100px) {
+  /* Below this the two columns starve each other — the form loses its two-up fields and
+     the live panel is too narrow to read a want-sentence in. Stack, live panel last:
+     you fill the form first, and it is most useful once something is attached. */
+  .na-screen { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+  /* Stacked, the rule belongs above it, not beside it. */
+  .na-side { position: static; padding-left: 0; padding-top: 26px; border-left: none; border-top: 1px solid var(--md-sys-color-outline-variant); }
+}
+@media (max-width: 640px) {
+  .na-screen { gap: 24px; }
+  .na-main { gap: 22px; }
+  .na-block + .na-block { padding-top: 20px; }
+  .na-side { padding-top: 20px; }
+  .na-screen .na-actions { flex-direction: column; align-items: stretch; }
+  .na-cta { margin-left: 0; flex-direction: column-reverse; align-items: stretch; }
+  /* 44px minimum touch target, and the primary reads first in the column-reverse order. */
+  .na-cta .m3-btn { min-height: 44px; justify-content: center; }
+}

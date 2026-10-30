@@ -33,6 +33,7 @@ const STATES = [
   { page: 'admin-m3.html',              label: 'Admin' },
   { page: 'assess-next.html?id=prg-07', label: 'Assessment — scored' },
   { page: 'assess-next.html?id=prg-01', label: 'Assessment — forming' },
+  { page: 'create-m3.html',             label: 'New assessment' },
   { page: 'setup.html',                 label: 'Setup' },
 ];
 

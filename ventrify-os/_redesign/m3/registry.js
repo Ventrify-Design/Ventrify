@@ -1072,7 +1072,7 @@ export const CATALOG = {
   },
   assessmentWizard: {
     level: 'organism', group: 'Organisms', domain: 'Workspace', title: 'Assessment wizard', sig: 'assessmentWizard(state)',
-    blurb: 'The 3-step assessment setup body — Name → Upload deck (hard gate) → Confirm & run — as a pure function of wizard state. Deck folded IN so "Create & run" already dispatches (a fix over the live [1,4] flow that strands a deck-less engagement). Entered via the AUX PANEL OVERLAY (a side sheet over the current context, never a full page — wired by initAssessmentWizard → window.openNewAssessment); fills the panel width. Launch stages the demo (→ portfolio.html?state=one).',
+    blurb: 'SUPERSEDED — use createScreen. The 3-step aux-panel setup body (Name → Upload deck → Confirm & run). Setup is a full page now: the panel was ~390px at every viewport, so the data-room read could only ever be a footnote under the Drive field, and the read is the point. Kept only because portfolio.html / portfolio-brand.html still demo the overlay affordance. Do not build on it.',
     maxw: null, pad: true,
     html: () => `<div class="brief" style="padding:20px 28px"><div style="max-width:640px;margin:0 auto">${DS.assessmentWizard({ step: 1, name: 'MoneyGym', deck: { title: 'MoneyGym — Seed pitch deck v0.1a.pdf', note: 'Pitch deck · ready to run' } })}</div></div>`,
     props: [{ name: 'state', type: '{step, name, deck, mode, on…}' }], variants: [{ label: 'route', note: 'first-time, guided primer' }, { label: 'overlay', note: 'returning, mini primer' }], usedIn: ['assess-setup.html'],
@@ -1106,11 +1106,29 @@ export const CATALOG = {
     maxw: null, pad: false, html: null,
     props: [{ name: 'body', type: 'assessingMemo(a, s, rs)' }, { name: 'masthead', type: 'no tabs · Stop (outlined) when canStopRun(rs)' }, { name: 'states', type: '?state=running|silent|queued|quiet|paused|error|republish' }], variants: [], usedIn: [], adaptive: noAdapt
   },
+  createScreen: {
+    level: 'template', group: 'Templates', domain: 'Workspace', title: 'Create screen', sig: 'createScreen({operators, cta})',
+    blurb: 'Setting up an assessment as a FULL PAGE. Left: what you type and attach. Right: what we can see, filling in live — roomPreview() before anything is uploaded, replaced in place by roomCheck() the moment a room is read. Two actions, not one: shared/entitlements.ctaPair() swaps which is filled by audience (free tier leads with the pre-screen, a licensee with the full run). Every element id matches the retired aux panel, so the live create/ingest/dispatch chain drives it untouched.',
+    maxw: null, pad: true,
+    html: () => `<div class="brief" style="padding:20px 28px">${DS.createScreen({ operators: [{ v: 'op-1', l: 'Alex Doré · Program Lead' }], cta: { primary: { id: 'run_full', label: 'Run full assessment', icon: 'play_arrow' }, secondary: { id: 'run_prescreen', label: 'Run pre-screen first', icon: 'bolt' } } })}</div>`,
+    props: [{ name: 'operators', type: '[{v,l}]' }, { name: 'cta', type: '{primary,secondary} from ctaPair(plan)' }, { name: 'stages', type: 'STAGES' }],
+    variants: [{ label: 'Licensed', note: 'full run filled, pre-screen tonal' }, { label: 'Free tier', note: 'pre-screen filled, unlock tonal' }],
+    usedIn: ['assess-setup.html', 'create-m3.html'],
+    adaptive: { status: 'built', layout: { mobile: 'Single column; the live panel moves below the form, separated by a rule.', tablet: 'Single column below 1100px — two columns starve each other.', desktop: 'Two columns, live panel sticky.' }, content: { mobile: 'Full.', tablet: 'Full.', desktop: 'Full.' } }
+  },
+  roomPreview: {
+    level: 'organism', group: 'Organisms', domain: 'Workspace', title: 'Data-room preview', sig: 'roomPreview({docCount, deck})',
+    blurb: 'The data-room panel BEFORE a room has been read. Deliberately NOT roomCheck with everything absent — that would print "6 of 6 could not be found", which is true and useless, because nobody has been asked for anything yet. It states what the score LOOKS FOR, which is useful on its own: it tells someone what to go and gather. Its six classes are gated against api/_roomcheck.js by tools/room-parity.mjs so the copy can never drift from the scorer.',
+    maxw: 420, pad: true,
+    html: () => `<div class="brief" style="padding:20px 24px;max-width:420px">${DS.roomPreview({})}</div>`,
+    props: [{ name: 'docCount', type: 'number' }, { name: 'deck', type: 'boolean' }],
+    variants: [{ label: 'Idle', note: 'nothing attached' }, { label: 'Staged', note: 'counts what is waiting to upload' }], usedIn: ['createScreen'], adaptive: noAdapt
+  },
   assessSetupPage: {
-    level: 'page', group: 'Pages', domain: 'Workspace', title: 'New assessment (overlay)', sig: 'assess-setup.html', src: 'assess-setup.html',
-    blurb: 'The new-assessment flow demonstrated in context — the populated portfolio with the assessment wizard opened in the AUXILIARY PANEL OVERLAY (a side sheet over the pipeline). Name → Upload deck (hard gate) → Confirm & run; launch stages the demo. The same overlay is reachable from every portfolio state via the masthead "New assessment" (and the empty-state CTA).',
+    level: 'page', group: 'Pages', domain: 'Workspace', title: 'New assessment', sig: 'assess-setup.html', src: 'assess-setup.html',
+    blurb: 'The new-assessment flow as it ships — a full screen, not a side sheet. Details + pitch deck + data room on the left, the live data-room read on the right. ?plan=self-serve previews the free tier, where the two CTAs swap emphasis.',
     maxw: null, pad: false, html: null,
-    props: [{ name: 'surface', type: 'aux panel overlay (openNewAssessment)' }, { name: 'body', type: 'assessmentWizard' }, { name: 'launch', type: 'staged → portfolio.html?state=one' }], variants: [], usedIn: [], adaptive: noAdapt
+    props: [{ name: 'surface', type: 'full page (create-m3.html)' }, { name: 'body', type: 'createScreen' }, { name: 'cta', type: 'ctaPair(plan)' }], variants: [], usedIn: [], adaptive: noAdapt
   },
   portfolioPage: {
     level: 'page', group: 'Pages', title: 'Portfolio', sig: 'portfolio.html', src: 'portfolio.html',

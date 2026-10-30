@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>New assessment · Ventrify OS</title>
-<meta name="description" content="Set up a venture assessment in the auxiliary panel — name it, upload the pitch deck, and run. The assessment researches the deck and returns a scored verdict.">
+<meta name="description" content="Setting up a venture assessment — details, pitch deck and data room on one screen, with a live read of what the score can see in the room.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" rel="stylesheet">
@@ -13,37 +13,37 @@
 <link rel="stylesheet" href="ds.css">
 <link rel="stylesheet" href="assess-editorial.css">
 <link rel="stylesheet" href="transitions.css">
+<link rel="stylesheet" href="workspace-chrome.css">
 </head>
 <body>
 <div id="app"></div>
 <script type="module">
   import * as DS from './ds.js';
-  import { ENGAGEMENTS } from './data.js';
   import { resolveActions } from '../../shared/actions.js';
+  import { ctaPair } from '../../shared/entitlements.js';
 
-  // The new-assessment flow lives in the AUXILIARY PANEL OVERLAY — a side sheet over the current context, never a
-  // full page. This page demonstrates it in context: the populated portfolio with the wizard opened over it.
+  // SETUP IS A FULL PAGE, not a side sheet. It used to render into the ~390px aux panel, which could only
+  // ever treat the data-room read as a footnote under the Drive field. The read is now the point, so it
+  // gets its own column: left is what you type and attach, right is what we can see, filling in live.
+  //
+  // ?plan=self-serve previews the free-tier emphasis — same two buttons, filled/tonal swapped by
+  // shared/entitlements.ctaPair(). Nothing here chooses that; the entitlement does.
+  const plan = { preset: new URLSearchParams(location.search).get('plan') || 'full' };
   const acts = resolveActions({ page: 'portfolio' });
-  const rows = ENGAGEMENTS;
-  const stats = [
-    { n: String(rows.length), l: 'Active engagements' },
-    { n: String(rows.filter(r => r.runState && ['queued', 'running', 'partial'].includes(r.runState.status)).length), l: 'Assessments in flight' },
-    { n: String(rows.filter(r => r.rec).length), l: 'Verdicts ready' },
-    { n: String(rows.filter(r => r.runState && r.runState.status === 'idle').length), l: 'Awaiting a deck' }
-  ];
+
   document.getElementById('app').outerHTML = DS.pageShell({
     active: 'portfolio', aux: {}, rail: acts.rail, railOverflow: acts.overflow,
     masthead: DS.masthead({
-      breadcrumb: false, eyebrow: 'Portfolio', headline: 'All engagements', headlineMeta: `· ${rows.length} active`,
-      subheading: 'Every venture on your workspace — open one for the full assessment and timeline.',
-      actions: [{ ...acts.primary, label: 'New assessment', onclick: 'window.openNewAssessment&&window.openNewAssessment()' }]
+      breadcrumb: { label: 'Portfolio', href: 'portfolio.html' }, crumbTail: 'New assessment',
+      eyebrow: 'New assessment', headline: 'Assess a venture for Mercer Ventures',
+      subheading: 'Attach the deck and the data room. We read the room first, so you know what we can see before the run starts.'
     }),
-    body: `${DS.figureStrip(stats)}${DS.filterBar(['All', 'On track', 'Needs attention', 'Stuck', 'Assessment'], 'Search ventures or founders')}${DS.engagementTable(rows)}`
+    body: `<div class="brief">${DS.createScreen({
+      operators: [{ v: 'op-1', l: 'Alex Doré · Program Lead' }, { v: 'op-2', l: 'Ruth Adeyemi · Master operator' }],
+      cta: ctaPair(plan)
+    })}</div>`
   });
   DS.initShell();
-  DS.initAssessmentWizard();
-  // open the wizard overlay on load so the Pages specimen shows the surface in context
-  requestAnimationFrame(() => window.openNewAssessment && window.openNewAssessment());
 </script>
 </body>
 </html>

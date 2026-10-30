@@ -12,7 +12,7 @@ const GROUPS = [
   // to be flying blind on five of seven.
   { base: 'http://localhost:3200/workspace',
     pages: ['dashboard-m3.html', 'queue-m3.html', 'team-m3.html', 'settings-m3.html',
-            'admin-m3.html', 'assess-next.html'] },
+            'admin-m3.html', 'assess-next.html', 'create-m3.html'] },
 ];
 const browser = await puppeteer.launch({
   executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
