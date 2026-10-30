@@ -213,6 +213,34 @@ export async function requestDocs({ engagementId, email } = {}) {
 //
 // Returns { added, changed, removed, unchanged, failed, check } — never throws for a Drive-side problem;
 // it toasts and returns null, so a caller can repaint without wrapping every call.
+// roomCheck — what the score looks for, and what it could not find. FREE: regex over already-ingested
+// text, no model, no cost, instant. It is the engagement loop (add documents, re-scan, watch coverage
+// fill), so it is deliberately unmetered — the expensive thing is re-SCORING, not re-reading.
+export async function roomCheck({ engagementId } = {}) {
+  const token = await idToken();
+  const r = await fetch('/api/ingest-docs', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ idToken: token, engagementId, action: 'room-check' }),
+  });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(d.detail || d.error || ('HTTP ' + r.status));
+  return d;
+}
+
+// unlockFull — promote a pre-screened engagement to the paid tier. With BILLING_ENFORCED false this is
+// the whole "purchase": the server flips the tier and the caller dispatches the run. When Stripe lands,
+// a payment confirmation calls the same endpoint and nothing else about the flow changes.
+export async function unlockFull({ engagementId } = {}) {
+  const token = await idToken();
+  const r = await fetch('/api/memo', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ idToken: token, engagementId, action: 'prescreen-unlock' }),
+  });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(d.detail || d.error || ('HTTP ' + r.status));
+  return d;
+}
+
 export async function rescanDataRoom({ engagementId, onProgress, onBusy } = {}) {
   const prog = onProgress || (() => {});
   const busy = onBusy || (() => {});

@@ -22,7 +22,9 @@ import puppeteer from 'puppeteer';
 const BASE = process.env.WS_BASE || 'http://localhost:3200/workspace';
 
 /* Each entry: a page, plus an optional mutation that forces a conditional state.
-   `empty` rewrites the demo fixture in flight so the first-run branch renders. */
+   `empty` rewrites the demo fixture in flight so the first-run branch renders.
+   `prescreen` flips an engagement to the free tier, which swaps the whole tab set — a branch the
+   populated fixture never reaches, and therefore one nothing would otherwise ever look at. */
 const STATES = [
   { page: 'dashboard-m3.html',          label: 'Portfolio' },
   { page: 'dashboard-m3.html',          label: 'Portfolio — FIRST RUN', empty: true },
@@ -33,6 +35,7 @@ const STATES = [
   { page: 'admin-m3.html',              label: 'Admin' },
   { page: 'assess-next.html?id=prg-07', label: 'Assessment — scored' },
   { page: 'assess-next.html?id=prg-01', label: 'Assessment — forming' },
+  { page: 'assess-next.html?id=prg-07', label: 'Assessment — PRE-SCREENED', prescreen: true },
   { page: 'create-m3.html',             label: 'New assessment' },
   { page: 'setup.html',                 label: 'Setup' },
 ];
@@ -62,6 +65,11 @@ for (const st of STATES) {
       const t = await fetch(u).then(x => x.text());
       return req.respond({ status: 200, contentType: 'application/javascript',
         body: t.replace(/export const FIREBASE_ENABLED\s*=\s*true/, 'export const FIREBASE_ENABLED = false') });
+    }
+    if (st.prescreen && u.includes('sample-data.js')) {
+      const t = await fetch(u).then(x => x.text());
+      return req.respond({ status: 200, contentType: 'application/javascript',
+        body: t + '\n;try{const P=window.WORKSPACE_SAMPLE.programs;(P.find(x=>x.id==="prg-07")||P[0]).tier="prescreen";}catch(e){}' });
     }
     if (st.empty && u.includes('sample-data.js')) {
       const t = await fetch(u).then(x => x.text());

@@ -261,8 +261,11 @@ md-outlined-text-field { --md-outlined-text-field-container-shape: 999px; --md-o
 .group-head { display: flex; align-items: baseline; gap: 10px; margin: 24px 0 4px; }
 .group-sub { color: var(--md-sys-color-on-surface-variant); font-size: 14px; line-height: 20px; letter-spacing: 0.25px; margin-bottom: 12px; }
 /* The queue's "all caught up" state — centred type on the page, no container. */
-.q-allclear { text-align: center; padding: 56px 24px 40px; }
-.q-allclear .body-m { margin-top: 6px; max-width: 480px; margin-left: auto; margin-right: auto; }
+/* The editorial empty state. Was .q-allclear, named for the one place it started: an empty action
+   queue. It is now the shape every "nothing here yet" uses, so it carries a generic name and a single
+   component (DS.emptyState) rather than being re-inlined per surface as a centred card tub. */
+.empty-state { text-align: center; padding: 56px 24px 40px; }
+.empty-state .body-m { margin-top: 6px; max-width: 480px; margin-left: auto; margin-right: auto; }
 
 /* Editorial list row (see queueItem in ds.js). A hairline BETWEEN rows, never under
    the last one, and no background — the icon tile carries the urgency. The row still

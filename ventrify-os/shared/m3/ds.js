@@ -2369,6 +2369,46 @@ export function rangeHero(range = {}, opts = {}) {
   });
 }
 
+// emptyState — ATOM. "Nothing here yet", editorially.
+//
+// Every empty state in this product used to be a centred filled card, and the operator's instruction was
+// to remove those everywhere. A tub around an absence is the worst case for one: it draws a container
+// around the thing there is least to say about, and on a first run it is the first surface a customer
+// sees. Centred text on the page background, no border, no fill.
+export function emptyState(opts = {}) {
+  const { title = 'Nothing here yet', text = '', ctaHtml = '' } = opts;
+  return `<div class="empty-state"><div class="title-l">${esc(title)}</div>${text ? `<div class="body-m variant">${esc(text)}</div>` : ''}${ctaHtml}</div>`;
+}
+
+// dataRoomTab — the one surface in the product the customer ACTS ON.
+//
+// Everything else here is us talking at them: a verdict, a score, research we did. This is the thing they
+// can go and change, and it is why the data room is a permanent tab in BOTH states rather than a footnote
+// on the assessment. (This contradicts the comment at assess-next.html rejecting a 7th tab for Diligence —
+// deliberately. That argument was that a permanent chapter about US is empty on the good deals. The data
+// room is about THEM, is never empty, and is the only tab with a verb on it.)
+//
+// THE CHECK IS FREE AND UNLIMITED. It is regex over already-ingested text: no model, no cost, instant. That
+// is the whole engagement loop — add documents, re-scan, watch coverage fill and the range narrow — and it
+// is deliberately NOT the thing that costs money. Re-SCORING is.
+//
+// opts: { check } — a real api/_roomcheck result once one has been run; until then roomPreview() says what
+// the score looks for, which is useful on its own and never reads as a grade.
+export function dataRoomTab(opts = {}) {
+  const { check = null, docCount = 0, deck = false, busy = false, canRescan = false } = opts;
+  const body = check ? roomCheck(check) : roomPreview({ docCount, deck });
+  return `<div class="brief">
+    <div id="dr-slot">${body}</div>
+    <div class="dr-act">
+      <button class="m3-btn ${check ? 'tonal' : 'filled'}" type="button" ${busy ? 'disabled' : ''} onclick="window.__drCheck&&window.__drCheck()">
+        <span class="material-symbols-rounded">${check ? 'refresh' : 'plagiarism'}</span>${check ? 'Re-scan the room' : 'Check my data room'}
+      </button>
+      ${canRescan ? `<button class="m3-btn text" type="button" onclick="window.__drRescanDrive&&window.__drRescanDrive()"><span class="material-symbols-rounded">cloud_sync</span>Pull new files from Drive</button>` : ''}
+      <span class="dr-act-x">Free, and as often as you like — scanning the room costs nothing and never changes your score on its own.</span>
+    </div>
+  </div>`;
+}
+
 // scoreProvenance — HOW MANY TIMES WAS THIS SCORED, AND ON WHAT?
 //
 // We publish the NEWEST snapshot. Re-running is cheap and unguarded. So an operator who dislikes 67 could run
@@ -4285,7 +4325,7 @@ export function queueBoard(items = [], opts = {}) {
      centring — found by tools/surface-audit.mjs, which drives the queue into its
      EMPTY branch; nothing had ever rendered it, because the demo fixture always
      has actions. */
-  const allClear = `<div class="q-allclear"><div class="title-l">${esc(opts.emptyTitle || "You're all caught up")}</div><div class="body-m variant">${esc(opts.emptyText || 'Nothing needs you right now.')}</div>${cta}</div>`;
+  const allClear = emptyState({ title: opts.emptyTitle || "You're all caught up", text: opts.emptyText || 'Nothing needs you right now.', ctaHtml: cta });
   const groups = ['high', 'med', 'low'].map(u => {
     const g = items.filter(i => i.urgency === u);
     if (!g.length) return '';

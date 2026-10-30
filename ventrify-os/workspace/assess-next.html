@@ -39,6 +39,7 @@
   import * as DS from '../shared/m3/ds.js';
   import { adaptEngagement } from '../shared/m3/adapter.js';
   import { resolveActions } from '../shared/actions.js';
+  import { capsFor, entitlements, isPrescreen, unlockRoute } from '../shared/entitlements.js';
   import { wsNavConfig, wsBrandConfig, wsAccountConfig, mountOrgSwitcherM3 } from './workspace-m3.js';
   import * as EA from './engagement-actions.js';
   import { dealMemoHTML } from './memo-view.js';
@@ -50,7 +51,14 @@
   const id = params.get('id') || (allPrograms[0] || {}).id;
   let p = allPrograms.find(x => x.id === id) || allPrograms[0] || null;
   const live = W.mode === 'live';
-  const acts = resolveActions({ page: 'assess' });
+  // The rail is filtered by what this engagement's TIER entitles it to. A pre-screened venture does not
+  // get Assist, the deal memo or the share link — shared/entitlements.js decides that in one place, and
+  // resolveActions applies it to the masthead and the rail alike.
+  const ENT = () => entitlements(p, W.plan);
+  // Resolved on every paint, NOT once at load. Unlocking flips p.tier in place, and a rail computed once
+  // would keep hiding Assist / Deal memo / Share until the customer happened to reload — i.e. they would
+  // pay and appear to get nothing.
+  const actsNow = () => resolveActions({ page: 'assess', caps: capsFor(p, W.plan) });
 
   if (!p) {
     document.getElementById('app').outerHTML = DS.pageShell({
@@ -145,6 +153,58 @@
   // whichever button is actually there, or Stop would never disable while the cancel is in flight.
   const busy = b => { const btn = document.querySelector('.mh-actions .m3-btn.filled') || document.querySelector('.mh-actions .m3-btn'); if (btn) { btn.disabled = b; btn.style.opacity = b ? '0.6' : ''; } };
   window.__eaRun = async () => { if (await EA.dispatchRun({ engagementId: p.id, phase: 'assess', onBusy: busy })) { window.__toast('Assessment queued — this runs in the cloud.'); if (!live) setTimeout(() => location.reload(), 800); } };
+  // UNLOCK — promote a pre-screened venture to the full assessment and start it.
+  // The tier flip is SERVER-SIDE (api/memo.js prescreen-unlock); a client that could set its own tier
+  // could skip the paywall, which is the one thing the paywall is for. BILLING_ENFORCED is false, so
+  // today this is simply available — the confirm is because it starts a real two-hour run, not because
+  // money changes hands yet.
+  window.__eaUnlock = async () => {
+    const ok = await window.__confirm({
+      title: 'Run the full assessment?',
+      message: `This replaces the range with a single measured score, and adds diligence, deep research and the deal memo. It takes about two hours and runs in the cloud.${unlockRoute() === 'checkout' ? '' : '\n\nBilling is not switched on yet, so this is free for now.'}`,
+      confirmLabel: 'Run full assessment',
+    });
+    if (!ok) return;
+    if (!live) { p.tier = 'full'; window.__toast('Unlocked — full assessment.'); refresh(); return; }
+    try {
+      await EA.unlockFull({ engagementId: p.id });
+      p.tier = 'full';
+      if (await EA.dispatchRun({ engagementId: p.id, phase: 'assess', onBusy: busy })) window.__toast('Full assessment queued — this runs in the cloud.');
+      refresh();
+    } catch (e) { window.__toast('Could not unlock: ' + ((e && e.message) || e), true); }
+  };
+
+  // CHECK THE DATA ROOM — free, instant, and as often as they like. This is the loop the product most
+  // wants customers in, so it is never metered and never costs them a run.
+  window.__drCheck = async () => {
+    if (!live) { window.__toast('Checking the data room needs the live workspace.', true); return; }
+    const btn = document.querySelector('.dr-act .m3-btn');
+    if (btn) { btn.disabled = true; }
+    try {
+      roomCheckResult = await EA.roomCheck({ engagementId: p.id });
+      const slot = document.getElementById('dr-slot');
+      // Repaint the slot in place rather than the whole page: the reader is ON this tab, and a full
+      // repaint would throw them back to the first one.
+      if (slot) slot.outerHTML = `<div id="dr-slot">${DS.roomCheck(roomCheckResult)}</div>`;
+      const seen = (roomCheckResult.classes || []).filter(c => c.found).length;
+      const of = (roomCheckResult.classes || []).length;
+      window.__toast(`Read ${roomCheckResult.docCount || 0} documents · ${seen} of ${of} evidence types found.`);
+    } catch (e) {
+      window.__toast('Could not read the room: ' + ((e && e.message) || e), true);
+    }
+    if (btn) { btn.disabled = false; }
+  };
+  window.__drRescanDrive = async () => {
+    if (!live) { window.__toast('Re-scanning needs the live workspace.', true); return; }
+    const r = await EA.rescanDataRoom({ engagementId: p.id, onBusy: busy });
+    if (r && r.check) {
+      roomCheckResult = r.check;
+      const slot = document.getElementById('dr-slot');
+      if (slot) slot.outerHTML = `<div id="dr-slot">${DS.roomCheck(r.check)}</div>`;
+      window.__toast(EA.rescanSummary(r));
+    }
+  };
+
   // STOP — a TRUE stop: cancels the actual GitHub Actions job, then clears runState so the page falls back
   // to "Ready to run". Nothing is published until the very END of a run, so stopping genuinely saves nothing
   // — say that plainly rather than implying partial results are kept.
@@ -364,6 +424,10 @@
 
   // ── masthead actions (≤3, ≤1 filled) ──
   function mastheadActions(st) {
+    // A PRE-SCREENED engagement has exactly one thing to offer: the full assessment. The unlock is the
+    // masthead primary — where shared/actions.js already says the primary lives — rather than a widget
+    // bolted into a corner, and with BILLING_ENFORCED false it simply runs the assessment.
+    if (isPrescreen(p)) return [{ variant: 'filled', icon: 'lock_open', label: 'Unlock full assessment', onclick: 'window.__eaUnlock()' }];
     // Deal memo / Share / Manage now live in the utility rail (window.RAIL_ACTIONS). The masthead keeps
     // ONLY the primary workflow CTA for the current state.
     if (!st.hasDeck) return [{ variant: 'filled', icon: 'upload_file', label: 'Upload deck', onclick: "window.__eaUpload('pitch')" }];
@@ -383,6 +447,9 @@
     return [{ variant: 'filled', icon: 'play_arrow', label: 'Run assessment', onclick: 'window.__eaRun()' }];   // idle + deck
   }
   function statusPill(st) {
+    // A pre-screened venture has no verdict, whatever the run state says. Without this guard the pill
+    // read "Verdict ready" beside a range — claiming the one thing the customer has not bought.
+    if (isPrescreen(p)) return { kind: 'info', label: 'Pre-screened', icon: 'bolt' };
     if (st.hasVerdict) {
       const dec = p.assessmentDecision;
       if (dec && dec.decision === 'confirmed') return { kind: 'ok', label: 'Confirmed', icon: 'check_circle' };
@@ -414,6 +481,29 @@
     </section>`;
     return `<div class="brief"><div id="ea-status">${banner}</div>${DS.missingDocs(A)}${note}${forming}${life}</div>`;
   }
+  // ---- the PRE-SCREEN tab set: the range, and the room that decides its width ----
+  // Both tabs are complete in themselves. The argument for upgrading closes the Range tab in the
+  // customer's own numbers; the unlock itself is the masthead primary.
+  function prescreenTabs() {
+    const r = p.prescreen || null;
+    const range = r
+      ? `<div class="brief">${DS.rangeHero(r, { docCount: r.docCount })}</div><hr class="rule">${DS.rangeCoverage(r.categories || [])}`
+      : `<div class="brief">${DS.emptyState({ title: 'Not pre-screened yet', text: 'Attach a pitch deck and run the free pre-screen to see a range in about a minute.' })}</div>`;
+    return `<div class="tab-panel active">${range}</div>
+      <div class="tab-panel">${dataRoomBody()}</div>`;
+  }
+  // ONE data-room body, rendered into both tab sets — it is the same surface whether the venture is
+  // pre-screened or fully assessed, and forking it is how the two would drift.
+  function dataRoomBody() {
+    return DS.dataRoomTab({
+      check: roomCheckResult,
+      docCount: (A.inputs && A.inputs.docs && A.inputs.docs.length) || 0,
+      deck: !!p.pitchDoc,
+      canRescan: !!(p.dataRoom && p.dataRoom.folderUrl),
+    });
+  }
+  let roomCheckResult = null;
+
   function verdictTabs(st) {
     const slim = (st.active || st.flagged) ? `<div class="brief" style="padding-bottom:0;margin-bottom:4px" id="ea-status">${DS.runBanner(st.rs)}</div>` : '<span id="ea-status"></span>';
     return `
@@ -422,11 +512,12 @@
       <div class="tab-panel">${DS.marketMemo(A)}</div>
       <div class="tab-panel">${DS.teamMemo(A, S)}</div>
       <div class="tab-panel">${DS.diligenceEditorial(A)}</div>
-      <div class="tab-panel">${DS.researchMemo(A, S)}</div>`;
+      <div class="tab-panel">${DS.researchMemo(A, S)}</div>
+      <div class="tab-panel">${dataRoomBody()}</div>`;
   }
 
   // ── paint: mount once; refresh reloads on the verdict transition, else swaps masthead + body in place ──
-  let mounted = false, lastVerdict = null;
+  let mounted = false, lastVerdict = null, lastTier = null;
   function paint() {
     const st = stateBits();
     // The Diligence tab carries a small count when the run recorded gaps it could not close. It is the ONLY
@@ -435,15 +526,28 @@
     // Only gaps that STILL ASK SOMETHING OF HIM. A gap he has already filed evidence against must stop
     // nagging him from the tab — DS.gapNeedsAction is the one derivation, shared with the row pill and counts.
     const nGaps = (A.gaps || []).filter(g => DS.gapNeedsAction(g)).length;
-    const tabs = st.hasVerdict
-      ? ['Verdict', 'Investability', 'Market', 'Team', { label: 'Diligence', badge: nGaps || null }, 'Research']
-      : false;
-    const bodyHtml = st.hasVerdict ? verdictTabs(st) : `<div class="tab-panel active">${statusBody(st)}</div>`;
+    // TIER DECIDES THE TAB SET. A pre-screened venture gets two COMPLETE tabs rather than six with four
+    // padlocked: a locked tab is a dead end, and four of them read as a negative statement about us, which
+    // is the same mistake §3 of the pre-screen spec guards against in the number.
+    const pre = isPrescreen(p);
+    const tabs = pre
+      ? ['Range', 'Data room']
+      : st.hasVerdict
+        ? ['Verdict', 'Investability', 'Market', 'Team', { label: 'Diligence', badge: nGaps || null }, 'Research', 'Data room']
+        : false;
+    const bodyHtml = pre
+      ? prescreenTabs()
+      : st.hasVerdict ? verdictTabs(st) : `<div class="tab-panel active">${statusBody(st)}</div>`;
+    const acts = actsNow();
     const mh = DS.masthead({
       breadcrumb: { label: 'Portfolio', href: 'dashboard-m3.html' }, crumbTail: A.name, avatar: A.initials,
       headline: A.name, status: statusPill(st), subheading: A.stageLine, compact: A.name,
       actions: mastheadActions(st), tabs, activeTab: 0
     });
+    // The rail is part of the SHELL, which mounts once. A tier change rewrites the rail, so it has to
+    // remount — otherwise an unlocked venture keeps a pre-screen rail until the next full page load.
+    if (mounted && lastTier !== null && lastTier !== pre) mounted = false;
+    lastTier = pre;
     if (!mounted) {
       document.getElementById('app').outerHTML = DS.pageShell({
         active: 'portfolio', nav: wsNavConfig(), brand: wsBrandConfig(), account: wsAccountConfig(),
@@ -455,7 +559,7 @@
       const oldMh = main.querySelector('.masthead'); if (oldMh) oldMh.outerHTML = mh;
       const sb = main.querySelector('.shell-body'); if (sb) sb.innerHTML = bodyHtml;
     }
-    if (tabs) DS.initTabs({ names: ['verdict', 'investability', 'market', 'team', 'diligence', 'research'] });
+    if (tabs) DS.initTabs({ names: pre ? ['range', 'dataroom'] : ['verdict', 'investability', 'market', 'team', 'diligence', 'research', 'dataroom'] });
     wireResearchDrill();   // paint() swaps .shell-body — rebuild the reading room + DRILL_PAGES every time
     lastVerdict = st.hasVerdict;
   }

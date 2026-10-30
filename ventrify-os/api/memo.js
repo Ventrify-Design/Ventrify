@@ -95,7 +95,7 @@ module.exports = async (req, res) => {
     const action = String(body.action || '');
     if (!idToken) { res.status(401).json({ error: 'no_token' }); return; }
     if (!engagementId) { res.status(400).json({ error: 'engagement_required' }); return; }
-    const ACTIONS = ['share', 'revoke-share', 'sign', 'revoke-sign', 'decide', 'revoke-decision', 'chat', 'prescreen-warm', 'prescreen-category'];
+    const ACTIONS = ['share', 'revoke-share', 'sign', 'revoke-sign', 'decide', 'revoke-decision', 'chat', 'prescreen-warm', 'prescreen-category', 'prescreen-unlock'];
     if (!ACTIONS.includes(action)) { res.status(400).json({ error: 'bad_action' }); return; }
 
     ensureAdmin();
@@ -121,6 +121,17 @@ module.exports = async (req, res) => {
     const ops = ((orgSnap.exists && orgSnap.data().operatorEmails) || []).map(e => String(e).toLowerCase());
     const supers = ((cfgSnap.exists && cfgSnap.data().superAdminEmails) || []).map(e => String(e).toLowerCase());
     if (!ops.includes(caller) && !supers.includes(caller)) { res.status(403).json({ error: 'forbidden' }); return; }
+
+    // ---- unlock: promote a pre-screened engagement to the paid tier --------------------------------
+    // The tier is SERVER-SET. A client that could write its own tier could write 'full' and skip the
+    // paywall entirely, which is the one thing the paywall exists to stop — so this endpoint, and not the
+    // browser, is what makes a venture paid. With BILLING_ENFORCED false it is simply available; when
+    // Stripe lands, a verified payment calls the same endpoint and the rest of the flow is unchanged.
+    if (action === 'prescreen-unlock') {
+      await engRef.set({ tier: 'full', unlockedAt: FieldValue.serverTimestamp(), unlockedBy: caller }, { merge: true });
+      res.status(200).json({ ok: true, tier: 'full' });
+      return;
+    }
 
     // ---- pre-screen -------------------------------------------------------------------------------
     // Hosted here for the same reason as the chat below: the OS project sits at exactly its 12-function
