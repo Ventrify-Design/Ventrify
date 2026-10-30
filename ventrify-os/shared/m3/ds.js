@@ -2380,6 +2380,36 @@ export function emptyState(opts = {}) {
   return `<div class="empty-state"><div class="title-l">${esc(title)}</div>${text ? `<div class="body-m variant">${esc(text)}</div>` : ''}${ctaHtml}</div>`;
 }
 
+// prescreenRunning — the live reveal while a pre-screen is in flight.
+//
+// DESIGN THE PERCEIVED WAIT, NOT THE REAL ONE. The room check is on screen in under a second and the
+// first category lands around twenty; the run finishes near fifty. Shown as one spinner that is a long
+// wait, and shown as a page filling up it is not — so each category appears the moment it lands, with
+// the count of signals the evidence actually supported.
+//
+// NEVER A FABRICATED PERCENTAGE. `phase` is the real stage the run is in. A progress bar that is really
+// a timer is the single easiest way to turn a 50-second wait into a broken-looking one.
+export function prescreenRunning(opts = {}) {
+  const { phase = 'Starting…', landed = [], total = 7 } = opts;
+  const rows = landed.map(c => {
+    const seen = (c.signals || []).filter(s => s.evidenced).length;
+    const of = (c.signals || []).length;
+    return row({
+      variant: 'metric', key: c.category, density: 'compact',
+      title: c.label,
+      sub: seen === of ? `All ${of} signals evidenced` : `${seen} of ${of} signals evidenced`,
+      trail: { kind: 'value', value: seen === of ? 'complete' : `${of - seen} unread` },
+    });
+  }).join('');
+  return `<section class="sec rc">
+    <div class="sec-head"><span class="eyebrow accent">Pre-screening</span><span class="t">${esc(phase)}</span>
+      <span class="meta">${landed.length} of ${total} categories</span></div>
+    ${landed.length ? `<div class="profile">${rows}</div>` : ''}
+    ${landed.length < total ? linearProgress({ indeterminate: true }) : ''}
+    <div class="profile-foot"><span>Three independent reads per signal, and the middle one is published — a single read of the same evidence can move a score by several points without making it more right.</span></div>
+  </section>`;
+}
+
 // dataRoomTab — the one surface in the product the customer ACTS ON.
 //
 // Everything else here is us talking at them: a verdict, a score, research we did. This is the thing they

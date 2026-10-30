@@ -7,7 +7,8 @@
 // NO app.js edits, no pipeline touch. Pure read + present.
 // ============================================================
 
-import { _esc as esc, docDropzone, roomCheck } from '../shared/m3/ds.js';   // ONE real HTML escaper + the dropzone molecule (repainting staged files) + the data-room playback. The FORM markup now lives in DS.createScreen().
+import { _esc as esc, docDropzone, roomCheck } from '../shared/m3/ds.js';
+import * as DS_PRESCREEN from '../shared/m3/ds.js';   // the live-reveal component, named apart so the targeted imports above stay readable   // ONE real HTML escaper + the dropzone molecule (repainting staged files) + the data-room playback. The FORM markup now lives in DS.createScreen().
 function initials(name) {
   return String(name || '').trim().split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || 'V';
 }
@@ -157,13 +158,16 @@ function naForm() {
 
 // CREATE ONCE. Reading a linked data room needs an engagement to ingest into, so it creates one — and Run
 // must then reuse it. Without this, pressing Read and then Run would leave two engagements for one venture.
-async function naEnsureEngagement(f) {
+async function naEnsureEngagement(f, tier = 'full') {
   if (NA.createdId) return NA.createdId;
   const W = window.WORKSPACE || {}, org = f.org;
   const slug = f.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').slice(0, 40) || 'venture';
   const programId = 'prg-' + slug + '-' + Math.random().toString(36).slice(2, 6);
   const newProgram = {
     id: programId, slug, engagementType: 'assessment',
+    // Declared here, RE-RESOLVED server-side in create-engagement: a client that could set its own
+    // tier could create a 'full' engagement without paying, which is the one thing the tier is for.
+    tier,
     website: f.website || null, stage: f.stage || null, name: f.name,
     founderName: f.founder, founderEmail: f.founderEmail || '',
     founderAvatar: (f.founder || f.name).split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || 'VV',
@@ -311,12 +315,68 @@ window.__naRequestDocs = async () => {
   }
 };
 
-// RUN A PRE-SCREEN. The free ~1-minute read that returns a range rather than a score.
-// NOT BUILT YET — the engine is the next piece (design/prescreen-spec.md §5/§6). It is wired now so the
-// create screen ships with both actions in their real positions; a button that silently did the wrong
-// thing would be worse than one that says what it is.
+// RUN A PRE-SCREEN. The free ~1-minute read that returns a RANGE rather than a score.
+//
+// Same create + ingest chain as the full run, then it stops short of dispatch and scores in-request
+// instead. The reveal happens in the create screen's right-hand column — the panel that was already
+// showing "what we can see" — so the page the customer is on fills up rather than handing off to a
+// spinner somewhere else.
 window.__wsRunPrescreen = async () => {
-  window.__toast('The pre-screen engine is still being built — run the full assessment for now.', true);
+  const f = naForm(); if (!f) return;
+  const W = window.WORKSPACE || {};
+  if (W.mode !== 'live') { window.__toast('The pre-screen needs the live workspace.', true); return; }
+
+  const slot = () => document.getElementById('na-room');
+  const paint = (html) => { const el = slot(); if (el) el.innerHTML = html; };
+  const landed = [];
+  let phaseText = 'Starting…', roomRead = null;
+  // The room check STAYS on screen while the categories land beneath it. It arrives in about a second,
+  // it is the most immediately useful thing we have, and it is the reason the rest of the wait feels
+  // like progress — replacing it with the run's own panel would throw that away one second in.
+  const repaint = () => paint(
+    (roomRead ? roomCheck(roomRead) + '<hr class="rule">' : '')
+    + DS_PRESCREEN.prescreenRunning({ phase: phaseText, landed })
+  );
+
+  naBusy(true);
+  try {
+    const programId = await naEnsureEngagement(f, 'prescreen');
+    const EA = await import('./engagement-actions.js');
+
+    // The deck is the hard gate here too — a pre-screen with no evidence returns a 0-60 range that says
+    // nothing about the venture, which is worse than refusing.
+    const deckFail = await naIngestDeck(EA, programId);
+    if (deckFail) { window.__toast('The pitch deck didn’t upload: ' + deckFail, true); naBusy(false); naProg(null); return; }
+
+    for (let i = 0; i < NA.docs.length; i++) {
+      NA.docStatus = { ...(NA.docStatus || {}), [i]: 'Uploading…' }; naPaintDocs();
+      naProg(`Data room · document ${i + 1} of ${NA.docs.length}`);
+      const r = await EA.ingestDocs({ engagementId: programId, files: [NA.docs[i]], docType: 'dataroom', onProgress: m => naProg(m) });
+      NA.docStatus = { ...(NA.docStatus || {}), [i]: ((r && r.skipped || []).length ? 'Failed' : 'Stored') }; naPaintDocs();
+    }
+
+    const { runPrescreen } = await import('./prescreen.js');
+    repaint();
+    await runPrescreen({
+      engagementId: programId,
+      onPhase: (t) => { phaseText = t; naProg(t); repaint(); },
+      onRoom: (check) => { roomRead = check; repaint(); },
+      onCategory: (c) => { landed.push(c); repaint(); },
+    });
+
+    NA.createdId = null;
+    resetNewAssessment();
+    location.href = 'assess-next.html?id=' + encodeURIComponent(programId);
+  } catch (e) {
+    naBusy(false); naProg(null);
+    // The one refusal that is not a failure: this venture has already had its free pre-screen.
+    if (e && e.status === 409 && e.body && e.body.error === 'already_prescreened') {
+      window.__toast(`“${e.body.name}” has already been pre-screened — opening it.`);
+      location.href = 'assess-next.html?id=' + encodeURIComponent(e.body.engagementId);
+      return;
+    }
+    window.__toast('Could not run the pre-screen: ' + ((e && e.message) || e), true);
+  }
 };
 
 // UNLOCK. With BILLING_ENFORCED false this simply runs the full assessment: Stripe is not wired, and the

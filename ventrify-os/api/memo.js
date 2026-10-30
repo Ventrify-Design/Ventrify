@@ -95,7 +95,7 @@ module.exports = async (req, res) => {
     const action = String(body.action || '');
     if (!idToken) { res.status(401).json({ error: 'no_token' }); return; }
     if (!engagementId) { res.status(400).json({ error: 'engagement_required' }); return; }
-    const ACTIONS = ['share', 'revoke-share', 'sign', 'revoke-sign', 'decide', 'revoke-decision', 'chat', 'prescreen-warm', 'prescreen-category', 'prescreen-unlock'];
+    const ACTIONS = ['share', 'revoke-share', 'sign', 'revoke-sign', 'decide', 'revoke-decision', 'chat', 'prescreen-warm', 'prescreen-category', 'prescreen-finalise', 'prescreen-unlock'];
     if (!ACTIONS.includes(action)) { res.status(400).json({ error: 'bad_action' }); return; }
 
     ensureAdmin();
@@ -144,7 +144,7 @@ module.exports = async (req, res) => {
     // Both actions rebuild the corpus from Firestore rather than accepting it from the client: the cache
     // prefix must be byte-identical across all 22 calls, and a client-supplied corpus could not be
     // trusted to be (nor trusted at all — it is the thing the score is computed from).
-    if (action === 'prescreen-warm' || action === 'prescreen-category') {
+    if (action === 'prescreen-warm' || action === 'prescreen-category' || action === 'prescreen-finalise') {
       const apiKey = process.env.ANTHROPIC_API_KEY;
       if (!apiKey) { res.status(503).json({ error: 'model_not_configured' }); return; }
       const PS = require('./_prescreen.js');
@@ -168,10 +168,56 @@ module.exports = async (req, res) => {
 
       try {
         if (action === 'prescreen-warm') {
+          // ONE FREE SCORED PRE-SCREEN PER VENTURE (spec §8.6), enforced on the first action that spends
+          // anything. Venture identity is the primary key; the deck fingerprint is the backstop for the
+          // same company under a new name. SCOPED TO THIS ORG — two firms legitimately pre-screening the
+          // same deck is normal, and telling one about the other leaks.
+          //
+          // The response carries the prior engagement so the UI can offer a route back ("open the
+          // existing result, or unlock the full assessment") rather than a dead end: a false positive
+          // blocks a genuine new venture, and that costs far more than the $1.60 a false negative does.
+          const EN = await import('../shared/entitlements.js');
+          const fp = EN.deckFingerprint(corpus.text);
+          const vk = EN.ventureKey({ name: engData.name, website: engData.website, founder: engData.founderName });
+          const sibs = await db.collection('engagements').where('orgId', '==', orgId).get();
+          const priors = sibs.docs
+            .filter(d => d.id !== engagementId && d.data().prescreenRanAt)
+            .map(d => ({ id: d.id, name: d.data().name, ventureKey: d.data().prescreenVentureKey, fingerprint: d.data().prescreenFingerprint || [] }));
+          const hit = EN.matchesExistingVenture({ ventureKey: vk, fingerprint: fp }, priors);
+          if (hit.match) {
+            res.status(409).json({ error: 'already_prescreened', reason: hit.reason, engagementId: hit.prior.id, name: hit.prior.name });
+            return;
+          }
+          await engRef.set({ prescreenVentureKey: vk, prescreenFingerprint: fp }, { merge: true });
+
           const warm = await PS.warmCache(corpus.text, apiKey);
           // Reported, not assumed. If `wrote` is 0 across runs a silent invalidator is loose and every
           // probe is paying full price - a ~5x cost bug that is otherwise completely invisible.
           res.status(200).json({ ok: true, corpus: { tokens: corpus.tokens, included: corpus.included, total: corpus.total, dropped: corpus.dropped }, cache: warm });
+          return;
+        }
+
+        if (action === 'prescreen-finalise') {
+          // Composed from what the SERVER stored, never from anything posted — the score is the thing
+          // being sold. A partial set is refused rather than published: a range missing a category is
+          // not a narrower range, it is a wrong one.
+          const stored = await engRef.collection('prescreenCategories').get();
+          const byKey = Object.fromEntries(stored.docs.map(d => [d.id, d.data()]));
+          const missing = VSS_RUBRIC.filter(c => !byKey[c.key]).map(c => c.key);
+          if (missing.length) { res.status(409).json({ error: 'incomplete', missing }); return; }
+          const cats = VSS_RUBRIC.map(c => ({ ...c, signals: byKey[c.key].signals || [] }));
+          const range = PS.composeRange(cats);
+          const snapshot = {
+            ...range, ...PS.rangeBand(range.floor, range.ceiling),
+            docCount: corpus.included, corpusTokens: corpus.tokens,
+            at: new Date().toISOString(), model: PS.MODEL, draws: PS.DRAWS,
+          };
+          await engRef.set({
+            tier: 'prescreen', prescreen: snapshot,
+            prescreenRanAt: FieldValue.serverTimestamp(),
+            gateStatus: 'Pre-screened',
+          }, { merge: true });
+          res.status(200).json({ ok: true, prescreen: snapshot });
           return;
         }
 
@@ -185,10 +231,16 @@ module.exports = async (req, res) => {
           res.status(502).json({ error: 'probe_failed', category: cat.key, detail: probe.errors.slice(0, 3) });
           return;
         }
+        // PERSISTED SERVER-SIDE, then read back server-side by prescreen-finalise. The browser only
+        // orchestrates timing; it never carries a score between calls.
+        const signals = PS.consolidate(cat, probe.draws);
+        await engRef.collection('prescreenCategories').doc(cat.key).set({
+          key: cat.key, label: cat.label, weight: cat.weight,
+          signals, drawsUsed: probe.draws.length, at: FieldValue.serverTimestamp(),
+        });
         res.status(200).json({
           ok: true, category: cat.key, label: cat.label, weight: cat.weight,
-          signals: PS.consolidate(cat, probe.draws),
-          drawsUsed: probe.draws.length, errors: probe.errors, usage: probe.usage,
+          signals, drawsUsed: probe.draws.length, errors: probe.errors, usage: probe.usage,
         });
         return;
       } catch (e) {
