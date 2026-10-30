@@ -112,8 +112,12 @@ catch { console.log('The Firebase credential is not valid JSON. If you pasted it
     process.exit(2);
   }
 }
-if (LIVE && !process.env.ANTHROPIC_API_KEY) {
-  console.log('--live needs ANTHROPIC_API_KEY.');
+if (LIVE && (!process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY === '[SENSITIVE]')) {
+  console.log(process.env.ANTHROPIC_API_KEY === '[SENSITIVE]'
+    ? 'ANTHROPIC_API_KEY is the literal placeholder "[SENSITIVE]".\n'
+      + 'Vercel refuses to export variables marked Sensitive, so `vercel env pull` wrote that instead of the key.\n'
+      + 'Open ventrify-os/.env.local and replace [SENSITIVE] with a real key from console.anthropic.com.'
+    : '--live needs ANTHROPIC_API_KEY in ventrify-os/.env.local.');
   process.exit(2);
 }
 // The last credential failure a reader can hit — a well-shaped key that Firebase rejects — also threw a
@@ -194,6 +198,15 @@ for (const s of list) {
 console.log('\n──────────────────────────────────────────────');
 for (const r of rows) {
   console.log(`  ${r.inside ? '✓' : '✗'} ${r.name.padEnd(26)} ${String(r.floor).padStart(3)}–${String(r.ceiling).padEnd(3)} (width ${String(r.width).padStart(2)}) · published ${r.published}` + (r.inside ? '' : `  ← ${r.published < r.floor ? 'BELOW the floor' : 'ABOVE the ceiling'}`));
+}
+// NOTHING MEASURED IS NOT A FAILED MEASUREMENT. With every run erroring, this printed
+// "containment: 0/0 = 0% … widen the floor", which blames the range for what was actually an auth
+// error. A gate that reports a verdict it did not earn is worse than one that reports nothing.
+if (!checked) {
+  console.log('\nNo run completed, so containment was never measured. Nothing above is a verdict on the range.');
+  const auth = rows.length === 0;
+  console.log(auth ? 'Every call failed before reaching the model — check ANTHROPIC_API_KEY in ventrify-os/.env.local.' : '');
+  process.exit(2);
 }
 const rate = checked ? contained / checked : 0;
 console.log(`\ncontainment: ${contained}/${checked} = ${(rate * 100).toFixed(0)}%  (floor ${CONTAINMENT_FLOOR * 100}%)`);
