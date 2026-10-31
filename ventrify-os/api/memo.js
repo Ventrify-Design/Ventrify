@@ -438,13 +438,24 @@ module.exports = async (req, res) => {
           // Ground truth is what the API fetched, never the model's account of what it read.
           const sources = E.harvestSources(msg);
           const narrative = E.researchNarrative(msg);
+
+          // web_search hands us `encrypted_content`: the model can read the page, our code cannot. So we
+          // read it ourselves, best-effort and in parallel, and whatever comes back is what a span can be
+          // verified against. A page we cannot reach makes its claims ATTRIBUTED, never dropped (§8.1) —
+          // a publisher blocking a server-side fetch is not evidence about whether a claim is true.
+          await E.fetchSourceText(sources);
+          // Text is kept OFF the stored document: a dozen full pages would blow Firestore's 1MB ceiling.
+          // Phase 3 re-fetches, which costs no model tokens and keeps the store small.
+          const stored = sources.map(s => ({ url: s.url, title: s.title, fetched: !!s.fetched, fetchFail: s.fetchFail || null }));
           await ps2.doc('research').set({
-            sources, narrative: narrative.slice(0, 12000),
+            sources: stored, narrative: narrative.slice(0, 12000),
+            readable: sources.filter(s => s.fetched).length,
             usage: { model: E.MODEL_REASON, usage: E.usageOf(msg) }, at: FieldValue.serverTimestamp(),
           });
           // No sources is a result, not a failure (§8.5). An obscure sector is a real case, and the run
           // continues on the venture's own documents with the competitive read honestly empty.
-          res.status(200).json({ ok: true, sources: sources.map(s => ({ url: s.url, title: s.title })), found: sources.length });
+          res.status(200).json({ ok: true, sources: stored.map(s => ({ url: s.url, title: s.title })),
+                                 found: sources.length, readable: sources.filter(s => s.fetched).length });
           return;
         }
 
@@ -465,11 +476,15 @@ module.exports = async (req, res) => {
             return;
           }
 
-          const msg = await E.callClaude(E.nuggetRequest(spec, bd.brief, rd.sources || [], rd.narrative), apiKey);
+          // The stored sources carry no text (Firestore's 1MB ceiling), so re-read the pages here. It
+          // costs no model tokens, and without it every external claim would be attributed rather than
+          // verified — the fetch is what earns the stronger tier.
+          const srcs = await E.fetchSourceText((rd.sources || []).map(x => ({ ...x })));
+          const msg = await E.callClaude(E.nuggetRequest(spec, bd.brief, srcs, rd.narrative), apiKey);
           const out = E.readJson(msg);
           // §8.1 — verified in code, against the sources the API returned and the corpus we actually
           // read. A claim that cannot be proven is dropped here and never reaches the browser.
-          const { kept, dropped } = E.verifyPoints(out.points, rd.sources || [], corpus.text);
+          const { kept, dropped } = E.verifyPoints(out.points, srcs, corpus.text);
           await ps2.doc('n-' + spec.key).set({
             key: spec.key, points: kept, dropped,
             usage: { model: E.MODEL_REASON, usage: E.usageOf(msg) }, at: FieldValue.serverTimestamp(),
@@ -541,7 +556,7 @@ module.exports = async (req, res) => {
             band: decided.band, reason: decided.reason, nextTests: (decided.nextTests || []).slice(0, 3),
             basis, brief: bd.brief, briefEdited: !!bd.briefEdited, asserted: bd.asserted || [],
             sources: (rd.sources || []).map(s => ({ url: s.url, title: s.title })),
-            nuggets, genericDropped: generic.length,
+            nuggets, genericDropped: generic.length, tiers: E.tierCounts(nuggets),
             docCount: corpus.included, roomDocs: fdSnap.size, corpusTokens: corpus.tokens,
             costUsd: sumUsage(usages),
             models: { distil: E.MODEL_DISTIL, reason: E.MODEL_REASON },

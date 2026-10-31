@@ -5651,14 +5651,26 @@ export function nuggetCard(kind, data = {}) {
   const meta = PS2_NUGGETS[kind];
   if (!meta) return '';
   const points = data.points || [];
+  // TWO TIERS, AND THE DIFFERENCE IS VISIBLE. A `verified` point's span was matched in our own code
+  // against the document or the page it cites. An `attributed` one cites a real search result we could
+  // not read — web_search returns encrypted content, and many publishers block a server-side fetch — so
+  // it says "according to" and nothing stronger. Presenting the second as the first is the one thing
+  // this component must never do.
+  const cite = (p) => {
+    if (p.external && p.source) {
+      const attributed = p.tier === 'attributed';
+      return `<a class="ng-src${attributed ? ' said' : ''}" href="${esc(p.source.url)}" target="_blank" rel="noopener noreferrer"
+         title="${esc(attributed ? 'We have not read this page ourselves — this is what the source is reported to say.' : p.quotedSpan || '')}">
+         <span class="material-symbols-rounded">${attributed ? 'format_quote' : 'open_in_new'}</span>${
+           attributed ? 'according to ' : ''}${esc(p.source.title || 'source')}</a>`;
+    }
+    return p.docName ? `<span class="ng-src doc" title="${esc(p.quotedSpan || '')}">
+      <span class="material-symbols-rounded">description</span>${esc(p.docName)}</span>` : '';
+  };
   const body = points.length
     ? `<ul class="ng-l">${points.map(p => `<li class="ng-i${p.external ? ' ext' : ''}">
         <span class="ng-t">${esc(p.point)}</span>
-        ${p.external && p.source
-          ? `<a class="ng-src" href="${esc(p.source.url)}" target="_blank" rel="noopener noreferrer"
-               title="${esc(p.quotedSpan || '')}"><span class="material-symbols-rounded">open_in_new</span>${esc(p.source.title || 'source')}</a>`
-          : (p.docName ? `<span class="ng-src doc" title="${esc(p.quotedSpan || '')}">
-               <span class="material-symbols-rounded">description</span>${esc(p.docName)}</span>` : '')}
+        ${cite(p)}
       </li>`).join('')}</ul>`
     : `<p class="ng-empty">${esc(
         data.skipped === 'needs_two_documents'

@@ -82,7 +82,9 @@ console.log('\n5. SPAN VERIFICATION DROPS WHAT IT CANNOT PROVE (§8.1)');
 // Each fixture isolates ONE failure mode, so a drop names the reason it was built to trigger. Every
 // fixture clears the genericness filter first (§7) — otherwise a case meant to test span matching would
 // never reach it, and the test would pass for the wrong reason.
-const sources = [{ url: 'https://example.com/a', title: 'A', text: 'Cleo raised £28m in a Series B led by Sofina in 2022.' }];
+// `fetched: true` is what a page we actually read looks like. Without it these are sources whose
+// text we do not hold, and every claim on them would be attributed rather than checked (§20).
+const sources = [{ url: 'https://example.com/a', title: 'A', fetched: true, text: 'Cleo raised £28m in a Series B led by Sofina in 2022.' }];
 const corpus = 'MoneyGym turns debt repayment into a weekly habit. The model assumes 40% weekly retention across the first cohort.';
 const span = 'Cleo raised £28m in a Series B';
 const v = E.verifyPoints([
@@ -96,7 +98,7 @@ const v = E.verifyPoints([
 ], sources, corpus);
 const why = (p) => (v.dropped.find(d => d.point.startsWith(p)) || {}).why;
 ok(v.kept.length === 2, `2 of 7 points survive (kept ${v.kept.length})`);
-ok(why('Chime') === 'span not in source', 'a fabricated public claim is dropped: ' + why('Chime'));
+ok(why('Chime') === 'span not in source', 'a fabricated public claim is dropped WHERE WE HOLD THE PAGE: ' + why('Chime'));
 ok(why('Monzo') === 'no such source', 'an out-of-range source index is dropped');
 ok(why('Needs to prove') === 'generic', 'a point true of any venture is dropped before any judge runs');
 ok(why('Churn') === 'span not in documents', 'a misquoted internal claim is dropped');
@@ -315,6 +317,51 @@ ok(/runPrescreen2/.test(wsjs), 'the create screen runs the v2 orchestrator');
 ok(!/import\('\.\/prescreen\.js'\)/.test(wsjs), 'and no longer imports the v1 one');
 ok(/PS2_NUGGETS/.test(wsjs), 'the run stage lists the six findings, not the seven retired categories');
 ok(/onNugget:/.test(wsjs) && !/onCategory:/.test(wsjs), 'and listens for findings landing rather than categories');
+
+console.log('\n20. TWO TIERS — MEASURED 2026-10-31, not designed');
+// web_search returns `encrypted_content`, on both the current tool and the pre-dynamic-filtering
+// `web_search_20250305`. The model can read a result page; our code cannot. The first smoke test
+// therefore DROPPED two true, correctly-cited findings. These checks pin the fix: verify where we can
+// read, attribute where we cannot, and never present the second as the first.
+const unread = [{ url: 'https://a.example', title: 'A', text: '', fetchFail: 'http_403' }];
+const readable = [{ url: 'https://b.example', title: 'B', fetched: true, text: 'Sprive raised 7.3 million dollars in a round led by Ascension. '.repeat(4) }];
+const claim = (span) => [{ point: 'Sprive raised £7.3M', external: true, sourceIndex: 0, quotedSpan: span, docName: '' }];
+
+const att = E.verifyPoints(claim('Sprive raised 7.3 million dollars'), unread, 'corpus');
+ok(att.kept.length === 1 && att.kept[0].tier === 'attributed',
+   'a claim on a page we could not read is KEPT and marked attributed');
+ok(att.kept[0].unread === 'http_403', 'and records why we could not read it');
+ok(att.kept[0].source.url === 'https://a.example', 'with its real URL intact');
+
+const ver = E.verifyPoints(claim('Sprive raised 7.3 million dollars'), readable, 'corpus');
+ok(ver.kept.length === 1 && ver.kept[0].tier === 'verified', 'a matching span on a page we DID read is verified');
+
+// The guardrail must still bite wherever we hold the text, or the tier is just a label.
+const wrong = E.verifyPoints(claim('Sprive raised ninety nine billion'), readable, 'corpus');
+ok(wrong.kept.length === 0 && wrong.dropped[0].why === 'span not in source',
+   'a WRONG span on a page we read is still dropped — verification is not weakened, only scoped');
+
+// The hard guarantee is untouched: an index outside the harvested list cannot be cited.
+const bogus = E.verifyPoints([{ point: 'Monzo raised £500m', external: true, sourceIndex: 9, quotedSpan: 'x'.repeat(40), docName: '' }], readable, 'corpus');
+ok(bogus.kept.length === 0 && bogus.dropped[0].why === 'no such source', 'an invented source index is still impossible');
+
+// Internal claims have no attributed tier — we always hold the document.
+const internalOnly = E.verifyPoints([{ point: 'Retention is 38% at twelve weeks', external: false, quotedSpan: 'retention is 38% at twelve weeks', docName: 'deck.pdf' }],
+                           [], 'The deck says retention is 38% at twelve weeks across pilots.');
+ok(internalOnly.kept.length === 1 && internalOnly.kept[0].tier === 'verified', 'an internal claim is verified or nothing');
+
+ok(typeof E.fetchSourceText === 'function', 'the page fetcher exists — it is what earns the stronger tier');
+ok(E.htmlToText('<p>a&nbsp;b &amp; <script>x()</script>c</p>') === 'a b & c',
+   'and its text extraction strips scripts and decodes entities a span would contain');
+const tc = E.tierCounts({ a: { points: att.kept.concat(ver.kept, internalOnly.kept) } });
+ok(tc.verified === 1 && tc.attributed === 1 && tc.internal === 1, `tierCounts reports the split: ${JSON.stringify(tc)}`);
+
+console.log('\n21. THE TIERS ARE VISIBLY DIFFERENT ON SCREEN');
+const dsrc2 = await (await import('node:fs/promises')).readFile(new URL('../shared/m3/ds.js', import.meta.url), 'utf8');
+const v2blk = dsrc2.slice(dsrc2.indexOf('PRE-SCREEN v2 — the flavour'));
+ok(/according to /.test(v2blk), 'an attributed citation says "according to"');
+ok(/We have not read this page ourselves/.test(v2blk), 'and says so plainly on hover');
+ok(/tier === 'attributed'/.test(v2blk), 'the component branches on the tier rather than guessing');
 
 console.log(fails ? `\n${fails} check(s) failed` : '\nall checks passed');
 process.exit(fails ? 1 : 0);

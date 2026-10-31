@@ -10,7 +10,7 @@
 > `verdictNext`, `verdictSources`, composed by `verdictPage`), their chrome, and both call sites
 > (`assess-next.html`'s Verdict tab, `workspace-m3.js`'s run).
 >
-> Gates: `prescreen2-logic` (19 sections, free), `prescreen-vocabulary` (free), `prescreen-composition`
+> Gates: `prescreen2-logic` (21 sections, 141 checks, free), `prescreen-vocabulary` (free), `prescreen-composition`
 > (free self-test; `--live` reads real snapshots). Sixteen gates pass including shell conformance and
 > motion. **Every cost and latency figure in §7 is still predicted** — no v2 run has met the API.
 >
@@ -356,21 +356,65 @@ Layers 8.1–8.6 run **inside every run** and protect every customer. §9's gate
 regressions. These are different jobs and are routinely conflated; building only the second ships
 fabrications to everyone between sweeps.
 
-### 8.1 Deterministic citation checks — free, and the most valuable thing here
+### 8.1 Citation: one hard guarantee, two honest tiers — AMENDED 2026-10-31 BY MEASUREMENT
 
-Every outside-in claim is a structured object: `{ claim, source_url, source_title, quoted_span }`. Verified
-in code, no model involved:
+The original design said: check that the cited URL appears in the search results, and substring-check the
+span against the fetched content. **The first half got stronger and the second half turned out to be
+impossible.**
 
-- **Is `source_url` present in the `web_search` results returned in that same call?** An invented URL will
-  not be. Drop the claim.
-- **Does `quoted_span` appear verbatim in the fetched content?** Plain substring check. If not, drop the
-  claim.
+#### The hard guarantee: cite by index, never by URL
 
-Every internal claim carries `{ docId, quoted_span }`, substring-checked against the stored document text.
-This is what stops *"your deck says 40% MoM"* when it says 4%.
+An external claim cites its source by **integer index into an enum built from the sources the API itself
+returned**. The model never writes a URL, so it cannot invent one — this is structural, not checked.
 
-Free, deterministic, catches the most damaging failure class outright, and degrades honestly: a dropped
-claim makes the output shorter, never wrong.
+> **Measured on the first live run:** the model returned indices 7, 8 and 0 against a nine-source list.
+> All three were real sources the search had actually fetched.
+
+#### What measurement broke
+
+`web_search` result blocks carry **`encrypted_content`**, not text:
+
+```
+keys on a result: type, title, url, encrypted_content, page_age
+```
+
+The model can read the page. **Our code cannot.** Three routes were tested and all closed:
+
+| Attempt | Result |
+|---|---|
+| Harvest text from `web_search_20260209` result blocks | encrypted |
+| Server-generated citations on the text blocks | no `citations` field |
+| The pre-dynamic-filtering `web_search_20250305` | also encrypted |
+
+So the first smoke test **dropped two findings that were true, useful and correctly cited** — *"Updraft is
+the best-funded direct rival"* and *"Sprive raised $7.3M"*. Precisely the outside-in nuggets this feature
+exists to produce. A guardrail that discards those makes the product look **weak rather than broken**,
+which is the worse of the two failures because nobody goes looking for a bug.
+
+#### The fix: read the page ourselves, and be honest when we cannot
+
+`fetchSourceText()` fetches each harvested URL server-side, in parallel, 4.5s timeout, best-effort. Then:
+
+| Tier | When | How it renders |
+|---|---|---|
+| **verified** | we fetched the page and the span matched it, **or** the claim is internal and matched the document | the source, plainly |
+| **attributed** | the claim cites a real harvested source we could not read | **"according to <source>"**, with its link |
+
+**A publisher blocking a server-side fetch is not evidence about whether a claim is true**, so an
+unreadable page downgrades a claim rather than binning it. And verification is **not weakened, only
+scoped**: where we do hold the text, a wrong span is still dropped.
+
+The tier is decided by whether we actually fetched the page, never by a string-length heuristic — holding
+60 characters of a 5,000-character page and "verifying" against it would drop true claims for reasons
+that are an artefact of how little we hold.
+
+This is the same move **§8.8** already makes for customer-edited fields: exempt from the check, visibly
+marked. The architecture already had a word for *true but not verified by us*.
+
+> **The principle that survives: nothing is ever presented as verified when it is not.**
+
+Internal claims have **no attributed tier** — we always hold the document, so a span that is not in it
+means the claim is wrong. *(Measured: 4 of 4 of the distil pass's own spans matched on the first run.)*
 
 ### 8.2 Guard the distillate — it is the single point of failure
 

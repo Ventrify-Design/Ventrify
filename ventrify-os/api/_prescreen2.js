@@ -24,11 +24,24 @@
  *
  *   · External claims cite a source by INTEGER INDEX into the sources we harvested from the API's own
  *     web_search result blocks, as a schema enum. The model cannot invent a URL because it never writes
- *     one. This is stronger than the spec's "check the URL appears in the results" and replaces it.
- *   · Every claim carries a quoted span, substring-verified in code against that source's harvested text
- *     (or, for internal claims, against the document). Unverifiable spans are DROPPED, never rendered.
+ *     one. MEASURED 2026-10-31: the model returned indices 7, 8 and 0 against a 9-source list, all real.
+ *     This is the hard guarantee, and it is doing more work than the spec first assumed.
+ *   · Every claim carries a quoted span. Where we hold the source text, it is substring-verified in code
+ *     and the claim is VERIFIED. Where we do not, the claim is ATTRIBUTED — shown as "according to X"
+ *     with its link, never as something we checked.
  *
- * A dropped claim makes the output shorter. It never makes it wrong.
+ * WHY TWO TIERS, MEASURED THE HARD WAY. The design assumed web_search would hand us the page text. It
+ * does not: result blocks carry `encrypted_content`, and so do the pre-dynamic-filtering
+ * `web_search_20250305` blocks. The model can read them; our code cannot. The first smoke test therefore
+ * dropped two findings — "Updraft is the best-funded direct rival", "Sprive raised $7.3M" — that were
+ * true, useful, correctly cited, and exactly the kind of thing this feature exists to surface. A guardrail
+ * that throws those away makes the product look weak rather than broken, which is worse.
+ *
+ * So we fetch the page OURSELVES where we can (fetchSourceText), and verify against what comes back. Many
+ * publishers block a server-side fetch, and a 403 from a news site is not evidence about a claim's truth —
+ * so a claim we cannot independently read is attributed rather than binned. This is the same move §8.8
+ * already makes for customer-edited fields: exempt from the check, visibly marked. Nothing is ever
+ * presented as verified when it is not, which is the principle that actually matters.
  *
  * NOTHING HERE IS A REQUIRED CREATIVE SLOT (§8.5). Every nugget may come back empty, and "we could not
  * find comparable players in public sources" is a valid, shipped answer. A mandatory slot with no
@@ -60,6 +73,8 @@ const WEB_SEARCH_TOOL = { type: 'web_search_20260209', name: 'web_search' };
 // run's bill. So max_tokens is sized per phase rather than set generously everywhere.
 const MAX_TOK = { distil: 3000, research: 8000, nugget: 4000, band: 3000, judge: 1500 };
 
+// Below this, text we were handed is a snippet rather than a page, and is not safe to verify against.
+const SOURCE_TEXT_MIN = 400;
 // A quoted span shorter than this cannot be verified meaningfully — "growth" appears in every document.
 const MIN_SPAN = 24;
 // Spans are matched after whitespace and case normalisation, because an extraction pass re-flows text.
@@ -233,6 +248,54 @@ function harvestSources(message) {
   return out;
 }
 
+/**
+ * Best-effort: read the pages the search found, so spans can be verified against something real.
+ *
+ * NOT a dependency. Publishers block server-side fetches routinely, and a 403 says nothing about whether
+ * a claim is true — so a failure downgrades a claim to attributed (§8.1) and never drops it. Runs in
+ * parallel with a short timeout because there is a 60s invocation cap above this.
+ */
+const FETCH_TIMEOUT_MS = 4500;
+const FETCH_MAX_BYTES = 400 * 1024;
+
+function htmlToText(html) {
+  return String(html || '')
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<!--[\s\S]*?-->/g, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    // Entities a quoted span routinely contains. &amp; last, or it double-decodes the others.
+    .replace(/&(nbsp|#160);/gi, ' ').replace(/&(quot|#34);/gi, '"').replace(/&(#39|apos|rsquo|#8217);/gi, "'")
+    .replace(/&(lt|#60);/gi, '<').replace(/&(gt|#62);/gi, '>').replace(/&(amp|#38);/gi, '&')
+    .replace(/\s+/g, ' ').trim();
+}
+
+async function fetchSourceText(sources = []) {
+  await Promise.all(sources.map(async (s) => {
+    if (String(s.text || '').trim().length > 80) return;        // already have it
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
+    try {
+      const r = await fetch(s.url, {
+        signal: ctrl.signal, redirect: 'follow',
+        headers: { 'user-agent': 'Mozilla/5.0 (compatible; VentrifyPreScreen/1.0; +https://os.ventrify.io)',
+                   'accept': 'text/html,application/xhtml+xml' },
+      });
+      if (!r.ok) { s.fetchFail = 'http_' + r.status; return; }
+      const ct = String(r.headers.get('content-type') || '');
+      if (!/text\/html|text\/plain|xml/i.test(ct)) { s.fetchFail = 'type_' + ct.split(';')[0]; return; }
+      const body = (await r.text()).slice(0, FETCH_MAX_BYTES);
+      const text = htmlToText(body);
+      if (text.length < 200) { s.fetchFail = 'too_short'; return; }
+      s.text = text;
+      s.fetched = true;
+    } catch (e) {
+      s.fetchFail = (e && e.name === 'AbortError') ? 'timeout' : 'unreachable';
+    } finally { clearTimeout(t); }
+  }));
+  return sources;
+}
+
 const researchNarrative = (message) =>
   ((message && message.content) || []).filter(b => b && b.type === 'text').map(b => b.text).join('\n').trim();
 
@@ -366,19 +429,56 @@ function verifyPoints(points, sources, docText) {
     if (span.length < MIN_SPAN) { dropped.push({ point: text, why: 'span too short to verify' }); continue; }
 
     if (p.external) {
+      // THE HARD GUARANTEE. sourceIndex is a schema enum over the sources the API itself returned, so a
+      // page that was never fetched cannot be cited — the model never writes a URL at all. An index
+      // outside the list means the schema was bypassed, which is a bug, not a judgement call.
       const s = sources[Number(p.sourceIndex)];
       if (!s) { dropped.push({ point: text, why: 'no such source' }); continue; }
-      if (!norm(s.text).includes(span)) { dropped.push({ point: text, why: 'span not in source' }); continue; }
-      kept.push({ point: text, external: true, source: { url: s.url, title: s.title }, quotedSpan: String(p.quotedSpan).slice(0, 300) });
+
+      // DID WE READ THE PAGE? That is the question, and `fetched` answers it directly — a length
+      // heuristic cannot. The length floor is the fallback for text that arrived some other way, and it
+      // is set well above a search snippet: holding 60 characters of a 5,000-character page and
+      // "verifying" against it would drop true claims for a reason that is purely an artefact of how
+      // little we hold.
+      const haveText = !!s.fetched || norm(s.text).length >= SOURCE_TEXT_MIN;
+      if (haveText) {
+        // We read the page. The span either matches it or the claim does not survive.
+        if (!norm(s.text).includes(span)) { dropped.push({ point: text, why: 'span not in source' }); continue; }
+        kept.push({ point: text, external: true, tier: 'verified',
+                    source: { url: s.url, title: s.title }, quotedSpan: String(p.quotedSpan).slice(0, 300) });
+        continue;
+      }
+      // We could NOT read the page — web_search hands us encrypted content, and many publishers block a
+      // server-side fetch. A 403 from a news site is not evidence about a claim's truth, so this is
+      // attributed rather than binned: shown as "according to X" with its link, never as something we
+      // checked. Dropping it instead is what made the first smoke test discard two true findings.
+      kept.push({ point: text, external: true, tier: 'attributed',
+                  source: { url: s.url, title: s.title }, quotedSpan: String(p.quotedSpan).slice(0, 300),
+                  unread: s.fetchFail || 'encrypted' });
       continue;
     }
 
     // Internal claims are checked against the corpus we actually read. A customer-EDITED brief field has
     // no document behind it and is handled by §8.8, not here — this function never sees one.
+    // Internal claims are always verifiable, because we hold the document. MEASURED: 4 of 4 of the
+    // distil pass's own spans matched on the first live run. There is no attributed tier here — if a
+    // span is not in a document we read, the claim is simply wrong.
     if (!norm(docText).includes(span)) { dropped.push({ point: text, why: 'span not in documents' }); continue; }
-    kept.push({ point: text, external: false, docName: String(p.docName || '').slice(0, 160), quotedSpan: String(p.quotedSpan).slice(0, 300) });
+    kept.push({ point: text, external: false, tier: 'verified',
+                docName: String(p.docName || '').slice(0, 160), quotedSpan: String(p.quotedSpan).slice(0, 300) });
   }
   return { kept, dropped };
+}
+
+/** How much of a run's output we could independently read. Logged per run, and shown nowhere as a score. */
+function tierCounts(nuggets = {}) {
+  let verified = 0, attributed = 0, internal = 0;
+  for (const slot of Object.values(nuggets)) for (const p of (slot.points || [])) {
+    if (!p.external) internal++;
+    else if (p.tier === 'verified') verified++;
+    else attributed++;
+  }
+  return { verified, attributed, internal, external: verified + attributed };
 }
 
 // ── PHASE 4 — THE BAND ───────────────────────────────────────────────────────────────────────────────
@@ -520,11 +620,11 @@ function basisLine(docCount, sourceCount) {
 
 module.exports = {
   MODEL_DISTIL, MODEL_REASON, MAX_SEARCHES, MAX_TOK, WEB_SEARCH_TOOL, MIN_SPAN,
-  BANDS, BAND_COPY, expectedBandFor, STAGES, NUGGETS,
+  BANDS, BAND_COPY, expectedBandFor, STAGES, NUGGETS, SOURCE_TEXT_MIN,
   briefSchema, distilRequest,
   researchRequest, researchPrompt, harvestSources, researchNarrative,
   nuggetSchema, nuggetPrompt, nuggetRequest,
-  hasSubstance, verifyPoints, norm,
+  hasSubstance, verifyPoints, norm, fetchSourceText, htmlToText, tierCounts,
   bandSchema, bandRequest, bandPrompt, judgeRequest,
   callClaude, readJson, usageOf, costOf, PRICE, basisLine,
   buildCorpus, estTokens, CORPUS_MAX_TOKENS,

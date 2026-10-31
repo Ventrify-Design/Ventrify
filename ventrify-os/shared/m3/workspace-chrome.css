@@ -831,3 +831,10 @@ body.signin::after {
 }
 .bpe-i:focus-visible { outline: 2px solid var(--md-sys-color-primary); outline-offset: 1px; border-color: transparent; }
 @media (max-width: 900px) { .bpe-grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* An ATTRIBUTED citation — a real source we could not read ourselves. Deliberately quieter than a
+   verified one: the reader should be able to tell at a glance which is which, without reading the word. */
+.ng-src.said { color: var(--md-sys-color-on-surface-variant);
+               background: color-mix(in srgb, var(--md-sys-color-on-surface) 7%, transparent);
+               font-style: italic; }
+.ng-src.said:hover { background: color-mix(in srgb, var(--md-sys-color-on-surface) 13%, transparent); }
