@@ -583,7 +583,7 @@
   function prescreenTabs() {
     const r = p.prescreen || null;
     const range = r
-      ? `<div class="brief">${DS.rangeHero(r, { docCount: r.docCount })}${DS.rangeStale(r, (A.inputs && A.inputs.docs && A.inputs.docs.length) || 0)}<hr class="rule">${DS.rangeCoverage(r.categories || [])}${DS.rangeFindings(r.categories || [])}${DS.rangeNext()}</div>`
+      ? `<div class="brief">${DS.rangeHero(r, { docCount: r.docCount })}${DS.rangeStale(r, (A.inputs && A.inputs.docs && A.inputs.docs.length) || 0)}<hr class="rule">${DS.rangeCoverage(r.categories || [])}${DS.rangeFindings(r.categories || [], { assumed: r.assumed })}${DS.rangeNext()}</div>`
       : `<div class="brief">${DS.emptyState({ title: 'Not pre-screened yet', text: 'Attach a pitch deck and run the free pre-screen to see a range in about a minute.' })}</div>`;
     return `<div class="tab-panel active">${range}</div>
       <div class="tab-panel">${dataRoomBody()}</div>`;

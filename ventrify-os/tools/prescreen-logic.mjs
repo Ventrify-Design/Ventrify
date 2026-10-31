@@ -292,6 +292,25 @@ const even = P.consolidate(VSS_RUBRIC[0], [
 ok(even.every(x => SIGNAL_SCALE.values.includes(x.score)),
    `two disagreeing draws still publish a value on the scale (${[...new Set(even.map(x => x.score))].join(', ')})`);
 
+console.log('\n21. THE CEILING DISCRIMINATES — it rests on the venture, not on a constant');
+// A flat par ceiling made every venture top out near the same number, which is most of why the
+// pre-screen could not rank ventures apart at all (correlation -0.23 against the full assessment).
+const roomAt = ev => VSS_RUBRIC.map(c => ({ ...c, signals: c.subs.map((slug, i) => ({ slug, evidenced: i < 4, score: i < 4 ? ev : 0 })) }));
+const weak = P.composeRange(roomAt(0)), mid = P.composeRange(roomAt(P.PAR)), strong = P.composeRange(roomAt(P.MAX_PER_SIGNAL));
+ok(strong.ceiling > mid.ceiling && mid.ceiling > weak.ceiling,
+   `ceilings separate by evidence quality: ${weak.ceiling} < ${mid.ceiling} < ${strong.ceiling}`);
+ok(strong.ceiling - weak.ceiling > 50, `and they separate WIDELY (${strong.ceiling - weak.ceiling} points apart)`);
+ok(mid.assumed === P.PAR, `evidence exactly at par assumes par for the unseen (${mid.assumed})`);
+// Nothing to go on → par, which is the old behaviour and the right behaviour.
+const nothing = P.composeRange(VSS_RUBRIC.map(c => ({ ...c, signals: c.subs.map(slug => ({ slug, evidenced: false, score: 0 })) })));
+ok(nothing.assumed === P.PAR, 'a room that evidences nothing assumes par, never an extrapolation from nothing');
+// THIN evidence must not earn a confident extrapolation.
+const thin = P.composeRange(VSS_RUBRIC.map((c, ci) => ({ ...c, signals: c.subs.map((slug, i) => ({ slug, evidenced: ci === 0 && i === 0, score: ci === 0 && i === 0 ? P.MAX_PER_SIGNAL : 0 })) })));
+ok(thin.assumed < P.PAR + 0.1, `one perfect signal does not imply a perfect room (assumed ${thin.assumed.toFixed(2)} vs par ${P.PAR})`);
+ok(strong.assumed > P.PAR && strong.assumed < P.MAX_PER_SIGNAL,
+   `a strong room is trusted but never fully (assumed ${strong.assumed.toFixed(2)})`);
+ok(typeof P.composeRange(roomAt(P.PAR)).assumed === 'number', 'the assumption is published, so the screen can say what the ceiling rests on');
+
 console.log(fails ? `\n${fails} FAILED\n` : '\nall checks passed\n');
 process.exit(fails ? 1 : 0);
 })();

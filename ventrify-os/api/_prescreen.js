@@ -424,13 +424,42 @@ function consolidate(cat, draws) {
  * Composite is the weighted mean of per-category fractions × 100, matching the runner's v3 scale exactly —
  * a pre-screen on a different scale could not be compared with the paid score it is selling.
  */
+// WHAT THE CEILING ASSUMES ABOUT WHAT IT CANNOT SEE.
+//
+// It used to assume PAR for every unevidenced signal, flat. That makes the ceiling independent of the
+// venture, which is the opposite of what a ceiling should be: measured on MoneyGym the range predicted
+// 64-74 against a true 76 — missing UPWARD, which is the worst direction, because it under-rates
+// exactly the ventures a fund most wants to find.
+//
+// The best available predictor of the documents a founder has NOT shown us is the documents they have.
+// So the assumption is their own evidenced mean — SHRUNK TOWARD PAR, because a venture that evidenced
+// three signals has not earned a confident extrapolation from them. K is the strength of that prior in
+// signals: at K=10, a room evidencing 28 signals is mostly trusted, one evidencing 3 is barely moved
+// from par, and a room evidencing nothing lands exactly on par, which is the old behaviour and the
+// right behaviour when there is nothing to go on.
+//
+// It cuts BOTH ways on purpose. A venture whose visible evidence is weak gets a ceiling below par,
+// because its unseen documents are probably weak too. That is not pessimism, it is the discrimination
+// the flat assumption destroyed: a constant ceiling cannot separate a good venture from a bad one.
+const CEILING_PRIOR_K = 10;
+function assumedForUnseen(cats) {
+  const seen = [];
+  for (const c of cats) for (const s of (c.signals || [])) if (s.evidenced) seen.push(Number(s.score) || 0);
+  const n = seen.length;
+  if (!n) return PAR;
+  const mean = seen.reduce((a, b) => a + b, 0) / n;
+  const shrunk = (n * mean + CEILING_PRIOR_K * PAR) / (n + CEILING_PRIOR_K);
+  return Math.max(0, Math.min(MAX_PER_SIGNAL, shrunk));
+}
+
 function composeRange(cats) {
   let floor = 0, ceiling = 0, evidencedWeight = 0;
+  const assumed = assumedForUnseen(cats);
   const categories = cats.map(c => {
     const max = c.subs.length * MAX_PER_SIGNAL;
     const sigs = c.signals || [];
     const fSum = sigs.reduce((a, s) => a + (s.evidenced ? s.score : 0), 0);
-    const cSum = sigs.reduce((a, s) => a + (s.evidenced ? s.score : PAR), 0);
+    const cSum = sigs.reduce((a, s) => a + (s.evidenced ? s.score : assumed), 0);
     const seen = sigs.filter(s => s.evidenced).length;
     floor += c.weight * (fSum / max);
     ceiling += c.weight * (cSum / max);
@@ -442,7 +471,10 @@ function composeRange(cats) {
     };
   });
   const f = Math.round(floor * 100), ce = Math.round(ceiling * 100);
-  return { floor: f, ceiling: ce, width: ce - f, evidencedWeight: Math.round(evidencedWeight * 100), categories };
+  // `assumed` is published so the screen can say what the high end rests on, rather than asserting a
+  // number whose basis the reader cannot see.
+  return { floor: f, ceiling: ce, width: ce - f, evidencedWeight: Math.round(evidencedWeight * 100),
+           assumed: Math.round(assumed * 100) / 100, categories };
 }
 
 // The guidance bands, 80/60/40, mirroring the runner. The runner DECIDES the band on a real run — this only
@@ -471,7 +503,7 @@ function rangeBand(floor, ceiling) {
 }
 
 module.exports = {
-  MODEL, FAST_BETA, DEFAULT_SPEED, DRAWS, PAR, MAX_PER_SIGNAL, SIGNAL_RAW, SIGNAL_VALUES, CORPUS_MAX_TOKENS, isFastUnavailable,
+  MODEL, FAST_BETA, DEFAULT_SPEED, DRAWS, PAR, MAX_PER_SIGNAL, CEILING_PRIOR_K, assumedForUnseen, SIGNAL_RAW, SIGNAL_VALUES, CORPUS_MAX_TOKENS, isFastUnavailable,
   estTokens, buildCorpus, evidenceTag, orderForBudget, systemBlock, categoryPrompt, schemaFor, requestBody,
   warmCache, probeCategory, medianOf, consolidate, composeRange, bandOf, rangeBand, BAND_ORDER,
 };

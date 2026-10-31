@@ -2382,9 +2382,13 @@ export function rangeHero(range = {}, opts = {}) {
     ],
     right: rangeLockup({ floor, ceiling }),
     thesisLabel: 'What this is.',
+    // The high end used to be described as "what you would expect" of the unseen documents, which was a
+    // flat par assumption and made every venture top out near the same number. It now rests on the
+    // venture's OWN evidenced quality, so the sentence has to say that — a reader cannot judge a
+    // ceiling whose basis is hidden.
     thesis: width === 0
       ? 'Every signal the rubric asks for had evidence behind it, so there is no spread left to close. A full assessment replaces this with a single measured number and the reasoning behind it.'
-      : 'The low end is what your evidence proves today. The high end is what this venture scores if the documents we could not find say what you would expect them to. The full assessment closes the gap to one number.',
+      : 'The low end is what your evidence proves today. The high end assumes the documents we could not find are about as strong as the ones we could — your own evidence sets that expectation, so a thin room cannot borrow a high ceiling. The full assessment closes the gap to one number.',
   });
 }
 
@@ -2433,7 +2437,7 @@ export function rangeStale(snapshot = {}, liveDocs = 0) {
 // PAR (3 of 5) at the ceiling, so it holds weight × 3/25 × 100 points of the 100-point scale. A Team
 // signal is worth 3.0; an Evidence Integrity signal 0.6. That ordering is the honest answer to "what
 // should I go and find first".
-export function rangeFindings(categories = []) {
+export function rangeFindings(categories = [], opts = {}) {
   const cats = (categories || []).filter(c => (c.signals || []).length);
   if (!cats.length) return '';
   // LEGACY SNAPSHOTS ARE ON THE OLD 0–5 SCALE. Pre-screens taken before the scale was unified with the
@@ -2441,7 +2445,11 @@ export function rangeFindings(categories = []) {
   // reader could not detect. Any score above 1 proves the old instrument, and nothing else can.
   const legacy = cats.some(c => (c.signals || []).some(sg => Number(sg.score) > 1));
   const MAX = legacy ? 5 : 1, PAR = legacy ? 3 : 0.5;
-  const ptsOf = c => (c.weight * PAR / ((c.signals.length || 5) * MAX)) * 100;
+  // Price each gap against what the CEILING actually assumes for it, not against a constant: the
+  // snapshot publishes `assumed`, and on a strong room that is well above par — so closing a gap is
+  // worth more there than the old flat figure claimed.
+  const assumed = (!legacy && typeof opts.assumed === 'number') ? opts.assumed : PAR;
+  const ptsOf = c => (c.weight * assumed / ((c.signals.length || 5) * MAX)) * 100;
   const showScore = v => legacy ? String(v) : scoreWord(v);
 
   // ---- what is missing, hardest-hitting first ----
