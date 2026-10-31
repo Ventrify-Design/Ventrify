@@ -204,5 +204,64 @@ ok(E.costOf([{ model: 'made-up-model', usage: { in: 1e6, out: 1e6 } }]) === 0,
    'an unpriced model contributes 0 rather than a wrong number');
 ok(E.costOf([]) === 0, 'and no calls cost nothing');
 
+console.log('\n17. THE WIRING — api/memo.js, read as text (the parity-gate pattern)');
+// These are the invariants a unit test cannot reach, because they are about WHICH CODE EXISTS. Every one
+// of them was a real hole in v1 or a consequence worked out in §8.8, and every one would be invisible in
+// a live run until it cost somebody something.
+const memo = await (await import('node:fs/promises')).readFile(new URL('../api/memo.js', import.meta.url), 'utf8');
+
+// One entitlement check, not two. Two copies of a rule is two rules, and the second is always the wrong one.
+const claimDefs = (memo.match(/async function claimVenture/g) || []).length;
+const fpCalls = (memo.match(/EN\.deckFingerprint\(/g) || []).length;
+ok(claimDefs === 1, 'claimVenture() is defined exactly once');
+ok(fpCalls === 1, `the venture fingerprint is computed in one place (${fpCalls})`);
+ok((memo.match(/await claimVenture\(/g) || []).length === 2, 'and both v1 and v2 call it');
+
+// §8.8 — a correction NEVER consumes a venture claim.
+const editBlock = memo.slice(memo.indexOf("action === 'ps2-brief-edit'", memo.indexOf('PHASE 1')), memo.indexOf('── PHASE 2'));
+ok(editBlock.length > 500, 'the correction block is present');
+ok(!/claimVenture/.test(editBlock), 'a brief correction does not go near the venture claim');
+ok(/MAX_EDITS = 2/.test(editBlock), 'and is bounded at two per venture');
+ok(/edit_limit/.test(editBlock), 'with a named refusal rather than a silent no-op');
+
+// §8.8 — edited fields are customer-asserted, and `claims` is never editable.
+ok(/asserted/.test(editBlock), 'edited fields are recorded as customer-asserted');
+const editable = (editBlock.match(/const EDITABLE = \[([^\]]*)\]/) || [, ''])[1];
+ok(editable.length > 0 && !/claims/.test(editable), 'the verified claims layer is NOT editable: [' + editable.replace(/'/g, '').trim() + ']');
+ok(/listDocuments|batch\.delete/.test(editBlock), 'a correction clears everything downstream rather than leaving stale nuggets');
+ok(/prescreen2Superseded/.test(editBlock), 'and the previous band is kept as superseded, not overwritten');
+
+// §3.3 — the unreadable path stops before anything expensive.
+const briefBlock = memo.slice(memo.indexOf("action === 'ps2-brief'", memo.indexOf('── PHASE 1')), memo.indexOf("action === 'ps2-brief-edit'", memo.indexOf('── PHASE 1')));
+ok(/readable === false/.test(briefBlock), 'an unreadable submission is detected in phase 1');
+ok(/state: 'unreadable'/.test(briefBlock) && /band: null/.test(briefBlock), 'it gets its own state and NO band');
+ok(/done: true/.test(briefBlock), 'and the run ends there — three phases are never started');
+
+// §8.1 — nothing reaches the browser unverified.
+const nugBlock = memo.slice(memo.indexOf("action === 'ps2-nugget'"), memo.indexOf('── PHASE 4'));
+ok(/E\.verifyPoints\(/.test(nugBlock), 'every nugget is run through verifyPoints before it is stored');
+ok(/points: kept/.test(nugBlock), 'only the verified points are persisted as points');
+ok(/needs_two_documents/.test(nugBlock), '§4 — tension is skipped on a deck-only run, not attempted');
+
+// §8.7 — the judge is the smallest possible component and cannot fail the run.
+const bandBlock = memo.slice(memo.indexOf("action === 'ps2-band'"));
+ok(/catch \(e\) \{[\s\S]{0,400}generic = \[\]/.test(bandBlock), 'a failed judge pass leaves nothing marked generic rather than failing the run');
+ok(/costUsd: sumUsage/.test(bandBlock), '§8.6 — every run logs what it actually cost');
+ok(/droppedUnverified/.test(bandBlock) && /droppedGeneric/.test(bandBlock), 'and what it threw away, split by reason');
+
+// The corpus is never trusted from the client — it is what every claim is verified against.
+ok(!/body\.corpus|body\.sources|body\.brief\b/.test(memo), 'no corpus, source list or brief is ever accepted from the browser');
+ok(/E\.buildCorpus\(fdSnap/.test(memo), 'it is rebuilt from Firestore on every v2 action');
+
+// Firestore denies by default, so a subcollection with no match block is unreachable from the browser.
+// That is the protection, and it only holds while NOBODY ADDS ONE — hence the check. Every v2 phase
+// returns its own payload, so the UI never needs to read these documents directly.
+const rules = await (await import('node:fs/promises')).readFile(new URL('../firebase/firestore.rules', import.meta.url), 'utf8');
+ok(!/prescreen2/.test(rules), 'no rule exposes the prescreen2 subcollection — default-deny keeps it server-only');
+ok(!/prescreenCategories/.test(rules), 'same as v1, which has always relied on this');
+
+// A spend cap is not a failure of ours.
+ok(/account_limit/.test(bandBlock) || /account_limit/.test(memo), 'an account spend limit is named, not reported as a model error');
+
 console.log(fails ? `\n${fails} check(s) failed` : '\nall checks passed');
 process.exit(fails ? 1 : 0);
