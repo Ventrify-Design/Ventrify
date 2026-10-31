@@ -986,4 +986,18 @@ md-outlined-text-field { --md-outlined-text-field-container-shape: 999px; --md-o
   .charts-in .sigtier-row b {
     animation: ch-pop 300ms var(--ch-ease) calc(var(--tier, 0) * 90ms + min(var(--i, 0), 10) * 34ms + 90ms) both;
   }
+
+  /* -- the pre-screen's verdict signal --
+     Three columns rise off the baseline left to right, then the band word, then the caption. scaleY
+     from the foot, so the only animated property is a transform and the bars grow out of the axis
+     rather than sliding onto it. No overshoot: the number of lit columns IS the verdict, and a
+     spring would draw two-and-a-bit of them for ~80ms. Living in this layer rather than in a
+     transition of its own is what gets it replayed by playCharts() when the tab is opened, like
+     every other graph in the product. */
+  @keyframes ch-rise { from { transform: translateY(9px); opacity: 0; } }
+  .charts-in .vsig-col { transform-box: fill-box; transform-origin: 50% 100%;
+                         animation: ch-growy 380ms var(--ch-ease) calc(var(--i, 0) * 80ms) both; }
+  .charts-in .vsig-lab { animation: ch-rise 320ms var(--ch-ease) 300ms both; }
+  .charts-in .vsig-sub,
+  .charts-in .vsig-basis { animation: ch-fade 300ms var(--ch-ease) 420ms both; }
 }

@@ -1004,9 +1004,33 @@ export function fitHeadline(text, fallback = '', maxWords = HEADLINE_MAX_WORDS) 
   // Too long. Prefer the caller's authored fallback over a mutilated sentence — but if there is none, cut at
   // the last sentence/clause boundary INSIDE the budget so what we show is still a complete thought.
   if (fallback) return fallback;
-  const head = words.slice(0, maxWords).join(' ');
-  const cut = Math.max(head.lastIndexOf('. '), head.lastIndexOf(' — '), head.lastIndexOf('; '));
-  return (cut > 20 ? head.slice(0, cut + 1) : head).replace(/[,;:—-]\s*$/, '') + (cut > 20 ? '' : '.');
+  let head = words.slice(0, maxWords).join(' ');
+  // A COMMA IS A CLAUSE BOUNDARY TOO. It was left out, so a long reason with no full stop, dash or
+  // semicolon inside the budget fell straight through to the hard cut below.
+  // A full stop already terminates the sentence and is kept; a dash, semicolon or comma does not, so
+  // it is dropped and a full stop put in its place. The original stripped the punctuation and added
+  // nothing, which left the headline running off the end of itself with no terminal mark at all.
+  const dot = head.lastIndexOf('. ');
+  const clause = Math.max(head.lastIndexOf(' — '), head.lastIndexOf('; '), head.lastIndexOf(', '));
+  if (dot > 20 && dot >= clause) return head.slice(0, dot + 1);
+  if (clause > 20) return head.slice(0, clause).replace(/[,;:—-]\s*$/, '') + '.';
+  /* THE HARD CUT HAS TO LAND ON A WORD THAT CAN END A SENTENCE. Slicing at a word count alone
+     published "A real wedge into a market that is already paying for the." — a dangling article, with
+     a full stop welded to it, set at 44px as the first line of the page. Walking back off trailing
+     function words costs one loop and is the difference between a clipped sentence and a broken one.
+     Looped rather than applied once, because cutting "for the" leaves "for", which is no better. */
+  const TRAILING_FN = new RegExp('\\s+(?:' + [
+    'the|a|an|this|these|those|its|their|his|her|our|your|my',              // determiners
+    'and|or|but|so|if|when|while|then|than|because|although|though',        // conjunctions
+    'of|to|in|on|for|with|by|from|at|as|into|onto|over|under|about|after',  // prepositions
+    'before|between|through|across|without|within|upon|per|via|against',
+    'that|which|who|whom|whose|it|they|we|he|she|you|there|here|one',        // pronouns / relatives
+    'is|are|was|were|be|been|being|has|have|had|will|would|can|could',       // auxiliaries
+    'should|may|might|must|do|does|did|not|no|very|more|most|much|many|such',
+  ].join('|') + ')$', 'i');
+  let prev;
+  do { prev = head; head = head.replace(/[,;:—-]\s*$/, '').replace(TRAILING_FN, ''); } while (head !== prev);
+  return head + '.';
 }
 
 export function statementLockup(opts = {}) {
@@ -1048,6 +1072,8 @@ export function sectionHero(opts = {}) {
     score = { score: 64, band: 'Promising', tone: 'mid', now: 64, potential: 82 },
     thesis = 'A real, sizeable market and a capable team, held back by unproven unit economics and a still-forming moat — the shape of the risk is clear enough to price.',
     thesisLabel = 'Thesis.',
+    thesisPlacement = 'column',   // 'column' | 'span' — see the note below
+
     ...statement
   } = opts;
   const leftHtml = left != null ? left : statementLockup(statement);
@@ -1067,10 +1093,20 @@ export function sectionHero(opts = {}) {
      owner view of Admin, against 20px in the two-column case. One path now. */
   const thesisHtml = thesis
     ? `<p class="lead"><span class="drop">${esc(thesisLabel)}</span> ${esc(thesis)}</p>` : '';
-  return `<section class="sec section-hero${single ? ' single' : ''}">
-      <div class="left">${leftHtml}${thesisHtml}</div>
+  /* WHERE THE THESIS GOES DEPENDS ON WHICH SLOT IS TALLER, AND ONLY THE CALLER KNOWS THAT.
+     'column' (the default, and every existing caller) keeps it inside .left, for the reason above:
+     a tall right slot leaves the left column half empty and the thesis fills it.
+     'span' drops it to its own row across both columns, for a hero whose right slot is COMPACT —
+     the pre-screen's verdict signal is a 96px graphic and two lines, so keeping the thesis in the
+     left column pushed that column far past the graphic and opened a void beside it.
+     A flag rather than a measurement because this is a string builder: there are no heights here to
+     compare, and guessing from content length would be a rule that silently gets it wrong. */
+  const span = thesisPlacement === 'span' && !!thesisHtml && !single;
+  return `<section class="sec section-hero${single ? ' single' : ''}${span ? ' thesis-span' : ''}">
+      <div class="left">${leftHtml}${span ? '' : thesisHtml}</div>
       <div class="divide"></div>
       <div class="right">${rightHtml}</div>
+      ${span ? `<div class="coda">${thesisHtml}</div>` : ''}
     </section>`;
 }
 
@@ -5519,40 +5555,50 @@ export function initTabs(opts = {}) {
 // The three bands, and what each one is allowed to say. NOT a quality verdict: we have only read
 // documents, never met the team or used the product (§2). None of these three sentences mentions a
 // document, and none of them may.
+// `i` is the band's position on the three-step scale — how many columns verdictSignal lights.
+// The `tone` keys the old dial used are GONE on purpose: one accent, never a ramp (see verdictSignal).
 const PS2_BANDS = {
-  HIGH:   { label: 'High',   tone: 'good', deg: 142, line: 'Worth assessing now.' },
-  MEDIUM: { label: 'Medium', tone: 'mid',  deg: 0,   line: 'Real signal, with things to resolve.' },
-  LOW:    { label: 'Low',    tone: 'warn', deg: -142, line: 'The case needs work before it is worth the full read.' },
+  HIGH:   { label: 'High',   i: 2, line: 'Worth assessing now.' },
+  MEDIUM: { label: 'Medium', i: 1, line: 'Real signal, with things to resolve.' },
+  LOW:    { label: 'Low',    i: 0, line: 'The case needs work before it is worth the full read.' },
 };
 
 /**
- * verdictDial — ATOM. The band as a dial, because a number invites arithmetic and a band invites a
- * decision.
+ * verdictSignal — ATOM. The band as three ascending columns, lit up to the verdict.
  *
- * v1 published a range: two numbers off a one-minute read, implying a resolution we do not have. Three
- * bands are honest about the resolution AND easier to validate — ordinal agreement with the full
- * assessment is a far lower bar than numerical containment, and that is what the calibration gate
- * measures.
+ * CHOSEN OVER A SPEEDOMETER, DELIBERATELY. A dial has a continuous face, so it invites "where exactly
+ * on it?" — the one question a three-band verdict exists so as not to answer, and the one the v1 range
+ * was retired for inviting. Three columns can say exactly three things, which is exactly the
+ * resolution we have. It is also the only one of the five concepts that is read before it is
+ * consciously looked at, which matters on the first page a customer ever sees.
+ *
+ * ONE COLOUR, AND THAT IS A RULE RATHER THAN A PREFERENCE. The lit columns are always the identity
+ * accent — never a red/amber/green ramp. Colour in this product carries SEMANTICS: a pass, a failure,
+ * a cleared check, the case for and the case against. A verdict graphic is not one of those. The band
+ * is carried by HOW MANY columns are lit and by the word beneath them, so the accent stays the accent.
+ * Painting Low amber would also quietly restate the thing §2 forbids — that this is a quality score
+ * rather than a judgement about whether the case is worth reading.
+ *
+ * The geometry is SVG because every other hero graphic in the product is (scoreDial, the radar), and
+ * because `fill` and a `scaleY` off the baseline are the whole drawing. Its entrance lives in ds.css's
+ * chart layer, so playCharts() replays it on tab open like every other graph.
  */
-export function verdictDial(band, opts = {}) {
+export function verdictSignal(band, opts = {}) {
   const b = PS2_BANDS[band];
-  if (!b) {
-    // §3.3 — "we couldn't tell" is NOT the bottom band. It is off the dial entirely, because an
-    // unreadable submission is not a verdict on a venture.
-    return `<div class="vd vd-none"><div class="vd-face"><span class="material-symbols-rounded">help</span></div>
-      <div class="vd-lab">Not enough to read yet</div></div>`;
-  }
-  const ticks = Object.entries(PS2_BANDS).map(([k, v]) =>
-    `<span class="vd-tick${k === band ? ' on' : ''}" style="--d:${v.deg}deg"></span>`).join('');
-  return `<div class="vd" data-tone="${b.tone}">
-    <div class="vd-face">
-      ${ticks}
-      <span class="vd-needle" style="--d:${b.deg}deg"></span>
-      <span class="vd-hub"></span>
-    </div>
-    <div class="vd-lab">${esc(b.label)}</div>
-    <div class="vd-sub">${esc(b.line)}</div>
-    ${opts.basis ? `<div class="vd-basis">${esc(opts.basis)}</div>` : ''}
+  const W = 34, GAP = 16, H = 96, STEP = [40, 64, 88];
+  // §3.3 — "we couldn't tell" is NOT the bottom band. It is OFF the scale: no column is lit, because
+  // an unreadable submission is not a verdict on a venture and must not render as the worst one.
+  const lit = b ? b.i : -1;
+  const cols = STEP.map((h, i) => `<rect class="vsig-col${i <= lit ? ' lit' : ''}" style="--i:${i}"
+      x="${i * (W + GAP)}" y="${H - h}" width="${W}" height="${h}" rx="7"/>`).join('');
+  const label = b ? b.label : 'Not enough to read yet';
+  const line = b ? b.line : 'Add the deck and we’ll take another look.';
+  return `<div class="vsig" data-band="${esc(band || 'NONE')}">
+    <svg class="vsig-face" viewBox="0 0 ${3 * W + 2 * GAP} ${H}" width="${3 * W + 2 * GAP}" height="${H}"
+         role="img" aria-label="Verdict: ${esc(label)}">${cols}</svg>
+    <div class="vsig-lab">${esc(label)}</div>
+    <div class="vsig-sub">${esc(line)}</div>
+    ${opts.basis ? `<div class="vsig-basis">${esc(opts.basis)}</div>` : ''}
   </div>`;
 }
 
@@ -5576,7 +5622,14 @@ export function verdictHero(snapshot = {}, opts = {}) {
       { k: 'Public sources', v: sources.length ? String(sources.length) : '—' },
       ...(snapshot.briefEdited ? [{ k: 'Your corrections', v: 'applied' }] : []),
     ],
-    right: verdictDial(band, { basis }),
+    right: verdictSignal(band, { basis }),
+    /* THE THESIS SPANS, IT DOES NOT SIT IN THE COLUMN. sectionHero's default puts it inside .left,
+       and the reason is written on that function: the full assessment's right slot is TALL (a dial,
+       a chip and a stability strip) so the left column was running half empty. This hero is the
+       mirror image — a compact graphic and two lines of caption — so the same default leaves a void
+       the full height of the thesis underneath the graphic. Spanning both columns closes it and the
+       thesis still reads as part of the hero. */
+    thesisPlacement: 'span',
     thesisLabel: 'What this is.',
     thesis: unreadable
       ? 'A pre-screen reads what a venture says about itself and then goes looking for what it does not say. There is too little here to do either yet — add the deck and we will take another look, and it will not count against your free pre-screen.'
@@ -5604,17 +5657,17 @@ export function briefPlayback(brief = {}, opts = {}) {
     ['oneLine', 'What it does'], ['sector', 'Sector'], ['businessModel', 'Business model'],
     ['stage', 'Stage'], ['geography', 'Where'], ['marketClaim', 'Market it claims'], ['ask', 'The ask'],
   ];
-  const rows = FIELDS.filter(([k]) => String(brief[k] || '').trim()).map(([k, label]) => `
+  const shown = FIELDS.filter(([k]) => String(brief[k] || '').trim());
+  const rows = shown.map(([k, label]) => `
     <div class="bpb-r${asserted.has(k) ? ' said' : ''}" data-field="${k}">
       <div class="bpb-k">${esc(label)}</div>
       <div class="bpb-v">${esc(brief[k])}${asserted.has(k)
         ? '<span class="bpb-mark" title="You told us this. We have not checked it against a document.">your correction</span>' : ''}</div>
     </div>`).join('');
   const canEdit = opts.editable && (opts.editsLeft == null || opts.editsLeft > 0);
-  return `<section class="sec bpb">
-    <div class="s-label"><span class="material-symbols-rounded">summarize</span>What we understood</div>
-    <h2 class="s-h">Here’s what we read your venture to be</h2>
-    <p class="s-sub">Everything below this is reasoned from this summary. If it’s wrong, correct it — the read is only as good as this.</p>
+  return `<section class="sec">
+    ${ps2Head('What we understood', 'Here’s what we read your venture to be', shown.length + ' fields')}
+    <p class="lead"><span class="drop">Read this first.</span> Everything below is reasoned from this summary and nothing else. If it’s wrong, correct it — the read is only as good as this.</p>
     <div class="bpb-grid">${rows}</div>
     ${(brief.team || []).length ? `<div class="bpb-team">${(brief.team || []).slice(0, 6).map(t =>
       `<span class="bpb-p"><b>${esc(t.name)}</b>${t.background ? ' — ' + esc(t.background) : ''}</span>`).join('')}</div>` : ''}
@@ -5628,126 +5681,222 @@ export function briefPlayback(brief = {}, opts = {}) {
   </section>`;
 }
 
-// What each findings card is called on screen, and the one line under its heading. The `tension` card is
-// absent on a deck-only run by design — one document cannot contradict itself across documents (§4).
+/* ════════════════════════════════════════════════════════════════════════════════════════════════════
+   THE FINDINGS ARE NOT CARDS, AND THE HEADS ARE NOT THIS FEATURE'S OWN.
+
+   WHAT WAS WRONG, AND WHERE IT CAME FROM. v2 shipped six `.ng` cards in a two-column grid under
+   `.s-label` / `.s-h` / `.s-sub` heads. Neither idiom belongs to this product:
+
+   • `.s-label` / `.s-h` / `.s-sub` is the MARKETING SITE's section pattern (icon over an uppercase
+     kicker → <h2> → muted one-liner), lifted out of the repo-root CLAUDE.md. `.s-h` and `.s-sub` have
+     no rule in ANY stylesheet the OS loads, so those headings fell back to the user-agent <h2> and the
+     subtitles to a bare <p> — no font token, no size token, no colour token. They read as "a little
+     off" because they were unstyled. tools/class-coverage.mjs now fails the build on a class a
+     component emits that no stylesheet defines.
+
+   • The cards contradict the rule this whole editorial layer is built on, written at the top of
+     assess-editorial.css: content breathes on the background, and a card appears ONLY where grouping
+     earns elevation. caseEditorial retired its own cards for exactly this reason — "two sides of an
+     argument are not separate objects, they are one argument".
+
+   WHAT IT IS NOW. The same components the full assessment's Verdict tab is built from:
+     the bet          → the one highlighted block, brand-tinted, `.must` numbered conditions inside it
+     for / against    → `.case-grid` + `.case-card` + `.ch` + `.cpt`, i.e. caseEditorial, verbatim
+     field/team/tension → plain `.sec` + `.sec-head` + `.cpt` rows, flat on the background
+     what we'd test   → `.must` numbered rows, the conditionsKill idiom
+   Divided by `<hr class="rule">`, the way every editorial tab in this product divides its sections.
+
+   AND THE SOURCE INVENTORY IS GONE. "What we read / Outside the deck" listed every page a second
+   time, after each finding had already linked the page it rests on. The count stays in the hero's
+   facts and the link stays beside the sentence it earned; a reader should never have to
+   cross-reference a bibliography to check a claim.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════════ */
+
+// What each finding is called on screen. `eyebrow` is the kicker and `title` the section head, in the
+// product's own `.sec-head`; `icon` and `sub` are read by the run stage (workspace/prescreen2.js),
+// which still shows these as a checklist while the reasoning lands. `tension` is absent on a deck-only
+// run by design — one document cannot contradict itself across documents (§4).
 const PS2_NUGGETS = {
-  thesis:      { icon: 'target',     title: 'The bet',            sub: 'What has to be true for this to work.' },
-  bull:        { icon: 'trending_up',title: 'The case for',        sub: 'How an investor who wants to back it would argue.' },
-  bear:        { icon: 'trending_down', title: 'The case against', sub: 'How it will be argued in the room the founder isn’t in.' },
-  competitive: { icon: 'travel_explore', title: 'Who else is doing this', sub: 'From public sources, not from the deck.' },
-  team:        { icon: 'groups',     title: 'The team against the problem', sub: 'Fit, and what’s conspicuously absent.' },
-  tension:     { icon: 'compare_arrows', title: 'Where the documents disagree', sub: 'Both sides, quoted.' },
+  thesis:      { icon: 'target',         eyebrow: 'The bet',          title: 'What has to be true for this to work',
+                 sub: 'What has to be true for this to work.' },
+  bull:        { icon: 'trending_up',    eyebrow: 'The case for',     title: 'The case for',
+                 sub: 'How an investor who wants to back it would argue.' },
+  bear:        { icon: 'trending_down',  eyebrow: 'The case against', title: 'The case against',
+                 sub: 'How it will be argued in the room the founder isn’t in.' },
+  competitive: { icon: 'travel_explore', eyebrow: 'The field',        title: 'Who else is already doing this',
+                 sub: 'From public sources, not from the deck.' },
+  team:        { icon: 'groups',         eyebrow: 'The team',         title: 'The team against the problem',
+                 sub: 'Fit, and what’s conspicuously absent.' },
+  tension:     { icon: 'compare_arrows', eyebrow: 'The tension',      title: 'Where your documents disagree',
+                 sub: 'Both sides, quoted.' },
 };
 
+// ps2Head — the product's section head, used by every section on this page. `tone` is the eyebrow
+// variant assess-editorial.css already defines (accent / good / warn / none), not a new scale.
+const ps2Head = (eyebrow, title, meta = '', tone = 'accent') => `<div class="sec-head">
+    <span class="eyebrow${tone ? ' ' + tone : ''}">${esc(eyebrow)}</span><span class="t">${esc(title)}</span>${
+      meta ? `<span class="meta">${esc(meta)}</span>` : ''}</div>`;
+
 /**
- * nuggetCard — MOLECULE. One finding set, with its provenance attached.
+ * ps2Cite — a point's provenance, as a chip the reader can follow. The ONLY place a source URL appears.
  *
- * EVERY POINT HERE HAS ALREADY BEEN VERIFIED (§8.1) — an external point's span was matched character for
- * character against the page it cites, and an internal one against the document. So the citation is a
- * link the reader can follow rather than a claim they have to take on trust, and an empty card is a
- * truthful outcome rather than a rendering failure (§8.5).
+ * TWO TIERS, AND THE DIFFERENCE IS VISIBLE. A `verified` point's span was matched in our own code
+ * against the document or the page it cites. An `attributed` one cites a real search result we could
+ * not read — web_search returns encrypted content, and many publishers block a server-side fetch — so
+ * it says "according to" and nothing stronger. Presenting the second as the first is the one thing
+ * this component must never do.
  */
-export function nuggetCard(kind, data = {}) {
-  const meta = PS2_NUGGETS[kind];
-  if (!meta) return '';
+function ps2Cite(p) {
+  if (p.external && p.source) {
+    const attributed = p.tier === 'attributed';
+    return `<a class="ps-cite${attributed ? ' said' : ''}" href="${esc(p.source.url)}" target="_blank" rel="noopener noreferrer"
+      title="${esc(attributed ? 'We have not read this page ourselves — this is what the source is reported to say.' : p.quotedSpan || '')}">
+      <span class="material-symbols-rounded">${attributed ? 'format_quote' : 'open_in_new'}</span>${
+        attributed ? 'according to ' : ''}${esc(p.source.title || 'source')}</a>`;
+  }
+  return p.docName ? `<span class="ps-cite doc" title="${esc(p.quotedSpan || '')}">
+    <span class="material-symbols-rounded">description</span>${esc(p.docName)}</span>` : '';
+}
+
+// The still-thinking state. Three dots, opacity only — what makes the progressive reveal read as an
+// analyst working rather than as a page with holes in it (§6.5). Declared ABOVE its callers: a const
+// arrow read before its declaration runs is a temporal-dead-zone throw, not an undefined.
+const ps2Dots = () => '<div class="ps-wait"><span></span><span></span><span></span></div>';
+
+// An empty section is a TRUTHFUL OUTCOME, not a render failure (§8.5), so it says which.
+const ps2Empty = (kind, data = {}) => data.skipped === 'needs_two_documents'
+  ? 'This one reads your documents against each other, so it needs more than the deck.'
+  : kind === 'competitive'
+    ? 'We couldn’t find comparable players in public sources for this one.'
+    : 'Nothing here we could stand behind.';
+
+/**
+ * ps2Points — the point rows, as the SAME `.cpt` row the Verdict tab's case is built from: a marker,
+ * the prose, a hairline between. Flat on the background.
+ *
+ * EVERY POINT HERE HAS ALREADY BEEN VERIFIED IN CODE (§8.1) — an external point's span was matched
+ * character for character against the page it cites, an internal one against the document — so the
+ * citation is a link to follow rather than a claim to take on trust.
+ */
+const ps2Points = (points, empty) => points.length
+  ? points.map(p => `<div class="cpt${p.external ? ' ext' : ''}">
+      <span class="mk"></span>
+      <div class="cpt-b"><p>${esc(p.point)}</p>${ps2Cite(p)}</div>
+    </div>`).join('')
+  : `<div class="cpt cpt-empty"><span class="mk"></span><div class="cpt-b"><p>${esc(empty)}</p></div></div>`;
+
+/**
+ * verdictBet — ORGANISM. The one highlighted block on the page.
+ *
+ * Everything else breathes on the background; this is the single thing worth lifting off it, and it
+ * takes the brand tint the product already uses for an advisory panel (.rstale-in) with the geometry
+ * the Verdict tab's kill-risk uses (.kill). Numbered rows inside, because "what has to be true" is a
+ * list of conditions — the same `.must` idiom conditionsKill renders on the full assessment.
+ */
+export function verdictBet(data = {}, opts = {}) {
+  const m = PS2_NUGGETS.thesis;
   const points = data.points || [];
-  // TWO TIERS, AND THE DIFFERENCE IS VISIBLE. A `verified` point's span was matched in our own code
-  // against the document or the page it cites. An `attributed` one cites a real search result we could
-  // not read — web_search returns encrypted content, and many publishers block a server-side fetch — so
-  // it says "according to" and nothing stronger. Presenting the second as the first is the one thing
-  // this component must never do.
-  const cite = (p) => {
-    if (p.external && p.source) {
-      const attributed = p.tier === 'attributed';
-      return `<a class="ng-src${attributed ? ' said' : ''}" href="${esc(p.source.url)}" target="_blank" rel="noopener noreferrer"
-         title="${esc(attributed ? 'We have not read this page ourselves — this is what the source is reported to say.' : p.quotedSpan || '')}">
-         <span class="material-symbols-rounded">${attributed ? 'format_quote' : 'open_in_new'}</span>${
-           attributed ? 'according to ' : ''}${esc(p.source.title || 'source')}</a>`;
-    }
-    return p.docName ? `<span class="ng-src doc" title="${esc(p.quotedSpan || '')}">
-      <span class="material-symbols-rounded">description</span>${esc(p.docName)}</span>` : '';
-  };
-  const body = points.length
-    ? `<ul class="ng-l">${points.map(p => `<li class="ng-i${p.external ? ' ext' : ''}">
-        <span class="ng-t">${esc(p.point)}</span>
-        ${cite(p)}
-      </li>`).join('')}</ul>`
-    : `<p class="ng-empty">${esc(
-        data.skipped === 'needs_two_documents'
-          ? 'This one compares your documents against each other, so it needs more than the deck.'
-          : kind === 'competitive'
-            ? 'We couldn’t find comparable players in public sources for this one.'
-            : 'Nothing here we could stand behind.')}</p>`;
-  return `<article class="ng" data-kind="${kind}"${points.length ? '' : ' data-empty="1"'}>
-    <div class="ng-h"><span class="material-symbols-rounded">${meta.icon}</span>
-      <div><div class="ng-ti">${esc(meta.title)}</div><div class="ng-sub">${esc(meta.sub)}</div></div></div>
-    ${body}
-  </article>`;
+  const body = opts.pending
+    ? ps2Dots()
+    : points.length
+      ? points.map((p, i) => `<div class="must"><span class="idx">${i + 1}</span>
+          <div class="bd"><p>${esc(p.point)}</p>${ps2Cite(p)}</div></div>`).join('')
+      : `<div class="must"><span class="idx"></span><div class="bd"><p class="ps-none">${esc(ps2Empty('thesis', data))}</p></div></div>`;
+  return `<section class="sec">
+    ${ps2Head(m.eyebrow, m.title, points.length ? `${points.length} condition${points.length === 1 ? '' : 's'}` : '')}
+    <div class="ps-bet">${body}</div>
+  </section>`;
 }
 
 /**
- * verdictFindings — ORGANISM. All six cards, in reveal order.
+ * verdictCase — ORGANISM. The case, argued both ways — the SAME component the full assessment fronts
+ * its Verdict tab with (caseEditorial): two columns, a hairline between them, a coloured rule under
+ * each heading, flat on the background. Only the naming differs, and only because this page's reader is
+ * the founder rather than the operator.
+ */
+export function verdictCase(bull = {}, bear = {}, opts = {}) {
+  const pend = new Set(opts.pending || []);
+  const side = (cls, kind, tag, icon, mk, data) => {
+    const m = PS2_NUGGETS[kind];
+    const pts = data.points || [];
+    const rows = pend.has(kind)
+      ? ps2Dots()
+      : pts.length
+        ? pts.map(p => `<div class="cpt${p.external ? ' ext' : ''}">
+            <span class="mk"><span class="material-symbols-rounded">${mk}</span></span>
+            <div class="cpt-b"><p>${esc(p.point)}</p>${ps2Cite(p)}</div></div>`).join('')
+        : `<div class="cpt cpt-empty"><span class="mk"></span><div class="cpt-b"><p>No material points we could stand behind on this side.</p></div></div>`;
+    return `<div class="case-card ${cls}">
+      <div class="ch"><span class="material-symbols-rounded">${icon}</span><span class="ttl">${esc(m.title)}</span><span class="ct">${tag}</span></div>
+      ${rows}
+    </div>`;
+  };
+  const nFor = (bull.points || []).length, nAg = (bear.points || []).length;
+  return `<section class="sec">
+    ${ps2Head('The case', 'Argued both ways', `${nFor} for · ${nAg} against`, '')}
+    <div class="case-grid">
+      ${side('forc', 'bull', 'BULL', 'trending_up', 'check_circle', bull)}
+      ${side('against', 'bear', 'BEAR', 'trending_down', 'cancel', bear)}
+    </div>
+  </section>`;
+}
+
+/**
+ * verdictStrand — ORGANISM. The field, the team and the tension, each as a plain editorial section.
  *
- * `pending` draws a card as still-thinking rather than as empty, which is what makes the progressive
- * reveal read as an analyst working rather than as a page with holes in it (§6.5).
+ * One function for all three rather than three near-identical ones: they differ only in their head and
+ * their empty line, both of which are data in PS2_NUGGETS.
+ */
+export function verdictStrand(kind, data = {}, opts = {}) {
+  const m = PS2_NUGGETS[kind];
+  if (!m) return '';
+  const pts = data.points || [];
+  const ext = pts.filter(p => p.external).length;
+  const meta = opts.pending ? ''
+    : kind === 'competitive' && ext ? `${ext} from public sources`
+    : pts.length ? `${pts.length} point${pts.length === 1 ? '' : 's'}` : '';
+  return `<section class="sec ps-strand">
+    ${ps2Head(m.eyebrow, m.title, meta)}
+    ${opts.pending ? ps2Dots() : ps2Points(pts, ps2Empty(kind, data))}
+  </section>`;
+}
+
+/**
+ * verdictFindings — ORGANISM. The findings, in reveal order, divided the way every other editorial tab
+ * in this product divides its sections.
+ *
+ * `pending` draws a section as still-thinking rather than as absent, which is what makes the
+ * progressive reveal read as an analyst working rather than as a page assembling itself (§6.5).
  */
 export function verdictFindings(nuggets = {}, opts = {}) {
-  const order = ['thesis', 'bull', 'bear', 'competitive', 'team', 'tension'];
-  const pending = new Set(opts.pending || []);
-  const cards = order.map(k => {
-    if (pending.has(k)) {
-      const meta = PS2_NUGGETS[k];
-      return `<article class="ng is-wait" data-kind="${k}">
-        <div class="ng-h"><span class="material-symbols-rounded">${meta.icon}</span>
-          <div><div class="ng-ti">${esc(meta.title)}</div><div class="ng-sub">${esc(meta.sub)}</div></div></div>
-        <div class="ng-wait"><span></span><span></span><span></span></div></article>`;
-    }
-    return nuggets[k] ? nuggetCard(k, nuggets[k]) : '';
-  }).filter(Boolean).join('');
-  return `<section class="sec vf">
-    <div class="s-label"><span class="material-symbols-rounded">lightbulb</span>What we found</div>
-    <h2 class="s-h">Argued both ways</h2>
-    <p class="s-sub">Every point below cites the page or document it rests on. Anything we couldn’t stand behind isn’t here.</p>
-    <div class="vf-grid">${cards}</div>
-  </section>`;
+  const pend = new Set(opts.pending || []);
+  const has = k => nuggets[k] || pend.has(k);
+  const secs = [];
+  if (has('thesis')) secs.push(verdictBet(nuggets.thesis || {}, { pending: pend.has('thesis') }));
+  if (has('bull') || has('bear')) secs.push(verdictCase(nuggets.bull || {}, nuggets.bear || {}, { pending: [...pend] }));
+  ['competitive', 'team', 'tension'].forEach(k => {
+    if (has(k)) secs.push(verdictStrand(k, nuggets[k] || {}, { pending: pend.has(k) }));
+  });
+  return secs.filter(Boolean).join('<hr class="rule">');
 }
 
 /**
  * verdictNext — ORGANISM. The conversion surface, and the only one.
  *
- * It must be EARNED by the six cards above it, and its three items are drawn from what this run actually
+ * It must be EARNED by the findings above it, and its three items are drawn from what this run actually
  * found — never a template. A generic "upgrade to find out more" after six specific findings reads as a
  * bait-and-switch, which is the one thing that would undo the trust the rest of the page just built.
  */
 export function verdictNext(snapshot = {}) {
   const tests = (snapshot.nextTests || []).filter(t => String(t || '').trim()).slice(0, 3);
   if (!tests.length) return '';
-  return `<section class="sec vn">
-    <div class="s-label"><span class="material-symbols-rounded">science</span>What the full assessment would test</div>
-    <h2 class="s-h">Three things we’d go after next</h2>
-    <p class="s-sub">Drawn from this read, not from a list.</p>
-    <ol class="vn-l">${tests.map((t, i) => `<li><span class="vn-n">${i + 1}</span><span>${esc(t)}</span></li>`).join('')}</ol>
+  return `<section class="sec ps-next">
+    ${ps2Head('The next read', 'Three things we’d go after next', 'drawn from this read, not from a list')}
+    <div class="mbt-grid"><div>${tests.map((t, i) =>
+      `<div class="must"><span class="idx">${i + 1}</span><div class="bd"><p>${esc(t)}</p></div></div>`).join('')}</div></div>
     <button class="m3-btn filled" type="button" onclick="window.__eaUnlock&&window.__eaUnlock()">
       <span class="material-symbols-rounded">bolt</span>Run the full assessment
     </button>
-  </section>`;
-}
-
-/**
- * verdictSources — ORGANISM. What we went and read.
- *
- * Arguably the most trust-building thing on the page at zero cost: it proves the outside-in findings came
- * from somewhere a reader can check. These are the pages the API itself fetched, not pages a model said
- * it read (§8.1).
- */
-export function verdictSources(sources = []) {
-  if (!sources.length) return '';
-  return `<section class="sec vs">
-    <div class="s-label"><span class="material-symbols-rounded">link</span>What we read</div>
-    <h2 class="s-h">Outside the deck</h2>
-    <p class="s-sub">The public pages behind the findings above.</p>
-    <ul class="vs-l">${sources.map(s => `<li><a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">
-      <span class="material-symbols-rounded">open_in_new</span>${esc(s.title || s.url)}</a></li>`).join('')}</ul>
   </section>`;
 }
 
@@ -5779,10 +5928,9 @@ export function briefEditor(brief = {}, opts = {}) {
         : `<input class="bpe-i" id="bpe-${k}" type="text" value="${v}">`;
     return `<label class="bpe-r${kind === 'textarea' ? ' wide' : ''}"><span class="bpe-k">${esc(label)}</span>${input}</label>`;
   };
-  return `<section class="sec bpb bpe">
-    <div class="s-label"><span class="material-symbols-rounded">edit</span>Your correction</div>
-    <h2 class="s-h">Put us right</h2>
-    <p class="s-sub">Change what we got wrong. Everything below re-reads on your version — it takes about a minute and doesn’t use up your free pre-screen.</p>
+  return `<section class="sec bpe-sec">
+    ${ps2Head('Your correction', 'Put us right')}
+    <p class="lead"><span class="drop">Your version.</span> Change what we got wrong. Everything below re-reads on your version — it takes about a minute and doesn’t use up your free pre-screen.</p>
     <div class="bpe-grid">${FIELDS.map(field).join('')}</div>
     <div class="bpb-act">
       <button class="m3-btn filled" type="button" onclick="window.__ps2SaveBrief&&window.__ps2SaveBrief()">
@@ -5804,16 +5952,15 @@ export function briefEditor(brief = {}, opts = {}) {
 export function verdictPage(snapshot = {}, opts = {}) {
   const editing = !!opts.editing;
   const brief = snapshot.brief || {};
-  return `<div class="brief">
-    ${verdictHero(snapshot, opts)}
-    ${editing
+  const readable = snapshot.state !== 'unreadable';
+  return `<div class="brief">${[
+    verdictHero(snapshot, opts),
+    editing
       ? briefEditor(brief, { editsLeft: opts.editsLeft })
-      : briefPlayback(brief, { asserted: snapshot.asserted || [], editable: opts.editable, editsLeft: opts.editsLeft })}
-    ${snapshot.state === 'unreadable' ? '' : `<hr class="rule">
-      ${verdictFindings(snapshot.nuggets || {}, { pending: opts.pending || [] })}
-      ${verdictSources(snapshot.sources || [])}
-      ${verdictNext(snapshot)}`}
-  </div>`;
+      : briefPlayback(brief, { asserted: snapshot.asserted || [], editable: opts.editable, editsLeft: opts.editsLeft }),
+    readable ? verdictFindings(snapshot.nuggets || {}, { pending: opts.pending || [] }) : '',
+    readable ? verdictNext(snapshot) : '',
+  ].filter(Boolean).join('<hr class="rule">')}</div>`;
 }
 
 export { PS2_BANDS, PS2_NUGGETS };

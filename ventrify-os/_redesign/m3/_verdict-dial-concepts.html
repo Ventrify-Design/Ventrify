@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en" data-brand="verdictscore">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verdict dial — five directions</title>
+<meta name="description" content="Exploration: five ways to draw a three-band verdict, each with its entrance motion, judged inside the real pre-screen hero.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter+Tight:wght@500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/brand/brand.css">
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="ds.css">
+<link rel="stylesheet" href="assess-editorial.css">
+<link rel="stylesheet" href="../../shared/m3/workspace-chrome.css">
+<link rel="stylesheet" href="../../shared/m3/brand-map.css">
+<script src="_preview-brand-switch.js" defer></script>
+<style>
+  body { margin:0; background:var(--surface-ground); color:var(--text-1);
+         font:400 15px/1.6 var(--font-text); -webkit-font-smoothing:antialiased; }
+  .pg { max-width:1180px; margin:0 auto; padding:64px 40px 160px; }
+  h1 { font:600 clamp(2rem,4vw,2.9rem)/1.05 var(--font-display); letter-spacing:-.02em; margin:0 0 .5rem; }
+  .sub { color:var(--text-2); max-width:74ch; margin:0 0 .4rem; }
+  .fine { color:var(--text-4); font-size:13px; max-width:88ch; }
+  .cx { margin:64px 0 0; padding-top:32px; border-top:1px solid var(--line-1); }
+  .cx-h { display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; }
+  .cx-n { font:500 12px/1 var(--font-mono); color:var(--brand-accent-2); letter-spacing:.1em; }
+  .cx-t { font:600 1.35rem/1.2 var(--font-display); letter-spacing:-.01em; }
+  .cx-d { color:var(--text-2); max-width:86ch; margin:.4rem 0 0; font-size:14px; }
+  .cx-m { color:var(--text-4); font:500 11px/1.5 var(--font-mono); margin:.7rem 0 0; letter-spacing:.05em; }
+
+  /* THE STAGE IS THE REAL READING COLUMN — the assess page's .brief measures 948px at 1440, so
+     anything judged wider than that looks bigger here than it will ever ship. 948 + 2x36. */
+  .stage { margin-top:24px; width:1020px; max-width:100%; box-sizing:border-box;
+           padding:34px 36px; background:var(--surface-base);
+           border:1px solid var(--line-1); border-radius:var(--r-lg); }
+  .states { display:flex; gap:12px; flex-wrap:wrap; margin-top:18px; }
+  .states > div { flex:1 1 180px; min-width:0; padding:18px 16px; border:1px dashed var(--line-1);
+                  border-radius:12px; display:flex; flex-direction:column; align-items:center; gap:10px; }
+  .states .lab { font:500 10.5px/1 var(--font-mono); letter-spacing:.12em; color:var(--text-4); text-transform:uppercase; }
+
+  .bar { position:sticky; top:0; z-index:9; display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+         padding:14px 0; margin-bottom:8px; background:var(--surface-ground); border-bottom:1px solid var(--line-1); }
+  .bar .lab { font:500 11px/1 var(--font-mono); letter-spacing:.1em; color:var(--text-4); margin-right:4px; }
+  .bar button { font:500 12px/1 var(--font-mono); letter-spacing:.06em; padding:10px 15px; border-radius:999px;
+                border:1px solid var(--line-1); background:transparent; color:var(--text-3); cursor:pointer;
+                min-height:40px; }
+  .bar button.on { background:var(--brand-accent); border-color:transparent; color:#fff; }
+
+  /* ══════════════════════════════════════════════════════════════════════════════════════════════
+     THE FIVE CONCEPTS.
+
+     Every one obeys the house motion contract (ds.css, CHART ENTRANCE MOTION):
+       · transform / opacity / stroke-dashoffset only — nothing that triggers layout
+       · cubic-bezier(0.2, 0, 0, 1), ~300ms a step, the whole choreography under 700ms
+       · EVERY START STATE LIVES IN A @keyframes `from`. Never in a base rule. So each graphic
+         renders complete when the animation never runs: reduced motion, a failed script, a print,
+         a screenshot. A layer that hides the verdict and relies on JS to reveal it is one broken
+         script away from a blank hero.
+       · nothing that carries a value overshoots. A spring on a needle draws the wrong band for
+         ~80ms, and this graphic has exactly one job.
+     ══════════════════════════════════════════════════════════════════════════════════════════════ */
+  .vx { --ease:cubic-bezier(0.2,0,0,1); display:flex; flex-direction:column; align-items:center; gap:2px; min-width:0; }
+  .vx svg { display:block; overflow:visible; }
+  .vx .word { font:600 clamp(26px,3vw,34px)/1 var(--font-display); letter-spacing:-.02em;
+              color:var(--md-sys-color-on-surface); }
+  .vx .line { font-size:13px; line-height:1.45; text-align:center; max-width:238px;
+              color:var(--md-sys-color-on-surface-variant); }
+  .vx .basis { font-size:12px; text-align:center; color:var(--md-sys-color-on-surface-variant); opacity:.78; margin-top:4px; }
+  /* tone is a TOKEN SWAP, not a colour literal: the same three-step ramp the guidance bands use */
+  .vx[data-tone="good"] { --vx-c:var(--m3-good,#1f8a5c); }
+  .vx[data-tone="mid"]  { --vx-c:var(--md-sys-color-primary); }
+  .vx[data-tone="warn"] { --vx-c:var(--m3-warn,#b4690e); }
+  .vx[data-tone="none"] { --vx-c:var(--md-sys-color-outline); }
+  .vx .q { fill:none; stroke:var(--md-sys-color-outline-variant); }
+  .vx .q.on { stroke:var(--vx-c); }
+
+  @keyframes vx-sweep { from { stroke-dashoffset:100; } }
+  @keyframes vx-fade  { from { opacity:0; } }
+  @keyframes vx-rise  { from { transform:translateY(10px); opacity:0; } }
+  @keyframes vx-growx { from { transform:scaleX(0); } }
+  @keyframes vx-growy { from { transform:scaleY(0); } }
+  @keyframes vx-pop   { from { transform:scale(.4); opacity:0; } }
+  @keyframes vx-drop  { from { transform:translateY(-8px) scale(.7); opacity:0; } }
+
+  /* ── 1 · GRADED ARC ─────────────────────────────────────────────────────────────────────────
+     The sibling of scoreDial: same medium (SVG), same sweep (stroke-dashoffset), same arc family.
+     Three zones with gaps, the live one at full stroke, the marker landing on its centre. */
+  .c1 .zone { stroke-width:11; stroke-linecap:round; }
+  .c1 .zone.on { stroke-width:15; }
+  .c1 .mk { fill:var(--vx-c); }
+  .c1 .hub { fill:var(--md-sys-color-surface); stroke:var(--vx-c); stroke-width:3; }
+  .play .c1 .zone        { animation:vx-fade 280ms var(--ease) both; }
+  .play .c1 .zone.on     { animation:vx-sweep 620ms var(--ease) 120ms both; }
+  .play .c1 .mk          { transform-box:fill-box; transform-origin:50% 50%;
+                           animation:vx-drop 300ms var(--ease) 480ms both; }
+  .play .c1 .hub         { animation:vx-fade 240ms var(--ease) 420ms both; }
+  .play .c1 .word        { animation:vx-rise 320ms var(--ease) 340ms both; }
+  .play .c1 .line        { animation:vx-fade 300ms var(--ease) 460ms both; }
+
+  /* ── 2 · THE CLIMB ──────────────────────────────────────────────────────────────────────────
+     No dial, so nothing to read a number off. Three rungs of increasing length; the live one
+     filled. The most honest drawing of an ordinal verdict — it cannot be mistaken for a measure. */
+  .c2 { align-items:stretch; width:100%; max-width:320px; gap:0; }
+  .c2 .rung { display:grid; grid-template-columns:62px minmax(0,1fr); align-items:center; gap:14px; padding:9px 0; }
+  .c2 .rk { font:500 11px/1 var(--font-mono); letter-spacing:.1em; text-transform:uppercase;
+            color:var(--md-sys-color-on-surface-variant); text-align:right; }
+  .c2 .rung.on .rk { color:var(--md-sys-color-on-surface); font-weight:600; }
+  .c2 .track { height:10px; border-radius:999px; background:var(--md-sys-color-outline-variant); opacity:.5;
+               transform-origin:left center; }
+  .c2 .rung.on .track { background:var(--vx-c); opacity:1; height:14px; }
+  .c2 .rung[data-w="s"] .track { width:46%; } .c2 .rung[data-w="m"] .track { width:72%; }
+  .c2 .rung[data-w="l"] .track { width:100%; }
+  .c2 .cap { margin-top:16px; padding-top:16px; border-top:1px solid var(--md-sys-color-outline-variant);
+             display:flex; flex-direction:column; align-items:flex-start; gap:4px; }
+  .c2 .line { text-align:left; max-width:none; }
+  .play .c2 .track       { animation:vx-growx 420ms var(--ease) calc(var(--i,0) * 70ms) both; }
+  .play .c2 .rk          { animation:vx-fade 260ms var(--ease) calc(var(--i,0) * 70ms + 120ms) both; }
+  .play .c2 .cap         { animation:vx-rise 320ms var(--ease) 330ms both; }
+
+  /* ── 3 · THE SEGMENTED RING ─────────────────────────────────────────────────────────────────
+     A closed badge: three arcs round a circle, the live one saturated and thicker, the word in
+     the middle. The most compact of the five, and the only one that survives being shrunk. */
+  .c3 .seg { stroke-width:9; stroke-linecap:round; }
+  .c3 .seg.on { stroke-width:14; }
+  .play .c3 .seg         { animation:vx-fade 260ms var(--ease) calc(var(--i,0) * 70ms) both; }
+  .play .c3 .seg.on      { animation:vx-sweep 560ms var(--ease) 140ms both; }
+  .play .c3 .mid         { animation:vx-pop 320ms var(--ease) 300ms both; }
+
+  /* ── 4 · THE ASCENDING SIGNAL ───────────────────────────────────────────────────────────────
+     Three rising columns, lit up to the band. Read before it is looked at — nobody has to learn
+     this one. The risk is the borrowed connotation: a signal meter says STRENGTH, and the verdict
+     is about whether the case is worth assessing, not how good the company is. */
+  .c4 .col { fill:var(--md-sys-color-outline-variant); }
+  .c4 .col.lit { fill:var(--vx-c); }
+  .play .c4 .col         { transform-box:fill-box; transform-origin:50% 100%;
+                           animation:vx-growy 380ms var(--ease) calc(var(--i,0) * 80ms) both; }
+  .play .c4 .word        { animation:vx-rise 320ms var(--ease) 300ms both; }
+  .play .c4 .line        { animation:vx-fade 300ms var(--ease) 420ms both; }
+
+  /* ── 5 · THE VERDICT PLATE ──────────────────────────────────────────────────────────────────
+     The type IS the graphic. A tinted plate, three position pips, the word set large in the
+     display face. The most editorial of the five and the only one that looks at home on a page
+     made of prose — which is what this page now is. */
+  .c5 { width:100%; max-width:330px; }
+  .c5 .plate { width:100%; box-sizing:border-box; padding:24px 26px 22px; border-radius:20px;
+               background:color-mix(in srgb, var(--vx-c) 10%, var(--md-sys-color-surface-container-low));
+               border:1px solid color-mix(in srgb, var(--vx-c) 28%, transparent);
+               display:flex; flex-direction:column; gap:4px; }
+  .c5 .pips { display:flex; gap:7px; margin-bottom:10px; }
+  .c5 .pips i { width:30px; height:5px; border-radius:999px; background:var(--md-sys-color-outline-variant);
+                transform-origin:left center; }
+  .c5 .pips i.lit { background:var(--vx-c); }
+  .c5 .eb { font:500 10.5px/1 var(--font-mono); letter-spacing:.14em; text-transform:uppercase;
+            color:color-mix(in srgb, var(--vx-c) 72%, var(--md-sys-color-on-surface)); }
+  .c5 .word { font-size:clamp(34px,4.4vw,46px); letter-spacing:-.03em; }
+  .c5 .line { text-align:left; max-width:none; }
+  .play .c5 .pips i      { animation:vx-growx 300ms var(--ease) calc(var(--i,0) * 80ms) both; }
+  .play .c5 .eb          { animation:vx-fade 260ms var(--ease) 180ms both; }
+  .play .c5 .word        { animation:vx-rise 340ms var(--ease) 240ms both; }
+  .play .c5 .line        { animation:vx-fade 300ms var(--ease) 420ms both; }
+
+  @media (prefers-reduced-motion: reduce) { .play * { animation:none !important; } }
+  @media (max-width:640px) {
+    .pg { padding:36px 20px 100px; }
+    .stage { padding:20px 16px; }
+  }
+</style>
+</head>
+<body>
+<main class="pg">
+  <h1>The verdict graphic — five directions</h1>
+  <p class="sub">The pre-screen publishes one of three bands. The graphic has to carry that word, say what it
+  means in a line, and disclose what it was read from — at about 380px wide, beside a headline, on a page
+  made of prose.</p>
+  <p class="fine">Judged inside the real <code>sectionHero</code>, at the real reading measure. Every concept
+  draws itself in on the house motion contract: transform, opacity and stroke-dashoffset only, every start
+  state inside a <code>@keyframes from</code> so the verdict renders complete if the animation never runs,
+  and no overshoot on anything carrying the band. Use the controls to switch band and replay.</p>
+
+  <div class="bar">
+    <span class="lab">BAND</span>
+    <button data-band="HIGH">High</button>
+    <button data-band="MEDIUM" class="on">Medium</button>
+    <button data-band="LOW">Low</button>
+    <button data-band="NONE">Not readable</button>
+    <span class="lab" style="margin-left:14px">MOTION</span>
+    <button id="replay">↻ Replay all</button>
+  </div>
+
+  <div id="out"></div>
+</main>
+
+<script type="module">
+import * as DS from '../../shared/m3/ds.js';
+
+/* The three bands and their copy — the same PS2_BANDS the component ships with, so what is judged
+   here is the real sentence length and not a placeholder that happens to fit. */
+const BANDS = {
+  HIGH:   { label: 'High',   tone: 'good', i: 2, line: 'Worth assessing now.' },
+  MEDIUM: { label: 'Medium', tone: 'mid',  i: 1, line: 'Real signal, with things to resolve.' },
+  LOW:    { label: 'Low',    tone: 'warn', i: 0, line: 'The case needs work before it is worth the full read.' },
+  NONE:   { label: 'Not enough to read yet', tone: 'none', i: -1, line: 'Add the deck and we will take another look.' },
+};
+const BASIS = 'Read from the deck and 6 room documents';
+
+/* ── arc helpers. pathLength="100" is the trick that makes the sweep free: dasharray 100 covers any
+   arc whatever its real length, so the animation never needs a measured circumference. ── */
+const pt = (cx, cy, r, deg) => {
+  const a = deg * Math.PI / 180;
+  return [cx + r * Math.cos(a), cy - r * Math.sin(a)];
+};
+const arc = (cx, cy, r, a1, a2) => {
+  const [x1, y1] = pt(cx, cy, r, a1), [x2, y2] = pt(cx, cy, r, a2);
+  const large = Math.abs(a2 - a1) > 180 ? 1 : 0;
+  return `M ${x1.toFixed(2)} ${y1.toFixed(2)} A ${r} ${r} 0 ${large} ${a1 > a2 ? 1 : 0} ${x2.toFixed(2)} ${y2.toFixed(2)}`;
+};
+
+const shell = (cls, tone, inner) => `<div class="vx ${cls}" data-tone="${tone}">${inner}</div>`;
+
+/* ── 1 · graded arc ───────────────────────────────────────────────────────────────────────── */
+function c1(b, { basis = true } = {}) {
+  const B = BANDS[b], cx = 120, cy = 112, r = 90;
+  // 200deg of sweep, left (Low) to right (High), 6deg gaps
+  const zones = [[194, 132], [126, 64], [58, -4]];
+  const arcs = zones.map(([a1, a2], i) =>
+    `<path class="q zone${i === B.i ? ' on' : ''}" pathLength="100" stroke-dasharray="100"
+       d="${arc(cx, cy, r, a1, a2)}"/>`).join('');
+  // NO NEEDLE, NO HUB. The first pass had both and they read as stray dots inside the bowl — a needle
+  // also invites "where exactly on the arc?", which is the question a band exists so as not to answer.
+  // The thick, saturated zone is the pointer; the word sits in the bowl it points into.
+  return shell('c1', B.tone, `
+    <div style="position:relative;width:240px">
+      <svg viewBox="0 0 240 118" width="240" height="118" role="img" aria-label="Verdict: ${B.label}">${arcs}</svg>
+      <div style="position:absolute;left:0;right:0;bottom:0;text-align:center;padding:0 46px">
+        <div class="word" style="font-size:${b === 'NONE' ? '15px' : '32px'}">${B.label}</div>
+      </div>
+    </div>
+    <div class="line" style="margin-top:12px">${B.line}</div>
+    ${basis ? `<div class="basis">${BASIS}</div>` : ''}`);
+}
+
+/* ── 2 · the climb ───────────────────────────────────────────────────────────────────────── */
+function c2(b, { basis = true } = {}) {
+  const B = BANDS[b];
+  const rungs = [['Low', 's'], ['Medium', 'm'], ['High', 'l']].map(([k, w], i) =>
+    `<div class="rung${i === B.i ? ' on' : ''}" data-w="${w}" style="--i:${i}">
+       <span class="rk">${k}</span><span class="track"></span></div>`).reverse().join('');
+  return shell('c2', B.tone, `${rungs}
+    <div class="cap"><div class="word" style="font-size:22px">${B.label}</div>
+      <div class="line">${B.line}</div>
+      ${basis ? `<div class="basis" style="text-align:left">${BASIS}</div>` : ''}</div>`);
+}
+
+/* ── 3 · the segmented ring ──────────────────────────────────────────────────────────────── */
+function c3(b, { basis = true } = {}) {
+  const B = BANDS[b], cx = 100, cy = 100, r = 76;
+  /* NOT A CLOSED RING. Three equal segments over 360deg always leave one of them sitting at the
+     BOTTOM, so whichever band lands there reads as the worst position whatever its colour — the first
+     pass put High down there. Opening the ring to 270deg with the gap at the foot gives a genuine
+     climb: Low lower-left, Medium over the top, High lower-right, and the open foot leaves the centre
+     word room to breathe. Three 83deg arcs, 10deg between them. */
+  const segs = [[225, 142], [132, 49], [39, -44]];
+  const arcs = segs.map(([a1, a2], i) =>
+    `<path class="q seg${i === B.i ? ' on' : ''}" pathLength="100" stroke-dasharray="100" style="--i:${i}"
+       d="${arc(cx, cy, r, a1, a2)}"/>`).join('');
+  return shell('c3', B.tone, `
+    <div style="position:relative;width:200px;height:200px">
+      <svg viewBox="0 0 200 200" width="200" height="200" role="img" aria-label="Verdict: ${B.label}">${arcs}</svg>
+      <div class="mid" style="position:absolute;inset:0;display:grid;place-content:center;text-align:center;padding:0 34px">
+        <div class="word" style="font-size:${b === 'NONE' ? '15px' : '30px'}">${B.label}</div>
+      </div>
+    </div>
+    <div class="line">${B.line}</div>
+    ${basis ? `<div class="basis">${BASIS}</div>` : ''}`);
+}
+
+/* ── 4 · the ascending signal ────────────────────────────────────────────────────────────── */
+function c4(b, { basis = true } = {}) {
+  const B = BANDS[b];
+  const hs = [40, 64, 88], W = 34, G = 16;
+  const cols = hs.map((h, i) =>
+    `<rect class="col${B.i >= i && B.i >= 0 ? ' lit' : ''}" style="--i:${i}"
+       x="${i * (W + G)}" y="${96 - h}" width="${W}" height="${h}" rx="7"/>`).join('');
+  return shell('c4', B.tone, `
+    <svg viewBox="0 0 ${3 * W + 2 * G} 96" width="${3 * W + 2 * G}" height="96" role="img" aria-label="Verdict: ${B.label}">${cols}</svg>
+    <div class="word" style="margin-top:14px">${B.label}</div><div class="line">${B.line}</div>
+    ${basis ? `<div class="basis">${BASIS}</div>` : ''}`);
+}
+
+/* ── 5 · the verdict plate ───────────────────────────────────────────────────────────────── */
+function c5(b, { basis = true } = {}) {
+  const B = BANDS[b];
+  const pips = [0, 1, 2].map(i =>
+    `<i class="${B.i >= i && B.i >= 0 ? 'lit' : ''}" style="--i:${i}"></i>`).join('');
+  return shell('c5', B.tone, `
+    <div class="plate">
+      <div class="pips">${pips}</div>
+      <div class="eb">Worth assessing?</div>
+      <div class="word"${b === 'NONE' ? ' style="font-size:24px;letter-spacing:-.01em"' : ''}>${B.label}</div>
+      <div class="line">${B.line}</div>
+      ${basis ? `<div class="basis" style="text-align:left">${BASIS}</div>` : ''}
+    </div>`);
+}
+
+const CONCEPTS = [
+  { n: '01', fn: c1, t: 'The graded arc',
+    d: 'The direct sibling of the full assessment’s score dial — same medium, same sweep, same arc family. ' +
+       'Three zones with gaps so the eye reads three states and not a continuum; the marker lands on the live zone’s centre.',
+    m: 'MOTION — zones fade in, the live zone sweeps in on stroke-dashoffset (620ms), the word rises into the bowl. 700ms end to end.\n' +
+       'TRADE-OFF — the closest to family, and the closest to looking like a number. An arc invites the question "where exactly on it?", which is the question we cannot answer.' },
+  { n: '02', fn: c2, t: 'The climb',
+    d: 'No dial at all: three rungs of increasing length, the live one filled. The only concept here that ' +
+       'cannot be misread as a measurement, because there is no scale to read a position off.',
+    m: 'MOTION — rungs grow from the left in sequence (70ms stagger), labels follow, the caption rises last. 650ms.\n' +
+       'TRADE-OFF — the most honest and the least spectacular. It also shows all three bands at once, which makes the verdict feel placed rather than scored.' },
+  { n: '03', fn: c3, t: 'The segmented ring',
+    d: 'An open badge — three arcs climbing from lower-left to lower-right, the live one saturated and thicker, the word in the middle. ' +
+       'The only one of the five that survives being shrunk to a row or a list.',
+    m: 'MOTION — segments fade in sequence, the live one sweeps clockwise, the word pops in the centre. 700ms.\n' +
+       'TRADE-OFF — reusable everywhere (pipeline rows, emails, the portfolio) but the ring’s empty centre fights a long band name; "Not enough to read yet" has to set small.' },
+  { n: '04', fn: c4, t: 'The ascending signal',
+    d: 'Three rising columns, lit up to the band. Read before it is consciously looked at — nobody has to ' +
+       'learn this one, which at the top of a first-ever page is worth a great deal.',
+    m: 'MOTION — columns grow from the baseline in sequence (80ms stagger), then the word. 620ms.\n' +
+       'TRADE-OFF — it borrows a connotation we do not mean. A signal meter says STRENGTH; this verdict says "worth assessing", which is not the same claim and is the exact confusion v2 exists to kill.' },
+  { n: '05', fn: c5, t: 'The verdict plate',
+    d: 'The type is the graphic: a brand-tinted plate, three position pips, the band set large in the display ' +
+       'face. It is the same tinted-panel recipe the page’s one highlighted block already uses.',
+    m: 'MOTION — pips fill left to right, the kicker fades, the word rises, the line follows. 720ms.\n' +
+       'TRADE-OFF — the most at home on a page made of prose, and the one that reads as an editorial judgement rather than an instrument. Least "graphic", if the hero wants a graphic.' },
+];
+
+let band = 'MEDIUM';
+const out = document.getElementById('out');
+
+function render() {
+  out.innerHTML = CONCEPTS.map(c => `
+    <section class="cx">
+      <div class="cx-h"><span class="cx-n">${c.n}</span><span class="cx-t">${c.t}</span></div>
+      <p class="cx-d">${c.d}</p>
+      <pre class="cx-m" style="white-space:pre-wrap;margin:.7rem 0 0">${c.m}</pre>
+      <div class="stage">
+        ${DS.sectionHero({
+          eyebrow: 'Pre-screen', eyebrowIcon: 'bolt',
+          headline: 'A real wedge into a market that is paying for the problem today, held back by a team with no commercial hire yet.',
+          facts: [{ k: 'Read from', v: '7 documents' }, { k: 'Public sources', v: '9' }],
+          right: c.fn(band),
+          thesisLabel: 'What this is.',
+          thesis: 'This verdict is about whether the case is worth a full assessment’s time — not about whether the business is good. We have read documents, not met the team.',
+        })}
+      </div>
+      <div class="states">
+        ${['HIGH', 'MEDIUM', 'LOW', 'NONE'].map(k =>
+          `<div><span class="lab">${k}</span>${c.fn(k, { basis: false })}</div>`).join('')}
+      </div>
+    </section>`).join('');
+  play();
+}
+
+/* Re-trigger the entrance the way playCharts() does: drop the class, force one reflow so the
+   animations are genuinely cancelled, put it back. Without the reflow the browser coalesces both
+   mutations into one frame and nothing replays. */
+function play() {
+  out.querySelectorAll('.stage, .states > div').forEach(el => {
+    el.classList.remove('play');
+    void el.offsetWidth;
+    el.classList.add('play');
+  });
+}
+
+document.querySelectorAll('.bar button[data-band]').forEach(b => b.addEventListener('click', () => {
+  band = b.dataset.band;
+  document.querySelectorAll('.bar button[data-band]').forEach(x => x.classList.toggle('on', x === b));
+  render();
+}));
+document.getElementById('replay').addEventListener('click', play);
+render();
+</script>
+</body>
+</html>

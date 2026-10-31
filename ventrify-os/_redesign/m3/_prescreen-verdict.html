@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en" data-brand="verdictscore">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pre-screen verdict — the page</title>
+<meta name="description" content="The whole pre-screen result page, rendered from DS.verdictPage against a realistic snapshot, in each of its four states.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter+Tight:wght@500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/brand/brand.css">
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="ds.css">
+<link rel="stylesheet" href="assess-editorial.css">
+<link rel="stylesheet" href="../../shared/m3/workspace-chrome.css">
+<link rel="stylesheet" href="../../shared/m3/brand-map.css">
+<script src="_preview-brand-switch.js" defer></script>
+<style>
+  /* THE PRE-SCREEN HAD NO PREVIEW PAGE, WHICH IS PART OF WHY IT DRIFTED. Every other editorial
+     surface in the DS can be opened and looked at without a Firebase session and without a paid
+     run; this one could only be seen by spending ~£1 and waiting two minutes, so nobody looked at
+     it, and it quietly grew an idiom of its own. */
+  body { margin:0; background:var(--surface-ground); color:var(--text-1);
+         font:400 15px/1.6 var(--font-text); -webkit-font-smoothing:antialiased; }
+  .pg { max-width:1180px; margin:0 auto; padding:40px 40px 160px; }
+  h1 { font:600 clamp(1.7rem,3vw,2.3rem)/1.1 var(--font-display); letter-spacing:-.02em; margin:0 0 .4rem; }
+  .sub { color:var(--text-2); max-width:76ch; margin:0 0 .2rem; font-size:14px; }
+  .bar { position:sticky; top:0; z-index:9; display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+         padding:14px 0; margin:14px 0 8px; background:var(--surface-ground); border-bottom:1px solid var(--line-1); }
+  .bar .lab { font:500 11px/1 var(--font-mono); letter-spacing:.1em; color:var(--text-4); margin-right:4px; }
+  .bar button { font:500 12px/1 var(--font-mono); letter-spacing:.06em; padding:10px 15px; border-radius:999px;
+                border:1px solid var(--line-1); background:transparent; color:var(--text-3); cursor:pointer; min-height:40px; }
+  .bar button.on { background:var(--brand-accent); border-color:transparent; color:#fff; }
+  /* The real reading column: .brief at the assess page's measure, on the page surface. */
+  .stage { width:1020px; max-width:100%; box-sizing:border-box; margin-top:18px;
+           padding:10px 36px 40px; background:var(--surface-base);
+           border:1px solid var(--line-1); border-radius:var(--r-lg); }
+</style>
+</head>
+<body>
+<main class="pg">
+  <h1>The pre-screen verdict page</h1>
+  <p class="sub">Rendered by <code>DS.verdictPage</code> against a realistic snapshot — the same function the
+  live Verdict tab calls, so this page and the paid one cannot drift.</p>
+  <div class="bar">
+    <span class="lab">STATE</span>
+    <button data-s="full" class="on">Full result</button>
+    <button data-s="deck">Deck only</button>
+    <button data-s="live">Mid-run</button>
+    <button data-s="none">Not readable</button>
+    <span class="lab" style="margin-left:14px">EDIT</span>
+    <button data-s="editing">Correcting the brief</button>
+    <span class="lab" style="margin-left:14px">MOTION</span>
+    <button id="replay">↻ Replay</button>
+  </div>
+  <div class="stage"><div id="out"></div></div>
+</main>
+
+<script type="module">
+import * as DS from '../../shared/m3/ds.js';
+
+const src = (title, url) => ({ title, url });
+const ext = (point, title, url, tier = 'verified') =>
+  ({ point, external: true, tier, source: src(title, url), quotedSpan: point.slice(0, 40) });
+const doc = (point, docName) => ({ point, external: false, docName, quotedSpan: point.slice(0, 40) });
+
+const SNAP = {
+  v: 2, state: 'ok', band: 'MEDIUM', docCount: 7,
+  reason: 'A real wedge into a market that is already paying for the problem, held back by a team with no commercial hire and pricing that assumes a buyer nobody has signed yet.',
+  basis: 'Read from the deck and 6 room documents',
+  brief: {
+    oneLine: 'A workflow tool that turns a lender’s existing spreadsheet process into an auditable pipeline, sold to specialist lenders in the UK.',
+    sector: 'Fintech · lending infrastructure', businessModel: 'SaaS, per-seat with a volume tier',
+    stage: 'seed', geography: 'UK, one pilot in Ireland',
+    marketClaim: '£2.1bn UK specialist lending software', ask: '£1.8m at £9m pre',
+    team: [{ name: 'Priya Raman', background: 'ex-OakNorth, credit risk' },
+           { name: 'Tom Ellory', background: 'engineering, two prior startups' }],
+  },
+  asserted: ['marketClaim'],
+  sources: Array.from({ length: 9 }, (_, i) => src(`Source ${i + 1}`, 'https://example.com/' + i)),
+  nuggets: {
+    thesis: { points: [
+      doc('Specialist lenders will pay per seat for an audit trail they currently assemble by hand at month end.', 'Deck v4.pdf'),
+      doc('The three-week implementation holds once a fourth and fifth lender are onboarded in the same quarter.', 'Implementation plan.docx'),
+      ext('Regulatory pressure on consumer-duty record-keeping keeps rising through 2026, which is what makes the audit trail a purchase rather than a preference.', 'FCA — Consumer Duty board reports', 'https://www.fca.org.uk/'),
+    ] },
+    bull: { points: [
+      doc('Two paying pilots converted inside eight weeks, both from a cold outbound list rather than a warm network.', 'Pipeline.xlsx'),
+      doc('Gross margin of 81% is already at the level the plan assumes for Series A.', 'Financial model.xlsx'),
+      ext('The incumbent most of these lenders run on has shipped no material release in four years, which is the gap the wedge depends on.', 'nCino release notes', 'https://www.ncino.com/', 'attributed'),
+    ] },
+    bear: { points: [
+      doc('Every signed customer came through one founder, and there is no commercial hire in the plan before month nine.', 'Deck v4.pdf'),
+      ext('Two UK competitors shipped an equivalent audit module in the last eighteen months, so the four-year gap is closing from both ends.', 'Finextra — lending software roundup', 'https://www.finextra.com/'),
+      doc('Pricing assumes a 40-seat average; both pilots bought 6 seats.', 'Pipeline.xlsx'),
+    ] },
+    competitive: { points: [
+      ext('Lendscape and Sopra Banking both list an audit-trail module on their UK specialist-lending products.', 'Lendscape product pages', 'https://www.lendscape.com/'),
+      ext('A seed-stage competitor raised £4.2m in March 2026 for the same wedge, which sets the pace rather than the price.', 'UKTN funding roundup', 'https://www.uktech.news/', 'attributed'),
+      ext('No incumbent currently prices the module separately, so the per-seat line has no public comparable.', 'Sopra Banking pricing', 'https://www.soprabanking.com/'),
+    ] },
+    team: { points: [
+      doc('Priya Raman ran credit risk at OakNorth, which is exactly the buyer she is now selling to.', 'Team one-pager.pdf'),
+      ext('Neither founder has previously carried a quota, and the plan has no commercial hire before month nine.', 'LinkedIn — founder profiles', 'https://www.linkedin.com/', 'attributed'),
+    ] },
+    tension: { points: [
+      doc('The deck puts the pipeline at £480k; the model’s revenue build totals £310k for the same period.', 'Deck v4.pdf vs Financial model.xlsx'),
+      doc('The plan says three-week implementation; the pilot retro records nine weeks for the second customer.', 'Implementation plan.docx vs Pilot retro.pdf'),
+    ] },
+  },
+  nextTests: [
+    'Rebuild the £2.1bn market from the bottom up — number of UK specialist lenders × realistic seat count, not an analyst total.',
+    'Price the two pilots against the 40-seat assumption and find which of the two numbers the plan actually depends on.',
+    'Verify the three-week implementation against every pilot, not the one that went well.',
+  ],
+};
+
+const deckOnly = () => {
+  const s = structuredClone(SNAP);
+  s.docCount = 1; s.basis = 'Read from the deck';
+  s.nuggets.tension = { points: [], skipped: 'needs_two_documents' };
+  s.nuggets.thesis.points = s.nuggets.thesis.points.slice(0, 2);
+  return s;
+};
+const unreadable = () => ({ v: 2, state: 'unreadable', band: null, docCount: 1, brief: {}, sources: [] });
+
+const STATES = {
+  full:    () => [SNAP, {}],
+  deck:    () => [deckOnly(), {}],
+  live:    () => [{ ...SNAP, nuggets: { thesis: SNAP.nuggets.thesis, bull: SNAP.nuggets.bull }, nextTests: [] },
+                  { pending: ['bear', 'competitive', 'team', 'tension'] }],
+  none:    () => [unreadable(), {}],
+  editing: () => [SNAP, { editing: true, editable: true, editsLeft: 2 }],
+};
+
+const out = document.getElementById('out');
+function render(key) {
+  const [snap, opts] = STATES[key]();
+  out.innerHTML = DS.verdictPage(snap, { editable: true, editsLeft: 2, ...opts });
+  // The SAME function the live page uses on a tab switch, not a replica of it — so the motion signed
+  // off here is the motion that ships. ds.css owns the choreography; this only re-triggers it.
+  DS.playCharts(out);
+}
+document.querySelectorAll('.bar button').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.bar button').forEach(x => x.classList.toggle('on', x === b));
+  render(b.dataset.s);
+}));
+document.getElementById('replay').addEventListener('click', () => DS.playCharts(out));
+render('full');
+</script>
+</body>
+</html>

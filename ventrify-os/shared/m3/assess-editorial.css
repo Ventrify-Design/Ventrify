@@ -57,6 +57,19 @@
   .section-hero.single { min-height: 0; }
   .section-hero.single > .left { max-width: 46rem; }
 
+  /* ---- thesis-span: the thesis on its own row, across both columns ----
+     For a hero whose RIGHT slot is compact. The default puts the thesis inside .left (see
+     sectionHero), which is right when the right slot is the tall one — a dial, a chip and a
+     stability strip. The pre-screen's verdict signal is a 96px graphic and two lines, so the same
+     default pushed .left far past it and opened a void the height of the thesis beside the graphic.
+     min-height and align-content are both reset: the 300px floor exists to reserve room for a tall
+     slot, and left in place it would simply move the void from beside the graphic to beneath it. */
+  .section-hero.thesis-span { min-height: 0; align-content: start; }
+  .section-hero.thesis-span > .coda { grid-column: 1 / -1; }
+  /* margin only — no max-width. `.lead` already carries the house reading measure (74ch) and a
+     spanning thesis is still a lead; overriding it here would be a second measure for one caller. */
+  .section-hero.thesis-span > .coda > .lead { margin: 30px 0 0; }
+
   /* --tone carries the verdict's colour to everything in the lockup. 'mid' is
    the default so nothing that existed before this moves. */
 /* COLOUR RULE — green and red are reserved for SEMANTICS.
@@ -775,7 +788,14 @@
      between the columns so they stay two columns, a 2px rule under each heading carrying the
      side's colour (the 4px bar that used to run down the card's edge), and the tick/cross
      markers that were already there. Nothing is lost except the container. */
-  .case-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; align-items: start; }
+  /* ⚠ minmax(0, 1fr), NOT 1fr. `1fr` is shorthand for `minmax(auto, 1fr)`, and `auto` floors the
+     track at its content's MIN-CONTENT width — so one unbreakable child (the pre-screen's citation
+     chip is `white-space: nowrap`) inflates the track and the column bursts straight out of the
+     section's padding. It does not trigger a document scrollbar, so a "no horizontal overflow" check
+     passes while the text is visibly clipped. Measured at 390px: the case column's right edge landed
+     at 379px inside a 310px stage. `minmax(0, …)` lets the track shrink and hands the job back to the
+     child's own `min-width: 0` + ellipsis. */
+  .case-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0; align-items: start; }
   .case-card { position: relative; padding: 0; background: none; box-shadow: none; border-radius: 0; }
   .case-card.forc { padding-right: clamp(24px, 3.2vw, 44px); }
   .case-card.against { padding-left: clamp(24px, 3.2vw, 44px); border-left: 1px solid var(--md-sys-color-outline-variant); }
@@ -802,11 +822,28 @@
   /* empty-side state: when one side raises no points, one muted row instead of a hollow shell */
   .cpt-empty p { color: var(--md-sys-color-on-surface-variant); font-style: italic; }
 
+  /* ---- `.cpt` and `.must` carry a CITATION now ----
+     The pre-screen renders its findings through these same two rows, and every point on it cites the
+     page or the document it rests on. The chip sits UNDER the prose rather than inline, so a long
+     source title cannot push the sentence around — which means the row needs a body box to stack in.
+     Deliberately NOT `display:flex`: `.must.run-step .bd` already holds a paragraph, a status line and
+     a progress bar laid out in normal flow, and switching it to a column would stop its margins
+     collapsing and quietly reflow the run page. `flex:1` + `min-width:0` is all that is wanted here. */
+  .cpt-b, .must > .bd { flex: 1; min-width: 0; }
+  /* A flat `.cpt` list sits directly under a `.sec-head`, where a top hairline reads as a stray rule
+     under the heading — the same call `.must:first-of-type` and `.ch + .cpt` already make for the
+     other two row families.
+     ⚠ This was first written as `.cpt:first-child` and NEVER MATCHED: the `.sec-head` is the
+     section's first child, so the first `.cpt` is the second. Exactly the bug the note above `.ch +
+     .cpt` records, made again twenty lines further down the same file. The adjacency is what was
+     meant both times. */
+  .sec-head + .cpt { border-top: none; }
+
   /* ============ WHAT MUST BE TRUE + THE KILL-RISK ============ */
   /* align-items:center balances a sparse conditions column against the taller kill card
      (and vice-versa) so neither side strands a one-sided void.
      :has() reflow: with no kill card, drop the dead right half to a single readable measure. */
-  .mbt-grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 48px; align-items: center; }
+  .mbt-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 48px; align-items: center; }
   .mbt-grid:not(:has(.kill)) { grid-template-columns: minmax(0, 720px); }
   .must { display: flex; gap: 18px; padding: 18px 0; border-top: 1px solid var(--md-sys-color-outline-variant); }
   .must:first-of-type { border-top: none; padding-top: 0; }
@@ -946,7 +983,7 @@
     .section-hero .divide { display: none; }
     .section-hero .left { padding-right: 0; }
     .section-hero .right { padding-left: 0; margin-top: 34px; }
-    .case-grid, .mbt-grid { grid-template-columns: 1fr; gap: 20px; }
+    .case-grid, .mbt-grid { grid-template-columns: minmax(0, 1fr); gap: 20px; }
     /* stacked, the column hairline would run along the wrong edge — the two sides are now
        above and below each other, so the divider has to turn with them */
     .case-card.forc { padding-right: 0; }
