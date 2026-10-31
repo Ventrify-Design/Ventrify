@@ -32,10 +32,16 @@ build; what they cannot do is un-waste an afternoon spent on one they thought wa
 
 1. `node tools/contract.mjs` — every action the client can post actually answers. Free. **This is the gate
    that was missing**; it would have caught the 2026-10-31 bug in two seconds.
-2. The offline gates for whatever was touched (`prescreen2-logic`, `plan-parity`, `room-parity`,
+2. `node tools/e2e-prescreen.mjs` — the whole pre-screen, end to end, for **$0**: the whitelist, authz,
+   every phase handler, span verification, both citation tiers, band composition, the snapshot write, the
+   entitlement rule and the correction path, against real Firestore in about ten seconds. The model is
+   never called and **no stub code ships** — the harness replaces the engine's exported `callClaude` on
+   the cached module, so the production file has no test flag to be left on by accident. `contract.mjs`
+   proves a door opens; this proves the route behind it works.
+3. The offline gates for whatever was touched (`prescreen2-logic`, `plan-parity`, `room-parity`,
    `prescreen-vocabulary`, …).
-3. `node _redesign/m3/conformance.mjs` for any page change, and `motion-gate.mjs` for any animated one.
-4. If it calls a model: **prove the request shapes free first** with
+4. `node _redesign/m3/conformance.mjs` for any page change, and `motion-gate.mjs` for any animated one.
+5. If it calls a model: **prove the request shapes free first** with
    `POST /v1/messages/count_tokens`, which validates `output_config` schemas and the `tools` array,
    returns 200 even at a zero credit balance, and costs nothing. Then one minimal real call before any
    full run. See [[web_search_encrypted_content]].
