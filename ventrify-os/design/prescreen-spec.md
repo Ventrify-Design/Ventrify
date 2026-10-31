@@ -1,5 +1,16 @@
 # Ventrify OS — Pre-screen Spec
 
+> ## ⚠️ PARTLY SUPERSEDED — 2026-10-31
+>
+> **`prescreen-v2-spec.md` replaces §1, §2, §5's shape-of-a-run, §7, and §8.7's range language.**
+> The score range is retired in favour of a three-band "is this worth assessing?" dial, and the 21-probe
+> document-scoring architecture is retired in favour of distil-once-reason-many with external research.
+> Where this document and v2 disagree, **v2 is right**.
+>
+> **Still normative here:** §3's three rules, §4, §6 (hosting, browser orchestration, the Opus 5.5 API
+> facts), §8.1–8.4 and §8.6 (user flow, entitlements), §8.7's *"coverage, never a grade"*, §9's open
+> items, and §10's measured platform limits. Read v2 first, then this for what it still owns.
+
 > A free, ~1-minute first assessment that returns a score RANGE (never a single number), a flavour of the
 > findings, and a quality + completeness read on the data room. Its job is to earn the paid full assessment.
 > This is normative throughout: the scoring construction, the cost/latency budget, the containment gate,
