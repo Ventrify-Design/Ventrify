@@ -52,14 +52,15 @@ ok(JSON.parse(sys[0])[0].cache_control.type === 'ephemeral', 'the breakpoint is 
 console.log('\n4. DRAWS — median on score, MAJORITY on evidenced, splits flagged');
 const cat = VSS_RUBRIC[0], s = cat.subs;
 const mk = (sc, ev) => s.map((slug, i) => ({ slug, evidenced: ev[i], score: sc[i], note: 'n' + sc[i] }));
+// RAW 0/1/2 — what the model is asked for — consolidated and normalised onto the rubric's 0/0.5/1.
 const con = P.consolidate(cat, [
-  mk([4,2,3,1,0], [true,true,true,false,false]),
-  mk([2,2,3,5,0], [true,true,false,false,false]),
-  mk([5,2,3,1,0], [true,true,true,true,false]),
+  mk([2,1,1,0,0], [true,true,true,false,false]),
+  mk([0,1,1,2,0], [true,true,false,false,false]),
+  mk([1,1,1,0,0], [true,true,true,true,false]),
 ]);
-ok(con[0].score === 4, `median of [4,2,5] = 4 (got ${con[0].score})`);
-ok(con[1].score === 2 && !con[1].split, 'unanimous 2 is not flagged as a split');
-ok(con[0].split === true, 'the 4/2/5 signal IS flagged as decided by one vote');
+ok(con[0].score === 0.5, `median of raw [2,0,1] = 1 → 0.5 on the rubric scale (got ${con[0].score})`);
+ok(con[1].score === 0.5 && !con[1].split, 'a unanimous raw 1 is 0.5 and not a split');
+ok(con[0].split === true, 'the 2/0/1 signal IS flagged as decided by one vote');
 ok(con[2].evidenced === true, 'evidenced 2-of-3 → true');
 ok(con[3].evidenced === false, 'evidenced 1-of-3 → false (conservative direction)');
 ok(con[3].score === 0, 'an unevidenced signal carries no score into the floor');
@@ -70,22 +71,31 @@ const deckOnly = VSS_RUBRIC.map(c => {
   const full = ['market','product','evidence'].includes(c.key);
   const part = c.key === 'team';
   return { ...c, signals: c.subs.map((slug, i) => ({
-    slug, evidenced: full || (part && i < 3), score: (full || (part && i < 3)) ? 3 : 0 })) };
+    slug, evidenced: full || (part && i < 3), score: (full || (part && i < 3)) ? P.PAR : 0 })) };
 });
 const r = P.composeRange(deckOnly);
 console.log(`     floor ${r.floor} · ceiling ${r.ceiling} · width ${r.width} · ${r.evidencedWeight}% of weight evidenced`);
-ok(r.width >= 24 && r.width <= 36, `deck-only spread is ${r.width} points — spec says roughly ±15 (24–36)`);
+// The WIDTH is the unevidenced weight assumed at par — unchanged in meaning by the rescale, but par is
+// now 0.5 of 1 rather than 3 of 5, so a deck-only read spreads ~±10 rather than ~±15.
+ok(r.width >= 15 && r.width <= 28, `deck-only spread is ${r.width} points (expected 15–28 on the rubric scale)`);
 
 console.log('\n6. THE RANGE — a complete room must collapse the width to zero');
-const complete = VSS_RUBRIC.map(c => ({ ...c, signals: c.subs.map(slug => ({ slug, evidenced: true, score: 3 })) }));
+const complete = VSS_RUBRIC.map(c => ({ ...c, signals: c.subs.map(slug => ({ slug, evidenced: true, score: P.PAR })) }));
 const rc = P.composeRange(complete);
 ok(rc.width === 0, `every signal evidenced → width ${rc.width} (the range IS the deficit)`);
-ok(rc.floor === 60 && rc.ceiling === 60, `all-par scores 60/100 (got ${rc.floor})`);
+// 50, not the old 60: "partly" on the rubric's scale is half, where "par" on the retired 0–5 was 3/5.
+ok(rc.floor === 50 && rc.ceiling === 50, `all-partly scores 50/100 (got ${rc.floor})`);
+// A venture that MEETS every criterion must be able to reach 100. On the old scale a flawless venture
+// topped out at 5/5 → 100 too, but the model never awarded 5; the point of the rescale is that "yes"
+// is now reachable, so assert the top of the range actually exists.
+const perfect = VSS_RUBRIC.map(c => ({ ...c, signals: c.subs.map(slug => ({ slug, evidenced: true, score: P.MAX_PER_SIGNAL })) }));
+const rp = P.composeRange(perfect);
+ok(rp.floor === 100 && rp.ceiling === 100, `every criterion met scores 100/100 (got ${rp.floor})`);
 
 console.log('\n7. THE RANGE — nothing evidenced is the widest possible, and par-capped');
 const none = VSS_RUBRIC.map(c => ({ ...c, signals: c.subs.map(slug => ({ slug, evidenced: false, score: 0 })) }));
 const rn = P.composeRange(none);
-ok(rn.floor === 0 && rn.ceiling === 60, `0–60: the ceiling is par, never 100 (got ${rn.floor}–${rn.ceiling})`);
+ok(rn.floor === 0 && rn.ceiling === 50, `0–50: the ceiling is par, never 100 (got ${rn.floor}–${rn.ceiling})`);
 
 console.log('\n8. BANDS — a straddling range must NOT publish one (§3.1)');
 ok(P.rangeBand(48, 71).band === null, '48–71 straddles → no band published');
@@ -98,7 +108,7 @@ console.log('\n9. SCHEMA — slugs and scores are constrained by the schema, not
 const sch = P.schemaFor(cat);
 const it = sch.properties.signals.items;
 ok(JSON.stringify(it.properties.slug.enum) === JSON.stringify(cat.subs), 'slug is an enum of this category\'s subs');
-ok(JSON.stringify(it.properties.score.enum) === '[0,1,2,3,4,5]', 'score is an enum 0–5 (numeric ranges are unsupported)');
+ok(JSON.stringify(it.properties.score.enum) === '[0,1,2]', 'score is an enum 0/1/2 (numeric ranges are unsupported)');
 ok(it.additionalProperties === false, 'additionalProperties:false, as structured outputs require');
 
 console.log('\n10. REQUEST — the model contract');
@@ -253,6 +263,34 @@ const withDeck = P.buildCorpus([
   mkDoc('MoneyGym-Market-Sizing.docx'), { name: 'Deck.pdf', text: 'd'.repeat(9000), docType: 'pitch' }, mkDoc('Team_Bios.docx'),
 ]);
 ok(withDeck.text.indexOf('Deck.pdf') < withDeck.text.indexOf('Team_Bios.docx'), 'a tagged deck is read first');
+
+console.log('\n20. SCALE PARITY — the pre-screen scores on the SAME scale as the thing it predicts');
+// THE GUARDRAIL. The scale was never declared anywhere, so the runner invented 0/0.5/1 and the
+// pre-screen invented 0-5 with "3 is par". Both weighted to a 0-100 composite, both were internally
+// consistent, and neither could reveal the mismatch alone — which is exactly why this is a GATE and not
+// a code comment. api/_prescreen.js is CommonJS and cannot import the ES-module rubric, so it holds a
+// mirror; this is what keeps the mirror honest.
+const { SIGNAL_SCALE } = await import(new URL('../shared/vss-rubric.js', import.meta.url));
+ok(JSON.stringify(P.SIGNAL_VALUES) === JSON.stringify([...SIGNAL_SCALE.values]),
+   `pre-screen values ${JSON.stringify(P.SIGNAL_VALUES)} match the rubric's`);
+ok(JSON.stringify(P.SIGNAL_RAW) === JSON.stringify([...SIGNAL_SCALE.raw]),
+   `the integer enum the model is asked for matches the rubric's`);
+ok(P.MAX_PER_SIGNAL === SIGNAL_SCALE.max, `MAX_PER_SIGNAL ${P.MAX_PER_SIGNAL} === rubric max ${SIGNAL_SCALE.max}`);
+ok(P.PAR === SIGNAL_SCALE.par, `PAR ${P.PAR} === rubric par ${SIGNAL_SCALE.par}`);
+// The schema must enforce the scale, not hope for it.
+const sch2 = P.schemaFor(VSS_RUBRIC[0]).properties.signals.items.properties.score;
+ok(JSON.stringify(sch2.enum) === JSON.stringify([...SIGNAL_SCALE.raw]), 'the structured-output schema enforces it');
+// And the prompt must not reintroduce a curve. "3 is par" is what produced 16 of 28 scores at exactly 3.
+const instr = P.requestBody(VSS_RUBRIC[0], 'x').system[0].text;
+ok(!/0 to 5|3 is par|out of 5/i.test(instr), 'the prompt no longer describes a 0-5 scale or a par score');
+ok(/2 for yes, 1 for partly, 0 for no/i.test(instr), 'it asks the full assessment\'s question instead');
+// A published score is always a point the rubric defines — never 0.75 from an even number of draws.
+const even = P.consolidate(VSS_RUBRIC[0], [
+  VSS_RUBRIC[0].subs.map(slug => ({ slug, evidenced: true, score: 1, note: 'a' })),
+  VSS_RUBRIC[0].subs.map(slug => ({ slug, evidenced: true, score: 2, note: 'b' })),
+]);
+ok(even.every(x => SIGNAL_SCALE.values.includes(x.score)),
+   `two disagreeing draws still publish a value on the scale (${[...new Set(even.map(x => x.score))].join(', ')})`);
 
 console.log(fails ? `\n${fails} FAILED\n` : '\nall checks passed\n');
 process.exit(fails ? 1 : 0);

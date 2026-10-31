@@ -16,6 +16,28 @@
 // The two live in separate repos; this is the documented sync point.
 // ============================================================
 
+// SIGNAL_SCALE — WHAT ONE SIGNAL IS WORTH. The single source, because it was never declared anywhere
+// and every consumer therefore invented its own.
+//
+// The cloud runner has always scored each signal 0 / 0.5 / 1 — "no", "partly", "yes". The pre-screen,
+// written later to PREDICT that runner, scored 0–5 and its prompt said "3 is par". Both weighted to a
+// 0–100 composite, so both looked internally consistent and neither revealed the mismatch. Measured on
+// MoneyGym (tools/prescreen-calibration.mjs): across the 24 signals BOTH instruments evidenced, the
+// runner awarded 81% of the available marks and the pre-screen 58% — lower on 19 of 24 — because a
+// clear "yes" is 1 of 1 to the runner and 3 of 5 to the pre-screen. An instrument that cannot agree
+// with the thing it exists to predict cannot predict it.
+//
+// `raw` is what a model is asked for: structured-output schemas take an integer enum, not halves. Divide
+// by 2 to land on `values`. Anything that scores a signal MUST use this, and tools/prescreen-logic.mjs
+// fails the build if api/_prescreen.js (CommonJS, so it holds a mirror) drifts from it.
+export const SIGNAL_SCALE = Object.freeze({
+  max: 1,
+  values: Object.freeze([0, 0.5, 1]),
+  raw: Object.freeze([0, 1, 2]),
+  par: 0.5,
+  label: 'none / partly / yes',
+});
+
 export const VSS_RUBRIC = [
   { key: 'market',    label: 'Market Opportunity',           weight: 0.20, subs: ['market_size', 'market_growth', 'why_now', 'demand_validation', 'gross_margin'] },
   { key: 'team',      label: 'Team & Founder-Market Fit',    weight: 0.25, subs: ['ceo_vision', 'talent_attraction', 'founder_market_fit', 'execution_record', 'ethics_trust'] },

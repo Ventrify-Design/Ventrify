@@ -2436,8 +2436,13 @@ export function rangeStale(snapshot = {}, liveDocs = 0) {
 export function rangeFindings(categories = []) {
   const cats = (categories || []).filter(c => (c.signals || []).length);
   if (!cats.length) return '';
-  const PAR = 3, MAX = 5;
+  // LEGACY SNAPSHOTS ARE ON THE OLD 0–5 SCALE. Pre-screens taken before the scale was unified with the
+  // rubric (2026-10-31) stored scores up to 5; rendering those as "½ of 1" would be wrong in a way the
+  // reader could not detect. Any score above 1 proves the old instrument, and nothing else can.
+  const legacy = cats.some(c => (c.signals || []).some(sg => Number(sg.score) > 1));
+  const MAX = legacy ? 5 : 1, PAR = legacy ? 3 : 0.5;
   const ptsOf = c => (c.weight * PAR / ((c.signals.length || 5) * MAX)) * 100;
+  const showScore = v => legacy ? String(v) : scoreWord(v);
 
   // ---- what is missing, hardest-hitting first ----
   const gaps = [];
@@ -2462,7 +2467,7 @@ export function rangeFindings(categories = []) {
       // `split` means the three blind draws disagreed and one vote decided it — the same honesty marker
       // the full run uses. Shown, not smoothed over.
       unsettled: sg.split ? 1 : 0,
-      trail: { kind: 'value', value: String(sg.score), valueMuted: `/${MAX}`,
+      trail: { kind: 'value', value: showScore(sg.score), valueMuted: ` of ${MAX}`,
                mark: { icon: 'check_circle', tone: 'good' } },
     })).join('');
     return `<div class="rf-cat"><div class="rf-cat-h">${esc(c.label)}<span>${seen.length} of ${c.signals.length} evidenced</span></div>

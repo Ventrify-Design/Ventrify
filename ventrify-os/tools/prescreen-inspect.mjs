@@ -68,14 +68,17 @@ for (const d of PS.orderForBudget(all.slice().sort((x, y) => x.name.localeCompar
 
 // the per-category results the run stored server-side
 const cats = await doc.ref.collection('prescreenCategories').get();
-console.log(`\nCATEGORIES  ${cats.size} of 7 stored`);
+// A score above 1 can only come from the retired 0–5 instrument, so it is the one reliable way to tell
+// a legacy snapshot from one scored on the rubric's own 0 / 0.5 / 1 scale.
+const anyAbove1 = cats.docs.some(cd => (cd.data().signals || []).some(s => Number(s.score) > 1));
+console.log(`\nCATEGORIES  ${cats.size} of 7 stored${anyAbove1 ? '  (legacy 0-5 scale)' : '  (rubric 0/0.5/1 scale)'}`);
 for (const cd of cats.docs.sort((x, y) => x.id.localeCompare(y.id))) {
   const k = cd.data(), sigs = k.signals || [];
   const seen = sigs.filter(s => s.evidenced).length;
   const splits = sigs.filter(s => s.split).length;
   console.log(`\n  ${k.label}  (weight ${k.weight}, ${k.drawsUsed}/3 draws, ${seen}/${sigs.length} evidenced${splits ? `, ${splits} decided by one vote` : ''})`);
   for (const s of sigs) {
-    console.log(`    ${s.evidenced ? s.score + '/5' : ' — '}  ${s.slug.padEnd(24)} ${String(s.note || '').slice(0, 72)}`);
+    console.log(`    ${s.evidenced ? String(s.score).padStart(3) + ' of ' + (anyAbove1 ? 5 : 1) : '  — '}  ${s.slug.padEnd(24)} ${String(s.note || '').slice(0, 68)}`);
   }
 }
 console.log('');

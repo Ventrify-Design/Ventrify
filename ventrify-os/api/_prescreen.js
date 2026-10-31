@@ -59,8 +59,21 @@ const PER_DOC_MAX = Math.round(CORPUS_MAX_TOKENS * 0.20);
 const MIN_USEFUL = 400;
 
 const DRAWS = 3;          // §7 — three blind draws, median published. Not optional; see belowry.
-const PAR = 3;            // "at par" on the rubric's 0–5 scale
-const MAX_PER_SIGNAL = 5;
+// MIRROR of shared/vss-rubric.js SIGNAL_SCALE. This file is CommonJS and the rubric is an ES module, so
+// it cannot be imported here — the same situation as ROOM_CLASSES in ds.js, and handled the same way:
+// the copy is made safe by a gate rather than forbidden by a comment. tools/prescreen-logic.mjs fails
+// the build if these stop matching the rubric.
+//
+// It was 0–5 with PAR 3, against a runner that has always scored 0 / 0.5 / 1. That is why a pre-screen
+// said 45–57 about a venture the full assessment scored 78.
+const SIGNAL_RAW = [0, 1, 2];        // what the model is asked for — schemas take integers, not halves
+const RAW_DIVISOR = 2;               // raw / 2 → 0, 0.5, 1
+const SIGNAL_VALUES = [0, 0.5, 1];
+const PAR = 0.5;          // "partly" — what an unevidenced signal is assumed to reach at the ceiling
+const MAX_PER_SIGNAL = 1;
+// Three draws can produce an even count if one fails, and the mean of 1 and 2 is 1.5 — which is not a
+// point on the scale. Snap, so a published score is always a value the rubric actually defines.
+const snapToScale = v => SIGNAL_VALUES.reduce((best, x) => Math.abs(x - v) < Math.abs(best - v) ? x : best, SIGNAL_VALUES[0]);
 
 // ── CORPUS ───────────────────────────────────────────────────────────────────────────────────────────
 //
@@ -219,7 +232,7 @@ You have no web access and must not use outside knowledge about this company, it
 For every sub-criterion you are given, answer two separate questions:
 
 1. EVIDENCED — does the supplied evidence actually let you rate this? Set "evidenced": true only when a specific passage supports a rating. An inference from what a competent company would probably do is NOT evidence. A claim the venture makes about itself IS evidence of the claim, but weak evidence of the fact. When in doubt, answer false — a false "evidenced" silently narrows a range that should have been wide, which is the one failure this design cannot tolerate.
-2. SCORE — 0 to 5, where 3 is par for a venture at this stage. Score only what the evidence supports. When "evidenced" is false the score is ignored entirely, so do not guess to fill it; send 0.
+2. SCORE — does the evidence MEET the criterion? Send 2 for yes, 1 for partly, 0 for no. This is the same judgement the full assessment makes, and it is not a grade on a curve: a criterion plainly met scores 2 even for an early venture, and one plainly not met scores 0 even for a strong one. Do not reserve the top of the scale. When "evidenced" is false the score is ignored entirely, so do not guess to fill it; send 0.
 
 Also give a one-sentence "note" of at most 25 words. When evidenced, quote or name the specific thing you saw. When not evidenced, name the document that would settle it. The note is shown to the founder, so it must be specific and plain — never "insufficient information".`;
 
@@ -240,7 +253,7 @@ function categoryPrompt(cat) {
 
 // Structured outputs, not a forced tool call: Opus 5.5 returns a 400 for tool_choice "any"/"tool", and the
 // forced call only ever existed to get JSON back. Numeric ranges are not supported in these schemas, so the
-// 0–5 bound is an enum (which IS supported) rather than minimum/maximum — the schema enforces it instead of
+// scale is an enum (which IS supported) rather than minimum/maximum — the schema enforces it instead of
 // the code hoping. Slugs are an enum too, so a probe cannot invent a sub-criterion.
 function schemaFor(cat) {
   return {
@@ -254,7 +267,7 @@ function schemaFor(cat) {
           properties: {
             slug: { type: 'string', enum: cat.subs },
             evidenced: { type: 'boolean' },
-            score: { type: 'integer', enum: [0, 1, 2, 3, 4, 5] },
+            score: { type: 'integer', enum: SIGNAL_RAW },
             note: { type: 'string' },
           },
         },
@@ -386,11 +399,12 @@ function consolidate(cat, draws) {
     if (!seen.length) return { slug, evidenced: false, score: 0, note: '', draws: 0, split: false };
     const yes = seen.filter(x => x.evidenced).length;
     const evidenced = yes * 2 > seen.length;
-    const scores = seen.map(x => Math.max(0, Math.min(MAX_PER_SIGNAL, Number(x.score) || 0)));
-    const score = medianOf(scores);
+    // Raw 0/1/2 from the model, median-of-three, then normalised onto the rubric's 0/0.5/1.
+    const scores = seen.map(x => Math.max(0, Math.min(SIGNAL_RAW[SIGNAL_RAW.length - 1], Number(x.score) || 0)));
+    const score = snapToScale(medianOf(scores) / RAW_DIVISOR);
     // A note from a draw that AGREES with the published median — quoting a draw we overruled would show
     // the founder a reason that is not the reason for their number.
-    const agreeing = seen.find(x => Math.max(0, Math.min(MAX_PER_SIGNAL, Number(x.score) || 0)) === score && !!x.evidenced === evidenced);
+    const agreeing = seen.find(x => snapToScale(Math.max(0, Math.min(SIGNAL_RAW[SIGNAL_RAW.length - 1], Number(x.score) || 0)) / RAW_DIVISOR) === score && !!x.evidenced === evidenced);
     return {
       slug, evidenced, score: evidenced ? score : 0,
       note: String((agreeing || seen[0]).note || '').slice(0, 220),
@@ -457,7 +471,7 @@ function rangeBand(floor, ceiling) {
 }
 
 module.exports = {
-  MODEL, FAST_BETA, DEFAULT_SPEED, DRAWS, PAR, MAX_PER_SIGNAL, CORPUS_MAX_TOKENS, isFastUnavailable,
+  MODEL, FAST_BETA, DEFAULT_SPEED, DRAWS, PAR, MAX_PER_SIGNAL, SIGNAL_RAW, SIGNAL_VALUES, CORPUS_MAX_TOKENS, isFastUnavailable,
   estTokens, buildCorpus, evidenceTag, orderForBudget, systemBlock, categoryPrompt, schemaFor, requestBody,
   warmCache, probeCategory, medianOf, consolidate, composeRange, bandOf, rangeBand, BAND_ORDER,
 };
