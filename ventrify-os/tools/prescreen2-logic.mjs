@@ -286,5 +286,35 @@ ok(/failed: e\.body/.test(orch), 'one dead nugget leaves its card empty rather t
 ok(/onNugget && onNugget\(out, landed\.length/.test(orch), 'each finding paints as it lands');
 ok(/const FANOUT = 6/.test(orch), 'all six reasoning calls run at once — they never carry the corpus');
 
+console.log('\n19. THE PAGES ARE ACTUALLY WIRED TO IT');
+// A feature nobody can reach is not built. These assert the two call sites, and the one thing about them
+// that matters most: an old snapshot keeps the page it was scored on.
+const fsp = await import('node:fs/promises');
+const assess = await fsp.readFile(new URL('../workspace/assess-next.html', import.meta.url), 'utf8');
+const wsjs = await fsp.readFile(new URL('../workspace/workspace-m3.js', import.meta.url), 'utf8');
+
+ok(/DS\.verdictPage\(v2/.test(assess), 'the Verdict tab renders verdictPage from a v2 snapshot');
+ok(/p\.prescreen2 && p\.prescreen2\.v === 2/.test(assess), 'and only when the snapshot really is v2');
+// A range and a band are different instruments. Rendering an old range AS a band would invent a verdict
+// nobody measured — the same reasoning as isV3Scale.
+ok(/DS\.rangeHero\(r/.test(assess), 'a pre-v2 snapshot still renders on the range page it was scored on');
+ok(assess.indexOf('DS.verdictPage(v2') < assess.indexOf('DS.rangeHero(r'), 'v2 is checked first');
+
+// The correction path, end to end: the DS button names the handler and the page defines it.
+const dsrc = await fsp.readFile(new URL('../shared/m3/ds.js', import.meta.url), 'utf8');
+for (const fn of ['__ps2Correct', '__ps2SaveBrief', '__ps2CancelBrief']) {
+  ok(dsrc.includes(fn) && new RegExp('window\\.' + fn + ' =').test(assess),
+     `${fn}: the component calls it and the page defines it`);
+}
+ok(/correctBrief/.test(assess), 'saving a correction goes through the orchestrator, not a bare fetch');
+ok(/nuggets: \{\}, sources: \[\]/.test(assess), 'and clears the old findings so none sits beside a corrected brief');
+ok(/edit_limit/.test(assess) && /402/.test(assess), 'both refusals the customer can actually hit are named');
+
+// The create screen runs v2, and the stage lists what v2 works through.
+ok(/runPrescreen2/.test(wsjs), 'the create screen runs the v2 orchestrator');
+ok(!/import\('\.\/prescreen\.js'\)/.test(wsjs), 'and no longer imports the v1 one');
+ok(/PS2_NUGGETS/.test(wsjs), 'the run stage lists the six findings, not the seven retired categories');
+ok(/onNugget:/.test(wsjs) && !/onCategory:/.test(wsjs), 'and listens for findings landing rather than categories');
+
 console.log(fails ? `\n${fails} check(s) failed` : '\nall checks passed');
 process.exit(fails ? 1 : 0);

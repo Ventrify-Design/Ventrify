@@ -5739,4 +5739,69 @@ export function verdictSources(sources = []) {
   </section>`;
 }
 
+/**
+ * briefEditor — MOLECULE. The correction state of briefPlayback (§8.8).
+ *
+ * A component rather than DOM surgery on the rendered playback, so the two states live in one file and
+ * cannot drift apart. The fields here are exactly the ones the server will accept: `claims` is absent
+ * deliberately — it is the substring-verified layer, and letting it be edited would put unverifiable
+ * text into the one place the pipeline treats as proven.
+ *
+ * The warning is not decoration. Re-reading costs most of a run, and the customer should know that
+ * before they press it rather than discover it as a wait.
+ */
+export function briefEditor(brief = {}, opts = {}) {
+  const FIELDS = [
+    ['oneLine', 'What it does', 'textarea'], ['sector', 'Sector', 'text'],
+    ['businessModel', 'Business model', 'text'], ['stage', 'Stage', 'select'],
+    ['geography', 'Where', 'text'], ['marketClaim', 'Market it claims', 'text'], ['ask', 'The ask', 'text'],
+  ];
+  const STAGE_OPTS = ['pre-seed', 'seed', 'series-a', 'series-b-plus', 'unknown'];
+  const field = ([k, label, kind]) => {
+    const v = esc(brief[k] || '');
+    const input = kind === 'textarea'
+      ? `<textarea class="bpe-i" id="bpe-${k}" rows="2">${v}</textarea>`
+      : kind === 'select'
+        ? `<select class="bpe-i" id="bpe-${k}">${STAGE_OPTS.map(o =>
+            `<option value="${o}"${o === brief[k] ? ' selected' : ''}>${esc(o)}</option>`).join('')}</select>`
+        : `<input class="bpe-i" id="bpe-${k}" type="text" value="${v}">`;
+    return `<label class="bpe-r${kind === 'textarea' ? ' wide' : ''}"><span class="bpe-k">${esc(label)}</span>${input}</label>`;
+  };
+  return `<section class="sec bpb bpe">
+    <div class="s-label"><span class="material-symbols-rounded">edit</span>Your correction</div>
+    <h2 class="s-h">Put us right</h2>
+    <p class="s-sub">Change what we got wrong. Everything below re-reads on your version — it takes about a minute and doesn’t use up your free pre-screen.</p>
+    <div class="bpe-grid">${FIELDS.map(field).join('')}</div>
+    <div class="bpb-act">
+      <button class="m3-btn filled" type="button" onclick="window.__ps2SaveBrief&&window.__ps2SaveBrief()">
+        <span class="material-symbols-rounded">refresh</span>Read it again on my version
+      </button>
+      <button class="m3-btn text" type="button" onclick="window.__ps2CancelBrief&&window.__ps2CancelBrief()">Cancel</button>
+      <span class="bpb-note">What you change here is marked as yours — we won’t present it as something we checked.${
+        opts.editsLeft != null ? ` ${opts.editsLeft} correction${opts.editsLeft === 1 ? '' : 's'} left.` : ''}</span>
+    </div>
+  </section>`;
+}
+
+/**
+ * verdictPage — ORGANISM. The whole pre-screen result, in reveal order (§5).
+ *
+ * ONE composition, used by the Verdict tab and by the live run, so the page a customer watches fill up
+ * and the page they come back to are the same page. Forking them is how the two drift.
+ */
+export function verdictPage(snapshot = {}, opts = {}) {
+  const editing = !!opts.editing;
+  const brief = snapshot.brief || {};
+  return `<div class="brief">
+    ${verdictHero(snapshot, opts)}
+    ${editing
+      ? briefEditor(brief, { editsLeft: opts.editsLeft })
+      : briefPlayback(brief, { asserted: snapshot.asserted || [], editable: opts.editable, editsLeft: opts.editsLeft })}
+    ${snapshot.state === 'unreadable' ? '' : `<hr class="rule">
+      ${verdictFindings(snapshot.nuggets || {}, { pending: opts.pending || [] })}
+      ${verdictSources(snapshot.sources || [])}
+      ${verdictNext(snapshot)}`}
+  </div>`;
+}
+
 export { PS2_BANDS, PS2_NUGGETS };

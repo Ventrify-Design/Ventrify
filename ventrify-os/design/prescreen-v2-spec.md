@@ -1,6 +1,22 @@
 # Ventrify OS — Pre-screen v2: the flavour, not the audit
 
-> **Status: DECIDED 2026-10-31, NOT BUILT.** Settled with the operator in discussion. Normative.
+> **Status: BUILT 2026-10-31, NOT YET RUN AGAINST THE REAL API.** Settled with the operator in
+> discussion, then built. Normative.
+>
+> What exists: `api/_corpus.js` (the room read, now shared with v1), `api/_prescreen2.js` (the engine, all
+> four phases, every guardrail in §8.1–8.6), the five `ps2-*` actions in `api/memo.js`,
+> `workspace/prescreen2.js` (orchestration + the correction path), seven components in `shared/m3/ds.js`
+> (`verdictDial`, `verdictHero`, `briefPlayback`, `briefEditor`, `nuggetCard`, `verdictFindings`,
+> `verdictNext`, `verdictSources`, composed by `verdictPage`), their chrome, and both call sites
+> (`assess-next.html`'s Verdict tab, `workspace-m3.js`'s run).
+>
+> Gates: `prescreen2-logic` (19 sections, free), `prescreen-vocabulary` (free), `prescreen-composition`
+> (free self-test; `--live` reads real snapshots). Sixteen gates pass including shell conformance and
+> motion. **Every cost and latency figure in §7 is still predicted** — no v2 run has met the API.
+>
+> Not built: the three `--spend` gates of §9 (`prescreen-deckonly`, `prescreen-direction`,
+> `prescreen-bands`), which cannot be written against data that does not exist yet, and §11.2
+> (what a band writes into the living investability score).
 >
 > This supersedes **§1, §2, §5 (shape of a run), §7 and §8.7's range language** in
 > `prescreen-spec.md`. Where this document and v1 disagree, **this one is right**. v1 remains the

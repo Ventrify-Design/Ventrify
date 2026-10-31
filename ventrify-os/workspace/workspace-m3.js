@@ -366,7 +366,10 @@ window.__wsRunPrescreen = async () => {
   // would blank the heading on the very first repaint.
   const stageName = f.name || '';
   let phaseText = 'Starting…', roomRead = null, justFound = [], step = 0;
-  const catList = (VSS_RUBRIC || []).map(c => ({ key: c.key, label: c.label }));
+  // THE STAGE LISTS WHAT IS ACTUALLY BEING WORKED THROUGH. v1 listed the seven rubric categories
+  // because it scored seven of them; v2 works through six findings, so it lists those. prescreenStage
+  // takes {key,label} and does not care which, so the swap needs no change to the component.
+  const catList = Object.entries(DS_PRESCREEN.PS2_NUGGETS).map(([key, n]) => ({ key, label: n.title }));
 
   const host = () => {
     let h = document.getElementById('ps-host');
@@ -432,9 +435,9 @@ window.__wsRunPrescreen = async () => {
       NA.docStatus = { ...(NA.docStatus || {}), [i]: ((r && r.skipped || []).length ? 'Failed' : 'Stored') }; naPaintDocs();
     }
 
-    const { runPrescreen } = await import('./prescreen.js');
+    const { runPrescreen2 } = await import('./prescreen2.js');
     step = 1; phaseText = 'Checking your data room…'; repaint();
-    await runPrescreen({
+    await runPrescreen2({
       engagementId: programId,
       onPhase: (t) => { phaseText = t; naProg(t); repaint(); },
       // EVERY class found on the first read is "just found" — a second ago the list was six hollow
@@ -448,7 +451,13 @@ window.__wsRunPrescreen = async () => {
         // every category that lands afterwards.
         setTimeout(() => { justFound = []; }, 900);
       },
-      onCategory: (c) => { landed.push(c); repaint(); },
+      // The brief is the first thing that proves we read them right, so it goes on the stage the moment
+      // it lands rather than waiting for the result page — it is ~20s into a ~60s run.
+      onBrief: (brief) => {
+        if (brief && brief.oneLine) phaseText = brief.oneLine;
+        step = 3; repaint();
+      },
+      onNugget: (out) => { landed.push({ category: out.nugget }); repaint(); },
     });
 
     NA.createdId = null;
