@@ -151,7 +151,13 @@ module.exports = async (req, res) => {
     const action = String(body.action || '');
     if (!idToken) { res.status(401).json({ error: 'no_token' }); return; }
     if (!engagementId) { res.status(400).json({ error: 'engagement_required' }); return; }
-    const ACTIONS = ['share', 'revoke-share', 'sign', 'revoke-sign', 'decide', 'revoke-decision', 'chat', 'prescreen-warm', 'prescreen-category', 'prescreen-finalise', 'prescreen-unlock'];
+    // EVERY ACTION MUST BE LISTED HERE OR IT IS UNREACHABLE. The v2 pre-screen actions were written,
+    // gated and deployed without being added, so the first live run failed with `bad_action` the moment
+    // it tried to read the deck. tools/prescreen2-logic.mjs §22 now asserts that everything the browser
+    // can ask for is in this list — a handler nobody can call is not a feature.
+    const ACTIONS = ['share', 'revoke-share', 'sign', 'revoke-sign', 'decide', 'revoke-decision', 'chat',
+                     'prescreen-warm', 'prescreen-category', 'prescreen-finalise', 'prescreen-unlock',
+                     'ps2-brief', 'ps2-brief-edit', 'ps2-research', 'ps2-nugget', 'ps2-band'];
     if (!ACTIONS.includes(action)) { res.status(400).json({ error: 'bad_action' }); return; }
 
     ensureAdmin();

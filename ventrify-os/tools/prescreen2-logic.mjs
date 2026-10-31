@@ -363,5 +363,31 @@ ok(/according to /.test(v2blk), 'an attributed citation says "according to"');
 ok(/We have not read this page ourselves/.test(v2blk), 'and says so plainly on hover');
 ok(/tier === 'attributed'/.test(v2blk), 'the component branches on the tier rather than guessing');
 
+console.log('\n22. EVERY ACTION THE BROWSER CAN ASK FOR IS REACHABLE');
+// api/memo.js guards its dispatcher with an ACTIONS whitelist. The v2 actions were written, gated and
+// DEPLOYED without being added to it, so the first live run died with `bad_action` while reading the
+// deck. §17 proved the handlers existed; nothing proved they could be called. A handler nobody can
+// reach is not a feature, and this is the check that would have caught it.
+const memoFile = await (await import('node:fs/promises')).readFile(new URL('../api/memo.js', import.meta.url), 'utf8');
+const whitelisted = (memoFile.match(/const ACTIONS = \[([\s\S]*?)\]/) || [, ''])[1]
+  .split(',').map(x => x.trim().replace(/'/g, '')).filter(Boolean);
+const orchSrc = await (await import('node:fs/promises')).readFile(new URL('../workspace/prescreen2.js', import.meta.url), 'utf8');
+// Everything the orchestrator posts, and everything with a handler block.
+const posted = [...orchSrc.matchAll(/action: '([^']+)'/g)].map(m => m[1]);
+const handled = [...memoFile.matchAll(/action === '(ps2-[^']+)'/g)].map(m => m[1]);
+const unique = (a) => [...new Set(a)];
+
+ok(unique(posted).length > 0, `the orchestrator posts ${unique(posted).length} action(s): ${unique(posted).join(', ')}`);
+const unreachable = unique(posted).filter(a => !whitelisted.includes(a));
+ok(!unreachable.length, `every posted action is whitelisted${unreachable.length ? ' — UNREACHABLE: ' + unreachable.join(', ') : ''}`);
+const unlisted = unique(handled).filter(a => !whitelisted.includes(a));
+ok(!unlisted.length, `every ps2 handler is whitelisted${unlisted.length ? ' — UNREACHABLE: ' + unlisted.join(', ') : ''}`);
+// The correction path is posted from the page, not the orchestrator, so check it by name too.
+ok(whitelisted.includes('ps2-brief-edit'), 'the correction action is whitelisted (posted from assess-next.html)');
+const assessSrc = await (await import('node:fs/promises')).readFile(new URL('../workspace/assess-next.html', import.meta.url), 'utf8');
+const pagePosted = unique([...assessSrc.matchAll(/action: '(ps2-[^']+)'/g)].map(m => m[1]));
+const pageBad = pagePosted.filter(a => !whitelisted.includes(a));
+ok(!pageBad.length, `every action the page posts is whitelisted${pageBad.length ? ' — UNREACHABLE: ' + pageBad.join(', ') : ''}`);
+
 console.log(fails ? `\n${fails} check(s) failed` : '\nall checks passed');
 process.exit(fails ? 1 : 0);
