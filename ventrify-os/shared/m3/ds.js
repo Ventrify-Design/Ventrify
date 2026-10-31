@@ -5500,3 +5500,243 @@ export function initTabs(opts = {}) {
   select(wanted());
   window.addEventListener('hashchange', () => { const h = location.hash.replace('#', ''); const idx = names.indexOf(h); if (idx >= 0) select(idx); });
 }
+
+// ═════════════════════════════════════════════════════════════════════════════════════════════════════
+// PRE-SCREEN v2 — the flavour, not the audit.
+//
+// Spec: design/prescreen-v2-spec.md. These components replace rangeHero / rangeLockup / rangeFindings /
+// rangeCoverage, which rendered a score built by reading documents and reported, in effect, how complete
+// a data room was. v2 renders a VERDICT on whether the venture is worth assessing, plus the findings
+// that earned it — and every finding on screen has already been verified in code against the source it
+// cites (§8.1), so nothing here needs to hedge.
+//
+// THE VOCABULARY IS LOAD-BEARING. tools/prescreen-vocabulary.mjs fails the build if "missing", "not
+// provided", "no evidence of" or "incomplete" appear in these components. That language belongs in the
+// coverage panel and nowhere else (§3.4), and it is how a readiness verdict quietly decays back into a
+// completeness score six months after everyone has forgotten the argument.
+// ═════════════════════════════════════════════════════════════════════════════════════════════════════
+
+// The three bands, and what each one is allowed to say. NOT a quality verdict: we have only read
+// documents, never met the team or used the product (§2). None of these three sentences mentions a
+// document, and none of them may.
+const PS2_BANDS = {
+  HIGH:   { label: 'High',   tone: 'good', deg: 142, line: 'Worth assessing now.' },
+  MEDIUM: { label: 'Medium', tone: 'mid',  deg: 0,   line: 'Real signal, with things to resolve.' },
+  LOW:    { label: 'Low',    tone: 'warn', deg: -142, line: 'The case needs work before it is worth the full read.' },
+};
+
+/**
+ * verdictDial — ATOM. The band as a dial, because a number invites arithmetic and a band invites a
+ * decision.
+ *
+ * v1 published a range: two numbers off a one-minute read, implying a resolution we do not have. Three
+ * bands are honest about the resolution AND easier to validate — ordinal agreement with the full
+ * assessment is a far lower bar than numerical containment, and that is what the calibration gate
+ * measures.
+ */
+export function verdictDial(band, opts = {}) {
+  const b = PS2_BANDS[band];
+  if (!b) {
+    // §3.3 — "we couldn't tell" is NOT the bottom band. It is off the dial entirely, because an
+    // unreadable submission is not a verdict on a venture.
+    return `<div class="vd vd-none"><div class="vd-face"><span class="material-symbols-rounded">help</span></div>
+      <div class="vd-lab">Not enough to read yet</div></div>`;
+  }
+  const ticks = Object.entries(PS2_BANDS).map(([k, v]) =>
+    `<span class="vd-tick${k === band ? ' on' : ''}" style="--d:${v.deg}deg"></span>`).join('');
+  return `<div class="vd" data-tone="${b.tone}">
+    <div class="vd-face">
+      ${ticks}
+      <span class="vd-needle" style="--d:${b.deg}deg"></span>
+      <span class="vd-hub"></span>
+    </div>
+    <div class="vd-lab">${esc(b.label)}</div>
+    <div class="vd-sub">${esc(b.line)}</div>
+    ${opts.basis ? `<div class="vd-basis">${esc(opts.basis)}</div>` : ''}
+  </div>`;
+}
+
+/**
+ * verdictHero — ORGANISM. What opens a pre-screened assessment.
+ *
+ * The headline is the REASON, not the band — the band is already on the dial beside it, and a headline
+ * that repeats it wastes the one line a reader is guaranteed to take in. The basis line is separate and
+ * deliberately plain: it discloses what we read from and never apologises for it (§3.2).
+ */
+export function verdictHero(snapshot = {}, opts = {}) {
+  const { band = null, reason = '', basis = '', brief = {}, sources = [] } = snapshot;
+  const unreadable = snapshot.state === 'unreadable' || !band;
+  return sectionHero({
+    eyebrow: 'Pre-screen', eyebrowIcon: 'bolt',
+    headline: unreadable
+      ? 'There isn’t enough here for us to say anything useful yet.'
+      : fitHeadline(reason || PS2_BANDS[band].line),
+    facts: [
+      { k: 'Read from', v: `${snapshot.docCount || 0} document${snapshot.docCount === 1 ? '' : 's'}` },
+      { k: 'Public sources', v: sources.length ? String(sources.length) : '—' },
+      ...(snapshot.briefEdited ? [{ k: 'Your corrections', v: 'applied' }] : []),
+    ],
+    right: verdictDial(band, { basis }),
+    thesisLabel: 'What this is.',
+    thesis: unreadable
+      ? 'A pre-screen reads what a venture says about itself and then goes looking for what it does not say. There is too little here to do either yet — add the deck and we will take another look, and it will not count against your free pre-screen.'
+      : (brief.oneLine
+          ? `${esc(brief.oneLine)} This verdict is about whether that case is worth a full assessment’s time — not about whether the business is good. We have read documents, not met the team.`
+          : 'This verdict is about whether the case is worth a full assessment’s time — not about whether the business is good. We have read documents, not met the team.'),
+  });
+}
+
+/**
+ * briefPlayback — ORGANISM. "Here is what we understood your venture to be."
+ *
+ * THE GUARDRAIL AND THE WOW ARE THE SAME COMPONENT (§8.2). Everything downstream reasons from this brief
+ * and nothing else, so if it is wrong — wrong sector, wrong model — every finding below will be
+ * confidently about the wrong company and will look perfect. The customer is the only validator who
+ * knows in two seconds, so it goes first, and they can fix it.
+ *
+ * A corrected field is CUSTOMER-ASSERTED and marked as such, here and on every export (§8.8). It has no
+ * document behind it to verify against, and an unmarked unverifiable claim in something carrying our
+ * name is the thing this product cannot afford.
+ */
+export function briefPlayback(brief = {}, opts = {}) {
+  const asserted = new Set(opts.asserted || []);
+  const FIELDS = [
+    ['oneLine', 'What it does'], ['sector', 'Sector'], ['businessModel', 'Business model'],
+    ['stage', 'Stage'], ['geography', 'Where'], ['marketClaim', 'Market it claims'], ['ask', 'The ask'],
+  ];
+  const rows = FIELDS.filter(([k]) => String(brief[k] || '').trim()).map(([k, label]) => `
+    <div class="bpb-r${asserted.has(k) ? ' said' : ''}" data-field="${k}">
+      <div class="bpb-k">${esc(label)}</div>
+      <div class="bpb-v">${esc(brief[k])}${asserted.has(k)
+        ? '<span class="bpb-mark" title="You told us this. We have not checked it against a document.">your correction</span>' : ''}</div>
+    </div>`).join('');
+  const canEdit = opts.editable && (opts.editsLeft == null || opts.editsLeft > 0);
+  return `<section class="sec bpb">
+    <div class="s-label"><span class="material-symbols-rounded">summarize</span>What we understood</div>
+    <h2 class="s-h">Here’s what we read your venture to be</h2>
+    <p class="s-sub">Everything below this is reasoned from this summary. If it’s wrong, correct it — the read is only as good as this.</p>
+    <div class="bpb-grid">${rows}</div>
+    ${(brief.team || []).length ? `<div class="bpb-team">${(brief.team || []).slice(0, 6).map(t =>
+      `<span class="bpb-p"><b>${esc(t.name)}</b>${t.background ? ' — ' + esc(t.background) : ''}</span>`).join('')}</div>` : ''}
+    ${canEdit ? `<div class="bpb-act">
+      <button class="m3-btn tonal" type="button" onclick="window.__ps2Correct&&window.__ps2Correct()">
+        <span class="material-symbols-rounded">edit</span>That’s not quite right
+      </button>
+      <span class="bpb-note">Correcting this re-runs the read on your version. It doesn’t use up your free pre-screen${
+        opts.editsLeft != null ? `, and you have ${opts.editsLeft} correction${opts.editsLeft === 1 ? '' : 's'} left` : ''}.</span>
+    </div>` : ''}
+  </section>`;
+}
+
+// What each findings card is called on screen, and the one line under its heading. The `tension` card is
+// absent on a deck-only run by design — one document cannot contradict itself across documents (§4).
+const PS2_NUGGETS = {
+  thesis:      { icon: 'target',     title: 'The bet',            sub: 'What has to be true for this to work.' },
+  bull:        { icon: 'trending_up',title: 'The case for',        sub: 'How an investor who wants to back it would argue.' },
+  bear:        { icon: 'trending_down', title: 'The case against', sub: 'How it will be argued in the room the founder isn’t in.' },
+  competitive: { icon: 'travel_explore', title: 'Who else is doing this', sub: 'From public sources, not from the deck.' },
+  team:        { icon: 'groups',     title: 'The team against the problem', sub: 'Fit, and what’s conspicuously absent.' },
+  tension:     { icon: 'compare_arrows', title: 'Where the documents disagree', sub: 'Both sides, quoted.' },
+};
+
+/**
+ * nuggetCard — MOLECULE. One finding set, with its provenance attached.
+ *
+ * EVERY POINT HERE HAS ALREADY BEEN VERIFIED (§8.1) — an external point's span was matched character for
+ * character against the page it cites, and an internal one against the document. So the citation is a
+ * link the reader can follow rather than a claim they have to take on trust, and an empty card is a
+ * truthful outcome rather than a rendering failure (§8.5).
+ */
+export function nuggetCard(kind, data = {}) {
+  const meta = PS2_NUGGETS[kind];
+  if (!meta) return '';
+  const points = data.points || [];
+  const body = points.length
+    ? `<ul class="ng-l">${points.map(p => `<li class="ng-i${p.external ? ' ext' : ''}">
+        <span class="ng-t">${esc(p.point)}</span>
+        ${p.external && p.source
+          ? `<a class="ng-src" href="${esc(p.source.url)}" target="_blank" rel="noopener noreferrer"
+               title="${esc(p.quotedSpan || '')}"><span class="material-symbols-rounded">open_in_new</span>${esc(p.source.title || 'source')}</a>`
+          : (p.docName ? `<span class="ng-src doc" title="${esc(p.quotedSpan || '')}">
+               <span class="material-symbols-rounded">description</span>${esc(p.docName)}</span>` : '')}
+      </li>`).join('')}</ul>`
+    : `<p class="ng-empty">${esc(
+        data.skipped === 'needs_two_documents'
+          ? 'This one compares your documents against each other, so it needs more than the deck.'
+          : kind === 'competitive'
+            ? 'We couldn’t find comparable players in public sources for this one.'
+            : 'Nothing here we could stand behind.')}</p>`;
+  return `<article class="ng" data-kind="${kind}"${points.length ? '' : ' data-empty="1"'}>
+    <div class="ng-h"><span class="material-symbols-rounded">${meta.icon}</span>
+      <div><div class="ng-ti">${esc(meta.title)}</div><div class="ng-sub">${esc(meta.sub)}</div></div></div>
+    ${body}
+  </article>`;
+}
+
+/**
+ * verdictFindings — ORGANISM. All six cards, in reveal order.
+ *
+ * `pending` draws a card as still-thinking rather than as empty, which is what makes the progressive
+ * reveal read as an analyst working rather than as a page with holes in it (§6.5).
+ */
+export function verdictFindings(nuggets = {}, opts = {}) {
+  const order = ['thesis', 'bull', 'bear', 'competitive', 'team', 'tension'];
+  const pending = new Set(opts.pending || []);
+  const cards = order.map(k => {
+    if (pending.has(k)) {
+      const meta = PS2_NUGGETS[k];
+      return `<article class="ng is-wait" data-kind="${k}">
+        <div class="ng-h"><span class="material-symbols-rounded">${meta.icon}</span>
+          <div><div class="ng-ti">${esc(meta.title)}</div><div class="ng-sub">${esc(meta.sub)}</div></div></div>
+        <div class="ng-wait"><span></span><span></span><span></span></div></article>`;
+    }
+    return nuggets[k] ? nuggetCard(k, nuggets[k]) : '';
+  }).filter(Boolean).join('');
+  return `<section class="sec vf">
+    <div class="s-label"><span class="material-symbols-rounded">lightbulb</span>What we found</div>
+    <h2 class="s-h">Argued both ways</h2>
+    <p class="s-sub">Every point below cites the page or document it rests on. Anything we couldn’t stand behind isn’t here.</p>
+    <div class="vf-grid">${cards}</div>
+  </section>`;
+}
+
+/**
+ * verdictNext — ORGANISM. The conversion surface, and the only one.
+ *
+ * It must be EARNED by the six cards above it, and its three items are drawn from what this run actually
+ * found — never a template. A generic "upgrade to find out more" after six specific findings reads as a
+ * bait-and-switch, which is the one thing that would undo the trust the rest of the page just built.
+ */
+export function verdictNext(snapshot = {}) {
+  const tests = (snapshot.nextTests || []).filter(t => String(t || '').trim()).slice(0, 3);
+  if (!tests.length) return '';
+  return `<section class="sec vn">
+    <div class="s-label"><span class="material-symbols-rounded">science</span>What the full assessment would test</div>
+    <h2 class="s-h">Three things we’d go after next</h2>
+    <p class="s-sub">Drawn from this read, not from a list.</p>
+    <ol class="vn-l">${tests.map((t, i) => `<li><span class="vn-n">${i + 1}</span><span>${esc(t)}</span></li>`).join('')}</ol>
+    <button class="m3-btn filled" type="button" onclick="window.__eaUnlock&&window.__eaUnlock()">
+      <span class="material-symbols-rounded">bolt</span>Run the full assessment
+    </button>
+  </section>`;
+}
+
+/**
+ * verdictSources — ORGANISM. What we went and read.
+ *
+ * Arguably the most trust-building thing on the page at zero cost: it proves the outside-in findings came
+ * from somewhere a reader can check. These are the pages the API itself fetched, not pages a model said
+ * it read (§8.1).
+ */
+export function verdictSources(sources = []) {
+  if (!sources.length) return '';
+  return `<section class="sec vs">
+    <div class="s-label"><span class="material-symbols-rounded">link</span>What we read</div>
+    <h2 class="s-h">Outside the deck</h2>
+    <p class="s-sub">The public pages behind the findings above.</p>
+    <ul class="vs-l">${sources.map(s => `<li><a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">
+      <span class="material-symbols-rounded">open_in_new</span>${esc(s.title || s.url)}</a></li>`).join('')}</ul>
+  </section>`;
+}
+
+export { PS2_BANDS, PS2_NUGGETS };

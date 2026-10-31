@@ -263,5 +263,28 @@ ok(!/prescreenCategories/.test(rules), 'same as v1, which has always relied on t
 // A spend cap is not a failure of ours.
 ok(/account_limit/.test(bandBlock) || /account_limit/.test(memo), 'an account spend limit is named, not reported as a model error');
 
+console.log('\n18. THE ORCHESTRATOR MIRRORS THE ENGINE (the copy is made safe by a gate)');
+// workspace/prescreen2.js holds its own list of nugget keys so the page can draw placeholders before
+// anything lands. That is a second copy, and the house rule is that a copy is made safe by a gate rather
+// than forbidden by a comment — the same arrangement as ROOM_CLASSES in ds.js and SIGNAL_SCALE in v1.
+const orch = await (await import('node:fs/promises')).readFile(new URL('../workspace/prescreen2.js', import.meta.url), 'utf8');
+const listed = (orch.match(/const NUGGET_KEYS = \[([^\]]*)\]/) || [, ''])[1].split(',').map(x => x.trim().replace(/'/g, '')).filter(Boolean);
+ok(listed.join(',') === E.NUGGETS.map(n => n.key).join(','),
+   `the orchestrator's keys match the engine's, in order: ${listed.join(', ')}`);
+
+// The browser must never carry anything that decides an outcome.
+ok(!/verifyPoints|expectedBandFor|hasSubstance|BAND_COPY/.test(orch), 'no verification, banding or filtering happens in the browser');
+ok(!/band\s*[:=]\s*['"]/.test(orch), 'and it never names a band itself');
+
+// §3.3 and §8.5 — the two places a run must degrade instead of failing.
+ok(/if \(bd\.done\)/.test(orch), 'an unreadable submission ends the run after one call');
+ok(/onSources && onSources\(\[\]\)/.test(orch), 'a failed research pass leaves the competitive read honestly empty');
+ok(/if \(e\.status === 402\) throw e/.test(orch), 'but the account spend cap stops everything, since nothing after it can succeed');
+ok(/failed: e\.body/.test(orch), 'one dead nugget leaves its card empty rather than failing the page');
+
+// §6.5 — the reveal is progressive because the fan-out calls back per item, not at the end.
+ok(/onNugget && onNugget\(out, landed\.length/.test(orch), 'each finding paints as it lands');
+ok(/const FANOUT = 6/.test(orch), 'all six reasoning calls run at once — they never carry the corpus');
+
 console.log(fails ? `\n${fails} check(s) failed` : '\nall checks passed');
 process.exit(fails ? 1 : 0);

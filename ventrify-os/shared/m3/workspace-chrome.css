@@ -668,3 +668,150 @@ body.signin::after {
 .rstale-p b { color: var(--md-sys-color-on-surface); font-weight: 600; }
 .rstale-b .m3-btn { margin-top: 2px; }
 @media (max-width: 640px) { .rstale-b .m3-btn { width: 100%; justify-content: center; min-height: 44px; } }
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════════
+   PRE-SCREEN v2 — the verdict dial, the brief playback and the findings cards.
+   Spec: design/prescreen-v2-spec.md. Replaces the .rng-* / .rstale-* range chrome.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* verdictDial — three bands, not a number. The needle is a single rotation off --d so the only animated
+   property is a transform, and the tone tokens come from the same ramp the guidance bands already use. */
+.vd { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 4px 0; min-width: 0; }
+.vd-face {
+  position: relative; width: 168px; height: 96px; flex: none;
+  border-radius: 168px 168px 0 0;
+  background: radial-gradient(112% 190% at 50% 100%,
+    color-mix(in srgb, var(--md-sys-color-primary) 13%, var(--md-sys-color-surface)) 0%,
+    var(--md-sys-color-surface) 62%);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-bottom: none;
+  overflow: hidden;
+}
+.vd-tick {
+  position: absolute; left: 50%; bottom: 0; width: 2px; height: 74px;
+  transform-origin: 50% 100%; transform: translateX(-50%) rotate(var(--d));
+  background: var(--md-sys-color-outline-variant); border-radius: 2px;
+}
+.vd-tick.on { background: var(--md-sys-color-primary); width: 3px; }
+.vd-needle {
+  position: absolute; left: 50%; bottom: 0; width: 3px; height: 82px;
+  transform-origin: 50% 100%; transform: translateX(-50%) rotate(var(--d));
+  background: linear-gradient(to top, var(--md-sys-color-on-surface), var(--md-sys-color-primary));
+  border-radius: 3px;
+  transition: transform .72s cubic-bezier(.34, 1.3, .64, 1);
+}
+.vd-hub {
+  position: absolute; left: 50%; bottom: -7px; width: 14px; height: 14px; border-radius: 50%;
+  transform: translateX(-50%);
+  background: var(--md-sys-color-surface); border: 3px solid var(--md-sys-color-primary);
+}
+.vd-lab { font-size: 30px; font-weight: 700; letter-spacing: -.02em; line-height: 1; color: var(--md-sys-color-on-surface); }
+.vd-sub { font-size: 13px; line-height: 1.45; text-align: center; max-width: 230px; color: var(--md-sys-color-on-surface-variant); }
+.vd-basis { font-size: 12px; text-align: center; color: var(--md-sys-color-on-surface-variant); opacity: .78; }
+.vd[data-tone="good"] { --md-sys-color-primary: var(--m3-good, #1f8a5c); }
+.vd[data-tone="warn"] { --md-sys-color-primary: var(--m3-warn, #b4690e); }
+.vd-none .vd-face { display: flex; align-items: flex-end; justify-content: center; padding-bottom: 16px; }
+.vd-none .vd-face > .material-symbols-rounded { font-size: 34px; color: var(--md-sys-color-on-surface-variant); }
+.vd-none .vd-lab { font-size: 19px; font-weight: 600; text-align: center; }
+
+/* briefPlayback — the guardrail and the wow in one component. A corrected row is marked, permanently:
+   it is customer-asserted and has no document behind it. */
+.bpb-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 30px; margin-top: 18px; }
+.bpb-r { display: grid; grid-template-columns: 148px minmax(0, 1fr); gap: 16px; align-items: baseline;
+         padding: 11px 0; border-bottom: 1px solid var(--md-sys-color-outline-variant); min-width: 0; }
+.bpb-r[data-field="oneLine"] { grid-column: 1 / -1; }
+.bpb-k { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em;
+         color: var(--md-sys-color-on-surface-variant); }
+.bpb-v { font-size: 14.5px; line-height: 1.55; color: var(--md-sys-color-on-surface); min-width: 0; }
+.bpb-mark {
+  display: inline-block; margin-left: 8px; padding: 1px 7px; border-radius: 999px;
+  font-size: 11px; font-weight: 600; letter-spacing: .01em; vertical-align: 1px;
+  background: color-mix(in srgb, var(--md-sys-color-tertiary, var(--md-sys-color-primary)) 15%, transparent);
+  color: var(--md-sys-color-on-surface);
+}
+.bpb-r.said .bpb-v { font-style: italic; }
+.bpb-team { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 16px; }
+.bpb-p { font-size: 13px; color: var(--md-sys-color-on-surface-variant); }
+.bpb-p b { color: var(--md-sys-color-on-surface); font-weight: 600; }
+.bpb-act { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 20px; }
+.bpb-note { font-size: 12.5px; line-height: 1.5; color: var(--md-sys-color-on-surface-variant); max-width: 42ch; }
+
+/* nuggetCard — a finding and the page it rests on. An empty card is a truthful outcome, so it is styled
+   as one rather than hidden: a hole in the grid would read as a bug. */
+.vf-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 20px; }
+.ng {
+  display: flex; flex-direction: column; gap: 12px; min-width: 0;
+  padding: 20px 22px 22px; border-radius: 16px;
+  background: var(--md-sys-color-surface-container-low, var(--md-sys-color-surface));
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+.ng[data-kind="thesis"] { grid-column: 1 / -1;
+  background: color-mix(in srgb, var(--md-sys-color-primary) 7%, var(--md-sys-color-surface));
+  border-color: color-mix(in srgb, var(--md-sys-color-primary) 22%, transparent); }
+.ng[data-empty="1"] { background: transparent; border-style: dashed; }
+.ng-h { display: flex; gap: 12px; align-items: flex-start; }
+.ng-h > .material-symbols-rounded { font-size: 22px; color: var(--md-sys-color-primary); flex: none; margin-top: 1px; }
+.ng-ti { font-size: 15.5px; font-weight: 600; letter-spacing: -.01em; color: var(--md-sys-color-on-surface); }
+.ng-sub { font-size: 12.5px; line-height: 1.5; color: var(--md-sys-color-on-surface-variant); margin-top: 2px; }
+.ng-l { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.ng-i { display: flex; flex-direction: column; gap: 6px; padding-left: 14px; position: relative; min-width: 0; }
+.ng-i::before { content: ''; position: absolute; left: 0; top: 7px; width: 5px; height: 5px; border-radius: 50%;
+                background: var(--md-sys-color-outline); }
+.ng-i.ext::before { background: var(--md-sys-color-primary); }
+.ng-t { font-size: 14.5px; line-height: 1.6; color: var(--md-sys-color-on-surface); }
+.ng-src {
+  display: inline-flex; align-items: center; gap: 5px; align-self: flex-start;
+  font-size: 12px; line-height: 1.3; color: var(--md-sys-color-primary); text-decoration: none;
+  padding: 3px 9px 3px 7px; border-radius: 999px;
+  background: color-mix(in srgb, var(--md-sys-color-primary) 11%, transparent);
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ng-src > .material-symbols-rounded { font-size: 14px; flex: none; }
+.ng-src:hover { background: color-mix(in srgb, var(--md-sys-color-primary) 19%, transparent); }
+.ng-src.doc { color: var(--md-sys-color-on-surface-variant); background: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, transparent); }
+.ng-empty { margin: 0; font-size: 13.5px; line-height: 1.6; color: var(--md-sys-color-on-surface-variant); }
+
+/* The still-thinking state. Three dots, opacity only — this is what makes a progressive reveal read as
+   an analyst working rather than as a page with holes in it. */
+.ng.is-wait { border-style: dashed; }
+.ng-wait { display: flex; gap: 6px; padding: 4px 0 2px 2px; }
+.ng-wait span { width: 7px; height: 7px; border-radius: 50%; background: var(--md-sys-color-primary); opacity: .25;
+                animation: ngWait 1.25s ease-in-out infinite; }
+.ng-wait span:nth-child(2) { animation-delay: .16s; }
+.ng-wait span:nth-child(3) { animation-delay: .32s; }
+@keyframes ngWait { 0%, 100% { opacity: .22; } 50% { opacity: .85; } }
+@media (prefers-reduced-motion: reduce) {
+  .ng-wait span { animation: none; opacity: .5; }
+  .vd-needle { transition: none; }
+}
+
+/* verdictNext — the conversion surface, earned by everything above it. */
+.vn-l { list-style: none; margin: 20px 0 22px; padding: 0; display: flex; flex-direction: column; gap: 14px; max-width: 76ch; }
+.vn-l li { display: flex; gap: 14px; align-items: flex-start; font-size: 14.5px; line-height: 1.6;
+           color: var(--md-sys-color-on-surface); }
+.vn-n { flex: none; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center;
+        font-size: 12px; font-weight: 700; margin-top: 1px;
+        background: color-mix(in srgb, var(--md-sys-color-primary) 15%, transparent); color: var(--md-sys-color-primary); }
+
+/* verdictSources — proof that the outside-in findings came from outside. */
+.vs-l { list-style: none; margin: 18px 0 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.vs-l li { border-bottom: 1px solid var(--md-sys-color-outline-variant); }
+.vs-l a { display: flex; align-items: center; gap: 10px; padding: 11px 2px; min-height: 44px;
+          font-size: 13.5px; color: var(--md-sys-color-on-surface); text-decoration: none; }
+.vs-l a > .material-symbols-rounded { font-size: 16px; color: var(--md-sys-color-primary); flex: none; }
+.vs-l a:hover { color: var(--md-sys-color-primary); }
+
+/* 641-900px: two columns is still right, but the thesis card and the brief rows need the full width. */
+@media (max-width: 900px) {
+  .bpb-grid { grid-template-columns: minmax(0, 1fr); }
+  .bpb-r { grid-template-columns: 128px minmax(0, 1fr); gap: 14px; }
+}
+@media (max-width: 640px) {
+  .vf-grid { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .ng { padding: 16px 16px 18px; }
+  .bpb-r { grid-template-columns: minmax(0, 1fr); gap: 3px; padding: 10px 0; }
+  .vd-face { width: 148px; height: 86px; }
+  .vd-lab { font-size: 26px; }
+  .bpb-act .m3-btn { width: 100%; justify-content: center; min-height: 44px; }
+  .bpb-note { max-width: none; }
+}
