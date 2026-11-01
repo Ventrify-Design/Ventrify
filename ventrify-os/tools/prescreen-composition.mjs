@@ -20,6 +20,7 @@
 //
 // --live needs credentials and reads only; it never calls a model and so costs nothing.
 // ============================================================
+import { pathToFileURL } from 'node:url';
 import { readFile } from 'node:fs/promises';
 
 // At least this share of shipped points must be external. Two of six nugget kinds are inherently
@@ -64,9 +65,15 @@ const report = (label, snapshot) => {
      + (c.pass ? '' : ` — ${c.sources} public source(s) were harvested; the fix is better research, not padding`));
 };
 
+/* ONLY RUN THE CLI WHEN THIS FILE IS THE ENTRY POINT.
+   `composition()` is exported so other read-only tools can measure a run with the canonical rule
+   rather than keeping a second copy of the arithmetic. Without this guard, importing it ran the
+   self-test and then called process.exit(0) — so the importer silently never executed. An exported
+   function that cannot be imported is not single-source, it is a copy waiting to be written. */
+const IS_CLI = import.meta.url === pathToFileURL(process.argv[1] || '').href;
 const arg = process.argv[2];
 
-if (!arg) {
+if (IS_CLI && !arg) {
   // ── FREE SELF-TEST ────────────────────────────────────────────────────────────────────────────────
   // Proves the rule itself, so the gate is known-good before a real snapshot ever reaches it.
   console.log('\nSELF-TEST — the rule, on synthetic snapshots (no credentials, no spend)');
@@ -92,7 +99,7 @@ if (!arg) {
   process.exit(fails ? 1 : 0);
 }
 
-if (arg === '--live') {
+if (IS_CLI && arg === '--live') {
   console.log('\nLIVE — every v2 snapshot in Firestore (read-only, no model calls)');
   const admin = (await import('firebase-admin')).default;
   if (!admin.apps.length) {
@@ -112,7 +119,9 @@ if (arg === '--live') {
   process.exit(fails ? 1 : 0);
 }
 
-console.log('\nFILE — ' + arg);
-report(arg.split('/').pop(), JSON.parse(await readFile(arg, 'utf8')));
-console.log(fails ? `\n${fails} check(s) failed` : '\npassed');
-process.exit(fails ? 1 : 0);
+if (IS_CLI) {
+  console.log('\nFILE — ' + arg);
+  report(arg.split('/').pop(), JSON.parse(await readFile(arg, 'utf8')));
+  console.log(fails ? `\n${fails} check(s) failed` : '\npassed');
+  process.exit(fails ? 1 : 0);
+}

@@ -89,10 +89,24 @@ ok(!/\bdocument|\bdata ?room|\bupload|\bfile\b/i.test(copy),
 console.log('\n4. NO RANGE VOCABULARY SURVIVES IN THE v2 SURFACE');
 // The range is retired (§2). A stray "floor"/"ceiling"/"range is N points wide" would be v1 bleeding
 // through into a page that no longer computes one.
-const RANGE_WORDS = [/\bfloor\b/i, /\bceiling\b/i, /points wide\b/i, /\bscore range\b/i, /out of 100\b/i];
+const RANGE_WORDS = [/\bfloor\b/i, /\bceiling\b/i, /points wide\b/i, /\bscore range\b/i, /out of 100\b/i,
+                     /\blow end\b/i, /\bhigh end\b/i];
 scan('ds.js v2 block', v2copy, RANGE_WORDS, 'the retired range vocabulary is gone');
 scan('api/_prescreen2.js', stripComments(eng), RANGE_WORDS,
      'and the engine does not compute or name one (comments excluded — they explain the history)');
+
+console.log('\n4b. THE COPY THAT SELLS THE PRE-SCREEN — the screen a free-tier customer sees FIRST');
+/* ⚠ WHY THIS SECTION EXISTS. Sections 1–4 scan ds.js's v2 component block and the engine's prompts.
+   The free tier's onboarding steps live in neither, and for a fortnight after the range was retired
+   step 3 still read "A score range — the low end is what your documents prove today; the high end is
+   what they become if the gaps close." The first screen a free-tier customer sees was still selling
+   the instrument the entire pivot removed, and the gate written to stop exactly that was looking at
+   two other files. A gate is only as wide as the paths it reads. */
+const cards = await readFile(new URL('shared/m3/workspace-cards.js', BASE), 'utf8');
+const steps = stripComments(slice(cards, 'const prescreenSteps', '];'));
+ok(steps.length > 200, 'the free tier\u2019s onboarding steps are present and findable');
+scan('prescreenSteps', steps, RANGE_WORDS, 'the retired range is not still being sold on the first screen');
+scan('prescreenSteps', steps, FORBIDDEN.concat(PENALISING), 'and the steps do not penalise a thin upload');
 
 console.log('\n5. COVERAGE KEEPS ITS OWN VOICE (§3.4) — this is where that language IS allowed');
 const cov = slice(ds, 'export function dataRoomHero', 'export function roomScanBanner');

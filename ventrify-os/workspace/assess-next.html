@@ -577,9 +577,9 @@
     </section>`;
     return `<div class="brief"><div id="ea-status">${banner}</div>${DS.missingDocs(A)}${note}${forming}${life}</div>`;
   }
-  // ---- the PRE-SCREEN tab set: the range, and the room that decides its width ----
-  // Both tabs are complete in themselves. The argument for upgrading closes the Range tab in the
-  // customer's own numbers; the unlock itself is the masthead primary.
+  // ---- the PRE-SCREEN tab set: the verdict, and the room it was read from ----
+  // Both tabs are complete in themselves. The argument for upgrading closes the Verdict tab in what
+  // this run actually found; the unlock itself is the masthead primary.
   // Declared ABOVE prescreenTabs because it reads them: a `let` used before its declaration runs is a
   // temporal-dead-zone throw, not an undefined, and it would take the whole tab out.
   let PS2_EDITING = false;
@@ -721,7 +721,7 @@
     // is the same mistake §3 of the pre-screen spec guards against in the number.
     const pre = isPrescreen(p);
     const tabs = pre
-      ? ['Range', 'Data room']
+      ? ['Verdict', 'Data room']
       : st.hasVerdict
         ? ['Verdict', 'Investability', 'Market', 'Team', { label: 'Diligence', badge: nGaps || null }, 'Research', 'Data room']
         : false;
@@ -749,7 +749,10 @@
       const oldMh = main.querySelector('.masthead'); if (oldMh) oldMh.outerHTML = mh;
       const sb = main.querySelector('.shell-body'); if (sb) sb.innerHTML = bodyHtml;
     }
-    if (tabs) DS.initTabs({ names: pre ? ['range', 'dataroom'] : ['verdict', 'investability', 'market', 'team', 'diligence', 'research', 'dataroom'] });
+    // The hash name matches the full set's first tab on purpose: #verdict deep-links on BOTH tiers,
+    // and the tab keeps its identity when a venture is unlocked — it gains five siblings rather than
+    // being replaced. It was 'range', from the instrument v2 retired.
+    if (tabs) DS.initTabs({ names: pre ? ['verdict', 'dataroom'] : ['verdict', 'investability', 'market', 'team', 'diligence', 'research', 'dataroom'] });
     // The Data Room tab's upload zone accepts drops. Delegated, so it survives paintRoomTab().
     DS.initDropzones();
     wireResearchDrill();   // paint() swaps .shell-body — rebuild the reading room + DRILL_PAGES every time

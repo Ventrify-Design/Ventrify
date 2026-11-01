@@ -1,105 +1,145 @@
 #!/usr/bin/env node
-// ============================================================
-// prescreen-calibration — READ ONLY, FREE. Is the pre-screen reading less, or marking harder?
-//
-//   node tools/prescreen-calibration.mjs            → every venture that has BOTH
-//   node tools/prescreen-calibration.mjs moneygym   → one venture
-//
-// A pre-screen and a full assessment score the SAME 35 signals from the same rubric, so where a venture
-// has both we can put them side by side without spending anything. The two answers it separates:
-//
-//   · the pre-screen could not EVIDENCE what the full run could  → an evidence problem; more corpus helps
-//   · both evidenced it and the pre-screen marked it LOWER       → a calibration problem; no amount of
-//                                                                  document selection will ever fix it
-//
-// ⚠ THE TWO INSTRUMENTS DO NOT SHARE A SCALE. The full run scores each signal 0 / 0.5 / 1 (max 5 per
-// category). The pre-screen scores 0–5 (max 25). Both then weight to a 0–100 composite, so both look
-// internally consistent and neither reveals the mismatch on its own. Everything below is normalised to
-// a PERCENTAGE OF EACH CATEGORY'S MAXIMUM, which is the only basis on which they are comparable.
-// ============================================================
-import { createRequire } from 'node:module';
-import { readFileSync, existsSync } from 'node:fs';
-const require = createRequire(import.meta.url);
-const HERE = new URL('./', import.meta.url).pathname;
-const BASE = HERE.replace(/tools\/$/, '');
+/* ════════════════════════════════════════════════════════════════════════════
+   PRESCREEN CALIBRATION (v2) — READ ONLY, FREE. Does the band agree with the
+   assessment, and do the cuts discriminate at all?
 
-// same .env.local reader as the containment gate
-const src = readFileSync(BASE + 'tools/prescreen-containment.mjs', 'utf8');
-const a = src.indexOf('function unquote('), b = src.indexOf('\n}\n', a) + 3;
-const unquote = eval('(' + src.slice(a, b).replace('function unquote(', 'function (') + ')');
-if (existsSync(BASE + '.env.local')) {
-  for (const line of readFileSync(BASE + '.env.local', 'utf8').split('\n')) {
-    const m = line.match(/^\s*(?:export\s+)?([A-Z0-9_]+)\s*=\s*(.*)$/); if (!m) continue;
-    let v = m[2].trim();
-    if (v.startsWith("'") && v.endsWith("'")) v = v.slice(1, -1);
-    else if (v.startsWith('"') && v.endsWith('"')) v = unquote(v.slice(1, -1));
-    if (process.env[m[1]] === undefined) process.env[m[1]] = v;
-  }
-}
-if (!process.env.FIREBASE_SERVICE_ACCOUNT) { console.log('No Firebase credentials — see tools/prescreen-containment.mjs.'); process.exit(2); }
+     node tools/prescreen-calibration.mjs
 
-const admin = require(BASE + 'node_modules/firebase-admin');
-admin.initializeApp({ credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)) });
+   WHAT THIS REPLACED. The previous version compared a pre-screen's per-signal
+   0–5 scores against the full run's 0/0.5/1 scores, normalised to a percentage
+   of each category's maximum. v2 has no per-signal scores — it publishes a
+   BAND — so that tool still ran, still printed numbers, and the numbers no
+   longer meant anything. A tool that keeps answering after its question has
+   been retired is worse than one that errors.
+
+   THE TWO QUESTIONS NOW, AND THEY ARE DIFFERENT:
+
+   1 · AGREEMENT. Where a venture has both a v2 band and a full assessment, do
+       they agree? Ordinal agreement is the bar (spec §11.3): the band maps to a
+       composite range, and High/Medium/Low must land in the right one. This is
+       a far lower bar than numerical containment and it is the right one — a
+       pre-screen that reads documents for a minute is not entitled to a number.
+
+   2 · SPREAD (calibration step zero). Across EVERY assessed engagement, do the
+       composites spread over the three cuts, or do they pile into one? If they
+       pile up, the cuts are wrong and must move BEFORE anyone pays for a
+       replay. prescreen-bands.mjs will later assert >60% in one band is a
+       failure; this prints the distribution that assertion will read.
+
+   It also reports each run's COMPOSITION using the canonical rule imported from
+   prescreen-composition.mjs — not a second copy of the arithmetic.
+   ════════════════════════════════════════════════════════════════════════════ */
+import { initAdmin } from './contract-auth.mjs';
+import { composition } from './prescreen-composition.mjs';
+
+/* The cuts, from the runner's own guidance bands (shared/vss-rubric.js). NOT invented here:
+   the pre-screen's three bands collapse the runner's top two, because to "is this worth
+   assessing?" both READY and PROMISING answer yes. */
+const CUTS = [
+  { band: 'HIGH',   min: 60, max: Infinity, says: 'READY or PROMISING' },
+  { band: 'MEDIUM', min: 40, max: 59.999,   says: 'HIGH_RISK' },
+  { band: 'LOW',    min: -Infinity, max: 39.999, says: 'POTENTIAL_DECLINE' },
+];
+const bandFor = (c) => (CUTS.find(x => c >= x.min && c <= x.max) || {}).band || null;
+
+const admin = await initAdmin();
 const db = admin.firestore();
-const PS = require(BASE + 'api/_prescreen.js');
-const want = process.argv.slice(2).filter(a => !a.startsWith('--')).join(' ').toLowerCase();
 const all = await db.collection('engagements').get();
 
-// Group by venture name: the pre-screen and the full assessment are usually separate engagements.
+/* Group by venture: a pre-screen and a full assessment are usually separate engagements, and the
+   second run of the same venture is named "X 2". Same normalisation the old tool used. */
 const byVenture = new Map();
+const composites = [];
 for (const d of all.docs) {
   const x = d.data();
-  const base = String(x.name || '').replace(/\s*\d+$|\s*S\d+$/i, '').trim().toLowerCase();
-  if (!base || (want && !base.includes(want))) continue;
-  if (!byVenture.has(base)) byVenture.set(base, { pre: null, full: null });
-  const slot = byVenture.get(base);
-  if (x.prescreen && !slot.pre) slot.pre = { id: d.id, snap: x.prescreen };
-  if (!x.prescreen) {
-    const s = await d.ref.collection('investabilitySnapshots').get();
-    if (s.size) {
-      const latest = s.docs.sort((a, b) => String(b.id).localeCompare(String(a.id)))[0].data();
-      if (!slot.full || (latest.composite || 0) > (slot.full.snap.composite || 0)) slot.full = { id: d.id, snap: latest };
+  const base = String(x.name || '').replace(/\s*\d+$|\s*S\d+$/i, '').trim();
+  if (!base) continue;
+  const key = base.toLowerCase();
+  if (!byVenture.has(key)) byVenture.set(key, { name: base, pre: null, full: null });
+  const slot = byVenture.get(key);
+
+  const v2 = x.prescreen2;
+  if (v2 && v2.v === 2 && v2.band && (!slot.pre || (v2.ranAt || '') > (slot.pre.ranAt || ''))) {
+    slot.pre = { id: d.id, band: v2.band, state: v2.state, cost: v2.costUsd, snap: v2, ranAt: v2.ranAt || '' };
+  }
+  const snaps = await d.ref.collection('investabilitySnapshots').get();
+  if (snaps.size) {
+    const latest = snaps.docs.sort((a, b) => String(b.id).localeCompare(String(a.id)))[0].data();
+    if (Number.isFinite(latest.composite)) {
+      composites.push({ name: base, id: d.id, composite: latest.composite });
+      if (!slot.full || latest.composite > slot.full.composite) slot.full = { id: d.id, composite: latest.composite };
     }
   }
 }
 
-const pct = (sum, max) => max ? Math.round((sum / max) * 100) : null;
-let rows = 0;
-for (const [name, { pre, full }] of byVenture) {
+console.log('\n══ 1 · AGREEMENT — ventures holding both a v2 band and a full assessment ══\n');
+let pairs = 0, agree = 0;
+for (const { name, pre, full } of byVenture.values()) {
   if (!pre || !full) continue;
-  rows++;
-  const f = full.snap, p = pre.snap;
-  console.log(`\n═══ ${name.toUpperCase()}  ·  full assessment ${f.composite}/100  vs  pre-screen ${p.floor}–${p.ceiling}\n`);
-  console.log('  category     full%   pre-floor%   evidenced   gap(full − pre)');
-  const fByKey = Object.fromEntries((f.categories || []).map(c => [c.key, c]));
-  let gapSum = 0, n = 0;
-  for (const pc of (p.categories || [])) {
-    const fc = fByKey[pc.key]; if (!fc) continue;
-    const fp = pct(fc.sum, fc.max);
-    const pp = pc.floorPct;
-    const gap = fp - pp; gapSum += gap; n++;
-    console.log(`  ${pc.key.padEnd(11)} ${String(fp).padStart(4)}%  ${String(pp).padStart(9)}%   ${String(pc.evidenced + '/' + pc.of).padStart(8)}   ${(gap >= 0 ? '+' : '') + gap}`);
-  }
-  console.log(`\n  mean gap across categories: ${(gapSum / n).toFixed(1)} points`);
-
-  // Signal level: where BOTH instruments evidenced the signal, what did each award?
-  const fSig = {}; for (const c of (f.categories || [])) for (const sg of (c.subs || [])) fSig[sg.slug] = sg.score;
-  let both = 0, preLower = 0, sumF = 0, sumP = 0;
-  for (const c of (p.categories || [])) for (const sg of (c.signals || [])) {
-    if (!sg.evidenced || fSig[sg.slug] == null) continue;
-    both++;
-    const fFrac = fSig[sg.slug];                 // already 0–1
-    const pFrac = sg.score / 5;                  // 0–5 → 0–1
-    sumF += fFrac; sumP += pFrac;
-    if (pFrac < fFrac) preLower++;
-  }
-  if (both) {
-    console.log(`\n  Of the ${both} signals BOTH instruments evidenced:`);
-    console.log(`    full run awards   ${(sumF / both * 100).toFixed(0)}% of the available marks`);
-    console.log(`    pre-screen awards ${(sumP / both * 100).toFixed(0)}%`);
-    console.log(`    pre-screen scored LOWER on ${preLower} of ${both} (${Math.round(preLower / both * 100)}%)`);
-    console.log(`\n    → ${sumP < sumF * 0.8 ? 'CALIBRATION: it is reading the same things and marking them harder.' : 'scales broadly agree; the gap is evidence, not marking.'}`);
-  }
+  pairs++;
+  const should = bandFor(full.composite);
+  const ok = should === pre.band;
+  if (ok) agree++;
+  const dist = CUTS.findIndex(c => c.band === pre.band) - CUTS.findIndex(c => c.band === should);
+  console.log(`  ${ok ? '✓' : '✗'} ${name}`);
+  console.log(`      pre-screen said   ${pre.band}`);
+  console.log(`      assessment scored ${full.composite}/100 → ${should}`);
+  // CUTS runs HIGH → MEDIUM → LOW, so a LARGER index is a LOWER band. The first version of this line
+  // read the index as if it were the band and printed "HIGHER" for a pre-screen that said LOW
+  // against an assessment that said HIGH — the wrong direction, in the one tool whose whole job is
+  // to say which way the instrument is off.
+  if (!ok) console.log(`      ⚠ ${Math.abs(dist)} band(s) apart — the pre-screen read it ${dist > 0 ? 'LOWER' : 'HIGHER'} than the assessment`);
 }
-if (!rows) console.log('No venture has BOTH a pre-screen and a full assessment to compare.');
+console.log(pairs
+  ? `\n  ${agree}/${pairs} agree. n=${pairs} is far too small to calibrate on — it is a smoke signal, not a measurement.`
+  : '\n  No venture yet holds both. Nothing to calibrate against.');
+
+console.log('\n══ 2 · SPREAD — the assessed population against the 80/60/40 cuts ══\n');
+/* ONE VENTURE, ONE VOTE — AND THE RAW COUNT BESIDE IT.
+   The first version counted SNAPSHOTS, and MoneyGym alone holds six of the thirteen. Six re-scores of
+   one venture clustered in the seventies made the population look far more top-heavy than it is, and
+   the tool would have reported a distribution failure that was really a sampling artefact. Per
+   venture is the honest denominator — prescreen-bands.mjs asserts on a GOLDEN SET, which is a set of
+   ventures. The per-snapshot line stays visible underneath so the skew is never hidden either. */
+const spread = (rows, label) => {
+  const buckets = new Map(CUTS.map(c => [c.band, []]));
+  for (const r of rows) buckets.get(bandFor(r.composite)).push(r);
+  console.log(`  ${label} (n=${rows.length})`);
+  for (const c of CUTS) {
+    const list = buckets.get(c.band);
+    const share = rows.length ? Math.round((list.length / rows.length) * 100) : 0;
+    console.log(`    ${c.band.padEnd(7)} ${String(list.length).padStart(2)}/${rows.length}  ${String(share).padStart(3)}%  ${
+      list.map(x => `${x.name} ${x.composite}`).join(', ') || '—'}`);
+  }
+  return rows.length ? Math.max(...[...buckets.values()].map(b => b.length)) / rows.length : 0;
+};
+if (!composites.length) {
+  console.log('  No investability snapshots found.');
+} else {
+  // one row per venture: its HIGHEST composite, which is the one a pre-screen would be judged against
+  const perVenture = [...composites.reduce((m, c) => {
+    const k = c.name.toLowerCase();
+    if (!m.has(k) || c.composite > m.get(k).composite) m.set(k, c);
+    return m;
+  }, new Map()).values()];
+  const worst = spread(perVenture, 'per venture — the denominator the band gate will use');
+  console.log('');
+  spread(composites, 'per snapshot — shown so the re-score skew stays visible');
+  console.log(`\n  Heaviest band holds ${Math.round(worst * 100)}% of ventures (prescreen-bands.mjs will fail above 60%).`);
+  console.log(worst > 0.6
+    ? '  ⚠ The cuts do not discriminate on this population. Move them before paying for a replay.'
+    : '  The cuts discriminate on this population.');
+}
+
+console.log('\n══ 3 · COMPOSITION — how much of each run came from OUTSIDE the documents ══\n');
+let any = false;
+for (const { name, pre } of byVenture.values()) {
+  if (!pre) continue;
+  any = true;
+  const c = composition(pre.snap);
+  const pct = c.total ? Math.round(c.share * 100) : 0;
+  console.log(`  ${c.pass ? '✓' : '✗'} ${name.padEnd(14)} ${String(c.external).padStart(2)}/${String(c.total).padStart(2)} findings external  (${String(pct).padStart(3)}%, floor 25%)   $${pre.cost}`);
+}
+if (!any) console.log('  No v2 snapshot stored yet.');
+console.log('');
 process.exit(0);

@@ -340,12 +340,18 @@ export function workspaceEmpty({ assessOnly = false, orgName = 'your Workspace',
   /* Numbered editorial rows, not stacked tubs — the same .must idiom the Verdict tab
      uses for its numbered list. These four are a SEQUENCE (deck → research → score →
      verdict), and a sequence reads as numbered steps down a rule, not as four boxes. */
-  // The free tier's four steps describe what the pre-screen ACTUALLY does, and say plainly where it
-  // stops. A range is not a verdict, and the screen should not imply it is.
+  /* The free tier's four steps describe what the pre-screen ACTUALLY does, and say plainly where it
+     stops.
+     ⚠ Step 3 promised "a score range — the low end is what your documents prove today, the high end
+     is what they become if the gaps close" for a fortnight after v2 retired the range. It is the
+     first screen a free-tier customer sees, and it was selling the instrument the whole pivot was
+     about removing — the one that scored documents rather than judging a venture. Nothing caught it:
+     prescreen-vocabulary.mjs scanned ds.js's v2 block and the engine prompts, and this copy is in
+     neither. That gate now reads this array too. */
   const prescreenSteps = [
     ['Deck', 'Deck & data room', 'Upload the pitch deck plus whatever supporting documents you have. Nothing is required beyond the deck.'],
-    ['Room', 'Data-room read', 'Instant, free, and as often as you like: which of the six evidence types the score looks for we can and cannot find.'],
-    ['Range', 'A score range', 'Not a single number. The low end is what your documents prove today; the high end is what they become if the gaps close.'],
+    ['Room', 'Data-room read', 'Instant, free, and as often as you like: which of the six evidence types a full assessment looks for we can and cannot find.'],
+    ['Verdict', 'A verdict, argued both ways', 'Is this worth a full assessment’s time? One of three bands, with the case for and against, who else is already doing this, and where your own documents disagree.'],
     ['Full', 'Unlock the full assessment', 'Deep research, diligence, a single measured score and a decision-grade verdict — when you are ready.'],
   ];
   const steps = (prescreen ? prescreenSteps : assessOnly ? assessSteps : buildSteps)

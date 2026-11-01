@@ -614,10 +614,39 @@ Decide before the first v2 run writes alongside them.
    `prescreen-bands.mjs`'s 60% distribution limit. If the full 13 cluster, **move the cuts before paying
    for a replay**, not after.
 
-   *Open sub-item:* MoneyGym's composite is recorded as **76** in v1 §10, from the containment replay; the
-   operator recalls **80**. Both map to High, so the mapping above is unaffected, but the gate's expected
-   values need the real number. Confirm from the engagement doc before `prescreen-bands.mjs` asserts
-   anything.
+   *Sub-item — **RESOLVED 2026-11-01, measured.*** MoneyGym's composite is **78**, read from the
+   engagement's latest `investabilitySnapshots` doc. Neither 76 (v1 §10) nor the recalled 80. MoneyGym
+   holds six snapshots spanning 67–78; 78 is the highest and the one a pre-screen is judged against.
+
+   ### ⚠ MEASURED 2026-11-01 — THE CUTS DO NOT DISCRIMINATE, AND THE FIRST PAIR DISAGREES
+
+   `node tools/prescreen-calibration.mjs` (free, read-only) against the real population:
+
+   **Spread.** Per venture, **5 of 7 land HIGH (71%), 2 MEDIUM, and 0 LOW.** The limit
+   `prescreen-bands.mjs` will assert is 60% in any one band, so the 80/60/40 cuts fail it on the
+   population we actually have. Per snapshot it is worse — 10 of 13 — but that counts MoneyGym six
+   times, so the per-venture figure is the honest one.
+
+   A band that is HIGH for three ventures in four carries almost no information, and LOW never fires
+   at all. **The cuts move before anything pays for a replay**, which is exactly what calibration step
+   zero existed to decide.
+
+   **Agreement.** The one venture holding both reads the wrong way round:
+
+   | Venture | Pre-screen said | Assessment scored | Maps to |
+   |---|---|---|---|
+   | MoneyGym | **LOW** | 78/100 | **HIGH** |
+
+   Two bands apart, and the pre-screen read it **lower**. n=1, so this is a smoke signal and not a
+   measurement — but it points the opposite way to the spread. The population says the cuts are too
+   generous; the only real pair says this run was too harsh. Both cannot be fixed by moving the cuts in
+   one direction, so the next step is a second and third pair, not a threshold change made on one
+   data point.
+
+   Note also that the assessed population is not the pre-screen's population: these 7 are ventures
+   somebody already chose to assess, so they are pre-filtered for quality and LOW would be expected to
+   be rare among them. That is an argument for calibrating the cuts against **pre-screened** ventures
+   once there are enough, not against this set.
 4. **The pending containment replay** — ~$8–10, unauthorised. §2 changes what it must prove, so **do not
    run v1's version.** −0.23 stands as the last measured correlation until a band replay runs.
 5. **Old snapshots — DECIDED 2026-10-31: delete.** The two existing pre-screens are on retired scales
@@ -630,3 +659,22 @@ Decide before the first v2 run writes alongside them.
    webhook will not.** Unchanged from v1 §9.
 8. **"Pre-Screen Tests" org is still on the `assess` preset** — the free-tier path has never been exercised
    in the real product.
+9. **Composition — MEASURED 2026-11-01, and the pivot holds.** The two real runs ship **57%** (MoneyGym,
+   8/14) and **79%** (ORE, 11/14) of their findings from outside the documents, against a 25% floor.
+   Every external citation on both is **`verified`** — the span was matched against a page the API
+   itself fetched — and **zero** are `attributed`. 45 and 47 public sources harvested, 29 and 33 of
+   them readable server-side. This is the number that says the page reasons about a venture rather
+   than auditing a data room, and it is the one thing none of the offline gates could answer.
+10. **`prescreen-citations.mjs` — BUILT 2026-11-01**, free and read-only, with a canary. Re-applies
+   §8.1 to what is actually stored rather than trusting the write-time guard. Both runs pass clean: no
+   invented URLs, no verified tier without its span, no counter drift.
+11. **The v1 range components are still load-bearing — for exactly one engagement.** `rangeHero`,
+   `rangeLockup`, `rangeCoverage`, `rangeFindings`, `rangeNext`, `rangeStale` and `rangeBandOf` are
+   kept so a pre-v2 snapshot renders on the page it was scored on (§10). **Measured 2026-11-01: one
+   v1 snapshot survives** — `prg-moneygym-oklk`, a 49–58 range, `tier=prescreen`, finished. §11.5
+   decided these should be deleted; that one was not. Until it is, the v1 components must stay, and
+   deleting them would render that engagement blank rather than old.
+
+   *This entry was first written here as "no v1 snapshot survives", from the two runs visible in
+   `prescreen-peek`'s five-most-recent listing. A count over all 20 engagements said otherwise. The
+   listing was never wrong; reading a top-five as a population was.*
