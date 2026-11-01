@@ -1,0 +1,1854 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   SITES → BRAND
+   The thin mapping layer promised by the architecture. The marketing sites
+   speak --ink / --paper / --fs-* ; the brand speaks --v-core-900 / --t-h1.
+   This file is the translation, and it is the ONLY file that knows both.
+
+   LOAD ORDER MATTERS:  brand.css → base.css → brand-map.css → motion.css
+   base.css still defines the site's own light-mode defaults; this overrides
+   them. Keeping base.css intact means the sites are one stylesheet away from
+   their previous state if the direction changes.
+
+   Nothing here invents a value. Every right-hand side is a brand token.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Text ─────────────────────────────────────────────────────────────── */
+  --ink:          var(--text-1);
+  --ink-2:        var(--text-2);
+  --muted:        var(--text-3);
+
+  --on-dark-1:    var(--text-1);
+  --on-dark-2:    var(--text-2);
+  --on-dark-3:    var(--text-3);
+  --on-dark-4:    var(--text-4);
+  --foot-link:    var(--text-3);
+  --cta-ink:      var(--text-2);
+
+  /* ── Surfaces ─────────────────────────────────────────────────────────────
+     The sites were built light, with the page white and occasional dark
+     sections. Inverted, the rhythm has to invert with it: the page is now the
+     deepest tone and "soft" is a step UP into the light, not down. */
+  /* THE SITES LIFT FROM THE GROUND, NOT FROM THE CHASSIS.
+     brand.css builds --surface-* up from --brand-ink, which is neutral for
+     all three identities. That is right for the product and wrong here: on a
+     violet or aqua page a neutral card reads as a grey patch stuck onto a
+     coloured one. So the sites derive their own three steps from
+     --brand-ground, and every surface stays the same material as the page. */
+  --lift-1:       color-mix(in srgb, var(--brand-ground) 93%, var(--white));
+  --lift-2:       color-mix(in srgb, var(--brand-ground) 88%, var(--white));
+  --lift-3:       color-mix(in srgb, var(--brand-ground) 82%, var(--white));
+
+  --paper:        var(--brand-ground);
+  --soft:         var(--lift-1);
+  --raised:       var(--lift-2);
+  --dark:         var(--brand-ground);
+  --dark-2:       var(--lift-1);
+  --dark-3:       var(--brand-ground);
+  --dark-4:       var(--lift-1);
+  --cta-bg:       transparent;
+  --foot-bg:      transparent;
+
+  /* ── Strokes ──────────────────────────────────────────────────────────── */
+  --line:         var(--line-1);
+  --line-dark:    var(--line-1);
+  --line-quiet:   var(--line-2);
+  --line-quiet-d: var(--line-2);
+  --line-ph:      var(--line-2);
+  --line-ph-d:    var(--line-2);
+  --line-foot:    var(--line-1);
+
+  /* Placeholder hatch — still visible on dark, where the light values vanished */
+  --ph-a:         var(--surface-base);
+  --ph-b:         var(--surface-raised);
+
+  --head-veil:    color-mix(in srgb, var(--canvas) 72%, transparent);
+
+  /* ── Navigation ─────────────────────────────────────────────────────────
+     Chosen from the four candidates on sites/_nav-concepts.html (variant A,
+     "Compact"). These four values ARE the treatment — everything else about
+     the nav is geometry that falls out of them. Retuning the nav means
+     changing them here and nowhere else. */
+  /* 12px. A DELIBERATE EXCEPTION to the 14px floor, and the only one on these
+     sites. The floor exists to stop iOS auto-zoom on input focus and to keep
+     body copy readable on a phone; neither applies to a link that is
+     display:none below 1120px and can never appear on a handset. Chosen over
+     14px after seeing all three sizes live: at 14px the links competed with
+     the wordmark and the buttons, at 12px they read as a quiet index and the
+     buttons stay the loudest thing in the bar. */
+  --nav-size:   var(--t-micro);    /* 12px — see the breakpoint note below */
+  --nav-weight: var(--fw-bold);    /* 700 */
+  --nav-track:  var(--tr-caps);    /* 0.12em — 12px caps crowd at --tr-wide */
+  --nav-rule:   2px;               /* the active indicator */
+  --nav-gap:    1.5rem;
+  /* The lockup's height, and the only number that sizes it — width follows
+     from the viewBox. Both lockups are 108 units tall and share the same mark
+     geometry, so one height makes the MARK identical on both sites and lets
+     the two wordmarks differ in width by the 18 units they actually differ
+     by. That is what "consistent" has to mean here: matching the widths
+     instead would scale one mark against the other. */
+  --logo-h:     30px;
+  /* How far a `peek` capture rises into the section above it. Viewport-
+     relative because what it has to clear is the hero's copy block, which is
+     centred in the viewport height — a fixed rem would collide with the
+     buttons on a short window and leave a gap on a tall one.
+     Re-measure against peek.mjs if this changes: the number this is really
+     trading against is the gap between the call to action and the top of
+     the capture, and it goes negative before it looks wrong. */
+  --shot-peek:  clamp(5rem, 22vh, 17rem);
+  --depth-light:  var(--depth-dark);
+
+  /* ── Accent ───────────────────────────────────────────────────────────── */
+  --accent:       var(--brand-accent);
+  --accent-soft:  var(--brand-tint);
+  /* …and again at matching specificity below — see the note by body[data-site]. */
+  --on-accent:    var(--text-on-accent);
+  --hl:           var(--brand-accent-2);     /* the second-colour hero word */
+
+  /* ── Type ─────────────────────────────────────────────────────────────── */
+  --f-sans:  var(--font-text);
+  --f-mono:  var(--font-mono);
+
+  /* The brand scale bottoms out at 12px, which is right for dense product UI
+     (the app's own row eyebrow is 11px) and below the floor these sites hold:
+     nothing under 14px. The floor is a SITES rule, so the mapping is where it
+     belongs — shift the three smallest roles up one step rather than raising
+     the brand scale and inflating every label in the product. */
+  --fs-micro:     var(--t-small);     /* 14px — the floor */
+  --fs-small:     var(--t-base);      /* 15px */
+  --fs-base:      var(--t-body);      /* 16px */
+  --fs-body:      var(--t-body);
+  --fs-body-lg:   var(--t-lead);
+  --fs-lead:      var(--t-lead);
+  --fs-quote:     var(--t-h3);
+  --fs-h4:        var(--t-h5);
+  --fs-h3:        var(--t-h4);
+  --fs-h3-lg:     var(--t-h3);
+  --fs-h2-sm:     var(--t-h3);
+  --fs-h2:        var(--t-h2);
+  --fs-h2-lg:     var(--t-h2);
+  --fs-h1:        var(--t-h1);
+  --fs-price:     var(--t-h3);
+  --fs-figure:    clamp(3rem, 7vw, 4.5rem);
+  --fs-figure-lg: var(--t-display);
+  --fs-brand:     var(--t-h5);
+  --fs-glyph:     var(--t-h5);
+
+  /* Only names that DIFFER between the two systems are mapped. Same-named
+     tokens are owned by brand.css and must not be restated here. */
+  --lh-solid:  var(--lh-display);
+  --lh-base:   var(--lh-snug);
+  --lh-figure: .9;
+
+  --tr-tighter: var(--tr-display);
+  --tr-snug:    var(--tr-tight);
+
+  --fw-medium: var(--w-medium);
+  --fw-semi:   var(--w-semi);
+  --fw-strong: var(--w-semi);
+  --fw-bold:   var(--w-bold);
+  --fw-heavy:  var(--w-bold);
+  --fw-black:  var(--w-bold);
+
+  /* ── Space, shape, time, layout ───────────────────────────────────────── */
+  --sp-1: var(--s-1);  --sp-2: var(--s-2);  --sp-3: var(--s-3);  --sp-4: var(--s-4);
+  --sp-5: var(--s-5);  --sp-6: var(--s-5);  --sp-7: var(--s-6);  --sp-8: var(--s-6);
+  --sp-10: var(--s-7); --sp-12: var(--s-7); --sp-14: var(--s-8);
+  --sp-section: var(--sp-section, clamp(4rem, 10vw, 8rem));
+  --sp-card:    var(--s-5);
+
+  --radius:   var(--r-lg);
+  --radius-s: var(--r-md);
+  --radius-pill: var(--r-pill);
+
+  --dur-fast: var(--dur-1); --dur-base: var(--dur-2);
+  --dur-slow: var(--dur-3); --dur-slower: var(--dur-4); --dur-reveal: var(--dur-5);
+  --spring: var(--ease-spring);
+  --ease:   var(--ease-out);
+}
+
+/* ═══ WHAT THE INVERSION BREAKS ════════════════════════════════════════════
+   Four places encoded "light page" as an assumption rather than a token.     */
+
+/* 1. `section.dark` meant "an inverted band on a white page". There is no
+      longer anything to invert OR a band to invert it into — see ONE GROUND
+      below, where .soft and .dark stop being fills and become light. */
+section.dark { color: var(--text-1); }
+section.dark .card { background: var(--lift-1); border-color: var(--line-1); }
+
+/* 2. The CTA band was light grey. It is now lit rather than filled, for the
+      same reason — the rule lives in ONE GROUND with its siblings. */
+.cta p { color: var(--text-2); }
+
+/* 3. Cards were white on white and relied on a border. On dark they need a
+      surface of their own or they disappear into the page. */
+.card  { background: var(--lift-1); }
+.panel { background: var(--lift-1); }
+section.soft .card { background: var(--lift-2); }
+
+/* 4. Inputs assumed a white field. */
+.fld input, .fld select { background: color-mix(in srgb, var(--black) 28%, transparent); color: var(--text-1); }
+.drop { background: color-mix(in srgb, var(--black) 20%, transparent); }
+
+/* ═══ ONE GROUND ═══════════════════════════════════════════════════════════
+   THE PAGE IS A SINGLE COLOUR FROM THE NAV TO THE FOOTER. Nothing between
+   them paints a background of its own — not a section, not the CTA, not the
+   footer, and no photograph.
+
+   WHY, AND WHAT IT REPLACES. The page used to be a stack of panels: a soft
+   band, a sunken band, a tinted CTA, four full-bleed photographic beds. Each
+   was a legitimate way to say "a new chapter starts here", and together they
+   said it eight times down one page, with a visible seam at every join. Worse,
+   once the heroes gained a light field they sat at a different, deeper tone
+   than the sections under them, so the very first scroll crossed a hard edge.
+
+   The replacement is the grammar the reference work actually uses: ONE ground,
+   and depth made of LIGHT played across it. A section no longer changes
+   colour; it changes how it is lit. That is why .soft and .dark survive as
+   class names with their meaning intact — a lifted moment and a deep one —
+   while the mechanism underneath them changes completely. No page markup had
+   to be rewritten to get the new rhythm, which is the test of whether the
+   abstraction was in the right place.
+
+   THE ONE RULE: if you are tempted to give something a background-colour,
+   give it light instead. A fill makes a panel; light makes a space.          */
+
+body { background: var(--canvas); }
+
+/* Grain belongs to the PAGE, not to each lit thing on it. Fixed, so it sits
+   in the plane of the screen like real film grain rather than sliding with
+   the content — and declared once, so a hero and a section can never show
+   two different grains meeting at a seam. */
+body::before {
+  content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  opacity: var(--grain-opacity);
+  mix-blend-mode: var(--grain-blend);
+  background-image: var(--grain-img);
+}
+/* A single frame vignette over the whole window, for the same reason: the
+   page is one lit space, so it has one set of edges. Far softer than the
+   hero's own --vignette, which has a subject to isolate; this one only has
+   to stop the ground reading as a flat rectangle. */
+body::after {
+  content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background: var(--page-vignette);
+}
+body > * { position: relative; z-index: 1; }
+
+/* Nothing between the nav and the footer paints a fill. */
+section,
+section.soft,
+section.dark,
+.cta,
+.site-foot { background: none; }
+
+/* ── Rhythm, made of light ───────────────────────────────────────────────────
+   Every section gets one bloom. It is anchored INSIDE the section box (a
+   radial gradient cannot escape its own element) so no section needs
+   overflow:hidden, and it is painted under the content, never over it. */
+section::before {
+  content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background: var(--sect-light, none);
+}
+section > .wrap { position: relative; z-index: 1; }
+
+/* EVERY BLOOM MUST REACH TRANSPARENCY INSIDE ITS OWN BOX.
+   MEASURED, and it is the one thing that is easy to get wrong here: a radial
+   anchored at `50% 108%` is at FULL strength where the element ends, so the
+   section boundary becomes a bright horizontal line — the exact seam ONE
+   GROUND exists to remove, reintroduced by the thing meant to replace it.
+   The arithmetic that has to hold for the vertical axis is
+
+        centre_y + (vertical_radius x last_stop)  <=  100%
+
+   and the same subtraction at the top. Horizontal radii may overrun, because
+   left and right are the window edges: there is no neighbouring section for
+   a cut to show against, and the page vignette is already darkening there. */
+
+/* A LIFTED section — the old `.soft` band. Brand haze rising off the floor,
+   which reads as the page catching light rather than as a lighter rectangle.
+   62% + (60% x 62%) = 99.2%. */
+section.soft {
+  --sect-light: radial-gradient(130% 60% at 50% 62%,
+                  var(--light-haze) 0%, transparent 62%);
+}
+/* A DEEP section — the old `.dark` band. Subtracting light rather than adding
+   it: a pocket the page falls into, with no edge anywhere.
+   50% + (50% x 96%) = 98%. */
+section.dark {
+  --sect-light: radial-gradient(124% 50% at 50% 50%,
+                  color-mix(in srgb, var(--black) 58%, transparent) 0%,
+                  color-mix(in srgb, var(--black) 34%, transparent) 54%,
+                  transparent 96%);
+}
+/* The CTA is the one place the identity is allowed to flood, because it is
+   the one place the page is asking for something.
+   66% + (54% x 62%) = 99.5%. */
+.cta {
+  --sect-light: radial-gradient(108% 54% at 50% 66%,
+                  var(--light-bloom) 0%,
+                  var(--light-haze) 38%,
+                  transparent 62%);
+}
+
+/* The footer closes the page with a hairline, which is the only divider the
+   whole document needs now that nothing else draws an edge. */
+.site-foot { border-top: 1px solid var(--line-1); }
+
+/* ═══ VERDICTSCORE: THE GROUND-TINT LAYER IS OFF ════════════════════════════
+   Paired with --brand-ground: #141218 (assets/brand.css), which matches the
+   Operator Workspace exactly. The point of that change is ONE continuous
+   surface from site to product, and a per-section bloom defeats it: the
+   ground was the product's, but every other section still had a violet wash
+   floating over it, so the page read as bands again rather than as one sheet.
+
+   WHAT IS TURNED OFF — everything that tints the PAGE GROUND:
+     · section.soft / .cta blooms   the rising haze and the CTA flood
+     · section.dark                  the black pocket; not violet, but it is
+                                      still a band, and the ask was one ground
+                                      all the way down
+     · .disc orbs                    the drifting parallax blobs (v-depth)
+     · instrument glows              these sit on the bare ground, not on a
+                                      card, so they wash it the same way
+
+   WHAT IS DELIBERATELY KEPT, because none of it touches the ground:
+     · the hero lightfield           a beam over a PHOTOGRAPH; the ground is
+                                      not visible behind it
+     · body::before grain            texture, not a tint, and the thing that
+                                      stops a dark page looking like a dead one
+     · body::after vignette          global and even, not a per-section band
+     · .price-card.is-featured glow  a highlight INSIDE a card surface — this
+                                      is why the fix is not just zeroing
+                                      --light-haze, which would have taken it
+     · shot frames and photo tiles   component treatments on their own boxes
+
+   Scoped to this identity: Ventrify and VentureStack keep their rhythm. The
+   revert is deleting this block. */
+[data-brand="verdictscore"] section.soft,
+[data-brand="verdictscore"] section.dark,
+[data-brand="verdictscore"] .cta { --sect-light: none; }
+
+/* … and the rings. These are `border: 1px solid currentColor` at 10%, not a gradient, so the
+   first sweep for "things painting a background over the page" walked straight past them — a
+   415px grey circle was still drifting across the Reproducibility section after every haze had
+   gone. The grid-lines preset stays: a 2%-opacity rule grid is structure, not a wash. */
+[data-brand="verdictscore"] .depth .disc,
+[data-brand="verdictscore"] .depth .ring { display: none; }
+
+[data-brand="verdictscore"] .instr::before,
+[data-brand="verdictscore"] .instr-profile::before { background: none; }
+
+
+/* ═══ VERDICTSCORE: THE SIX STEPS ══════════════════════════════════════════
+   WHAT WAS THERE. Each step sat under a 2px SOLID WHITE rule running the full
+   column, with the numeral in muted grey beneath it. Six identical white bars
+   is the heaviest thing on a page whose whole visual argument is hairlines and
+   type — they read as a table header, and because every bar was identical
+   there was nothing to tell you where the sequence started or which way it ran.
+   Under them sat a stepper repeating the same six numbers and six labels; that
+   is removed from the page, and this is what replaces the job it was doing.
+
+   WHAT IT IS NOW. The rule drops to a hairline and an accent segment sits on
+   its left end — a tick on a scale rather than a bar. The numeral comes
+   forward in the accent and gets room to breathe. The sequence is legible from
+   the marks alone, which is what the stepper was there to supply.
+
+   The hover lengthens the accent segment. It is a scaleX on a transform-only
+   property with the origin pinned left, so it animates on the compositor and
+   cannot shift the text beside it — a width transition here would reflow the
+   whole row on every pointer move. */
+[data-brand="verdictscore"] .steps { column-gap: clamp(1.6rem, 3vw, 3rem); row-gap: clamp(2.2rem, 3.4vw, 3.2rem); }
+
+[data-brand="verdictscore"] .steps li {
+  position: relative;
+  border-top: 1px solid var(--line-1);
+  padding-top: 1.25rem;
+}
+/* the accent tick, sitting ON the hairline at the step's left edge */
+[data-brand="verdictscore"] .steps li::after {
+  content: ""; position: absolute; left: 0; top: -1px;
+  width: 34px; height: 2px; background: var(--brand-accent);
+  transform-origin: left center;
+  transition: transform var(--dur-2, .28s) var(--ease-out, cubic-bezier(.2,0,0,1));
+}
+[data-brand="verdictscore"] .steps li:hover::after { transform: scaleX(1.9); }
+
+[data-brand="verdictscore"] .steps li::before {
+  display: block;
+  font-size: var(--fs-small);
+  color: var(--brand-accent-2);
+  margin-bottom: .55rem;
+}
+[data-brand="verdictscore"] .steps h4 { margin-top: 0; }
+
+
+/* ═══ THE CHALLENGE BAND ═══════════════════════════════════════════════════
+   A tinted band behind the first section, rising ABOVE its own top edge so the
+   hero capture straddles it: the shot ends up standing on the hero photograph
+   and on the band at once, which is the one place the page says "this product
+   sits between the pitch and the decision" without writing it down.
+
+   HOW THE LAYERING WORKS, because it is the whole trick and it is not obvious:
+     · .shot.is-peek is position:relative; z-index:2 and is pulled upward by a
+       negative margin, so it already overlaps the hero.
+     · The band is ::after on the section at z-index 0. The section comes LATER
+       in the DOM than the shot, so without an explicit z-index it would paint
+       straight over it — 0 against the shot's 2 is what puts it underneath.
+     · `section > .wrap` is already z-index 1, so the copy stays above the band.
+   Measured: the shot's bottom edge and the section's top are the same y, so the
+   rise is exactly how much of the shot ends up over colour.
+
+   THE EDGES ARE HARD, ON PURPOSE. This first shipped with short fades top and
+   bottom, reasoning from the note in assets/brand.css that a hard horizontal
+   line across the full width is the seam one continuous ground exists to
+   avoid. That note is about a SECTION PRETENDING TO BE A PANEL — a band that
+   is meant to be seen is the opposite case, and the fade undid the very thing
+   the band is here for: the top edge has to run into the shot and come out the
+   other side for the capture to read as sitting ON it. A gradient that
+   dissolves before it reaches the shot just looks like another haze.
+   So: flat fill, two clean lines. Do not reintroduce the fade. */
+[data-brand="verdictscore"] #challenge { --band-rise: clamp(7rem, 20vh, 15rem); }
+[data-brand="verdictscore"] #challenge::after {
+  content: ""; position: absolute; z-index: 0; pointer-events: none;
+  inset: calc(var(--band-rise) * -1) 0 0 0;
+  background: color-mix(in srgb, var(--brand-accent) 13%, var(--canvas));
+}
+
+/* ═══ CONTENTS — the parts of a document, set as a contents page ══════════
+   Used by The Output for the six things in the memo. Deliberately NOT the
+   `.steps` treatment used by How it works: these are not a sequence, they are
+   the sections of one artefact, so there is no accent tick marking a start and
+   no heading per item — an index, a line, and a rule between, which is what a
+   contents page looks like.
+
+   THREE columns at desktop, so six entries sit as 3 x 2. Two columns put them in
+   three rows, which made the block taller than the claim above it and left the
+   full-width shot underneath looking disconnected from a narrow stack. Three
+   across is one scan per row and two rows total, which is the shape of the
+   thing being described. Two columns at tablet, one on a phone. */
+.contents { list-style: none; margin: 0; padding: 0; display: grid; gap: 0 clamp(1.6rem, 3vw, 3rem); }
+@media (min-width: 681px) { .contents { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 1001px) { .contents { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+.contents li {
+  display: grid; grid-template-columns: auto 1fr; align-items: baseline; gap: 1rem;
+  padding: 1.05rem 0; border-top: 1px solid var(--line-1);
+}
+/* Every row carries its top rule and nothing closes the bottom, so both columns start level
+   whatever the item count — no :nth-child arithmetic that would hardcode "six". */
+
+.c-n { font-family: var(--f-mono); font-size: var(--fs-micro); letter-spacing: var(--tr-wide);
+       color: var(--text-4); transition: color var(--dur-2, .28s) var(--ease-out, cubic-bezier(.2,0,0,1)); }
+.c-t { font-size: var(--fs-small); line-height: var(--lh-snug); color: var(--text-2); }
+.contents li:hover .c-n { color: var(--brand-accent-2); }
+
+@media (prefers-reduced-motion: reduce) { .c-n { transition: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  [data-brand="verdictscore"] .steps li::after { transition: none; }
+}
+
+
+/* ── Buttons on dark ──────────────────────────────────────────────────────── */
+/* A BUTTON LABEL NEVER WRAPS. Found when the nav became a three-column grid:
+   squeezed into its column at 901px, "Try it free" broke onto THREE lines and
+   grew the whole bar from 76px to 92px. A button that wraps is always a layout
+   bug being rendered rather than reported, so it is forbidden outright here —
+   if there is no room, the overflow should be visible and fixed. */
+.button { white-space: nowrap; }
+.button { background: var(--brand-accent); color: var(--text-on-accent); border-color: transparent; }
+.button:hover { background: var(--brand-accent-2); }
+.button.light { background: transparent; color: var(--text-1); border-color: var(--line-2); }
+.button.light:hover { background: var(--glass-film-1); border-color: var(--line-3); }
+section.dark .button { background: var(--brand-accent); color: var(--text-on-accent); }
+section.dark .button.light { background: transparent; color: var(--text-1); border-color: var(--line-2); }
+
+/* ── Header: bare on the hero, glass once you leave it ────────────────────
+   At the top of the page the nav should sit ON the photograph — a glass bar
+   over the hero is a panel between the reader and the first thing they came
+   to look at. It materialises only once the hero is behind them, which is
+   also the moment it starts doing real work (holding position over content).
+   `is-stuck` is set by motion.js from an IntersectionObserver on a sentinel
+   at the top of the page. */
+.site-head {
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  transition: background var(--dur-3) var(--ease-out),
+              backdrop-filter var(--dur-3) var(--ease-out),
+              border-color var(--dur-3) var(--ease-out);
+}
+.site-head.is-stuck {
+  background: var(--head-veil);
+  backdrop-filter: var(--glass-fx-1);
+  -webkit-backdrop-filter: var(--glass-fx-1);
+  border-bottom-color: var(--line-1);
+}
+.mobile-menu { background: var(--canvas); }
+
+/* ═══ THE ACCENT HAD NEVER REACHED THE TWO PRODUCT SITES ═══════════════════
+   base.css line 169 carries the ORIGINAL pre-brand palette:
+
+       body[data-site="verdictscore"] { --accent: #1f4fd8; … }
+       body[data-site="venturestack"] { --accent: #0f8f57; … }
+
+   Those are an attribute selector on an element — specificity (0,1,1) — and
+   this file remaps --accent on :root, which is (0,1,0). The lower one loses,
+   in every browser, silently, because both produce a perfectly plausible
+   colour. So VerdictScore has been drawing its focus rings, tick marks,
+   device glow and scroll-progress bar in the LEGACY BLUE, and VentureStack
+   in the legacy green, for as long as brand.css has existed. Ventrify was
+   never affected: it has no body[data-site] rule, so it fell through to :root
+   correctly, which is exactly why this stayed invisible.
+
+   MEASURED on the nav indicator, which is what surfaced it: VerdictScore
+   painted rgb(31,79,216) where the identity is #7C5CFC, and VentureStack
+   rgb(15,143,87) where it is #0FB5D4.
+
+   Matching the specificity rather than raising ours above it keeps base.css
+   revertible, which is the contract at the top of this file.              */
+body[data-site] {
+  --accent:      var(--brand-accent);
+  --accent-soft: var(--brand-tint);
+}
+
+
+/* ═══ NAVIGATION ═══════════════════════════════════════════════════════════
+   UPPERCASE, CENTRED ON THE BAR, WITH A REAL TAB INDICATOR.
+
+   CENTRING IS A GRID, NOT A MARGIN. The bar was flex with `margin-left: auto`
+   on the actions, which centres nothing — it just pushed the links to sit
+   beside the wordmark. `1fr auto 1fr` centres the middle column on the BAR
+   itself. MEASURED at 0px off-centre on all three identities.
+
+   The columns are named rather than left to source order, and that is load-
+   bearing: the sub-page nav (`.is-minimal`) has a wordmark and actions and NO
+   links, so with implicit placement its button would land in the centre slot.
+   Pinning actions to column 3 means one rule serves both navs.
+
+   THE INDICATOR IS NOT OFFSET BY HAND. Each link stretches to the full height
+   of the bar, so `bottom: 0` on the link already IS the bottom of the bar —
+   measured 76px of a 77px bar. Change --nav height later and nothing here
+   needs re-measuring, which is the point of doing it this way rather than
+   positioning the rule against the header.
+
+   It is also a live position marker, not only a hover effect: the scroll-spy
+   in motion.js sets aria-current on the section you are in. That is the
+   argument for giving it real weight and the identity colour.                */
+
+.nav { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; }
+.brand       { grid-column: 1; justify-self: start; }
+
+/* ── The brand lockup ─────────────────────────────────────────────────────
+   The art is inline SVG with currentColor ink, so it needs a colour set ON
+   it, not inherited: the footer renders the same brand, and `.site-foot a`
+   paints links --foot-link, which would quietly take the wordmark from white
+   to grey in one of the two places the logo appears. Naming the ink here
+   fixes both, and leaves the Ventrify text wordmark's own inheritance alone.
+
+   display:block on the svg, not inline: an inline SVG sits on the text
+   baseline and carries the line-box's descender space with it, which put
+   ~5px of dead air under the mark and pushed the lockup visibly high in a
+   76px bar. flex + align-items:center then centres the real art box.        */
+.brand.is-lockup     { display: inline-flex; align-items: center; color: var(--text-1); }
+.brand.is-lockup svg { display: block; height: var(--logo-h); width: auto; }
+.navlinks    { grid-column: 2; align-self: stretch; gap: var(--nav-gap); }
+.nav-actions { grid-column: 3; justify-self: end; margin-left: 0; }
+.burger      { grid-column: 3; justify-self: end; margin-left: 0; }
+
+.navlinks a {
+  display: flex; align-items: center; padding-block: 0;
+  font-size: var(--nav-size);
+  font-weight: var(--nav-weight);
+  letter-spacing: var(--nav-track);
+  text-transform: uppercase;
+  color: var(--text-2);
+  transition: color var(--dur-2) var(--ease);
+}
+.navlinks a:hover,
+.navlinks a[aria-current="true"] { color: var(--text-1); }
+
+.navlinks a::after {
+  height: var(--nav-rule);
+  background: var(--accent);
+  /* grows from the middle, because the bar it sits in is centred */
+  transform-origin: center;
+}
+
+/* THE DESKTOP NAV NEEDS 1150px, NOT THE OLD 901px.
+   MEASURED — the narrowest width at which the centred caps nav still fits
+   inside the gutter with the links truly centred, at the shipped 0.12em
+   tracking, for each size tried:
+
+                        12px      13px      14px
+       Ventrify         725px     755px     785px
+       VentureStack    1105px    1148px    1191px
+       VerdictScore    1135px    1180px    1224px
+
+   NOTE THAT TRACKING MOVES THIS. At 0.08em the 12px worst case was 1106px
+   and the breakpoint was set to 1120; opening the letters to 0.12em for
+   legibility added 27px to the link block and pushed it to 1135, which would
+   have left 1120-1134 broken. Any future change to --nav-track or --nav-size
+   has to be re-measured against this table, not assumed.
+
+   Uppercase plus 0.08em tracking makes a label 15-20% wider than the old
+   sentence case, which is what broke 901px: at 14px VerdictScore pushed its
+   buttons 94px past the gutter and put 58px of horizontal scroll on the page.
+   There is no room to reclaim by tightening — brand + links + actions + gaps
+   came to 919px against 829px of wrap, and closing every gap completely
+   recovered only 64 of the 90px needed. The size had to come down, or the
+   breakpoint had to go up.
+
+   12px does both: it is the chosen treatment AND it pulls the worst case from
+   1224 to 1135, so the breakpoint lands at 1150 rather than 1240 and hands
+   back ~90px of the band that would otherwise get a hamburger.
+
+   ONE breakpoint for all three rather than one each, even though Ventrify
+   would fit at 725: sibling sites whose navigation collapses at different
+   widths read as three unrelated sites, which is the opposite of the point.
+
+   Below it the existing hamburger and full-screen overlay take over — that
+   path is unchanged and already tested. */
+@media (max-width: 1149px) {
+  .navlinks   { display: none; }
+  .burger     { display: grid; }
+  .mobile-menu { display: flex; }
+
+  /* THE BAR WAS TWO ROWS TALL FROM 641px TO 1149px, AND HAD BEEN SINCE THIS
+     BREAKPOINT MOVED. Above, .nav-actions and .burger are BOTH pinned to
+     grid-column 3 with no row named. That is only ever one item at a time —
+     base.css hides the actions at 640 and the burger used to vanish at 901,
+     so the two never met. Raising the cutover to 1149 opened a 509px band
+     where both are live, and grid did the only thing it can with two items
+     claiming one column: it gave the second one its own ROW. MEASURED at
+     768, 1024 and 1149 — a 112px bar with the burger stranded under the
+     buttons, on all three sites, Ventrify included.
+
+     Centring is what the 1fr auto 1fr was for, and in this band there is
+     nothing left to centre — the links are display:none. So the bar becomes
+     brand · spacer · actions · burger, which is four columns on ONE row.
+     Naming the burger's column is also what stops this recurring: the clash
+     only existed because two items shared one. */
+  .nav         { grid-template-columns: auto 1fr auto auto; }
+  .nav-actions { grid-column: 3; }
+  .burger      { grid-column: 4; margin-left: var(--sp-3); }
+}
+
+
+/* ── Footer ──────────────────────────────────────────────────────────────── */
+/* .site-foot is painted by ONE GROUND — it has no fill of its own. */
+
+/* ── Placeholders read as a frame, not a white box ───────────────────────── */
+.ph { border-color: var(--line-2); color: var(--text-3); background: var(--lift-1); }
+.ph b { color: var(--text-1); }
+
+
+/* ═══ PHOTOGRAPHY ══════════════════════════════════════════════════════════ */
+
+v-photo { display: block; }
+
+/* A full-bleed bed behind a section. The section needs position:relative and
+   its content needs to sit above — .has-photo does both. */
+.photo-bed { position: absolute; inset: 0; overflow: hidden; z-index: 0; pointer-events: none; }
+.photo-bed img { width: 100%; height: 100%; object-fit: cover;
+  filter: var(--photo-grade) var(--photo-dim); }
+.photo-bed::after { content: ""; position: absolute; inset: 0;
+  background: linear-gradient(to right, var(--canvas) 0%,
+    color-mix(in srgb, var(--canvas) 92%, transparent) 34%,
+    color-mix(in srgb, var(--canvas) 56%, transparent) 54%, transparent 80%); }
+.photo-bed::before { content: ""; position: absolute; inset: 0; z-index: 1;
+  background: linear-gradient(to top, var(--canvas) 2%,
+    color-mix(in srgb, var(--canvas) 30%, transparent) 40%, transparent 70%); }
+
+/* Narrow screens: a left-to-right scrim protects nothing when the text runs
+   the full width, so it becomes a full-frame veil. */
+@media (max-width: 899px) {
+  .photo-bed::after { background: linear-gradient(to bottom,
+      color-mix(in srgb, var(--canvas) 70%, transparent) 0%,
+      color-mix(in srgb, var(--canvas) 62%, transparent) 55%,
+      var(--canvas) 100%); }
+  .photo-bed img { filter: var(--photo-grade) brightness(.6) contrast(1.06); }
+}
+
+.has-photo { position: relative; overflow: hidden; }
+.has-photo > .wrap { position: relative; z-index: 1; }
+
+/* A contained tile inside a layout. */
+.photo-tile { position: relative; display: block; overflow: hidden;
+  border-radius: var(--radius); aspect-ratio: 4 / 3; background: var(--lift-1); }
+.photo-tile img { width: 100%; height: 100%; object-fit: cover;
+  filter: var(--photo-grade) var(--tile-dim); }
+.photo-tile::after { content: ""; position: absolute; inset: 0;
+  background: var(--tile-scrim); }
+.photo-tile.is-tall { aspect-ratio: 3 / 4; }
+.photo-tile.is-wide { aspect-ratio: 16 / 9; }
+
+/* The hero no longer needs a second column for an image — the photograph IS
+   the section — so the text column takes the room it was using. */
+.hero.is-full .split { grid-template-columns: 1fr; }
+.hero.is-full .lead, .hero.is-full .fine { max-width: 46ch; }
+
+/* Display headings got bigger with the brand type scale and started wrapping
+   into a narrow column. Give the section head room to match. */
+.section-head { max-width: 72ch; }
+.section-head h2 { max-width: 20ch; }
+
+
+/* ═══ HERO: TWO LAYERS AND A PRODUCT ═══════════════════════════════════════
+   The hero carries three things moving at three speeds — the photograph
+   behind, the copy, and the product shot — which is where the depth comes
+   from. One layer moving is a background; three is a parallax. */
+
+/* The hero fills the window.
+   NOT `100vh`: on mobile that is the height with browser chrome RETRACTED, so
+   a 100vh hero is taller than what you can actually see and the buttons sit
+   below the fold until you scroll. `100svh` is the SMALL viewport height —
+   the height when the chrome is showing — so the hero always fits on arrival.
+   `min-height`, not `height`, so a short window or long copy can still grow
+   rather than clip. */
+.hero.is-full {
+  min-height: 100vh;                 /* fallback for older engines */
+  display: flex; align-items: center;
+}
+@supports (height: 100svh) {
+  .hero.is-full { min-height: 100svh; }
+}
+.hero.is-full .split { grid-template-columns: 1fr; gap: var(--sp-6); }
+@media (min-width: 901px) {
+  .hero.is-full .split { grid-template-columns: 1.05fr .95fr; gap: var(--sp-7); align-items: center; }
+}
+.hero-product { position: relative; z-index: 1; }
+.hero-product .ph { min-height: clamp(18rem, 36vw, 26rem); }
+
+/* On a phone the copy and the product shot STACK, so a desktop-sized product
+   frame pushes the hero past the window and it stops reading as full-screen.
+   Size it off the viewport height instead of the width, so the pair lands
+   inside one screen. */
+@media (max-width: 900px) {
+  .hero-product .ph { min-height: clamp(9rem, 26svh, 15rem); }
+  .hero.is-full { padding-block: var(--nav-h) var(--sp-6); }
+  .hero.is-full .split { gap: var(--sp-5); }
+}
+
+/* A SHORT window is a height problem, not a width one — a laptop at 1024x500
+   or a phone in landscape sits above the mobile breakpoint and still cannot
+   hold a 368px product frame inside one screen. Cap it against the viewport
+   height whatever the width. */
+@media (max-height: 760px) {
+  .hero-product .ph { min-height: min(26svh, 15rem); }
+  .hero.is-full { padding-block: var(--nav-h) var(--sp-5); }
+  /* Hero type is sized off the WIDTH everywhere else, which is why the site
+     with the longest hero copy still overflowed a short window. In a hero the
+     constraint is vertical, so scale it against the height too. */
+  .hero.is-full h1   { font-size: clamp(2rem, 7svh, 3.4rem); }
+  .hero.is-full .lead { font-size: clamp(.95rem, 2.4svh, 1.2rem); }
+  .hero.is-full .fine { font-size: var(--fs-micro); }
+  .hero.is-full .buttonrow { margin-top: var(--sp-4); }
+}
+
+/* A parallaxed bed is translated, so it must overhang its box or the move
+   exposes the edge. */
+.photo-bed.is-moving { inset: -14% 0; }
+
+/* ═══ CARDS OVER PHOTOGRAPHY — REMOVED ═════════════════════════════════════
+   `.on-photo` made cards glass so a photographic section bed could show
+   through them. ONE GROUND removed every section bed, so there is nothing
+   behind a card to see and glass would just be a lighter card with a blur
+   tax. Cards lift from the ground instead (see --lift-1). The glass tiers
+   in brand.css are untouched and still available where something genuinely
+   floats over something else — the nav once it sticks, the mobile menu. */
+
+
+
+
+/* ═══ THE HEADER SITS ON THE HERO ══════════════════════════════════════════
+   Making the header transparent was not enough: the hero began BELOW it, so
+   the bar still sat on a solid band of page. The hero has to start at the top
+   of the document and the sticky header overlay it. Pull the hero up by the
+   nav height and give its content that height back as padding. */
+v-hero { display: block; margin-top: calc(-1 * var(--nav-h)); }
+v-hero .hero.is-full { padding-top: var(--nav-h); }
+
+/* ═══ SHINE — the brand's planet-limb artwork ══════════════════════════════
+   Real artwork, not a conic gradient pretending to be one. The plates are
+   glow on black, so `screen` drops the black and composites only the light —
+   which is also why they can sit over any dark surface without a cut-out. */
+v-shine { display: block; }
+.shine { position: absolute; pointer-events: none; z-index: 0;
+  mix-blend-mode: screen; opacity: .9;
+  /* The plate is a rectangle of glow on black. `screen` drops the black, but
+     the frame still ENDS somewhere — which showed as a hard vertical seam
+     mid-section. A radial mask dissolves the plate's own edges so it reads as
+     light falling off, not as an image boundary.
+
+     MEASURED, and the reason this is `closest-side` and not a percentage:
+     a fixed 68% radius is only safe if the mask centre happens to sit in the
+     middle. It does not. --shine-x is 40%, and .shine-bl then flips the whole
+     plate with scaleX(-1), which carries the mask with it and puts the centre
+     at 60% — leaving 552px to the right edge against a 938px radius, so the
+     mask was still 71% OPAQUE where the plate ended. The VentureStack CTA had
+     a hard vertical cut at x=1005, exactly the plate's right edge, invisible
+     until the section fills came off.
+
+     `closest-side` removes the arithmetic instead of correcting it: each axis
+     radius becomes the distance to its NEAREST side, so the ellipse is always
+     inscribed and `transparent 100%` always lands on or inside the frame. No
+     position, width or flip can reintroduce the cut. */
+  -webkit-mask-image: radial-gradient(closest-side at var(--shine-x, 34%) var(--shine-y, 46%),
+                        var(--black) 0 42%, transparent 100%);
+          mask-image: radial-gradient(closest-side at var(--shine-x, 34%) var(--shine-y, 46%),
+                        var(--black) 0 42%, transparent 100%); }
+.shine img { display: block; width: 100%; height: auto; }
+
+/* Oversized on purpose: the anchored corner should be well off-canvas so the
+   reader sees a fragment of something larger, not a picture of a planet. */
+.shine-br { right: -22%; bottom: -42%; width: min(124vw, 1420px); --shine-x: 40%; --shine-y: 42%; }
+.shine-bl { left: -26%;  bottom: -44%; width: min(120vw, 1380px); transform: scaleX(-1); --shine-x: 40%; --shine-y: 42%; }
+.shine-tr { right: -24%; top: -46%;    width: min(116vw, 1320px); transform: scaleY(-1); --shine-x: 40%; --shine-y: 44%; }
+
+.has-limb { position: relative; overflow: hidden; }
+.has-limb > .wrap { position: relative; z-index: 1; }
+
+/* THE CLASS THAT CROPS IS THE CLASS THAT DISSOLVES THE CROP.
+   .shine masks its OWN edges, which is a different thing from surviving the
+   SECTION's edge. The plate is anchored `bottom: -42%` of the section, so
+   where the section crops it is a function of two heights and cannot be
+   written as a percentage of the plate — the plate cannot fade itself there.
+
+   MEASURED: this was the single largest remaining discontinuity after the
+   section fills came off, and it was invisible before them. On VentureStack
+   the gutter went (9,95,81) to (2,17,21) across 24px at the foot of #engine —
+   a bright aqua limb guillotined at the boundary. It never showed while the
+   section had a fill, because the cut landed exactly on the panel edge.
+
+   So the section paints the ground back over its own first and last rows.
+   Decoration sits at z-index 0 and gets veiled; .wrap sits at z-index 1 and
+   does not, so no content is touched. */
+.has-limb::after {
+  content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  /* A FIXED LENGTH, not a percentage. MEASURED: a 9% fade cleared every tall
+     section and failed on all three CTAs, because a crop is a pixel event and
+     a percentage is not. .shine-bl is up to 1380px of plate hanging in a 415px
+     CTA, so 9% was 37px of fade against a plate still at half mask opacity —
+     the boundary still stepped 62/765 on VentureStack. The `min()` keeps the
+     fade from eating a short section whole. */
+  --limb-fade: min(128px, 24%);
+  background: linear-gradient(to bottom,
+    var(--canvas) 0, transparent var(--limb-fade),
+    transparent calc(100% - var(--limb-fade)), var(--canvas) 100%);
+}
+
+@supports not (mix-blend-mode: screen) { .shine { opacity: .5; } }
+
+
+/* Very short windows — a small phone upright (360x640, 390x667). The product
+   frame and the gaps give up the last ~100px so the hero still lands in one
+   screen. Copy is never cut: if a hero still needs more room than this, it
+   grows, because clipping the first thing a visitor reads is worse than a
+   hero that runs slightly long. */
+@media (max-height: 690px) {
+  .hero-product .ph { min-height: min(17svh, 9rem); }
+  .hero.is-full .split { gap: var(--sp-4); }
+  .hero.is-full { padding-block: var(--nav-h) var(--sp-4); }
+  .hero.is-full .buttonrow { margin-top: var(--sp-3); }
+  .hero.is-full h1 { font-size: clamp(1.9rem, 6.4svh, 2.8rem); }
+}
+
+
+/* ═══ PRICING RAIL ═════════════════════════════════════════════════════════
+   NO CARD. No fill, no blur, no shadow, no rim — the tiers sit on the page
+   ground and nothing tints it. This is the last place on the sites that was
+   still drawing a panel, so it is now the same grammar as everything else:
+   the page is one colour and depth is made of light.
+
+   WHAT THE CARD WAS DOING, because removing it reopens all four jobs:
+     1. grouping the rows of one tier      → the subgrid, below
+     2. separating tier from tier          → the spine, a divider BETWEEN
+                                             columns and never around them
+     3. marking the featured tier          → a bloom, which is light; a second
+                                             fill would put the panel back
+     4. hiding unequal feature counts      → the subgrid again
+
+   THE SUBGRID IS LOAD-BEARING. VerdictScore runs 3/4/3/3 features and
+   VentureStack 3/4/3, and inside a box that mismatch was invisible. Without
+   one, each column would start its price, its list and its button at a
+   different height and the row would read as sloppy. The rail declares five
+   rows and every tier inherits them, so those three baselines line up across
+   every column no matter how long the list is.
+
+   `:has()` rather than a new class: a grid that holds price tiers IS the
+   rail, and saying so in CSS means neither site's markup changes and no page
+   can forget to opt in. */
+
+.grid:has(> .price-card) {
+  gap: 0;
+  grid-template-rows: auto auto auto 1fr auto;
+}
+.price-card {
+  position: relative;
+  display: grid;
+  grid-row: span 5;
+  grid-template-rows: subgrid;
+  gap: 0;
+  padding: var(--sp-2) var(--sp-5) var(--sp-7);
+}
+/* THE BOTTOM PADDING IS THE ROW GAP, and it cannot be `row-gap` instead. The
+   rail's rows are the FIVE INSIDE a tier, so a row-gap would push tier off
+   price off list off button — it has no way to tell "between two tiers" from
+   "between two parts of one tier". Measured at 768px, where four tiers wrap
+   to 2×2: without this the first row's button sat 8px under the next row's
+   label. */
+/* Pseudo-elements on a grid container become grid items and would be placed
+   into the five rows. Both of these are positioned, which takes them out of
+   flow, so the row track they would otherwise occupy never exists. */
+.price-card > * { position: relative; z-index: 1; }
+
+@supports not (grid-template-rows: subgrid) {
+  .grid:has(> .price-card) { grid-template-rows: none; }
+  .price-card { grid-row: auto; grid-template-rows: auto auto auto 1fr auto; }
+}
+
+/* ── the spine ──────────────────────────────────────────────────────────── */
+/* Fades at both ends so it reads as a division inside one instrument rather
+   than a border on a box that has had three sides deleted. */
+.price-card::before {
+  content: ""; position: absolute; left: 0; top: 0; bottom: var(--sp-5); width: 1px;
+  background: linear-gradient(to bottom, transparent, var(--line-2) 12%,
+                              var(--line-2) 76%, transparent);
+}
+/* A spine divides two columns, so it belongs to every tier EXCEPT the one
+   that opens a row — and which tier that is changes with the column count.
+   Left on all of them, the first tier of every row gets a rule down its left
+   edge with nothing on the other side of it. */
+.price-card:first-child::before { display: none; }
+@media (min-width: 641px) and (max-width: 900px) {        /* two columns */
+  .price-card:nth-child(odd)::before { display: none; }
+}
+@media (min-width: 901px) {                                /* three or four */
+  .grid.three > .price-card:nth-child(3n+1)::before,
+  .grid.four  > .price-card:nth-child(4n+1)::before { display: none; }
+}
+/* Stacked, a divider BETWEEN columns is no longer vertical. Left as-is it
+   draws a rule down the left of every tier below the first and separates
+   nothing, so it turns horizontal and does the job it was drawn for. */
+@media (max-width: 640px) {
+  /* Bottom padding again, and for a sharper reason than above: stacked, the
+     rule sits at the TOP of each tier, so with no space beneath the button it
+     lands immediately under the previous tier's CTA and reads as that
+     button's underline rather than the next tier's opening. */
+  .price-card { padding: var(--sp-5) 0 var(--sp-6); }
+  .price-card::before {
+    left: 0; right: 0; top: 0; bottom: auto; width: auto; height: 1px;
+    background: linear-gradient(to right, var(--line-2) 0, var(--line-2) 62%, transparent);
+  }
+}
+
+/* ── the tier ───────────────────────────────────────────────────────────── */
+/* The price is the thing being compared, so it is the only loud element. The
+   tier is a label above it, not a heading competing with it. */
+.price-tier {
+  margin: 0; padding-bottom: var(--sp-3); font-family: var(--f-mono);
+  font-size: var(--fs-micro); letter-spacing: var(--tr-wider);
+  text-transform: uppercase; color: var(--brand-accent-2);
+}
+.price-amt {
+  margin: 0; font-size: clamp(2.1rem, 3.4vw, 2.9rem); font-weight: var(--fw-bold);
+  letter-spacing: var(--tr-tighter); line-height: var(--lh-flat);
+  font-variant-numeric: tabular-nums; color: var(--text-1);
+}
+.price-per {
+  margin: 0; padding: var(--sp-2) 0 var(--sp-5);
+  font-size: var(--fs-small); color: var(--text-3);
+}
+
+.price-list {
+  list-style: none; margin: 0; padding: 0 0 var(--sp-5);
+  display: grid; gap: var(--sp-3); align-content: start;
+}
+.price-list li {
+  position: relative; padding-left: var(--sp-5);
+  font-size: var(--fs-small); color: var(--text-2);
+}
+/* A ring, not a filled dot. With no card behind it a solid mark reads as the
+   heaviest thing in the column after the price itself. */
+.price-list li::before {
+  content: ""; position: absolute; left: 0; top: .4em;
+  width: 9px; height: 9px; border-radius: 50%;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand-accent) 55%, transparent);
+}
+.price-cta .button { width: 100%; }
+
+/* ── the featured tier ──────────────────────────────────────────────────── */
+/* Marked by LIGHT, not fill. A second background would reintroduce exactly
+   the panel this rail exists to remove, and the bloom is the same instrument
+   section.soft and .cta already use to lift a band off the ground. */
+.price-card.is-featured::after {
+  content: ""; position: absolute; inset: calc(var(--sp-5) * -1) 0 0; z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(84% 56% at 50% 34%, var(--light-bloom) 0%,
+                              var(--light-haze) 40%, transparent 72%);
+}
+.price-card.is-featured .price-amt { color: var(--brand-accent-2); }
+
+/* ═══ PRODUCT SHOTS ═════════════════════════════════════════════════════════
+   The frame around a real screenshot of our own interface. Modelled on
+   Linear's hero: flat, rounded, hairline, and a soft lift along the bottom
+   edge so the image resolves into the page rather than stopping dead.
+
+   Deliberately NOT: a perspective tilt, a laptop frame, or a big drop shadow.
+   Each of those says "mockup" and pushes the product away from the reader;
+   the whole point of showing the interface flat is that it reads as the real
+   thing, sitting right there. */
+
+/* A PRODUCT SHOT IS A CHANGE OF REGISTER, NOT ANOTHER PARAGRAPH, so it owns the space above it
+   rather than asking every call site to remember a utility.
+   The utility ladder cannot express this gap anyway: brand-map collapses --sp-7 and --sp-8 onto
+   --s-6, so mt-7 and mt-8 are both 2rem — a paragraph gap under a full-width capture. (That is
+   also why bumping a shot from mt-7 to mt-8 changes nothing, which cost a round of guessing.)
+   The hero opts out: is-peek and is-bleed position themselves against the section deliberately. */
+.shot { position: relative; display: block; margin-top: clamp(var(--s-7), 5.5vw, var(--s-9)); }
+.shot.is-peek, .shot.is-bleed, .shot.mt-0 { margin-top: 0; }
+
+.shot-frame {
+  display: block;
+  position: relative;
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: var(--surface-sunken);
+  border: 1px solid var(--glass-edge);
+  /* One soft cast, far down and wide — it lifts the panel without reading as
+     a shadow under a floating card. */
+  box-shadow: 0 32px 80px -24px rgba(0,0,0,.72), var(--glass-bevel);
+}
+
+.shot-frame img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* The lift: a thin band of light along the bottom lip, which is what makes
+   Linear's shot look like a lit object rather than a pasted rectangle. */
+.shot-frame::after {
+  content: "";
+  position: absolute; inset: auto 0 0 0; height: 34%;
+  pointer-events: none;
+  background: linear-gradient(to top,
+    color-mix(in srgb, var(--brand-accent) 10%, transparent) 0%,
+    transparent 72%);
+  mix-blend-mode: screen;
+}
+
+/* `bleed` runs the shot off the bottom of its section — the reader sees the
+   top of a real screen and understands there is more of it, which is a
+   stronger claim than a tidy contained thumbnail. */
+.shot.is-bleed .shot-frame { border-bottom: 0; border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+
+/* A HERO WITH A REAL SHOT IS A DIFFERENT LAYOUT.
+   A 1440px-wide capture cannot go in a 420px side column: scaled to fit it is
+   illegible, and cropped to fill it you see the sidebar and nothing else —
+   both were tried. Linear's answer is the right one: the copy sits on top at
+   full measure, and the screenshot runs the full width underneath, cut off by
+   the fold. The reader sees the top of a real screen and understands there is
+   more of it below, which claims more than a tidy contained thumbnail. */
+.hero.has-shot { padding-bottom: 0; overflow: hidden; align-items: stretch; }
+/* No `.wrap` override here. `.wrap` sizes itself with `width: min(--max, 100% - gutters)`,
+   not max-width + padding, so setting `width: 100%` on it does not widen the
+   content — it removes the gutters entirely and the shot goes edge to edge. */
+
+/* The copy sits under the nav and the shot takes whatever height is left, so
+   it meets the fold exactly instead of stopping short of it. `margin-top:auto`
+   is what does that — the hero centres its content by default, which left a
+   70px band of photograph under the screenshot and killed the illusion. */
+/* `align-items: stretch` is explicit because the grid rule this replaces sets
+   `center`, and that carries over to flex — it centred the copy block instead
+   of leaving it on the left margin. */
+.hero.has-shot .split {
+  display: flex; flex-direction: column; align-items: stretch;
+  min-height: calc(100svh - var(--nav-h));
+  padding-top: clamp(1.5rem, 6svh, 4.5rem);
+}
+.hero.has-shot .hero-copy { max-width: 46rem; }
+.hero.has-shot .hero-product {
+  margin-top: auto;
+  padding-top: clamp(1.75rem, 4svh, 3rem);
+  width: 100%;
+  min-height: 12rem;
+}
+.hero.has-shot .shot,
+.hero.has-shot .shot-frame { height: 100%; }
+.hero.has-shot .shot-frame img { object-fit: cover; object-position: top center; height: 100%; }
+
+/* A PLATE hero: one photograph that already contains the product, so there is no second column
+   to balance — only a copy measure held to the left of the frame and enough height for the image
+   to breathe. The plate is 16:9, so a tall viewport crops its sides; object-position keeps the
+   right of the frame (where the laptop sits) in view. */
+/* ── A CENTRED HERO ───────────────────────────────────────────────────────
+   One column down the middle, no product beside it, and the capture carried
+   full-bleed underneath instead.
+
+   It cannot reuse .has-plate. Every number in that block is written around
+   a laptop sitting in the right of the photograph — the 16:9 height clamp
+   exists so the laptop is not cropped, object-position 92% exists to hold it
+   at the right edge, and the scrim runs left-to-right because the copy was
+   on the left. Take the laptop out and each of those is solving a problem
+   that is no longer there. */
+/* THE HERO IS EXACTLY ONE SCREEN, WHICH IT WAS NOT.
+   `section` carries padding-block: clamp(3.5rem, 9vw, 7rem) and the hero
+   only ever overrode the TOP (with --nav-h). So a full-height hero was
+   100svh of split plus 112px of inherited section padding underneath —
+   MEASURED 1012px tall in a 900px window. The fold landed inside the hero,
+   which is why the capture below it could rise 153px and still show only
+   40px: the first 112 were spent climbing out of padding nobody wanted.
+   The split owns the height here, so the bottom padding goes. */
+.hero.is-centred { padding-bottom: 0; }
+.hero.is-centred .split {
+  display: grid; grid-template-columns: 1fr; justify-items: center;
+  text-align: center;
+  min-height: calc(100svh - var(--nav-h));
+  align-content: center;
+  /* The copy sits ABOVE centre, by half of this. align-content centres
+     within the content box, so taking height off the bottom lifts the block
+     without moving the section — and the room it frees is exactly the room
+     the capture below rises into. The two numbers are a pair: lift the copy
+     and the peek can grow by the same amount before it reaches the buttons. */
+  padding-bottom: clamp(3rem, 10vh, 8rem);
+}
+@media (min-width: 901px) { .hero.is-centred .split { grid-template-columns: 1fr; } }
+.hero.is-centred .hero-copy { max-width: 48rem; }
+/* .lead and .fine carry a 46ch measure for a left-ranged column; centred,
+   that measure is what decides where the line breaks fall, so it is set
+   here and the block is centred rather than left in place. */
+.hero.is-centred .lead { max-width: 34ch; margin-inline: auto; }
+.hero.is-centred .buttonrow { justify-content: center; }
+
+/* THE VEIL GOES CONCENTRIC. The standard bed scrims left-to-right, which
+   protects a left-ranged column; with the copy over the middle of a sunrise
+   it protects nothing and the headline sits on the brightest part of the
+   photograph. */
+.hero.is-centred .photo-bed img {
+  object-position: center;
+  filter: var(--photo-grade) brightness(.5) contrast(1.1);
+}
+.hero.is-centred .photo-bed::after {
+  background: radial-gradient(72% 64% at 50% 46%,
+    color-mix(in srgb, var(--canvas) 84%, transparent) 0%,
+    color-mix(in srgb, var(--canvas) 50%, transparent) 56%, transparent 80%);
+}
+/* THE PHOTOGRAPH HAS NO BOTTOM EDGE. It reaches full ground at 84% rather
+   than 100%, so it has already dissolved before the section ends. Two
+   reasons: a hard horizontal line across the full width is the one thing
+   that makes a full-bleed photograph read as a pasted rectangle, and the
+   capture that rises over it needs to be standing on the PAGE — if the photo
+   were still going underneath, the shot would read as pinned to a picture
+   rather than lifted off the ground. */
+.hero.is-centred .photo-bed::before {
+  /* A LONGER, EARLIER DESCENT. Measured first, because the complaint was "I can see where the
+     image cuts": a pixel scan down the hero found NO discontinuity — brightness moved by at most
+     3/255 between sampled rows, which is ridgeline, not a seam. What reads as a cut is the last
+     visible mountain against ground that had already arrived: the old ramp held the photograph at
+     26% canvas until 48% and then buried it in 20% of the height, so the detail stopped abruptly
+     while the frame kept going.
+     Starting the descent at 38% and spreading it over twice the distance dissolves the picture
+     instead of dropping it. Full ground now lands at 78% rather than 84%, so the bottom of the
+     bed is clean well before the capture crosses it. */
+  background: linear-gradient(to bottom,
+    color-mix(in srgb, var(--canvas) 72%, transparent) 0%,
+    transparent 20%,
+    color-mix(in srgb, var(--canvas) 22%, transparent) 38%,
+    color-mix(in srgb, var(--canvas) 48%, transparent) 52%,
+    color-mix(in srgb, var(--canvas) 72%, transparent) 64%,
+    color-mix(in srgb, var(--canvas) 92%, transparent) 72%,
+    var(--canvas) 78%);
+}
+/* The sides go too. The bed is as wide as the window, so at the left and
+   right the photograph ends on the viewport edge — which is a cut, not a
+   horizon. */
+.hero.is-centred .photo-bed::after {
+  background:
+    radial-gradient(72% 64% at 50% 46%,
+      color-mix(in srgb, var(--canvas) 84%, transparent) 0%,
+      color-mix(in srgb, var(--canvas) 50%, transparent) 56%, transparent 80%),
+    linear-gradient(to right, var(--canvas) 0%, transparent 14%,
+      transparent 86%, var(--canvas) 100%);
+}
+
+/* ── A CAPTURE THAT PEEKS ─────────────────────────────────────────────────
+   Pulled up into the section above so its top edge is on screen at load.
+   z-index, not just a negative margin: the hero is position:relative with a
+   photo bed inside it, so without one the shot slides UNDER the section it
+   is supposed to be overlapping. */
+.shot.is-peek {
+  position: relative; z-index: 2;
+  margin-top: calc(var(--shot-peek) * -1);
+}
+/* A PHONE GETS A SHORTER PEEK, and not because the screen is short — the
+   same 16vh clears the buttons fine at 390x844. It is that the headline
+   wraps to three lines on a narrow column, so the copy block takes a much
+   larger share of the hero and the slack underneath it collapses. MEASURED
+   at 390x667: 16vh left 15px between the call to action and the capture. */
+@media (max-width: 640px) {
+  :root { --shot-peek: clamp(3rem, 15vh, 9rem); }
+}
+/* The lift is what sells it as overlaying rather than abutting: a cast that
+   reads on the photograph behind, plus the brand glow the hero ground
+   already uses, so the capture looks lit by the same scene. */
+.shot.is-peek .shot-frame {
+  box-shadow: var(--glass-cast-3),
+              0 -2px 60px color-mix(in srgb, var(--brand-accent) 14%, transparent);
+}
+
+.hero.has-plate .split {
+  display: block;
+  /* The plate is ONE composition at 16:9. Forcing it to fill a 100svh frame scales it ~1.3x and
+     crops the mountain off the left and the laptop off the right — the thing it was made to show.
+     So the hero takes the PLATE's height (56.25vw) wherever that fits, with a floor for short
+     viewports and a ceiling of the viewport itself. */
+  min-height: clamp(34rem, 56.25vw, calc(100svh - var(--nav-h)));
+  padding-top: clamp(1.5rem, 6svh, 4.5rem); padding-bottom: clamp(2rem, 6svh, 4.5rem);
+}
+.hero.has-plate .hero-copy { max-width: 34rem; }
+@media (min-width: 901px){ .hero.has-plate .hero-copy { max-width: 38rem; } }
+/* The copy column is taller than 16:9 at most widths, so SOMETHING gets cropped. Take it off the
+   LEFT, which is sky the headline sits over anyway, and hold the right edge where the laptop is —
+   cropping the product out of a plate whose whole job is to show the product would be the one
+   unacceptable loss. Below 900px the laptop cannot survive the crop either way, so the frame
+   favours the summit instead. */
+.hero.has-plate .photo-bed img { object-position: 34% center; }
+@media (min-width: 901px){ .hero.has-plate .photo-bed img { object-position: 92% center; } }
+
+/* A DEVICE hero is the other composition: the copy holds the left column and the laptop sits
+   beside it, overhanging the right edge the way it does on a desk. The stacked rules above are
+   for a FLAT capture, which has to run full width to read; a device is an object, so it can be
+   placed. Everything here is a column/placement change — the copy, the reveal and the parallax
+   are untouched. */
+.hero.has-device .split {
+  display: grid; grid-template-columns: 1fr; align-items: center;
+  min-height: calc(100svh - var(--nav-h)); padding-top: clamp(1.5rem, 5svh, 3.5rem);
+}
+.hero.has-device .hero-copy { max-width: 36rem; }
+.hero.has-device .hero-product { margin-top: var(--sp-6); padding-top: 0; min-height: 0; }
+@media (min-width: 901px) {
+  /* the copy needs enough measure for the headline to break in two or three lines rather than
+     four, and for the three proof marks to sit on ONE row — both are what make it read as a
+     composed lockup instead of a stack of fragments */
+  .hero.has-device .split { grid-template-columns: minmax(0, 1.04fr) minmax(0, 0.96fr); gap: var(--sp-4); }
+  .hero.has-device .hero-copy { max-width: 42rem; }
+  .hero.has-device .hero-product {
+    margin-top: 0;
+    /* the laptop runs past the content gutter — it is a photograph of an object, and cropping it
+       to the text column would make it look pasted in rather than sitting in the scene */
+    width: calc(100% + var(--gut) + 6vw); margin-right: calc((var(--gut) + 6vw) * -1);
+  }
+}
+
+/* Restructuring the hero moved the copy from vertically centred to the top,
+   which put the eyebrow and headline over the brightest part of the sky —
+   measured 3.1:1 on "Venture evaluation", under AA. The bottom-up scrim that
+   served the centred layout is re-aimed downward here, because in a has-shot
+   hero the lower half is covered by the screenshot and needs no protection. */
+.hero.has-shot .photo-bed::before {
+  background: linear-gradient(to bottom,
+    color-mix(in srgb, var(--canvas) 78%, transparent) 0%,
+    color-mix(in srgb, var(--canvas) 58%, transparent) 42%,
+    color-mix(in srgb, var(--canvas) 34%, transparent) 68%,
+    transparent 100%);
+}
+
+/* On a phone a 1440px capture scaled into a 358px column is 25% scale —
+   every label in it is around 3px tall and the whole thing reads as grey
+   noise. A desktop screenshot has to be CROPPED on mobile, not shrunk: show
+   the content column at a legible size and let the nav rail fall off the
+   left edge, which is the part a reader loses nothing by not seeing. */
+@media (max-width: 900px) {
+  .hero.has-shot .hero-product { min-height: 9rem; }
+  .hero.has-shot .shot-frame img {
+    width: 300%; max-width: none; height: auto;
+    object-fit: fill;
+    margin-left: -52%;
+  }
+}
+
+/* ═══ THE CINEMATIC ASSET LAYER ════════════════════════════════════════════
+   Six asset types, approved from sites/_assets-board.html. Taken from how
+   Raycast and Resend build their pages, and reduced to the three rules both
+   follow without exception:
+
+     · BLACK IS THE CANVAS. Neither reference puts an image behind its
+       content. Imagery is an OBJECT inside the frame, never a backdrop.
+     · LIGHT IS THE MATERIAL. Beams, blooms and rim light — never a flat
+       gradient panel, never a coloured surface.
+     · AN ASSET DIES INTO THE GROUND. Every edge falls off to black before
+       the frame reaches it, so nothing is ever hard-cropped by its container.
+
+   Every value below comes from §10 of assets/brand.css. The only literals are
+   geometry — the angle of a beam, the degrees of a tilt, the pixels of a
+   bevel — which are optical decisions, not brand ones.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── GRAIN ────────────────────────────────────────────────────────────────
+   Shared by every lit asset. Applied as a pseudo-element so an asset needs
+   only the class, never its own copy of the noise. */
+.has-grain { position: relative; }
+.has-grain::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 2;
+  opacity: var(--grain-opacity);
+  mix-blend-mode: var(--grain-blend);
+  background-image: var(--grain-img);
+}
+
+/* ── A01 · LIGHT FIELD ────────────────────────────────────────────────────
+   Diagonal smeared beams of brand light. Replaces the full-bleed photograph
+   behind a hero.
+
+   MEASURED: beams need a CORE, not an even ramp. A soft gradient under a
+   heavy blur gives a coloured cloud; a hard-edged one under a light blur
+   gives a beam. The stops below ramp to full within 1.6% and fall off over
+   3%, then blur(9px) softens the edge without dissolving the core. */
+.lightfield {
+  position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none;
+  background: var(--canvas);
+}
+.lightfield::before {
+  content: ""; position: absolute; inset: -40%;
+  background:
+    linear-gradient(112deg, transparent 41%, var(--light-beam)   42.6%, var(--light-beam) 44.2%, transparent 47.5%),
+    linear-gradient(112deg, transparent 48%, var(--light-beam-2) 49.4%, transparent 55%),
+    linear-gradient(112deg, transparent 56%, var(--light-beam)   57.4%, var(--light-beam) 58.8%, transparent 62%),
+    linear-gradient(112deg, transparent 63%, var(--light-haze)   68%,   transparent 76%);
+  filter: blur(9px);
+  opacity: calc(.92 * var(--light-strength));
+}
+/* The vignette is what makes it cinematic rather than decorative. */
+.lightfield::after {
+  content: ""; position: absolute; inset: 0;
+  background: var(--vignette);
+}
+/* Grain is NOT declared here — see ONE GROUND. A hero that carried its own
+   grain layer met the page grain at the hero edge and showed a seam. */
+.hero.has-light > .wrap { position: relative; z-index: 1; }
+
+/* A light field can also sit UNDER a photographic plate, which is how a hero
+   keeps a real subject and still reads as lit rather than as a backdrop:
+   the plate is graded down and vignetted so only its subject survives. */
+.hero.has-plate .photo-bed img { filter: var(--photo-grade) brightness(.58) contrast(1.12); }
+.hero.has-plate .photo-bed::after { background: var(--plate-vignette); }
+/* The plate's own bottom scrim would fight the vignette — two falloffs in
+   different directions read as a smudge rather than as darkness. */
+.hero.has-plate .photo-bed::before { display: none; }
+
+/* ── A02 · THE DARK OBJECT ────────────────────────────────────────────────
+   A physical thing rendered black-on-black, legible only by the light on its
+   rim. One geometry, three lamps.
+
+   ⚠ CSS STAND-IN. The shipped asset should be rendered, with real specular
+   and depth of field. This version is close enough to hold the layout and to
+   judge the composition, and re-tints per identity for free. */
+.obj-stage {
+  position: relative; display: grid; place-items: center;
+  perspective: 1400px; pointer-events: none;
+}
+.obj-stage::before {
+  content: ""; position: absolute; inset: 0;
+  background: radial-gradient(48% 42% at 50% 46%, var(--light-haze), transparent 70%);
+}
+.obj {
+  position: relative; display: grid; gap: 7px; grid-template-columns: repeat(3, 1fr);
+  width: clamp(11rem, 22vw, 19rem);
+  transform: rotateX(54deg) rotateZ(-34deg);
+  transform-style: preserve-3d;
+}
+.obj i {
+  display: block; aspect-ratio: 1; border-radius: var(--r-md);
+  background: linear-gradient(148deg,
+    color-mix(in srgb, var(--white) 9%, var(--black)) 0%,
+    color-mix(in srgb, var(--white) 3%, var(--black)) 42%,
+    var(--black) 100%);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--white) 16%, transparent),
+    inset 1px 0 0 color-mix(in srgb, var(--white) 7%, transparent),
+    inset 0 -1px 0 var(--black),
+    0 2px 3px var(--black);
+}
+/* The rim. This one rule is the whole trick: the object is black, and the
+   brand is the light falling along one edge of it. */
+.obj i:nth-child(3n+1) {
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--light-rim) 42%, transparent),
+    inset 1px 0 0 color-mix(in srgb, var(--light-rim) 22%, transparent),
+    inset 0 -1px 0 var(--black),
+    0 2px 3px var(--black);
+}
+.obj::after {
+  content: ""; position: absolute; inset: -14%; z-index: -1; border-radius: var(--r-2xl);
+  background: radial-gradient(60% 60% at 30% 24%, var(--light-bloom), transparent 72%);
+  filter: blur(34px);
+}
+
+/* ── A03 · DEVICE FRAME ───────────────────────────────────────────────────
+   A product capture inside real window chrome, vignetted, bleeding off the
+   bottom of its container so the frame reads as a window onto something
+   larger rather than a cropped picture.
+
+   This EXTENDS .shot rather than replacing it: the flat crop stays the right
+   answer where a shot runs full width, and the frame is opt-in per use. */
+/* ⚠ A CLOSED FRAME, ALL FOUR CORNERS. This was `border-bottom: 0` with
+   `border-radius: var(--r-lg) var(--r-lg) 0 0`, paired with the bottom fade below — a deliberate
+   "the capture continues past the frame" look. On a page with four framed shots, three of which
+   sit fully in view, it read as a cut: rounded at the top, square and open at the foot.
+   Closing it also suits the band behind the hero capture better. The band's whole job is to make
+   that shot read as SITTING ON the page; a frame dissolving into the page says the opposite. */
+.shot.is-framed .shot-frame {
+  position: relative; display: block; overflow: hidden;
+  border: 1px solid var(--glass-edge);
+  border-radius: var(--r-lg);
+  background: var(--surface-sunken);
+  box-shadow: var(--glass-cast-3);
+}
+.shot-chrome {
+  display: flex; align-items: center; gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--line-1);
+  background: color-mix(in srgb, var(--white) 4%, var(--black));
+}
+.shot-chrome b {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: color-mix(in srgb, var(--white) 16%, transparent);
+}
+.shot-chrome span {
+  margin-left: var(--sp-3); font-family: var(--f-mono);
+  font-size: var(--fs-micro); color: var(--text-4);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* THE VIGNETTE IS GONE, AND IT WAS THE "SHINE".
+   This used to carry a second layer:
+
+     radial-gradient(120% 90% at 50% 20%, transparent 46%, black 58% 100%)
+
+   — transparent through the middle and darkening outwards from a point up
+   near the top. On a flat UI capture that reads as a soft edge. On a capture
+   whose top band is a PHOTOGRAPH it reads as a light source: the mountains
+   go hazy under the clear centre, the sidebar dims beside it, and the whole
+   thing looks like it is being shone on. MEASURED against the raw PNG side
+   by side — the asset is evenly lit, and every bit of the wash was this.
+
+   A vignette is a photograph's gesture. The thing inside this frame is a
+   screen, which emits its own light evenly, so there was nothing for it to
+   describe. The bottom fade stays: that one has a job, resolving the capture
+   into the page instead of letting it end on a hard line. */
+/* ⚠ AND THE LIFT GOES WITH IT. The base .shot-frame::after is a 34%-tall band of
+   --brand-accent along the bottom lip with mix-blend-mode: screen — "the lift", which made an
+   OPEN-bottomed capture read as lit by the page it dissolves into. The old is-framed rule
+   overrode that background with the fade; deleting the override did not delete the pseudo-element,
+   so the base lift came back and screened violet across the bottom third of every capture. On a
+   closed, bordered, fully-rounded frame there is nothing to be lit by: it is just a colour cast
+   over the product UI. `content: none` removes the element rather than painting over it. */
+.shot.is-framed .shot-frame::after { content: none; }
+
+/* ── A LIVE SHOT ──────────────────────────────────────────────────────────
+   The same frame, with the real product inside it instead of a picture of one.
+   The product renders at a fixed 1440×900 and is SCALED to the frame rather
+   than reflowed: a workspace squeezed into 900px is a different layout, and
+   the point of the shot is what the thing actually looks like.
+
+   The still stays underneath as a poster. It is what the visitor sees for the
+   second before the frame is ready, what they see if the embed fails, and what
+   they see under prefers-reduced-motion — in which case the frame is never
+   requested at all. A live shot therefore costs nothing extra to someone who
+   cannot use it. */
+.shot.is-live .shot-frame { aspect-ratio: 1440 / 900; }
+.shot.is-live .shot-frame > img {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+  transition: opacity var(--dur-3, .5s) var(--ease-out, ease);
+}
+.shot.is-live .shot-frame.is-running > img { opacity: 0; }
+
+.shot-live {
+  position: absolute; top: 0; left: 0;
+  width: 1440px; height: 900px; border: 0;
+  transform-origin: 0 0;
+  /* Nothing in there is clickable, scrollable or selectable: the pointer belongs to the page. */
+  pointer-events: none;
+}
+
+/* THE POINTER. Drawn out here, not in the product — the product has no idea it is being
+   demonstrated, which is the only reason this can never drift from what the product does. */
+.shot-cur {
+  position: absolute; left: 0; top: 0; width: 22px; height: 22px;
+  margin: -2px 0 0 -2px; pointer-events: none; opacity: 0; z-index: 3;
+  transition: transform .52s cubic-bezier(.34,.8,.3,1), opacity .3s linear;
+}
+.shot-cur svg { display: block; filter: drop-shadow(0 2px 6px rgba(0,0,0,.6)); }
+.shot-cur.is-on { opacity: 1; }
+/* the tap: a ring that expands and fades, and a small press on the arrow itself */
+.shot-cur::after {
+  content: ""; position: absolute; left: -9px; top: -9px; width: 40px; height: 40px;
+  border-radius: 50%; border: 2px solid var(--brand-accent-2); opacity: 0; transform: scale(.3);
+}
+.shot-cur.is-tap::after { animation: shot-tap .5s cubic-bezier(.2,0,0,1); }
+.shot-cur.is-tap svg { animation: shot-press .22s ease-out; }
+@keyframes shot-tap   { 0% { opacity: .9; transform: scale(.3) } 100% { opacity: 0; transform: scale(1.25) } }
+@keyframes shot-press { 0%, 100% { transform: scale(1) } 50% { transform: scale(.8) } }
+
+@media (prefers-reduced-motion: reduce) {
+  .shot-cur { display: none; }
+  .shot.is-live .shot-frame.is-running > img { opacity: 1; }
+}
+
+/* THE BOTTOM FADE IS RETIRED WITH THE OPEN FOOT.
+   It dissolved the lower half of every framed capture into --canvas so the square, borderless
+   bottom read as "continues past the frame". With the frame closed on all four sides the fade has
+   nothing to blend INTO — it would just dim the bottom of a bordered panel. The long note that
+   used to live here recorded two real bugs in it (an inset/height shorthand leak, and an
+   inherited mix-blend-mode: screen lifting the blue channel); both are moot now the rule is gone,
+   and both are in the history if the fade is ever wanted back. */
+@media (max-width: 640px) {
+  /* The bar stays on a phone: it is ~36px and it is what tells a reader the
+     thing below is a real screen. Only the label tightens.
+     NOT display:none — that leaves a zero-box text node the clip gate reads
+     as text cut off the top of its frame. */
+  .shot-chrome { padding: var(--sp-2) var(--sp-3); }
+  .shot-chrome span { margin-left: var(--sp-2); }
+}
+
+/* ── A04 · BLOOM FIGURE ───────────────────────────────────────────────────
+   One number with a soft brand bloom behind it.
+   THE RULE, which matters more than the asset: ONE lit figure per section.
+   The moment two glow, neither means anything. */
+.stat-lit { position: relative; isolation: isolate; }
+.stat-lit::before {
+  content: ""; position: absolute; z-index: -1;
+  inset: -18% -12% -24% -10%;
+  background: radial-gradient(58% 64% at 50% 42%, var(--light-bloom), transparent 68%);
+  pointer-events: none;
+}
+
+/* ── A05 · SECTION MARK ───────────────────────────────────────────────────
+   A small dark squircle lit from inside, above a section heading. It JOINS
+   the eyebrow label rather than replacing it, so every section gains a
+   physical anchor without any new copy.
+   Identical geometry on all three sites; only the light inside it changes. */
+.mark {
+  position: relative; display: grid; place-items: center;
+  width: 72px; height: 72px; border-radius: 22px; flex: none;
+  background:
+    radial-gradient(70% 56% at 50% 108%, var(--light-bloom), transparent 62%),
+    linear-gradient(160deg, color-mix(in srgb, var(--white) 10%, var(--black)), var(--black) 72%);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--white) 22%, transparent),
+    inset 0 -1px 0 color-mix(in srgb, var(--light-rim) 26%, transparent),
+    0 10px 26px var(--black),
+    0 0 36px color-mix(in srgb, var(--brand-accent) 16%, transparent);
+}
+.mark svg {
+  width: 28px; height: 28px; fill: none;
+  stroke: var(--light-rim); stroke-width: 1.4;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+.mark-row { display: flex; flex-wrap: wrap; gap: var(--sp-6); }
+.mark-cell { text-align: center; width: 120px; }
+.mark-cell .mark { margin: 0 auto var(--sp-3); }
+.mark-cell span {
+  display: block; font-family: var(--f-mono);
+  font-size: var(--fs-micro); color: var(--text-3);
+}
+/* Above a section heading the mark sits in the normal flow, left-aligned
+   with the eyebrow it belongs to. */
+.section-head .mark { margin-bottom: var(--sp-4); }
+@media (max-width: 640px) {
+  .mark { width: 60px; height: 60px; border-radius: 18px; }
+  .mark svg { width: 24px; height: 24px; }
+  .mark-row { gap: var(--sp-5); justify-content: center; }
+  .mark-cell { width: 96px; }
+}
+
+/* ── A06 · INSTRUMENT ─────────────────────────────────────────────────────
+   What replaces the eleven dashed placeholders. Neither reference site draws
+   a chart; they draw an instrument — thin lines on black, one lit track, no
+   fills, no card, no legend. */
+.instr {
+  position: relative; display: block; padding: var(--sp-6) 0;
+  overflow: visible;
+}
+.instr::before {
+  content: ""; position: absolute; inset: -6% -4%;
+  background: radial-gradient(60% 70% at 24% 50%, var(--light-haze), transparent 72%);
+  pointer-events: none;
+}
+.instr svg {
+  position: relative; display: block; width: 100%; height: auto; overflow: visible;
+}
+.ix-grid  { stroke: var(--line-1); stroke-width: 1; }
+.ix-axis  { stroke: var(--line-2); stroke-width: 1; }
+.ix-track {
+  stroke: var(--light-beam); stroke-width: 1.5; fill: none;
+  filter: drop-shadow(0 0 7px var(--light-bloom));
+}
+.ix-track-quiet { stroke: var(--line-2); stroke-width: 1.5; fill: none; }
+.ix-dot   { fill: var(--canvas-lift); stroke: var(--light-rim); stroke-width: 1.5; }
+.ix-node  { fill: var(--canvas); stroke: var(--light-rim); stroke-width: 1.5; }
+.ix-lbl   { font-family: var(--f-mono); font-size: 11px; fill: var(--text-4); }
+.ix-cap   { font-family: var(--f-sans); font-size: 13px; fill: var(--text-2); }
+.ix-fig   { font-family: var(--f-sans); font-weight: var(--fw-bold); font-size: 42px; fill: var(--text-1); }
+
+/* On a phone an instrument drawn for 980px wide is unreadable at 358px.
+   SVG scales the geometry but not the type, so the labels are scaled back up
+   against the viewBox rather than left at 11px-of-a-third. */
+@media (max-width: 640px) {
+  .ix-lbl { font-size: 18px; }
+  .ix-cap { font-size: 20px; }
+  .ix-fig { font-size: 58px; }
+}
+
+/* A capture that bleeds to the bottom of a hero used to stand on a photograph,
+   which softened its top edge for free. On a light field it starts with a hard
+   horizontal line across the full width, so the fade has to be explicit. */
+.hero.has-shot .shot-frame::before {
+  content: ""; position: absolute; inset: 0 0 auto; height: 10%; z-index: 2;
+  pointer-events: none;
+  /* MEASURED: at full --canvas over 18% this veiled the top rows of the
+     capture — the product is the thing being sold, so the seam is worth less
+     than its legibility. Enough to soften the edge, not enough to dim it. */
+  background: linear-gradient(to bottom,
+    color-mix(in srgb, var(--canvas) 70%, transparent), transparent);
+}
+
+/* A `runs` instrument lives inside a card at roughly half the page width, so
+   the shared 980-unit geometry scales to about 0.5x. Line weights that read
+   at full width disappear there; these are the compensated values. */
+.instr-runs .ix-track { stroke-width: 3; }
+.instr-runs .ix-dot   { stroke-width: 3; }
+.instr-runs .ix-grid, .instr-runs .ix-axis { stroke-width: 2; }
+
+/* ── the investability score: arc, figure, band, and the three blind draws ──
+   Replaces the `runs` instrument in the Reproducibility section. That one drew
+   fifteen dots on a line at 73 — a result from one data room. This draws the
+   MECHANISM, so the section can say how any score is reached rather than how
+   one score came out. Geometry is in components.js; everything here is colour
+   and weight, from tokens. */
+.ix-arc-track { fill: none; stroke: var(--line-2); stroke-width: 34; stroke-linecap: round; }
+.ix-arc       { fill: none; stroke: var(--brand-accent-2); stroke-width: 34; stroke-linecap: round; }
+.ix-score     { font-family: var(--f-sans); font-weight: var(--fw-bold); font-size: 150px;
+                letter-spacing: -6px; fill: var(--text-1); }
+.ix-score-u   { font-family: var(--f-sans); font-size: 46px; fill: var(--text-3); }
+.ix-chip rect { fill: color-mix(in srgb, var(--brand-accent) 22%, transparent);
+                stroke: color-mix(in srgb, var(--brand-accent) 40%, transparent); stroke-width: 1.5; }
+.ix-chip text { font-family: var(--f-sans); font-weight: var(--fw-semi); font-size: 30px; fill: var(--text-1); }
+.ix-span      { fill: color-mix(in srgb, var(--brand-accent) 26%, transparent); }
+.ix-tick      { stroke: var(--brand-accent-2); stroke-width: 4; stroke-linecap: round; }
+.ix-lbl.is-lit { fill: var(--brand-accent-2); }
+.instr-score .ix-cap { font-size: 28px; }
+.instr-score .ix-lbl { font-size: 26px; letter-spacing: var(--tr-wide); }
+
+/* ── A06, continued · THE CATEGORY PROFILE ────────────────────────────────
+   The radar. Grid and axis come from the shared instrument tokens above, so
+   it sits in the same drawing language as `runs` and `flow` without a single
+   value of its own.
+
+   .ix-wash is a WASH, not a fill. A solid polygon on this ground reads as a
+   card, and the instrument language is light rather than fill everywhere
+   else — so it is the same --light-haze the featured price tier blooms with,
+   held inside the track. */
+.ix-wash  { fill: var(--light-haze); stroke: none; }
+.ix-axval {
+  font-family: var(--f-sans); font-weight: var(--fw-bold);
+  font-size: 26px; fill: var(--text-1);
+}
+
+/* A profile takes a COLUMN, not a band — roughly half the page, so the shared
+   980-unit geometry scales to about 0.45x. Same compensation `runs` needs,
+   for the same reason: weights that read at full width vanish at half. */
+.instr-profile .ix-track { stroke-width: 3; }
+.instr-profile .ix-node  { stroke-width: 3; r: 10; }
+.instr-profile .ix-grid, .instr-profile .ix-axis { stroke-width: 1.6; }
+/* 40/46 against a 980 viewBox, not 21/26. See the note in components.js:
+   these are solved backwards from 14px rendered in the narrowest box this
+   instrument ever gets (386px, at the 901px two-column breakpoint), not
+   chosen to look right in the source. */
+/* NO extra tracking here, unlike every other mono label on these sites.
+   At the size the floor forces, --tr-wide added ~8% to the widest label for
+   no legibility it did not already have, and width is the scarce thing in
+   this drawing — it is what the web radius is traded against. */
+.instr-profile .ix-lbl   { font-size: 40px; }
+.instr-profile .ix-axval { font-size: 46px; }
+/* The bloom behind an instrument is keyed left for the wide ones. A radar is
+   centred in its box, so the light has to be too, or the web sits in shadow
+   down its right-hand third. */
+.instr-profile::before {
+  background: radial-gradient(58% 58% at 50% 50%, var(--light-haze), transparent 70%);
+}
+
+/* ── A06, continued · HOW THE SCORE COMPOSES ──────────────────────────────
+   Seven rows: category, what it weighs and scored, a proportional track, and
+   what it contributes. Real elements so it reflows on a phone — see the note
+   on `seq`.
+
+   THREE COLUMNS, NOT FOUR, and at every width: label-with-caption, track,
+   figure. Four columns put the caption in its own 1fr, which measured 142px
+   once this sits in the narrow-first split beside the radar — not enough for
+   "25% weight · rated 4.0/5" at mono 14px. Stacking the caption under its
+   label is also simply the better read: the two are one thought. */
+.ix-compose { list-style: none; margin: 0; padding: 0; }
+.ix-compose li {
+  display: grid; align-items: center;
+  grid-template-columns: minmax(0, 13rem) minmax(0, 1fr) auto;
+  gap: var(--sp-2) var(--sp-5);
+  padding: var(--sp-4) 0;
+  border-bottom: 1px solid var(--line-1);
+}
+.ix-compose li:first-child { border-top: 1px solid var(--line-1); }
+.ix-cl { grid-column: 1; grid-row: 1; font-size: var(--fs-small); font-weight: var(--fw-semi); color: var(--text-1); }
+.ix-cs { grid-column: 1; grid-row: 2; font-family: var(--f-mono); font-size: var(--fs-micro); color: var(--text-3); }
+.ix-cb { grid-column: 2; grid-row: 1 / span 2; }
+.ix-cv { grid-column: 3; grid-row: 1 / span 2; }
+.ix-cb { display: block; min-width: 0; }
+/* height, not aspect-ratio: the rects stretch with preserveAspectRatio="none",
+   so the box sets the bar's thickness directly. */
+.ix-cb svg { display: block; width: 100%; height: 8px; overflow: visible; }
+/* The ghost is the category's full weight — what it would contribute at the
+   top of its scale. The lit part is what it actually earned. Reading the two
+   against each other IS the instrument. */
+.ix-cb-pot { fill: var(--line-2); }
+.ix-cb-now { fill: var(--light-beam); filter: drop-shadow(0 0 6px var(--light-bloom)); }
+.ix-cv {
+  font-family: var(--f-sans); font-weight: var(--fw-bold);
+  font-size: var(--fs-body); color: var(--text-1);
+  font-variant-numeric: tabular-nums; text-align: right; min-width: 3.5rem;
+}
+.ix-ctotal {
+  display: flex; align-items: baseline; gap: var(--sp-3);
+  margin: var(--sp-5) 0 0;
+}
+.ix-ctotal span {
+  flex: 1; font-family: var(--f-mono); font-size: var(--fs-micro);
+  letter-spacing: var(--tr-wider); text-transform: uppercase; color: var(--brand-accent-2);
+}
+.ix-ctotal b {
+  font-size: clamp(2.1rem, 3.4vw, 2.9rem); font-weight: var(--fw-bold);
+  letter-spacing: var(--tr-tighter); line-height: var(--lh-flat);
+  font-variant-numeric: tabular-nums; color: var(--text-1);
+}
+.ix-ctotal i { font-style: normal; font-size: var(--fs-small); color: var(--text-3); }
+
+@media (max-width: 640px) {
+  /* Label and figure on top, the track full width beneath — the track is the
+     only part that needs real estate, and at 358px it cannot share a row
+     with two numbers and stay legible. */
+  .ix-compose li { grid-template-columns: 1fr auto; gap: var(--sp-2) var(--sp-4); }
+  .ix-cl { grid-column: 1; grid-row: 1; }
+  .ix-cv { grid-column: 2; grid-row: 1; }
+  .ix-cs { grid-column: 1 / -1; grid-row: 2; }
+  .ix-cb { grid-column: 1 / -1; grid-row: 3; }
+}
+
+/* The artefact glyph inside a `set` plate, drawn from the shared icon set. */
+.ix-glyph {
+  fill: none; stroke: var(--light-rim); stroke-width: 1.4;
+  stroke-linecap: round; stroke-linejoin: round; opacity: .8;
+}
+
+/* ── A06, continued · THE REFLOWING INSTRUMENTS ───────────────────────────
+   `seq` and `set` are real elements rather than SVG. An SVG has a fixed
+   viewBox, so six stages across a 390px phone scaled their captions to 7px —
+   under the 14px floor. Elements reflow, so one instrument serves every
+   width and there is no second drawing to keep in step. */
+
+.ix-seq, .ix-set { list-style: none; margin: 0; padding: 0; }
+
+/* SEQUENCE — horizontal track on desktop. */
+.ix-seq {
+  display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
+}
+.ix-seq li {
+  position: relative; display: grid; justify-items: center; align-content: start;
+  gap: var(--sp-3); text-align: center; padding: 0 var(--sp-2); min-width: 0;
+}
+.ix-n {
+  font-family: var(--f-mono); font-size: var(--fs-micro);
+  color: var(--text-4); font-weight: var(--fw-medium);
+}
+.ix-rail { position: relative; display: grid; place-items: center; width: 100%; height: 22px; }
+/* The connector runs from this node's centre to the next node's centre,
+   which is exactly one column — hence width:100%, not a computed value. */
+.ix-rail::before {
+  content: ""; position: absolute; top: 50%; left: 50%; width: 100%; height: 1.5px;
+  transform: translateY(-50%);
+  background: var(--light-beam); box-shadow: 0 0 7px var(--light-bloom);
+}
+.ix-seq li:last-child .ix-rail::before { display: none; }
+.ix-pt {
+  position: relative; z-index: 1; display: grid; place-items: center;
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 1.5px solid var(--light-rim); background: var(--canvas);
+}
+.ix-seq .ix-cap {
+  font-size: var(--fs-small); color: var(--text-2); line-height: var(--lh-base);
+}
+
+/* CHAIN — the same sequence with a hand-off marked between each pair, and a
+   glyph in the node instead of a step number. */
+.ix-seq.is-chain .ix-pt { width: 44px; height: 44px; border-radius: var(--r-sm); }
+.ix-seq.is-chain .ix-rail { height: 46px; }
+.ix-pt svg {
+  width: 20px; height: 20px; fill: none; stroke: var(--light-rim);
+  stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round;
+}
+.ix-seq.is-chain .ix-rail::after {
+  content: ""; position: absolute; top: 50%; left: 100%;
+  width: 6px; height: 6px; border-radius: 50%; background: var(--light-rim);
+  transform: translate(-50%, -50%);
+}
+.ix-seq.is-chain li:last-child .ix-rail::after { display: none; }
+
+/* SET — a responsive grid of lit plates. 6 -> 3 -> 2. */
+.ix-set { display: grid; grid-template-columns: repeat(6, 1fr); gap: var(--sp-4); }
+.ix-set li { display: grid; gap: var(--sp-3); justify-items: center; text-align: center; min-width: 0; }
+.ix-plate {
+  display: grid; place-items: center; width: 100%; aspect-ratio: 3 / 2;
+  border-radius: var(--r-md); border: 1.5px solid var(--line-2);
+}
+/* Alternating lift, so the row reads as a set with depth rather than a strip
+   of identical boxes. */
+.ix-set li:nth-child(odd) .ix-plate {
+  border-color: var(--light-beam);
+  box-shadow: 0 0 20px var(--light-haze);
+}
+.ix-plate svg {
+  width: 26px; height: 26px; fill: none; stroke: var(--light-rim);
+  stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; opacity: .85;
+}
+.ix-set .ix-cap { font-size: var(--fs-small); color: var(--text-2); }
+
+@media (max-width: 900px) {
+  .ix-set { grid-template-columns: repeat(3, 1fr); }
+}
+/* VERTICAL SEQUENCE. Used by `layout="vertical"` at every width, and by
+   every sequence below 640px — a phone has height, not width. Same rules, so
+   the two can never drift apart. */
+.ix-seq.is-vert { grid-auto-flow: row; grid-auto-columns: auto; }
+.ix-seq.is-vert li {
+  grid-template-columns: auto 1fr; justify-items: start; text-align: left;
+  gap: 0 var(--sp-4); padding: 0; min-height: 56px;
+}
+.ix-seq.is-vert .ix-n { grid-column: 2; order: 1; }
+.ix-seq.is-vert .ix-rail { grid-row: 1 / span 2; grid-column: 1; width: 22px; height: 100%; align-self: stretch; }
+.ix-seq.is-vert .ix-rail::before { top: 50%; left: 50%; width: 1.5px; height: 100%; transform: translateX(-50%); }
+.ix-seq.is-vert .ix-cap { grid-column: 2; order: 2; align-self: center; }
+.ix-seq.is-vert.is-chain .ix-rail { width: 46px; }
+.ix-seq.is-vert.is-chain .ix-rail::after { top: 100%; left: 50%; }
+.ix-seq.is-vert.is-chain li { min-height: 68px; }
+
+@media (max-width: 640px) {
+  .ix-seq { grid-auto-flow: row; grid-auto-columns: auto; }
+  .ix-seq li {
+    grid-template-columns: auto 1fr; justify-items: start; text-align: left;
+    gap: 0 var(--sp-4); padding: 0; min-height: 56px;
+  }
+  .ix-n { grid-column: 2; order: 1; }
+  .ix-seq .ix-rail { grid-row: 1 / span 2; grid-column: 1; width: 22px; height: 100%; align-self: stretch; }
+  .ix-seq .ix-rail::before { top: 50%; left: 50%; width: 1.5px; height: 100%; transform: translateX(-50%); }
+  .ix-seq .ix-cap { grid-column: 2; order: 2; align-self: start; }
+  .ix-seq.is-chain .ix-rail { width: 46px; }
+  .ix-seq.is-chain .ix-rail::after { top: 100%; left: 50%; }
+  .ix-set { grid-template-columns: repeat(2, 1fr); gap: var(--sp-3); }
+}

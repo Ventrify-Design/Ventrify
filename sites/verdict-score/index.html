@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en" class="no-js" data-brand="verdictscore">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VerdictScore — A venture score that shows its working</title>
+<meta name="description" content="VerdictScore turns venture evidence into a structured, traceable assessment designed to help investors examine opportunities more consistently.">
+<meta property="og:title" content="VerdictScore — A venture score that shows its working">
+<meta property="og:description" content="VerdictScore turns venture evidence into a structured, traceable assessment designed to help investors examine opportunities more consistently.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://verdict-score.ventrify.io">
+<link rel="stylesheet" href="../../assets/brand.css">
+<link rel="stylesheet" href="../shared/base.css">
+<link rel="stylesheet" href="../shared/brand-map.css">
+<link rel="stylesheet" href="../shared/motion.css">
+</head>
+<body data-site="verdictscore">
+
+
+<v-nav></v-nav>
+
+<main id="top">
+
+  <!-- ══ HERO ══════════════════════════════════════════════════════════════ -->
+  <v-hero base="../../" photo="verdictscore-hero" centred light>
+    <p data-eyebrow>Venture evaluation</p>
+    <h1>A venture score that shows its <span class="hl">working.</span></h1>
+    <p data-lede>Diligence you can audit.</p>
+    <div data-actions>
+    <a class="button" href="#contact">Score your first venture free <span class="arw" aria-hidden="true">↗</span></a>
+    <a class="button light" href="#reproducibility">See 15 runs, one score</a>
+    </div>
+  </v-hero>
+
+  <!-- The capture the hero used to carry inside its photograph, now at full
+       width between the hero and the first section. -->
+  <div class="wrap">
+    <!-- LIVE. The still is the poster: what you see before the frame is ready, if it fails, and
+         under reduced motion. The running version walks the seven tabs, scrolls to what is below
+         the fold on three of them, and opens a research document three clicks deep — which is the
+         one thing no screenshot of this product can show. -->
+    <v-shot base="../../" name="shots/vs-verdict-score" frame peek eager
+            live="assessment-tour"
+            alt="A VerdictScore assessment: the verdict, the investability score and the three blind draws behind it"></v-shot>
+  </div>
+
+  <!-- ══ THE CHALLENGE ═════════════════════════════════════════════════════ -->
+  <section id="challenge">
+    <v-depth preset="left"></v-depth>
+    <div class="wrap">
+      <div class="split top">
+        <v-section-head class="mb-0">
+          <p data-eyebrow>The challenge</p>
+          <h2>Investment decisions need more than a deck and a feeling.</h2>
+        </v-section-head>
+        <div>
+          <p class="sub lg" data-reveal>VerdictScore gives investment teams a consistent first pass, with findings, criteria and reasoning they can inspect.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ══ HOW IT WORKS ══════════════════════════════════════════════════════ -->
+  <section class="soft" id="method">
+    <div class="wrap">
+      <v-section-head>
+        <p data-eyebrow>How it works</p>
+        <h2>From data room to a judgement you can inspect.</h2>
+        <p data-sub>The workflow is designed to make each stage visible, from source documents to the final assessment.</p>
+      </v-section-head>
+
+      <v-steps>
+        <li data-reveal>
+          <h4>Upload the data room</h4>
+          <p>Bring together decks, financial models, spreadsheets, contracts and other supporting documents.</p>
+        </li>
+        <li data-reveal>
+          <h4>Review readiness</h4>
+          <p>Before assessment, receive a review of potential gaps and missing supporting material so you can strengthen the data room.</p>
+        </li>
+        <li data-reveal>
+          <h4>Examine the evidence</h4>
+          <p>Specialist analysis steps review claims, markets, competitors, comparables, assumptions and risks.</p>
+        </li>
+        <li data-reveal>
+          <h4>Freeze the findings</h4>
+          <p>Evidence is fixed before scoring so the basis for the assessment can be identified.</p>
+        </li>
+        <li data-reveal>
+          <h4>Score against criteria</h4>
+          <p>Blind readers apply defined criteria and anchored thresholds; disagreement is surfaced rather than hidden.</p>
+        </li>
+        <li data-reveal>
+          <h4>Review the memo</h4>
+          <p>Receive a structured assessment with reasoning and source references to support further diligence.</p>
+        </li>
+      </v-steps>
+
+
+      <!-- PLACEHOLDER SHOT — the image is provisional, the placement is not. -->
+      <v-shot base="../../" name="shots/vs-portfolio" frame
+              alt="The Portfolio screen: eleven active engagements, how the book scores across the five guidance bands, and the ventures waiting on something"></v-shot>
+    </div>
+  </section>
+
+  <!-- ══ REPRODUCIBILITY ═══════════════════════════════════════════════════ -->
+  <section class="dark has-limb" id="reproducibility" data-motion="mask">
+    <v-depth preset="deep"></v-depth>
+    <div class="wrap">
+      <!-- `split`, not `split top`: the score graphic is taller than the copy beside it, and
+           top-aligning them left its centre 72px below the text's. .split already centres by
+           default — this section just stops opting out. -->
+      <div class="split">
+        <div>
+          <p class="eyebrow" data-reveal>Reproducibility</p>
+          <h2  data-split>The same evidence, scored three times, blind.</h2>
+          <p class="sub lg on-dark-2" data-reveal>Every score is drawn three times. Three independent reads work the frozen evidence without seeing each other, and what they do with it is published alongside the number.</p>
+        </div>
+        <div data-reveal="right">
+          <v-instrument kind="score" score="80" max="100" band="Investment ready"
+                        potential="85" draws="78|80|81" spread="within 3 pts · solid" lo="75" hi="85"
+                        label="An example investability score: eighty out of a hundred, investment ready, potential eighty-five with five points of headroom. The three blind draws came in at seventy-eight, eighty and eighty-one — a spread of three points on a scale running from seventy-five to eighty-five."></v-instrument>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ THE OUTPUT ════════════════════════════════════════════════════════ -->
+  <section id="output" data-motion="scale">
+    <v-depth preset="lines"></v-depth>
+    <div class="wrap">
+      <v-section-head>
+        <p data-eyebrow>The output</p>
+        <h2>More than a summary. A documented assessment.</h2>
+        <p data-sub>Give investment teams a working document that makes the conclusion and supporting evidence easy to review.</p>
+      </v-section-head>
+
+      <!-- THE MEMO'S CONTENTS, laid out as contents.
+           This was a two-line pull-quote and a decorative mountain photograph in one column, a
+           six-item list in the other, and under them a radar and a composition table. The photo
+           said nothing about the product, the two instruments repeated the scoring story the
+           Reproducibility section above had just told, and the split left a 2-line quote sitting
+           next to a 6-line list — lopsided at every width.
+           What the section is actually saying is "here is what is in the document", so it is set
+           as a contents page: the claim full width, then the six parts in two columns, then the
+           document itself. -->
+      <p class="quote measure-lg" data-reveal>The decision memo shows its working.</p>
+
+      <ol class="contents mt-6" data-stagger="70">
+        <li data-reveal><span class="c-n">01</span><span class="c-t">Overall score and stated guidance</span></li>
+        <li data-reveal><span class="c-n">02</span><span class="c-t">Investment thesis with supporting and opposing evidence</span></li>
+        <li data-reveal><span class="c-n">03</span><span class="c-t">Claims marked as supported, unverified or contradicted</span></li>
+        <li data-reveal><span class="c-n">04</span><span class="c-t">Market, competitor and comparable analysis</span></li>
+        <li data-reveal><span class="c-n">05</span><span class="c-t">Key assumptions and risks that could change the decision</span></li>
+        <li data-reveal><span class="c-n">06</span><span class="c-t">Evidence references and a record of material gaps</span></li>
+      </ol>
+
+      <!-- PLACEHOLDER SHOT — and a knowingly weak one: vs-verdict is the SAME screen as the hero
+           shot at a different crop, so as it stands the page shows the Verdict tab twice. It is
+           here to hold the slot while we choose what this section should actually show. -->
+      <v-shot base="../../" name="shots/vs-verdict" frame
+              alt="The decision memo: the recommendation and thesis beside an investability score of 80 out of 100, the three blind draws behind it, and the composition that makes up the score"></v-shot>
+    </div>
+  </section>
+
+  <!-- ══ FOR FOUNDERS ══════════════════════════════════════════════════════ -->
+  <section id="readiness">
+    <v-depth preset="quiet"></v-depth>
+    <div class="wrap">
+      <div class="split top">
+        <div>
+          <p class="eyebrow" data-reveal>For founders</p>
+          <h2 data-split>See what an investor will see, before they do.</h2>
+          <p class="sub" data-reveal>Review your data room before assessment. VerdictScore flags missing documents and weakly supported claims so you can address gaps before a pitch. The review identifies gaps; it does not promise a higher score.</p>
+          <div class="buttonrow" data-reveal>
+            <a class="button" href="#pricing">Check my data room <span class="arw" aria-hidden="true">→</span></a>
+          </div>
+        </div>
+        <!-- Was a decorative mountain photograph. This is the REAL data-room coverage figure
+             from the workspace — the same component an operator sees, rendered by the product's
+             own ds.js inside a shadow root. The section is about reviewing your data room before
+             an investor does; showing the actual check beats showing a mountain. -->
+        <div data-reveal="right">
+          <v-product widget="room-coverage"
+                     aria-label="The data-room coverage figure: five document classes, three found and two still missing, read from seven documents"></v-product>
+        </div>
+      </div>
+
+      <v-shot base="../../" name="shots/vs-investability" frame
+              alt="The Investability tab an investor reads: the category profile and how the score decomposes"></v-shot>
+    </div>
+  </section>
+
+  <!-- ══ PRICING ═══════════════════════════════════════════════════════════ -->
+  <section class="soft" id="pricing">
+    <div class="wrap">
+      <v-section-head class="measure-lg">
+        <p data-eyebrow>Pricing</p>
+        <h2>Try one assessment free. Then $199 per run.</h2>
+        <p data-sub>Every tier reads the full data room. The difference is how many assessments you run.</p>
+      </v-section-head>
+
+      <div class="grid four" data-stagger="100">
+        <v-price tier="Angel" amount="$1,200" per="per year · 6 runs" cta="Get your 6 runs" href="mailto:hello@ventrify.io?subject=VerdictScore%20Angel%20plan">
+          <li>Six assessments a year</li>
+          <li>Full memo on each</li>
+          <li>Share with co-investors</li>
+        </v-price>
+
+        <v-price featured tier="Investor" amount="$20,000" per="per year · 48 runs" cta="Start your free trial now" href="mailto:hello@ventrify.io?subject=VerdictScore%20Investor%20plan">
+          <li>Pipeline dashboard</li>
+          <li>Your thesis, codified</li>
+          <li>Team seats</li>
+          <li>Free trial</li>
+        </v-price>
+
+        <v-price tier="Enterprise" amount="$35,000" per="per year · 60 runs" cta="Book a pipeline demo" href="mailto:hello@ventrify.io?subject=VerdictScore%20Enterprise%20plan">
+          <li>Mid-market PE and advisers</li>
+          <li>Larger data rooms</li>
+          <li>Free trial</li>
+        </v-price>
+
+        <v-price tier="Founder" amount="$299" per="per assessment" cta="Check my data room" href="mailto:hello@ventrify.io?subject=VerdictScore%20Founder%20plan">
+          <li>One full assessment</li>
+          <li>One re-run included</li>
+          <li>Your gaps, itemised</li>
+        </v-price>
+      </div>
+
+      <p class="pricing-footnote" data-reveal>Diligence on a single mid-market deal runs from $338,000. Extra runs are available on every annual tier.</p>
+    </div>
+  </section>
+
+  <!-- ══ CTA ═══════════════════════════════════════════════════════════════ -->
+  <section class="cta has-limb" id="contact">
+    <div class="wrap cta-inner">
+      <div>
+        <h2 data-split>See how VerdictScore could fit your process.</h2>
+        <p data-reveal>Run your first assessment free. For larger annual programmes, book a pipeline demo.</p>
+      </div>
+      <a class="button" href="#pricing" data-reveal>Run your first assessment free</a>
+    </div>
+  </section>
+
+</main>
+
+<v-footer></v-footer>
+
+<script src="../shared/components.js"></script>
+<script src="../shared/motion.js"></script>
+</body>
+</html>

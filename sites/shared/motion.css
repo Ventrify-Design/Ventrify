@@ -1,0 +1,369 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   VENTRIFY — MOTION LAYER
+   Depth through parallax, reveal and layered drift.
+
+   RULES THIS FILE KEEPS:
+   • Only `transform` and `opacity` are ever animated. Nothing else moves, so
+     every animation stays on the compositor and off the layout path.
+   • No `transition-all` anywhere.
+   • Spring easing (--spring) for anything that should feel physical; a plain
+     ease for anything that should feel calm.
+   • `prefers-reduced-motion: reduce` turns ALL of it off and shows every
+     element in its final state. Parallax is the single most common trigger for
+     motion sickness, so this is not optional.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* ── The composition inputs are NON-INHERITING ──────────────────────────────
+   Custom properties inherit by default, and that quietly breaks a composed
+   transform: motion.js writes --py onto the hero layer, every descendant
+   inherits it, and each descendant that also composes a transform applies
+   the same parallax a second time. Measured before this block, VentureStack's
+   <h1> sat 1217px down the page — 316px below a hero section that clips at
+   901px — because the hero's drift was being added once by the layer and
+   again by the heading inside it. The same leak would make a price card's
+   hover lift drag its own button up with it.
+
+   `inherits: false` scopes each input to the element it was set on, which is
+   the only place any of them means anything. */
+
+@property --px   { syntax: "<length>"; inherits: false; initial-value: 0px;  }
+@property --py   { syntax: "<length>"; inherits: false; initial-value: 0px;  }
+@property --pr   { syntax: "<angle>";  inherits: false; initial-value: 0deg; }
+@property --tx   { syntax: "<angle>";  inherits: false; initial-value: 0deg; }
+@property --ty   { syntax: "<angle>";  inherits: false; initial-value: 0deg; }
+@property --lift { syntax: "<length>"; inherits: false; initial-value: 0px;  }
+@property --mv-x { syntax: "<length>"; inherits: false; initial-value: 0px;  }
+@property --mv-y { syntax: "<length>"; inherits: false; initial-value: 0px;  }
+@property --mv-s { syntax: "<number>"; inherits: false; initial-value: 1;    }
+
+/* ── ONE TRANSFORM, COMPOSED FROM VARIABLES ─────────────────────────────────
+   An element here is rarely doing one thing: a card can be revealing,
+   parallaxing, lifting under the cursor and tilting toward it at the same
+   moment. CSS has a single `transform` property, so two rules that each
+   declare it do not combine — the later one silently erases the earlier.
+
+   That is not hypothetical. `[data-tilt]` sat after `[data-reveal]` at equal
+   specificity and won, which meant 12 of the 14 cards on VentureStack had
+   `transition-property: transform` only: they snapped from invisible to
+   visible with no fade, lost their stagger, and the tilt they were tagged
+   for never ran once. `.price-card:hover` lost the same fight to
+   `[data-reveal].is-in` and never lifted.
+
+   So exactly ONE rule below declares `transform`. Every effect contributes a
+   variable and they add up. `transform` itself stays the transitioned
+   property, so this is still a compositor animation — only the inputs moved.
+
+      --mv-x/--mv-y/--mv-s   reveal state        (CSS)
+      --px/--py/--pr         parallax            (motion.js)
+      --lift                 hover/press         (CSS)
+      --tx/--ty              pointer tilt        (motion.js)                */
+
+[data-reveal],
+[data-tilt],
+[data-parallax],
+[data-hero-fade],
+[data-seq] > *,
+.price-card,
+.button {
+  transform:
+    translate3d(calc(var(--mv-x, 0px) + var(--px, 0px)),
+                calc(var(--mv-y, 0px) + var(--py, 0px) + var(--lift, 0px)), 0)
+    scale(var(--mv-s, 1))
+    rotate(var(--pr, 0deg))
+    perspective(900px)
+    rotateY(var(--tx, 0deg))
+    rotateX(var(--ty, 0deg));
+}
+
+/* ── Reveal on scroll ───────────────────────────────────────────────────────
+   Durations are deliberately short. Measured at an ordinary 900px/s scroll,
+   the previous .75s/.9s pair left something mid-fade on 89–96% of frames —
+   about half of everything on screen was translucent at any instant, and at
+   1400px/s every reveal finished above the fold, so the only part a reader
+   ever saw was the faint beginning of the curve. */
+
+[data-reveal] {
+  opacity: 0;
+  --mv-y: 26px;
+  transition:
+    opacity   .42s var(--ease),
+    transform .55s var(--spring);
+  transition-delay: var(--d, 0ms);
+}
+[data-reveal="left"]  { --mv-x: -28px; --mv-y: 0px; }
+[data-reveal="right"] { --mv-x:  28px; --mv-y: 0px; }
+[data-reveal="scale"] { --mv-y: 20px; --mv-s: .97; }
+/* DEVICE — the laptop. It enters from further right and lower than anything else and takes
+   longer to settle, so the product arrives as the last thing the eye lands on rather than
+   racing the headline. One variable each, like every other variant; the composed transform
+   rule above is still the only place `transform` is declared. */
+[data-reveal="device"] { --mv-x: 54px; --mv-y: 34px; --mv-s: .965;
+  transition: opacity .72s var(--ease) .18s, transform .96s var(--spring) .18s; }
+/* The wipe clips to 55%, NOT to 100%. Chrome applies an element's own
+   clip-path when computing intersection, so `inset(0 0 100% 0)` reports
+   intersectionRatio 0 even for a 405px box sitting in the middle of the
+   viewport — the element hides itself from the very observer that is
+   supposed to reveal it, and can never come back. Measured: isIntersecting
+   false, ratio 0, rect.top 248, height 405. A partial clip still reads as a
+   wipe because opacity carries the rest of the entrance. */
+[data-reveal="mask"]  { --mv-y: 14px; clip-path: inset(0 0 55% 0);
+  transition: opacity .42s var(--ease), transform .55s var(--spring), clip-path .7s var(--ease); }
+
+[data-reveal].is-in {
+  opacity: 1;
+  --mv-x: 0px; --mv-y: 0px; --mv-s: 1;
+}
+[data-reveal="mask"].is-in { clip-path: inset(0 0 0 0); }
+
+/* Horizontal reveals only exist where there is room for them.
+   On a narrow viewport a 28px side offset pushes the element past the edge —
+   measured at 390px as 12px of horizontal overflow on every page — and a
+   side-slide reads badly in a single column regardless. Fall back to the
+   vertical reveal, which is the same motion the rest of the page uses. */
+@media (max-width: 900px) {
+  [data-reveal="left"],
+  [data-reveal="right"] { --mv-x: 0px; --mv-y: 26px; }
+}
+
+/* ── Parallax ───────────────────────────────────────────────────────────────── */
+/* The JS writes --py (pixels) and --pr (rotation). Elements opt in by attribute
+   so a layer can be tuned in the HTML without touching this file. */
+
+/* --py and --pr feed the composed transform above. */
+[data-parallax] { will-change: transform; }
+
+/* Hero content drifts up and dissolves as the section leaves */
+[data-hero-fade] {
+  opacity: var(--po, 1);
+  will-change: transform, opacity;
+}
+
+/* ── Depth field — the decorative layers ────────────────────────────────────── */
+/* Purely presentational, so they are aria-hidden in the markup. These are the
+   "design assets" placeholders: once the visual signature exists, these become
+   real shapes, grain, gradients or product imagery moving at their own speeds. */
+
+.depth { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+.depth > * { position: absolute; will-change: transform; }
+
+/* THE FIELD MUST DIE BEFORE THE SECTION EDGE DOES.
+   `overflow: hidden` crops the field at the section box. That was invisible
+   while every section had its own background — the cut landed exactly where
+   the panel already ended. On ONE GROUND there is no panel, so the crop shows
+   as a straight horizontal line across an otherwise continuous page. Fading
+   the field out vertically is the same rule .shine already follows: an asset
+   dies into the ground, it is never cut by the frame. Left and right stay
+   cropped, which is safe — the geometry parks those edges off-canvas. */
+.depth {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, var(--black) 16%, var(--black) 84%, transparent 100%);
+          mask-image: linear-gradient(to bottom, transparent 0%, var(--black) 16%, var(--black) 84%, transparent 100%);
+}
+
+.depth .ring {
+  border: 1px solid currentColor; border-radius: 50%; opacity: .1;
+}
+/* The drifting disc was colourless because it had to work on two different
+   section fills. There is one ground now, so it can carry the identity —
+   which is most of what makes a VerdictScore page look unlike a VentureStack
+   one once the panels are gone. */
+.depth .disc {
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, var(--light-haze), var(--clear) 68%);
+}
+.depth .bar { height: 1px; background: currentColor; opacity: .08; }
+.depth .grid-lines {
+  inset: 0; width: 100%; height: 100%; opacity: .035;
+  background-image: linear-gradient(to right, currentColor 1px, transparent 1px);
+  background-size: 96px 100%;
+}
+
+/* Everything in the depth field sits behind the content */
+section > .wrap { position: relative; z-index: 1; }
+
+/* ── Sticky scroll sequence ─────────────────────────────────────────────────── */
+/* Used for the loop / method sections: the heading pins while the steps advance
+   past it, which gives a long section a sense of being one continuous idea. */
+
+.sticky-seq { display: grid; gap: 2rem; }
+@media (min-width: 901px) {
+  .sticky-seq { grid-template-columns: .85fr 1.15fr; gap: 3.5rem; align-items: start; }
+  .sticky-seq .seq-pin { position: sticky; top: 120px; }
+}
+
+/* ── Scroll progress — REMOVED ────────────────────────────────────────────────
+   A 2px accent bar pinned to the top of the viewport, scaling with page scroll.
+   It sat directly above the nav in the same accent, growing horizontally — two
+   rows of moving accent-coloured line reading as one confused indicator, and the
+   one underneath (the scroll-spy underline on the active nav link) is the one
+   that actually says something. Removed from all five pages with the JS that
+   drove it. ───────────────────────────────────────────────────────────────── */
+
+
+/* ── Marquee-free horizontal drift for a strip of labels ────────────────────── */
+
+.drift { display: flex; gap: 2.5rem; white-space: nowrap; transform: translate3d(var(--px, 0px), 0, 0); will-change: transform; }
+
+/* ── Link underline sweep ───────────────────────────────────────────────────── */
+
+.sweep { position: relative; }
+.sweep::after {
+  content: ""; position: absolute; left: 0; bottom: -2px; width: 100%; height: 1px;
+  background: currentColor; transform: scaleX(0); transform-origin: right;
+  transition: transform .4s var(--ease);
+}
+.sweep:hover::after { transform: scaleX(1); transform-origin: left; }
+
+/* ── REDUCED MOTION — everything off, nothing hidden ────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+  }
+
+  [data-reveal],
+  [data-reveal].is-in {
+    opacity: 1 !important;
+    transform: none !important;
+    clip-path: none !important;
+  }
+
+  [data-parallax],
+  [data-hero-fade],
+  .drift {
+    transform: none !important;
+    opacity: 1 !important;
+  }
+
+  .depth { display: none; }
+  .sticky-seq .seq-pin { position: static; }
+  .button:hover, .card.is-interactive:hover, .price-card:hover { --lift: 0px; }
+}
+
+/* ── Line-by-line headline reveal ───────────────────────────────────────────
+   Each line is an overflow-hidden mask with the text sliding up inside it, so
+   the headline resolves line by line rather than arriving as one block. The
+   original string stays on the element's aria-label and every generated span
+   is aria-hidden, so a screen reader hears one clean sentence. */
+
+/* The mask must be TALLER than the line box or it eats descenders — the g in
+   "Building", the j in "Judging", the p in "expensive". The padding opens the
+   mask, the equal negative margin takes the space back so the visual rhythm is
+   unchanged, and the slide distance is "full height PLUS that padding" so the
+   hidden line still clears the opened mask instead of peeking below it. */
+[data-split] .ln {
+  --ln-top: .24em;    /* capitals and ascenders — headings run at lh 1.05 */
+  --ln-pad: .30em;    /* descenders */
+  display: block;
+  overflow: hidden;
+  padding-top: var(--ln-top);
+  padding-bottom: var(--ln-pad);
+  margin-top: calc(var(--ln-top) * -1);
+  margin-bottom: calc(var(--ln-pad) * -1);
+}
+[data-split] .ln-i {
+  display: block;
+  transform: translate3d(0, calc(100% + var(--ln-pad)), 0);
+  transition: transform .95s var(--spring);
+  transition-delay: var(--d, 0ms);
+  will-change: transform;
+}
+[data-split].is-in .ln-i { transform: translate3d(0, 0, 0); }
+
+/* ── Stepped sequences ──────────────────────────────────────────────────────
+   Steps resolve as the reader reaches them rather than all at once, so a long
+   numbered list reads as a sequence instead of a wall. */
+
+[data-seq] > * {
+  /* Dim enough to read as "not reached yet", light enough to stay legible if a
+     reader stops here. .32 looked right and failed contrast outright.
+     The items must NOT also carry [data-reveal]: `.is-in { opacity: 1 }` is
+     more specific than this rule and silently cancelled the dimming, which
+     left the sequence animating nothing but a border colour. `v-steps`
+     strips the attribute for exactly this reason. */
+  opacity: .5;
+  --mv-y: 10px;
+  transition: opacity .45s var(--ease), transform .5s var(--spring), border-color .4s var(--ease);
+}
+[data-seq] > *.is-active { opacity: 1; --mv-y: 0px; }
+[data-seq] > * { border-top-color: var(--on-dark-2); }
+[data-seq] > *.is-active { border-top-color: var(--ink); }
+section.dark [data-seq] > * { border-top-color: var(--line-ph-d); }
+section.dark [data-seq] > *.is-active { border-top-color: var(--white); }
+
+/* ── Pointer tilt ───────────────────────────────────────────────────────────
+   Tiny on purpose: enough to feel like a surface, not enough to read as an
+   effect. Fine pointers only — it is meaningless on touch. */
+
+/* --tx/--ty feed the composed transform. While the pointer is actually over
+   the surface the transform wants to track it, so the spring is swapped for a
+   short ease; on leave it springs back with everything else. */
+[data-tilt] { transform-style: preserve-3d; }
+[data-tilt]:not([data-reveal]) { transition: transform .5s var(--ease); }
+[data-tilt]:hover { transition: transform .18s var(--ease); }
+
+/* ── Section progress ───────────────────────────────────────────────────────
+   Every section publishes --prog (0→1) as it crosses the viewport. Anything
+   can hang off it without another line of JavaScript. Used here to let a dark
+   section's depth field bloom as you move through it. */
+
+.depth .disc { opacity: calc(.35 + (var(--prog, 0) * .65)); }
+.depth .grid-lines { opacity: calc(.02 + (var(--prog, 0) * .03)); }
+
+/* THE SCORE ARC FILLS AS YOU SCROLL THROUGH ITS SECTION.
+   No new JavaScript: the section already publishes --prog, which is what the note above promises
+   this layer is for.
+
+   ⚠ THE FALLBACK IS 1, NOT 0, AND THAT IS THE WHOLE SAFETY ARGUMENT. --prog only exists once
+   motion.js has run. Defaulting to 0 would mean a failed script, a blocked file or a browser that
+   never fires the handler leaves the arc EMPTY — a score graphic showing nothing, which is worse
+   than one that does not animate. At 1 the arc is drawn complete and the scroll layer is the only
+   thing that can take it away.
+
+   The window is 0.12→0.54 of the section crossing rather than the full range: --prog does not
+   reach 1 until the section's bottom clears the top of the viewport, so a straight mapping would
+   still be filling while the graphic was leaving the screen. This finishes it while it is
+   centred. No transition — the value updates per frame on scroll, and easing a per-frame value
+   only adds lag. */
+.ix-arc { stroke-dashoffset: calc(100 - (clamp(0, (var(--prog, 1) - .12) / .42, 1) * 100)); }
+
+/* ── Reduced motion: the additions above, switched off ─────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  [data-split] .ln { overflow: visible; padding: 0; margin: 0; }
+  [data-split] .ln-i,
+  [data-split].is-in .ln-i { transform: none !important; }
+  [data-seq] > * { opacity: 1 !important; --mv-y: 0px; border-top-color: var(--ink) !important; }
+  section.dark [data-seq] > * { border-top-color: var(--white) !important; }
+  [data-tilt] { --tx: 0deg; --ty: 0deg; }
+  .ph::before { transform: none !important; }
+  .depth .disc, .depth .grid-lines { opacity: initial; }
+  .ix-arc { stroke-dashoffset: 0; }   /* drawn complete, never revealed */
+}
+
+
+/* ── Depth-field geometry ───────────────────────────────────────────────────
+   The decorative layers were 6 lines of inline style per section, repeated
+   across every section on all three sites. Their geometry lives here now, so
+   retuning the depth language is one file. */
+
+:root {
+  --depth-xl: min(85vw, 900px);
+  --depth-lg: min(76vw, 780px);
+  --depth-md: min(58vw, 580px);
+  --depth-sm: min(46vw, 460px);
+  --depth-xs: min(40vw, 400px);
+}
+
+.depth .disc, .depth .ring { aspect-ratio: 1; }
+
+.d-hero-disc  { width: var(--depth-lg); right: -20%; top: -30%; }
+.d-hero-ring  { width: var(--depth-sm); right: 8%;  top: 14%; }
+.d-left-disc  { width: var(--depth-md); left: -14%; bottom: -26%; }
+.d-right-ring { width: var(--depth-md); right: -20%; top: 8%; }
+.d-deep-disc  { width: var(--depth-xl); left: -24%; top: -22%; }
+.d-deep-ring  { width: var(--depth-xs); right: 4%;  bottom: -18%; }
+.d-quiet-disc { width: var(--depth-md); right: -16%; top: -20%; }

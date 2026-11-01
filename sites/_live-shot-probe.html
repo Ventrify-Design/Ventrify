@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en" data-brand="verdictscore">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Live shot — the workbench</title>
+<link rel="stylesheet" href="../assets/brand.css">
+<link rel="stylesheet" href="shared/base.css">
+<link rel="stylesheet" href="shared/brand-map.css">
+<style>
+  body { margin:0; background:var(--paper); color:var(--ink); font:400 15px/1.6 var(--f-sans); }
+  .pg { max-width:1240px; margin:0 auto; padding:48px 40px 120px; }
+  h1 { font:700 2rem/1.1 var(--f-sans); letter-spacing:-.02em; margin:0 0 .4rem; }
+  .fine { color:var(--text-3); font-size:14px; max-width:84ch; }
+  pre { color:var(--text-4); font:500 12px/1.7 var(--f-mono); white-space:pre-wrap; margin:.8rem 0 0; }
+  .shot { margin-top:22px; }
+</style>
+</head>
+<body>
+<main class="pg">
+  <h1>Live shot · the workbench</h1>
+  <p class="fine">The same component the site uses — <code>sites/shared/shot-live.js</code>, running the
+  choreography named below — with its beats printed as they fire. This page exists to watch and time a
+  script while building it; the site renders the identical thing without the commentary. There is one
+  implementation, so what passes here is what ships.</p>
+  <pre id="log">booting…</pre>
+
+  <!-- The frame is the site's own .shot / .shot-frame, so spacing, radius, border and cast are
+       whatever brand-map.css says they are — not a second set of values that drifts. -->
+  <div class="shot is-framed is-live">
+    <span class="shot-frame" id="frame"></span>
+  </div>
+</main>
+<script type="module">
+  import { mountLiveShot, SCRIPTS } from './shared/shot-live.js';
+
+  const log = document.getElementById('log'), frame = document.getElementById('frame');
+  const script = new URLSearchParams(location.search).get('script') || 'assessment-tour';
+  const t0 = performance.now();
+  const stamp = () => ((performance.now() - t0) / 1000).toFixed(1).padStart(5) + 's  ';
+
+  if (!SCRIPTS[script]) {
+    log.textContent = `no script "${script}". Known: ${Object.keys(SCRIPTS).join(', ')}`;
+  } else {
+    log.textContent = `${script} · ${SCRIPTS[script].length} beats`;
+    mountLiveShot(frame, {
+      src: '/ventrify-os/_redesign/m3/live-demo.html',
+      script,
+      onLog: s => { log.textContent += '\n' + stamp() + s; },
+    });
+  }
+</script>
+</body>
+</html>
