@@ -85,5 +85,62 @@ for (const k of LIMITS) {
 }
 
 console.log('');
-console.log(fails ? `FAIL — ${fails} parity problem(s)` : 'PASS — the licence model agrees across client, admin API and create API');
+
+/* ──────────────────────────────────────────────────────────────────────────
+   EVERY PRESET THAT GRANTS PRE-SCREENS CAN ACTUALLY CREATE ONE.
+
+   Parity above proves the three copies of the licence model AGREE. It cannot
+   prove the model is USED correctly, and that is where this failed in the
+   field: `prescreens` is unlimited on all five presets and
+   api/create-engagement.js honours it, but three create surfaces asked
+   `defaultTier(plan)` — which reports what the LICENCE PREFERS — and then
+   checked the allowance for that tier. Any org whose full-assessment allowance
+   was zero or spent was shown "Plan limit reached" and no way forward, for a
+   thing it was entitled to do free and without limit. The licence was right,
+   the server was right, and the customer was still blocked.
+
+   So: for every preset, at every usage level, if the plan grants a pre-screen
+   then createableTier() must offer one. --self proves it can fail.
+   ────────────────────────────────────────────────────────────────────────── */
+/* VERDICTSCORE DOES NOT BUILD VENTURES.
+   This product pre-screens and assesses; building becomes VentureStack, a separate product on the
+   same architecture. A preset that grants `build` puts the other product's onboarding on this
+   product's first screen — which is exactly what a full licensee saw: "Brief intake", "Hub seeding",
+   "Agent wiring", "The Studio goes live". Nobody caught it because the only org that renders that
+   screen is one with zero engagements, and the orgs we look at all have some.
+   When VentureStack arrives it flips these booleans back; until then, false is the invariant. */
+console.log('no VerdictScore preset grants the build capability');
+for (const [key, def] of Object.entries(PLAN_PRESETS)) {
+  if (def.capabilities && def.capabilities.build) fail(`preset '${key}' still grants build — that is VentureStack`);
+  if (def.limits && def.limits.builds !== 0) fail(`preset '${key}' has a non-zero build allowance (${def.limits.builds})`);
+}
+
+console.log('every preset that grants pre-screens can create one');
+const { resolvePlan, createableTier, canCreate, limitFor } = await import('../workspace/plan.js');
+const SELF = process.argv.includes('--self');
+const usedFull = n => Array.from({ length: n }, (_, i) => ({ engagementType: 'assessment', tier: 'full', id: 'f' + i }));
+
+for (const key of Object.keys(PLAN_PRESETS)) {
+  for (const spent of [0, 1, 5]) {
+    const plan = resolvePlan({ plan: { preset: key, ...PLAN_PRESETS[key] } });
+    const programs = usedFull(spent);
+    // SELF breaks the derivation the way the bug did: prefer-tier only, no fallback.
+    const got = SELF
+      ? (canCreate(plan, programs, 'assessment', 'full').allowed ? 'full' : null)
+      : createableTier(plan, programs);
+    const entitled = canCreate(plan, programs, 'assessment', 'prescreen').allowed;
+    if (entitled && !got) {
+      fail(`${key} after ${spent} full assessment(s): grants pre-screens (limit ${
+        limitFor(plan, 'assessment', 'prescreen') ?? 'unlimited'}) but createableTier() offers nothing`);
+    }
+  }
+}
+if (SELF) {
+  console.log(fails ? '\n  ok  CANARY: the old prefer-tier-only logic is caught — the gate can fail'
+                    : '\n  ✗   CANARY: the old logic PASSED — this gate is decoration');
+  process.exit(fails ? 0 : 1);
+}
+
+console.log('');
+console.log(fails ? `FAIL — ${fails} parity problem(s)` : 'PASS — the licence model agrees across client, admin API and create API, and no preset is blocked from the pre-screen it grants');
 process.exit(fails ? 1 : 0);

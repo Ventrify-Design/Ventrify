@@ -317,25 +317,34 @@ export function personCard({ avatar, avatarColor, name, sub, badge = '', pill = 
 // assessment's four steps — "agents pressure-test the claims", "decision-grade verdict" — none of
 // which it is buying. Describing the wrong product on the very first screen is worse than saying
 // nothing, and it is the screen most likely to decide whether they ever pay.
-export function workspaceEmpty({ assessOnly = false, orgName = 'your Workspace', canCreate = true, prescreen = false } = {}) {
+export function workspaceEmpty({ assessOnly = false, orgName = 'your Workspace', canCreate = true, prescreen = false, planLine = '' } = {}) {
+  /* `assessOnly` is now always true — no VerdictScore licence grants `build` (see plan.js). The
+     parameter and the third branch are kept because VentureStack will be built on this component and
+     will want the other half back; they are unreachable here, not wrong. */
   const eyebrow = prescreen ? 'First pre-screen' : assessOnly ? 'First assessment' : 'First engagement';
   const title = prescreen ? 'Pre-screen your<br>first venture.' : assessOnly ? 'Run your first<br>assessment.' : 'Create your first<br>engagement.';
   const sub = prescreen
-    ? 'Upload a pitch deck and whatever data room you have. In about three minutes you get a score range, a read on what your documents do and don’t cover, and a flavour of the findings — free.'
+    ? 'Upload a pitch deck and whatever data room you have. In about three minutes you get a verdict — is this worth a full assessment’s time? — with the case argued both ways, who else is already doing this, and where your own documents disagree. Free.'
     : assessOnly
-    ? 'Click “New assessment”, then upload a pitch deck and any supporting docs. Ventrify returns a venture score, the key findings, and how to strengthen it — all here, with no founder needed.'
+    ? 'Click “New assessment”, then upload a pitch deck and whatever supporting documents you have. Pre-screen it free in about three minutes, or run the full assessment — all here, with no founder needed.'
     : 'Click “New engagement”. A five-step wizard captures the brief. The platform sets up the workspace, seeds the agents, opens Phase 0, and slots the venture into this portfolio.';
-  const buildSteps = [
-    ['Brief', 'Brief intake', 'Venture name, founder, industry, tier — an eight-section brief stored against the engagement.'],
-    ['Hubs', 'Hub seeding', 'The three-layer data room is scaffolded and all seven hubs are primed.'],
-    ['Agents', 'Agent wiring', 'The research agents are wired up and Phase 0 opens.'],
-    ['Live', 'Portal & portfolio', 'The Studio goes live and the engagement appears in your portfolio.'],
-  ];
+  /* ⚠ THE BUILD STEPS ARE GONE. A full licensee's first screen used to open with "Brief intake — an
+     eight-section brief", "Hub seeding — the three-layer data room is scaffolded", "Agent wiring —
+     Phase 0 opens", "The Studio goes live". That is VENTURESTACK's onboarding: the product that
+     builds ventures. VerdictScore pre-screens and assesses them, and a licence that grants
+     everything VerdictScore does should say so in VerdictScore's own terms.
+     The old four steps survived the pivot because the only org that renders them is one with the
+     `build` capability, and the demo org has engagements, so nobody ever saw this screen. */
+  const buildSteps = null;   // retired with the build capability; see plan.js
+
+  /* The ladder a full licensee actually has, in order, and the pre-screen is a RUNG rather than a
+     lesser version of the product — it is the free, unlimited step that decides whether the paid one
+     is worth running. Leaving it out made "unlimited assessments" read as the only thing on offer. */
   const assessSteps = [
-    ['Deck', 'Deck & data room', 'Upload the pitch deck plus any supporting docs. Large files are extracted in-browser.'],
-    ['Research', 'Evidence gathering', 'Agents pressure-test the claims, size the market, benchmark competitors, and check the founders.'],
-    ['Score', 'Investability score', 'A weighted 0–100 venture score across seven categories, with the gaps called out.'],
-    ['Verdict', 'Decision-grade verdict', 'Recommendation, thesis, key findings, and how to strengthen it — ready to act on.'],
+    ['Deck', 'Deck & data room', 'Upload the pitch deck plus whatever supporting documents you have. Large files are extracted in-browser.'],
+    ['Screen', 'Pre-screen, free', 'A verdict in about three minutes — is this one worth a full assessment’s time? Free and unlimited, on every venture you look at.'],
+    ['Assess', 'The full assessment', 'Deep research, a competitor teardown, founder diligence, and a weighted 0–100 score across seven categories.'],
+    ['Verdict', 'Decision-grade verdict', 'Recommendation, thesis, the case argued both ways, and how to strengthen it — ready to sign off or share.'],
   ];
   /* Numbered editorial rows, not stacked tubs — the same .must idiom the Verdict tab
      uses for its numbered list. These four are a SEQUENCE (deck → research → score →
@@ -354,15 +363,15 @@ export function workspaceEmpty({ assessOnly = false, orgName = 'your Workspace',
     ['Verdict', 'A verdict, argued both ways', 'Is this worth a full assessment’s time? One of three bands, with the case for and against, who else is already doing this, and where your own documents disagree.'],
     ['Full', 'Unlock the full assessment', 'Deep research, diligence, a single measured score and a decision-grade verdict — when you are ready.'],
   ];
-  const steps = (prescreen ? prescreenSteps : assessOnly ? assessSteps : buildSteps)
+  const steps = (prescreen ? prescreenSteps : assessOnly ? assessSteps : (buildSteps || assessSteps))
     .map(([tag, t, p], i) => `<div class="ws-step"><div class="ws-step-n">${i + 1}</div><div class="ws-step-b"><div class="ws-step-tag">${tag}</div><div class="ws-step-title">${t}</div><p>${p}</p></div></div>`).join('');
   const cta = canCreate
     ? `<button class="m3-btn filled" style="margin-top:20px" onclick="window.openNewAssessment&&window.openNewAssessment()"><span class="material-symbols-rounded">${prescreen ? 'bolt' : 'add'}</span>${prescreen ? 'Run your first pre-screen' : assessOnly ? 'Start your first assessment' : 'Start your first engagement'}</button>`
     : `<div style="margin-top:20px">${planGateBanner(assessOnly ? 'New assessment' : 'New engagement')}</div>`;
   const explorers = [
-    ['tune', 'Refine your brand', 'Edit your organisation name, primary colour, or logo before your first engagement goes live.', '/workspace/settings-m3.html', 'Open settings →', ''],
+    ['tune', 'Refine your brand', 'Edit your organisation name, primary colour, or logo before your first assessment goes out.', '/workspace/settings-m3.html', 'Open settings →', ''],
     ['dashboard', 'How the Workspace works', 'Three surfaces, three audiences. The marketing tour explains how operators, founders, and investors connect.', '/the-workspace.html', 'Read the tour →', ' target="_blank"'],
-    ['groups', 'Meet the 47 agents', 'The fleet behind every engagement — substrate keystones, Build-First 8, and the full domain breakdown.', '/agents.html', 'Explore the fleet →', ' target="_blank"'],
+    ['groups', 'Meet the agents', 'The research fleet behind every assessment — what each one reads, and the claim it is responsible for.', '/agents.html', 'Explore the fleet →', ' target="_blank"'],
   ].map(([ic, t, p, href, cta2, attr]) => `<a class="ws-explorer" href="${href}"${attr}>
       <div class="ws-explorer-head"><span class="ws-explorer-icon"><span class="material-symbols-rounded">${ic}</span></span><span class="ws-explorer-title">${t}</span></div>
       <p>${p}</p><span class="ws-explorer-cta">${cta2}</span>
@@ -378,6 +387,7 @@ export function workspaceEmpty({ assessOnly = false, orgName = 'your Workspace',
         <div class="overline" style="color:var(--md-sys-color-primary)">${eyebrow}</div>
         <h2 class="ws-empty-title">${title}</h2>
         <p class="ws-empty-sub">${sub}</p>
+        ${planLine ? `<div class="ws-empty-plan"><span class="material-symbols-rounded">workspace_premium</span>${esc(planLine)}</div>` : ''}
         ${cta}
       </div>
       <div class="ws-empty-steps">${steps}</div>

@@ -140,7 +140,21 @@ ok(!PLAN.canCreate(freePlan, [], 'assessment', 'full').allowed, 'a free account 
 ok(!PLAN.canCreate(freePlan, [], 'build').allowed, 'a free account still may not build');
 // planSummary suppresses unlimited pre-screens only when something else prints.
 ok(/pre-screen/.test(PLAN.planSummary(freePlan).detail), `free badge says what it allows: "${PLAN.planSummary(freePlan).detail}"`);
-ok(!/pre-screen/.test(PLAN.planSummary(PLAN.resolvePlan({ plan: { preset: 'full' } })).detail), 'a full licence does not repeat unlimited pre-screens');
+/* INVERTED DELIBERATELY, 2026-11-01. This asserted that a full licence does NOT repeat "unlimited
+   pre-screens" — right when the summary could read "unlimited builds · unlimited assessments ·
+   unlimited pre-screens" and the third item was noise. Builds are retired on VerdictScore, so there
+   are at most two items, and the pre-screen is the one that makes a full licence full: suppressing
+   it left the badge reading "unlimited assessments" alone, which understates what was bought. The
+   check is kept pointing the other way rather than deleted, so the rule stays asserted either way. */
+{
+  const fullDetail = PLAN.planSummary(PLAN.resolvePlan({ plan: { preset: 'full' } })).detail;
+  ok(/unlimited assessments/.test(fullDetail) && /unlimited pre-screens/.test(fullDetail),
+     `a full licence states BOTH allowances — that is what makes it full ("${fullDetail}")`);
+  // And a one-off licensee must learn that triage is free, which is the whole conversion path.
+  const oneOff = PLAN.planSummary(PLAN.resolvePlan({ plan: { preset: 'one-off' } })).detail;
+  ok(/1 assessment/.test(oneOff) && /unlimited pre-screens/.test(oneOff),
+     `a one-off licence says the assessment is capped and the pre-screens are not ("${oneOff}")`);
+}
 
 console.log('\n12. ENFORCEMENT — the per-venture rule carries the weight alone now');
 const memo = await (await import('node:fs/promises')).readFile(new URL('../api/memo.js', import.meta.url), 'utf8');

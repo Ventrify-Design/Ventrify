@@ -36,7 +36,7 @@ export const BILLING_ENFORCED = false;
 export const TIERS = {
   prescreen: {
     key: 'prescreen', label: 'Pre-screen',
-    blurb: 'A free ~1-minute read that returns a score range, a flavour of the findings, and a data-room coverage report.',
+    blurb: 'A free ~3-minute read that returns a verdict band, the case argued both ways, who else is doing this, and what your own documents disagree about.',
   },
   full: {
     key: 'full', label: 'Full assessment',
@@ -112,10 +112,13 @@ export function capsFor(engagement, plan) {
 // two-hour agentic run — because the emphasis swap is correct for a licensee and nothing on either
 // button said that one takes three minutes and the other takes two hours. That is the single most
 // decision-relevant fact about the choice, and it was the one thing missing from it.
-export function ctaPair(plan) {
+// `tier` defaults to the licence's preference, but a caller that has resolved what the org can
+// actually create TODAY (plan.js createableTier) passes that instead — an org whose full allowance is
+// spent must not be shown "Run full assessment" as its primary.
+export function ctaPair(plan, tier = defaultTier(plan)) {
   const runPrescreen = { id: 'run_prescreen', label: 'Run free pre-screen', icon: 'bolt', cost: 'about 3 minutes · free' };
   const runFull      = { id: 'run_full',      label: 'Run full assessment', icon: 'play_arrow', cost: 'about 2 hours' };
-  return defaultTier(plan) === 'prescreen'
+  return tier === 'prescreen'
     ? { primary: runPrescreen, secondary: { id: 'unlock_full', label: 'Unlock full assessment', icon: 'lock_open', cost: 'about 2 hours' } }
     : { primary: runFull,      secondary: { ...runPrescreen, label: 'Run pre-screen first' } };
 }

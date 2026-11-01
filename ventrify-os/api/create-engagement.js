@@ -27,7 +27,9 @@ const SERVER_PLAN_PRESETS = {
   'self-serve': { capabilities: { assess: true, build: false }, limits: { assessments: 0,    builds: 0,    prescreens: null } },
   'one-off':    { capabilities: { assess: true, build: false }, limits: { assessments: 1,    builds: 0,    prescreens: null } },
   'assess':     { capabilities: { assess: true, build: false }, limits: { assessments: null, builds: 0,    prescreens: null } },
-  'full':       { capabilities: { assess: true, build: true },  limits: { assessments: null, builds: null, prescreens: null } },
+  // VERDICTSCORE DOES NOT BUILD VENTURES. 'full' means everything THIS product does — unlimited
+  // pre-screens and unlimited full assessments. Building is VentureStack, a separate product.
+  'full':       { capabilities: { assess: true, build: false }, limits: { assessments: null, builds: 0,    prescreens: null } },
 };
 function normLimit(v) {
   if (v == null || v === '' || v === 'unlimited') return null;

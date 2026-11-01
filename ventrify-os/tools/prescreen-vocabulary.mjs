@@ -102,11 +102,30 @@ console.log('\n4b. THE COPY THAT SELLS THE PRE-SCREEN — the screen a free-tier
    what they become if the gaps close." The first screen a free-tier customer sees was still selling
    the instrument the entire pivot removed, and the gate written to stop exactly that was looking at
    two other files. A gate is only as wide as the paths it reads. */
+/* THE WHOLE FUNCTION, not just the steps array. Scoping this to `prescreenSteps` caught step 3 and
+   left the paragraph four lines above it reading "you get a score range, a read on what your
+   documents do and don't cover, and a flavour of the findings". Same screen, same retired
+   instrument, one scan away. A gate aimed at a variable instead of a surface will keep finding the
+   instance and missing the class. */
 const cards = await readFile(new URL('shared/m3/workspace-cards.js', BASE), 'utf8');
-const steps = stripComments(slice(cards, 'const prescreenSteps', '];'));
-ok(steps.length > 200, 'the free tier\u2019s onboarding steps are present and findable');
-scan('prescreenSteps', steps, RANGE_WORDS, 'the retired range is not still being sold on the first screen');
-scan('prescreenSteps', steps, FORBIDDEN.concat(PENALISING), 'and the steps do not penalise a thin upload');
+const empty = stripComments(slice(cards, 'export function workspaceEmpty', 'export function planGateBanner'));
+ok(empty.length > 1500, 'the free tier\u2019s first screen is present and findable');
+scan('workspaceEmpty', empty, RANGE_WORDS, 'the retired range is not still being sold on the first screen');
+scan('workspaceEmpty', empty, FORBIDDEN.concat(PENALISING), 'and that screen does not penalise a thin upload');
+
+// The PLAN PRESET blurbs: what an admin reads when choosing a licence for a customer. The
+// self-serve one still said "Pre-screen a venture free and see the range" — so the person setting
+// up the account was being told to sell the retired instrument too.
+const planSrc = await readFile(new URL('workspace/plan.js', BASE), 'utf8');
+const presets = stripComments(slice(planSrc, 'export const PLAN_PRESETS', '};'));
+ok(presets.length > 400, 'the plan preset blurbs are present and findable');
+scan('PLAN_PRESETS', presets, RANGE_WORDS, 'no preset still describes the pre-screen as a range');
+
+// The tier descriptions are what every surface quotes when it explains the two products.
+const ent = await readFile(new URL('shared/entitlements.js', BASE), 'utf8');
+const tiers = stripComments(slice(ent, 'export const TIERS', 'export function tierOf'));
+ok(tiers.length > 200, 'the tier descriptions are present and findable');
+scan('TIERS', tiers, RANGE_WORDS.concat(FORBIDDEN, PENALISING), 'and they describe a band, not the retired range');
 
 console.log('\n5. COVERAGE KEEPS ITS OWN VOICE (§3.4) — this is where that language IS allowed');
 const cov = slice(ds, 'export function dataRoomHero', 'export function roomScanBanner');

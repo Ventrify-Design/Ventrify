@@ -42,8 +42,10 @@
   const Plan = window.VentrifyPlan, plan = W.plan;
 
   const chrome = { nav: wsNavConfig(), brand: wsBrandConfig(), account: wsAccountConfig() };
-  const tier = defaultTier(plan);
-  const cta = ctaPair(plan);
+  // The tier they can actually create, not the one the licence prefers — otherwise a licensee whose
+  // full allowance is spent is turned away at the door from the free thing they are still entitled to.
+  const tier = (Plan && Plan.createableTier ? Plan.createableTier(plan, W.programs || []) : null) || defaultTier(plan);
+  const cta = ctaPair(plan, tier);
 
   function mount(masthead, body) {
     document.getElementById('app').outerHTML = DS.pageShell({ active: 'portfolio', aux: {}, ...chrome, masthead, body });
