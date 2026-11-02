@@ -46,6 +46,14 @@
   --dark-2:       var(--lift-1);
   --dark-3:       var(--brand-ground);
   --dark-4:       var(--lift-1);
+  /* --band — ONE tinted ground, used by the two sections that lift off the page: The challenge at
+     the top and the CTA at the bottom. A token rather than the recipe written twice, because the
+     whole point is that the page opens and closes on the same colour and a second literal would
+     drift the first time one of them is tuned. */
+  --band:         color-mix(in srgb, var(--brand-accent) 13%, var(--canvas));
+  /* NOT --cta-bg. "Nothing between the nav and the footer paints a fill" is a rule of this
+     identity, and it wins over base.css's `.cta { background: var(--cta-bg) }`. A band here is a
+     pseudo-element laid behind the content, the same as the one at the top — see #contact::after. */
   --cta-bg:       transparent;
   --foot-bg:      transparent;
 
@@ -381,6 +389,21 @@ section.dark {
 }
 [data-brand="verdictscore"] .steps h4 { margin-top: 0; }
 
+/* `is-index` — the SAME rhythm for a list that is not a sequence of actions but the parts of one
+   document. The Output's six memo sections were set as a contents page (an index, a line and a
+   rule between) on the argument that they are not steps. That argument was right about the content
+   and wrong about the page: it read as a table of contents sitting under a product whose other
+   list carries the site's rhythm, and the two did not look like the same site.
+   So it takes the tick, the number and the scroll-stepped resolve, and keeps the distinction where
+   it belongs — in the content. How it works puts a sentence under each title; this puts nothing,
+   because a contents entry IS its title. */
+[data-brand="verdictscore"] .steps.is-index h4 {
+  font-size: var(--fs-base);
+  line-height: var(--lh-snug);
+  margin-bottom: 0;
+  color: var(--text-1);
+}
+
 
 /* ═══ THE CHALLENGE BAND ═══════════════════════════════════════════════════
    A tinted band behind the first section, rising ABOVE its own top edge so the
@@ -411,38 +434,18 @@ section.dark {
 [data-brand="verdictscore"] #challenge::after {
   content: ""; position: absolute; z-index: 0; pointer-events: none;
   inset: calc(var(--band-rise) * -1) 0 0 0;
-  background: color-mix(in srgb, var(--brand-accent) 13%, var(--canvas));
+  background: var(--band);
 }
 
-/* ═══ CONTENTS — the parts of a document, set as a contents page ══════════
-   Used by The Output for the six things in the memo. Deliberately NOT the
-   `.steps` treatment used by How it works: these are not a sequence, they are
-   the sections of one artefact, so there is no accent tick marking a start and
-   no heading per item — an index, a line, and a rule between, which is what a
-   contents page looks like.
-
-   THREE columns at desktop, so six entries sit as 3 x 2. Two columns put them in
-   three rows, which made the block taller than the claim above it and left the
-   full-width shot underneath looking disconnected from a narrow stack. Three
-   across is one scan per row and two rows total, which is the shape of the
-   thing being described. Two columns at tablet, one on a phone. */
-.contents { list-style: none; margin: 0; padding: 0; display: grid; gap: 0 clamp(1.6rem, 3vw, 3rem); }
-@media (min-width: 681px) { .contents { grid-template-columns: 1fr 1fr; } }
-@media (min-width: 1001px) { .contents { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-
-.contents li {
-  display: grid; grid-template-columns: auto 1fr; align-items: baseline; gap: 1rem;
-  padding: 1.05rem 0; border-top: 1px solid var(--line-1);
+/* THE PAGE CLOSES ON THE COLOUR IT OPENED WITH.
+   Same token, same mechanism — a pseudo-element behind the content rather than a section
+   background, because of the rule above. No rise: the challenge band lifts above its own top edge
+   so the hero capture straddles it, and there is nothing straddling the CTA's. */
+[data-brand="verdictscore"] #contact::after {
+  content: ""; position: absolute; z-index: 0; pointer-events: none;
+  inset: 0;
+  background: var(--band);
 }
-/* Every row carries its top rule and nothing closes the bottom, so both columns start level
-   whatever the item count — no :nth-child arithmetic that would hardcode "six". */
-
-.c-n { font-family: var(--f-mono); font-size: var(--fs-micro); letter-spacing: var(--tr-wide);
-       color: var(--text-4); transition: color var(--dur-2, .28s) var(--ease-out, cubic-bezier(.2,0,0,1)); }
-.c-t { font-size: var(--fs-small); line-height: var(--lh-snug); color: var(--text-2); }
-.contents li:hover .c-n { color: var(--brand-accent-2); }
-
-@media (prefers-reduced-motion: reduce) { .c-n { transition: none; } }
 
 @media (prefers-reduced-motion: reduce) {
   [data-brand="verdictscore"] .steps li::after { transition: none; }

@@ -513,12 +513,15 @@
   }
 
   /* <v-steps> — a numbered sequence. Picks its own column count and wires the
-     scroll-stepped behaviour, so no page hardcodes "of-6". */
+     scroll-stepped behaviour, so no page hardcodes "of-6".
+     `variant` adds is-<name> for a list that wants the same rhythm with a
+     different job — see .steps.is-index in brand-map.css. */
   function defineSteps() {
     customElements.define('v-steps', class extends HTMLElement {
       connectedCallback() {
         var items = [].slice.call(this.children).filter(function (c) { return c.tagName === 'LI'; });
-        var ol = el('ol', 'steps of-' + items.length);
+        var variant = this.getAttribute('variant');
+        var ol = el('ol', 'steps of-' + items.length + (variant ? ' is-' + variant : ''));
         ol.setAttribute('data-seq', '');
         items.forEach(function (li) {
           /* A step is revealed BY the sequence, so it must not also be a
