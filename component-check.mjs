@@ -204,6 +204,30 @@ for (const path of PAGES) {
      (wide.length ? ` — ${wide.map(i => `${i.name} ${i.w}px`).join(', ')}` : ''));
 }
 
+/* A WIDGET'S BOX IS ITS CONTENT, NOT A WORKSPACE PAGE'S PADDING.
+   <v-product> wraps the render in `brief vp-box`, and the product's .brief is a scrolling
+   document's reading column — a 63px side gutter and 120px of bottom padding. Inside a 552px
+   marketing column that made the valuation widget's box 493px tall around 339px of content, so a
+   grid centring the two columns centred the BOX and left the chart sitting 69px above the text
+   beside it. It looked like a layout bug and was a padding bug; only measuring tells them apart. */
+for (const path of PAGES) {
+  const p = await browser.newPage();
+  await p.setViewport({ width: 1440, height: 900 });
+  await p.goto('http://localhost:3000' + path, { waitUntil: 'networkidle0' });
+  await new Promise(r => setTimeout(r, 2200));
+  const boxes = await p.evaluate(() => [...document.querySelectorAll('v-product')].map(el => {
+    const inner = el.shadowRoot && el.shadowRoot.querySelector('.vp-box > *');
+    return { w: el.getAttribute('widget'),
+             host: Math.round(el.getBoundingClientRect().height),
+             content: inner ? Math.round(inner.getBoundingClientRect().height) : null };
+  }));
+  await p.close();
+  if (!boxes.length) continue;
+  const padded = boxes.filter(b => b.content == null || Math.abs(b.host - b.content) > 2);
+  ok(!padded.length, `${path.padEnd(32)} product widgets are content-height (${boxes.length} checked)` +
+     (padded.length ? ` — ${padded.map(b => `${b.w} box ${b.host} vs content ${b.content}`).join(', ')}` : ''));
+}
+
 /* THE SCROLL-DRIVEN CHART, AND ITS FALLBACK.
    The valuation widget re-keys the product's own six-stage entrance from time to scroll, off the
    --prog every section publishes. Two things have to hold, and the second matters more:

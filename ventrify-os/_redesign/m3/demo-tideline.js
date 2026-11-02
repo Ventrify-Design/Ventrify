@@ -396,6 +396,43 @@ export const demo = {
   },
   resetChat() { chat = []; repaintChat(false); },
 
+  /* ⚠ A COMPOSED VIEW — the product does not lay the Data room tab out this way.
+     Measured at 1440x900: the tab hero's right column holds the Room coverage lockup and is 157px
+     tall against a 542px left column, and "what the score looks for" — the list the lockup is a map
+     of — starts at y878, twenty-two pixels below the fold. So the tab shows the figure and none of
+     the thing it summarises, with a 377px void beside it.
+     For the WEBSITE only, the head and first rows of that list are lifted into the void so one
+     frame carries both. Nothing is invented: it is the real section, rendered by the real
+     component, moved. The marketing still and the live shot call this same function, so the two
+     cannot drift into showing different things.
+     If the void bothers us in the PRODUCT as well, that is a layout decision to take there — not
+     something to settle by cropping a marketing shot. */
+  liftRoomList(rows = 3) {
+    const right = $('.tab-panel.active .section-hero .right');
+    const list = $('.tab-panel.active .sec.rc');
+    if (!right || !list || right.querySelector('.__lift-wrap')) return;   // idempotent: the tour loops
+    const lifted = list.cloneNode(true);
+    [...lifted.querySelectorAll('.rcl')].slice(rows).forEach(r => r.remove());
+    // the section's tail belongs to the whole list, not to three rows of it
+    lifted.querySelectorAll('.rc-extra, .rc-act, .profile-foot, .dz, .m3-btn').forEach(e => e.remove());
+    lifted.classList.add('__lifted');
+    const wrap = document.createElement('div');
+    wrap.className = '__lift-wrap';
+    wrap.appendChild(lifted);
+    right.appendChild(wrap);
+    if (!document.getElementById('__lift-css')) {
+      const st = document.createElement('style');
+      st.id = '__lift-css';
+      // the fade is the honest part: it says the list continues past the frame
+      st.textContent = `.__lift-wrap{position:relative;margin-top:26px;
+          -webkit-mask-image:linear-gradient(to bottom,#000 0,#000 72%,transparent 100%);
+          mask-image:linear-gradient(to bottom,#000 0,#000 72%,transparent 100%)}
+        .__lifted{border-top:1px solid var(--md-sys-color-outline-variant);padding-top:18px!important}
+        .__lifted .sec-head .meta,.__lifted .sec-head .eyebrow{display:none}`;
+      document.head.appendChild(st);
+    }
+  },
+
   /* The flow ends by reloading the frame rather than un-winding four views by hand. The shot engine
      restarts its beats on every load, so a reload IS the loop. */
   restart() { location.reload(); },

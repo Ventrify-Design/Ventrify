@@ -76,29 +76,11 @@ for (const [name, { page, plan }] of Object.entries(SHOTS)) {
       return shown ? 'mid-read' : 'the banner was gone';
     }
     if (plan.liftRoomList) {
-      const right = document.querySelector('.tab-panel.active .section-hero .right');
-      const list = document.querySelector('.tab-panel.active .sec.rc');
-      if (!right || !list) return 'no hero right column / room list';
-      const lifted = list.cloneNode(true);
-      // keep the section head and the first N rows; the rest is what the fade says continues
-      const rows = [...lifted.querySelectorAll('.rcl')];
-      rows.slice(plan.liftRoomList).forEach(r => r.remove());
-      // the section's own tail — the request-documents action, its "or run it as it stands" aside and
-      // the provenance footnote — belongs to the whole list, not to three rows of it
-      lifted.querySelectorAll('.rc-extra, .rc-act, .profile-foot, .dz, .m3-btn').forEach(e => e.remove());
-      lifted.classList.add('__lifted');
-      const wrap = document.createElement('div');
-      wrap.className = '__lift-wrap';
-      wrap.appendChild(lifted);
-      right.appendChild(wrap);
-      const st = document.createElement('style');
-      // the fade is the honest part: it says the list continues past the frame
-      st.textContent = `.__lift-wrap{position:relative;margin-top:26px;-webkit-mask-image:linear-gradient(to bottom,#000 0,#000 72%,transparent 100%);mask-image:linear-gradient(to bottom,#000 0,#000 72%,transparent 100%)}
-        .__lifted{padding-top:0!important;border-top:1px solid var(--md-sys-color-outline-variant);padding-top:18px!important}
-        .__lifted .sec-head .meta,.__lifted .sec-head .eyebrow{display:none}`;
-      document.head.appendChild(st);
+      // ONE implementation, in demo-tideline.js, shared with the live shot — see the note there.
+      window.__demo.liftRoomList(plan.liftRoomList);
       await sleep(400);
-      return `lifted ${Math.min(plan.liftRoomList, rows.length)} of ${rows.length} rows into the hero`;
+      const n = document.querySelectorAll('.__lifted .rcl').length;
+      return n ? `lifted ${n} rows into the hero` : 'nothing lifted';
     }
     if (plan.run != null) {
       window.__demo.run();                 // not awaited: we want it mid-run, at a named step

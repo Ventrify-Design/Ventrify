@@ -67,6 +67,18 @@ if (BOOT) {
   ok('chatReveal never cuts a marker in half', split.length === 0, split.length ? JSON.stringify(split[0].slice(-40)) : `${frames.length} frames`);
   ok('chatReveal ends on the whole answer', frames[frames.length - 1] === SAMPLE);
 
+  /* Every `call` beat names a function the embedded page actually exposes. A missing one does not
+     throw — the engine logs "the page exposes no __demo.x" into a log nobody is reading and the
+     beat is skipped, so the shot quietly loses a step. Free, and it catches a rename. */
+  const demoSrc = readFileSync('ventrify-os/_redesign/m3/demo-tideline.js', 'utf8');
+  const defined = new Set([...demoSrc.matchAll(/^  (\w+)\s*\(/gm)].map(m => m[1]));
+  const { SCRIPTS } = await import('./sites/shared/shot-live.js');
+  const missing = [];
+  for (const [name, def] of Object.entries(SCRIPTS))
+    for (const b of def.beats)
+      if (b.act === 'call' && !defined.has(b.fn)) missing.push(`${name} → __demo.${b.fn}`);
+  ok('every call beat names a function the page defines', !missing.length, missing.join(', '));
+
   const pages = [...new Set(
     [...readFileSync('sites/shared/shot-live.js', 'utf8').matchAll(/page:\s*DEMO \+ '([^']+)'/g)]
       .map(m => '/ventrify-os/_redesign/m3/' + m[1]))];

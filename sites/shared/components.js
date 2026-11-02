@@ -1319,6 +1319,15 @@
      the chart is centred at either. The "+$25M over" caption is the conclusion
      of the argument and was still invisible at rest on desktop before this. */
   var PRODUCT_MOTION = [
+    /* ⚠ .brief IS A WORKSPACE PAGE'S READING COLUMN, NOT A WIDGET BOX.
+       The wrapper carries `brief vp-box`, and the product's .brief is a scrolling document's
+       column: a 63px side gutter and 120px of bottom padding. Inside a 552px marketing column that
+       made the widget's BOX 493px tall around 339px of content — so a grid centring the two
+       columns centred the box and left the chart sitting 69px above the text beside it. Measured,
+       not guessed: 339 + 34 top + 120 bottom = 493.
+       .vp-box exists for exactly this, and nothing had ever styled it. No !important needed — this
+       sheet is injected last, so it wins over .brief at equal specificity. */
+    '.vp-box{padding:0}',
     ':host{',
     '  --draw-band: clamp(0, (var(--prog, 1) - .06) / .14, 1);',
     '  --draw-ask:  clamp(0, (var(--prog, 1) - .18) / .08, 1);',

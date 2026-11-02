@@ -59,7 +59,13 @@ export const SCRIPTS = {
       { act: 'tap', sel: '.m3-drill .drill-close', label: 'close' },
       { act: 'hold' },
       { act: 'home' },
-    { act: 'tab', name: 'Data' }, { act: 'hold', ms: 1800 },
+    /* The tour ends on the Data room — the one tab a customer ACTS on — and it does not scroll,
+       deliberately. It does show the same composed view as the still under "For founders": the
+       product leaves a 377px void beside the coverage figure and puts the list it summarises just
+       below the fold, so the tab would otherwise end the tour on a number with nothing under it. */
+    { act: 'tab', name: 'Data' },
+    { act: 'call', fn: 'liftRoomList' },
+    { act: 'hold', ms: 2600 },
   ] },
 
   /* HOW IT WORKS — "from data room to a judgement you can inspect". The whole sentence, in order:
