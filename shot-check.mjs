@@ -59,6 +59,7 @@ if (BOOT) {
     [...readFileSync('sites/shared/shot-live.js', 'utf8').matchAll(/page:\s*DEMO \+ '([^']+)'/g)]
       .map(m => '/ventrify-os/_redesign/m3/' + m[1]))];
   if (!pages.length) { console.log('FAIL  no demo pages found in SCRIPTS'); process.exit(1); }
+  const sheets = [];
   for (const path of pages) {
     const pg = await b.newPage();
     const bad = [];
@@ -74,8 +75,17 @@ if (BOOT) {
     // is still there is a page that threw before it got anywhere.
     const built = await pg.evaluate(() => !!document.querySelector('.shell-main') && !document.getElementById('app'));
     ok(path.split('/').pop(), built && !bad.length, bad.length ? bad.join(' | ') : (built ? 'shell mounted' : 'the shell never mounted'));
+    sheets.push([path, await pg.evaluate(() => [...document.styleSheets].map(s => (s.href || '').split('/').pop()).filter(Boolean).join(','))]);
     await pg.close();
   }
+  /* The brand chain is the one thing these pages cannot share: HTML has no import, so each carries
+     its own <link> list, and the order is load-bearing — brand.css first for the tokens, brand-map
+     last so its remaps win. A page that drops one renders in Material's stock palette and nothing
+     throws. So they are asserted identical instead. */
+  const first = sheets[0];
+  sheets.slice(1).forEach(([path, css]) =>
+    ok(`${path.split('/').pop()} loads the same brand chain`, css === first[1],
+       css === first[1] ? '' : `differs from ${first[0].split('/').pop()}`));
   await b.close();
   console.log(fails.length ? `\n${fails.length} FAILED` : '\nevery embedded page boots clean');
   process.exit(fails.length ? 1 : 0);
@@ -185,34 +195,81 @@ const CHECKS = {
     ok('the index returns to the top', after.top === 0, `${after.top}px`);
   },
 
-  /* The Drive read. The scan is staged, so what is worth asserting is that the product's own
-     components got the state — not that a timer ran. */
-  async 'room-scan'() {
+  /* The whole flow. Four screens, three handovers, and a run compressed from two hours into about
+     fourteen seconds — so what is worth asserting is that each handover LANDED and that the product
+     state came with it, not that a timer ran. */
+  async 'full-run'() {
+    const book = await inner('full-run', `(d) => ({
+      rows: d.querySelectorAll('.eng-row, .pf-row, [class*="triage"] .mrow, .m3-table tbody tr').length,
+      band: !!d.querySelector('.pf-band, [class*="band"]'),
+      heading: (d.querySelector('.mh-hero .headline-m, .headline-m') || {}).textContent || '',
+    })`);
+    ok('it opens on the portfolio', /all engagements/i.test(book.heading), book.heading.trim().slice(0, 40));
+
+    await until(/New assessment/);
+    await new Promise(r => setTimeout(r, 1500));
+    ok('"New assessment" opens the create screen', !!(await inner('full-run', `(d) => !!d.getElementById('na-drive')`)));
+
     await until(/Read data room/);
-    const typed = await inner('room-scan', `(d) => (d.getElementById('na-drive')||{}).value || ''`);
+    const typed = await inner('full-run', `(d) => (d.getElementById('na-drive')||{}).value || ''`);
     ok('the Drive URL was typed into the real field', /drive\.google\.com\/drive\/folders\//.test(typed), typed.slice(0, 48));
-    ok('the scan banner came up', !!(await inner('room-scan', `(d) => !!d.querySelector('.rsb')`)));
+    ok('the scan banner came up', !!(await inner('full-run', `(d) => !!d.querySelector('.rsb')`)));
 
     /* Wait on the BANNER, not on a beat line. beats() returns the whole accumulated log, so any
-       regex that could have matched an earlier line matches immediately — "scrolling to" fires at
-       the name field, twenty seconds before the read is done. */
-    for (let n = 0; n < 200; n++) {
-      if (!(await inner('room-scan', `(d) => !!d.querySelector('.rsb')`))) break;
+       regex that could have matched an earlier line matches immediately. */
+    for (let n = 0; n < 250; n++) {
+      if (!(await inner('full-run', `(d) => !!d.querySelector('.rsb')`))) break;
       await new Promise(r => setTimeout(r, 200));
     }
-    await new Promise(r => setTimeout(r, 600));
-    const room = await inner('room-scan', `(d) => ({
-      banner: !!d.querySelector('.rsb'),
+    const room = await inner('full-run', `(d) => ({
       found: d.querySelectorAll('.rcl.is-found').length,
       gaps: d.querySelectorAll('.rcl.is-gap').length,
       live: [...d.querySelectorAll('.na-run')].filter(b => !b.disabled).length,
       gate: (d.getElementById('na-gate') || {}).textContent || '',
-      deck: !!d.querySelector('#na-deck .dz-file, #na-deck [class*="file"]'),
     })`);
-    ok('the read finished', !room.banner);
     ok('document types ticked over to present', room.found >= 4 && room.gaps >= 1, `${room.found} present · ${room.gaps} not seen`);
     ok('the run buttons came alive', room.live === 2, `${room.live} enabled`);
     ok('the "attach a deck" gate cleared', room.gate.trim() === '', JSON.stringify(room.gate));
+
+    await until(/Run full assessment/);
+    // the run: the real eleven workstreams, and a clock that tells the truth about the duration
+    let run = null;
+    for (let n = 0; n < 250; n++) {
+      run = await inner('full-run', `(d) => {
+        const steps = d.querySelectorAll('.run-step');
+        const live = d.querySelector('.run-step.live .bd p');
+        // "23m elapsed" is rendered in two places by two components; read the page, not a class.
+        const m = d.body.textContent.match(/(\\d+)\\s*m elapsed/);
+        return { steps: steps.length, live: live ? live.textContent.trim() : '', elapsed: m ? m[1] : null };
+      }`);
+      if (run && run.steps && run.elapsed) break;
+      await new Promise(r => setTimeout(r, 150));
+    }
+    ok('the run shows the real eleven workstreams', run && run.steps === 11, run ? `${run.steps} steps · ${run.live}` : 'never started');
+    ok('the elapsed clock climbs at the real rate', run && Number(run.elapsed) > 0, run && run.elapsed ? `${run.elapsed}m in` : 'no elapsed');
+
+    // and it lands on the verdict
+    let done = null;
+    for (let n = 0; n < 300; n++) {
+      done = await inner('full-run', `(d) => ({
+        tabs: d.querySelectorAll('.m3-tab').length,
+        active: (d.querySelector('.m3-tab.on, .m3-tab[aria-selected="true"]') || {}).textContent || '',
+        score: (d.querySelector('.lockup-num, .score-num') || {}).textContent || '',
+      })`);
+      if (done && done.tabs) break;
+      await new Promise(r => setTimeout(r, 200));
+    }
+    ok('it lands on the finished assessment', done && done.tabs === 7, done ? `${done.tabs} tabs` : 'never landed');
+    ok('and lands on the Verdict tab', done && /verdict/i.test(done.active), done ? done.active : '—');
+
+    // the reload IS the loop: the beats must start again, not stop
+    await until(/restart/, 40000);
+    for (let n = 0; n < 150; n++) {
+      const after = (await beats(CUR)).split('restart').pop();
+      if (/New assessment|Tideline/.test(after)) break;
+      await new Promise(r => setTimeout(r, 200));
+    }
+    ok('the reload restarts the choreography', /New assessment|Tideline/.test((await beats(CUR)).split('restart').pop()));
   },
 
   /* The assistant. The citation rule is the one that matters: chatMsg renders an id that is not in

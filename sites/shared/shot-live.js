@@ -62,38 +62,53 @@ export const SCRIPTS = {
     { act: 'tab', name: 'Data' }, { act: 'hold', ms: 1800 },
   ] },
 
-  /* HOW IT WORKS — "from data room to a judgement you can inspect". The section's heading is the
-     first half of that sentence and it was illustrating the second half. This is the first half:
-     a Drive folder goes in, 46 documents are read, and the six document types the score counts
-     tick over from "Not seen" to "Present" as the file that answers each one goes past.
+  /* HOW IT WORKS — "from data room to a judgement you can inspect". The whole sentence, in order:
+     the book, a new assessment set up from scratch, the data room read before a penny is spent, the
+     run, and the verdict it produces.
 
-     Nothing here is a mock-up. The typing fires real input events, the button is the product's
-     own, and the panel that fills in is roomScanBanner + roomCheck out of ds.js. What is staged
-     is the server. */
-  'room-scan': { page: DEMO + 'live-demo-setup.html', beats: [
+     THE RUN IS COMPRESSED AND THE CLOCK IS NOT. A real assess run is eleven workstreams on a cloud
+     runner and takes about two hours. The eleven steps here are the real ones — ASSESS_PLAN,
+     transcribed from the orchestration prompt — played at about a second each, with the elapsed
+     counter climbing at the REAL rate. That is the honest way round: the shot is short, and what it
+     says about the product is true.
+
+     Nothing else is a mock-up. The typing fires real input events so the product's own validators
+     run, every button is the product's own, and the panels that fill in are roomScanBanner,
+     roomCheck, assessingMemo and verdictMemo out of ds.js. What is staged is the server. */
+  'full-run': { page: DEMO + 'live-demo-flow.html', beats: [
+    { act: 'hold', ms: 2400 },
+    { act: 'read', to: .45, ms: 3000 },                  // the whole book, and how it scores
+    { act: 'hold', ms: 1600 },
+    { act: 'home', ms: 1200 },
+    { act: 'tap', sel: '.mh-actions .m3-btn', label: 'New assessment' },
+    { act: 'await', sel: '#na-drive' },
     { act: 'hold', ms: 1400 },
-    { act: 'reach', sel: '#na-name', pad: 300, ms: 1600 },
+    { act: 'reach', sel: '#na-name', pad: 300, ms: 1400 },
     { act: 'type', sel: '#na-name', text: 'Tideline', cps: 9, label: 'Venture name' },
-    { act: 'call', fn: 'attachDeck' },                  // the deck is a hard gate; without it the run buttons stay dead
+    { act: 'call', fn: 'attachDeck' },                   // the deck is a hard gate on the run
     { act: 'hold', ms: 1000 },
     { act: 'reach', sel: '#na-drive', pad: 300, ms: 2000 },
     { act: 'type', text: 'https://drive.google.com/drive/folders/1kQ9xTideline-dataroom', cps: 30, label: 'Drive folder' },
     { act: 'hold', ms: 700 },
     { act: 'tap', sel: '.na-drive-go', label: 'Read data room' },
-    { act: 'await', sel: '.rsb' },                      // the banner is up: the read has started
+    { act: 'await', sel: '.rsb' },                       // the banner is up: the read has started
     /* Back to the top to WATCH it. The aside is sticky, but at 900px its content is taller than the
        frame, so down by the Drive field the banner sits tucked under the masthead — measured at y=5.
-       The counter is the best thing in this shot and it was off-screen for all of it. */
+       The counter is the best thing in this part and it was off-screen for all of it. */
     { act: 'home', ms: 1100 },
-    { act: 'await', sel: '.rsb', gone: true },          // and down again: the read has finished
+    { act: 'await', sel: '.rsb', gone: true },           // and down again: the read has finished
     { act: 'hold', ms: 2600 },
-    /* The run buttons are disabled until the form is valid, so the pointer rests on one rather
-       than tapping it: a tap that visibly does nothing is worse than no tap at all. */
-    { act: 'reach', sel: '.m3-btn.filled.na-run', pad: 420, ms: 2000 },
-    { act: 'point', sel: '.m3-btn.filled.na-run', ms: 2400 },
-    { act: 'home' },
-    { act: 'call', fn: 'reset' },
-    { act: 'hold', ms: 1400 },
+    { act: 'reach', sel: '.m3-btn.filled.na-run', pad: 420, ms: 1800 },
+    { act: 'tap', sel: '.m3-btn.filled.na-run', label: 'Run full assessment' },
+    { act: 'await', sel: '.run-step' },
+    { act: 'hold', ms: 2200 },
+    { act: 'read', to: .42, ms: 3200 },                  // the eleven workstreams, ticking over
+    { act: 'await', sel: '.m3-tab', ms: 30000 },         // tabs appear: the verdict has landed
+    { act: 'home', ms: 900 },
+    { act: 'hold', ms: 3200 },
+    { act: 'read', to: .45, ms: 3000 },
+    { act: 'hold', ms: 2600 },
+    { act: 'call', fn: 'restart' },                      // the reload is the loop
   ] },
 
   /* THE OUTPUT — "more than a summary, a documented assessment". The argument is not "here is a
@@ -203,7 +218,13 @@ export function mountLiveShot(frame, { src, script, onLog } = {}) {
     if (onLog) onLog(s);
   };
 
+  /* RESTART ON EVERY LOAD, not just the first. A choreography that walks a whole flow ends by
+     reloading the frame rather than unwinding four views by hand — so the reload IS the loop. The
+     generation counter is what stops the previous run's beats carrying on against a dead document:
+     an await in flight when the page goes resolves into a loop that checks `mine` and exits. */
+  let gen = 0;
   iframe.addEventListener('load', async () => {
+    const mine = ++gen;
     const d = iframe.contentDocument, w = iframe.contentWindow;
     if (!d) return;
     frame.classList.add('is-running');
@@ -362,11 +383,12 @@ export function mountLiveShot(frame, { src, script, onLog } = {}) {
 
     for (;;) {
       for (const beat of beats) {
+        if (mine !== gen) return;                 // the page reloaded; this run is over
         await breathe();
         try { await run(beat); } catch (e) { say(`!! ${beat.act} failed: ${e.message}`); }
       }
     }
-  }, { once: true });
+  });
 
   return iframe;
 }

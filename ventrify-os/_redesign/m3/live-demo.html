@@ -9,10 +9,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" rel="stylesheet">
-<!-- THE BRAND LAYER, which _redesign/m3/assess.html does not load — that page is the DS workshop and
-     renders in the pre-brand M3 default, which is why it shows "Ventrify OS" with both product lockups.
-     Order is load-bearing and brand-map.css documents why: brand.css first (the tokens), then theme/ds,
-     then brand-map last so its remaps win. -->
+<!-- THE BRAND LAYER, which the _redesign workshop pages do not load — they render in the pre-brand
+     M3 default, which is why they show "Ventrify OS" with both product lockups. Order is load-bearing
+     and brand-map.css documents why: brand.css first (the tokens), then theme/ds, then brand-map last
+     so its remaps win. Identical on all three demo pages; shot-check --boot asserts they stay that way. -->
 <link rel="stylesheet" href="../../assets/brand/brand.css">
 <link rel="stylesheet" href="theme.css">
 <link rel="stylesheet" href="ds.css">
@@ -28,8 +28,8 @@
 
   /* NO FOCUS RING ON THE DRILL HEADLINE — here only, never in the product. openDrill() moves focus
      to the companion page's title so a screen-reader or keyboard user lands where the new content
-     starts, and the ring is how a sighted keyboard user sees that happen. This page is driven by a
-     script and read by nobody's keyboard, so the ring is just a box that appears around the title
+     starts, and the ring is how a sighted keyboard user sees that happen. These pages are driven by
+     a script and read by nobody's keyboard, so the ring is just a box that appears around a title
      for no reason the viewer can explain. The real workspace keeps it. */
   .m3-drill .mh-hero .headline-m:focus,
   .m3-drill:focus { outline: none; box-shadow: none; }
@@ -38,167 +38,8 @@
 <body>
 <div id="app"></div>
 <script type="module">
-  import * as DS from './ds.js';
-  import { ASSESSMENT as BASE, SCORE as S } from './data.js';
-  import { resolveActions } from '../../shared/actions.js';
-
-  /* ── A FICTIONAL VENTURE ───────────────────────────────────────────────────
-     The sample assessment is written about MoneyGym, which is a real customer. This page is
-     embedded on a public marketing site, so the venture is renamed throughout — one pass over the
-     serialised object rather than a forked copy of data.js, which would be 976 lines to keep in
-     sync for the sake of a name.
-
-     ⚠ HONEST LIMIT: this renames, it does not rewrite. The underlying story is still the same
-     behavioural-finance subscription business, with the same figures and the same prose. It reads
-     as a plausible venture called Tideline; it is not an independently invented one. If this page
-     is ever pointed at by sales or press, the memo copy wants writing from scratch. */
-  const rename = (o, from, to) => JSON.parse(JSON.stringify(o).split(from).join(to));
-  const A = { ...rename(BASE, 'MoneyGym', 'Tideline'), name: 'Tideline', initials: 'TL' };
-  const SC = rename(S, 'MoneyGym', 'Tideline');
-
-  const acts = resolveActions({ page: 'assess' });
-
-  /* The DATA ROOM tab, which the workshop page omits. The live workspace shows it on every
-     assessment — it is the one surface a customer acts on — so a demo without it misrepresents
-     the product by one whole tab. */
-  const roomTab = {
-    docCount: 46, deck: true, canRescan: true,
-    check: { docCount: 46, classes: [
-      { key: 'deck',   label: 'Pitch deck',            found: true },
-      { key: 'model',  label: 'Financial model',       found: true },
-      { key: 'unit',   label: 'Unit economics',        found: true },
-      { key: 'cap',    label: 'Ownership / cap table', found: true },
-      { key: 'legal',  label: 'Corporate / legal',     found: false },
-      { key: 'metric', label: 'Observed metrics',      found: false },
-    ] },
-  };
-
-  const body = `
-    <div class="tab-panel active">${DS.verdictMemo(A, SC)}</div>
-    <div class="tab-panel"><div class="brief">${DS.investabilityHero(SC, A)}${DS.scoreMovement(A.filings)}<hr class="rule">${DS.investabilityComposition(SC, 'openInvest')}<hr class="rule">${DS.strengthProfile(SC, 'openInvest')}</div></div>
-    <div class="tab-panel">${DS.marketMemo(A)}</div>
-    <div class="tab-panel">${DS.teamMemo(A, SC)}</div>
-    <div class="tab-panel">${DS.diligenceEditorial(A)}</div>
-    <div class="tab-panel">${DS.researchMemo(A, SC)}</div>
-    <div class="tab-panel"><div class="brief">${DS.dataRoomTab(roomTab)}</div></div>`;
-
-  document.getElementById('app').outerHTML = DS.pageShell({
-    active: 'portfolio',
-    aux: {}, auxMode: 'push', drill: true, rail: acts.rail, railOverflow: acts.overflow,
-    masthead: DS.masthead({
-      breadcrumb: { label: 'Portfolio', href: 'portfolio.html' },
-      crumbTail: A.name, avatar: A.initials, headline: A.name,
-      status: A.status, subheading: A.stageLine, compact: A.name,
-      actions: acts.decision.length ? acts.decision : (acts.primary ? [acts.primary] : []),
-      tabs: ['Verdict', 'Investability', 'Market', 'Team',
-        { label: 'Diligence', badge: (A.gaps || []).filter(g => DS.gapNeedsAction(g)).length || null },
-        'Research', 'Data room'],
-      activeTab: 0
-    }),
-    body
-  });
-  DS.initShell();
-  DS.initTabs({ names: ['verdict', 'investability', 'market', 'team', 'diligence', 'research', 'dataroom'] });
-
-  window.openInvest = (key) => window.openAux({ mode: 'push', ...DS.categoryDetail(SC, key, A.gapBySlug || {}) });
-
-  /* THE RESEARCH DRILL. Every research document opens as its own full companion page — the thing
-     that makes the Research tab worth showing at all, because the index alone is just a list of
-     titles. The embedding page drives this: it opens one document, holds, and closes it again. */
-  const room = DS.researchRoom(A.reading && A.reading.length ? A.reading : A.research);
-  window.__room = room;
-  window.DRILL_PAGES = {};
-  room.all.forEach(d => { window.DRILL_PAGES[d.slug] = () => DS.researchDrillOpts(d, room); });
-  window.openResearchDrill = (slug) => {
-    const o = window.DRILL_PAGES[slug];
-    if (o) window.openDrill({ key: slug, source: document.activeElement, ...o() });
-  };
-  const findDoc = re => room.all.find(d => re.test(d.slug) || re.test(d.title.toLowerCase()));
-  window.openPeek = (kind, i) => {
-    if (kind === 'research') { const d = room.all[i]; return d && window.openResearchDrill(d.slug); }
-    const d = kind === 'benchmark' ? findDoc(/benchmark|competitor|competitive/) : findDoc(/team|diligence/);
-    if (d) return window.openResearchDrill(d.slug);
-  };
-  /* ── THE ASSISTANT ───────────────────────────────────────────────────────
-     chatPanel is a real ds.js organism and the live workspace wires it; this page did not, so the
-     one feature that answers "can I interrogate this thing?" was invisible on the site.
-
-     WHAT IS REAL. The panel, the citation chips, the numbered references, the ⟨derived⟩ marker and
-     the proposal card are all the product's own rendering. The ANSWER is written down, because the
-     real one costs an API call and a marketing page must not make them. Nothing here claims to be
-     generated live.
-
-     The answer is held to the same rule the real assistant is: every id in `cited` exists in this
-     assessment's research, and the chips open those documents. A chip citing something absent would
-     render as a loud "unverified" — which is the component working, and not a thing to demonstrate
-     by accident. */
-  const CHAT = {
-    q: 'What is the single biggest risk to this score?',
-    a: {
-      role: 'bot',
-      text: '**The moat is the gap, and it is not built.** Two of the five Moat criteria score zero — '
-        + 'IP defensibility and switching costs — because the four-engine stack is "defined, not built" '
-        + 'in the founder’s own document [[research:claims-pressure-test]]. Moat carries 1.5 of 5, and '
-        + 'closing it is a funded build rather than anything diligence can resolve \u27e8derived\u27e9.\n\n'
-        + 'The second is the category. The deck presents it as unclaimed; the benchmark puts an incumbent '
-        + 'in it at roughly 7M users and $280M+ ARR, net-profitable [[research:competitive-benchmark]].\n\n'
-        + 'Both sit inside the +21 headroom to a 76 — so the 55 is not a verdict on the venture, it is '
-        + 'a measure of what has been built so far.',
-      cited: ['research:claims-pressure-test', 'research:competitive-benchmark'],
-      proposals: [{
-        title: 'Add a diligence question',
-        detail: 'Ask the founder for a named ML / data lead and a build plan for the four engines.',
-        lines: ['Action queue · Tideline', 'Owner: Alex Doré · Blocker'],
-        cta: 'Add to the action queue',
-      }],
-    },
-  };
-  let chat = [];
-  const chatOpts = () => DS.chatPanel({ ventureName: A.name, messages: chat, pending: chat.pending });
-  const repaintChat = (pending) => {
-    const body = document.querySelector('.m3-aux .aux-body');
-    if (!body) return;
-    const c = DS.chatPanel({ ventureName: A.name, messages: chat, pending });
-    body.innerHTML = c.body;
-    const log = document.getElementById('chat-log');
-    if (log) log.scrollTop = log.scrollHeight;
-  };
-
-  window.RAIL_PANELS = {
-    sources: () => DS.sourcesPanel(A),
-    assist: () => { chat = []; return chatOpts(); },
-  };
-
-  const sleep = ms => new Promise(r => setTimeout(r, ms));
-  /* A citation that cannot be opened is a footnote. The real panel routes a chip to its source; so
-     does this one, straight into the research drill the chip names. */
-  document.addEventListener('click', (e) => {
-    const chip = e.target.closest && e.target.closest('.chat-chip');
-    if (chip) { const id = (chip.dataset.src || '').replace(/^research:/, ''); return window.openResearchDrill(id); }
-    if (e.target.closest && e.target.closest('#chat-send')) window.__demo.ask();
-  });
-
-  window.__demo = {
-    /* The typed question is already in the box when this runs — the shot put it there, keystroke by
-       keystroke, through the product's own input events. */
-    async ask() {
-      const box = document.getElementById('chat-input');
-      const text = (box && box.value.trim()) || CHAT.q;
-      chat = chat.concat([{ role: 'user', text }]);
-      // The form lives in the aux FOOTER, which repaintChat does not touch, so the question would
-      // otherwise sit in the box underneath its own answer.
-      if (box) box.value = '';
-      repaintChat(true);                      // the three dots: the product's own pending state
-      await sleep(2400);
-      chat = chat.concat([CHAT.a]);
-      repaintChat(false);
-      await sleep(400);
-    },
-    resetChat() { chat = []; repaintChat(false); },
-  };
-
-  /* Everything that would WRITE is inert. This is a window onto the product, not the product. */
-  window.openGap = () => {}; window.__eaRun = () => {}; window.__toast = () => {};
+  import { boot } from './demo-tideline.js';
+  boot('assess');
 </script>
 </body>
 </html>

@@ -13,7 +13,7 @@ import { mkdirSync } from 'fs';
 
 const HOST = process.env.SHOT_HOST || 'http://localhost:3000';
 const DEMO  = '/ventrify-os/_redesign/m3/live-demo.html';
-const SETUP = '/ventrify-os/_redesign/m3/live-demo-setup.html';
+const FLOW  = '/ventrify-os/_redesign/m3/live-demo-flow.html';
 const OUT = 'assets/product/shots';
 
 /* Each poster is the frame of its choreography worth freezing — usually the moment the shot is
@@ -21,7 +21,9 @@ const OUT = 'assets/product/shots';
  * so its poster is what the live frame starts on, and the handover is invisible. */
 const SHOTS = {
   'vs-verdict-score': { page: DEMO,  plan: { tab: 'Verdict' } },
-  'vs-room-scan':     { page: SETUP, plan: { scan: 0.55 } },
+  /* The poster for the whole-flow shot. The run is the frame that says "how it works" on its own:
+     eleven named workstreams, the one in flight, and a clock that admits it takes two hours. */
+  'vs-run':           { page: FLOW,  plan: { run: 4 } },
   'vs-assistant':     { page: DEMO,  plan: { tab: 'Verdict', assist: true } },
   'vs-dataroom':      { page: DEMO,  plan: { tab: 'Data' } },
   'vs-research-doc':  { page: DEMO,  plan: { tab: 'Research', drill: ['market sizing'], drillScroll: .18 } },
@@ -63,6 +65,16 @@ for (const [name, { page, plan }] of Object.entries(SHOTS)) {
       const shown = document.querySelector('.rsb');
       run.then(() => {});                 // let it finish in the background; we shoot mid-read
       return shown ? 'mid-read' : 'the banner was gone';
+    }
+    if (plan.run != null) {
+      window.__demo.run();                 // not awaited: we want it mid-run, at a named step
+      for (let n = 0; n < 200; n++) {
+        const live = document.querySelector('.run-step.live .idx');
+        if (live && Number(live.textContent) >= plan.run) break;
+        await sleep(100);
+      }
+      const live = document.querySelector('.run-step.live .bd p');
+      return live ? 'step: ' + live.textContent.trim().slice(0, 34) : 'no live step';
     }
     if (plan.assist) {
       const btn = document.querySelector('[data-panel="assist"]');
