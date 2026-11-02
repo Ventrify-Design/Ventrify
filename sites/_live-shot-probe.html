@@ -26,7 +26,9 @@
 
   <!-- The frame is the site's own .shot / .shot-frame, so spacing, radius, border and cast are
        whatever brand-map.css says they are — not a second set of values that drifts. -->
-  <div class="shot is-framed is-live">
+  <!-- `live` is set from the query string below, not written here: it is how shot-check.mjs finds
+       a given choreography's frame, and the site's <v-shot live="…"> carries the same attribute. -->
+  <div class="shot is-framed is-live" id="shot">
     <span class="shot-frame" id="frame"></span>
   </div>
 </main>
@@ -41,12 +43,10 @@
   if (!SCRIPTS[script]) {
     log.textContent = `no script "${script}". Known: ${Object.keys(SCRIPTS).join(', ')}`;
   } else {
-    log.textContent = `${script} · ${SCRIPTS[script].length} beats`;
-    mountLiveShot(frame, {
-      src: '/ventrify-os/_redesign/m3/live-demo.html',
-      script,
-      onLog: s => { log.textContent += '\n' + stamp() + s; },
-    });
+    log.textContent = `${script} · ${SCRIPTS[script].beats.length} beats · ${SCRIPTS[script].page}`;
+    document.getElementById('shot').setAttribute('live', script);
+    // No src: the choreography names its own page.
+    mountLiveShot(frame, { script, onLog: s => { log.textContent += '\n' + stamp() + s; } });
   }
 </script>
 </body>

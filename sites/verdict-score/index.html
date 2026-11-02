@@ -99,8 +99,14 @@
 
 
       <!-- PLACEHOLDER SHOT — the image is provisional, the placement is not. -->
-      <v-shot base="../../" name="shots/vs-portfolio" frame
-              alt="The Portfolio screen: eleven active engagements, how the book scores across the five guidance bands, and the ventures waiting on something"></v-shot>
+      <!-- LIVE. This section's heading is "from data room to a judgement you can inspect" and it
+           was illustrating the second half of that sentence with a Portfolio screenshot. This is
+           the first half: a Drive folder goes in, 46 documents are read, and the six document
+           types the score counts tick from "Not seen" to "Present" as the file that answers each
+           one goes past. -->
+      <v-shot base="../../" name="shots/vs-room-scan" frame
+              live="room-scan"
+              alt="Setting up an assessment: a Google Drive folder is linked and the data room is read, with each of the six document types the score counts marked present or missing as the files go past"></v-shot>
     </div>
   </section>
 
@@ -159,8 +165,13 @@
       <!-- PLACEHOLDER SHOT — and a knowingly weak one: vs-verdict is the SAME screen as the hero
            shot at a different crop, so as it stands the page shows the Verdict tab twice. It is
            here to hold the slot while we choose what this section should actually show. -->
-      <v-shot base="../../" name="shots/vs-verdict" frame
-              alt="The decision memo: the recommendation and thesis beside an investability score of 80 out of 100, the three blind draws behind it, and the composition that makes up the score"></v-shot>
+      <!-- LIVE. The argument here is not "here is a document" — it is "here is one you can
+           interrogate, and every claim in the answer goes back to a source you can open". So the
+           shot reads the memo, asks the assistant what the biggest risk is, and follows one of its
+           citations into the research behind it. -->
+      <v-shot base="../../" name="shots/vs-assistant" frame
+              live="ask-the-memo"
+              alt="The decision memo with the assistant open beside it: an answer about the biggest risk to the score, every claim numbered to a source, and a card proposing a diligence question it cannot action on its own"></v-shot>
     </div>
   </section>
 
@@ -187,8 +198,11 @@
         </div>
       </div>
 
-      <v-shot base="../../" name="shots/vs-investability" frame
-              alt="The Investability tab an investor reads: the category profile and how the score decomposes"></v-shot>
+      <!-- A STILL, deliberately. The section is about the state of your room, and a state is a
+           thing to read rather than watch; the coverage figure above it is already the live
+           component. Shot from the same demo page as the rest, so the venture matches. -->
+      <v-shot base="../../" name="shots/vs-dataroom" frame
+              alt="The Data room tab: every document the assessment read, and which of the six document types the score counts are present and which are still missing"></v-shot>
     </div>
   </section>
 

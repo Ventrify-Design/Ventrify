@@ -1238,9 +1238,8 @@
      COST: six stylesheets and the render layer, fetched once and shared by every
      instance, and only on a page that actually uses one — the import is dynamic. */
   var OS_BASE = '/ventrify-os';
-  /* The embedded product page. Absolute from the server root, like OS_CSS below: a live shot can
-     sit at any depth on any of the three sites. Override per shot with live-src="". */
-  var LIVE_SRC = OS_BASE + '/_redesign/m3/live-demo.html';
+  /* No default embed page here on purpose: a choreography names the page it runs on (see
+     shared/shot-live.js), and a fallback defined out here would silently win over it. */
   var OS_CSS = [
     'https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0',
     OS_BASE + '/assets/brand/brand.css',
@@ -1405,13 +1404,18 @@
         if (!matchMedia('(min-width: 901px)').matches) return;
         this.classList.add('is-live');
         var frame = this.querySelector('.shot-frame');
-        var src = this.getAttribute('live-src') || LIVE_SRC;
+        /* ⚠ ONLY when the page says so. This was `live-src || LIVE_SRC`, which meant the component
+           ALWAYS passed a src — and a src overrides the choreography's own page. Every live shot
+           therefore ran on live-demo.html whatever script it named, so the data-room shot embedded
+           the assessment and played a scan script against a page with no scan on it. It failed
+           silently: the frame rendered a perfectly good screen that was simply the wrong one. */
+        var src = this.getAttribute('live-src') || '';
         var started = false;
         var io = new IntersectionObserver(function (es) {
           if (!es[0].isIntersecting || started) return;
           started = true; io.disconnect();
           import('./shot-live.js')
-            .then(function (m) { m.mountLiveShot(frame, { src: src, script: live }); })
+            .then(function (m) { m.mountLiveShot(frame, src ? { src: src, script: live } : { script: live }); })
             .catch(function () { /* the poster is already there — that IS the fallback */ });
         }, { rootMargin: '400px' });
         io.observe(this);

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en" data-brand="verdictscore">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>New assessment · Tideline — VerdictScore</title>
+<meta name="description" content="Setting up a venture assessment: the deck and the data room on one screen, with a live read of what the score can see in the room.">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" rel="stylesheet">
+<!-- Same brand chain, same order, same reasons as live-demo.html. -->
+<link rel="stylesheet" href="../../assets/brand/brand.css">
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="ds.css">
+<link rel="stylesheet" href="assess-editorial.css">
+<link rel="stylesheet" href="transitions.css">
+<link rel="stylesheet" href="../../shared/m3/workspace-chrome.css">
+<link rel="stylesheet" href="../../shared/m3/brand-map.css">
+<style>
+  html, body { scrollbar-width: none; }
+  body::-webkit-scrollbar { display: none; }
+  /* Same reason as live-demo.html: a script drives this, nobody's keyboard does. */
+  .m3-drill .mh-hero .headline-m:focus, .m3-drill:focus { outline: none; box-shadow: none; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script type="module">
+  import * as DS from './ds.js';
+  import { resolveActions } from '../../shared/actions.js';
+  import { ctaPair } from '../../shared/entitlements.js';
+
+  /* THE INTAKE, AS A MARKETING SHOT.
+     Setup is a full page, not a side sheet: left is what you type and attach, right is what we can
+     see, filling in live. That second column is the argument — "we read the room before the run
+     starts, so you know what we can see" — and it is a thing that HAPPENS. A screenshot of it is a
+     progress bar frozen at 40%, which says nothing at all.
+
+     WHAT IS REAL AND WHAT IS STAGED. Every surface here is the product's own: createScreen,
+     roomScanBanner, roomCheck, roomPreview, straight out of ds.js. What is staged is the SERVER —
+     the real __naReadRoom() posts a Drive folder to the room-check API. A marketing page has no
+     API and must not pretend to call one, so the reply is scripted and nothing else is. */
+
+  const acts = resolveActions({ page: 'portfolio' });
+
+  document.getElementById('app').outerHTML = DS.pageShell({
+    active: 'portfolio', aux: {}, rail: acts.rail, railOverflow: acts.overflow,
+    masthead: DS.masthead({
+      breadcrumb: { label: 'Portfolio', href: '#' }, crumbTail: 'New assessment',
+      eyebrow: 'New assessment', headline: 'Assess a venture for Apex Capital',
+      // Without `compact` the masthead keeps the full headline when it minifies on scroll, and a
+      // 34-character line in a 1440px bar truncates to "Assess a venture for Apex Capit".
+      compact: 'New assessment',
+      subheading: 'Attach the deck and the data room. We read the room first, so you know what we can see before the run starts.'
+    }),
+    body: `<div class="brief">${DS.createScreen({
+      operators: [{ v: 'op-1', l: 'Alex Doré · Program Lead' }, { v: 'op-2', l: 'Ruth Adeyemi · Master operator' }],
+      cta: ctaPair({ preset: 'full' })
+    })}</div>`
+  });
+  DS.initShell();
+
+  /* ── the staged read ──────────────────────────────────────────────────────
+     46 files, read one at a time, with the six document classes the score counts ticking over from
+     "Not seen" to "Present" as the file that answers each one goes past. The class rows are the
+     product's own roomCheck(); `justFound` is its transient highlight, which exists because the
+     real read lands all at once and the change would otherwise happen in a list nobody is looking
+     at. Here it fires six times, once per class, which is what the component was built for. */
+  const CLASSES = [
+    { key: 'financial_model',  label: 'Financial model',                      want: 'A projection over three or more periods with at least one revenue line and one cost line', found: false, seenIn: 'Tideline model v4.xlsx' },
+    { key: 'unit_economics',   label: 'Unit economics',                       want: 'At least two of: price or ARPU, CAC, churn or retention, LTV or payback',                found: false, seenIn: 'Unit economics + sensitivity.xlsx' },
+    { key: 'cost_basis',       label: 'Cost basis',                           want: 'At least one cost line with where it comes from — a named vendor, a quoted rate, or a stated assumption', found: false, seenIn: 'Opex build 2026.xlsx' },
+    { key: 'ownership',        label: 'Ownership / cap table',                want: 'Any statement of who owns what — a cap table, equity split, share register, SAFE or option schedule', found: false, seenIn: 'Cap table — post-seed.xlsx' },
+    { key: 'corporate_legal',  label: 'Corporate / legal',                    want: 'Any one of: incorporation document, company number, articles, board minutes, shareholder or IP agreement' },
+    { key: 'observed_metrics', label: 'Observed metrics or primary research', want: 'At least one MEASURED number — not a forecast: pilot, waitlist, funnel, cohort, LOI, or primary interviews' },
+  ];
+  /* The files the reader walks past. Enough of them to read as a real folder rather than a list of
+     six props, and the four that answer a class are marked with the class they answer. */
+  const FILES = [
+    'Tideline — Seed deck v3.pdf',
+    'Tideline model v4.xlsx',                      // financial_model
+    'Executive summary.docx',
+    'Unit economics + sensitivity.xlsx',           // unit_economics
+    'Pricing tiers — Nov.pdf',
+    'Opex build 2026.xlsx',                        // cost_basis
+    'Hiring plan — eng.xlsx',
+    'Cap table — post-seed.xlsx',             // ownership
+    'Founder letter.pdf',
+    'Market notes — behavioural finance.md',
+    'Competitor teardown.pdf',
+    'Brand guidelines.pdf',
+  ];
+  const ANSWERS = { 1: 'financial_model', 3: 'unit_economics', 5: 'cost_basis', 7: 'ownership' };
+  const TOTAL = 46;                                 // the folder is bigger than the list we walk
+
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const room = () => document.getElementById('na-room');
+
+  const paint = (scan, justFound) => {
+    const host = room(); if (!host) return;
+    const seen = CLASSES.filter(c => c.found).length;
+    host.innerHTML = (scan ? DS.roomScanBanner({ ...scan, found: seen, of: CLASSES.length }) : '')
+      + DS.roomCheck({ docCount: scan ? scan.done : TOTAL, classes: CLASSES }, { justFound: justFound || [] });
+  };
+
+  window.__demo = {
+    /* Drive → folder → files → coverage. Paced to be read, not to be fast: the real read of 46
+       documents takes most of a minute, so a shot that finishes in two seconds is the lie. */
+    async scanRoom() {
+      CLASSES.forEach(c => { c.found = false; });
+      paint({ done: 0, total: TOTAL, current: '' });
+      await sleep(700);
+      for (let i = 0; i < FILES.length; i++) {
+        const key = ANSWERS[i];
+        if (key) CLASSES.find(c => c.key === key).found = true;
+        paint({ done: Math.round((i + 1) * TOTAL / FILES.length), total: TOTAL, current: FILES[i] },
+               key ? [key] : []);
+        await sleep(key ? 620 : 300);
+      }
+      paint(null, []);
+    },
+    /* The deck is a hard gate — the product will not run an assessment without one — so a shot that
+       never attaches one ends on two greyed-out buttons and the line "Attach a pitch deck to begin."
+       That is accurate and it is the wrong last frame. */
+    attachDeck() {
+      const host = document.getElementById('na-deck'); if (!host) return;
+      host.innerHTML = DS.docDropzone([{ icon: 'slideshow', title: 'Tideline — Seed deck v3.pdf', note: 'Pitch deck · 18 slides · ready to run' }], {
+        single: true, status: 'read', clearLabel: 'Replace', fileIcon: 'slideshow',
+        icon: 'upload_file', prompt: 'Drop the pitch deck here', sub: 'PDF · the assessment runs from it.',
+        note: 'Pitch deck · uploads when you run',
+        onPick: "window.__naPick('deck')", onClear: 'window.__naClearDeck()', onDrop: '__naDropDeck',
+      });
+      deck = true; syncRun();
+    },
+    reset() {
+      CLASSES.forEach(c => { c.found = false; });
+      const host = room(); if (host) host.innerHTML = DS.roomPreview({});
+      const f = document.getElementById('na-drive'); if (f) f.value = '';
+      const n = document.getElementById('na-name'); if (n) n.value = '';
+      const dz = document.getElementById('na-deck');
+      if (dz) dz.innerHTML = DS.docDropzone([], { single: true, status: '', clearLabel: 'Replace', fileIcon: 'slideshow',
+        icon: 'upload_file', prompt: 'Drop the pitch deck here', sub: 'PDF · the assessment runs from it.',
+        note: 'Pitch deck · uploads when you run',
+        onPick: "window.__naPick('deck')", onClear: 'window.__naClearDeck()', onDrop: '__naDropDeck' });
+      deck = false; syncRun();
+    },
+  };
+
+  /* The run buttons ship disabled and the workspace's own validator enables them. There is no
+     validator on a marketing page, so this is the same rule written out: a name and a deck. */
+  let deck = false;
+  const syncRun = () => {
+    const named = !!(document.getElementById('na-name') || {}).value;
+    const ready = named && deck;
+    document.querySelectorAll('.na-run').forEach(b => { b.disabled = !ready; });
+    // #na-gate is the "Attach a pitch deck to begin." line beside the buttons. It is rendered
+    // statically by createScreen and cleared by the workspace's validator, so without this the
+    // shot ends on two live buttons and a sentence saying they cannot be pressed.
+    const gate = document.getElementById('na-gate');
+    if (gate) gate.textContent = ready ? '' : 'Attach a pitch deck to begin.';
+  };
+  document.addEventListener('input', e => { if (e.target && e.target.id === 'na-name') syncRun(); });
+  syncRun();
+
+  /* The product's own button calls this. In the workspace it posts to the room-check API; here it
+     plays the staged read, so the SHOT does not have to know which button it pressed. */
+  window.__naReadRoom = () => window.__demo.scanRoom();
+  window.__naCheckRoom = () => window.__demo.scanRoom();
+
+  /* Everything that would WRITE is inert. This is a window onto the product, not the product. */
+  window.__wsCreateAssessment = () => {}; window.__wsRunPrescreen = () => {}; window.__wsUnlock = () => {};
+  window.__naPick = () => {}; window.__naClearDoc = () => {}; window.__naDropDocs = () => {};
+</script>
+</body>
+</html>

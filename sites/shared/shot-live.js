@@ -17,17 +17,32 @@
  *   {act:'read',  to:0.6, target:'main'|'drill'}   scroll a surface to a fraction of its range
  *   {act:'home',  target:'main'|'drill'}           glide it back to the top
  *   {act:'hold',  ms}                              let the viewer look at it
+ *   {act:'type',  sel, text, cps}                 type into a real field, a character at a time
+ *   {act:'point', sel, label}                     move the pointer onto something without tapping it
+ *   {act:'await', sel, gone, ms}                   wait for something to appear — or to go away
+ *   {act:'call',  fn, args}                       run a demo-only animation the page exposes
  * An unknown act is skipped with a warning rather than throwing: a shot is decoration, and a broken
  * beat must not take the page down with it.
+ *
+ * WHY 'call' EXISTS AND WHAT IT IS NOT. A data-room scan and a streaming answer are real product
+ * states driven by a real API. A marketing page has no API and must not pretend to call one, so the
+ * embedded page exposes the staged version under window.__demo and the shot asks for it by name.
+ * The surfaces are the product's own components either way — what is faked is the server, and only
+ * the server. The engine never learns what a data room is.
  */
 
 /* ── the choreographies ──────────────────────────────────────────────────── */
+const DEMO = '/ventrify-os/_redesign/m3/';
+
+/* A choreography names the page it runs on. The alternative — the page in the markup and the beats
+   in here — lets a shot be pointed at a page its beats know nothing about, which fails as an empty
+   frame and a log full of "no tab". `live-src` on the element still overrides, for a one-off. */
 export const SCRIPTS = {
   /* THE HERO. The whole product in one pass: the verdict, the score, the evidence under it, and —
      the part no still can reach — a research document opening three clicks deep and closing again.
      Measured at ~39s a cycle. Four of the seven tabs hold still: motion on all of them reads as a
      screensaver, and the eye stops believing any of it is real. */
-  'assessment-tour': [
+  'assessment-tour': { page: DEMO + 'live-demo.html', beats: [
     { act: 'tab', name: 'Verdict' }, { act: 'read', to: .62 }, { act: 'hold' }, { act: 'home' },
     { act: 'tab', name: 'Investability' }, { act: 'hold', ms: 1800 },
     { act: 'tab', name: 'Market' }, { act: 'read', to: .58 }, { act: 'hold' }, { act: 'home' },
@@ -45,7 +60,74 @@ export const SCRIPTS = {
       { act: 'hold' },
       { act: 'home' },
     { act: 'tab', name: 'Data' }, { act: 'hold', ms: 1800 },
-  ],
+  ] },
+
+  /* HOW IT WORKS — "from data room to a judgement you can inspect". The section's heading is the
+     first half of that sentence and it was illustrating the second half. This is the first half:
+     a Drive folder goes in, 46 documents are read, and the six document types the score counts
+     tick over from "Not seen" to "Present" as the file that answers each one goes past.
+
+     Nothing here is a mock-up. The typing fires real input events, the button is the product's
+     own, and the panel that fills in is roomScanBanner + roomCheck out of ds.js. What is staged
+     is the server. */
+  'room-scan': { page: DEMO + 'live-demo-setup.html', beats: [
+    { act: 'hold', ms: 1400 },
+    { act: 'reach', sel: '#na-name', pad: 300, ms: 1600 },
+    { act: 'type', sel: '#na-name', text: 'Tideline', cps: 9, label: 'Venture name' },
+    { act: 'call', fn: 'attachDeck' },                  // the deck is a hard gate; without it the run buttons stay dead
+    { act: 'hold', ms: 1000 },
+    { act: 'reach', sel: '#na-drive', pad: 300, ms: 2000 },
+    { act: 'type', text: 'https://drive.google.com/drive/folders/1kQ9xTideline-dataroom', cps: 30, label: 'Drive folder' },
+    { act: 'hold', ms: 700 },
+    { act: 'tap', sel: '.na-drive-go', label: 'Read data room' },
+    { act: 'await', sel: '.rsb' },                      // the banner is up: the read has started
+    /* Back to the top to WATCH it. The aside is sticky, but at 900px its content is taller than the
+       frame, so down by the Drive field the banner sits tucked under the masthead — measured at y=5.
+       The counter is the best thing in this shot and it was off-screen for all of it. */
+    { act: 'home', ms: 1100 },
+    { act: 'await', sel: '.rsb', gone: true },          // and down again: the read has finished
+    { act: 'hold', ms: 2600 },
+    /* The run buttons are disabled until the form is valid, so the pointer rests on one rather
+       than tapping it: a tap that visibly does nothing is worse than no tap at all. */
+    { act: 'reach', sel: '.m3-btn.filled.na-run', pad: 420, ms: 2000 },
+    { act: 'point', sel: '.m3-btn.filled.na-run', ms: 2400 },
+    { act: 'home' },
+    { act: 'call', fn: 'reset' },
+    { act: 'hold', ms: 1400 },
+  ] },
+
+  /* THE OUTPUT — "more than a summary, a documented assessment". The argument is not "here is a
+     document", it is "here is one you can interrogate and whose every claim goes back to a source".
+     So: read the memo, ask the assistant the question an investor would actually ask, and then
+     follow one of its citations into the research behind it.
+
+     The answer is written down — the real one costs an API call. Everything around it is the
+     product: the panel, the numbered references, the ⟨derived⟩ marker that separates a number the
+     assistant worked out from one it quoted, the proposal card that can only ever PROPOSE, and the
+     chip that opens the document it cited. */
+  'ask-the-memo': { page: DEMO + 'live-demo.html', beats: [
+    { act: 'tab', name: 'Verdict' },
+    { act: 'read', to: .32, ms: 2600 },
+    { act: 'hold', ms: 1200 },
+    { act: 'home' },
+    { act: 'tap', sel: '[data-panel="assist"]', label: 'Assistant' },
+    { act: 'await', sel: '#chat-input' },
+    /* The empty state is worth two seconds on its own: "I can only see this assessment — I have not
+       read the founder's own documents, and I have no web access." */
+    { act: 'hold', ms: 2600 },
+    { act: 'type', sel: '#chat-input', text: 'What is the single biggest risk to this score?', cps: 22, label: 'the question' },
+    { act: 'hold', ms: 600 },
+    { act: 'tap', sel: '#chat-send', label: 'Send' },
+    { act: 'await', sel: '.chat-chip', ms: 9000 },
+    { act: 'hold', ms: 4200 },
+    { act: 'tap', sel: '.chat-chip', label: 'the source it cited' },
+    { act: 'await', sel: '.m3-drill .drill-scroll' },
+    { act: 'read', target: 'drill', to: .35, ms: 2400 },
+    { act: 'hold', ms: 1600 },
+    { act: 'tap', sel: '.m3-drill .drill-close', label: 'close' },
+    { act: 'hold', ms: 1200 },
+    { act: 'call', fn: 'resetChat' },
+  ] },
 };
 
 /* ── the engine ──────────────────────────────────────────────────────────── */
@@ -75,12 +157,14 @@ const CURSOR = '<svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="tru
   'fill="#fff" stroke="rgba(0,0,0,.55)" stroke-width="1" stroke-linejoin="round"/></svg>';
 
 export function mountLiveShot(frame, { src, script, onLog } = {}) {
-  const beats = SCRIPTS[script];
-  if (!frame || !src || !beats) return null;
+  const def = SCRIPTS[script];
+  const beats = def && def.beats;
+  const page = src || (def && def.page);
+  if (!frame || !page || !beats) return null;
 
   const iframe = document.createElement('iframe');
   iframe.className = 'shot-live';
-  iframe.src = src;
+  iframe.src = page;
   iframe.title = 'A VerdictScore assessment, running';
   /* Decoration, and a keyboard user must never fall into it: there is nothing in there for them,
      and everything in there is fictional. The accessible description stays on the <v-shot>. */
@@ -152,6 +236,18 @@ export function mountLiveShot(frame, { src, script, onLog } = {}) {
 
     /* Ordered preference, not "the first match". The research index is grouped, so the first row in
        DOM order belongs to whichever group sorts first — not the document worth showing. */
+    /* What to CALL a thing in the log. Material Symbols renders its icons as ligature TEXT, so a
+       button's textContent is "boltRun pre-screen first" and a form field's is "". Neither is a
+       name. Strip the icon spans, fall back to the field's own label, then to the selector. */
+    const labelOf = (el, sel) => {
+      const nm = el.querySelector('.mrow-nm');
+      const src = nm || el.cloneNode(true);
+      if (!nm) src.querySelectorAll && src.querySelectorAll('.material-symbols-rounded').forEach(i => i.remove());
+      const t = (src.textContent || '').trim();
+      return t ? t.slice(0, 44)
+        : (el.getAttribute('aria-label') || el.getAttribute('placeholder') || sel || 'target');
+    };
+
     const pick = (sel, prefer) => {
       const all = [...d.querySelectorAll(sel)];
       if (prefer) for (const p of prefer) {
@@ -187,8 +283,7 @@ export function mountLiveShot(frame, { src, script, onLog } = {}) {
         case 'reach': {
           found = pick(beat.sel, beat.prefer);
           if (!found) return say(`!! nothing matches ${beat.sel}`);
-          const nm = (found.querySelector('.mrow-nm') || found).textContent.trim().slice(0, 40);
-          say(`↓ scrolling to “${nm}”`);
+          say(`↓ scrolling to “${labelOf(found, beat.sel)}”`);
           await reach(found, ms || DEFAULTS.reach, beat.pad || DEFAULTS.pad);
           await wait(500);
           return;
@@ -196,7 +291,7 @@ export function mountLiveShot(frame, { src, script, onLog } = {}) {
         case 'tap': {
           const el = beat.sel ? pick(beat.sel, beat.prefer) : found;
           if (!el) return say(`!! nothing to tap${beat.sel ? ' for ' + beat.sel : ''}`);
-          const nm = beat.label || (el.querySelector('.mrow-nm') || el).textContent.trim().slice(0, 40);
+          const nm = beat.label || labelOf(el, beat.sel);
           moveTo(el, nm); await wait(800);
           await tapEl(el); say(`↳ ${nm}`);
           await wait(1100);
@@ -212,6 +307,52 @@ export function mountLiveShot(frame, { src, script, onLog } = {}) {
         case 'home': {
           const sc = surface(beat.target);
           if (sc) await glide(sc, 0, ms || DEFAULTS.home);
+          return;
+        }
+        case 'type': {
+          const el = beat.sel ? pick(beat.sel, beat.prefer) : found;
+          if (!el) return say(`!! nothing to type into for ${beat.sel}`);
+          moveTo(el, beat.label || 'field'); await wait(620);
+          await tapEl(el);
+          el.focus({ preventScroll: true });
+          // A character at a time, with the events a real keystroke fires: the product's own
+          // listeners enable the button, validate the URL and update the aside. Setting .value in
+          // one go would skip all of it and the screen would sit there looking broken.
+          const cps = beat.cps || 26, text = beat.text || '';
+          el.value = '';
+          for (const ch of text) {
+            el.value += ch;
+            el.dispatchEvent(new w.Event('input', { bubbles: true }));
+            await wait(1000 / cps);
+          }
+          el.dispatchEvent(new w.Event('change', { bubbles: true }));
+          say(`⌨ ${text.slice(0, 48)}`);
+          await wait(500);
+          return;
+        }
+        case 'point': {
+          const el = beat.sel ? pick(beat.sel, beat.prefer) : found;
+          if (!el) return say(`!! nothing to point at for ${beat.sel}`);
+          moveTo(el, beat.label || 'target');
+          return wait(ms || 700);
+        }
+        /* `gone` as well as `arrived`, because the thing worth waiting for is often the end of
+           something: a scan banner that clears when the read finishes says "done" more reliably
+           than a hold timed to how long the read happened to take the day it was written. */
+        case 'await': {
+          const t0 = Date.now(), limit = ms || 12000;
+          while (Date.now() - t0 < limit) {
+            const there = !!d.querySelector(beat.sel);
+            if (beat.gone ? !there : there) return wait(300);
+            await wait(80);
+          }
+          return say(`!! ${beat.sel} never ${beat.gone ? 'went away' : 'appeared'}`);
+        }
+        case 'call': {
+          const demo = w.__demo || {};
+          if (typeof demo[beat.fn] !== 'function') return say(`!! the page exposes no __demo.${beat.fn}`);
+          say(`▸ ${beat.fn}`);
+          await demo[beat.fn].apply(null, beat.args || []);
           return;
         }
         case 'hold': return wait(ms || DEFAULTS.hold);
