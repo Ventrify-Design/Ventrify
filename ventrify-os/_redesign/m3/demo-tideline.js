@@ -377,8 +377,20 @@ export const demo = {
     // otherwise sit in the box underneath its own answer.
     if (box) box.value = '';
     repaintChat(true);                      // the three dots: the product's own pending state
-    await sleep(2400);
-    chat = chat.concat([CHAT.a]);
+    await sleep(1800);
+
+    /* THE ANSWER ARRIVES, IT DOES NOT APPEAR. Same reveal the live workspace uses — DS.chatReveal
+       gives the frames and never cuts inside a [[citation]], a **bold run** or a ⟨derived⟩ marker.
+       The sources and the proposal land at the END, after the prose, which is both what a streaming
+       interface does and the right order to read it in: the claim, then what backs it. */
+    const asked = chat;                                  // everything up to and including the question
+    const bare = { ...CHAT.a, revealing: true };   // keeps `cited`, so no frame can read as unverified
+    for (const frame of DS.chatReveal(CHAT.a.text)) {
+      chat = asked.concat([{ ...bare, text: frame }]);
+      repaintChat(false);
+      await sleep(26);
+    }
+    chat = asked.concat([CHAT.a]);                       // the sources and the proposal, last
     repaintChat(false);
     await sleep(400);
   },

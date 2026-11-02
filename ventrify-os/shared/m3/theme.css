@@ -626,6 +626,12 @@ md-outlined-button, md-filled-button, md-text-button, md-filled-tonal-button { -
 .shell-main.is-compact .eng-table td[data-th]::before { content: attr(data-th) " · "; color: var(--md-sys-color-on-surface-variant); font-size: 12px; }
 /* editorial lockups + content grids → single column at ANY viewport */
 .shell-main.is-compact .section-hero { grid-template-columns: 1fr; }
+/* …and a lockup the caller marked as a RESTATEMENT goes entirely, rather than stacking under the
+   statement and pushing the section's actual content down the page. sectionHero({rightRestates})
+   is the opt-in; only the verdict hero's score takes it, because Investability is a whole tab about
+   that number. Everything else — the run's progress, the room's coverage, the radar — stacks. */
+.shell-main.is-compact .section-hero .right.restates { display: none; }
+.shell-main.is-compact .section-hero:has(.right.restates) .divide { display: none; }
 .shell-main.is-compact .section-hero .divide { display: none; }
 .shell-main.is-compact .section-hero .left { padding-right: 0; }
 .shell-main.is-compact .section-hero .right { padding-left: 0; padding-top: 28px; }

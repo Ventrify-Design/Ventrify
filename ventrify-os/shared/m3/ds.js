@@ -1073,6 +1073,18 @@ export function sectionHero(opts = {}) {
     thesis = 'A real, sizeable market and a capable team, held back by unproven unit economics and a still-forming moat — the shape of the risk is clear enough to price.',
     thesisLabel = 'Thesis.',
     thesisPlacement = 'column',   // 'column' | 'span' — see the note below
+    /* rightRestates — "the thing in the right slot is said somewhere else as well, so drop it rather
+       than stack it when the column goes narrow."
+
+       Narrowing a hero collapses it to one column and the right lockup lands UNDER the statement. For
+       a lockup that is the section's own content — the run's progress, the room's coverage, the
+       radar on the Investability tab — that is right: it is the only place it appears. For the
+       verdict hero's score it is not: Investability is an entire tab about that number, so the
+       narrow view pushes the memo down the page to restate something one tab away.
+
+       A flag, because only the caller knows whether its lockup is a restatement. Default false, so
+       every existing hero keeps stacking. */
+    rightRestates = false,
 
     ...statement
   } = opts;
@@ -1105,7 +1117,7 @@ export function sectionHero(opts = {}) {
   return `<section class="sec section-hero${single ? ' single' : ''}${span ? ' thesis-span' : ''}">
       <div class="left">${leftHtml}${span ? '' : thesisHtml}</div>
       <div class="divide"></div>
-      <div class="right">${rightHtml}</div>
+      <div class="right${rightRestates ? ' restates' : ''}">${rightHtml}</div>
       ${span ? `<div class="coda">${thesisHtml}</div>` : ''}
     </section>`;
 }
@@ -2279,6 +2291,9 @@ export function verdictMemo(a, s) {
         { k: 'The ask', v: `${esc(a.askAmount)} <small>${esc(a.askRest)}</small>` }
       ],
       score: { label: 'Investability score', score: s.composite, max: 100, band: s.band, tone: BAND_TONE[s.band] || 'mid', now: s.composite, potential: s.potential, draws: s.draws || null },
+      // Investability is a whole tab about this number. Narrow the column — open the assistant, open
+      // a drill — and the reader wants the verdict, not the score restated above the fold.
+      rightRestates: true,
       thesis: a.thesis
     })}
     <hr class="rule">
@@ -3566,19 +3581,29 @@ function chatMsg(m, idx) {
     .replace(/⟨derived⟩/g, '<span class="chat-derived" title="The assistant calculated this; it is not quoted from a source">derived</span>')
     .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
     .replace(/\n/g, '<br>');
-  const chips = cited.length
+  /* ⚠ `revealing` — a FRAME of a progressive reveal, not a finished message.
+     Everything below the prose is an end-state fact about the whole answer: which sources it used,
+     which figures are unsupported, what it proposes. Rendered against a half-written frame they are
+     all wrong, and one of them is dangerously wrong — the chips come from `cited`, and dropping
+     `cited` to hide them makes every [[id]] in the prose render as the loud "unverified" warning.
+     A reveal was therefore flashing "unverified: research:claims-pressure-test" in red for two
+     seconds on an answer whose citation is perfectly good. That warning is the single thing this
+     panel exists to be trusted about.
+     So the frame keeps `cited` — the references number correctly — and suppresses the furniture. */
+  const revealing = !!m.revealing;
+  const chips = cited.length && !revealing
     ? `<div class="chat-srcs">${cited.map((id, i) => `<button class="chat-chip" data-src="${esc(id)}"><b>${i + 1}</b>${esc(id)}</button>`).join('')}</div>` : '';
-  const figs = (m.unsupportedFigures || []).length
+  const figs = !revealing && (m.unsupportedFigures || []).length
     ? `<div class="chat-warn"><span class="material-symbols-rounded">report</span>${m.unsupportedFigures.length} figure${m.unsupportedFigures.length === 1 ? '' : 's'} in this answer ${m.unsupportedFigures.length === 1 ? 'does' : 'do'} not appear in the assessment. Check ${m.unsupportedFigures.length === 1 ? 'it' : 'them'} against the source before using ${m.unsupportedFigures.length === 1 ? 'it' : 'them'}.</div>` : '';
-  const bad = (m.invalid || []).length
+  const bad = !revealing && (m.invalid || []).length
     ? `<div class="chat-warn"><span class="material-symbols-rounded">report</span>Cited ${m.invalid.length} source${m.invalid.length === 1 ? '' : 's'} that ${m.invalid.length === 1 ? 'does' : 'do'} not exist in this assessment. Treat ${m.invalid.length === 1 ? 'that claim' : 'those claims'} as unsupported.</div>` : '';
-  const omitted = (m.dropped || []).length
+  const omitted = !revealing && (m.dropped || []).length
     ? `<div class="chat-note">${m.dropped.length} research document${m.dropped.length === 1 ? '' : 's'} too large to load for this answer.</div>` : '';
   const stub = m.stub ? `<div class="chat-note">Stub mode &mdash; no model was called.</div>` : '';
   // PROPOSALS, NOT ACTIONS. Every card shows exactly what will be written and does nothing until pressed.
   // The commit runs through the operator's own credentials, so the assistant can never reach further than
   // the person reading it could by clicking the same thing themselves.
-  const props = (m.proposals || []).map((pr, j) => {
+  const props = (revealing ? [] : (m.proposals || [])).map((pr, j) => {
     const done = pr.committed ? `<div class="chat-prop-done"><span class="material-symbols-rounded">check</span>${esc(pr.committed)}</div>` : '';
     const lines = (pr.lines || []).length ? `<div class="chat-prop-l">${pr.lines.map((l) => esc(l)).join('<br>')}</div>` : '';
     const btn = pr.committed ? '' :
@@ -3588,6 +3613,28 @@ function chatMsg(m, idx) {
       <div class="chat-prop-d">${esc(pr.detail)}</div>${lines}${done}${btn}</div>`;
   }).join('');
   return `<div class="chat-msg bot">${stub}<div class="chat-body">${body}</div>${bad}${figs}${chips}${omitted}${props}</div>`;
+}
+
+/* chatReveal — a message, as the progressively longer strings a progressive reveal needs.
+ *
+ * WHY IT IS NOT JUST text.slice(n). chatMsg parses the answer before it renders it: [[id]] becomes a
+ * numbered reference, **…** becomes bold, and ⟨derived⟩ becomes the marker that separates a number
+ * the assistant worked out from one it quoted. Cut inside any of those and the half-written token
+ * renders as literal punctuation — "[[research:claims-pres" in the middle of a sentence — and the
+ * ⟨not in sources⟩ warning in particular would flicker as raw text before resolving.
+ *
+ * So the unit is an ATOM: a whole marker, or a word. A bold run is one atom too, which makes the
+ * lead-in land in one go; cutting inside it would print the asterisks.
+ *
+ * Pure, and no DOM: the caller owns the repaint and the pacing. ONE rule in ONE place, because the
+ * parser it has to agree with is ten lines above it.
+ */
+export function chatReveal(text = '') {
+  const atoms = String(text).match(/(\[\[[^\]]*\]\]|\*\*[^*]*\*\*|\u27e8[^\u27e9]*\u27e9|\s+|\S+)/g) || [];
+  const frames = [];
+  let acc = '';
+  for (const a of atoms) { acc += a; if (!/^\s+$/.test(a)) frames.push(acc); }
+  return frames;
 }
 
 export function chatPanel(c = {}) {
@@ -5016,6 +5063,25 @@ export function initShell() {
   // the two "no room to push an aux" breakpoints, mirroring theme.css
   const mqAuxPush = window.matchMedia('(max-width: 900px)');        // default 440px panel
   const mqAuxPushWide = window.matchMedia('(max-width: 1679px)');   // wide 720px panel
+
+  /* ---- A PUSHED PANEL NARROWS THE PRIMARY, AND THE PRIMARY HAS TO KNOW ----
+     .is-compact is the DS's one narrow presentation of a page, and openDrill() applies it. openAux()
+     did not — so pushing the panel took the primary from 1108px to 676px while it kept rendering the
+     wide layout. MEASURED on the assessment: the verdict hero's columns went 539px/408px → 293px/222px,
+     which puts a 103px score number and a 116px band chip inside a 178px lockup. They overlap the arc,
+     and the statement beside them is reading at 293px.
+
+     Keyed on the MEASURED width, not on another media query: whether there is room depends on the
+     viewport, the nav rail and which panel width was asked for, and only the result knows all three.
+     900px is the same threshold mqAuxPush uses to decide the panel can push at all. */
+  const AUX_NARROW = 900;
+  const syncAuxCompact = () => {
+    const app = document.querySelector('.m3-app'); if (!app) return;
+    const main = app.querySelector('.shell-main'); if (!main) return;
+    if (app.classList.contains('drill-open')) return;     // the drill owns the class while it is open
+    const pushing = app.classList.contains('aux-push') && !app.classList.contains('aux-floating');
+    main.classList.toggle('is-compact', pushing && main.getBoundingClientRect().width < AUX_NARROW);
+  };
   window.openAux = (opts = {}) => {
     const app = document.querySelector('.m3-app'); if (!app) return;
     window.closeNav && window.closeNav();
@@ -5046,6 +5112,7 @@ export function initShell() {
     // to re-state the scrim on its own; now they only decide the WIDTH and this decides the
     // BEHAVIOUR — scrim up, chrome beneath it, dialog semantics.
     app.classList.toggle('aux-floating', floating);
+    requestAnimationFrame(syncAuxCompact);               // after the push has actually reflowed
     if (floating) {
       lastFocused = lastFocused || document.activeElement;
       document.body.classList.add('overlay-lock');
@@ -5057,6 +5124,7 @@ export function initShell() {
   window.closeAux = () => {
     const app = document.querySelector('.m3-app'); if (!app) return;
     app.classList.remove('aux-open', 'aux-push', 'aux-modal', 'aux-wide', 'aux-floating');
+    syncAuxCompact();
     const a = app.querySelector('.m3-aux'); if (a) { a.removeAttribute('role'); a.removeAttribute('aria-modal'); }
     app.querySelectorAll('.urail-item.on').forEach(b => b.classList.remove('on'));
     if (!app.classList.contains('nav-open') && !app.classList.contains('drill-open')) document.body.classList.remove('overlay-lock');
@@ -5254,6 +5322,11 @@ export function initShell() {
   // set once at open time — so an open panel that crosses its breakpoint has to be re-synced, or
   // it keeps a scrim it no longer needs (or loses one it does). Mirrors the two media queries in
   // theme.css: 900px for the default panel, 1680px for the wide one.
+  // the primary can be resized without the panel changing — a window drag, the nav rail collapsing
+  if (window.ResizeObserver) {
+    const m = document.querySelector('.shell-main');
+    if (m) new ResizeObserver(syncAuxCompact).observe(m);
+  }
   [mqAuxPush, mqAuxPushWide].forEach(mq => mq.addEventListener('change', () => {
     const app = app0(); if (!app || !app.classList.contains('aux-open')) return;
     const aux = app.querySelector('.m3-aux');

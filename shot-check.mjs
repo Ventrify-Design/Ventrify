@@ -55,6 +55,18 @@ const b = await puppeteer.launch({
 
    Six seconds, no choreography. Run it after every edit to a demo page. */
 if (BOOT) {
+  /* chatReveal is the one rule the progressive reveal depends on: never cut inside a [[citation]],
+     a **bold run** or a ⟨derived⟩ marker, because chatMsg parses all three and half a marker renders
+     as literal punctuation mid-sentence. Pure function, no browser, free — so it runs here. */
+  const { chatReveal } = await import('./ventrify-os/shared/m3/ds.js');
+  const SAMPLE = '**The moat is not built.** Two score zero [[research:claims-pressure-test]], and '
+    + 'closing it is a funded build \u27e8derived\u27e9 \u2014 see also [[research:competitive-benchmark]].';
+  const frames = chatReveal(SAMPLE);
+  const n = (t, x) => t.split(x).length - 1;
+  const split = frames.filter(f => n(f, '[[') !== n(f, ']]') || n(f, '\u27e8') !== n(f, '\u27e9') || n(f, '**') % 2);
+  ok('chatReveal never cuts a marker in half', split.length === 0, split.length ? JSON.stringify(split[0].slice(-40)) : `${frames.length} frames`);
+  ok('chatReveal ends on the whole answer', frames[frames.length - 1] === SAMPLE);
+
   const pages = [...new Set(
     [...readFileSync('sites/shared/shot-live.js', 'utf8').matchAll(/page:\s*DEMO \+ '([^']+)'/g)]
       .map(m => '/ventrify-os/_redesign/m3/' + m[1]))];
@@ -276,13 +288,65 @@ const CHECKS = {
      the corpus as a loud "unverified", which is the component working — and the last thing a
      marketing page should ship by accident. */
   async 'ask-the-memo'() {
+    /* The beat logs at the TAP, so the panel has not opened yet and the push has not reflowed. Wait
+       for the width to settle before measuring anything about it — the first version of these checks
+       sampled immediately and passed once, by luck, on a frame that had not moved. */
     await until(/Assistant/);
-    ok('the assistant panel opens', !!(await inner('ask-the-memo', `(d) => !!d.getElementById('chat-input')`)));
+    let settled = null;
+    for (let n = 0, last = -1; n < 120; n++) {
+      const w = await inner('ask-the-memo', `(d) => { const m = d.querySelector('.shell-main');
+        return { w: Math.round(m.getBoundingClientRect().width), open: !!d.getElementById('chat-input') }; }`);
+      if (w && w.open && w.w === last) { settled = w; break; }
+      last = w ? w.w : -1;
+      await new Promise(r => setTimeout(r, 120));
+    }
+    ok('the assistant panel opens', !!settled, settled ? `primary settled at ${settled.w}px` : 'never settled');
     ok('it opens on the "I can only see this assessment" state',
        !!(await inner('ask-the-memo', `(d) => !!d.querySelector('.chat-empty')`)));
 
+    /* THE HERO AT HALF WIDTH. Pushing the panel took the primary from 1108px to 676px while it kept
+       rendering the wide two-column hero: columns 539/408 → 293/222, which puts a 103px score number
+       and a 116px band chip inside a 178px lockup. openAux now applies the DS's narrow presentation
+       the way openDrill already did, and the verdict's score — restated in full on its own tab —
+       drops out rather than stacking above the memo. */
+    const hero = await inner('ask-the-memo', `(d) => {
+      const m = d.querySelector('.shell-main'), h = d.querySelector('.tab-panel.active .section-hero');
+      const r = h && h.querySelector('.right');
+      return { compact: m.classList.contains('is-compact'),
+        cols: (getComputedStyle(h).gridTemplateColumns.match(/px/g) || []).length,
+        left: Math.round(h.querySelector('.left').getBoundingClientRect().width),
+        right: r ? getComputedStyle(r).display : 'absent' };
+    }`);
+    ok('the primary takes the narrow presentation', hero.compact);
+    ok('the hero is one column, not two squeezed', hero.cols === 1, `${hero.cols} tracks · left ${hero.left}px`);
+    ok('the statement is not squashed', hero.left > 500, `${hero.left}px`);
+    ok('the restated score drops out', hero.right === 'none', hero.right);
+
+    /* THE ANSWER ARRIVES, IT DOES NOT APPEAR. Sampled while it lands: the prose has to grow, and the
+       sources and the proposal have to come last. */
     await until(/Send/);
-    await new Promise(r => setTimeout(r, 4200));
+    const grew = [];
+    for (let n = 0; n < 60; n++) {
+      const f = await inner('ask-the-memo', `(d) => {
+        const b = d.querySelector('.chat-msg.bot .chat-body');
+        return { chars: b ? b.textContent.length : 0, chips: d.querySelectorAll('.chat-chip').length,
+                 bad: d.querySelectorAll('.chat-bad').length, warn: d.querySelectorAll('.chat-warn').length };
+      }`);
+      if (f) grew.push(f);
+      if (f && f.chips) break;
+      await new Promise(r => setTimeout(r, 200));
+    }
+    const lens = [...new Set(grew.map(f => f.chars).filter(Boolean))];
+    ok('the answer reveals progressively', lens.length >= 4, `${lens.length} distinct lengths: ${lens.slice(0, 5).join(' → ')}…`);
+    ok('the sources land last', grew.slice(0, -1).every(f => f.chips === 0), 'chips never appeared early');
+    /* AT NO POINT, not just at the end. Dropping `cited` to hide the chips mid-reveal made every
+       [[id]] in a partial frame render as the loud "unverified" warning — a false accusation, in
+       red, for two seconds, on the one surface whose whole job is being trusted about citations.
+       Sampling only the finished message would never have seen it. */
+    const everBad = grew.filter(f => f.bad || f.warn).length;
+    ok('no frame ever reads as unverified', everBad === 0, `${everBad} of ${grew.length} samples showed a warning`);
+
+    await new Promise(r => setTimeout(r, 2200));
     const chat = await inner('ask-the-memo', `(d) => ({
       user: d.querySelectorAll('.chat-msg.user').length,
       bot: d.querySelectorAll('.chat-msg.bot').length,

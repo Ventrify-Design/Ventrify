@@ -25,7 +25,16 @@ const SHOTS = {
      eleven named workstreams, the one in flight, and a clock that admits it takes two hours. */
   'vs-run':           { page: FLOW,  plan: { run: 4 } },
   'vs-assistant':     { page: DEMO,  plan: { tab: 'Verdict', assist: true } },
-  'vs-dataroom':      { page: DEMO,  plan: { tab: 'Data' } },
+  /* ⚠ A COMPOSED STILL — the product does not lay the Data room tab out this way.
+     Measured at 1440x900: the hero's right column holds the Room coverage lockup and is 157px tall
+     against a 542px left column, and "What the score looks for" — the list the lockup is a map of —
+     starts at y878, twenty-two pixels below the fold. So a screenshot of this tab shows the figure
+     and none of the thing it summarises, with a 377px void beside it.
+     For the website only, the head and first rows of that list are lifted into the void so one
+     frame carries both. Nothing is invented: it is the real section, rendered by the real component,
+     moved. If the void bothers us in the PRODUCT as well, that is a layout decision to take there —
+     not something to settle by cropping a marketing shot. */
+  'vs-dataroom':      { page: DEMO,  plan: { tab: 'Data', liftRoomList: 3 } },
   'vs-research-doc':  { page: DEMO,  plan: { tab: 'Research', drill: ['market sizing'], drillScroll: .18 } },
 };
 
@@ -65,6 +74,31 @@ for (const [name, { page, plan }] of Object.entries(SHOTS)) {
       const shown = document.querySelector('.rsb');
       run.then(() => {});                 // let it finish in the background; we shoot mid-read
       return shown ? 'mid-read' : 'the banner was gone';
+    }
+    if (plan.liftRoomList) {
+      const right = document.querySelector('.tab-panel.active .section-hero .right');
+      const list = document.querySelector('.tab-panel.active .sec.rc');
+      if (!right || !list) return 'no hero right column / room list';
+      const lifted = list.cloneNode(true);
+      // keep the section head and the first N rows; the rest is what the fade says continues
+      const rows = [...lifted.querySelectorAll('.rcl')];
+      rows.slice(plan.liftRoomList).forEach(r => r.remove());
+      // the section's own tail — the request-documents action, its "or run it as it stands" aside and
+      // the provenance footnote — belongs to the whole list, not to three rows of it
+      lifted.querySelectorAll('.rc-extra, .rc-act, .profile-foot, .dz, .m3-btn').forEach(e => e.remove());
+      lifted.classList.add('__lifted');
+      const wrap = document.createElement('div');
+      wrap.className = '__lift-wrap';
+      wrap.appendChild(lifted);
+      right.appendChild(wrap);
+      const st = document.createElement('style');
+      // the fade is the honest part: it says the list continues past the frame
+      st.textContent = `.__lift-wrap{position:relative;margin-top:26px;-webkit-mask-image:linear-gradient(to bottom,#000 0,#000 72%,transparent 100%);mask-image:linear-gradient(to bottom,#000 0,#000 72%,transparent 100%)}
+        .__lifted{padding-top:0!important;border-top:1px solid var(--md-sys-color-outline-variant);padding-top:18px!important}
+        .__lifted .sec-head .meta,.__lifted .sec-head .eyebrow{display:none}`;
+      document.head.appendChild(st);
+      await sleep(400);
+      return `lifted ${Math.min(plan.liftRoomList, rows.length)} of ${rows.length} rows into the hero`;
     }
     if (plan.run != null) {
       window.__demo.run();                 // not awaited: we want it mid-run, at a named step
