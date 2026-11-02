@@ -48,13 +48,22 @@
   <section id="challenge">
     <v-depth preset="left"></v-depth>
     <div class="wrap">
-      <div class="split top">
+      <!-- The standfirst sits UNDER the headline, not beside it: a heading and the sentence that
+           completes it are one thought, and splitting them across two columns made the reader
+           start again halfway. v-section-head's [data-sub] already does this, with the stagger. -->
+      <div class="split">
         <v-section-head class="mb-0">
           <p data-eyebrow>The challenge</p>
           <h2>Investment decisions need more than a deck and a feeling.</h2>
+          <p data-sub data-lg>VerdictScore gives investment teams a consistent first pass, with findings, criteria and reasoning they can inspect.</p>
         </v-section-head>
-        <div>
-          <p class="sub lg" data-reveal>VerdictScore gives investment teams a consistent first pass, with findings, criteria and reasoning they can inspect.</p>
+        <!-- The REAL valuation verdict from the Market tab, rendered by the product's own ds.js,
+             on the same figures as the demo embedded further down the page. It draws itself as the
+             section crosses: the defensible band first, then the ask landing on it, then the
+             overshoot — the product's own order, re-keyed from time to scroll. -->
+        <div data-reveal="right">
+          <v-product widget="valuation"
+                     aria-label="The valuation verdict: a $60M pre-money ask against a defensible $15–35M band, 3.75 times the seed median, read as rich and needing a reprice"></v-product>
         </div>
       </div>
 

@@ -1249,7 +1249,23 @@
     OS_BASE + '/shared/m3/workspace-chrome.css',
     OS_BASE + '/shared/m3/brand-map.css'
   ];
-  var osDS = null, osCSS = null;
+  var osDS = null, osCSS = null, osFont = false;
+
+  /* ⚠ @font-face HAS TO BE IN THE DOCUMENT, NOT THE SHADOW ROOT.
+     The icon stylesheet is linked inside each shadow root so the `.material-symbols-rounded`
+     CLASS rule applies there — style rules do not cross the boundary. But a shadow root's
+     @font-face is ignored for font matching, so the family never resolves and every icon renders
+     as its ligature TEXT: the valuation chip read "trending_flat Rich — reprice" on the live page.
+     The room-coverage widget has no icons, which is why this survived a whole release.
+     So the same sheet goes in BOTH places: the document for the face, the shadow for the rule. */
+  function osIconFont() {
+    if (osFont) return;
+    osFont = true;
+    var l = document.createElement('link');
+    l.rel = 'stylesheet';
+    l.href = OS_CSS[0];
+    document.head.appendChild(l);
+  }
 
   /* ⚠ :root DOES NOT MATCH INSIDE A SHADOW ROOT, and that is where the product keeps its tokens.
      theme.css opens with `:root { --md-sys-color-*, --tone-* … }`. Linked into a shadow tree that
@@ -1277,6 +1293,55 @@
   /* The curated set. Data lives HERE rather than in page markup: a JSON blob in an
      attribute is unreadable and unlintable, and these are marketing examples, not
      live figures. Each entry is a function of the product's own render layer. */
+  /* ── SCROLL-DRIVEN, INSIDE THE SHADOW ROOT ──────────────────────────────
+     The product already choreographs this chart: ds.css `.charts-in` grows the
+     defensible band first (the recommendation), drops the ask marker onto it,
+     then grows the overshoot and the figure measuring it — "the gap is the
+     conclusion, not the premise". That order is an argument, and it is not
+     ours to re-invent for a marketing page.
+
+     So the same six stages are re-keyed from TIME to SCROLL. --prog is the
+     progress every section publishes and it inherits across the shadow
+     boundary, which is the one thing that does. Same contract as .ix-arc on
+     the score dial, including the part that matters:
+
+     ⚠ THE FALLBACK IS 1, NOT 0. --prog only exists once motion.js has run.
+     Default it to 0 and a failed script leaves the chart EMPTY — a valuation
+     graphic showing nothing, which is worse than one that does not animate.
+     At 1 everything is drawn and the scroll layer can only take it away.
+
+     The windows all finish by 0.46 of the crossing, which is set by the
+     DESKTOP case and measured, not guessed: --prog does not reach 1 until the
+     section's BOTTOM clears the TOP of the viewport, so how far it has got
+     when the chart is centred depends on the section's height against the
+     window. Measured — 390px centres at prog 0.59, 1440px at 0.49. Timings
+     tuned to the smaller of the two, so the sequence is COMPLETE by the time
+     the chart is centred at either. The "+$25M over" caption is the conclusion
+     of the argument and was still invisible at rest on desktop before this. */
+  var PRODUCT_MOTION = [
+    ':host{',
+    '  --draw-band: clamp(0, (var(--prog, 1) - .06) / .14, 1);',
+    '  --draw-ask:  clamp(0, (var(--prog, 1) - .18) / .08, 1);',
+    '  --draw-over: clamp(0, (var(--prog, 1) - .24) / .10, 1);',
+    '  --draw-gap:  clamp(0, (var(--prog, 1) - .32) / .08, 1);',
+    '  --draw-cap:  clamp(0, (var(--prog, 1) - .38) / .08, 1);',
+    '  --draw-axis: clamp(0, (var(--prog, 1) - .10) / .12, 1);',
+    '}',
+    /* everything grows from the LEFT — the axis runs that way, and a region that grew from its
+       own centre would travel against the scale it sits on (ds.css says the same thing) */
+    '.v1-band{transform-origin:left center;transform:scaleX(var(--draw-band))}',
+    '.v1-ask{transform-origin:center bottom;transform:scaleY(var(--draw-ask))}',
+    '.v1-over{transform-origin:left center;transform:scaleX(var(--draw-over))}',
+    '.v1-gap .bar{transform-origin:left center;transform:scaleX(var(--draw-gap))}',
+    '.v1-gap .cap{opacity:var(--draw-cap)}',
+    '.vz-axis i,.vz-axis span{opacity:var(--draw-axis)}',
+    '.vl-read{opacity:calc(.25 + .75 * var(--draw-cap))}',
+    /* drawn complete, never revealed */
+    '@media (prefers-reduced-motion: reduce){',
+    '  :host{--draw-band:1;--draw-ask:1;--draw-over:1;--draw-gap:1;--draw-cap:1;--draw-axis:1}',
+    '}'
+  ].join('\n');
+
   var WIDGETS = {
     'room-coverage': function (DS) {
       return DS.roomLockup({ docCount: 7, classes: [
@@ -1286,6 +1351,19 @@
         { key: 'd', label: 'Corporate / legal',     found: false },
         { key: 'e', label: 'Observed metrics',      found: false }
       ] });
+    },
+
+    /* The Market tab's valuation verdict, on the same figures the embedded demo shows: a $60M ask
+       against a defensible $15–35M. Not live data — a marketing example, like the one above — but
+       the same numbers as the product beside it on the page, so the two cannot read as two
+       different ventures. */
+    valuation: function (DS) {
+      return DS.valuationLockup({
+        label: 'Valuation verdict',
+        multiple: 3.75, multipleSuffix: '\u00d7 seed median',
+        band: 'Rich \u2014 reprice', tone: 'mid',
+        asked: 60, defensibleLo: 15, defensibleHi: 35, scaleMax: 70
+      });
     }
   };
 
@@ -1295,6 +1373,7 @@
         var name = this.getAttribute('widget');
         var build = WIDGETS[name];
         if (!build || this.shadowRoot) return;
+        osIconFont();
         var root = this.attachShadow({ mode: 'open' });
         var box = document.createElement('div');
         /* The product reads its own identity off [data-brand]; the attribute does not
@@ -1317,6 +1396,10 @@
             else { el = document.createElement('style'); el.textContent = s.text; }
             root.insertBefore(el, box);
           });
+          // last, so it wins at equal specificity over the product's own sheets
+          var motion = document.createElement('style');
+          motion.textContent = PRODUCT_MOTION;
+          root.insertBefore(motion, box);
           try { box.innerHTML = build(DS); self.setAttribute('data-ready', ''); }
           catch (e) { self.remove(); }
         }).catch(function () { self.remove(); });
