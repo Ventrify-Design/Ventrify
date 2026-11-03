@@ -105,10 +105,13 @@ async function loadLive(user) {
   const myOrgs = await data.listOperatorOrgs(email);
   const superAdmin = await data.isSuperAdmin(email);
   if (!myOrgs.length) {
-    // Signed in but not an operator of any org. (Super-admins with no org of
-    // their own get the platform console — added in the next stage.)
-    renderNoAccess(user);
-    return new Promise(() => {});
+    // Signed in, no org — which since public signup opened is the FIRST STEP, not a failure. It used
+    // to render "ask your Ventrify admin to add you", written for an employee of an existing client
+    // and a dead end for everyone else; the marketing site now sends strangers here on purpose.
+    // setup.html offers them a trial workspace and still tells an invited colleague what to ask for.
+    // The permission-denied branch below keeps renderNoAccess: that one IS a real refusal.
+    if (!/setup\.html$/.test(currentPath)) { window.location.replace('/workspace/setup.html'); }
+    return new Promise(() => {});   // halt — navigating away
   }
   const storedActive = localStorage.getItem('workspace.activeOrg');
   const org = myOrgs.find(o => o.id === storedActive) || myOrgs[0];

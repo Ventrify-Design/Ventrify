@@ -91,19 +91,18 @@
           { label: 'Pricing',         href: '#pricing' }
         ]
       },
-      /* SIGN IN GOES TO THE PRODUCT; "TRY IT FREE" DELIBERATELY DOES NOT.
-         os.ventrify.io/workspace/ is already titled "Sign in — VerdictScore" and authenticates by
-         magic link, so a real operator lands in their workspace. But there is NO self-serve signup:
-         orgs are created by a super-admin (api/admin.js create-org), and a stranger who signs in
-         with no org hits renderNoAccess() — "ask your Ventrify admin to add you". Pointing "Try it
-         free" at the product would walk every prospect into that wall, so it stays on #pricing
-         until a real request-access path exists. VentureStack's Sign in (below) stays '#': that
-         product has no platform and no domain yet.
+      /* BOTH BUTTONS GO TO THE SAME DOOR, and that is the design. The magic link at
+         os.ventrify.io/workspace is simultaneously the sign-up and the sign-in: an address with a
+         workspace lands in it, an address without one is routed to setup.html and offered a free
+         trial. There is no separate signup form, so there is no second entry point to secure.
+         ?new=1 only changes the copy on that page — "Sign in to your workspace" is a wall to
+         somebody who hasn't got one.
+         VentureStack's Sign in (below) stays '#': that product has no platform and no domain yet.
          NO TRAILING SLASH — cleanUrls makes /workspace/ a 308 to /workspace. Measured 2026-11-03:
          /workspace/ 308, /workspace/index.html 308, /workspace 200. Same trap as middleware.js. */
       actions: [
         { label: 'Sign in',     href: 'https://os.ventrify.io/workspace', style: 'light' },
-        { label: 'Try it free', href: '#pricing', style: 'solid' }
+        { label: 'Try it free', href: 'https://os.ventrify.io/workspace?new=1', style: 'solid' }
       ],
       footer: {
         tagline: 'VerdictScore — a venture score that shows its working.',

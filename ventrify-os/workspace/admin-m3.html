@@ -100,7 +100,19 @@
     const slug = document.getElementById('org-slug').value.trim();
     const ownerEmail = document.getElementById('org-owner').value.trim();
     if (!name || !ownerEmail) { window.__toast('Organisation name and owner email are required.', true); return; }
-    try { await adminCall({ action: 'create-org', name, slug, ownerEmail, plan: readPlan('neworg') }); location.reload(); }
+    try {
+      const made = await adminCall({ action: 'create-org', name, slug, ownerEmail, plan: readPlan('neworg') });
+      // CREATE-ORG USED TO TELL NOBODY. An operator made a workspace for a customer and the customer
+      // found out by being telephoned. Same template self-signup sends; content from the org record.
+      try {
+        const { auth } = await import('../firebase/firebase.js');
+        await fetch('/api/send-email', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: 'welcome', idToken: await auth.currentUser.getIdToken(), email: ownerEmail, orgId: made.id }),
+        });
+      } catch (_) { window.__toast('Org created, but the welcome email did not send.', true); }
+      location.reload();
+    }
     catch (e) { window.__toast('Could not create org: ' + e.message, true); }
   };
   window.__setOrgPlan = async (orgId) => { try { await adminCall({ action: 'set-plan', orgId, plan: readPlan('plan-' + orgId) }); location.reload(); } catch (e) { window.__toast('Could not update plan: ' + e.message, true); } };

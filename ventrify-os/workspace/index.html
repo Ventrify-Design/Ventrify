@@ -49,16 +49,26 @@
     const card = document.getElementById('signin-card');
     const mark = () => `<div class="signin-mark">${brandLockup({ label: 'VerdictScore' })}</div>`;
 
+    // ?new=1 — arrived from "Try it free" on the marketing site. SAME DOOR, different words. The magic
+    // link is both the sign-up and the sign-in: an address that has no workspace is sent to setup.html
+    // by app.js and offered one, so there is no second form to build and no second way in to secure.
+    // Only the copy changes, because "Sign in to your workspace" is a wall to someone who hasn't got one.
+    const SIGNUP = new URLSearchParams(window.location.search).get('new') === '1';
+
     function renderForm() {
       card.innerHTML = `
         ${mark()}
-        <h1 class="signin-title">Sign in to your workspace</h1>
-        <p class="signin-sub">Evidence-led venture assessment — the operator view of every venture your team is scoring.</p>
+        <h1 class="signin-title">${SIGNUP ? 'Start pre-screening, free' : 'Sign in to your workspace'}</h1>
+        <p class="signin-sub">${SIGNUP
+          ? 'Two free pre-screens — a verdict on whether a venture is worth a full assessment. No card, no password.'
+          : 'Evidence-led venture assessment — the operator view of every venture your team is scoring.'}</p>
         <form class="signin-form" id="login-form">
           ${formField({ label: 'Work email', id: 'login-email', type: 'email', placeholder: 'you@yourfund.com', attr: ' autocomplete="email" required' })}
-          <button type="submit" class="m3-btn filled signin-go" id="login-btn">Send me a sign-in link</button>
+          <button type="submit" class="m3-btn filled signin-go" id="login-btn">${SIGNUP ? 'Send me a link to get started' : 'Send me a sign-in link'}</button>
         </form>
-        <p class="signin-meta" id="login-meta">No password — we email you a one-time link to sign in.</p>`;
+        <p class="signin-meta" id="login-meta">${SIGNUP
+          ? 'No password — we email you a one-time link. Already have a workspace? The same link signs you in.'
+          : 'No password — we email you a one-time link to sign in.'}</p>`;
       wire();
     }
 

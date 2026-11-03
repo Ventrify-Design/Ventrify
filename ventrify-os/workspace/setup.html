@@ -31,6 +31,26 @@
     import { formField, inkOn } from '../shared/m3/ds.js';
     import { brandLockup } from '../shared/m3/brand-lockup.js';
     import { brandPreview, brandSwatches } from '../shared/m3/workspace-cards.js';
+    import { FIREBASE_ENABLED } from '../firebase/config.js';
+
+    // ── LIVE vs LOCAL ────────────────────────────────────────────────────────
+    // This page used to write four localStorage keys and nothing else, which on a real deployment
+    // meant a brand-new customer could fill it in, land on a dashboard, and be looking at a workspace
+    // that existed only in their browser — no org, no Firestore, invisible to everyone including them
+    // on their next device. It was unreachable in production only by accident: app.js's first-run
+    // redirect sits on the LOCAL branch, and the live branch showed "ask your Ventrify admin" instead.
+    //
+    // Now it is the live signup screen. The local path below is untouched, because the demo build and
+    // `FIREBASE_ENABLED = false` screenshots still depend on it.
+    const LIVE = await (async () => {
+      if (!FIREBASE_ENABLED) return null;
+      const { auth } = await import('../firebase/firebase.js');
+      const { onAuthStateChanged } = await import('https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js');
+      const user = await new Promise(r => { const u = onAuthStateChanged(auth, x => { u(); r(x); }); });
+      // No session, no workspace to create. Back to the magic link.
+      if (!user) { window.location.replace('/workspace'); return new Promise(() => {}); }
+      return { auth, user };
+    })();
 
     // ── State. Same shape the old page kept, minus `tier`. ──────────────────
     // THE LICENCE TIER PICKER IS GONE. It offered Starter $4,800 / Cohort
@@ -87,11 +107,17 @@
           ${formField({ label: 'Your name', id: 'op-name', placeholder: 'e.g. Alex Doré' })}
           ${formField({ label: 'Your email', id: 'op-email', type: 'email', placeholder: 'you@yourfund.com' })}
         </div>
-        <p class="signin-meta">You'll be set as Program Lead. Add more operators from Settings later.</p>
+        <p class="signin-meta">${LIVE
+          ? 'Signed in as <strong>' + esc(LIVE.user.email) + '</strong>. You\'ll be the owner — add more operators from Settings later.'
+          : 'You\'ll be set as Program Lead. Add more operators from Settings later.'}</p>
       </div>
 
       <button class="m3-btn filled signin-go" id="setup-go">Create workspace</button>
-      <p class="signin-meta setup-skip"><a href="#" id="setup-demo">Skip — explore with sample data instead</a></p>`;
+      ${LIVE
+        ? `<p class="signin-meta setup-skip">Been invited to an existing workspace? Ask its owner to add
+             <strong>${esc(LIVE.user.email)}</strong>, then sign in again.
+             &nbsp;·&nbsp; <a href="#" id="setup-signout">Sign out</a></p>`
+        : `<p class="signin-meta setup-skip"><a href="#" id="setup-demo">Skip — explore with sample data instead</a></p>`}`;
 
     // ── Live preview ────────────────────────────────────────────────────────
     const preview = document.getElementById('setup-preview');
@@ -135,14 +161,70 @@
     const DASH = '/workspace/dashboard-m3.html';   // was dashboard.html — the LEGACY page, which
     // login has not sent anyone to since Material-3 became the only workspace UI.
     // First-run was the one path still landing a brand-new org on the old dashboard.
-    document.getElementById('setup-go').addEventListener('click', () => {
+    // In live mode the address is whatever the magic link proved, and the server reads it from the
+    // token regardless of what this field says — so show it, and do not invite anyone to edit it.
+    if (LIVE) {
+      const f = document.getElementById('op-email');
+      f.value = LIVE.user.email; f.readOnly = true; f.tabIndex = -1;
+      f.setAttribute('aria-readonly', 'true');
+      const so = document.getElementById('setup-signout');
+      if (so) so.addEventListener('click', async (e) => {
+        e.preventDefault();
+        try { const { signOutUser } = await import('../firebase/auth.js'); await signOutUser(); } catch (_) {}
+        window.location.replace('/workspace');
+      });
+    }
+
+    const say = (m, bad) => window.__toast ? window.__toast(m, !!bad) : alert(m);
+
+    document.getElementById('setup-go').addEventListener('click', async () => {
       state.opName = document.getElementById('op-name').value.trim();
       state.opEmail = document.getElementById('op-email').value.trim();
       if (!state.orgName.trim() || !state.opName || !state.opEmail) {
-        window.__toast ? window.__toast('Organisation name, your name and your email are all required.', true)
-                       : alert('Organisation name, your name and your email are all required.');
+        say('Organisation name, your name and your email are all required.', true);
         return;
       }
+
+      // ── LIVE: the workspace is a Firestore org, created server-side ───────
+      if (LIVE) {
+        const btn = document.getElementById('setup-go');
+        btn.disabled = true; btn.textContent = 'Creating your workspace…';
+        try {
+          const idToken = await LIVE.auth.currentUser.getIdToken();
+          const resp = await fetch('/api/admin', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'create-own-org', idToken, name: state.orgName.trim(), primaryColor: state.primaryColor }),
+          });
+          const data = await resp.json().catch(() => ({}));
+          // Already having one is not an error worth a message — it is where they were going anyway.
+          if (resp.ok || data.error === 'already_has_org') {
+            // Fire and forget. A workspace that exists but whose welcome bounced is a working
+            // workspace; blocking the redirect on an email would turn a mail outage into a signup
+            // outage. The server derives every word of it from the org record.
+            if (resp.ok) {
+              fetch('/api/send-email', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'welcome', idToken, email: LIVE.user.email, orgId: data.id }),
+              }).catch(() => {});
+            }
+            window.location.href = DASH; return;
+          }
+          const why = {
+            email_not_verified: 'This address has not been verified. Sign in again through the emailed link.',
+            name_required: 'Give your workspace a name.',
+            name_too_long: 'That name is too long — 80 characters or fewer.',
+            slug_exhausted: 'Too many workspaces share that name. Try a more specific one.',
+          }[data.error] || ('Could not create your workspace: ' + (data.error || ('HTTP ' + resp.status)));
+          say(why, true);
+        } catch (e) {
+          say('Could not reach the server. Check your connection and try again.', true);
+        } finally {
+          btn.disabled = false; btn.textContent = 'Create workspace';
+        }
+        return;
+      }
+
+      // ── LOCAL / demo: unchanged. app.js's first-run branch reads these four keys. ──
       const operatorId = 'op-' + Math.random().toString(36).slice(2, 8);
       const organisation = {
         name: state.orgName.trim(),
@@ -163,7 +245,7 @@
       localStorage.setItem('workspace.demoMode', 'off');
       window.location.href = DASH;
     });
-    document.getElementById('setup-demo').addEventListener('click', (e) => {
+    document.getElementById('setup-demo')?.addEventListener('click', (e) => {
       e.preventDefault();
       localStorage.setItem('workspace.demoMode', 'on');
       window.location.href = DASH;

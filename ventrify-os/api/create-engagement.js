@@ -24,6 +24,9 @@ function ensureAdmin() {
 // Licence presets — MUST mirror workspace/plan.js PLAN_PRESETS and the copy in
 // api/admin.js. Keep the three in sync if a preset's capabilities/limits change.
 const SERVER_PLAN_PRESETS = {
+  // Public signup creates THIS and only this — see workspace/plan.js. A finite pre-screen
+  // allowance is the money guard: each run costs real API credit and nothing throttles a user.
+  'trial':      { capabilities: { assess: true, build: false }, limits: { assessments: 0,    builds: 0,    prescreens: 2 } },
   'self-serve': { capabilities: { assess: true, build: false }, limits: { assessments: 0,    builds: 0,    prescreens: null } },
   'one-off':    { capabilities: { assess: true, build: false }, limits: { assessments: 1,    builds: 0,    prescreens: null } },
   'assess':     { capabilities: { assess: true, build: false }, limits: { assessments: null, builds: 0,    prescreens: null } },

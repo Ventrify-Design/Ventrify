@@ -54,6 +54,19 @@
 import { defaultTier } from '../shared/entitlements.js';
 
 export const PLAN_PRESETS = {
+  // THE ONLY PRESET PUBLIC SIGNUP CAN CREATE, and the reason it exists.
+  // 'self-serve' grants UNLIMITED pre-screens, which is the right offer for an account we chose to
+  // open — "volume is the hook" above still stands. It is the wrong offer for anyone who can mint an
+  // account from a marketing page: a pre-screen costs ~$1.60 of real API credit (v1 measured; v2's
+  // figures are still predicted) and nothing in this codebase rate-limits a user. Unlimited × open
+  // signup is an uncapped bill. So the public door creates 'trial', and an admin moves an org up.
+  // api/admin.js hard-codes this preset on create-own-org and never reads one from the request.
+  'trial': {
+    label: 'Free trial',
+    blurb: 'Two free pre-screens — a verdict on whether a venture is worth assessing. Upgrade for more.',
+    capabilities: { assess: true, build: false },
+    limits: { assessments: 0, builds: 0, prescreens: 2 },
+  },
   'self-serve': {
     label: 'Free account',
     blurb: 'Pre-screen any venture free — a verdict on whether it is worth assessing. Full assessments are bought per venture.',

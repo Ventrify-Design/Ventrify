@@ -3,6 +3,7 @@
  *
  * Consolidates the former /api/send-login-link + /api/send-invite into one function
  * (dispatched by `type`) to stay within the Vercel plan's serverless-function budget.
+ *   types: login | invite | docs-request | welcome
  * The Admin SDK MINTS the Firebase email-link sign-in URL (generateSignInWithEmailLink
  * — mint, don't send); Resend SENDS it from the verified domain. This sidesteps
  * Firebase's built-in email-send DAILY QUOTA (auth/quota-exceeded) and gives full
@@ -73,6 +74,36 @@ function inviteHtml({ orgName, ventureName, link }) {
   </body></html>`;
 }
 
+// A workspace now exists and nobody has been told. create-org has never sent anything — an operator
+// made an org for a customer and the customer learned about it by being telephoned — and self-signup
+// would have inherited exactly that silence. Deliberately NOT a magic link: this is confirmation, not
+// authentication, and a sign-in link sitting in an inbox is a credential with a long tail.
+function welcomeHtml({ orgName, planLabel, prescreens, link }) {
+  const org = esc(orgName);
+  const allowance = prescreens == null
+    ? 'Unlimited pre-screens'
+    : `${prescreens} free pre-screen${prescreens === 1 ? '' : 's'}`;
+  return `<!doctype html><html><body style="margin:0;background:#f4f5f7;font-family:-apple-system,'Segoe UI',Inter,Helvetica,Arial,sans-serif;color:#141414;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5f7;padding:32px 12px;"><tr><td align="center">
+    <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="max-width:480px;background:#ffffff;border-radius:16px;border:1px solid rgba(0,0,0,0.06);overflow:hidden;">
+      <tr><td style="padding:28px 32px 0;">
+        <div style="font-weight:700;letter-spacing:-0.01em;font-size:15px;color:#0036FF;">Verdict<span style="color:#9aa0ab;font-weight:500;">Score</span></div>
+      </td></tr>
+      <tr><td style="padding:18px 32px 8px;">
+        <h1 style="margin:0 0 12px;font-size:22px;letter-spacing:-0.02em;line-height:1.25;">${org} is ready</h1>
+        <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#444;">Your workspace is set up. Upload a deck and any supporting documents, and the pre-screen returns a verdict on whether the venture is worth a full assessment — with its reasoning and its sources attached.</p>
+        <p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#444;background:#f4f5f7;border-radius:10px;padding:12px 14px;"><strong>${esc(planLabel)}</strong> &middot; ${allowance}</p>
+        <a href="${link}" style="display:inline-block;background:#0036FF;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:13px 26px;border-radius:10px;">Open your workspace &rarr;</a>
+        <p style="margin:22px 0 0;font-size:13px;line-height:1.6;color:#8a8f98;">Sign in with the same email address and we'll send you a one-time link. If you didn't create this workspace, reply and tell us.</p>
+      </td></tr>
+      <tr><td style="padding:22px 32px 26px;border-top:1px solid rgba(0,0,0,0.06);">
+        <p style="margin:0;font-size:12px;color:#aab0b8;">Powered by Ventrify OS</p>
+      </td></tr>
+    </table>
+  </td></tr></table>
+  </body></html>`;
+}
+
 function docsRequestHtml({ orgName, ventureName, operatorName, missing, extras, folderUrl, note }) {
   const org = esc(orgName), venture = esc(ventureName);
   const li = (t, sub) => `<tr><td style="padding:9px 0;border-bottom:1px solid rgba(0,0,0,0.06);"><div style="font-size:14px;font-weight:600;color:#141414;">${esc(t)}</div>${sub ? `<div style="font-size:13px;line-height:1.5;color:#6b7280;margin-top:2px;">${esc(sub)}</div>` : ''}</td></tr>`;
@@ -111,6 +142,59 @@ module.exports = async (req, res) => {
     const email = String(body.email || '').trim().toLowerCase();
     if (!email) { res.status(400).json({ error: 'email_required' }); return; }
     if (!process.env.RESEND_API_KEY) { res.status(503).json({ error: 'email_not_configured' }); return; }
+
+    // ── WELCOME (authenticated) ────────────────────────────────────────────────────────────────────
+    // Content comes from the org record, never the body: a caller picks nobody's name, plan or
+    // allowance. An operator may only welcome THEMSELVES to an org they belong to; a super-admin may
+    // welcome the owner of any org, which is what closes create-org's long-standing silence.
+    if (body.type === 'welcome') {
+      if (!body.idToken) { res.status(400).json({ error: 'bad_request' }); return; }
+      ensureAdmin();
+      let decoded;
+      try { decoded = await admin.auth().verifyIdToken(body.idToken); }
+      catch (e) { res.status(401).json({ error: 'invalid_token' }); return; }
+      const caller = (decoded.email || '').toLowerCase();
+      const db = admin.firestore();
+
+      const cfg = (await db.doc('app/config').get()).data() || {};
+      const isSuper = (cfg.superAdminEmails || []).map(e => String(e).toLowerCase()).includes(caller);
+
+      const orgId = String(body.orgId || '').trim();
+      let orgSnap;
+      if (orgId) {
+        orgSnap = await db.collection('organisations').doc(orgId).get();
+      } else {
+        const mine = await db.collection('organisations').where('operatorEmails', 'array-contains', caller).limit(1).get();
+        orgSnap = mine.empty ? null : mine.docs[0];
+      }
+      if (!orgSnap || !orgSnap.exists) { res.status(404).json({ error: 'org_not_found' }); return; }
+      const org = orgSnap.data();
+      const ops = (org.operatorEmails || []).map(e => String(e).toLowerCase());
+      // Not a super-admin? Then the only address you may write to is your own, in your own org.
+      if (!isSuper && (!ops.includes(caller) || email !== caller)) { res.status(403).json({ error: 'forbidden' }); return; }
+      if (isSuper && !ops.includes(email)) { res.status(403).json({ error: 'not_an_operator_of_that_org' }); return; }
+
+      const plan = org.plan || {};
+      const PLAN_LABELS = { trial: 'Free trial', 'self-serve': 'Free account', 'one-off': 'One-off assessment',
+                            assess: 'Assessment licence', full: 'Full platform licence', custom: 'Custom plan' };
+      const html = welcomeHtml({
+        orgName: org.name || 'Your workspace',
+        planLabel: PLAN_LABELS[plan.preset] || 'Workspace',
+        prescreens: plan.limits ? plan.limits.prescreens : null,
+        link: (process.env.WORKSPACE_URL || 'https://os.ventrify.io') + '/workspace',
+      });
+      const sendResp = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from: process.env.INVITE_FROM_EMAIL || 'Ventrify <hello@ventrify.io>',
+          to: [email], subject: `${org.name || 'Your workspace'} is ready — VerdictScore`, html
+        })
+      });
+      if (!sendResp.ok) { const detail = await sendResp.text(); res.status(502).json({ error: 'send_failed', detail: detail.slice(0, 300) }); return; }
+      res.status(200).json({ ok: true });
+      return;
+    }
 
     // ── REQUEST THE MISSING DOCUMENTS (authenticated) ───────────────────────────────────────────────
     // Unlike 'login' and 'invite' above, this type requires an ID token and proves the caller is an operator

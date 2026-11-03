@@ -8,6 +8,7 @@
  * Actions (body.action):
  *   list-orgs                         → super-admin: all orgs
  *   create-org {name, slug?, ownerEmail, primaryColor?, plan?} → super-admin: new org
+ *   create-own-org {name, primaryColor?}  → ANY verified caller with no org: their own trial workspace
  *   set-plan {orgId, plan}            → super-admin: change an org's licence
  *   add-operator {orgId, email}       → super-admin OR that org's owner
  *   remove-operator {orgId, email}    → super-admin OR that org's owner
@@ -30,6 +31,9 @@ function slugify(s) {
 // is the source of truth: clients can suggest a plan, but it's normalised here
 // before it touches Firestore so a tampered request can't grant extra scope.
 const SERVER_PLAN_PRESETS = {
+  // Public signup creates THIS and only this — see workspace/plan.js. A finite pre-screen
+  // allowance is the money guard: each run costs real API credit and nothing throttles a user.
+  'trial':      { capabilities: { assess: true, build: false }, limits: { assessments: 0,    builds: 0,    prescreens: 2 } },
   'self-serve': { capabilities: { assess: true, build: false }, limits: { assessments: 0,    builds: 0,    prescreens: null } },
   'one-off':    { capabilities: { assess: true, build: false }, limits: { assessments: 1,    builds: 0,    prescreens: null } },
   'assess':     { capabilities: { assess: true, build: false }, limits: { assessments: null, builds: 0,    prescreens: null } },
@@ -93,6 +97,50 @@ module.exports = async (req, res) => {
         name, slug: id, ownerEmail, operatorEmails: [ownerEmail],
         primaryColor: body.primaryColor || '#0036FF',
         plan: normalisePlan(body.plan),
+        createdAt: FieldValue.serverTimestamp()
+      });
+      res.status(200).json({ ok: true, id });
+      return;
+    }
+
+    // ── PUBLIC SIGNUP ─────────────────────────────────────────────────────────────────────────────
+    // The one action here that is NOT super-admin. It is still not unauthenticated: the caller has
+    // already proved this email by following a magic link, and verifyIdToken above is what proves it
+    // to us. That is the whole security model — there is no open endpoint that mints organisations.
+    //
+    // THREE THINGS ARE NEVER READ FROM THE REQUEST, because a client can say anything:
+    //   • the owner's email  — taken from the verified token, not the body
+    //   • the plan           — hard-coded 'trial'; body.plan is ignored entirely
+    //   • super-admin status — irrelevant here; a super-admin signing up gets a trial like anyone
+    // Upgrading an org remains set-plan, which is super-admin only.
+    if (action === 'create-own-org') {
+      // email_verified is true for email-link sign-in, which is the only way into this product.
+      // A provider that could federate an unverified address must not be able to claim a workspace.
+      if (!decoded.email_verified) { res.status(403).json({ error: 'email_not_verified' }); return; }
+
+      const name = String(body.name || '').trim();
+      if (!name) { res.status(400).json({ error: 'name_required' }); return; }
+      if (name.length > 80) { res.status(400).json({ error: 'name_too_long' }); return; }
+
+      // ONE WORKSPACE PER EMAIL. Without this, a signed-in account can mint organisations in a loop
+      // and each one carries its own free pre-screen allowance — the allowance would cap nothing.
+      const mine = await db.collection('organisations').where('operatorEmails', 'array-contains', caller).limit(1).get();
+      if (!mine.empty) { res.status(409).json({ error: 'already_has_org', id: mine.docs[0].id }); return; }
+
+      // Slug collisions are other people's workspaces, so never reuse and never guess twice.
+      const base = slugify(name) || 'workspace';
+      let id = base;
+      for (let i = 2; (await db.doc('organisations/' + id).get()).exists; i++) {
+        if (i > 50) { res.status(409).json({ error: 'slug_exhausted' }); return; }
+        id = base + '-' + i;
+      }
+
+      await db.doc('organisations/' + id).set({
+        name, slug: id, ownerEmail: caller, operatorEmails: [caller],
+        primaryColor: typeof body.primaryColor === 'string' && /^#[0-9a-fA-F]{6}$/.test(body.primaryColor)
+          ? body.primaryColor : '#0036FF',
+        plan: normalisePlan({ preset: 'trial' }),
+        source: 'self-signup',
         createdAt: FieldValue.serverTimestamp()
       });
       res.status(200).json({ ok: true, id });
