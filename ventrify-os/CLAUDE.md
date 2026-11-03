@@ -72,6 +72,22 @@ Production tracks `main`. Pushing the feature branch alone only creates a Previe
 `git push origin m3-workspace-migration:main`. Builds take ~60–130s. **Verify the deploy landed by
 fetching the changed asset**, not by assuming the push was enough.
 
-`api/` sits at exactly Vercel's 12-function Hobby cap. **A new `api/*.js` file fails the whole deploy** —
-fold new work into an existing function and dispatch on an action, and add that action to the dispatcher's
-whitelist. Underscore-prefixed files (`_prescreen2.js`, `_corpus.js`) are not counted.
+### The Hobby caps are gone — but nothing has proved it yet
+
+**The account moved to Vercel Pro on 2026-11-03.** Two limits shaped most of this codebase:
+
+| Limit | Hobby | Pro | What it shaped |
+|---|---|---|---|
+| Functions per deployment | 12 | far higher | `api/` multiplexing; six `_`-prefixed files |
+| `maxDuration` per invocation | 60s | up to 300s | the browser orchestrating the pre-screen |
+| Vercel Cron | 2, daily only | many, any schedule | the sweeper riding a GitHub Actions cron |
+
+**Claim level: `built` at most — the raised caps are assumed from the plan change, not observed.** No
+deploy has yet carried a 13th `api/*.js` file or a `maxDuration` over 60. Until one has, write the
+number down as predicted. The first deploy that adds a function is the test.
+
+**Do not refactor the multiplexed shape just because the cap lifted.** `memo.js` and `dispatch-run.js`
+dispatch on an action and they work; a working design is not a debt. Split a function out when that
+function has its own reason to exist, and let the first split prove the ceiling moved.
+
+Underscore-prefixed files (`_prescreen2.js`, `_corpus.js`) were never counted and still are not.
