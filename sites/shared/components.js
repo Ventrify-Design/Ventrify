@@ -91,8 +91,18 @@
           { label: 'Pricing',         href: '#pricing' }
         ]
       },
+      /* SIGN IN GOES TO THE PRODUCT; "TRY IT FREE" DELIBERATELY DOES NOT.
+         os.ventrify.io/workspace/ is already titled "Sign in — VerdictScore" and authenticates by
+         magic link, so a real operator lands in their workspace. But there is NO self-serve signup:
+         orgs are created by a super-admin (api/admin.js create-org), and a stranger who signs in
+         with no org hits renderNoAccess() — "ask your Ventrify admin to add you". Pointing "Try it
+         free" at the product would walk every prospect into that wall, so it stays on #pricing
+         until a real request-access path exists. VentureStack's Sign in (below) stays '#': that
+         product has no platform and no domain yet.
+         NO TRAILING SLASH — cleanUrls makes /workspace/ a 308 to /workspace. Measured 2026-11-03:
+         /workspace/ 308, /workspace/index.html 308, /workspace 200. Same trap as middleware.js. */
       actions: [
-        { label: 'Sign in',     href: '#', style: 'light' },
+        { label: 'Sign in',     href: 'https://os.ventrify.io/workspace', style: 'light' },
         { label: 'Try it free', href: '#pricing', style: 'solid' }
       ],
       footer: {

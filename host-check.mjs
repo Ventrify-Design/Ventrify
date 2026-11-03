@@ -48,6 +48,27 @@ for (const { host, expect, site } of HOSTS) {
   ok(`serves ${site}`, title.includes(want), title || '(no title)');
 }
 
+/* THE SIGN IN BUTTON. It leaves the marketing site for the product, so nothing on the page can tell
+   you it still works — only asking the product can. A trailing slash here is a 308 under cleanUrls. */
+console.log('\n── the Sign in destination');
+{
+  const src = await import('node:fs').then(m => m.readFileSync('sites/shared/components.js', 'utf8'));
+  const href = (src.match(/label: 'Sign in',\s*href: '(https?:\/\/[^']+)'/) || [, ''])[1];
+  ok('VerdictScore Sign in points at the product', !!href, href || "still '#'");
+  if (href) {
+    ok('no trailing slash — cleanUrls would 308 it', !href.endsWith('/'), href);
+    const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
+    try {
+      const r = await fetch(href, { headers: { 'user-agent': UA }, redirect: 'manual' });
+      ok('answers 200 with no redirect', r.status === 200, 'status ' + r.status);
+      if (r.status === 200) {
+        const t = ((await r.text()).match(/<title>([^<]*)</) || [, ''])[1];
+        ok('and it is the sign-in page', /sign in/i.test(t), t);
+      }
+    } catch (e) { ok('reachable', false, e.message); }
+  }
+}
+
 console.log(fail ? `\n${fail} FAILED` : '\nevery host serves its own site');
 if (CANARY) {
   console.log(fail ? 'canary OK — the gate can fail' : '\n!! CANARY DID NOT FAIL — this gate is decoration');
