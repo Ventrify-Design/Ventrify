@@ -10,7 +10,14 @@
 // It also checks the one thing that fails SILENTLY: the tier names in the page must match the
 // server's allowlist in send-email.js, or an enquiry about the $35,000 plan is filed as "General".
 //
+// ⚠ THE DEFAULT RUN DOES NOT REACH THE DATABASE, and once did not reach it by accident. Honeypot,
+// bad address and missing name are all refused before Firestore, so the first version of this gate
+// passed against an endpoint that answered 500 to every genuine submission (a composite query with
+// no index). --live posts one real enquiry, proves the whole route, and sweeps its own record. It
+// emails CONTACT_TO_EMAIL once, which is why it is a flag and not the default.
+//
 //   node cta-check.mjs
+//   node cta-check.mjs --live      # + one real submission, end to end, then swept
 //   node cta-check.mjs --canary
 // ============================================================
 import { readFileSync } from 'node:fs';
@@ -66,6 +73,33 @@ ok(bad.s === 400 && bad.b.error === 'bad_email', 'a malformed address is refused
 
 const noName = await post({ type: 'contact', email: 'someone@example.com', tier: 'Founder' });
 ok(noName.s === 400 && noName.b.error === 'name_required', 'a missing name is refused', `${noName.s} ${noName.b.error}`);
+
+if (process.argv.includes('--live')) {
+  console.log('\n── one real submission, all the way through');
+  const marker = '__cta-harness-' + Date.now();
+  const sent = await post({ type: 'contact', name: 'CTA harness', email: 'antonywhenman@icloud.com',
+                            company: marker, tier: 'Founder', message: 'Automated route check. Safe to delete.' });
+  ok(sent.s === 200, 'a genuine enquiry is accepted', `${sent.s} ${JSON.stringify(sent.b).slice(0, 120)}`);
+  ok(!!sent.b.id, 'and is recorded', sent.b.id);
+  ok(sent.b.emailed === true, 'and the notification went out', String(sent.b.emailed));
+
+  if (sent.b.id) {
+    const { initAdmin } = await import('./ventrify-os/tools/contract-auth.mjs');
+    const a = await initAdmin(); const db = a.firestore();
+    const doc = await db.doc('contactRequests/' + sent.b.id).get();
+    ok(doc.exists, 'the record is really in Firestore');
+    const d = doc.data() || {};
+    ok(d.tier === 'Founder', 'with the tier the visitor pressed', d.tier);
+    ok(d.company === marker, 'and the content they typed', d.company);
+    ok(d.handled === false, 'flagged unhandled so it can be worked through', String(d.handled));
+    // Sweep: the record AND the throttle entry, or three runs in an hour start returning 429.
+    await doc.ref.delete();
+    await db.doc('contactThrottle/antonywhenman_icloud_com').delete().catch(() => {});
+    console.log('  (swept the record and the throttle entry)');
+  }
+} else {
+  console.log('\n  ·  skipped the real submission — run with --live to prove the whole route');
+}
 
 console.log(fails ? `\n${fails} FAILED` : '\nevery CTA goes somewhere, and the form refuses what it should');
 if (CANARY) { console.log(fails ? 'canary OK — the gate can fail' : '\n!! CANARY DID NOT FAIL'); process.exit(fails ? 0 : 1); }

@@ -182,12 +182,22 @@ module.exports = async (req, res) => {
 
       ensureAdmin();
       const db = admin.firestore();
+
       // Cheap, honest throttle: the same address cannot file more than three in an hour. Not a defence
       // against a determined flood — it is a defence against a retry loop and an idle nuisance.
-      const since = new Date(Date.now() - 60 * 60 * 1000);
-      const recent = await db.collection('contactRequests')
-        .where('email', '==', email).where('createdAt', '>', since).get();
-      if (recent.size >= 3) { res.status(429).json({ error: 'too_many_requests' }); return; }
+      //
+      // ONE DOCUMENT READ, NOT A QUERY, and that is the whole point. The first version asked
+      // `where('email','==',x).where('createdAt','>',t)`, which is a composite query, and Firestore
+      // answers a composite query it has no index for with FAILED_PRECONDITION — a 500 on every
+      // genuine submission. It shipped, because every case the gate tested (honeypot, bad address,
+      // missing name) returns BEFORE this line. Keying the document by the address needs no index and
+      // cannot develop this failure again.
+      const key = email.replace(/[^a-z0-9]+/g, '_').slice(0, 120);
+      const tRef = db.doc('contactThrottle/' + key);
+      const now = Date.now();
+      const hits = (((await tRef.get()).data() || {}).hits || []).filter(t => now - t < 60 * 60 * 1000);
+      if (hits.length >= 3) { res.status(429).json({ error: 'too_many_requests' }); return; }
+      await tRef.set({ hits: [...hits, now], email }, { merge: false });
 
       const ref = await db.collection('contactRequests').add({
         email, name, company, message, tier,
