@@ -20,6 +20,17 @@ const HOSTS = [
 let fail = 0;
 const ok = (n, c, got) => { console.log(`  ${c ? 'PASS' : 'FAIL'}  ${n}${got ? ' — ' + got : ''}`); if (!c) fail++; };
 
+console.log('\n── middleware destinations (offline)');
+{
+  const src = await import('node:fs').then(m => m.readFileSync('middleware.js', 'utf8'));
+  const dests = [...src.matchAll(/'(\/sites\/[^']+)'/g)].map(m => m[1]);
+  ok('every destination is declared', dests.length >= 2, dests.join(', '));
+  /* cleanUrls turns an index.html destination into a 308, and an internal rewrite aimed at a
+     redirect resolves to NOT_FOUND. This shipped once. */
+  const bad = dests.filter(d => d.endsWith('.html') || d.endsWith('/'));
+  ok('none ends in .html or a slash — cleanUrls would 308 it', !bad.length, bad.join(', ') || 'all bare');
+}
+
 for (const { host, expect, site } of HOSTS) {
   console.log(`\n── ${host}  (${site})`);
   let res, body = '';

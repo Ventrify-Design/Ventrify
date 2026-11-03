@@ -19,14 +19,20 @@
  *
  * No imports. @vercel/edge's rewrite() helper would mean a new dependency in a package.json shared
  * with every other project built from this repo; the response headers below are the same mechanism
- * that helper wraps.
+ * that helper wraps. Both headers are confirmed honoured in production: the first deploy rewrote
+ * verdict.ventrify.io (to a bad path) and let ventrify.io through to its 87KB page untouched.
  */
 
 export const config = { matcher: '/' };
 
+/* EXTENSIONLESS, AND NOT BY STYLE. vercel.json sets cleanUrls, so /sites/verdict-score/index.html is
+ * a 308 to /sites/verdict-score — and an internal rewrite aimed at a redirect resolves to nothing at
+ * all. The first deploy of this file returned NOT_FOUND for exactly that reason. Measured 2026-11-03:
+ *   /sites/verdict-score/index.html -> 308      /sites/verdict-score/ -> 308      /sites/verdict-score -> 200
+ * Only the bare path is a document. Do not "tidy" these back to index.html. */
 const SITES = {
-  'verdict.ventrify.io': '/sites/verdict-score/index.html',
-  'venture.ventrify.io': '/sites/venture-stack/index.html',
+  'verdict.ventrify.io': '/sites/verdict-score',
+  'venture.ventrify.io': '/sites/venture-stack',
 };
 
 export default function middleware(request) {
