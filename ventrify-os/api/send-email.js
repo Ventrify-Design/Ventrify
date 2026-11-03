@@ -3,7 +3,7 @@
  *
  * Consolidates the former /api/send-login-link + /api/send-invite into one function
  * (dispatched by `type`) to stay within the Vercel plan's serverless-function budget.
- *   types: login | invite | docs-request | welcome
+ *   types: login | invite | docs-request | welcome | contact (public, CORS, the only unauthenticated one)
  * The Admin SDK MINTS the Firebase email-link sign-in URL (generateSignInWithEmailLink
  * — mint, don't send); Resend SENDS it from the verified domain. This sidesteps
  * Firebase's built-in email-send DAILY QUOTA (auth/quota-exceeded) and gives full
@@ -135,12 +135,92 @@ function docsRequestHtml({ orgName, ventureName, operatorName, missing, extras, 
 
 const { checkRoom } = require('./_roomcheck.js');
 
+// The ONLY cross-origin caller is the marketing site's contact form: the page is served from
+// verdict.ventrify.io and this function lives on os.ventrify.io. An allowlist, not a wildcard —
+// every other type here is authenticated and has no business being reachable from a stranger's page.
+const CORS_ORIGINS = new Set([
+  'https://verdict.ventrify.io', 'https://venture.ventrify.io', 'https://ventrify.io',
+  'http://localhost:3000',
+]);
+function cors(req, res) {
+  const origin = req.headers && req.headers.origin;
+  if (!origin || !CORS_ORIGINS.has(origin)) return;
+  res.setHeader('Access-Control-Allow-Origin', origin);
+  res.setHeader('Vary', 'Origin');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+}
+
 module.exports = async (req, res) => {
+  cors(req, res);
+  // Preflight. Without this the browser never sends the POST and the form fails silently.
+  if (req.method === 'OPTIONS') { res.status(204).end(); return; }
   if (req.method !== 'POST') { res.status(405).json({ error: 'method_not_allowed' }); return; }
   try {
     const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
     const email = String(body.email || '').trim().toLowerCase();
     if (!email) { res.status(400).json({ error: 'email_required' }); return; }
+
+    // ── CONTACT (public, unauthenticated) ───────────────────────────────────────────────────────────
+    // The pricing CTAs were four `mailto:` links, which on mobile and in webmail frequently do nothing
+    // at all — the click looks like a dead button and the lead is gone with no trace. This is the only
+    // unauthenticated branch in this file, so it is also the only one that has to assume the caller is
+    // hostile: nothing it submits is trusted, nothing it says is echoed anywhere privileged, and it
+    // writes one short record rather than anything that can grow.
+    if (body.type === 'contact') {
+      if (!process.env.RESEND_API_KEY) { res.status(503).json({ error: 'email_not_configured' }); return; }
+      // A field no human sees and no human fills. Bots fill everything. Answer 200 so the bot believes
+      // it worked and does not come back by another route.
+      if (String(body._hp || '').trim()) { res.status(200).json({ ok: true }); return; }
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { res.status(400).json({ error: 'bad_email' }); return; }
+
+      const TIERS = new Set(['Founder', 'Angel', 'Investor', 'Enterprise', 'General']);
+      const tier = TIERS.has(String(body.tier || '')) ? String(body.tier) : 'General';
+      const cap = (v, n) => String(v == null ? '' : v).trim().slice(0, n);
+      const name = cap(body.name, 120), company = cap(body.company, 120), message = cap(body.message, 2000);
+      if (!name) { res.status(400).json({ error: 'name_required' }); return; }
+
+      ensureAdmin();
+      const db = admin.firestore();
+      // Cheap, honest throttle: the same address cannot file more than three in an hour. Not a defence
+      // against a determined flood — it is a defence against a retry loop and an idle nuisance.
+      const since = new Date(Date.now() - 60 * 60 * 1000);
+      const recent = await db.collection('contactRequests')
+        .where('email', '==', email).where('createdAt', '>', since).get();
+      if (recent.size >= 3) { res.status(429).json({ error: 'too_many_requests' }); return; }
+
+      const ref = await db.collection('contactRequests').add({
+        email, name, company, message, tier,
+        source: (req.headers && req.headers.origin) || 'unknown',
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        handled: false,
+      });
+
+      const row = (k, v) => v ? `<tr><td style="padding:4px 14px 4px 0;color:#8a8f98;font-size:13px;">${esc(k)}</td><td style="padding:4px 0;font-size:14px;">${esc(v)}</td></tr>` : '';
+      const html = `<!doctype html><html><body style="font-family:-apple-system,'Segoe UI',Inter,Helvetica,Arial,sans-serif;color:#141414;">
+        <h2 style="margin:0 0 14px;font-size:18px;">${esc(tier)} plan enquiry</h2>
+        <table role="presentation" cellpadding="0" cellspacing="0">
+          ${row('Name', name)}${row('Email', email)}${row('Company', company)}${row('Tier', tier)}
+        </table>
+        ${message ? `<p style="margin:16px 0 0;font-size:14px;line-height:1.6;white-space:pre-wrap;">${esc(message)}</p>` : ''}
+        <p style="margin:20px 0 0;font-size:12px;color:#aab0b8;">contactRequests/${esc(ref.id)} · reply to this email to answer them directly.</p>
+      </body></html>`;
+
+      const to = process.env.CONTACT_TO_EMAIL || 'hello@ventrify.io';
+      const sendResp = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from: process.env.INVITE_FROM_EMAIL || 'Ventrify <hello@ventrify.io>',
+          to: [to], reply_to: email, subject: `${tier} plan enquiry — ${name}`, html,
+        })
+      });
+      // The record is already written, so a mail outage loses the notification, never the lead.
+      if (!sendResp.ok) { res.status(200).json({ ok: true, emailed: false, id: ref.id }); return; }
+      res.status(200).json({ ok: true, emailed: true, id: ref.id });
+      return;
+    }
+
     if (!process.env.RESEND_API_KEY) { res.status(503).json({ error: 'email_not_configured' }); return; }
 
     // ── WELCOME (authenticated) ────────────────────────────────────────────────────────────────────

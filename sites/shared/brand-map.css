@@ -1855,3 +1855,38 @@ v-shine { display: block; }
   .ix-seq.is-chain .ix-rail::after { top: 100%; left: 50%; }
   .ix-set { grid-template-columns: repeat(2, 1fr); gap: var(--sp-3); }
 }
+
+/* ══ CONTACT DIALOG ══════════════════════════════════════════════════════════════════════════════
+   The pricing CTAs were four `mailto:` links. On mobile and in webmail a mailto frequently does
+   nothing visible at all — the button reads as broken and the lead leaves with no trace of having
+   tried. This is the form that replaces them. It is a <dialog> so the tier a visitor pressed is
+   still on screen behind it, and so no CTA has to navigate away from the page that convinced them.
+   Tokens only: it must read as part of the site in both palettes without a second theme to keep. */
+.cdlg { border: none; padding: 0; background: transparent; max-width: min(34rem, calc(100vw - 2rem)); width: 100%; }
+.cdlg::backdrop { background: rgba(8, 10, 18, 0.62); backdrop-filter: blur(6px); }
+.cdlg-card { background: var(--surface-raised); border: 1px solid var(--line-2); border-radius: var(--radius);
+             padding: 1.75rem; max-height: calc(100dvh - 2rem); overflow-y: auto; }
+.cdlg-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 0.35rem; }
+.cdlg-head h3 { margin: 0; font-size: 1.25rem; letter-spacing: -0.02em; }
+.cdlg-sub { margin: 0 0 1.25rem; color: var(--text-3); font-size: 0.95rem; line-height: 1.55; }
+.cdlg-x { background: none; border: none; color: var(--text-3); font-size: 1.5rem; line-height: 1;
+          cursor: pointer; padding: 0.25rem 0.5rem; margin: -0.25rem -0.5rem 0 0; border-radius: var(--radius-s);
+          min-width: 44px; min-height: 44px; }
+.cdlg-x:hover { color: var(--text-1); background: var(--glass-film-1); }
+.cdlg-f { display: block; margin-bottom: 0.9rem; }
+.cdlg-f > span { display: block; font-size: 0.82rem; color: var(--text-2); margin-bottom: 0.35rem; font-weight: 500; }
+.cdlg-f input, .cdlg-f textarea {
+  width: 100%; box-sizing: border-box; font: inherit; font-size: 16px;   /* 16px — stops iOS zooming on focus */
+  color: var(--text-1); background: var(--surface-sunken); border: 1px solid var(--line-2);
+  border-radius: var(--radius-s); padding: 0.7rem 0.85rem; min-height: 44px;
+}
+.cdlg-f textarea { min-height: 5.5rem; resize: vertical; }
+.cdlg-f input:focus, .cdlg-f textarea:focus { outline: 2px solid var(--brand-accent); outline-offset: 1px; border-color: transparent; }
+.cdlg-hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+.cdlg-go { width: 100%; margin-top: 0.35rem; }
+.cdlg-note { margin: 0.9rem 0 0; font-size: 0.82rem; color: var(--text-3); line-height: 1.5; }
+.cdlg-note.err { color: #ff6b6b; }
+.cdlg-done { text-align: center; padding: 1rem 0 0.25rem; }
+.cdlg-done h3 { margin: 0 0 0.5rem; font-size: 1.2rem; }
+.cdlg-done p { margin: 0; color: var(--text-3); font-size: 0.95rem; line-height: 1.6; }
+@media (max-width: 640px) { .cdlg-card { padding: 1.35rem; } }

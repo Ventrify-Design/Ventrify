@@ -1,7 +1,12 @@
 # Ventrify OS — Pre-screen v2: the flavour, not the audit
 
-> **Status: BUILT 2026-10-31, NOT YET RUN AGAINST THE REAL API.** Settled with the operator in
-> discussion, then built. Normative.
+> **Status: BUILT AND RUN 2026-10-31.** Settled with the operator in discussion, then built. Normative.
+>
+> **Two real runs exist** — `prg-ore-dudh` and `prg-moneygym-2-sval`, both with all eight phases
+> (brief, research, six nuggets) and per-phase `usage` logged. **MEASURED cost: $1.22 and $1.06,
+> mean $1.14** against the PRICE table in `_prescreen2.js`. §7's predicted figures are superseded
+> by these two; the rest of §7 (latency) is still predicted. Both ran on standard speed
+> (`claude-opus-5-5` + `claude-sonnet-5-5` for the brief), not the fast mode v1 §5 assumed.
 >
 > What exists: `api/_corpus.js` (the room read, now shared with v1), `api/_prescreen2.js` (the engine, all
 > four phases, every guardrail in §8.1–8.6), the five `ps2-*` actions in `api/memo.js`,

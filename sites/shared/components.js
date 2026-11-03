@@ -515,9 +515,118 @@
           '<p class="price-amt">' + esc(this.getAttribute('amount') || '') + '</p>' +
           '<p class="price-per">' + esc(this.getAttribute('per') || '') + '</p>' +
           '<ul class="price-list">' + items + '</ul>' +
-          '<div class="price-cta"><a class="button' + (featured ? '' : ' light') + '" href="' +
-            esc(this.getAttribute('href') || '#') + '">' + esc(this.getAttribute('cta') || '') + '</a></div>';
+          /* `contact="<Tier>"` opens the dialog; `href` still navigates. A tier uses one or the
+             other — the paid ones contact us because there is no checkout yet, the free one links
+             straight to signup. */
+          '<div class="price-cta"><a class="button' + (featured ? '' : ' light') + '"' +
+            (this.getAttribute('contact')
+              ? ' href="#" data-contact="' + esc(this.getAttribute('contact')) + '"'
+              : ' href="' + esc(this.getAttribute('href') || '#') + '"') +
+            '>' + esc(this.getAttribute('cta') || '') + '</a></div>';
       }
+    });
+  }
+
+  /* THE CONTACT DIALOG — what replaced four `mailto:` links.
+     A mailto is a dead button for anyone on a phone without a mail client configured, or on webmail:
+     the click does nothing visible and the lead is gone leaving no trace that they ever tried. This
+     keeps them on the page that convinced them, records who asked about which tier, and still emails.
+     Opened by ANY element carrying data-contact="<Tier>", so a new CTA needs no new wiring. */
+  var CONTACT_API = 'https://os.ventrify.io/api/send-email';
+  var dlg = null;
+
+  function buildContactDialog() {
+    if (dlg) return dlg;
+    dlg = document.createElement('dialog');
+    dlg.className = 'cdlg';
+    dlg.setAttribute('aria-labelledby', 'cdlg-t');
+    document.body.appendChild(dlg);
+    /* Clicking the backdrop closes. A <dialog>'s backdrop is not a separate element, so the test is
+       whether the press landed outside the card's own box. */
+    dlg.addEventListener('click', function (e) {
+      if (e.target !== dlg) return;
+      var r = dlg.querySelector('.cdlg-card').getBoundingClientRect();
+      if (e.clientY < r.top || e.clientY > r.bottom || e.clientX < r.left || e.clientX > r.right) dlg.close();
+    });
+    return dlg;
+  }
+
+  function openContact(tier) {
+    var d = buildContactDialog();
+    var paid = tier && tier !== 'General';
+    d.innerHTML =
+      '<div class="cdlg-card">' +
+        '<div class="cdlg-head">' +
+          '<h3 id="cdlg-t">' + esc(paid ? tier + ' plan' : 'Talk to us') + '</h3>' +
+          '<button type="button" class="cdlg-x" aria-label="Close">&times;</button>' +
+        '</div>' +
+        '<p class="cdlg-sub">' + esc(tier === 'Enterprise'
+            ? 'Tell us about your pipeline and we\'ll set up a demo.'
+            : 'Tell us where to reach you and we\'ll get you set up.') + '</p>' +
+        '<form novalidate>' +
+          '<label class="cdlg-f"><span>Your name</span><input name="name" autocomplete="name" required></label>' +
+          '<label class="cdlg-f"><span>Work email</span><input name="email" type="email" autocomplete="email" required></label>' +
+          '<label class="cdlg-f"><span>Company <em>optional</em></span><input name="company" autocomplete="organization"></label>' +
+          '<label class="cdlg-f"><span>Anything we should know? <em>optional</em></span><textarea name="message"></textarea></label>' +
+          /* Hidden from people, irresistible to bots. The server discards any submission that fills it. */
+          '<div class="cdlg-hp" aria-hidden="true"><label>Leave this empty<input name="_hp" tabindex="-1" autocomplete="off"></label></div>' +
+          '<button type="submit" class="button cdlg-go">Send</button>' +
+          '<p class="cdlg-note">We reply to every message. No newsletter, no list.</p>' +
+        '</form>' +
+      '</div>';
+
+    var form = d.querySelector('form');
+    var note = d.querySelector('.cdlg-note');
+    var btn = d.querySelector('.cdlg-go');
+    d.querySelector('.cdlg-x').addEventListener('click', function () { d.close(); });
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var fd = new FormData(form);
+      var name = String(fd.get('name') || '').trim();
+      var email = String(fd.get('email') || '').trim();
+      note.classList.remove('err');
+      if (!name) { note.textContent = 'Please tell us your name.'; note.classList.add('err'); return; }
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { note.textContent = 'That email address does not look right.'; note.classList.add('err'); return; }
+      btn.disabled = true; btn.textContent = 'Sending…';
+      fetch(CONTACT_API, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'contact', tier: tier || 'General', name: name, email: email,
+          company: String(fd.get('company') || '').trim(),
+          message: String(fd.get('message') || '').trim(),
+          _hp: String(fd.get('_hp') || ''),
+        }),
+      }).then(function (r) { return r.json().catch(function () { return {}; }).then(function (b) { return { ok: r.ok, b: b }; }); })
+        .then(function (res) {
+          if (!res.ok) throw new Error(res.b.error || 'failed');
+          d.querySelector('.cdlg-card').innerHTML =
+            '<div class="cdlg-done"><h3>Thanks — that\'s with us.</h3>' +
+            '<p>We\'ll reply to <strong>' + esc(email) + '</strong>, usually within a working day.</p></div>';
+          setTimeout(function () { d.close(); }, 2600);
+        })
+        .catch(function (err) {
+          btn.disabled = false; btn.textContent = 'Send';
+          note.classList.add('err');
+          /* Never a dead end: if the form cannot reach us, give them the address it would have used. */
+          note.innerHTML = String(err.message) === 'too_many_requests'
+            ? 'That\'s a few messages from this address already — email <a href="mailto:hello@ventrify.io">hello@ventrify.io</a> and we\'ll pick it up.'
+            : 'Could not send just now. Email <a href="mailto:hello@ventrify.io">hello@ventrify.io</a> and we\'ll pick it up.';
+        });
+    });
+
+    d.showModal();
+    var first = d.querySelector('input[name="name"]');
+    if (first) first.focus();
+  }
+
+  /* One listener for the whole document, so a CTA added later needs no wiring. */
+  function wireContact() {
+    document.addEventListener('click', function (e) {
+      var t = e.target && e.target.closest ? e.target.closest('[data-contact]') : null;
+      if (!t) return;
+      e.preventDefault();
+      openContact(t.getAttribute('data-contact') || 'General');
     });
   }
 
@@ -1537,6 +1646,7 @@
     definePh();
     defineStat();
     definePrice();
+    wireContact();   /* the dialog the pricing CTAs open — one delegated listener, no per-CTA wiring */
     defineSteps();
     defineFaq();
     defineBanner();

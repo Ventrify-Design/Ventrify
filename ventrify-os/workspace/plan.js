@@ -57,15 +57,22 @@ export const PLAN_PRESETS = {
   // THE ONLY PRESET PUBLIC SIGNUP CAN CREATE, and the reason it exists.
   // 'self-serve' grants UNLIMITED pre-screens, which is the right offer for an account we chose to
   // open — "volume is the hook" above still stands. It is the wrong offer for anyone who can mint an
-  // account from a marketing page: a pre-screen costs ~$1.60 of real API credit (v1 measured; v2's
-  // figures are still predicted) and nothing in this codebase rate-limits a user. Unlimited × open
-  // signup is an uncapped bill. So the public door creates 'trial', and an admin moves an org up.
+  // account from a marketing page: a v2 pre-screen costs $1.14 of real API credit — MEASURED, mean of
+  // the two runs of 2026-10-31 ($1.22 and $1.06, per-phase usage on the engagements, priced by the
+  // PRICE table in api/_prescreen2.js) — and nothing in this codebase rate-limits a user. Unlimited ×
+  // open signup is an uncapped bill. So the public door creates 'trial', and an admin moves an org up.
+  // Two pre-screens is ~$2.27 of API exposure per self-made account. The ONE assessment is not in
+  // that figure and is not comparable: a full assessment runs on the Claude SUBSCRIPTION through
+  // GitHub Actions, so its marginal cash cost is ~$0 — it spends runner time, not credit. That
+  // asymmetry is why the free offer can include the expensive-looking thing and must ration the
+  // cheap-looking one. The site promises "run your first assessment free" in six places; this line
+  // is what makes that true.
   // api/admin.js hard-codes this preset on create-own-org and never reads one from the request.
   'trial': {
     label: 'Free trial',
-    blurb: 'Two free pre-screens — a verdict on whether a venture is worth assessing. Upgrade for more.',
+    blurb: 'One full assessment and two pre-screens, free. Upgrade for more.',
     capabilities: { assess: true, build: false },
-    limits: { assessments: 0, builds: 0, prescreens: 2 },
+    limits: { assessments: 1, builds: 0, prescreens: 2 },
   },
   'self-serve': {
     label: 'Free account',

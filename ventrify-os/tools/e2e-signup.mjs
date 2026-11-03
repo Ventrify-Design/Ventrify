@@ -84,7 +84,10 @@ try {
   const org = (await db.doc('organisations/' + id).get()).data() || {};
   eq(org.plan?.preset, 'trial', 'the plan is trial — body.plan was ignored');
   eq(org.plan?.limits?.prescreens, 2, 'two pre-screens, not unlimited');
-  eq(org.plan?.limits?.assessments, 0, 'no assessments');
+  // ONE assessment, because the site promises "run your first assessment free" in six places and a
+  // free trial that cannot do the thing the page sells is a broken promise a stranger can test in
+  // sixty seconds. It is affordable because assessments run on the Claude subscription, not the API.
+  eq(org.plan?.limits?.assessments, 1, 'exactly one free assessment');
   eq(org.plan?.capabilities?.build, false, 'no build capability');
   eq(org.ownerEmail, email, 'the owner is the TOKEN email, not body.ownerEmail');
   eq((org.operatorEmails || [])[0], email, 'and they are the operator');
