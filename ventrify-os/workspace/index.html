@@ -28,9 +28,9 @@
 <body class="signin">
   <main class="signin-shell">
     <div class="m3-card signin-card" id="signin-card"></div>
-    <p class="signin-foot">
+    <p class="signin-foot" id="signin-foot">
       Don&rsquo;t have a workspace yet?
-      <a href="../pricing.html">View pricing</a> &middot;
+      <a href="/pricing">View pricing</a> &middot;
       <a href="mailto:hello@ventrify.io?subject=VerdictScore%20demo%20request">Book a demo</a>
     </p>
   </main>
@@ -69,6 +69,12 @@
         <p class="signin-meta" id="login-meta">${SIGNUP
           ? 'No password — we email you a one-time link. Already have a workspace? The same link signs you in.'
           : 'No password — we email you a one-time link to sign in.'}</p>`;
+      // "Don't have a workspace yet?" is the wrong question on the screen that hands them one.
+      const foot = document.getElementById('signin-foot');
+      if (foot && SIGNUP) {
+        foot.innerHTML = 'Need more than the free trial? <a href="/pricing">View pricing</a> &middot; '
+          + '<a href="mailto:hello@ventrify.io?subject=VerdictScore%20demo%20request">Book a demo</a>';
+      }
       wire();
     }
 
