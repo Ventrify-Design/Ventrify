@@ -233,6 +233,24 @@ export function mountLiveShot(frame, { src, script, onLog } = {}) {
     const mine = ++gen;
     const d = iframe.contentDocument, w = iframe.contentWindow;
     if (!d) return;
+
+    /* A 404 FIRES `load` TOO. The browser loaded a document — it just happens to be an error page —
+       so `load` alone is not evidence the demo is there. `is-running` fades the poster out, and the
+       marketing site and the product deploy as SEPARATE sites: if the proxy that serves
+       /ventrify-os/ is ever removed or misrouted, the poster would dissolve to reveal a 404 in the
+       hero. Wait for the shell the demo actually mounts; without it, keep the still and say so.
+       The still is a true picture of the product, so holding it is a complete fallback, not a
+       degraded one — the same reason --prog falls back to 1 rather than 0. */
+    const mounted = await (async () => {
+      for (let i = 0; i < 40; i++) {                       // ~4s: boot() mounts async
+        if (mine !== gen) return false;
+        if (d.querySelector('.shell-main')) return true;
+        await wait(100);
+      }
+      return false;
+    })();
+    if (!mounted) return say('!! frame never mounted the demo — poster kept');
+    if (mine !== gen) return;
     frame.classList.add('is-running');
 
     const main = () => d.querySelector('.shell-main');

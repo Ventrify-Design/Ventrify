@@ -36,7 +36,7 @@ const inside = (pt, b) => pt.x >= b.x0 && pt.x <= b.x1 && pt.y >= b.y0 && pt.y <
 
 /* CANARY. Containment is the whole gate; prove it rejects a point outside the box. The first
    version of this file would have passed a pointer drawn anywhere on the page. */
-if (CANARY) {
+if (CANARY && !process.argv.includes("--poster")) {   // --poster has its own canary, below
   const box = { x0: 100, x1: 400, y0: 200, y1: 300 };
   const good = inside({ x: 250, y: 250 }, box), bad = inside({ x: 250, y: 60 }, box);
   console.log(`canary: inside ${good} (want true) · above ${bad} (want false)`);
@@ -112,6 +112,57 @@ if (BOOT) {
        css === first[1] ? '' : `differs from ${first[0].split('/').pop()}`));
   await b.close();
   console.log(fails.length ? `\n${fails.length} FAILED` : '\nevery embedded page boots clean');
+  process.exit(fails.length ? 1 : 0);
+}
+
+/* ── POSTER ────────────────────────────────────────────────────────────────
+   When the frame CANNOT load, does the still survive?
+
+   The marketing site and the product deploy as separate sites, and the demo reaches the first one
+   only through a proxy. If that proxy is removed, misrouted, or the OS deploy drops the demo pages,
+   the iframe 404s. A 404 fires `load` like any other document, so the old code added `is-running`
+   and faded the poster out — dissolving a product screenshot to reveal an error page, in the hero.
+
+   This blocks the demo at the network layer and asserts the still is still there. */
+if (process.argv.includes('--poster')) {
+  const pg = await b.newPage();
+  await pg.setViewport({ width: 1500, height: 1150 });
+  await pg.setRequestInterception(true);
+  // CANARY: serve the demo normally, and the poster MUST fade — otherwise this gate would pass
+  // on a page where the shot never ran at all, which proves nothing.
+  const canary = process.argv.includes('--canary');
+  pg.on('request', r => (!canary && /\/ventrify-os\/_redesign\/m3\/live-demo/.test(r.url()))
+    ? r.respond({ status: 404, contentType: 'text/html', body: '<!doctype html><title>404</title>Not found' })
+    : r.continue());
+  /* The REAL page, not the probe: the probe's frame carries no poster, so asserting the still
+     survives there would assert nothing. The poster only exists where it matters. */
+  await pg.goto(HOST + '/sites/verdict-score/', { waitUntil: 'networkidle2' });
+  // say() talks via a `shot-beat` event, not the console — the real page passes no onLog.
+  await pg.evaluate(() => {
+    window.__beats = [];
+    document.addEventListener('shot-beat', e => window.__beats.push(e.detail), true);
+    document.querySelector('[live="assessment-tour"]')?.scrollIntoView();
+  });
+  await new Promise(r => setTimeout(r, 9000));          // past the guard's ~4s wait, with room
+  const st = await pg.evaluate(() => {
+    const host = document.querySelector('[live="assessment-tour"]');
+    const f = host && host.querySelector('.shot-frame');
+    const img = f && f.querySelector('img');
+    return { found: !!f, running: !!(f && f.classList.contains('is-running')),
+             opacity: img ? getComputedStyle(img).opacity : 'no-img' };
+  });
+  st.log = (await pg.evaluate(() => (window.__beats || []).join(" | ")));
+  ok('the shot mounted at all', st.found);
+  if (canary) {
+    ok('CANARY — a WORKING frame still fades the poster', st.running && st.opacity === '0',
+       `is-running ${st.running} · opacity ${st.opacity}`);
+  } else {
+    ok('a 404 frame never claims to be running', !st.running);
+    ok('the poster survives — the reader sees the product, not an error', st.opacity === '1', `opacity ${st.opacity}`);
+    ok('and the failure is said out loud, not swallowed', /never mounted/.test(st.log));
+  }
+  await b.close();
+  console.log(fails.length ? `\n${fails.length} FAILED` : '\nthe poster holds when the frame cannot load');
   process.exit(fails.length ? 1 : 0);
 }
 

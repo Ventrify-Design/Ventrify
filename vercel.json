@@ -1,4 +1,44 @@
 {
   "cleanUrls": true,
-  "trailingSlash": false
+  "trailingSlash": false,
+  "rewrites": [
+    {
+      "source": "/ventrify-os/_redesign/:path*",
+      "destination": "https://os.ventrify.io/_redesign/:path*"
+    },
+    {
+      "source": "/ventrify-os/shared/:path*",
+      "destination": "https://os.ventrify.io/shared/:path*"
+    },
+    {
+      "source": "/ventrify-os/assets/:path*",
+      "destination": "https://os.ventrify.io/assets/:path*"
+    },
+
+    {
+      "source": "/",
+      "has": [{ "type": "host", "value": "verdict.ventrify.io" }],
+      "destination": "/sites/verdict-score/index.html"
+    },
+    {
+      "source": "/",
+      "has": [{ "type": "host", "value": "venture.ventrify.io" }],
+      "destination": "/sites/venture-stack/index.html"
+    },
+    {
+      "source": "/moneygym",
+      "has": [{ "type": "host", "value": "venture.ventrify.io" }],
+      "destination": "/sites/venture-stack/moneygym/index.html"
+    },
+    {
+      "source": "/",
+      "has": [{ "type": "host", "value": "ventrify.io" }],
+      "destination": "/sites/ventrify/index.html"
+    },
+    {
+      "source": "/moneygym",
+      "has": [{ "type": "host", "value": "ventrify.io" }],
+      "destination": "/sites/ventrify/moneygym/index.html"
+    }
+  ]
 }

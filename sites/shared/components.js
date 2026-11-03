@@ -62,8 +62,8 @@
         tagline: 'Ideas into impact.',
         columns: [
           { title: 'Products', items: [
-            { label: 'VentureStack',  href: 'https://venture-stack.ventrify.io' },
-            { label: 'VerdictScore',  href: 'https://verdict-score.ventrify.io' }
+            { label: 'VentureStack',  href: 'https://venture.ventrify.io' },
+            { label: 'VerdictScore',  href: 'https://verdict.ventrify.io' }
           ]},
           { title: 'Company', items: [
             { label: 'MoneyGym case study', href: 'moneygym/' },
@@ -106,7 +106,7 @@
           ]},
           { title: 'Ventrify', items: [
             { label: 'Ventrify',     href: 'https://ventrify.io' },
-            { label: 'VentureStack', href: 'https://venture-stack.ventrify.io' },
+            { label: 'VentureStack', href: 'https://venture.ventrify.io' },
             { label: 'For founders', href: '#readiness' }
           ]},
           { title: 'Legal', items: [
@@ -146,7 +146,7 @@
           ]},
           { title: 'Ventrify', items: [
             { label: 'Ventrify',            href: 'https://ventrify.io' },
-            { label: 'VerdictScore',        href: 'https://verdict-score.ventrify.io' },
+            { label: 'VerdictScore',        href: 'https://verdict.ventrify.io' },
             { label: 'MoneyGym case study', href: 'moneygym/' }
           ]},
           { title: 'Legal', items: [
