@@ -83,6 +83,19 @@ if (BOOT) {
     [...readFileSync('sites/shared/shot-live.js', 'utf8').matchAll(/page:\s*DEMO \+ '([^']+)'/g)]
       .map(m => '/ventrify-os/_redesign/m3/' + m[1]))];
   if (!pages.length) { console.log('FAIL  no demo pages found in SCRIPTS'); process.exit(1); }
+
+  /* EVERY demo page needs its own rewrite, and it must point at the CLEAN url.
+     The marketing site reaches these only through a proxy, and the OS runs cleanUrls: so
+     /_redesign/m3/live-demo.html answers 308 to a RELATIVE /_redesign/m3/live-demo, which the
+     browser resolves against the MARKETING host, where nothing serves it. The shot then dies on a
+     404 the poster guard catches — a silent downgrade to a still, on the page the motion sells.
+     Checked here rather than remembered: a third demo page would otherwise ship broken. */
+  const vercel = JSON.parse(readFileSync('vercel.json', 'utf8'));
+  const routed = new Map((vercel.rewrites || []).map(r => [r.source, r.destination]));
+  const unrouted = pages.filter(p => !routed.has(p));
+  ok('every demo page has a proxy rewrite', !unrouted.length, unrouted.join(', '));
+  const redirecting = pages.filter(p => (routed.get(p) || '').endsWith('.html'));
+  ok('and each points at the clean url, so no 308 escapes the proxy', !redirecting.length, redirecting.join(', '));
   const sheets = [];
   for (const path of pages) {
     const pg = await b.newPage();

@@ -3,6 +3,14 @@
   "trailingSlash": false,
   "rewrites": [
     {
+      "source": "/ventrify-os/_redesign/m3/live-demo.html",
+      "destination": "https://os.ventrify.io/_redesign/m3/live-demo"
+    },
+    {
+      "source": "/ventrify-os/_redesign/m3/live-demo-flow.html",
+      "destination": "https://os.ventrify.io/_redesign/m3/live-demo-flow"
+    },
+    {
       "source": "/ventrify-os/_redesign/:path*",
       "destination": "https://os.ventrify.io/_redesign/:path*"
     },
