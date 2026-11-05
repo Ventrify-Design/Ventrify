@@ -439,7 +439,14 @@ section.dark {
 [data-brand="verdictscore"] .steps.is-pane { column-gap: clamp(1rem, 2vw, 1.6rem);
                                              row-gap:    clamp(1rem, 2vw, 1.6rem); }
 
-/* `is-index` — the SAME rhythm for a list that is not a sequence of actions but the parts of one
+/* `is-index` — CURRENTLY UNUSED. Its one consumer, the memo's contents, became
+   `variant="pane"` when How it works did: as panes the distinction it existed to
+   draw survives on its own, because the contents entries carry a title and no body
+   where the method's steps carry both. Kept because the variant is still supported
+   and the reasoning below is still true of any list that is parts-of-a-thing rather
+   than a sequence — but nothing on any site renders it today.
+
+   `is-index` — the SAME rhythm for a list that is not a sequence of actions but the parts of one
    document. The Output's six memo sections were set as a contents page (an index, a line and a
    rule between) on the argument that they are not steps. That argument was right about the content
    and wrong about the page: it read as a table of contents sitting under a product whose other
