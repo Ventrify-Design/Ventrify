@@ -89,39 +89,39 @@
            set, and its number stays derived from DOM order rather than typed six times.
 
            NO `brand=` ANYWHERE. The page is already VerdictScore from <html> down, so every
-           pane pools violet without being told to. Adding brand="verdictscore" to each would
-           say the same thing six more times and be six more places to forget.
+           pane pools violet without being told. Adding brand="verdictscore" to each would say
+           the same thing six more times and be six more places to forget.
 
-           THE PHOTOGRAPHY IS ONE CLIMB, IN ORDER, which is the only honest way to use this
-           library here: it holds sixteen frames and all sixteen are a figure on a mountain, so
-           six "relevant" pictures of uploading a document do not exist. What does exist is an
-           ascent, and the six steps ARE an ascent — so the frames are sequenced by altitude and
-           by light, from setting out on a ridge to standing on the summit with the answer.
-           Two of them are better than sequencing: 03 is a figure with a laptop surveying a
-           whole valley, which is what examining evidence looks like, and 04 is the frozen
-           snowpeak, which is what freezing the findings looks like. -->
+           ⚠ THESE ARE NOT THE MOUNTAIN LIBRARY, AND THAT IS THE POINT. Every one of the
+           sixteen brand photographs is a figure on a summit, so six of them side by side read
+           as one picture repeated — which is exactly how this section looked first time. The
+           texture set is free stock chosen against the PANE TREATMENT rather than against the
+           brief: measured on a contact sheet first, dark low-key frames keep their shape
+           through a .55 duotone and a dim, bright flat ones turn to mush, and literal scenes
+           with people in them stay visibly stock however hard you tint them. Provenance and
+           licence: assets/photography/CREDITS.md. -->
       <v-steps variant="pane" base="../../">
-        <li data-reveal icon="upload" photo="venturestack-01" focus="low">
+        <li data-reveal icon="upload" photo="texture-paper">
           <h4>Upload the data room</h4>
           <p>Bring together decks, financial models, spreadsheets, contracts and other supporting documents.</p>
         </li>
-        <li data-reveal icon="doc" photo="ventrify-03" focus="left">
+        <li data-reveal icon="doc" photo="texture-tear">
           <h4>Review readiness</h4>
           <p>Before assessment, receive a review of potential gaps and missing supporting material so you can strengthen the data room.</p>
         </li>
-        <li data-reveal icon="examine" photo="verdictscore-04-perspective" focus="right">
+        <li data-reveal icon="examine" photo="texture-lens">
           <h4>Examine the evidence</h4>
           <p>Specialist analysis steps review claims, markets, competitors, comparables, assumptions and risks.</p>
         </li>
-        <li data-reveal icon="lock" photo="verdictscore-02-snowpeak" focus="high">
+        <li data-reveal icon="lock" photo="texture-ice">
           <h4>Freeze the findings</h4>
           <p>Evidence is fixed before scoring so the basis for the assessment can be identified.</p>
         </li>
-        <li data-reveal icon="gauge" photo="verdictscore-03-alpinelake" focus="far-left">
+        <li data-reveal icon="gauge" photo="texture-dial">
           <h4>Score against criteria</h4>
           <p>Blind readers apply defined criteria and anchored thresholds; disagreement is surfaced rather than hidden.</p>
         </li>
-        <li data-reveal icon="memo" photo="verdictscore-01-summit" focus="right">
+        <li data-reveal icon="memo" photo="texture-stack">
           <h4>Review the memo</h4>
           <p>Receive a structured assessment with reasoning and source references to support further diligence.</p>
         </li>
@@ -185,13 +185,20 @@
            under each title, these have nothing, because a contents entry IS its title. -->
       <p class="quote measure-lg" data-reveal>The decision memo shows its working.</p>
 
-      <v-steps variant="index" class="mt-6">
-        <li><h4>Overall score and stated guidance</h4></li>
-        <li><h4>Investment thesis with supporting and opposing evidence</h4></li>
-        <li><h4>Claims marked as supported, unverified or contradicted</h4></li>
-        <li><h4>Market, competitor and comparable analysis</h4></li>
-        <li><h4>Key assumptions and risks that could change the decision</h4></li>
-        <li><h4>Evidence references and a record of material gaps</h4></li>
+      <!-- THE SAME PANE AS How it works, and `is-index` is gone with the change. That variant
+           existed to give a contents list the stepper's rhythm without its sentence-per-item;
+           as panes the distinction survives on its own, because these six carry a title and no
+           body where the method's six carry both. One component, two lists, no third styling.
+           Each texture is picked for what the entry IS: a dial for the score, a balance for
+           evidence that cuts both ways, marks on a page for claims, a row of files for
+           comparables, a crack for risk, a catalogue drawer for references. -->
+      <v-steps variant="pane" base="../../" class="mt-6">
+        <li icon="verdict"   photo="texture-face"><h4>Overall score and stated guidance</h4></li>
+        <li icon="balance"   photo="texture-stripes"><h4>Investment thesis with supporting and opposing evidence</h4></li>
+        <li icon="flag"      photo="texture-ink"><h4>Claims marked as supported, unverified or contradicted</h4></li>
+        <li icon="investors" photo="texture-folders"><h4>Market, competitor and comparable analysis</h4></li>
+        <li icon="risk"      photo="texture-crack"><h4>Key assumptions and risks that could change the decision</h4></li>
+        <li icon="stack"     photo="texture-index"><h4>Evidence references and a record of material gaps</h4></li>
       </v-steps>
 
       <!-- PLACEHOLDER SHOT — and a knowingly weak one: vs-verdict is the SAME screen as the hero

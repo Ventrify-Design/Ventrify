@@ -1117,6 +1117,12 @@
        wherever the subject is a number rather than a duration. This is the
        dial it was meant to be: a sweep with a needle. */
     gauge:    '<path d="M3.5 18a8.5 8.5 0 1 1 17 0"/><path d="m12 18 4.8-5.6"/><circle cx="12" cy="18" r="1.4"/>',
+    /* Three more the memo's contents needed and the set did not have. All
+       generic: a balance for two-sided evidence, a flag for something marked,
+       a warning for risk. */
+    balance:  '<path d="M12 4v16"/><path d="M7 20h10"/><path d="M4 8h16"/><path d="M1.6 13h4.8L4 8Z"/><path d="M17.6 13h4.8L20 8Z"/>',
+    flag:     '<path d="M5 21V4"/><path d="M5 5h12l-2.5 4L17 13H5"/>',
+    risk:     '<path d="M12 4 3 20h18L12 4Z"/><path d="M12 10v4"/><path d="M12 17h.01"/>',
     launch:   '<path d="M5 19c2-6 7-11 14-13-1 7-6 12-13 14Z"/><path d="M8.5 15.5 5 19"/>',
     dot:      '<circle cx="12" cy="12" r="4"/>'
   };
