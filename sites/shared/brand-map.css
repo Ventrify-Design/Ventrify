@@ -49,8 +49,24 @@
   /* --band — ONE tinted ground, used by the two sections that lift off the page: The challenge at
      the top and the CTA at the bottom. A token rather than the recipe written twice, because the
      whole point is that the page opens and closes on the same colour and a second literal would
-     drift the first time one of them is tuned. */
-  --band:         color-mix(in srgb, var(--brand-accent) 13%, var(--canvas));
+     drift the first time one of them is tuned.
+
+     --band-mix IS A SEPARATE DIAL BECAUSE A PERCENTAGE IS NOT A STEP. The mix says how much accent
+     goes in; how far the ground then LIFTS off the page depends on how bright that accent is, and
+     the three identities do not agree. MEASURED at 13%: VerdictScore's violet (#7C5CFC) lifts
+     rgb(20,18,24) → rgb(34,28,54), mostly in blue; Ventrify's near-white grey (#E5E7EB) lifts
+     rgb(10,15,20) → rgb(38,43,48), +28 flat on every channel. Same number, twice the step, and on
+     Ventrify it reads as a grey slab rather than a ground. So the recipe stays shared and the
+     strength is per-identity, which is the only part that has to differ. */
+  --band-mix:     13%;
+  --band:         color-mix(in srgb, var(--brand-accent) var(--band-mix), var(--canvas));
+
+  /* How strong a pane's colour pool is. Not the pool itself — see THE PANE SURFACE for
+     why that cannot be a token. One number, because the two consumers do not carry the
+     pool over the same thing: a card's sits over mostly empty surface, a door's sits
+     over a full-bleed photograph that is already duotoned and twice-scrimmed, and the
+     strength that lights one fogs the other. */
+  --glass-pool-a: 1;
   /* NOT --cta-bg. "Nothing between the nav and the footer paints a fill" is a rule of this
      identity, and it wins over base.css's `.cta { background: var(--cta-bg) }`. A band here is a
      pseudo-element laid behind the content, the same as the one at the top — see #contact::after. */
@@ -193,6 +209,14 @@ section.dark .card { background: var(--lift-1); border-color: var(--line-1); }
 .card  { background: var(--lift-1); }
 .panel { background: var(--lift-1); }
 section.soft .card { background: var(--lift-2); }
+/* ⚠ BUT NOT A PANE. A card lifts off a soft section by taking a step up from
+   the ground; a GLASS pane already gets its lightness from its own film and
+   colour pool, and stacking the section's lift underneath those double-counts
+   it. MEASURED on the same component in two places: the Ventrify challenge
+   card (not on a soft section) reads 68 at the top where the VerdictScore
+   How-it-works panes read 77 — one pane, one pool, two weights, decided by
+   which section it happened to land in. A pane keeps the ground. */
+section.soft .card.is-glass { background: var(--paper); }
 
 /* 4. Inputs assumed a white field. */
 .fld input, .fld select { background: color-mix(in srgb, var(--black) 28%, transparent); color: var(--text-1); }
@@ -303,12 +327,20 @@ section.dark {
    whole document needs now that nothing else draws an edge. */
 .site-foot { border-top: 1px solid var(--line-1); }
 
-/* ═══ VERDICTSCORE: THE GROUND-TINT LAYER IS OFF ════════════════════════════
-   Paired with --brand-ground: #141218 (assets/brand.css), which matches the
-   Operator Workspace exactly. The point of that change is ONE continuous
-   surface from site to product, and a per-section bloom defeats it: the
-   ground was the product's, but every other section still had a violet wash
-   floating over it, so the page read as bands again rather than as one sheet.
+/* ═══ THE FLAT GROUND ══════════════════════════════════════════════════════
+   WHO ASKS FOR IT: VerdictScore and Ventrify. It was written for VerdictScore
+   alone and scoped to that identity, with a line saying Ventrify and
+   VentureStack keep their rhythm. Ventrify asked for the flat ground on
+   2026-11-05, so the hook is now a list rather than a name — the alternative
+   was a second copy of the same eight rules, which is how two grounds drift
+   apart on the next edit.
+
+   WHY VERDICTSCORE WANTED IT: paired with --brand-ground: #141218
+   (assets/brand.css), which matches the Operator Workspace exactly. The point
+   of that change is ONE continuous surface from site to product, and a
+   per-section bloom defeats it: the ground was the product's, but every other
+   section still had a violet wash floating over it, so the page read as bands
+   again rather than as one sheet.
 
    WHAT IS TURNED OFF — everything that tints the PAGE GROUND:
      · section.soft / .cta blooms   the rising haze and the CTA flood
@@ -330,21 +362,30 @@ section.dark {
                                       --light-haze, which would have taken it
      · shot frames and photo tiles   component treatments on their own boxes
 
-   Scoped to this identity: Ventrify and VentureStack keep their rhythm. The
-   revert is deleting this block. */
-[data-brand="verdictscore"] section.soft,
-[data-brand="verdictscore"] section.dark,
-[data-brand="verdictscore"] .cta { --sect-light: none; }
+   VentureStack keeps its rhythm. The revert for one identity is taking it out
+   of :is(); the revert for all is deleting this block. */
+:is([data-brand="verdictscore"], [data-brand="ventrify"]) section.soft,
+:is([data-brand="verdictscore"], [data-brand="ventrify"]) section.dark,
+:is([data-brand="verdictscore"], [data-brand="ventrify"]) .cta { --sect-light: none; }
+
+/* THE SHINE PLATES, and the limb fade that exists to hide where a section
+   crops one. Ventrify's markup drops both <v-shine> and .has-limb rather than
+   downloading a 1400px glow plate to hide it — this is the guard, so a page
+   that adds one back cannot quietly un-flatten the ground. VerdictScore has
+   never used a shine; its two .has-limb sections now fade canvas into canvas,
+   which is what they were already doing. */
+:is([data-brand="verdictscore"], [data-brand="ventrify"]) .shine { display: none; }
+:is([data-brand="verdictscore"], [data-brand="ventrify"]) .has-limb::after { content: none; }
 
 /* … and the rings. These are `border: 1px solid currentColor` at 10%, not a gradient, so the
    first sweep for "things painting a background over the page" walked straight past them — a
    415px grey circle was still drifting across the Reproducibility section after every haze had
    gone. The grid-lines preset stays: a 2%-opacity rule grid is structure, not a wash. */
-[data-brand="verdictscore"] .depth .disc,
-[data-brand="verdictscore"] .depth .ring { display: none; }
+:is([data-brand="verdictscore"], [data-brand="ventrify"]) .depth .disc,
+:is([data-brand="verdictscore"], [data-brand="ventrify"]) .depth .ring { display: none; }
 
-[data-brand="verdictscore"] .instr::before,
-[data-brand="verdictscore"] .instr-profile::before { background: none; }
+:is([data-brand="verdictscore"], [data-brand="ventrify"]) .instr::before,
+:is([data-brand="verdictscore"], [data-brand="ventrify"]) .instr-profile::before { background: none; }
 
 
 /* ═══ VERDICTSCORE: THE SIX STEPS ══════════════════════════════════════════
@@ -367,27 +408,36 @@ section.dark {
    whole row on every pointer move. */
 [data-brand="verdictscore"] .steps { column-gap: clamp(1.6rem, 3vw, 3rem); row-gap: clamp(2.2rem, 3.4vw, 3.2rem); }
 
-[data-brand="verdictscore"] .steps li {
+[data-brand="verdictscore"] .steps:not(.is-pane) li {
   position: relative;
   border-top: 1px solid var(--line-1);
   padding-top: 1.25rem;
 }
 /* the accent tick, sitting ON the hairline at the step's left edge */
-[data-brand="verdictscore"] .steps li::after {
+[data-brand="verdictscore"] .steps:not(.is-pane) li::after {
   content: ""; position: absolute; left: 0; top: -1px;
   width: 34px; height: 2px; background: var(--brand-accent);
   transform-origin: left center;
   transition: transform var(--dur-2, .28s) var(--ease-out, cubic-bezier(.2,0,0,1));
 }
-[data-brand="verdictscore"] .steps li:hover::after { transform: scaleX(1.9); }
+[data-brand="verdictscore"] .steps:not(.is-pane) li:hover::after { transform: scaleX(1.9); }
 
-[data-brand="verdictscore"] .steps li::before {
+[data-brand="verdictscore"] .steps:not(.is-pane) li::before {
   display: block;
   font-size: var(--fs-small);
   color: var(--brand-accent-2);
   margin-bottom: .55rem;
 }
-[data-brand="verdictscore"] .steps h4 { margin-top: 0; }
+[data-brand="verdictscore"] .steps:not(.is-pane) h4 { margin-top: 0; }
+
+/* A PANE STEP IS NOT GIVEN THE STEPPER'S CHROME IN THE FIRST PLACE — every
+   rule above is scoped `:not(.is-pane)`, because cancelling them afterwards
+   cancels the pane's own surface and rim, which live on the same two
+   pseudo-elements. See the note in base.css. Only the spacing differs here:
+   a stepper's row gap is set for borderless columns and is far too loose
+   between cards. */
+[data-brand="verdictscore"] .steps.is-pane { column-gap: clamp(1rem, 2vw, 1.6rem);
+                                             row-gap:    clamp(1rem, 2vw, 1.6rem); }
 
 /* `is-index` — the SAME rhythm for a list that is not a sequence of actions but the parts of one
    document. The Output's six memo sections were set as a contents page (an index, a line and a
@@ -430,8 +480,8 @@ section.dark {
    other side for the capture to read as sitting ON it. A gradient that
    dissolves before it reaches the shot just looks like another haze.
    So: flat fill, two clean lines. Do not reintroduce the fade. */
-[data-brand="verdictscore"] #challenge { --band-rise: clamp(7rem, 20vh, 15rem); }
-[data-brand="verdictscore"] #challenge::after {
+:is([data-brand="verdictscore"], [data-brand="ventrify"]) #challenge { --band-rise: clamp(7rem, 20vh, 15rem); }
+:is([data-brand="verdictscore"], [data-brand="ventrify"]) #challenge::after {
   content: ""; position: absolute; z-index: 0; pointer-events: none;
   inset: calc(var(--band-rise) * -1) 0 0 0;
   background: var(--band);
@@ -441,14 +491,14 @@ section.dark {
    Same token, same mechanism — a pseudo-element behind the content rather than a section
    background, because of the rule above. No rise: the challenge band lifts above its own top edge
    so the hero capture straddles it, and there is nothing straddling the CTA's. */
-[data-brand="verdictscore"] #contact::after {
+:is([data-brand="verdictscore"], [data-brand="ventrify"]) #contact::after {
   content: ""; position: absolute; z-index: 0; pointer-events: none;
   inset: 0;
   background: var(--band);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  [data-brand="verdictscore"] .steps li::after { transition: none; }
+  [data-brand="verdictscore"] .steps:not(.is-pane) li::after { transition: none; }
 }
 
 
@@ -1020,8 +1070,16 @@ v-shine { display: block; }
   background: var(--surface-sunken);
   border: 1px solid var(--glass-edge);
   /* One soft cast, far down and wide — it lifts the panel without reading as
-     a shadow under a floating card. */
-  box-shadow: 0 32px 80px -24px rgba(0,0,0,.72), var(--glass-bevel);
+     a shadow under a floating card.
+     IT KEEPS THE INSET HAIRLINE, and the two reasons are worth stating because
+     every other glass surface moved off it. First, the frame is never lensed,
+     so the hairline is never resampled and never smears — the artefact that
+     moved the lit edge to a ring does not exist here. Second, this frame's
+     ::after is ALREADY the lift (see below), and a ring needs a pseudo. Put
+     `glass-rim` on it and the ring silently does not render, which is how the
+     frame briefly lost its top edge altogether. */
+  box-shadow: 0 32px 80px -24px rgba(0,0,0,.72),
+              var(--glass-bevel-flat), var(--glass-bevel);
 }
 
 .shot-frame img {
@@ -1890,3 +1948,520 @@ v-shine { display: block; }
 .cdlg-done h3 { margin: 0 0 0.5rem; font-size: 1.2rem; }
 .cdlg-done p { margin: 0; color: var(--text-3); font-size: 0.95rem; line-height: 1.6; }
 @media (max-width: 640px) { .cdlg-card { padding: 1.35rem; } }
+
+/* ── THE PRODUCT PROMO CARD — colour ──────────────────────────────────────
+   NOT ONE VALUE BELOW NAMES A PRODUCT. <v-promo> puts [data-brand] on the card
+   itself, which re-points --brand-accent / -accent-2 / -affirm / -tint AND
+   --brand-ground; --lift-1/2/3 are mixed from --brand-ground forty lines up,
+   so the card's own surface shifts with it too. The result is that the same
+   twelve declarations paint a cyan card and a violet one, and a change to
+   either ramp in brand.css reaches both without being edited here.
+   This is also why the lockup is inlined rather than linked: an <img> cannot
+   see a custom property, so a linked logo would carry a private copy of the
+   palette and go wrong the day the ramp moves. See THE BRAND LOCKUPS. */
+/* ── A SCOPED BRAND MUST RE-DERIVE ITS SURFACES ──────────────────────────
+   ⚠ A CUSTOM PROPERTY RESOLVES WHERE IT IS DECLARED, NOT WHERE IT IS USED.
+   --lift-1/2/3 are mixed from --brand-ground at the top of this file — on
+   :root. So they compute once, against the HOUSE ground, and then simply
+   inherit. A [data-brand] subtree therefore got the accent ramp, the affirm
+   step and the tint, and kept Ventrify's grey surface underneath all of it.
+
+   It went unnoticed because it is invisible on a product SITE: there
+   [data-brand] sits on <html>, which IS :root, so the one declaration already
+   used the right ground. It only breaks when a brand is scoped to part of a
+   page — a card, a door — which is exactly what the house page now does.
+
+   MEASURED: the two challenge cards, one cyan and one violet, returned
+   byte-identical background colours. Re-declaring the ground-derived surfaces
+   inside the scope is what makes a scoped brand real rather than decorative.
+   On <html> this recomputes to the same values it already had. */
+/* Ventrify's accent is a near-white grey, so it needs less of it to make the
+   same step — see --band-mix. Walked down from the shipped 13% and MEASURED at
+   the band's own top boundary, against a rgb(10,15,20) page:
+
+       13%  rgb(38,43,48)  +28    6%  rgb(23,28,33)  +13
+        4%  rgb(19,24,29)   +9    3%  rgb(17,21,26)   +6    2%  rgb(14,19,24)  +4
+
+   The floor is set by the page grain, not by taste: a flat patch of canvas
+   measures a standard deviation of 2.6, so +9 is 3.4σ and reads as an edge,
+   +6 is 2.4σ and is the last step that still does, and +4 is 1.5σ — inside
+   the noise, where the section stops having a boundary and just looks
+   mottled. 4% keeps the ground while sitting all but on the page. */
+[data-brand="ventrify"] { --band-mix: 4%; }
+
+/* ⚠ THE DISPERSION'S BRAND SIDE WAS NEVER BRAND-COLOURED. brand.css composes
+   --glass-chroma-b from var(--brand-accent) and --glass-disperse from that, all
+   on :root — and a custom property resolves its inner var()s where it is
+   DECLARED, so :root's accent is baked in and the resolved value inherits.
+   MEASURED before this block: the VentureStack card's accent computed to
+   #0FB5D4 while its right-edge glow computed to #E5E7EB at 55% — Ventrify's
+   grey — and so did VerdictScore's, and the doors'. Every glass surface on
+   every site wore the same grey edge, which is the exact opposite of what the
+   token is for ("so dispersion re-skins with the identity"). Re-deriving the
+   chain inside the scope is the same fix the --lift-* block below applies for
+   the same reason; --glass-bevel comes with it because it is just a name for
+   the dispersion. */
+[data-brand] {
+  --glass-chroma-b: color-mix(in srgb, var(--brand-accent) 55%, transparent);
+  --glass-disperse:
+    inset  6px 0 6px -6px var(--glass-chroma-a),
+    inset -6px 0 6px -6px var(--glass-chroma-b);
+  --glass-bevel: var(--glass-disperse);
+
+  --lift-1:  color-mix(in srgb, var(--brand-ground) 93%, var(--white));
+  --lift-2:  color-mix(in srgb, var(--brand-ground) 88%, var(--white));
+  --lift-3:  color-mix(in srgb, var(--brand-ground) 82%, var(--white));
+  --paper:   var(--brand-ground);
+  --soft:    var(--lift-1);
+  --raised:  var(--lift-2);
+  --dark:    var(--brand-ground);
+  --dark-2:  var(--lift-1);
+}
+
+/* ── A CARD WEARING A PRODUCT'S COLOUR ───────────────────────────────────
+   Shared by <v-promo> and by any <v-card brand="…">. It was written under
+   .promo first, which was wrong the moment a second kind of card needed the
+   same thing: the two challenge cards are ABOUT the two products and were
+   sitting in neutral grey next to a section where the same two products wear
+   cyan and violet.
+
+   Two blooms, not one: a wash down from the top edge where the heading sits,
+   and a smaller one rising from the far bottom corner, so the card reads as
+   lit by its own product rather than tinted flat. It is a ::before rather
+   than an element, so a card earns it by carrying the class — nothing has to
+   be added to the markup, which is what made the promo-only version a
+   component's private trick instead of a system's. */
+.card.is-branded { position: relative; overflow: hidden;
+  border-color: color-mix(in srgb, var(--brand-accent) 20%, var(--line-1)); }
+/* ⚠ :not(.photo-ground), AND IT IS NOT A DETAIL. This rule exists to lift a
+   branded card's CONTENT above its wash, and `> *` caught the photographic
+   ground too — at (0,2,0) it outranked .photo-ground's own (0,1,0)
+   `position: absolute`, so the picture dropped out of its own layer and into
+   flex flow as the first child. It rendered as a hard-edged rectangle above
+   the header row, inset by the card's padding, which looks like a mask bug
+   and is a specificity one. */
+.card.is-branded > :not(.photo-ground) { position: relative; }
+.card.is-branded::before { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(118% 66% at 50% -12%, color-mix(in srgb, var(--brand-accent) 13%, transparent), transparent 64%),
+    radial-gradient(78% 48% at 112% 106%, color-mix(in srgb, var(--brand-accent-2) 10%, transparent), transparent 70%); }
+.card.is-branded.is-interactive:hover { border-color: color-mix(in srgb, var(--brand-accent) 46%, transparent); }
+/* The eyebrow is the one piece of text on a challenge card that can carry
+   colour without competing with the heading — and --brand-affirm, not
+   --brand-accent, because the accent step is the one that fails on dark. */
+.card.is-branded .num { color: var(--brand-affirm); }
+
+/* --brand-affirm, NOT --brand-accent. The accent step is the one a filled
+   button paints; on a dark card it is the step that fails contrast. Every
+   ramp already names the readable-on-dark step, and this is what it is for. */
+.promo-status {
+  display: inline-flex; align-items: center;
+  padding: .42rem .74rem; border-radius: var(--r-pill);
+  font-size: var(--fs-micro); font-weight: var(--fw-bold);
+  letter-spacing: var(--tr-wide); text-transform: uppercase;
+  color: var(--brand-affirm);
+  border: 1px solid color-mix(in srgb, var(--brand-accent) 40%, transparent);
+  background: color-mix(in srgb, var(--brand-accent) 9%, transparent);
+}
+
+/* THE BADGE WEARS THE BRAND HERE, which the bare .mark does not. The section
+   mark is a near-black squircle with a whisper of accent in its outer glow —
+   right when it sits alone above a heading on the house page, wrong when two
+   of them sit on two cards whose entire job is to be told apart. In a promo
+   it takes the product's tint as its ground and the readable-on-dark step as
+   its glyph, and it drops from 72px to 56px: at full size it outweighed the
+   lockup beside it, which is the one thing on the card that must lead. */
+.promo .mark {
+  width: 56px; height: 56px; border-radius: 17px;
+  background:
+    radial-gradient(70% 56% at 50% 108%, color-mix(in srgb, var(--brand-accent) 26%, transparent), transparent 62%),
+    linear-gradient(160deg, color-mix(in srgb, var(--brand-accent) 17%, var(--black)), var(--black) 76%);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--brand-accent) 34%, transparent),
+    0 8px 20px var(--black),
+    0 0 30px color-mix(in srgb, var(--brand-accent) 20%, transparent);
+}
+.promo .mark svg { width: 23px; height: 23px; stroke: var(--brand-affirm); }
+
+.promo-lockup svg       { color: var(--text-1); }
+.promo .promo-tag       { color: var(--on-dark-2); }
+.promo .ticks li::before { color: var(--brand-affirm); }
+.promo-cta              { color: var(--brand-affirm); }
+
+/* ── THE PRODUCT DOORS — colour ──────────────────────────────────────────
+   Every value resolves through [data-brand] on the door itself, so the same
+   fourteen declarations paint a cyan door and a violet one.
+
+   ⚠ THE DUOTONE IS LOAD-BEARING, not a filter for taste. --photo-grade is a
+   nudge — VentureStack's is saturate(1.04) hue-rotate(-2deg) — and on its own
+   it left a golden-hour photograph golden. On a section whose entire job is
+   telling two products apart, one door was wearing its colour and the other
+   was not. `mix-blend-mode: color` maps the photograph's LUMINANCE onto the
+   brand hue: the picture keeps its light and loses its own palette.
+
+   ⚠ AND THE SCRIMS BELONG TO .photo-ground, NOT TO ITS CONSUMER. On the
+   concept board they were pseudo-elements of the door at z-index -1, which
+   put them at the same stacking level as the door's other children — so DOM
+   order decided and the scrim painted over anything placed under it. Owning
+   them here means a door, or a scene, can hold any content at any depth and
+   the photograph stays a ground.
+   ⚠ AND THE CLASS IS NOT CALLED .door-photo ANY MORE. Three things stand on
+   this now — the two product doors, the altitude scene and the rope — and a
+   class named after one of its three consumers is a class the other two get
+   copied away from. */
+.photo-ground img { filter: var(--photo-grade); }
+.photo-ground::before { content: ""; position: absolute; inset: 0; z-index: 1;
+  background: var(--brand-accent); mix-blend-mode: color; opacity: .55; }
+.photo-ground::after { content: ""; position: absolute; inset: 0; z-index: 2;
+  background:
+    linear-gradient(to top, var(--brand-ground) 6%, color-mix(in srgb, var(--brand-ground) 74%, transparent) 44%, transparent 80%),
+    /* THE TOP SCRIM, and 58% was not enough. The dial's title sits ~5% down a
+       door and MEASURED 3.2:1 against VentureStack's sky at that strength —
+       the gate could not see it, because it only looked inside .has-photo
+       sections and a door is not one. A ground's top strip has to be safe for
+       text by contract, not by luck with the photograph. */
+    linear-gradient(to bottom, color-mix(in srgb, var(--brand-ground) 84%, transparent), transparent 30%),
+    linear-gradient(to top, color-mix(in srgb, var(--brand-accent) 20%, transparent), transparent 56%); }
+
+/* A photograph has no quiet corner by contract, so the dial brings its own —
+   sized to the dial and round, so it reads as light behind the instrument
+   rather than as a panel behind a graphic.
+   ⚠ IT HAS TO REACH THE TITLE, and for a while it did not. The box started at
+   -18% of the dial's own height, which stops just under "Venture score" — so
+   the one run of text up there was sitting on open sky and MEASURED 3.2:1,
+   under the 4.5:1 floor. It went unseen because photo-contrast only looked
+   inside .has-photo sections and a door is not one; the gate reaches every
+   .photo-ground now, which is how this surfaced. -40% covers the label, and
+   the focal point moves down with it so the dial keeps the same light. */
+.door-dial::before { content: ""; position: absolute; inset: -46% -16% -20%;
+  z-index: -1; pointer-events: none; border-radius: 50%;
+  background: radial-gradient(62% 62% at 50% 56%, color-mix(in srgb, var(--brand-ground) 88%, transparent), transparent 74%); }
+.door-dial-t { font-family: var(--f-mono); font-size: var(--fs-micro);
+  letter-spacing: var(--tr-wider); text-transform: uppercase; color: var(--brand-affirm); }
+.door-dial .instr { filter: drop-shadow(0 14px 34px color-mix(in srgb, var(--black) 70%, transparent)); }
+
+.door h3      { font-size: var(--fs-h3); letter-spacing: var(--tr-tight); color: var(--text-1); }
+.door p       { color: var(--on-dark-2); }
+.door-cta     { font-weight: var(--fw-bold); color: var(--brand-affirm); }
+
+/* ── THE DOORS WEAR THE PANE ──────────────────────────────────────────────
+   The same five pieces that make a challenge card, from the same tokens: the
+   hairline, the lit rim (`glass-rim`), the refraction (`glass-lens`), the
+   depth cast, and --glass-pool over the face. Nothing is invented here —
+   components.js puts the two classes on, and these three declarations are the
+   rest. Two sections apart, one material.
+
+   WHAT A DOOR DOES DIFFERENTLY IS THE PHOTOGRAPH, and only the photograph. A
+   card seals its picture into the lower 60% and carries the pool over empty
+   surface; a door is full-bleed, and that picture is ALREADY duotoned and
+   twice-scrimmed by .photo-ground. Running the card's pool over that at full
+   strength does not light it, it fogs it — so the door takes the same recipe
+   at --glass-pool-a, and only that number differs. */
+.door { --glass-pool-a: .55; }
+/* The door's ::before geometry and paint are both in THE PANE SURFACE below,
+   shared with the card. They are declared in CSS rather than left to
+   `.glass-lens::before`, which is applied by script: a pane whose surface only
+   exists once JavaScript has run is a pane that flashes. The lens adds its
+   backdrop-filter to the same pseudo. */
+
+/* The five crops a <v-door> may ask for. Named for where the subject lands,
+   not for the coordinate: object-position moves the WINDOW, so pushing the
+   window right ("at-right") moves the subject left in the frame — which is
+   the opposite of what the number looks like it does, and the reason these
+   are named at all. The dial occupies the top-right of every door, so the
+   job of a crop here is almost always to get a person out from under it. */
+.photo-ground.at-left      img { object-position: 24% 50%; }
+.photo-ground.at-right     img { object-position: 76% 50%; }
+.photo-ground.at-low       img { object-position: 50% 78%; }
+.photo-ground.at-high      img { object-position: 50% 24%; }
+.photo-ground.at-low-right img { object-position: 72% 68%; }
+/* Hard against the edge, to drop a subject OUT rather than reposition it. */
+.photo-ground.at-far-left  img { object-position: 4% 50%; }
+
+
+/* ── SCENES — colour ──────────────────────────────────────────────────────
+   A scene is a photographic ground with an instrument on it, so everything
+   here is about one problem: a drawing has to stay readable over a picture
+   that was not composed for it.
+
+   THE VEIL IS WHY THIS IS NOT JUST A DOOR. A door's scrims darken the top
+   and the bottom and leave the middle open, because a door puts its words at
+   the foot and its dial in a corner. A plot uses the WHOLE frame, and the
+   middle of a mountain photograph is snow — the brightest thing in the
+   library. The veil is a flat tone across the frame, under the plot and over
+   the ground, mixed from the scene's own --brand-ground so it arrives in the
+   product's colour rather than as grey. */
+/* The veil is now --pane-base, declared with the other pane rules above, so a
+   scene is the same material as a card and a door and not a lookalike. What is
+   written here is only what a scene does DIFFERENTLY. */
+
+/* THE ONE SCENE THAT IS ABOUT BOTH PRODUCTS. The loop is VentureStack pulling
+   VerdictScore and back again, so a single-hue duotone would have to pick a
+   winner. Two masked tints hand the frame over from one product to the other
+   across the middle, which is also where the two climbers' hands are. */
+.photo-ground.is-duo::before {
+  background:
+    linear-gradient(to right,
+      var(--v-aqua-600) 18%,
+      color-mix(in srgb, var(--v-aqua-600) 50%, var(--v-violet-600)) 50%,
+      var(--v-violet-600) 82%);
+}
+
+
+/* ── THE ALTITUDE INSTRUMENT — colour ─────────────────────────────────────
+   ⚠ THE LABEL SIZE IS SET TWICE, AND NEITHER NUMBER IS A STYLE CHOICE. An SVG
+   scales its type with the viewBox, so a declared size is not a rendered one.
+   MEASURED at four widths, the binding case is not the phone — it is 901px,
+   where .split turns two-column and this drawing gets the narrowest box it
+   ever has, 386px. 32px rendered 12.6px there, under the project's 14px
+   floor; 38px renders 15.0px. `profile` found the same 901px cliff and left
+   the same note. The phone then needs its own value because the scene goes
+   full width and 38px would read 13.9px at 358. */
+.instr-ascent .ix-axis { stroke: var(--light-rim); stroke-width: 2; }
+.instr-ascent .ix-grid { stroke: var(--light-rim); stroke-width: 2; }
+.instr-ascent .ix-lbl  { font-size: 38px; letter-spacing: var(--tr-wide); fill: var(--on-dark-2); }
+.instr-ascent .ix-lbl.is-lit { fill: var(--brand-affirm); }
+.instr-ascent .ix-fig  { font-size: 158px; fill: var(--text-1);
+  paint-order: stroke; stroke: color-mix(in srgb, var(--brand-ground) 70%, transparent); stroke-width: 10; }
+
+/* The ceiling is a quiet dotted rule; the reading is the lit one. Two lines
+   of the same weight would make the reader work out which is the number. */
+.ix-asc-pot   { stroke: color-mix(in srgb, var(--white) 44%, transparent); stroke-width: 2.5;
+  fill: none; stroke-dasharray: 2 11; stroke-linecap: round; }
+.ix-asc-level { stroke: var(--brand-affirm); stroke-width: 4; fill: none;
+  stroke-dasharray: 16 11; stroke-linecap: round;
+  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--brand-accent) 70%, transparent)); }
+
+/* Fifteen runs AT ONE HEIGHT. Solid and lit, not the hollow dot the flat-line
+   instrument uses — here they are the evidence sitting on the claim, so they
+   read as one row rather than as fifteen separate readings. */
+.instr-ascent .ix-dot { fill: var(--brand-affirm); stroke: var(--brand-ground); stroke-width: 3; }
+
+
+/* ── THE ROPE — colour ────────────────────────────────────────────────────
+   Each node wears the brand of the product that owns that stage, and it gets
+   there through [data-brand] on the <li> — the same scoping the doors and the
+   challenge cards use. Nothing in this block names a product. */
+.ix-rope-line path {
+  fill: none; stroke: color-mix(in srgb, var(--white) 52%, transparent);
+  stroke-width: 2; stroke-dasharray: 5 8; stroke-linecap: round;
+}
+.ix-rope-n {
+  font-size: var(--fs-small); font-weight: var(--fw-semi); color: var(--text-1);
+  background: color-mix(in srgb, var(--brand-ground) 64%, transparent);
+  border: 1px solid color-mix(in srgb, var(--white) 14%, transparent);
+  backdrop-filter: blur(6px);
+}
+.ix-rope-n[data-brand] {
+  color: var(--brand-affirm);
+  border-color: color-mix(in srgb, var(--brand-accent) 44%, transparent);
+}
+.ix-rope-pt { background: var(--brand-affirm);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--brand-accent) 80%, transparent); }
+
+@media (max-width: 640px) {
+  /* 42px in a 980-wide drawing is 15.3px on a 358px phone column. */
+  .instr-ascent .ix-lbl { font-size: 42px; }
+}
+
+
+/* ── THE 44px MARK ────────────────────────────────────────────────────────
+   Same squircle, same light, in a header row. Everything here is a ratio of
+   the 72px original (22/72 radius, 24/72 icon) so the two cannot drift into
+   being two different marks. */
+.mark.is-sm { width: 44px; height: 44px; border-radius: 13px; }
+.mark.is-sm svg { width: 21px; height: 21px; }
+/* A 44px tile keeps the 72px mark's rim and its brand glow and drops the
+   cast: the big mark floats above a section, this one sits IN a header row on
+   a lit card, and a 16px black shadow there reads as a hole punched in the
+   colour. */
+.mark.is-sm { box-shadow:
+  inset 0 1px 0 color-mix(in srgb, var(--white) 26%, transparent),
+  inset 0 -1px 0 color-mix(in srgb, var(--light-rim) 30%, transparent),
+  0 2px 8px color-mix(in srgb, var(--black) 55%, transparent),
+  0 0 20px color-mix(in srgb, var(--brand-accent) 22%, transparent); }
+
+
+/* ── THE GLASS CARD — material and colour ─────────────────────────────────
+   Three things make it read as glass rather than as a tinted box, and all
+   three come from the tiers already in assets/brand.css — nothing new is
+   invented here, because a second glass recipe is how a site ends up with
+   two materials that both call themselves glass:
+     · --glass-edge + .glass-rim      the hairline and the lit top edge
+     · --glass-film-2                 the card-tier white film
+     · --glass-fx-2                   the backdrop blur, so it is real glass
+                                        wherever anything passes behind it
+   `glass-lens` (the rim refraction) and `glass-rim` (the lit edge) are both
+   added by components.js to the same set, for the same reason. The lit edge
+   is a class and not a box-shadow here because an inset shadow would paint
+   UNDER the refraction and come back smeared — see THE RIM in brand.css.
+
+   ⚠ THE FILM IS IN ::before, NOT IN `background`. An element's own
+   background paints UNDER its children, and the photograph is a child at
+   z-index -2 — so a film declared as the background sat beneath the picture
+   and did nothing. In the pseudo it sits over the photograph and under the
+   copy, which is where a pane's surface belongs. */
+/* `.is-glass`, NOT `.is-branded.is-glass`. Being a pane and wearing a product's
+   colour are two different things, and the selector used to conflate them — so
+   a card with a photograph but no `brand=` got `is-glass` and then none of the
+   material, because every rule that paints it was gated on branding. That is
+   the "Who it's for" case: three cards that speak about BOTH products and so
+   belong to neither. They are panes; they just pool the house accent instead
+   of a product's. */
+.card.is-glass,
+.door,
+.scene {
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--glass-bevel), var(--glass-cast-2);
+  -webkit-backdrop-filter: var(--glass-fx-2);
+          backdrop-filter: var(--glass-fx-2);
+}
+
+/* WHAT THE POOL SITS ON differs, and it is the only thing that does. A card
+   and a door lay the pool over the card-tier FILM, which lightens. A scene
+   lays it over the VEIL, which darkens — and that is not a preference: a
+   scene carries a DRAWING across the whole frame, not copy in one corner, and
+   the middle of a mountain photograph is snow. The veil was already there for
+   exactly that reason; making it the pane's base layer means a scene joins the
+   material without giving it up. */
+.card.is-glass, .door { --pane-base: var(--glass-film-2); }
+.scene                { --pane-base: color-mix(in srgb, var(--brand-ground) 52%, transparent); }
+
+/* A HOUSE PANE POOLS A NEAR-WHITE ACCENT, AND ALPHA IS NOT BRIGHTNESS. A product
+   pane pools cyan (#0FB5D4, luminance 148) or violet (#7C5CFC, 110); the house
+   accent is #E5E7EB at 230, so the same 42% lifts roughly twice as far and the
+   card stops reading as colour and starts reading as a white panel. MEASURED 9%
+   down the top-left corner, where the pool is strongest:
+
+       challenge BUILD 71.2   challenge ASSESS 64.1   ← the product panes
+       house at .50    78.4   ← brighter than both: wrong pane leading the page
+       house at .30    68.5
+       house at .20    64.6   ← level with the quieter product pane
+       house at 0      53.9   ← no pool at all
+
+   .20 keeps the gesture and keeps the hierarchy: the panes that name a product
+   lead, and the panes that name both sit behind them. Keyed on the absence of a
+   brand rather than on #who, because what makes it true is the accent. */
+/* ⚠ SCOPED TO VENTRIFY, AND `:not([data-brand])` RATHER THAN `:not(.is-branded)`.
+   Both corrections are the same correction: what makes a pane a "house" pane
+   is that its accent is Ventrify's near-white, not that it lacks a class. A
+   VerdictScore page is violet from <html> down, so an unbranded pane there —
+   the six How-it-works steps — is a PRODUCT pane and must not be dimmed and
+   half-pooled as if it were grey. `:not([data-brand])` is also the test that
+   covers scenes and cards alike, since both put the attribute on themselves
+   when they are given a product. */
+[data-brand="ventrify"] .card.is-glass:not([data-brand]),
+[data-brand="ventrify"] .scene:not([data-brand]) { --glass-pool-a: .2; }
+
+/* AND ITS PHOTOGRAPH HAS TO BE DIMMED, for the same underlying reason. A
+   duotoned picture carries its weight in its COLOUR: deep teal at luminance 56
+   reads heavy. Strip the colour out — which is what the house accent's
+   near-neutral duotone does — and the identical luminance reads as light grey,
+   so a neutral ground has to carry its weight in luminance instead. MEASURED
+   across the photo band, 80% down each card:
+
+       challenge BUILD 56.0   challenge ASSESS 65.0   ← the coloured grounds
+       house, undimmed         45.0 / 74.9 / 57.2     ← reads lighter than both
+       house at .62            35.4 / 52.0 / 47.2
+       house at .34            27.3 / 35.7 / 32.9     ← ships
+
+   The spread is the photographs, not the filter: brightness scales them all by
+   the same factor, and verdictscore-03 is simply a brighter picture (snow and
+   open sky) than ventrify-04. What matters is that the set sits well under the
+   coloured pair instead of over it.
+
+   THE FLOOR IS DETAIL, NOT TASTE. Measured as the standard deviation across
+   the photo band, against the page grain's own sd of 2.6: .62 holds 17.5, .34
+   holds 9.1 — still three and a half times the grain, so the pictures read as
+   pictures — and .26 falls to 6.5, where they stop being photographs and
+   become texture. .34 is as dark as this goes while the landscape survives.
+   --photo-dim is the system's existing dim and far too gentle here at .82;
+   this is the same idea, much further. */
+[data-brand="ventrify"] .card.is-glass:not([data-brand]) .photo-ground img {
+  filter: var(--photo-grade) brightness(.34) contrast(1.12);
+}
+
+/* ── THE PANE SURFACE ─────────────────────────────────────────────────────
+   THE COLOUR POOLS AT THE TOP, where the content is, and falls away down the
+   face. That is the Raycast move and it is the opposite of a flat tint: a
+   tint says "this box is cyan", a pool says "something in this box is lit".
+   It replaces the two-corner wash .card.is-branded paints, which was built
+   for a card with nothing in it but words.
+
+   TWO SELECTORS, ONE DECLARATION — AND NOT A TOKEN, WHICH I TRIED FIRST AND
+   WHICH IS SILENTLY WRONG. A custom property resolves the var()s inside it on
+   the element where it is DECLARED, and the resolved value is what inherits.
+   Declare `--glass-pool: …var(--brand-accent)…` on :root and :root's accent —
+   Ventrify's near-white grey — is baked in before any card ever sees it, so
+   every pane on the page pools GREY instead of its own product's colour. It
+   does not throw and it does not look obviously broken; it just quietly
+   un-brands the thing. MEASURED the moment it landed: the ASSESS card's
+   eyebrow fell from passing to 2.5:1, because a violet pool had become a
+   near-white one. Shared DECLARATIONS resolve at the element and are safe;
+   shared VALUES containing var() are not. The --lift-* block further up is
+   re-derived inside [data-brand] for this same reason. */
+.card.is-glass::before,
+.door::before,
+.scene::before {
+  /* The geometry is here too, not only on `.card.is-branded::before`, because
+     an unbranded pane has no branded rule to inherit it from. */
+  content: ""; position: absolute; inset: 0; z-index: 0;
+  pointer-events: none; border-radius: inherit;
+  background:
+    radial-gradient(96% 56% at 26% -10%,
+      color-mix(in srgb, var(--brand-accent) calc(42% * var(--glass-pool-a)), transparent),
+      transparent 68%),
+    linear-gradient(to bottom,
+      color-mix(in srgb, var(--brand-accent) calc(16% * var(--glass-pool-a)), transparent),
+      transparent 58%),
+    var(--pane-base);
+}
+
+/* THE PHOTOGRAPH DISSOLVES UPWARD INTO THE COLOUR, and the reason it can is
+   that they are the same colour: .photo-ground has already duotoned the
+   picture to --brand-accent, so the mask is a fade between two values of one
+   hue rather than a seam between a photo and a wash. */
+.card.is-glass > .photo-ground {
+  /* THE FADE HAS TO END ABOVE THE COPY, not above the card. The first cut ran
+     to 88% and the picture came up through the body text — MEASURED at 2.4:1
+     over the lit ridge on the BUILD card. The fade is now measured against the
+     STRIP rather than the card: solid across its lower 46%, gone by its top
+     edge, which lands the last line of the longest copy block on about 20% of
+     a picture that is itself at 82%. It reaches transparent AT the strip's top
+     edge, not before it: stopping at 96% left a 4% step, and on the BUILD card
+     that step landed on a lit ridge and drew a visible horizontal line across
+     the card. Verified by photo-contrast, which reaches a glass card's text
+     now that the card seals a photograph. */
+  opacity: .82;
+  -webkit-mask-image: linear-gradient(to top, var(--black) 0 38%, transparent 100%);
+          mask-image: linear-gradient(to top, var(--black) 0 38%, transparent 100%);
+}
+/* A door's scrim is built for a door — a heavy floor so a heading can stand
+   on it. There is no copy on the floor of a card, and that scrim took most
+   of the picture with it, so the card asks for a lighter one. */
+.card.is-glass > .photo-ground::after {
+  background:
+    /* The floor, so the picture resolves into the card's bottom edge. */
+    linear-gradient(to top,
+      color-mix(in srgb, var(--brand-ground) 62%, transparent),
+      transparent 72%),
+    /* AND A LID, because the copy reaches into this strip and how far depends
+       on the column width. MEASURED at 901px, where .grid.two is still two-up
+       and the ASSESS card is 406px wide: the body copy wraps to FOUR lines
+       instead of three and its last line lands 32% down the strip, on a part
+       the floor scrim never reached — 4.1:1, under the 4.5 floor, while the
+       same card measured 4.7:1 at both 1440 and 390. A strip's top has to be
+       safe for text by contract, not by luck with the photograph and the
+       wrap; the doors learned this and so does the card. */
+    linear-gradient(to bottom,
+      color-mix(in srgb, var(--brand-ground) 72%, transparent),
+      transparent 46%);
+}
+
+/* The hairline under the header row is the pane's own edge, not a divider
+   token: it has to be the same line as the rim or the card has two. */
+.card-head { border-bottom: 1px solid var(--glass-edge); }
+.card.is-glass .num { color: var(--brand-affirm); }
+.card.is-glass h3   { color: var(--text-1); }
+.card.is-glass p    { color: var(--on-dark-2); }
+

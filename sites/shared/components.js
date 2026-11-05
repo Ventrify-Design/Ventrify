@@ -49,14 +49,23 @@
       brand:   { text: 'ventrify', dot: true, product: null, href: '', lockup: 'ventrify', label: 'Ventrify' },
       nav: {
         home: [
-          { label: 'Products',             href: '#products' },
-          { label: 'How it works',         href: '#learning-loop' },
-          { label: 'Case study',           href: '#case-study' },
-          { label: 'About',                href: '#about' }
+          { label: 'Products',      href: '#products' },
+          { label: 'Case study',    href: '#case-study' },
+          { label: "Who it's for",  href: '#who' },
+          { label: 'About',         href: '#about' }
         ]
       },
+      /* THE SAME TWO DOORS AS THE PRODUCT SITES, and the same addresses. The house page used to
+         carry one button that went to '#products' — an in-page anchor dressed as a call to
+         action, which is the one CTA on the site that cannot be acted on.
+         os.ventrify.io/workspace is the platform BOTH products run on, and its magic link is
+         simultaneously the sign-in and the sign-up: an address with a workspace lands in it, an
+         address without one is routed to setup.html and offered a trial. So the parent can point
+         at it truthfully today, before VentureStack exists on it.
+         NO TRAILING SLASH — cleanUrls makes /workspace/ a 308. Same trap as middleware.js. */
       actions: [
-        { label: 'Try it free', href: '#products', style: 'solid' }
+        { label: 'Sign in',     href: 'https://os.ventrify.io/workspace', style: 'light' },
+        { label: 'Try it free', href: 'https://os.ventrify.io/workspace?new=1', style: 'solid' }
       ],
       footer: {
         tagline: 'Ideas into impact.',
@@ -68,7 +77,10 @@
           { title: 'Company', items: [
             { label: 'MoneyGym case study', href: 'moneygym/' },
             { label: 'About',   href: '#about' },
-            { label: 'Contact', href: 'mailto:hello@ventrify.io' }
+            /* WAS mailto:hello@ventrify.io — the last mailto left in the family. The CTA section
+               it now points at carries the contact dialog, which keeps the visitor on the page
+               and records who asked. See the note on that button in sites/ventrify/index.html. */
+            { label: 'Contact', href: '#contact' }
           ]},
           { title: 'Legal', items: [
             { label: 'Privacy',  href: '#' },
@@ -76,7 +88,7 @@
             { label: 'Security', href: '#' }
           ]}
         ],
-        disclaimer: 'Product and case-study claims should be checked against the latest product evidence before publication. Contact email and product URLs are placeholders to verify before launch.'
+        disclaimer: 'Product and case-study claims should be checked against the latest product evidence before publication. The VentureStack capture is a placeholder: it is the VerdictScore workspace shell in VentureStack\u2019s colour, and is replaced when that product ships.'
       }
     },
 
@@ -159,9 +171,15 @@
             { label: 'MoneyGym case study', href: 'moneygym/' }
           ]},
           { title: 'Legal', items: [
-            { label: 'Privacy',  href: 'mailto:hello@ventrify.io?subject=Privacy%20policy%20enquiry' },
-            { label: 'Terms',    href: 'mailto:hello@ventrify.io?subject=Terms%20of%20service%20enquiry' },
-            { label: 'Security', href: 'mailto:hello@ventrify.io?subject=Security%20enquiry' }
+            /* '#' TO MATCH THE OTHER TWO SITES, which have always parked these three here while
+               the legal pages are written. VentureStack alone sent them to a mailbox with a
+               prefilled subject — so the same three words behaved differently depending on which
+               of the three footers a visitor happened to be reading, and on a phone with no mail
+               client configured they did nothing at all. All three are replaced together when the
+               pages exist. */
+            { label: 'Privacy',  href: '#' },
+            { label: 'Terms',    href: '#' },
+            { label: 'Security', href: '#' }
           ]}
         ],
         disclaimer: 'Product claims, pricing and the MoneyGym case study should be checked against the latest product evidence before publication. Contact email and product URLs are placeholders to verify before launch.'
@@ -440,6 +458,15 @@
     customElements.define('v-card', class extends HTMLElement {
       connectedCallback() {
         this.classList.add('card');
+        /* `brand="verdictscore"` makes a card wear that product's colour. It is
+           the same one move the product doors make: [data-brand] re-points the
+           accent ramp AND --brand-ground, and --lift-1/2/3 are mixed from that
+           ground — so the card's surface, its border, its number label and its
+           wash all shift together without one of them being named at the call
+           site. Used by the two challenge cards, which are ABOUT the two
+           products, and by <v-promo>, which is one. */
+        var brand = this.getAttribute('brand');
+        if (brand) { this.setAttribute('data-brand', brand); this.classList.add('is-branded'); }
         if (this.hasAttribute('interactive')) this.classList.add('is-interactive');
         if (this.hasAttribute('price')) this.classList.add('price-card');
         if (this.hasAttribute('featured')) this.classList.add('featured');
@@ -448,6 +475,40 @@
         var num = this.querySelector('[data-num]');
         if (num) num.classList.add('num');
         this.querySelectorAll('ul:not([class])').forEach(function (u) { u.classList.add('ticks'); });
+
+        /* ── GLASS, WITH THE PHOTOGRAPH SEALED INSIDE IT ──────────────────
+           `photo` is what turns a card into a pane. The reference is
+           Raycast's store cards: a saturated colour pooling at the top
+           where the icon sits, a lit rim, a hairline under the header row,
+           and a visual filling the lower half.
+
+           WHY THE PICTURE IS A CHILD AND NOT A BACKDROP. `backdrop-filter`
+           blurs what is BEHIND an element, so the obvious build — card over
+           photograph — needs the photograph in the section, and then both
+           cards share one picture and neither is about its own product.
+           Sealing a ground inside each card gives each one its own
+           landscape, duotoned to its own hue by .photo-ground, which is
+           also what lets it blend into the colour instead of sitting in
+           front of it: the wash and the photograph are the same colour, so
+           the mask between them has nothing to give away.
+
+           The header row is BUILT, not authored: the eyebrow already exists
+           in the markup as [data-num], and pairing it with a mark in the
+           page would mean two of these written by hand and drifting. */
+        var photo = this.getAttribute('photo');
+        if (photo) {
+          this.classList.add('is-glass');
+          var icon = this.getAttribute('icon');
+          if (num) {
+            var head = el('span', 'card-head');
+            this.insertBefore(head, num);
+            if (icon) head.innerHTML = '<v-mark size="sm" icon="' + esc(icon) + '"></v-mark>';
+            head.appendChild(num);
+          }
+          this.insertAdjacentHTML('afterbegin',
+            photoGround(this.getAttribute('base') || '', photo, this.getAttribute('focus'),
+                        this.getAttribute('sizes') || '(min-width: 761px) 50vw, 100vw', false));
+        }
       }
     });
   }
@@ -639,15 +700,39 @@
       connectedCallback() {
         var items = [].slice.call(this.children).filter(function (c) { return c.tagName === 'LI'; });
         var variant = this.getAttribute('variant');
+        /* `variant="pane"` makes every step the SAME OBJECT as a challenge
+           card — it adds .card.is-glass to the <li>, so the material, the rim,
+           the refraction, the colour pool and the sealed photograph all arrive
+           from the rules that already exist. Nothing about the pane is
+           restated here; a second glass card is how a system ends up with two.
+           What a step keeps that a card does not have is its NUMBER, and the
+           number stays derived from DOM order rather than typed into the
+           markup six times — it just moves out of the CSS counter and into the
+           header row, beside the mark, because that is where a pane's eyebrow
+           lives. */
+        var pane = variant === 'pane';
+        var up   = this.getAttribute('base') || '';
         var ol = el('ol', 'steps of-' + items.length + (variant ? ' is-' + variant : ''));
         ol.setAttribute('data-seq', '');
-        items.forEach(function (li) {
+        items.forEach(function (li, i) {
           /* A step is revealed BY the sequence, so it must not also be a
              standalone reveal: `[data-reveal].is-in { opacity: 1 }` outranks
              `[data-seq] > * { opacity: .5 }`, which cancelled the dimming and
              left the sequence animating nothing but a border colour. Stripped
              here so the markup can keep saying `data-reveal` harmlessly. */
           li.removeAttribute('data-reveal');
+          if (pane) {
+            li.classList.add('card', 'is-glass');
+            var icon = li.getAttribute('icon');
+            var head = el('span', 'card-head');
+            head.innerHTML =
+              (icon ? '<v-mark size="sm" icon="' + esc(icon) + '"></v-mark>' : '') +
+              '<span class="num">' + ('0' + (i + 1)).slice(-2) + '</span>';
+            li.insertBefore(head, li.firstChild);
+            li.insertAdjacentHTML('afterbegin',
+              photoGround(up, li.getAttribute('photo'), li.getAttribute('focus'),
+                          '(min-width: 901px) 33vw, (min-width: 641px) 50vw, 100vw', false));
+          }
           ol.appendChild(li);
         });
         this.appendChild(ol);
@@ -710,6 +795,56 @@
   var PHOTO_BASE = 'assets/photography/';
   var BED_PARALLAX = '0.13';
 
+  /* ONE DEFINITION OF HOW A BRAND PHOTOGRAPH IS SOURCED, used by <v-photo>
+     and <v-door>. It was inline in v-photo, which was fine while v-photo was
+     the only thing that showed a photograph. The moment a second component
+     needed one, copying these three lines would have meant two places to fix
+     the next time the export set changes — and the comment below records that
+     this exact list has been wrong before.
+     1600/1200/720 because EVERY source is at least 1672px wide. An earlier set
+     referenced -1920, which six of the thirteen never had, so the right
+     viewport fetched a 404.
+     ⚠ THE SIZES ATTRIBUTE IS NOT COSMETIC. A door is a half-width box roughly
+     as tall as it is wide, and `cover` on a 2.43:1 photograph — which four of
+     VentureStack's five are — upscales it 1.77x to fill one. Understate
+     `sizes` and the browser picks a smaller file and the upscale compounds. */
+  function photoImg(base, sizes, eager) {
+    return '<img alt="" aria-hidden="true" decoding="async" ' +
+      (eager ? 'fetchpriority="high" ' : 'loading="lazy" ') +
+      'src="' + base + '-1200.webp" sizes="' + sizes + '" ' +
+      'srcset="' + base + '-720.webp 720w, ' + base + '-1200.webp 1200w, ' + base + '-1600.webp 1600w">';
+  }
+
+  /* A BRANDED PHOTOGRAPHIC GROUND — the grade, the duotone and the scrims, as
+     ONE thing rather than a thing doors happen to have. It was `.door-photo`
+     while doors were the only consumer; the moment a second and third
+     component wanted to stand on a photograph, a class called "door" would
+     have been copied into two places that are not doors, and the next tweak
+     to the scrim would have reached one of the three.
+     The crops a ground may ask for, named for where the SUBJECT should end up
+     rather than for the coordinate — "put the climbers left" is a judgement an
+     author can make from looking at the photograph; "68% 55%" is not. AN ENUM,
+     NOT A VALUE: the obvious version took any object-position and emitted it as
+     an inline custom property, which token-check fails, correctly. The five
+     named crops live in brand-map.css, so the markup chooses and the
+     stylesheet decides what the choice means. Anything unlisted is ignored
+     rather than guessed at. */
+  var FOCUS = { left: ' at-left', right: ' at-right', low: ' at-low',
+                high: ' at-high', 'low-right': ' at-low-right',
+                /* `far-left` is not "more left", it is the one that puts the
+                   window hard against the edge — the crop you reach for when a
+                   subject has to leave the frame entirely rather than be moved
+                   within it. `left` at 24% only ever slices a figure standing
+                   near the far end; this clears it. */
+                'far-left': ' at-far-left' };
+
+  function photoGround(up, photo, focus, sizes, eager, duo) {
+    if (!photo) return '';
+    return '<span class="photo-ground' + (FOCUS[focus] || '') + (duo ? ' is-duo' : '') + '">' +
+             photoImg(up + PHOTO_BASE + photo, sizes, eager) +
+           '</span>';
+  }
+
   function definePhoto() {
     customElements.define('v-photo', class extends HTMLElement {
       connectedCallback() {
@@ -735,14 +870,7 @@
         this.classList.add('photo-' + mode);
         if (speed) this.classList.add('is-moving');
         if (speed) this.setAttribute('data-parallax', speed);
-        this.innerHTML =
-          // 1600/1200/720 because EVERY source is at least 1672px wide. An
-          // earlier set referenced -1920 which six of the thirteen never had,
-          // so the right viewport fetched a 404.
-          '<img alt="" aria-hidden="true" decoding="async" ' +
-            (mode === 'bed' ? 'fetchpriority="high" ' : 'loading="lazy" ') +
-            'src="' + b + '-1200.webp" sizes="' + sizes + '" ' +
-            'srcset="' + b + '-720.webp 720w, ' + b + '-1200.webp 1200w, ' + b + '-1600.webp 1600w">';
+        this.innerHTML = photoImg(b, sizes, mode === 'bed');
       }
     });
   }
@@ -907,14 +1035,22 @@
     svg.setAttribute('aria-hidden', 'true');
     svg.setAttribute('focusable', 'false');
     svg.style.cssText = 'position:absolute;width:0;height:0;pointer-events:none';
+    /* userSpaceOnUse, so --glass-refract is a LENGTH and the bend is the same
+       on a 571px card as on a 180px panel — see REFRACTION in brand.css for
+       what the fraction model cost. The feImage drops its explicit subregion
+       with it: under userSpaceOnUse `width="1"` would mean one pixel. With no
+       subregion it defaults to the filter region, which is still the bounding
+       box (filterUnits is untouched), so the map stretches to the surface
+       exactly as before. */
+    var refract = parseFloat(getComputedStyle(document.documentElement)
+                               .getPropertyValue('--glass-refract')) || 3;
     svg.innerHTML =
       '<defs><filter id="v-lens" x="0" y="0" width="100%" height="100%"' +
-      ' primitiveUnits="objectBoundingBox" color-interpolation-filters="sRGB">' +
-      '<feImage href="' + base + 'lens-map.png" x="0" y="0" width="1" height="1"' +
+      ' primitiveUnits="userSpaceOnUse" color-interpolation-filters="sRGB">' +
+      '<feImage href="' + base + 'lens-map.png"' +
       ' preserveAspectRatio="none" result="map"/>' +
       '<feDisplacementMap in="SourceGraphic" in2="map"' +
-      ' scale="' + (getComputedStyle(document.documentElement)
-                      .getPropertyValue('--glass-refract').trim() || '.022') + '"' +
+      ' scale="' + refract + '"' +
       ' xChannelSelector="R" yChannelSelector="G"/>' +
       '</filter></defs>';
     document.body.appendChild(svg);
@@ -925,9 +1061,30 @@
      to the same set rather than to a hand-picked few — otherwise VentureStack
      shows six lensed pricing cards directly above nine unlensed ones, which is
      precisely the mismatch a shared material exists to prevent. */
+  /* `.door` is in the set for the same reason `.card.is-glass` is: the product
+     doors and the challenge cards are the same material two sections apart,
+     and the moment one of them is a pane and the other is a bare photograph
+     the page has two answers to "what is a surface here". */
+  var LENSED = '.on-photo v-card, .on-photo .card, .on-photo .panel, .card.is-glass, .door, .scene';
+
   function markGlassSurfaces() {
-    document.querySelectorAll('.on-photo v-card, .on-photo .card, .on-photo .panel')
+    /* `.card.is-glass` joins the set for the reason the comment above gives:
+       a card that is a pane gets the pane's rim, or the page shows two
+       materials both calling themselves glass. */
+    document.querySelectorAll(LENSED)
       .forEach(function (el) { el.classList.add('glass-lens'); });
+
+    /* THE LIT EDGE, on exactly the same set. The ring lives in brand.css as
+       one recipe (see THE RIM); a `.glass-N` tier already has it by being a
+       tier, and everything else is marked here rather than each component
+       restating the mask — a second lit-edge recipe is exactly what put the
+       first one underneath the refraction.
+       NOT `.shot-frame`, though it also carries a lit edge. The ring is an
+       ::after and the frame's ::after is already the lift, so marking it adds
+       a class that renders nothing. It keeps --glass-bevel-flat instead, which
+       is safe there precisely because the frame is never lensed. */
+    document.querySelectorAll(LENSED)
+      .forEach(function (el) { el.classList.add('glass-rim'); });
   }
 
 
@@ -955,6 +1112,11 @@
     investors:'<path d="M4 19h16"/><path d="M7 19v-6M12 19V7M17 19v-9"/>',
     org:      '<rect x="4" y="9" width="7" height="11" rx="1"/><rect x="13" y="4" width="7" height="16" rx="1"/>',
     doc:      '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/>',
+    lock:     '<rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',
+    /* `score` is an arc with two hands and reads as a CLOCK, which is wrong
+       wherever the subject is a number rather than a duration. This is the
+       dial it was meant to be: a sweep with a needle. */
+    gauge:    '<path d="M3.5 18a8.5 8.5 0 1 1 17 0"/><path d="m12 18 4.8-5.6"/><circle cx="12" cy="18" r="1.4"/>',
     launch:   '<path d="M5 19c2-6 7-11 14-13-1 7-6 12-13 14Z"/><path d="M8.5 15.5 5 19"/>',
     dot:      '<circle cx="12" cy="12" r="4"/>'
   };
@@ -962,19 +1124,24 @@
     return '<svg viewBox="0 0 24 24" aria-hidden="true">' + (ICONS[name] || ICONS.dot) + '</svg>';
   }
 
-  /* <v-mark icon="" label=""> — A05, the section mark.
+  /* <v-mark icon="" label="" size=""> — A05, the section mark.
      Bare, it is the squircle alone, for sitting above a heading. With a
-     `label` it becomes a captioned cell for a row of marks. */
+     `label` it becomes a captioned cell for a row of marks.
+     `size="sm"` is the 44px tile, for sitting IN a row rather than above one
+     — a glass card's header puts the mark beside its own eyebrow, and 72px
+     next to a 12px label is a logo with a caption, not a header. Same
+     geometry, same light, scaled; it is not a second mark. */
   function defineMark() {
     customElements.define('v-mark', class extends HTMLElement {
       connectedCallback() {
         var icon  = this.getAttribute('icon') || 'dot';
         var label = this.getAttribute('label');
+        var sz    = this.getAttribute('size') === 'sm' ? ' is-sm' : '';
         if (label) {
           this.className = 'mark-cell';
-          this.innerHTML = '<span class="mark">' + iconSVG(icon) + '</span><span>' + esc(label) + '</span>';
+          this.innerHTML = '<span class="mark' + sz + '">' + iconSVG(icon) + '</span><span>' + esc(label) + '</span>';
         } else {
-          this.className = 'mark';
+          this.className = 'mark' + sz;
           this.innerHTML = iconSVG(icon);
         }
         this.setAttribute('data-reveal', revealKind(this, this.getAttribute('reveal')));
@@ -1192,6 +1359,122 @@
       return s + '</svg>';
     },
 
+    /* ── ALTITUDE ──────────────────────────────────────────────────────────
+       A score out of 100 and a mountain are both heights, so this draws the
+       score as a POSITION rather than as a badge: a real axis up the left
+       edge, the assessed value as a line across the frame at its own height,
+       the potential above it, and the gap between them left as sky. The
+       reader never has to be told that 73 is short of 85 — the distance is
+       the picture.
+
+       IT CARRIES THE RUNS TOO, and that is the part worth defending. The
+       section it serves used to show `kind="runs"` — fifteen marks on a flat
+       line — beside a sentence about reproducibility. Fifteen marks that all
+       sit ON the assessed line say the same thing in the same drawing, so the
+       claim and the number stop being two graphics that have to be read
+       against each other. `runs` stays for every other use; this is not a
+       replacement, it is a composition.
+
+       GEOMETRY, NOT A PHOTOGRAPH OF ONE. Nothing here knows which venture it
+       is drawing or which picture it will land on — same rule as `score`. */
+    ascent: function (opts) {
+      var max  = parseFloat(opts.max) || 100;
+      var val  = parseFloat(opts.score) || 0;
+      var pot  = opts.potential ? parseFloat(opts.potential) : null;
+      var runs = parseInt(opts.runs, 10) || 0;
+
+      /* 980 x 900 — the shared instrument width, in a box slightly taller
+         than it is wide. The ascent is the one drawing on the site whose
+         MEANING is vertical, so it takes a column rather than a band; the
+         radar made the same call and left the same note. */
+      var W = 980, H = 900;
+      var AX = 176, TOP = 110, FOOT = 830, RIGHT = 930;
+      var at = function (v) {
+        return FOOT - Math.max(0, Math.min(1, v / max)) * (FOOT - TOP);
+      };
+
+      var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="">';
+
+      /* the axis and its five stops. The scale is FIXED at quarters — it is
+         the ruler, not the reading, so it does not move with the data. */
+      s += '<line class="ix-axis" x1="' + AX + '" y1="' + TOP + '" x2="' + AX + '" y2="' + FOOT + '"/>';
+      for (var k = 0; k <= 4; k++) {
+        var v = max * k / 4, y = at(v);
+        s += '<line class="ix-grid" x1="' + AX + '" y1="' + y + '" x2="' + (AX + 26) + '" y2="' + y + '"/>';
+        s += '<text class="ix-lbl" x="' + (AX - 20) + '" y="' + (y + 14) + '" text-anchor="end">' +
+             esc(String(Math.round(v))) + '</text>';
+      }
+
+      /* the ceiling, drawn before the reading so the reading sits on top */
+      if (pot !== null) {
+        var py = at(pot);
+        s += '<line class="ix-asc-pot" x1="' + AX + '" y1="' + py + '" x2="' + RIGHT + '" y2="' + py + '"/>';
+        s += '<text class="ix-lbl" x="' + RIGHT + '" y="' + (py - 20) + '" text-anchor="end">POTENTIAL ' +
+             esc(String(pot)) + '</text>';
+      }
+
+      /* the reading */
+      var ly = at(val);
+      s += '<line class="ix-asc-level" x1="' + AX + '" y1="' + ly + '" x2="' + RIGHT + '" y2="' + ly + '"/>';
+
+      /* THE RUNS SIT ON THE LINE, which is the whole argument: fifteen marks
+         at one height is a flat result drawn flat. They stop at 648 —
+         MEASURED, not guessed: a 158px numeral right-aligned on 930 starts at
+         762, and the first cut ran the dots to 740, which put the last two
+         under the 7. */
+      if (runs > 0) {
+        var X0 = 230, X1 = 648, gap = runs > 1 ? (X1 - X0) / (runs - 1) : 0;
+        for (var i = 0; i < runs; i++) {
+          s += '<circle class="ix-dot" cx="' + (X0 + gap * i).toFixed(1) + '" cy="' + ly + '" r="13"/>';
+        }
+      }
+
+      /* the figure hangs BELOW its own line, not above it: above, a 132px
+         numeral at a high score collides with the potential label a hundred
+         units up, and the collision gets worse the better the venture does. */
+      s += '<text class="ix-fig" x="' + RIGHT + '" y="' + (ly + 130) + '" text-anchor="end">' +
+           esc(String(opts.score)) + '</text>';
+      if (opts.readingLabel)
+        s += '<text class="ix-lbl is-lit" x="' + RIGHT + '" y="' + (ly + 186) + '" text-anchor="end">' +
+             esc(opts.readingLabel) + '</text>';
+
+      return s + '</svg>';
+    },
+
+    /* ── THE ROPE ──────────────────────────────────────────────────────────
+       The connected loop is two products pulling each other up, and the
+       photograph under this instrument is exactly that gesture. So the four
+       stages are hung along a line drawn between the two climbers instead of
+       on a track of their own: the diagram and the picture become one line.
+
+       HTML LABELS, SVG LINE — and not by preference. `seq` records what
+       happens when a sequence goes into a fixed viewBox: six captions across
+       a 390px phone scaled to 7px, under the 14px floor. Real elements
+       reflow and keep their size, so the words are HTML and only the rope is
+       drawn. The path stretches with `preserveAspectRatio="none"`, which is
+       what lets a node at 31% of the box always land on it; the stroke is
+       spared the distortion by `vector-effect`, without which a 2.4:1 band
+       would show flat dashes and a phone would show tall ones.
+
+       Each node takes the brand of the product that owns that stage, so its
+       colour arrives through [data-brand] like every other branded thing on
+       the site rather than through a rule written for this drawing. */
+    rope: function (steps, tones) {
+      if (!steps.length) return '';
+      var nodes = steps.map(function (t, i) {
+        var brand = tones[i] || '';
+        return '<li class="ix-rope-n n' + (i + 1) + '"' + (brand ? ' data-brand="' + esc(brand) + '"' : '') + '>' +
+                 '<i class="ix-rope-pt" aria-hidden="true"></i>' +
+                 '<span class="ix-rope-cap">' + esc(t) + '</span>' +
+               '</li>';
+      }).join('');
+      return '<svg class="ix-rope-line" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true">' +
+               '<path vector-effect="non-scaling-stroke" d="M 28 232 C 190 470, 330 560, 520 452 ' +
+               'C 650 378, 790 240, 972 150"/>' +
+             '</svg>' +
+             '<ol class="ix-rope-nodes">' + nodes + '</ol>';
+    },
+
     /* THE INVESTABILITY SCORE, as the product draws it: an arc, the figure, the
        guidance band, and the three blind draws underneath.
 
@@ -1291,6 +1574,13 @@
         var max = parseFloat(this.getAttribute('max')) || 5;
         if (kind === 'set')       html = INSTRUMENTS.set(steps, icons);
         else if (kind === 'runs') html = INSTRUMENTS.runs(steps);
+        else if (kind === 'ascent') html = INSTRUMENTS.ascent({
+          score: this.getAttribute('score'), max: this.getAttribute('max') || 100,
+          potential: this.getAttribute('potential'), runs: this.getAttribute('runs'),
+          readingLabel: this.getAttribute('reading-label'),
+        });
+        else if (kind === 'rope') html = INSTRUMENTS.rope(steps,
+          (this.getAttribute('tones') || '').split('|'));
         else if (kind === 'profile') html = INSTRUMENTS.profile(steps, max);
         else if (kind === 'compose') html = INSTRUMENTS.compose(steps, max, this.getAttribute('total') || '');
         else if (kind === 'score') html = INSTRUMENTS.score({
@@ -1305,13 +1595,22 @@
            the markup beats a rule that silently guesses from item count. */
         else                      html = INSTRUMENTS.seq(steps, icons, kind === 'chain',
                                                          this.getAttribute('layout') === 'vertical');
-        this.className = 'instr instr-' + kind;
+        /* `static` — DRAWN, NOT PERFORMED. An instrument is normally a data
+           reveal: the arc fills and the rows stagger as the section crosses
+           the viewport, because the drawing IS the claim and watching it
+           resolve is the point. On a product door it is not a claim, it is a
+           brand mark — and a mark that redraws itself every time you scroll
+           past is an animation with nothing to say. This switches off both
+           halves: the scroll-linked arc (motion.css keys it off --prog) and
+           the reveal that fades the whole instrument in. */
+        var isStatic = this.hasAttribute('static');
+        this.className = 'instr instr-' + kind + (isStatic ? ' is-static' : '');
         /* The drawing is decorative detail under one accessible name: a
            screen reader gets the sentence, not fifteen stray dots. */
         this.setAttribute('role', 'img');
         this.setAttribute('aria-label', label);
         this.innerHTML = html;
-        this.setAttribute('data-reveal', revealKind(this, this.getAttribute('reveal')));
+        if (!isStatic) this.setAttribute('data-reveal', revealKind(this, this.getAttribute('reveal')));
         var speed = this.getAttribute('parallax');
         if (speed) this.setAttribute('data-parallax', speed);
       }
@@ -1636,6 +1935,232 @@
     });
   }
 
+  /* <v-lockup name="verdictscore|venturestack|ventrify"> — a product's mark + wordmark.
+     The lockups were reachable only through <v-nav>, which meant any other surface that wanted
+     to show a product's logo had to either hand-roll one or reach into LOCKUPS from inside this
+     file. <v-promo> did the second. Naming it as a component gives every surface the same one,
+     and — the part that matters — keeps the fills as tokens, so the logo paints itself from
+     whatever [data-brand] scope it is dropped into rather than carrying a frozen palette.
+     `height` is a CSS concern, not an attribute: size it where you place it. */
+  function defineLockup() {
+    customElements.define('v-lockup', class extends HTMLElement {
+      connectedCallback() {
+        var n = this.getAttribute('name') || '';
+        var art = LOCKUPS[n];
+        if (!art) return;
+        this.classList.add('lockup');
+        /* Decorative by default: on a product card the <h3> beside it already carries the name,
+           and a logo announced twice is a logo read twice. `label` makes it the accessible name
+           instead, for a surface where the lockup IS the only naming. */
+        var label = this.getAttribute('label');
+        if (label) { this.setAttribute('role', 'img'); this.setAttribute('aria-label', label); }
+        else this.setAttribute('aria-hidden', 'true');
+        this.innerHTML = art;
+      }
+    });
+  }
+
+  /* <v-promo> — THE PRODUCT ADVERTISEMENT CARD.
+     The products section used two hand-written <v-card>s carrying a status word, a mark, a
+     name, a sentence and four bullets. That is a specification, and it read like one: the
+     parent's single most important section — the one that has to make two products want to be
+     clicked — was the least persuasive thing on the page.
+
+     ONE COMPONENT, NOT TWO CARDS, for the usual reason and one specific one. The usual: two
+     copies of this much structure drift, and the drift always lands on the product nobody
+     edited that day. The specific one: everything that makes the card feel like ITS product —
+     the lockup, the surface tint, the status pill, the badge glow, the wash — is a token, and
+     a token only resolves against a [data-brand] scope. Setting that scope is the component's
+     real job; the markup is what follows from it.
+
+     `brand` DOES THE COLOURING ON ITS OWN. [data-brand="verdictscore"] on this element
+     re-points --brand-accent/-affirm/-tint AND --brand-ground, and --lift-1/2/3 are mixed from
+     --brand-ground (brand-map.css:38-40) — so the card's own surface, its border, its badge
+     glow, its wash and the fills inside the inlined lockup all land on that product's palette
+     without one of them being named here. Change a ramp in brand.css and these cards follow.
+
+     ⚠ THE REFERENCE SHOWS VENTURESTACK IN GREEN. The identity system says cyan: brand.css
+     gives VentureStack --v-aqua-*, and the three-palette family (monochrome / violet / cyan)
+     is the thing that makes the three sites tellable apart. So the card is built to the
+     reference's COMPOSITION and the system's COLOUR. Swapping it back is one attribute. */
+  function definePromo() {
+    customElements.define('v-promo', class extends HTMLElement {
+      connectedCallback() {
+        var up    = this.getAttribute('base') || '';
+        var key   = this.getAttribute('brand') || '';
+        var art   = LOCKUPS[key];
+        var shot  = this.getAttribute('shot');
+        var items = [].slice.call(this.querySelectorAll('li'))
+                      .map(function (li) { return li.outerHTML; }).join('');
+
+        /* ADD, never assign — the lesson v-shot's comment records. */
+        /* `is-branded` is the SHARED treatment, not a promo one — the border
+           tint, the wash and the brand-coloured number label now live on
+           .card.is-branded so the challenge cards get the identical thing.
+           This used to be three near-duplicate rules under .promo and a
+           <span class="promo-wash"> that only this component emitted. */
+        this.classList.add('card', 'promo', 'is-branded', 'is-interactive');
+        if (key) this.setAttribute('data-brand', key);
+        this.setAttribute('data-reveal', revealKind(this, this.getAttribute('reveal')));
+
+        /* THE CAPTURE IS A SEPARATE FILE FROM THE FULL-WIDTH ONE, deliberately — see the note
+           in shoot-product.mjs. A 1440px workspace inside a ~560px card renders its 14px body
+           text at 5.5px. `frame` + `title-bar` gives it the window chrome that says which
+           screen it is without a caption underneath. */
+        var media = '';
+        if (shot) {
+          media =
+            '<span class="promo-media">' +
+              '<v-shot base="' + esc(up) + '" name="' + esc(shot) + '" frame' +
+                (this.getAttribute('shot-title') ? ' title-bar="' + esc(this.getAttribute('shot-title')) + '"' : '') +
+                ' alt="' + esc(this.getAttribute('shot-alt') || '') + '"></v-shot>' +
+            '</span>';
+        }
+
+        this.innerHTML =
+          '<div class="row-between promo-top">' +
+            '<span class="promo-status">' + esc(this.getAttribute('status') || '') + '</span>' +
+            '<v-mark icon="' + esc(this.getAttribute('icon') || 'dot') + '"></v-mark>' +
+          '</div>' +
+          /* THE LOCKUP IS THE HEADING, not an image beside one. It is the product's real
+             wordmark, already inlined and already tokenised, so here it paints itself in its
+             own palette. The <h3> stays in the accessibility tree underneath it: a heading
+             that is a picture is a heading screen readers and the outline both lose. */
+          '<h3 class="promo-name">' +
+            (art ? '<v-lockup class="promo-lockup" name="' + esc(key) + '"></v-lockup>' +
+                   '<span class="vh">' + esc(this.getAttribute('name') || key) + '</span>'
+                 : esc(this.getAttribute('name') || key)) +
+          '</h3>' +
+          '<p class="promo-tag">' + esc(this.getAttribute('tagline') || '') + '</p>' +
+          (items ? '<ul class="ticks promo-list">' + items + '</ul>' : '') +
+          media +
+          '<a class="textlink sweep promo-cta" href="' + esc(this.getAttribute('href') || '#') + '">' +
+            esc(this.getAttribute('cta') || '') +
+            ' <span class="arw" aria-hidden="true">↗</span></a>';
+      }
+    });
+  }
+
+  /* <v-door> — THE PRODUCT DOOR. The chosen treatment for the house page's
+     products section: a full-bleed photograph duotoned to the product's own
+     hue, a score dial top-right, the lockup and one line bottom-left, and no
+     card anywhere. Two of them side by side; the half you point at widens.
+
+     WHY A COMPONENT AND NOT TWO BLOCKS OF MARKUP. Everything that makes a door
+     feel like ITS product — the photograph's hue, the dial's arc, the pill,
+     the lockup's fills, the link colour, even the scrim, which is mixed from
+     --brand-ground — resolves through [data-brand]. Setting that scope on the
+     element is the component's real job; the markup is what follows from it.
+     Not one colour is named in the page.
+
+     THE DIAL IS DRAWN, NOT PHOTOGRAPHED. <v-instrument kind="score"> renders
+     it in SVG from numbers, so the title above it is live text — which is the
+     only reason VerdictScore's "Investability score" and VentureStack's
+     "Venture score" can be the same instrument with a different word. Cropped
+     out of a screenshot that would have been a second asset to keep in step.
+
+     ⚠ `score` IS DEMONSTRATION DATA. 80 is VerdictScore's demo figure. On
+     VentureStack it is invented, and a dial on the build product implies
+     VentureStack emits a number at all. Both are deliberate and both are the
+     page author's call — the component just draws what it is given. */
+  /* ── <v-scene> — A PHOTOGRAPH WITH A DRAWING ON IT ──────────────────────
+     The doors proved that a branded photograph can be a ground rather than a
+     background: duotoned to the product's hue, scrimmed top and bottom, and
+     cropped by name. A door then spends that ground on a heading and a link.
+     A scene spends it on an INSTRUMENT — the altitude axis, the rope — so the
+     measurement is drawn on the landscape it is a measurement of.
+
+     IT DOES NOT TOUCH ITS CHILDREN. The drawing is authored in the page, as
+     a <v-instrument> with its own data, and this only slides a ground in
+     underneath it and lifts everything else above. Wrapping the children in
+     a plot div was the first cut; it disconnects and reconnects every custom
+     element inside, which makes each one run its connectedCallback twice for
+     no gain.
+
+     `duo` is the one scene that is about BOTH products at once — the loop —
+     and it takes a two-sided tint instead of one brand's. Everything else
+     resolves through [data-brand] exactly as a door does, so not one colour
+     is named in the page. */
+  function defineScene() {
+    customElements.define('v-scene', class extends HTMLElement {
+      connectedCallback() {
+        var up  = this.getAttribute('base') || '';
+        var key = this.getAttribute('brand');
+        this.classList.add('scene');
+        if (key) this.setAttribute('data-brand', key);
+        /* A scene is normally half a row; a loop band is the whole of one.
+           Understating `sizes` makes the browser fetch a smaller file and the
+           upscale compounds — the note on photoImg records what that costs. */
+        this.insertAdjacentHTML('afterbegin',
+          photoGround(up, this.getAttribute('photo'), this.getAttribute('focus'),
+                      this.getAttribute('sizes') || '(min-width: 761px) 50vw, 100vw',
+                      false, this.hasAttribute('duo')));
+      }
+    });
+  }
+
+  function defineDoor() {
+    customElements.define('v-door', class extends HTMLElement {
+      connectedCallback() {
+        var up    = this.getAttribute('base') || '';
+        var key   = this.getAttribute('brand') || '';
+        var photo = this.getAttribute('photo');
+        var score = this.getAttribute('score');
+
+        this.classList.add('door');
+        if (key) this.setAttribute('data-brand', key);
+
+        var head = this.getAttribute('heading') || '';
+        var line = this.getAttribute('line') || '';
+
+        var dial = '';
+        if (score) {
+          dial =
+            '<span class="door-dial">' +
+              '<span class="door-dial-t">' + esc(this.getAttribute('score-label') || '') + '</span>' +
+              /* ALWAYS static here, not an option the page passes. A door's dial
+                 says "this product scores things"; it is not reporting a result,
+                 so there is nothing for an animation to resolve. */
+              '<v-instrument static kind="score" score="' + esc(score) + '" max="' + esc(this.getAttribute('max') || '100') + '"' +
+                (this.getAttribute('band') ? ' band="' + esc(this.getAttribute('band')) + '"' : '') +
+                ' label="' + esc(this.getAttribute('score-alt') || '') + '"></v-instrument>' +
+            '</span>';
+        }
+
+        /* The photograph is DECORATIVE and v-photo already says so. The door's
+           meaning is in the heading and the link; a screen reader that also had
+           to hear "two climbers on a ridge at sunrise" before reaching either
+           would be worse off, not better. */
+        this.innerHTML =
+          /* `focus` earns an attribute because a door CROPS HARD: a 2.43:1
+             frame in a 1.2:1 box throws away more than half its width, and
+             which half it keeps decides whether the dial lands on sky or on
+             somebody's chest. It did the latter first time. */
+          photoGround(up, photo, this.getAttribute('focus'), '(min-width: 761px) 50vw, 100vw', true) +
+          dial +
+          '<span class="door-copy">' +
+            '<v-lockup class="door-lk" name="' + esc(key) + '"></v-lockup>' +
+            '<h3>' + esc(head) + '</h3>' +
+            '<p>' + esc(line) + '</p>' +
+            '<span class="door-cta">' + esc(this.getAttribute('cta') || '') +
+              ' <span class="arw" aria-hidden="true">↗</span></span>' +
+          '</span>';
+
+        /* THE WHOLE DOOR IS THE LINK, not the words at the bottom of it. A
+           560px-tall photograph with a 180px text link in one corner is a
+           target most people will miss on the first try. Wrapping instead of
+           nesting keeps it one tab stop and one accessible name. */
+        var href = this.getAttribute('href');
+        if (href) {
+          var a = el('a', 'door-hit');
+          a.setAttribute('href', href);
+          a.setAttribute('aria-label', (head + '. ' + line + ' ' + (this.getAttribute('cta') || '')).trim());
+          this.appendChild(a);
+        }
+      }
+    });
+  }
+
   if ('customElements' in window) {
     injectLensFilter();
     defineNav();
@@ -1659,6 +2184,10 @@
     defineMark();
     defineObject();
     defineInstrument();
+    defineLockup();
+    definePromo();
+    defineScene();  /* after defineInstrument: its children are instruments */
+    defineDoor();   /* after defineLockup + defineInstrument: it writes both */   /* after defineMark + defineShot: it writes both into its own markup */
 
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', markGlassSurfaces);

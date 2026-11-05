@@ -372,14 +372,24 @@ section.dark ul.rule li { border-color: var(--line-dark); color: var(--on-dark-2
 /* ── Steps ──────────────────────────────────────────────────────────────────── */
 
 .steps { list-style: none; counter-reset: step; margin: 0; padding: 0; display: grid; gap: 1.1rem; }
-.steps li { counter-increment: step; border-top: 2px solid var(--ink); padding: 1.1rem .6rem 0 0; }
-.steps li::before {
+.steps li { counter-increment: step; }
+/* ⚠ `:not(.is-pane)` IS LOAD-BEARING, NOT TIDINESS. A pane step is a
+   .card.is-glass, and a glass pane spends BOTH pseudo-elements: ::before is
+   its surface (the colour pool, and the layer the refraction lives on) and
+   ::after is its lit rim. The stepper's rule, counter and accent tick want
+   the same two. Written unscoped and then cancelled with `content: none` in
+   pane mode — which is what I did first — the cancel takes the pane's surface
+   and rim with it, and the result is a card with no pool and no rim that
+   still looks plausible. Declaring the chrome only where it applies is the
+   only version of this that cannot silently delete the material. */
+.steps:not(.is-pane) li { border-top: 2px solid var(--ink); padding: 1.1rem .6rem 0 0; }
+.steps:not(.is-pane) li::before {
   content: "0" counter(step);
   font-family: var(--f-mono); font-size: var(--fs-micro); font-weight: var(--fw-bold); letter-spacing: var(--tr-wide); color: var(--muted);
 }
 .steps h4 { margin: .8rem 0 .5rem; font-size: var(--fs-h4); line-height: var(--lh-snug); }
 .steps p { font-size: var(--fs-small); color: var(--muted); }
-section.dark .steps li { border-color: var(--white); }
+section.dark .steps:not(.is-pane) li { border-color: var(--white); }
 
 @media (min-width: 641px) { .steps { grid-template-columns: repeat(2, minmax(0,1fr)); } }
 @media (min-width: 901px) {
@@ -521,6 +531,18 @@ section.dark :focus-visible,
 .cta { background: var(--cta-bg); }
 .cta-inner { display: grid; gap: 1.8rem; align-items: center; }
 @media (min-width: 901px) { .cta-inner { grid-template-columns: 1fr auto; gap: 2.5rem; } }
+/* TWO BUTTONS IN THE BAND.
+   .cta-inner is a two-column grid: copy | action. A SECOND bare button therefore has no cell to
+   go to — it falls into an implicit second ROW, in the 1fr column, and stretches across the whole
+   band. MEASURED 2026-11-04 on the LIVE VerdictScore page: "Book a pipeline demo" rendering as an
+   840px pill under the copy while the primary sat correctly at the right. It had shipped.
+   Buttons in the band belong in a .buttonrow, which is ONE grid item however many it holds; its
+   own top margin is for a column of copy and is wrong against a centred grid cell. */
+.cta-inner > .buttonrow { margin-top: 0; }
+/* The net under that, for a bare button that slips in anyway: an `auto` track shrinks to its
+   content, a 1fr track does not, so range it right instead of letting it span the band. This is
+   a floor, not the pattern — a second button still wants the .buttonrow. */
+.cta-inner > .button { justify-self: end; }
 .cta h2 { max-width: 18ch; margin-bottom: .8rem; }
 .cta p { color: var(--cta-ink); font-size: var(--fs-body-lg); max-width: 60ch; }
 
@@ -577,7 +599,8 @@ h3.h-product   { font-size: var(--fs-h3-lg); letter-spacing: var(--tr-tight); }
    Any NEW component must be added here; `component-check.mjs` enforces it. */
 v-footer, v-depth, v-section-head, v-card, v-ph,
 v-stat, v-price, v-steps, v-faq, v-banner, v-breadcrumb, v-photo, v-shot,
-v-hero, v-shine, v-mark, v-object, v-instrument, v-product { display: block; }
+v-hero, v-shine, v-mark, v-object, v-instrument, v-product, v-promo,
+v-lockup, v-door, v-scene { display: block; }
 
 /* <v-nav> is the one exception, and it must be `contents`.
    A sticky element can only stick within its PARENT's box. Wrapping the header
@@ -665,3 +688,231 @@ v-nav { display: contents; }
   filter: blur(60px); z-index: -1; pointer-events: none; }
 .shot.is-device img { display: block; width: 100%; height: auto; border-radius: 0; box-shadow: none;
   filter: drop-shadow(0 48px 70px color-mix(in srgb, var(--black) 55%, transparent)); }
+
+/* ── THE PRODUCT PROMO CARD — layout only. Colour is in brand-map.css, where
+   it can resolve against the [data-brand] scope <v-promo> sets on itself. ──
+   The two cards are a grid row, so they are already the same height. What has
+   to line up INSIDE them is the capture and the call to action: a card whose
+   tagline wraps to two lines would otherwise push its screenshot half a line
+   below its neighbour's, and two near-identical cards misaligned by 11px look
+   like a mistake rather than a pair. `margin-top: auto` on the media pins the
+   capture and everything after it to the bottom of whichever card is taller. */
+.vh { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+
+.promo { position: relative; overflow: hidden; display: flex; flex-direction: column; }
+.promo-top       { margin-bottom: var(--sp-5); }
+.promo .promo-name { margin: 0; }             /* beats `.card h3 { margin-top: 1.3rem }` */
+.promo-lockup      { display: block; }
+v-lockup svg       { display: block; width: auto; }
+.promo-lockup svg  { display: block; height: clamp(24px, 2.3vw, 32px); width: auto; }
+.promo-tag       { margin-top: var(--sp-3); }
+.promo-list      { margin-top: var(--sp-5); }
+.promo-media     { display: block; margin-top: auto; padding-top: var(--sp-6); }
+.promo-cta       { margin-top: var(--sp-5); }
+
+/* The capture sits INSIDE a card that already has a radius and a border, so it
+   gets the frame and nothing else — no lift, no hover travel. Two nested
+   objects both reacting to the same pointer is one too many. */
+.promo-media .shot { margin: 0; }
+
+/* ── THE PRODUCT DOORS — layout. Colour is in brand-map.css. ─────────────
+   Two full-bleed photographs side by side, no card. The grid's columns are
+   what animates, not a transform on the panels: widening a column reflows
+   the copy inside it, which is the effect — the door OPENS. A transform
+   would only have scaled a picture of it. */
+/* TWO STANDALONE CARDS, not a split pane. They were one rounded surface cut
+   by a 2px seam, with the columns animating on hover so the half you pointed
+   at opened. It demonstrated well and read badly: a 560px photograph that
+   resizes under the cursor moves its own subject and its own text while you
+   are reading them, and the two halves could never be looked at evenly
+   because one of them was always being widened or squeezed.
+   Now: a real gap, each card clipping itself, and no column transition. */
+.doors { display: grid; grid-template-columns: 1fr; gap: clamp(1rem, 2vw, 1.6rem); }
+@media (min-width: 761px) { .doors { grid-template-columns: 1fr 1fr; } }
+
+.door { position: relative; isolation: isolate; overflow: hidden;
+  border-radius: var(--r-2xl);
+  min-height: 560px; display: flex; flex-direction: column; justify-content: flex-end;
+  padding: clamp(1.4rem, 3vw, 2.6rem); }
+.photo-ground { position: absolute; inset: 0; z-index: -1; overflow: hidden; }
+/* ⚠ RESTATED AT HIGHER SPECIFICITY, and it is load-bearing. A door is now a
+   lensed surface, and brand.css's `.glass-lens > *` lifts every direct child
+   to z-index 1 so content clears the refraction. The photograph is a direct
+   child and must NOT be lifted — at z-index 1 it paints over the copy and the
+   dial. The bare `.photo-ground` rule above happens to win on load order
+   alone, which is not a guarantee worth relying on twice: the identical
+   collision already cost a day on `.card.is-branded > *`. */
+.door > .photo-ground { position: absolute; z-index: -1; }
+/* NO PRE-SCALE. The 1.04 existed only to give the hover zoom somewhere to go.
+   With the zoom gone it was costing sharpness for nothing — and these frames
+   are already upscaled ~1.77x because four of the five VentureStack
+   photographs are 2.43:1 in a 1.2:1 box. 1.77 x 1.04 was 1.84; it is 1.77. */
+.photo-ground img { width: 100%; height: 100%; object-fit: cover;
+  object-position: var(--door-focus, 50% 50%); }
+
+.door-dial { position: absolute; top: clamp(1rem, 2.4vw, 1.9rem); right: clamp(1rem, 2.4vw, 1.9rem);
+  width: min(44%, 268px); text-align: center; }
+.door-dial-t { display: block; margin-bottom: .3rem; }
+
+.door-copy { position: relative; display: block; max-width: 26rem; }
+.door-lk { display: block; margin-bottom: 1rem; }
+.door-lk svg { height: clamp(24px, 2.2vw, 30px); }
+.door h3 { margin: 0 0 .5rem; }
+.door p  { margin: 0 0 1.1rem; }
+.door-cta { display: inline-flex; align-items: center; gap: .55rem; min-height: 44px; }
+/* The one hover that stays. The whole card is a link, and a link with no
+   feedback at all is a worse answer than a loud one — this is the same 3px
+   nudge every other link on the site uses, and it moves a 10px glyph rather
+   than a photograph. */
+.door-cta .arw { transition: transform .35s var(--spring); }
+.door:hover .door-cta .arw { transform: translate(3px, -3px); }
+
+/* THE WHOLE DOOR IS THE TARGET. A 560px photograph whose only link is a
+   180px run of text in one corner is a target most people miss once. The
+   overlay is the anchor; everything under it is decoration it names. */
+.door-hit { position: absolute; inset: 0; z-index: 2; border-radius: inherit; }
+.door-hit:focus-visible { outline: 2px solid var(--white); outline-offset: -4px; }
+
+@media (max-width: 760px) {
+  .door { min-height: 440px; }
+  .door-dial { width: min(52%, 210px); }
+}
+
+
+/* ── SCENES — a photograph with a drawing on it. Colour is in brand-map.css. ─
+   The doors showed that a branded photograph can be a GROUND: duotoned to the
+   product's hue, scrimmed, cropped by name. A door spends that ground on a
+   heading and a link; a scene spends it on an instrument, so a measurement is
+   drawn on the landscape it is a measurement of.
+   No min-height, deliberately. The drawing inside decides how tall the scene
+   is — the same rule the score instrument states for its own box ("THE BOX IS
+   THE DRAWING, with nothing reserved around it"). Reserving a height here
+   would put a band of empty photograph under every plot that came up short. */
+.scene { position: relative; isolation: isolate; overflow: hidden;
+  border-radius: var(--r-2xl); }
+.scene > :not(.photo-ground) { position: relative; z-index: 1; }
+
+/* An instrument inside a scene brings two things it does not need here: the
+   vertical padding that gives it air in a text column, and the radial haze it
+   paints behind itself to lift a drawing off flat ground. The ground is a
+   photograph — it is already lit, and a second glow on top of it reads as a
+   smudge. */
+.scene .instr { padding: 0; }
+.scene .instr::before { content: none; }
+
+
+/* ── THE ROPE — layout. ────────────────────────────────────────────────────
+   The line is SVG and the words are HTML, and that division is the whole
+   reason this instrument is built the way it is: a fixed viewBox scales type
+   with the box, which is how `seq` ended up with 7px captions on a phone.
+   The path stretches to the band with preserveAspectRatio="none" so a node at
+   31% always lands on it; the stroke is spared the distortion by
+   vector-effect, without which a 2.4:1 band would draw flat dashes and a
+   phone tall ones.
+   RATIO, NOT HEIGHT, and a different one at each end. At full width 2.56:1
+   is slightly wider than the photograph (2.43:1), so `cover` trims the empty
+   foreground off the bottom rather than the sides — `focus="high"` on the
+   scene decides which end goes. On a phone that ratio is 152px tall and four
+   stages cannot be told apart in it, so the band opens up and the sag gets
+   its room back. */
+.instr-rope { position: relative; aspect-ratio: 1000 / 390; }
+/* .instr-rope SCOPED, and it has to be: `.instr svg` in brand-map.css sets
+   height:auto and position:relative at (0,1,1), and it loads after this file.
+   A bare .ix-rope-line is (0,1,0) and loses both ways. */
+.instr-rope .ix-rope-line { position: absolute; inset: 0; width: 100%; height: 100%; }
+.ix-rope-nodes { position: absolute; inset: 0; margin: 0; padding: 0; list-style: none; }
+.ix-rope-n {
+  position: absolute; display: inline-flex; align-items: center; gap: .5rem;
+  transform: translateY(-50%); white-space: nowrap;
+  padding: .36rem .72rem .36rem .6rem; border-radius: var(--r-pill);
+}
+.ix-rope-n.n4 { flex-direction: row-reverse; padding: .36rem .6rem .36rem .72rem; }
+.ix-rope-pt { flex: none; width: 10px; height: 10px; border-radius: 50%; }
+
+/* HAND-PLACED ON THE CURVE, and these five numbers are not arbitrary: each
+   pair is a point evaluated on the path above, so a node cannot drift off the
+   rope when the band is resized — both are expressed as a fraction of the
+   same box. Change the path and these move with it.
+   n1 2.8%/23.2% = the start · n2 31.1%/49.0% = t≈0.6 of the first curve ·
+   n3 62.0%/38.6% = t≈0.25 of the second · n4 97.2%/15.0% = the end.
+   n3 was t≈0.35 and sat 11% under n4; on a phone that is 36px, which is one
+   pill height, so the two read as one stack. Backing it down the curve buys
+   19%. */
+.ix-rope-n.n1 { left:  2.8%; top: 23.2%; }
+.ix-rope-n.n2 { left: 31.1%; top: 49.0%; }
+.ix-rope-n.n3 { left: 62.0%; top: 38.6%; }
+.ix-rope-n.n4 { right: 2.8%; top: 15.0%; }
+
+@media (max-width: 760px) {
+  .instr-rope { aspect-ratio: 1000 / 680; }
+}
+
+
+/* ── THE GLASS CARD — layout. Colour and material are in brand-map.css. ────
+   A <v-card photo=""> is a PANE with a landscape sealed inside it. The
+   reference is Raycast's store cards: a header row with a tile and a label,
+   a hairline under it, the copy, and a visual filling the lower half.
+   MIN-HEIGHT, not a fixed one. The two cards carry two and three lines of
+   body copy; the grid already stretches them to match, and the min-height is
+   there so the shorter one still has a lower half for the photograph to live
+   in rather than a strip. */
+.card.is-glass {
+  position: relative; isolation: isolate; overflow: hidden;
+  display: flex; flex-direction: column;
+  min-height: 440px;
+}
+/* A STRIP ALONG THE FLOOR, not the whole card — and that is a framing
+   decision, not a cosmetic one. Filling the card makes `cover` take a ~1.3:1
+   slice out of a 1.78:1 photograph and throw away a third of its width, so
+   every figure in the library ends up cropped at the knees. A 56%-tall strip
+   is 2:1 against a 16:9 source: it crops ~12% off the height and nothing
+   off the width, and the picture arrives whole.
+   `position` is restated because .card.is-branded > * outranked the
+   .photo-ground rule — see the note on that selector in brand-map.css. */
+.card.is-glass > .photo-ground { position: absolute; inset: auto 0 0 0; height: 60%; z-index: -2; }
+.card.is-glass > :not(.photo-ground) { position: relative; z-index: 1; }
+
+/* The header row: the mark sits BESIDE its own eyebrow, not above it. */
+.card-head { display: flex; align-items: center; gap: .85rem; padding-bottom: 1.05rem; }
+.card.is-glass h3 { margin-top: 1.15rem; }
+.card.is-glass p  { margin-bottom: 0; }
+
+/* A THREE-UP PANE IS NARROWER, SO IT CANNOT BE AS TALL. 440 was set on the
+   two-up challenge cards, where it makes a landscape box; the same number in a
+   three-column grid is a ~370px-wide column at 440 tall, which reads as a slab
+   rather than a card. The floor follows the column count because that is what
+   actually changed — not the section. */
+@media (min-width: 901px) { .grid.three .card.is-glass { min-height: 360px; } }
+
+/* ── A STEP THAT IS A PANE ────────────────────────────────────────────────
+   `<v-steps variant="pane">` puts .card.is-glass on every <li>, so the pane
+   itself is not described here — it is the same component. Everything below
+   is only what a LIST has to stop doing once it becomes one: its rule, its
+   counter (the number is real markup now, in the header row), and its list
+   padding, which is not a card's padding.
+   SIX OF THEM, THREE UP, so they are shorter than a three-up card: a step
+   carries one short title and two or three lines, where a who-card carries a
+   72px mark above its heading. 300 leaves the photograph a 180px floor. */
+.steps.is-pane { gap: clamp(1rem, 2vw, 1.6rem); }
+.steps.is-pane li { padding: clamp(1.4rem, 2.5vw, 1.9rem); }
+.steps.is-pane h4 { margin: 1.15rem 0 .5rem; }
+.steps.is-pane p  { margin-bottom: 0; }
+@media (min-width: 901px) { .steps.is-pane li { min-height: 300px; } }
+@media (max-width: 900px) { .steps.is-pane li { min-height: 320px; } }
+/* AND A SMALLER SHARE OF IT IS PICTURE. 60% is set for a 440px card, where the
+   copy stops well above the strip. The same 60% of a 300px pane puts the last
+   line of a three-line step about halfway down the photograph, past the lid
+   scrim — MEASURED 4.2:1 on "Blind readers apply defined criteria", under the
+   4.5 floor, while the panes with two lines passed. A short pane has
+   proportionally more copy and less card, so the picture takes less of it. */
+.steps.is-pane li > .photo-ground { height: 46%; }
+
+@media (max-width: 760px) {
+  .card.is-glass { min-height: 380px; }
+  /* A narrower column turns two lines of body copy into four, so the copy
+     block grows and the strip has to give way — a percentage that is right at
+     1440 puts a photograph under the last line at 390. */
+  .card.is-glass > .photo-ground { height: 44%; }
+}
+
