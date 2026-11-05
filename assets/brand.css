@@ -147,6 +147,31 @@
   --glass-edge:    rgba(255,255,255,.14);    /* hairline border */
   --glass-edge-hi: rgba(255,255,255,.22);    /* the lit top edge */
 
+  /* THE RIM — the lit top edge, as ONE recipe for every glass surface.
+     A masked gradient ring, not an inset shadow, for two reasons:
+       · a ring can be a GRADIENT, so the light falls away toward the corners.
+         A stroke of even brightness all the way round is an outline; light
+         that peaks where it enters and dies before the corner is a highlight.
+       · a ring is a PSEUDO-ELEMENT, so it paints above `.glass-lens::before`.
+         An inset shadow paints on the element, which puts it behind the
+         refraction — see the bevel note below for what that costs.
+     Width is a token because a hairline is the one measurement that has to
+     hold at every size; brightness is --glass-edge-hi, so the rim and the
+     border tune from one pair of values rather than drifting apart. */
+  --glass-rim-w:     1px;
+  --glass-rim-top:   var(--glass-edge-hi);
+  /* THE SHAPE IS MOSTLY VERTICAL, and that is the measured correction. The
+     first cut was 78% wide, which put the top CORNERS at 7% of the centre's
+     brightness — MEASURED +2 of luminance over the film, i.e. nothing. A top
+     edge that is only lit in the middle is a spotlight, not an edge. 165%
+     puts the corners at ~42% of the centre, so light runs the whole span and
+     falls away where the pane turns: lit along the top, faint down the sides,
+     gone by the bottom, which is how a pane actually catches light. */
+  --glass-rim-paint: radial-gradient(165% 95% at 50% 0%,
+                       var(--glass-rim-top),
+                       color-mix(in srgb, var(--glass-rim-top) 24%, transparent) 42%,
+                       transparent 78%);
+
   --glass-cast-1:  0 2px 14px rgba(0,0,0,.28);
   --glass-cast-2:  0 12px 40px rgba(0,0,0,.42);
   --glass-cast-3:  0 24px 70px rgba(0,0,0,.55);
@@ -155,17 +180,50 @@
      a sticker. A real pane is lit along the top, dim along the bottom, and
      splits light into colour at the two sides it refracts through. The side
      tints are deliberately asymmetric: neutral-cool on one edge, the brand
-     accent on the other, so dispersion re-skins with the identity. */
+     accent on the other, so dispersion re-skins with the identity.
+
+     ⚠ THE LIT EDGE IS NOT IN HERE ANY MORE. An inset box-shadow paints ON the
+     element, which puts it BEHIND `.glass-lens::before` — and that layer is a
+     backdrop-filter, so it re-samples the highlight through a 512×512 raster
+     displacement map stretched to whatever the surface measures. MEASURED at
+     6× on a challenge card (571×440): the shipped bevel+lens edge came back a
+     doubled, ragged band with ghost arcs inside the corner; the same card with
+     the lens switched off was one clean hairline. A 1px line resampled through
+     a stretched raster is no longer 1px and no longer straight.
+
+     So the lit edge moved to `.glass-rim::after`, which paints ABOVE the
+     refraction and therefore cannot be bent by it. What stays here is the
+     dispersion, which is a soft 6px colour wash — being displaced by a
+     fraction of a pixel is invisible on a gradient and ruinous on a hairline.
+     --glass-bevel-flat is kept, and still ships, for surfaces that are NOT
+     lensed and whose ::after is already spoken for — `.shot-frame` is both:
+     it never smears, and its pseudo is the lift along its bottom lip. There
+     the inset hairline is the right tool, not a leftover. It is also what the
+     bench renders to show the superseded edge beside the new one. */
   --glass-lift:     1.05;                    /* glass is lit, not just see-through */
   --glass-bevel-hi: rgba(255,255,255,.30);
   --glass-bevel-lo: rgba(255,255,255,.07);
   --glass-chroma-a: rgba(150,195,255,.45);
   --glass-chroma-b: color-mix(in srgb, var(--brand-accent) 55%, transparent);
-  --glass-bevel:
+  --glass-bevel-flat:                        /* SUPERSEDED — comparison only */
     inset  0  1px 0     var(--glass-bevel-hi),
-    inset  0 -1px 0     var(--glass-bevel-lo),
-    inset  2px 0 6px -4px var(--glass-chroma-a),
-    inset -2px 0 6px -4px var(--glass-chroma-b);
+    inset  0 -1px 0     var(--glass-bevel-lo);
+  /* ⚠ THE OFFSET AND THE SPREAD BOTH HAVE TO BE ≥ THE BLUR, or a side glow is
+     not a side glow. An inset shadow grows its inner rect by |spread| on EVERY
+     side and only then shifts it by the offset — so at 2px/-4px the rect grew
+     4px past the top and bottom, the 6px blur reached back inside, and a
+     dispersion meant for the two vertical edges was laying a soft wash across
+     the top edge as well. MEASURED on a challenge card at 4×: a tail of 8
+     luminance points fading over the 4px under the rim, which is the thing
+     that made the card's 1px hairline read thicker than the same 1px hairline
+     on a door. At 6px/-6px the rect clears the top by 6 and the blur cannot
+     reach back: the tail measures -0.1, the rim's lower boundary sharpens
+     from 34.5 to 39.3 — and the glow on the sides, where it belongs, DOUBLES
+     from 9.1 to 18.6, because it is no longer spread over the whole element. */
+  --glass-disperse:
+    inset  6px 0 6px -6px var(--glass-chroma-a),
+    inset -6px 0 6px -6px var(--glass-chroma-b);
+  --glass-bevel:    var(--glass-disperse);
   --glass-lip:      var(--glass-bevel);      /* former name, kept so older rules upgrade too */
 
   /* SPECULAR — the bloom where light enters the pane. Its position is a pair
@@ -189,9 +247,18 @@
   --glass-fx-2: blur(var(--glass-blur))    saturate(var(--glass-sat)) brightness(var(--glass-lift));
   --glass-fx-3: blur(var(--glass-blur-lg)) saturate(var(--glass-sat)) brightness(var(--glass-lift));
 
-  /* REFRACTION — how far the rim bends the backdrop, in fractions of the
-     element. Only the rim: a real pane is flat through the middle. */
-  --glass-refract: .012;
+  /* REFRACTION — how far the rim bends the backdrop. Only the rim: a real
+     pane is flat through the middle.
+
+     ⚠ IN PIXELS, NOT IN FRACTIONS OF THE ELEMENT. It used to be .012 under
+     `primitiveUnits="objectBoundingBox"`, which made the bend 1.2% OF THE
+     SURFACE — so a 571px challenge card bent by ~7px while a 180px panel bent
+     by ~2px, and the big surfaces smeared a 512×512 raster map across seven
+     pixels of their own corner. MEASURED at 6×: a pale ghost arc running out
+     of the top-left corner at .012, gone at a fixed 3px, and faintly back at
+     5px. A real pane's rim does not get thicker because the pane got bigger,
+     so the filter now declares userSpaceOnUse and this is a length. */
+  --glass-refract: 3px;
 
   /* A tinted glass picks up the brand colour rather than staying neutral.
      Kept very low — glass that is obviously coloured stops reading as glass. */
@@ -535,11 +602,22 @@
 }
 
 /* The lit top edge. A real glass panel catches light along its upper rim; a
-   flat border on all four sides is the single biggest tell of fake glass. */
-.glass-1::after, .glass-2::after, .glass-3::after {
+   flat border on all four sides is the single biggest tell of fake glass.
+
+   ONE RECIPE. The tiers get it by being a tier; anything else opts in with
+   `.glass-rim`, which is what components.js puts on the surfaces that are
+   glass without being a `.glass-N` (cards standing on photography, the
+   screenshot frame). Before this there were two lit edges in the system — the
+   tiers drew BOTH this ring and the bevel's inset hairline, and the card drew
+   only the bevel — which is how one of them ended up under the refraction.
+
+   z-index 2 is the whole point: `.glass-lens::before` is 0 and the content is
+   1, so the rim is the one layer the refraction cannot reach. */
+.glass-rim { position: relative; }
+.glass-1::after, .glass-2::after, .glass-3::after, .glass-rim::after {
   content: ""; position: absolute; inset: 0; border-radius: inherit;
-  padding: 1px; pointer-events: none;
-  background: linear-gradient(160deg, var(--glass-edge-hi), transparent 42%);
+  padding: var(--glass-rim-w); pointer-events: none; z-index: 2;
+  background: var(--glass-rim-paint);
   -webkit-mask: linear-gradient(var(--black) 0 0) content-box, linear-gradient(var(--black) 0 0);
   -webkit-mask-composite: xor; mask: linear-gradient(var(--black) 0 0) content-box, linear-gradient(var(--black) 0 0);
   mask-composite: exclude;

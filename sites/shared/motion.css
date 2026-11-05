@@ -289,10 +289,21 @@ section > .wrap { position: relative; z-index: 1; }
   transition: opacity .45s var(--ease), transform .5s var(--spring), border-color .4s var(--ease);
 }
 [data-seq] > *.is-active { opacity: 1; --mv-y: 0px; }
-[data-seq] > * { border-top-color: var(--on-dark-2); }
-[data-seq] > *.is-active { border-top-color: var(--ink); }
-section.dark [data-seq] > * { border-top-color: var(--line-ph-d); }
-section.dark [data-seq] > *.is-active { border-top-color: var(--white); }
+
+/* ⚠ THE BORDER PART ONLY APPLIES WHERE THE STEP HAS A RULE TO LIGHT.
+   A stepper draws a 2px line across the top of each item and resolves it from
+   dim to bright as the reader arrives — that is what these four rules are.
+   A PANE STEP (`v-steps variant="pane"`) has no rule; it has a 1px glass
+   hairline, and recolouring that to --ink paints a pure-white band across the
+   top of the card. MEASURED at 4× before this was scoped: the first four
+   device rows of every How-it-works pane read 255,255,255 — not a hairline, a
+   white bar — and because the rim sits directly beneath it the lit edge was
+   invisible and rim-check could find no transition to measure at all.
+   The opacity and the lift above stay unscoped: those ARE the sequence. */
+[data-seq]:not(.is-pane) > * { border-top-color: var(--on-dark-2); }
+[data-seq]:not(.is-pane) > *.is-active { border-top-color: var(--ink); }
+section.dark [data-seq]:not(.is-pane) > * { border-top-color: var(--line-ph-d); }
+section.dark [data-seq]:not(.is-pane) > *.is-active { border-top-color: var(--white); }
 
 /* ── Pointer tilt ───────────────────────────────────────────────────────────
    Tiny on purpose: enough to feel like a surface, not enough to read as an
@@ -329,6 +340,10 @@ section.dark [data-seq] > *.is-active { border-top-color: var(--white); }
    centred. No transition — the value updates per frame on scroll, and easing a per-frame value
    only adds lag. */
 .ix-arc { stroke-dashoffset: calc(100 - (clamp(0, (var(--prog, 1) - .12) / .42, 1) * 100)); }
+/* …unless the instrument asked not to be performed. Same end state the
+   reduced-motion branch below uses: the arc is authored COMPLETE in the SVG,
+   so switching the reveal off is a matter of not taking it away. */
+.instr.is-static .ix-arc { stroke-dashoffset: 0; }
 
 /* ── Reduced motion: the additions above, switched off ─────────────────────── */
 
@@ -336,8 +351,16 @@ section.dark [data-seq] > *.is-active { border-top-color: var(--white); }
   [data-split] .ln { overflow: visible; padding: 0; margin: 0; }
   [data-split] .ln-i,
   [data-split].is-in .ln-i { transform: none !important; }
-  [data-seq] > * { opacity: 1 !important; --mv-y: 0px; border-top-color: var(--ink) !important; }
-  section.dark [data-seq] > * { border-top-color: var(--white) !important; }
+  /* `:not(.is-pane)` on the border half, for the reason given where these
+     colours are set above: a pane step has no rule to light, only a glass
+     hairline, and forcing it to --ink paints a solid white bar across the top
+     of the card. It is !important and unscoped here, so it beat everything —
+     and because it lives behind a media query it only appeared for readers
+     who have reduced motion on. The opacity stays unscoped: resolving the
+     sequence immediately is the whole point of this block. */
+  [data-seq] > * { opacity: 1 !important; --mv-y: 0px; }
+  [data-seq]:not(.is-pane) > * { border-top-color: var(--ink) !important; }
+  section.dark [data-seq]:not(.is-pane) > * { border-top-color: var(--white) !important; }
   [data-tilt] { --tx: 0deg; --ty: 0deg; }
   .ph::before { transform: none !important; }
   .depth .disc, .depth .grid-lines { opacity: initial; }

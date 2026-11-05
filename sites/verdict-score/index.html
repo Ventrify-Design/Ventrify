@@ -82,28 +82,46 @@
         <p data-sub>The workflow is designed to make each stage visible, from source documents to the final assessment.</p>
       </v-section-head>
 
-      <v-steps>
-        <li data-reveal>
+      <!-- SIX PANES, NOT SIX CARDS WRITTEN OUT. `variant="pane"` puts .card.is-glass on every
+           <li>, so these are the same component as the challenge cards — same rim, same
+           refraction, same colour pool, same sealed photograph — and the step keeps the two
+           things a card does not have: it stays an <ol>, because this is a sequence and not a
+           set, and its number stays derived from DOM order rather than typed six times.
+
+           NO `brand=` ANYWHERE. The page is already VerdictScore from <html> down, so every
+           pane pools violet without being told to. Adding brand="verdictscore" to each would
+           say the same thing six more times and be six more places to forget.
+
+           THE PHOTOGRAPHY IS ONE CLIMB, IN ORDER, which is the only honest way to use this
+           library here: it holds sixteen frames and all sixteen are a figure on a mountain, so
+           six "relevant" pictures of uploading a document do not exist. What does exist is an
+           ascent, and the six steps ARE an ascent — so the frames are sequenced by altitude and
+           by light, from setting out on a ridge to standing on the summit with the answer.
+           Two of them are better than sequencing: 03 is a figure with a laptop surveying a
+           whole valley, which is what examining evidence looks like, and 04 is the frozen
+           snowpeak, which is what freezing the findings looks like. -->
+      <v-steps variant="pane" base="../../">
+        <li data-reveal icon="upload" photo="venturestack-01" focus="low">
           <h4>Upload the data room</h4>
           <p>Bring together decks, financial models, spreadsheets, contracts and other supporting documents.</p>
         </li>
-        <li data-reveal>
+        <li data-reveal icon="doc" photo="ventrify-03" focus="left">
           <h4>Review readiness</h4>
           <p>Before assessment, receive a review of potential gaps and missing supporting material so you can strengthen the data room.</p>
         </li>
-        <li data-reveal>
+        <li data-reveal icon="examine" photo="verdictscore-04-perspective" focus="right">
           <h4>Examine the evidence</h4>
           <p>Specialist analysis steps review claims, markets, competitors, comparables, assumptions and risks.</p>
         </li>
-        <li data-reveal>
+        <li data-reveal icon="lock" photo="verdictscore-02-snowpeak" focus="high">
           <h4>Freeze the findings</h4>
           <p>Evidence is fixed before scoring so the basis for the assessment can be identified.</p>
         </li>
-        <li data-reveal>
+        <li data-reveal icon="gauge" photo="verdictscore-03-alpinelake" focus="far-left">
           <h4>Score against criteria</h4>
           <p>Blind readers apply defined criteria and anchored thresholds; disagreement is surfaced rather than hidden.</p>
         </li>
-        <li data-reveal>
+        <li data-reveal icon="memo" photo="verdictscore-01-summit" focus="right">
           <h4>Review the memo</h4>
           <p>Receive a structured assessment with reasoning and source references to support further diligence.</p>
         </li>
@@ -270,8 +288,13 @@
         <h2 data-split>See how VerdictScore could fit your process.</h2>
         <p data-reveal>Run your first assessment free. For larger annual programmes, book a pipeline demo.</p>
       </div>
-      <a class="button" href="https://os.ventrify.io/workspace?new=1" data-reveal>Run your first assessment free</a>
-        <a class="button light" href="#" data-contact="Enterprise" data-reveal>Book a pipeline demo</a>
+      <!-- BOTH BUTTONS IN ONE .buttonrow. Loose in .cta-inner the second one fell into an
+           implicit grid row in the 1fr column and stretched the full width of the band —
+           live, until 2026-11-04. The rule that makes this the fix is in base.css. -->
+      <div class="buttonrow" data-reveal>
+        <a class="button" href="https://os.ventrify.io/workspace?new=1">Run your first assessment free</a>
+        <a class="button light" href="#" data-contact="Enterprise">Book a pipeline demo</a>
+      </div>
     </div>
   </section>
 
