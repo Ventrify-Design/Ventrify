@@ -4466,6 +4466,110 @@ export function assessmentWizard(state = {}) {
 //
 // opts: { operators:[{v,l}], cta:{primary,secondary}, stages }
 // ============================================================
+// ---- tierChoice — STEP ZERO of the create flow --------------------------
+// A COMPARISON TABLE, NOT TWO CARDS. The first build gave each tier its own card and
+// its own list, which read as a DRAW — seven bullets against eight, all ticks, no way
+// to see that one is a three-minute read and the other is a morning's work. Two lists
+// cannot be compared; one vocabulary answered twice can. Every capability is named
+// once down the left, each tier says what it does about it, and the asymmetry becomes
+// countable: 7 of 15 against 15 of 15, tallied from the data by tierTally() so the
+// headline can never drift from the rows beneath it.
+//
+// NO CARD CHROME. Hairlines and type, the emphasis carried by one tinted column rather
+// than by a border and a shadow. A card says "two options"; a table says "here is the
+// difference", which is the actual job.
+//
+// IT OWNS NO COPY. Every row comes from TIER_GROUPS in shared/entitlements.js, beside
+// the booleans those rows describe.
+//
+// ONE PRIMARY. The recommended tier takes the filled button, everything else is tonal —
+// the same emphasis swap ctaPair() makes, and what conformance.mjs enforces.
+//
+// opts: { groups, tiers:[{ key,label,question,pitch,time,cost,price,basis,upsell,tally,
+//                          cta:{id,label,icon}, state, reason, recommended }], note }
+export function tierChoice(opts = {}) {
+  const { groups = [], tiers = [], note = '' } = opts;
+
+  // `cost` is either a plain string (the specimen, a preview with no plan in hand) or the
+  // { main, sub } that entitlements.tierCost() derives from the licence — "3 runs left ·
+  // of 5 on your plan", "$199 per run", "Included in your licence". Normalised here so a
+  // caller never has to know which it holds, and so the DS specimen keeps working without
+  // inventing a plan.
+  const money = t => (t && typeof t.cost === 'object' && t.cost)
+    ? { main: t.cost.main || '', sub: t.cost.sub || '' }
+    : { main: (t && t.cost) || '', sub: '' };
+
+  const cell = v => {
+    if (!v) return `<span class="tc-no" aria-label="Not included">&mdash;</span>`;
+    const q = typeof v === 'string' ? v : '';
+    return `<span class="tc-yes">${icon('check')}${q ? `<span class="tc-q">${esc(q)}</span>` : '<span class="sr-only">Included</span>'}</span>`;
+  };
+
+  const head = t => {
+    const st = t.state || 'available';
+    const off = st !== 'available';
+    const act = off
+      ? `<p class="tc-blocked">${icon(st === 'locked' ? 'lock' : 'block')}<span>${esc(t.reason || 'Not available on this plan')}</span></p>`
+      : `<button class="m3-btn ${t.recommended ? 'filled' : 'tonal'} tc-go" type="button"
+           data-tier="${esc(t.key)}"${t.cta && t.cta.id ? ` data-action="${esc(t.cta.id)}"` : ''}>
+           ${icon((t.cta && t.cta.icon) || 'arrow_forward')}${esc((t.cta && t.cta.label) || `Choose ${t.label}`)}</button>`;
+    return `
+      ${t.recommended ? '<span class="tc-flag">Recommended</span>' : '<span class="tc-flag is-ghost" aria-hidden="true"></span>'}
+      <h3 class="tc-name">${esc(t.label)}</h3>
+      <p class="tc-q-main">${esc(t.question)}</p>
+      <p class="tc-cost"><strong>${esc(money(t).main)}</strong>${money(t).sub ? `<span>${esc(money(t).sub)}</span>` : ''}<span class="tc-time">${esc(t.time || '')}</span></p>
+      <p class="tc-tally"><strong>${t.tally ? t.tally.yes : ''}</strong> of ${t.tally ? t.tally.total : ''} below</p>
+      ${act}`;
+  };
+
+  const cols = tiers.map(t => `<col class="${t.recommended ? 'tc-col-rec' : ''}">`).join('');
+  const body = groups.map(g => `
+    <tr class="tc-grp"><th scope="rowgroup" colspan="${tiers.length + 1}">${esc(g.group)}</th></tr>
+    ${g.rows.map(r => `<tr>
+      <th scope="row">${esc(r.label)}</th>
+      ${tiers.map(t => `<td class="${t.recommended ? 'is-rec' : ''}" data-h="${esc(t.label)}">${cell(r[t.key])}</td>`).join('')}
+    </tr>`).join('')}`).join('');
+
+  // The upsell closes the table rather than floating beside it: it is the conclusion the
+  // rows have just argued, so it reads last. Same primary action as the header, not a
+  // second competing button.
+  const up = tiers.find(t => t.upsell && t.state !== 'unavailable');
+  const upsell = up ? `<aside class="tc-up${up.recommended ? '' : ' is-quiet'}">
+      <p class="tc-up-k">${esc(up.label)}</p>
+      <p class="tc-up-t">${esc(up.upsell)}</p>
+      <p class="tc-up-m">${esc([money(up).main, money(up).sub, up.time].filter(Boolean).join(' · '))}</p>
+      ${up.state === 'available'
+        // ⚠ ALWAYS TONAL. This repeats the header's action, and two filled buttons is two
+        // primaries — it fails conformance and, worse, it stops meaning "this is the default".
+        // The band's tint and headline carry the emphasis; the button does not need to.
+        ? `<button class="m3-btn tonal tc-up-go" type="button" data-tier="${esc(up.key)}"${up.cta && up.cta.id ? ` data-action="${esc(up.cta.id)}"` : ''}>${icon((up.cta && up.cta.icon) || 'arrow_forward')}${esc((up.cta && up.cta.label) || 'Choose')}</button>`
+        : `<p class="tc-blocked">${icon('lock')}<span>${esc(up.reason || '')}</span></p>`}
+    </aside>` : '';
+
+  // ⚠ THE HEADERS LIVE OUTSIDE THE TABLE. At ≤820 the table stops being a table and the
+  // <thead> is hidden — which took the two CTAs with it, so the narrow screen had a
+  // comparison and no way to act on it. Outside, they stack like everything else. The
+  // table keeps a visually-hidden <thead> so the column associations survive for a
+  // screen reader; the `data-h` label on each cell is the visible equivalent.
+  // The top-left corner is the one place a comparison table can say what it is comparing.
+  // Left empty it reads as a void the layout forgot; filled, it frames the fifteen rows
+  // under it and the eye starts in the right place.
+  const heads = `<div class="tc-heads">
+    <div class="tc-lede">${esc(opts.lede || '')}</div>
+    ${tiers.map(t => `<div class="tc-h${t.recommended ? ' is-rec' : ''}">${head(t)}</div>`).join('')}
+  </div>`;
+
+  return `<section class="tc">
+    ${heads}
+    <table class="tc-tab"><colgroup><col class="tc-col-lab">${cols}</colgroup>
+      <thead class="sr-only"><tr><td></td>${tiers.map(t => `<th scope="col">${esc(t.label)}</th>`).join('')}</tr></thead>
+      <tbody>${body}</tbody>
+    </table>
+    ${upsell}
+    ${note ? `<p class="tc-note">${note}</p>` : ''}
+  </section>`;
+}
+
 export function createScreen(opts = {}) {
   const { operators = [], cta = {}, stages = STAGES } = opts;
   const opList = operators.length ? operators : [{ v: '', l: 'No operators' }];

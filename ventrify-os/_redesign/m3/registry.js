@@ -18,6 +18,8 @@
 // ============================================================
 import * as DS from './ds.js';
 import { ASSESSMENT, SCORE, ENGAGEMENTS, STATS, QUEUE, withGaps } from './data.js';
+// entitlements is the single source for what each tier gives — tierChoice renders it.
+import * as E from '../../shared/entitlements.js';
 // the evidence-gap specimens render the ?state=gaps assessment — real contract-shaped gaps + a
 // filed ledger, pushed through the real adapter (see data.js withGaps).
 const AG = withGaps(ASSESSMENT, SCORE);
@@ -1070,6 +1072,39 @@ export const CATALOG = {
     props: [{ name: 'label / optional / hint', type: 'string / bool' }, { name: 'value / placeholder', type: 'string' }, { name: 'options', type: '[str | {v,l}] → <select>' }, { name: 'type / attr / id', type: 'input attrs' }],
     variants: [{ label: 'Input', note: 'default text/url/email' }, { label: 'Select', note: 'options → dropdown + chevron' }, { label: 'Focus', note: 'primary border + soft ring' }], usedIn: ['assessmentWizard', 'Workspace forms'],
     adaptive: { status: 'built', layout: { mobile: 'Full width.', tablet: 'Full.', desktop: 'Full.' }, content: { mobile: 'Full.', tablet: 'Full.', desktop: 'Full.' } }
+  },
+  tierChoice: {
+    level: 'organism', group: 'Organisms', domain: 'Workspace', title: 'Tier choice', sig: 'tierChoice({ groups, tiers, lede, note })',
+    blurb: 'STEP ZERO of the create flow: pre-screen or full assessment, compared before any form is filled. One vocabulary answered twice — every capability named once down the left, each tier saying what it does about it — so the asymmetry is countable (7 of 15 against 15 of 15, tallied by entitlements.tierTally, never typed). Deliberately a table and not two cards: two separate lists read as a draw, which is what the first build did. Rows come from entitlements.TIER_GROUPS and the cost line from entitlements.tierCost(), which turns the licence into \'3 runs left\', \'Included in your licence\' or the $199 price — this owns no copy and no number. Exactly one filled button across the screen, matching ctaPair\'s emphasis swap — the closing upsell repeats that action tonally because a second filled button is a second primary.',
+    maxw: 1040, pad: true,
+    html: () => {
+      const tiers = ['prescreen', 'full'].map(k => ({
+        key: k, label: E.TIERS[k].label, ...E.TIER_COMPARISON[k], tally: E.tierTally(k),
+        // A licence with THREE OF FIVE runs left, because that is the case the live screen
+        // has that a bare TIER_COMPARISON cannot show: the cost line is derived from the
+        // allowance, not written. Unlimited reads "Included in your licence"; an empty
+        // allowance reads the price.
+        cost: E.tierCost(k, k === 'full'
+          ? { canAssess: true, limit: 5, remaining: 3 }
+          : { canAssess: true, limit: null, remaining: Infinity }),
+        cta: { id: 'pick_' + k, label: 'Set up a ' + E.TIERS[k].label.toLowerCase(), icon: k === 'full' ? 'play_arrow' : 'bolt' },
+        state: 'available', recommended: k === 'full',
+      }));
+      return `<div class="brief" style="padding:22px 28px">${DS.tierChoice({ groups: E.TIER_GROUPS, tiers, lede: 'Both reads start from the same evidence.' })}</div>`;
+    },
+    props: [
+      { name: 'groups', type: 'TIER_GROUPS' }, { name: 'tiers', type: 'tier[]' },
+      { name: 'lede', type: 'string' }, { name: 'note', type: 'string' },
+    ],
+    variants: [
+      { label: 'state', note: 'available / locked / unavailable — per tier' },
+      { label: 'recommended', note: 'exactly one; moves to pre-screen when the full allowance is spent' },
+    ],
+    usedIn: ['_tier-choice.html'], adaptive: {
+      status: 'built',
+      layout: { mobile: 'Table stops being a table: rows stack, each cell labelled from data-h. Headers move above it.', tablet: 'As mobile below 820.', desktop: 'Three columns, tinted recommended column.' },
+      content: { mobile: 'Full — nothing is dropped.', tablet: 'Full.', desktop: 'Full.' }
+    }
   },
   wizardSteps: {
     level: 'molecule', group: 'Molecules', domain: 'Workspace', title: 'Wizard steps', sig: 'wizardSteps(labels, active)',

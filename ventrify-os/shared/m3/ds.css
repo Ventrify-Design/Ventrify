@@ -1001,3 +1001,113 @@ md-outlined-text-field { --md-outlined-text-field-container-shape: 999px; --md-o
   .charts-in .vsig-sub,
   .charts-in .vsig-basis { animation: ch-fade 300ms var(--ch-ease) 420ms both; }
 }
+
+/* ── tierChoice — step zero of the create flow ────────────────────────────
+   EDITORIAL, NOT CARDS. The emphasis is carried by ONE tinted column and by type,
+   not by borders and shadows. A card says "two options"; a table says "here is the
+   difference", and the difference is the whole reason this screen exists.
+   See ds.tierChoice() for why it is one vocabulary answered twice. */
+.tc { max-width: 1040px; margin: 0 auto; }
+.tc-tab { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.tc-col-lab { width: 42%; }
+.tc-tab th, .tc-tab td { text-align: left; vertical-align: top; }
+
+/* The tinted column. A background on <col> paints behind the cells and under the
+   row hairlines, which is exactly the "band down the page" this wants and is why
+   the emphasis is not a border. */
+.tc-col-rec { background: color-mix(in srgb, var(--brand-accent) 7%, transparent); }
+
+/* -- the two headers, ABOVE the table (see ds.tierChoice) -- */
+.tc-heads { display: grid; grid-template-columns: 42% 1fr 1fr; align-items: end; }
+.tc-h { padding: 4px 22px 22px; }
+/* ⚠ THE SAME TINT AS .tc-col-rec, AND NO RADIUS. The recommended header is the TOP OF
+   THE COLUMN, not a card floating above it — give it a corner radius or its own
+   background value and it detaches, which is the card look this screen exists to avoid. */
+.tc-h.is-rec { background: color-mix(in srgb, var(--brand-accent) 7%, transparent); }
+.tc-lede { padding: 0 28px 24px 0; font: 400 14.5px/1.55 var(--font-text); color: var(--text-3);
+  max-width: 34ch; align-self: end; }
+.tc-flag { display: inline-block; font: 500 10px/1 var(--font-mono); letter-spacing: .1em;
+  text-transform: uppercase; color: var(--brand-accent); margin-bottom: 12px; min-height: 12px; }
+.tc-flag.is-ghost { visibility: hidden; }
+.tc-name { font: 600 clamp(1.25rem, 2.2vw, 1.6rem)/1.12 var(--font-display);
+  letter-spacing: -.02em; margin: 0 0 5px; color: var(--text-1); }
+.tc-q-main { margin: 0 0 16px; font-size: 14px; line-height: 1.5; color: var(--text-3); }
+/* Cost is THREE lines, in falling weight: what it costs, the licence qualifier that
+   explains the number, then how long it takes. The price has to be the heaviest thing
+   on the header after the name — it is the fact the choice turns on. */
+.tc-cost { margin: 0 0 4px; display: flex; flex-direction: column; gap: 3px; }
+.tc-cost strong { font: 600 clamp(1.05rem, 1.8vw, 1.3rem)/1.15 var(--font-display);
+  letter-spacing: -.015em; color: var(--text-1); }
+.is-rec .tc-cost strong { color: var(--brand-accent); }
+.tc-cost span { font-size: 13px; color: var(--text-3); }
+.tc-cost .tc-time { color: var(--text-4); }
+/* The count. This is the comparison in one number, so it is set like a number. */
+.tc-tally { margin: 14px 0 18px; font: 400 13px/1 var(--font-text); color: var(--text-3); }
+.tc-tally strong { font: 600 26px/1 var(--font-display); color: var(--text-1);
+  letter-spacing: -.02em; margin-right: 4px; }
+.is-rec .tc-tally strong { color: var(--brand-accent); }
+.tc-go, .tc-up-go { width: 100%; justify-content: center; min-height: 46px; }
+
+/* -- the rows -- */
+.tc-grp th { padding: 26px 0 10px; font: 500 10px/1 var(--font-mono); letter-spacing: .12em;
+  text-transform: uppercase; color: var(--text-4); border-bottom: 1px solid var(--line-1); }
+.tc-tab tbody tr:not(.tc-grp) th { padding: 15px 28px 15px 0; font: 400 14.5px/1.5 var(--font-text);
+  color: var(--text-2); border-bottom: 1px solid var(--line-1); }
+.tc-tab tbody tr:not(.tc-grp) td { padding: 15px 22px; border-bottom: 1px solid var(--line-1); }
+
+.tc-yes { display: flex; gap: 8px; align-items: flex-start; }
+.tc-yes .material-symbols-rounded { font-size: 18px; flex: none; margin-top: 1px; color: var(--brand-accent); }
+.tc-q { font-size: 13.5px; line-height: 1.45; color: var(--text-3); }
+/* An em-dash, not a cross. A cross reads as a failure; this tier simply does not
+   answer that question, and the pre-screen is not a broken full assessment. */
+.tc-no { color: var(--text-4); font-size: 16px; }
+
+.tc-blocked { display: flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 46px; margin: 0; border: 1px dashed var(--line-1); border-radius: 999px;
+  font-size: 13px; color: var(--text-3); padding: 0 14px; text-align: center; }
+.tc-blocked .material-symbols-rounded { font-size: 18px; color: var(--text-4); }
+
+/* -- the close -- */
+/* The close has to carry weight on its own, because the BUTTON in it cannot: it
+   repeats the header's action and a second filled button is a second primary. So the
+   emphasis is in the band — tint, border and a display-size line — not in the control. */
+.tc-up { margin: 38px 0 0; padding: 34px 36px; border-radius: 18px;
+  background: linear-gradient(135deg,
+    color-mix(in srgb, var(--brand-accent) 20%, var(--surface-1)) 0%,
+    color-mix(in srgb, var(--brand-accent) 9%, var(--surface-1)) 100%);
+  border: 1px solid color-mix(in srgb, var(--brand-accent) 40%, transparent);
+  display: grid; gap: 7px; justify-items: start; }
+.tc-up.is-quiet { background: var(--surface-1); border-color: var(--line-1); }
+.tc-up-k { margin: 0; font: 500 10px/1 var(--font-mono); letter-spacing: .12em;
+  text-transform: uppercase; color: var(--brand-accent); }
+.tc-up-t { margin: 0; font: 600 clamp(1.25rem, 2.4vw, 1.75rem)/1.25 var(--font-display);
+  letter-spacing: -.015em; color: var(--text-1); max-width: 40ch; }
+.tc-up-m { margin: 0 0 16px; font-size: 13.5px; color: var(--text-2); }
+.tc-up-go { width: auto; min-width: 260px; }
+
+.tc-note { max-width: 74ch; margin: 20px auto 0; font-size: 13px; line-height: 1.6;
+  color: var(--text-3); text-align: center; }
+
+/* -- narrow: the table stops being a table -------------------------------
+   A three-column comparison at 390px is unreadable at any type size. Below 820 the
+   rows stack: the capability on its own line, then one labelled line per tier. The
+   `data-h` on each cell carries the tier name, so the label is never duplicated in
+   markup and can never fall out of step with the header. */
+@media (max-width: 820px) {
+  .tc-heads { grid-template-columns: 1fr; gap: 14px; }
+  .tc-heads::before { display: none; }
+  .tc-tab, .tc-tab tbody, .tc-tab tr, .tc-tab th, .tc-tab td { display: block; width: auto; }
+  .tc-tab colgroup, .tc-tab thead { display: none; }
+  .tc-tab tbody tr:not(.tc-grp) { padding: 14px 0; border-bottom: 1px solid var(--line-1); }
+  .tc-tab tbody tr:not(.tc-grp) th { padding: 0 0 10px; border: 0; font-weight: 500; color: var(--text-1); }
+  .tc-tab tbody tr:not(.tc-grp) td { padding: 6px 0 0; border: 0; display: grid;
+    grid-template-columns: 8.5rem 1fr; gap: 10px; align-items: start; }
+  .tc-tab tbody tr:not(.tc-grp) td::before { content: attr(data-h);
+    font: 500 10px/1.5 var(--font-mono); letter-spacing: .09em; text-transform: uppercase;
+    color: var(--text-4); }
+  .tc-grp th { padding: 24px 0 8px; }
+  .tc-lede { padding: 0 0 6px; max-width: none; }
+  .tc-h { padding: 20px; border-radius: 16px; border: 1px solid var(--line-1); }
+  .tc-h.is-rec { border-color: color-mix(in srgb, var(--brand-accent) 36%, transparent); }
+  .tc-up-go { width: 100%; min-width: 0; }
+}

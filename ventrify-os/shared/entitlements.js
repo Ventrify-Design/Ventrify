@@ -44,6 +44,147 @@ export const TIERS = {
   },
 };
 
+// ---- What each tier actually hands back ---------------------------------
+// ONE VOCABULARY, TWO COLUMNS. The first version of this was two separate lists of
+// what each tier gives, and it read as a DRAW: seven bullets against eight, every
+// one of them a tick, no way to see that one of these is twenty minutes of reading
+// and the other is a morning's work. A comparison only compares if both sides answer
+// the SAME questions. So every capability is named once and each tier says what it
+// does about it — and the asymmetry stops being an opinion and becomes countable.
+//
+// It lives here rather than in the renderer because every line is a CLAIM ABOUT WHAT
+// THE PRODUCT DOES, and a claim that drifts from the booleans in entitlements() below
+// is worse than no comparison at all. ds.tierChoice() renders this; it owns no copy.
+//
+// Traceable: the pre-screen column to design/prescreen-v2-spec.md §5 (what lands on
+// screen) and §4 (deck-only), the full column to the assess page's tabs,
+// shared/vss-rubric.js, and the paid-only booleans below. Add a line, point at the
+// thing that produces it.
+//
+// A cell is `true` (plain tick), `false` (not in this tier), or a STRING — a tick with
+// a qualifier, for the places where both tiers do a thing but not to the same depth.
+// Strings are what stop this becoming a feature checklist that flatters both sides.
+export const TIER_GROUPS = [
+  {
+    group: 'The verdict',
+    rows: [
+      { label: 'Is this worth assessing?',
+        prescreen: 'A band — High, Medium or Low, with the reason', full: true },
+      { label: 'A measured investability score',
+        prescreen: false, full: 'Weighted 0–100 across 7 categories and 35 signals' },
+      { label: 'The bet, played back in our words',
+        prescreen: true, full: true },
+    ],
+  },
+  {
+    group: 'The argument',
+    rows: [
+      { label: 'The case argued both ways',
+        prescreen: 'Three for, three against', full: 'A full chapter, argued from the whole room' },
+      { label: 'Competitive read',
+        prescreen: 'Names that are not in the deck', full: 'Named comparables, benchmarked' },
+      { label: 'Team read',
+        // ⚠ "the gaps in it", not "what is missing". prescreen-vocabulary.mjs forbids
+        // "missing" anywhere in this block (§3.2 — disclose a thin basis, never penalise
+        // it). The sense here is a TEAM gap, not an absent document, but a gate that had
+        // to tell those apart would be a gate nobody trusts. Reword, don't weaken.
+        prescreen: 'Fit for the problem, and the gaps in it', full: 'A full chapter — roster, record, gaps' },
+      { label: 'Market sizing and valuation read',
+        prescreen: false, full: true },
+      { label: 'Contradictions between your own documents',
+        prescreen: 'Needs two or more documents', full: true },
+    ],
+  },
+  {
+    group: 'The evidence',
+    rows: [
+      { label: 'Data-room coverage — what is present and absent',
+        prescreen: true, full: true },
+      { label: 'Deep research, document by document, with sources',
+        prescreen: false, full: true },
+      { label: 'Diligence gaps raised as asks you can answer',
+        prescreen: false, full: 'With links and uploads' },
+    ],
+  },
+  {
+    group: 'What you can do with it',
+    rows: [
+      { label: 'Ask the memo questions, every claim cited',
+        prescreen: false, full: true },
+      { label: 'Deal-memo PDF for an investment committee',
+        prescreen: false, full: true },
+      { label: 'Shareable frozen memo link, with your sign-off',
+        prescreen: false, full: true },
+      { label: 'Re-score when new evidence lands',
+        prescreen: false, full: true },
+    ],
+  },
+];
+
+// ---- What a run costs, in money or in allowance -------------------------
+// ⚠ THE PRICE IS DISPLAYED, NOT CHARGED. BILLING_ENFORCED is false and unlockRoute()
+// returns 'run', so nothing collects this today — a customer who presses the button
+// gets the run. The number lives here, alone, so that when Stripe lands there is one
+// place to change it and no template has invented a second one in the meantime.
+export const PRICE_PER_RUN_USD = 199;
+
+// tierCost — what the comparison's "Costs" line says, derived from the LICENCE rather
+// than written per screen. `allowance` is the already-computed plan fact, passed IN,
+// because this module imports nothing and must not learn how to read a plan:
+//   { canAssess, limit, remaining }   limit null = unlimited; remaining Infinity = same
+//
+// The cases, and why each is worded the way it is:
+//   no capability   → the licence does not include this at all
+//   unlimited       → "Included in your licence" / "Free" — never a price
+//   allowance left  → "3 runs left". What a licensee most wants to know is how many
+//                     they still hold, not the sticker price of something already paid for.
+//   none left       → the price, because buying is now the only route. A plan that never
+//                     granted any (self-serve, assessments: 0) lands here too, and must
+//                     NOT read "0 of 0 used" — it never had one to use, and telling a free
+//                     account it has "used" its allowance is the same deficiency-framing
+//                     planSummary already refuses.
+export function tierCost(tier, allowance = {}) {
+  const { canAssess = true, limit = null, remaining = Infinity } = allowance;
+  if (!canAssess) return { main: 'Not on this licence', sub: '' };
+  if (limit == null) return tier === 'full'
+    ? { main: 'Included in your licence', sub: 'Unlimited on this plan' }
+    : { main: 'Free', sub: 'Unlimited on this plan' };
+  if (remaining > 0) return {
+    main: remaining + (remaining === 1 ? ' run left' : ' runs left'),
+    sub: 'of ' + limit + ' on your plan',
+  };
+  return tier === 'full'
+    ? { main: '$' + PRICE_PER_RUN_USD + ' per run', sub: limit > 0 ? 'Your plan allowance is used' : '' }
+    : { main: 'No pre-screens left', sub: 'of ' + limit + ' on your plan' };
+}
+
+// Per-tier framing. `cost` here is the FALLBACK used when no plan is in hand — the DS
+// specimen, a preview. A live screen passes tierCost() instead. `time` is never derived:
+// it is a property of the run, not of the licence.
+export const TIER_COMPARISON = {
+  prescreen: {
+    question: 'Is this worth assessing?',
+    pitch: 'A fast read of the case, so you know whether to spend the real run on it.',
+    time: 'about 3 minutes', cost: 'Free',
+    basis: 'Reads your pitch deck, the data room if you attach one, and public sources.',
+  },
+  full: {
+    question: 'What is the verdict?',
+    pitch: 'The complete agentic run — everything the pre-screen reads, argued from the whole room.',
+    time: 'about 2 hours', cost: '$' + PRICE_PER_RUN_USD + ' per run',
+    basis: 'Reads every document in the room, then researches the outside world against it.',
+    // The line the pre-screen column is measured against. Counted, not asserted — see tierTally().
+    upsell: 'Everything above, on every document you have, with the working shown.',
+  },
+};
+
+// What each tier answers, counted off TIER_GROUPS so the headline number can never
+// disagree with the table under it. A qualifier string counts as a yes; `false` does not.
+export function tierTally(tier) {
+  const rows = TIER_GROUPS.flatMap(g => g.rows);
+  return { yes: rows.filter(r => r[tier]).length, total: rows.length };
+}
+
 // ---- Tier resolution ----------------------------------------------------
 
 // An engagement's tier. Anything that isn't explicitly 'prescreen' is 'full' —
