@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-brand="verdictscore">
+<html lang="en" data-brand="verdictscore" data-flow="wizard">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -20,6 +20,22 @@
 <link rel="stylesheet" href="../shared/m3/transitions.css">
 <link rel="stylesheet" href="../shared/m3/workspace-chrome.css">
 <link rel="stylesheet" href="../shared/m3/brand-map.css">
+<!-- DIRECTION, decided by STEP ORDER rather than by traversal type.
+     navigation.activation only knows whether the browser went back; it cannot know
+     that the breadcrumb from step 2 to step 1 is also a step backwards, because that
+     is an ordinary forward navigation. Without this, returning to the choice slides
+     the wrong way. Inline and synchronous on purpose: the view transition starts at
+     the first render opportunity, so a deferred module would set this too late. -->
+<script>
+  try {
+    var wizStep = new URLSearchParams(location.search).get('tier') ? 1 : 0;
+    var wizPrev = sessionStorage.getItem('wizStep');
+    document.documentElement.dataset.navDir =
+      (wizPrev !== null && Number(wizPrev) > wizStep) ? 'back' : 'deeper';
+    document.documentElement.dataset.navDirLock = 'wizard';   // ds.js must not overwrite this
+    sessionStorage.setItem('wizStep', String(wizStep));
+  } catch (e) {}
+</script>
 </head>
 <body>
 <div id="app"></div>

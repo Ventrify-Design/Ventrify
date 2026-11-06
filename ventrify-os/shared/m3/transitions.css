@@ -25,8 +25,15 @@
 ::view-transition-new(shell-content) { animation: vt-in 240ms cubic-bezier(0.2, 0, 0, 1) 60ms both; }
 @keyframes vt-out { to   { opacity: 0; transform: translateY(-8px); } }
 @keyframes vt-in  { from { opacity: 0; transform: translateY(12px); } }
-:root[data-nav-dir="back"] ::view-transition-old(shell-content) { animation-name: vt-out-back; }
-:root[data-nav-dir="back"] ::view-transition-new(shell-content) { animation-name: vt-in-back; }
+/* ⚠ NO SPACE before ::view-transition-*. These two rules carried a descendant
+   combinator until 2026-11-06, which never matches: the pseudo tree hangs off the
+   originating element itself, not off a descendant of it. PROVEN in isolation —
+   with only the descendant form present, the bound animation was the UA default
+   (-ua-view-transition-fade-out). So the drill's "back" direction had never once
+   applied on any workspace page; every return navigation played the forward
+   motion. Gate: tools/token-grade.mjs rule 3. */
+:root[data-nav-dir="back"]::view-transition-old(shell-content) { animation-name: vt-out-back; }
+:root[data-nav-dir="back"]::view-transition-new(shell-content) { animation-name: vt-in-back; }
 @keyframes vt-out-back { to   { opacity: 0; transform: translateY(8px); } }
 @keyframes vt-in-back  { from { opacity: 0; transform: translateY(-12px); } }
 
@@ -34,3 +41,41 @@
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
 }
+
+/* ============================================================
+   WIZARD FLAVOUR — the assessment setup's three steps.
+   Opt in with data-flow="wizard" on <html>.
+
+   The drill motion above (8-12px vertical nudge + cross-fade) was built for
+   portfolio -> assess, where the two layouts differ in content but not in kind.
+   Between step 1 (a comparison table) and step 2 (a form) it GHOSTS: measured
+   frame-by-frame, at 133ms both breadcrumbs and both page titles are legible at
+   once, superimposed. That is what "it just refreshes" looks like.
+
+   Two changes. The old step must be GONE before the new one is readable, rather
+   than the two sitting at half opacity together. And the movement has to be big
+   enough to parse AS movement -- 8px is a twitch; a step sideways is a step.
+   ============================================================ */
+
+/* The hero photo and the appbar hold their place -- only the words inside them
+   swap, and fast. Without this the masthead rides the root cross-fade and the two
+   breadcrumbs smear through each other for the full 300ms. */
+:root[data-flow="wizard"] .masthead { view-transition-name: wiz-head; }
+:root[data-flow="wizard"]::view-transition-group(wiz-head) { animation-duration: 240ms; }
+:root[data-flow="wizard"]::view-transition-old(wiz-head)   { animation: wiz-fade-out 100ms linear both; }
+:root[data-flow="wizard"]::view-transition-new(wiz-head)   { animation: wiz-fade-in 180ms linear 90ms both; }
+
+/* The step travels: out to the left, in from the right. Reversed going back.
+   NOTE the selector shape -- `:root[...]::view-transition-old(x)`, no descendant
+   combinator. The pseudo tree hangs off the originating element itself. */
+:root[data-flow="wizard"]::view-transition-old(shell-content) { animation: wiz-out 150ms cubic-bezier(0.4, 0, 1, 1) both; }
+:root[data-flow="wizard"]::view-transition-new(shell-content) { animation: wiz-in 300ms cubic-bezier(0.05, 0.7, 0.1, 1) 120ms both; }
+:root[data-flow="wizard"][data-nav-dir="back"]::view-transition-old(shell-content) { animation-name: wiz-out-back; }
+:root[data-flow="wizard"][data-nav-dir="back"]::view-transition-new(shell-content) { animation-name: wiz-in-back; }
+
+@keyframes wiz-fade-out { to   { opacity: 0; } }
+@keyframes wiz-fade-in  { from { opacity: 0; } }
+@keyframes wiz-out      { to   { opacity: 0; transform: translateX(-52px); } }
+@keyframes wiz-in       { from { opacity: 0; transform: translateX(64px); } }
+@keyframes wiz-out-back { to   { opacity: 0; transform: translateX(52px); } }
+@keyframes wiz-in-back  { from { opacity: 0; transform: translateX(-64px); } }

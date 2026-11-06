@@ -1012,10 +1012,19 @@ md-outlined-text-field { --md-outlined-text-field-container-shape: 999px; --md-o
 .tc-col-lab { width: 42%; }
 .tc-tab th, .tc-tab td { text-align: left; vertical-align: top; }
 
+/* ⚠ ACCENT GRADE. Everything accent-coloured in this block goes through
+   --md-sys-color-primary (the LIGHT step, #B9A7FF on VerdictScore) — the same token the
+   masthead breadcrumb tail uses, and the one the other 43 accent rules in this file use.
+   It first shipped against --brand-accent (#7C5CFC), which is the FILL step: brand-map.css
+   says so in a comment directly above the token, and it measured 4.15:1 behind the tally and
+   4.39:1 behind the 10px RECOMMENDED flag — an AA failure on the flag and the upsell kicker.
+   On --md-sys-color-primary the same ink measures 8.1–8.7:1 and the column tint separates
+   1.088:1 instead of 1.058:1, so the band is MORE visible, not less. Gate: tools/token-grade.mjs. */
+
 /* The tinted column. A background on <col> paints behind the cells and under the
    row hairlines, which is exactly the "band down the page" this wants and is why
    the emphasis is not a border. */
-.tc-col-rec { background: color-mix(in srgb, var(--brand-accent) 7%, transparent); }
+.tc-col-rec { background: color-mix(in srgb, var(--md-sys-color-primary) 7%, transparent); }
 
 /* -- the two headers, ABOVE the table (see ds.tierChoice) -- */
 .tc-heads { display: grid; grid-template-columns: 42% 1fr 1fr; align-items: end; }
@@ -1023,11 +1032,11 @@ md-outlined-text-field { --md-outlined-text-field-container-shape: 999px; --md-o
 /* ⚠ THE SAME TINT AS .tc-col-rec, AND NO RADIUS. The recommended header is the TOP OF
    THE COLUMN, not a card floating above it — give it a corner radius or its own
    background value and it detaches, which is the card look this screen exists to avoid. */
-.tc-h.is-rec { background: color-mix(in srgb, var(--brand-accent) 7%, transparent); }
+.tc-h.is-rec { background: color-mix(in srgb, var(--md-sys-color-primary) 7%, transparent); }
 .tc-lede { padding: 0 28px 24px 0; font: 400 14.5px/1.55 var(--font-text); color: var(--text-3);
   max-width: 34ch; align-self: end; }
 .tc-flag { display: inline-block; font: 500 10px/1 var(--font-mono); letter-spacing: .1em;
-  text-transform: uppercase; color: var(--brand-accent); margin-bottom: 12px; min-height: 12px; }
+  text-transform: uppercase; color: var(--md-sys-color-primary); margin-bottom: 12px; min-height: 12px; }
 .tc-flag.is-ghost { visibility: hidden; }
 .tc-name { font: 600 clamp(1.25rem, 2.2vw, 1.6rem)/1.12 var(--font-display);
   letter-spacing: -.02em; margin: 0 0 5px; color: var(--text-1); }
@@ -1038,14 +1047,14 @@ md-outlined-text-field { --md-outlined-text-field-container-shape: 999px; --md-o
 .tc-cost { margin: 0 0 4px; display: flex; flex-direction: column; gap: 3px; }
 .tc-cost strong { font: 600 clamp(1.05rem, 1.8vw, 1.3rem)/1.15 var(--font-display);
   letter-spacing: -.015em; color: var(--text-1); }
-.is-rec .tc-cost strong { color: var(--brand-accent); }
+.is-rec .tc-cost strong { color: var(--md-sys-color-primary); }
 .tc-cost span { font-size: 13px; color: var(--text-3); }
 .tc-cost .tc-time { color: var(--text-4); }
 /* The count. This is the comparison in one number, so it is set like a number. */
 .tc-tally { margin: 14px 0 18px; font: 400 13px/1 var(--font-text); color: var(--text-3); }
 .tc-tally strong { font: 600 26px/1 var(--font-display); color: var(--text-1);
   letter-spacing: -.02em; margin-right: 4px; }
-.is-rec .tc-tally strong { color: var(--brand-accent); }
+.is-rec .tc-tally strong { color: var(--md-sys-color-primary); }
 .tc-go, .tc-up-go { width: 100%; justify-content: center; min-height: 46px; }
 
 /* -- the rows -- */
@@ -1056,7 +1065,7 @@ md-outlined-text-field { --md-outlined-text-field-container-shape: 999px; --md-o
 .tc-tab tbody tr:not(.tc-grp) td { padding: 15px 22px; border-bottom: 1px solid var(--line-1); }
 
 .tc-yes { display: flex; gap: 8px; align-items: flex-start; }
-.tc-yes .material-symbols-rounded { font-size: 18px; flex: none; margin-top: 1px; color: var(--brand-accent); }
+.tc-yes .material-symbols-rounded { font-size: 18px; flex: none; margin-top: 1px; color: var(--md-sys-color-primary); }
 .tc-q { font-size: 13.5px; line-height: 1.45; color: var(--text-3); }
 /* An em-dash, not a cross. A cross reads as a failure; this tier simply does not
    answer that question, and the pre-screen is not a broken full assessment. */
@@ -1070,16 +1079,21 @@ md-outlined-text-field { --md-outlined-text-field-container-shape: 999px; --md-o
 /* -- the close -- */
 /* The close has to carry weight on its own, because the BUTTON in it cannot: it
    repeats the header's action and a second filled button is a second primary. So the
-   emphasis is in the band — tint, border and a display-size line — not in the control. */
+   emphasis is in the band — tint, border and a display-size line — not in the control.
+
+   ⚠ The ground here is --md-sys-color-surface-container-low, the same base .run-banner.info
+   mixes against. It first shipped as --surface-1, which is a SITES token and is declared
+   nowhere in the OS: `background` was therefore invalid at computed-value time and the band
+   painted nothing in either variant. Gate: tools/token-grade.mjs. */
 .tc-up { margin: 38px 0 0; padding: 34px 36px; border-radius: 18px;
   background: linear-gradient(135deg,
-    color-mix(in srgb, var(--brand-accent) 20%, var(--surface-1)) 0%,
-    color-mix(in srgb, var(--brand-accent) 9%, var(--surface-1)) 100%);
-  border: 1px solid color-mix(in srgb, var(--brand-accent) 40%, transparent);
+    color-mix(in srgb, var(--md-sys-color-primary) 20%, var(--md-sys-color-surface-container-low)) 0%,
+    color-mix(in srgb, var(--md-sys-color-primary) 9%, var(--md-sys-color-surface-container-low)) 100%);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-primary) 40%, transparent);
   display: grid; gap: 7px; justify-items: start; }
-.tc-up.is-quiet { background: var(--surface-1); border-color: var(--line-1); }
+.tc-up.is-quiet { background: var(--md-sys-color-surface-container-low); border-color: var(--line-1); }
 .tc-up-k { margin: 0; font: 500 10px/1 var(--font-mono); letter-spacing: .12em;
-  text-transform: uppercase; color: var(--brand-accent); }
+  text-transform: uppercase; color: var(--md-sys-color-primary); }
 .tc-up-t { margin: 0; font: 600 clamp(1.25rem, 2.4vw, 1.75rem)/1.25 var(--font-display);
   letter-spacing: -.015em; color: var(--text-1); max-width: 40ch; }
 .tc-up-m { margin: 0 0 16px; font-size: 13.5px; color: var(--text-2); }
@@ -1108,6 +1122,6 @@ md-outlined-text-field { --md-outlined-text-field-container-shape: 999px; --md-o
   .tc-grp th { padding: 24px 0 8px; }
   .tc-lede { padding: 0 0 6px; max-width: none; }
   .tc-h { padding: 20px; border-radius: 16px; border: 1px solid var(--line-1); }
-  .tc-h.is-rec { border-color: color-mix(in srgb, var(--brand-accent) 36%, transparent); }
+  .tc-h.is-rec { border-color: color-mix(in srgb, var(--md-sys-color-primary) 36%, transparent); }
   .tc-up-go { width: 100%; min-width: 0; }
 }

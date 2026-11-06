@@ -4534,7 +4534,13 @@ export function tierChoice(opts = {}) {
   // rows have just argued, so it reads last. Same primary action as the header, not a
   // second competing button.
   const up = tiers.find(t => t.upsell && t.state !== 'unavailable');
-  const upsell = up ? `<aside class="tc-up${up.recommended ? '' : ' is-quiet'}">
+  // LOUD when the tier it sells is NOT the one already recommended — that is the only
+  // state in which this band is an upsell at all. Where the licence already includes the
+  // full assessment the band is a summary, and a sales gradient over something the operator
+  // already owns is noise. This shipped inverted: the three PAYING states (self-serve,
+  // one-off, trial — all "$199 per run") got the quiet band and the two included states got
+  // the loud one. Gate: tools/upsell-loudness.mjs.
+  const upsell = up ? `<aside class="tc-up${up.recommended ? ' is-quiet' : ''}">
       <p class="tc-up-k">${esc(up.label)}</p>
       <p class="tc-up-t">${esc(up.upsell)}</p>
       <p class="tc-up-m">${esc([money(up).main, money(up).sub, up.time].filter(Boolean).join(' · '))}</p>
@@ -5117,17 +5123,42 @@ function announce(msg) {
   requestAnimationFrame(() => { liveRegion.textContent = msg; });
 }
 
+// ---- travel direction for the level transitions ---------------------------------
+// MEASURED 2026-11-06, and the reason the drill's "back" motion had never played:
+// while the document is parsing, navigation.activation.navigationType still describes
+// the PREVIOUS activation — it reads "push" even on a Back. It only becomes "traverse"
+// at `pagereveal`, which is also the moment the view transition builds its animations,
+// so that is both the first instant the value is right and the last instant it matters.
+// Setting it from initShell(), as this did, could therefore only ever say "deeper".
+//
+// Registered at module scope so the listener exists before the first render opportunity.
+// A flow that knows its own step order sets data-nav-dir itself and locks it: traversal
+// type cannot see that a breadcrumb from step 2 to step 1 is a step BACKWARDS, because
+// that is an ordinary forward navigation.
+function setNavDir() {
+  try {
+    const r = document.documentElement;
+    if (r.dataset.navDirLock) return;
+    const nav = window.navigation;
+    const act = nav && nav.activation;
+    if (!act || act.navigationType !== 'traverse') { r.dataset.navDir = 'deeper'; return; }
+    // A traverse is Back OR Forward. Compare history positions rather than assuming:
+    // the Forward button used to play the back motion because "traverse" covers both.
+    const from = act.from, now = nav.currentEntry;
+    r.dataset.navDir = (from && now && typeof from.index === 'number' && now.index > from.index)
+      ? 'deeper' : 'back';
+  } catch (e) {}
+}
+try { addEventListener('pagereveal', setNavDir); } catch (e) {}
+setNavDir();
+
 // ---- theme toggle wiring (call once per page after render) ----
 export function initShell() {
   window.__toggleRail = () => document.querySelector('.m3-app') && document.querySelector('.m3-app').classList.toggle('rail');
 
   // ---- level transitions (cross-document View Transitions) ----
-  // __drill just navigates; the travel direction (traverse = came back) drives the content slide.
+  // __drill just navigates; the direction is decided by setNavDir above, at pagereveal.
   window.__drill = (row, href) => location.assign(href);
-  try {
-    const act = window.navigation && navigation.activation;
-    document.documentElement.dataset.navDir = (act && act.navigationType === 'traverse') ? 'back' : 'deeper';
-  } catch (e) {}
 
   // ---- mobile overlay state: nav drawer + aux panel are mutually exclusive (one scrim, one lock) ----
   const app0 = () => document.querySelector('.m3-app');
