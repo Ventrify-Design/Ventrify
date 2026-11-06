@@ -572,6 +572,15 @@
   .wstep.pending .wstep-lab { color: var(--md-sys-color-on-surface-variant); }
   .wstep-conn { flex: 1 1 auto; height: 2px; margin: 0 12px; border-radius: 2px; background: var(--md-sys-color-outline-variant); }
   .wstep-conn.done { background: var(--success); }
+  /* ⚠ NARROW: THE LABELS GO, THE DOTS STAY. Three labelled steps plus two connectors
+     cannot fit 390px and the row was simply clipping its last step off the right edge —
+     a progress indicator that hides how many steps remain. Below 620 only the step you
+     are ON keeps its label; the rest are dots, which is still a legible "1 of 3". */
+  @media (max-width: 620px) {
+    .wsteps { gap: 0; }
+    .wstep:not(.active) .wstep-lab { display: none; }
+    .wstep-conn { margin: 0 8px; }
+  }
   .wiz-primer { margin-bottom: 22px; }
   .wiz-primer p { font-size: 14px; color: var(--md-sys-color-on-surface); margin: 6px 0 12px; }
   .wiz-primer.mini { font-size: 13px; color: var(--md-sys-color-on-surface-variant); }

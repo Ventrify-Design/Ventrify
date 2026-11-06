@@ -4,7 +4,9 @@ import puppeteer from '/Users/antonywhenman/Desktop/Ventrify/node_modules/puppet
 // (workspace/, import ../shared/m3/ds.js — served from project root, need a FIREBASE_ENABLED=false
 // demo build or app.js redirects to login). Both mount the SAME shell so both take the same gate.
 const GROUPS = [
-  { base: 'http://localhost:3200/_redesign/m3', pages: ['portfolio.html', 'portfolio.html?state=empty', 'queue.html', 'research-detail.html', 'drill.html', 'assess.html', 'assess.html?state=gaps', 'assess-brand.html', 'portfolio-brand.html', 'assess-setup.html', 'assess-running.html', 'assess-running.html?state=silent'] },
+  { base: 'http://localhost:3200/_redesign/m3', pages: ['portfolio.html', 'portfolio.html?state=empty', 'queue.html', 'research-detail.html', 'drill.html', 'assess.html', 'assess.html?state=gaps', 'assess-brand.html', 'portfolio-brand.html', 'assess-setup.html', 'assess-running.html', 'assess-running.html?state=silent',
+      // step zero of the create flow — see ds.tierChoice()
+      '_tier-choice.html'] },
   // EVERY page an operator can reach, not the two that happened to be here.
   // team/settings/admin/assess-next were already on the M3 shell and already
   // live, but were outside the gate — so nothing stopped them drifting. The

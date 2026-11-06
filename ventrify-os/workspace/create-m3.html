@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>New assessment · Ventrify OS</title>
-<meta name="description" content="Set up a venture assessment — details, pitch deck and data room on one screen, with a live read of what we can see in the room.">
+<meta name="description" content="Choose the read — pre-screen or full assessment — then set up the venture, the pitch deck and the data room on one screen.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- The brand's faces. These MUST match what --font-text / --font-display name in
      brand.css — tools/font-sync.mjs fails the build if a page stops fetching one. -->
@@ -27,25 +27,37 @@
 <script src="agents.js"></script>
 <script type="module" src="app.js"></script>
 <script type="module">
-  // NEW ASSESSMENT, as a full screen. Setup used to happen in the ~390px aux panel, which could only ever
-  // treat the data-room read as a footnote. Here it gets its own column and fills in live while you attach.
+  // NEW ASSESSMENT — TWO STEPS ON ONE PAGE, keyed on ?tier=.
   //
-  // The create / ingest / dispatch chain is NOT re-implemented here — it lives in workspace-m3.js, keyed on
-  // the element ids DS.createScreen() renders, and drives this layout untouched.
+  //   no ?tier   → step 1: choose the read (DS.tierChoice)
+  //   ?tier=…    → step 2: the setup form, with ONE run button for the tier already chosen
+  //
+  // WHY THE CHOICE MOVED TO THE FRONT. It used to live on two buttons at the BOTTOM of the
+  // form, after all the work. That has already cost a real user: a licensee created a
+  // workspace called "Pre-Screen Tests", filled the form, pressed the filled button and
+  // started a two-hour agentic run, because the emphasis swap is correct for a licensee and
+  // nothing on either button said which was which. Durations were bolted onto the buttons as
+  // a patch; this is the fix — you commission the thing while that is the only question on
+  // screen, and the form that follows has exactly one run button.
+  //
+  // WHY A QUERY PARAM AND NOT STATE. Back must return to the choice rather than to the
+  // portfolio, the step must be linkable, and a reload must not silently change which product
+  // is being bought. All three fall out of the URL for free.
+  //
+  // The create / ingest / dispatch chain is NOT re-implemented here — it lives in
+  // workspace-m3.js, keyed on the element ids DS.createScreen() renders.
   import * as DS from '../shared/m3/ds.js';
   import { wsNavConfig, wsBrandConfig, wsAccountConfig, mountOrgSwitcherM3, initCreateScreen } from './workspace-m3.js';
-  import { ctaPair, defaultTier, TIERS } from '../shared/entitlements.js';
+  import { TIERS, TIER_GROUPS, TIER_COMPARISON, tierTally, tierCost, unlockRoute, PRICE_PER_RUN_USD } from '../shared/entitlements.js';
 
   await window.WORKSPACE_READY;
   const W = window.WORKSPACE;
   const { org } = W;
   const Plan = window.VentrifyPlan, plan = W.plan;
+  const programs = W.programs || [];
 
   const chrome = { nav: wsNavConfig(), brand: wsBrandConfig(), account: wsAccountConfig() };
-  // The tier they can actually create, not the one the licence prefers — otherwise a licensee whose
-  // full allowance is spent is turned away at the door from the free thing they are still entitled to.
-  const tier = (Plan && Plan.createableTier ? Plan.createableTier(plan, W.programs || []) : null) || defaultTier(plan);
-  const cta = ctaPair(plan, tier);
+  const crumb = { breadcrumb: { label: 'Portfolio', href: '/workspace/dashboard-m3.html' } };
 
   function mount(masthead, body) {
     document.getElementById('app').outerHTML = DS.pageShell({ active: 'portfolio', aux: {}, ...chrome, masthead, body });
@@ -53,38 +65,129 @@
     mountOrgSwitcherM3();
   }
 
-  // ---- the allowance gate, tier-aware ----
-  // Checked for the tier this org would actually create. A self-serve account with no paid credits is NOT
-  // blocked here — it is allowed to pre-screen, and meets the paywall at the unlock button instead.
-  const gate = Plan ? Plan.canCreate(plan, W.programs || [], 'assessment', tier) : { allowed: true };
-  if (!gate.allowed) {
-    mount(
-      DS.masthead({ breadcrumb: { label: 'Portfolio', href: '/workspace/dashboard-m3.html' }, crumbTail: 'New assessment',
-        eyebrow: 'New assessment', headline: 'No allowance left on this plan',
-        subheading: gate.reason === 'capability' ? 'This workspace’s licence doesn’t include assessments.' : 'You’ve used every assessment your plan allows.' }),
-      `<div class="brief">${DS.noteCard({ center: true, text: gate.reason === 'capability'
-        ? 'Ask your administrator to add assessments to this organisation’s licence.'
-        : 'Ask your administrator to raise the allowance, or upgrade the organisation’s licence.' })}</div>`
-    );
-    // Halts by never resolving rather than throwing — a throw here is an uncaught Error in the console,
-    // indistinguishable from a page that actually broke. Same idiom as dashboard-m3 / admin-m3.
-    await new Promise(() => {});
+  // ---- what this org may do, per tier ------------------------------------
+  // ONE derivation, read by both steps. Presentation ≠ permission: api/create-engagement.js
+  // and the Firestore rules re-enforce every line of this, and must keep doing so.
+  const canAssess = Plan ? Plan.orgCan(plan, 'assessment') : true;
+
+  function allowanceOf(tier) {
+    return {
+      canAssess,
+      limit: Plan ? Plan.limitFor(plan, 'assessment', tier) : null,
+      remaining: Plan ? Plan.remainingFor(plan, programs, 'assessment', tier) : Infinity,
+    };
   }
 
-  const operators = (W.operators || []).map(o => ({ v: o.id, l: `${o.name} · ${o.role}` }));
+  // A tier's state on the choice screen.
+  //
+  // ⚠ "NO ALLOWANCE LEFT" IS NOT A DEAD END FOR THE FULL TIER — it is the purchase state, and
+  // the one place the price earns its keep. The pre-screen has no such route, so for it an
+  // empty allowance really is unavailable. Which route the purchase takes is unlockRoute()'s
+  // call, not this screen's: today it runs (Stripe is unwired), later it will be checkout.
+  function stateOf(tier) {
+    if (!canAssess) return { state: 'unavailable', reason: 'Assessments are not included on this licence' };
+    const gate = Plan ? Plan.canCreate(plan, programs, 'assessment', tier) : { allowed: true };
+    if (gate.allowed) return { state: 'available' };
+    if (tier === 'prescreen') return { state: 'unavailable', reason: 'No pre-screens left on this plan' };
+    return { state: 'available', buy: true };
+  }
 
-  mount(
-    DS.masthead({
-      breadcrumb: { label: 'Portfolio', href: '/workspace/dashboard-m3.html' }, crumbTail: 'New assessment',
-      eyebrow: 'New assessment',
-      headline: `Assess a venture for ${(org && org.name) || 'your workspace'}`,
-      subheading: tier === 'prescreen'
-        ? 'Attach the deck and we’ll give you a free range in about a minute — then you can unlock the full assessment.'
-        : 'Attach the deck and the data room. We read the room first, so you know what we can see before the run starts.',
-    }),
-    `<div class="brief">${DS.createScreen({ operators, cta })}</div>`
-  );
-  initCreateScreen();
+  // ---- step 1: choose the read -------------------------------------------
+  function renderChoice() {
+    // The recommendation is what the org can create TODAY, not what the licence prefers —
+    // createableTier() exists for exactly that distinction. An org whose full allowance is
+    // spent must not be pointed at the full run as its default.
+    const rec = Plan ? Plan.createableTier(plan, programs) : 'full';
+
+    const tiers = ['prescreen', 'full'].map(key => {
+      const st = stateOf(key);
+      const cost = tierCost(key, allowanceOf(key));
+      // The label says what pressing it does. "Buy" only ever appears when there is something
+      // to buy — while unlockRoute() is 'run' it would be a promise the product cannot keep.
+      const label = st.buy && unlockRoute() === 'checkout'
+        ? `Buy a run · $${PRICE_PER_RUN_USD}`
+        : `Set up a ${TIERS[key].label.toLowerCase()}`;
+      return {
+        key, label: TIERS[key].label, ...TIER_COMPARISON[key],
+        cost, tally: tierTally(key),
+        cta: { id: 'pick_' + key, label, icon: key === 'full' ? 'play_arrow' : 'bolt' },
+        ...st,
+        recommended: rec === key && st.state === 'available',
+      };
+    });
+
+    mount(
+      DS.masthead({ ...crumb, crumbTail: 'New assessment', eyebrow: 'New assessment',
+        headline: 'How should we read this venture?',
+        subheading: 'Two different questions, not two sizes of the same one. Pick the read before you set anything up.' }),
+      `<div class="brief">
+        ${DS.wizardSteps(['Choose the read', 'Venture & evidence', 'Run'], 0)}
+        ${DS.tierChoice({
+          groups: TIER_GROUPS, tiers,
+          lede: 'Both reads start from the same evidence. One tells you whether this is worth your time; the other tells you what you would conclude, and shows its working.',
+          note: 'You can commission the full assessment later from the venture itself — a pre-screen is never a dead end.',
+        })}
+      </div>`
+    );
+
+    // Delegated, so a re-render cannot leave a dead button behind.
+    document.addEventListener('click', e => {
+      const b = e.target.closest('[data-action^="pick_"]');
+      if (!b) return;
+      location.href = '/workspace/create-m3.html?tier=' + encodeURIComponent(b.dataset.tier);
+    });
+  }
+
+  // ---- step 2: the setup form --------------------------------------------
+  function renderForm(tier) {
+    const st = stateOf(tier);
+    if (st.state !== 'available') {
+      mount(
+        DS.masthead({ ...crumb, crumbTail: 'New assessment', eyebrow: 'New assessment',
+          headline: 'No allowance left on this plan', subheading: st.reason }),
+        `<div class="brief">${DS.noteCard({ center: true, text:
+          'Ask your administrator to raise the allowance, or upgrade the organisation’s licence.' })}</div>`
+      );
+      return;
+    }
+
+    // ONE BUTTON, because the tier is already decided. The ids are the ones
+    // DS.createScreen()'s handler map already knows: `run_full` creates and dispatches,
+    // `run_prescreen` runs the free read, anything else is the unlock path — which is what
+    // an org with no full allowance left must take, exactly as it does today.
+    const cost = tierCost(tier, allowanceOf(tier));
+    const costLine = [cost.main, TIER_COMPARISON[tier].time].filter(Boolean).join(' · ');
+    const primary = tier === 'prescreen'
+      ? { id: 'run_prescreen', label: 'Run the pre-screen', icon: 'bolt', cost: costLine }
+      : st.buy
+        ? { id: 'unlock_full', label: 'Unlock the full assessment', icon: 'lock_open', cost: costLine }
+        : { id: 'run_full', label: 'Run the full assessment', icon: 'play_arrow', cost: costLine };
+
+    const operators = (W.operators || []).map(o => ({ v: o.id, l: `${o.name} · ${o.role}` }));
+
+    mount(
+      DS.masthead({
+        // Back goes to the CHOICE, not to the portfolio — the step they came from.
+        breadcrumb: { label: 'Choose the read', href: '/workspace/create-m3.html' },
+        crumbTail: TIERS[tier].label,
+        eyebrow: TIERS[tier].label,
+        headline: `Assess a venture for ${(org && org.name) || 'your workspace'}`,
+        subheading: tier === 'prescreen'
+          ? 'Attach the deck and we’ll read it in about three minutes.'
+          : 'Attach the deck and the data room. We read the room first, so you know what we can see before the run starts.',
+      }),
+      `<div class="brief">
+        ${DS.wizardSteps(['Choose the read', 'Venture & evidence', 'Run'], 1)}
+        ${DS.createScreen({ operators, cta: { primary } })}
+      </div>`
+    );
+    initCreateScreen();
+  }
+
+  // ---- route --------------------------------------------------------------
+  const asked = new URLSearchParams(location.search).get('tier');
+  const tier = asked === 'prescreen' || asked === 'full' ? asked : null;
+  if (tier) renderForm(tier); else renderChoice();
 </script>
 </body>
 </html>

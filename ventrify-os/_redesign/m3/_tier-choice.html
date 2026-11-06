@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en" data-brand="verdictscore">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Choose the read — step zero of the create flow</title>
+<meta name="description" content="The screen that would open the create flow: pre-screen or full assessment, compared side by side, before any form.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/brand/brand.css">
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="ds.css">
+<link rel="stylesheet" href="assess-editorial.css">
+<link rel="stylesheet" href="../../shared/m3/transitions.css">
+<link rel="stylesheet" href="../../shared/m3/workspace-chrome.css">
+<link rel="stylesheet" href="../../shared/m3/brand-map.css">
+<script src="_preview-brand-switch.js" defer></script>
+<style>
+  /* THE STATE BAR IS THE POINT OF THIS PAGE. The choice screen is not one screen — it is one
+     screen that has to be right in three licence situations, and the third (a licensee whose
+     full allowance is spent) is the one that is easy to get wrong, because it is the only one
+     where the recommended tier moves. Looking at the happy path alone is how that gets missed. */
+  .sw { position: fixed; left: 50%; transform: translateX(-50%); bottom: 18px; z-index: 40;
+        display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center;
+        padding: 10px 12px; border-radius: 999px; background: var(--surface-2);
+        border: 1px solid var(--line-1); box-shadow: 0 18px 46px rgba(0,0,0,.5); }
+  .sw .lab { font: 500 10px/1 var(--font-mono); letter-spacing: .1em; text-transform: uppercase;
+             color: var(--text-4); padding: 0 4px; }
+  .sw button { font: 500 12px/1 var(--font-mono); letter-spacing: .04em; padding: 9px 14px;
+               border-radius: 999px; border: 1px solid var(--line-1); background: transparent;
+               color: var(--text-3); cursor: pointer; min-height: 38px; }
+  .sw button.on { background: var(--brand-accent); border-color: transparent; color: #fff; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script type="module">
+  import * as DS from './ds.js';
+  import { TIER_COMPARISON, TIER_GROUPS, TIERS, tierTally, tierCost } from '../../shared/entitlements.js';
+
+  // THE THREE SITUATIONS THIS SCREEN HAS TO BE RIGHT IN. Each one is a real plan shape that
+  // workspace/plan.js can produce today — not invented states. `rec` is which tier gets the one
+  // filled button, and it is the only thing that moves between them.
+  const STATES = {
+    licensed: {
+      label: 'Licensed org',
+      blurb: 'A fund on a plan with assessments left. The full run is the default; the pre-screen is there for triage.',
+      rec: 'full',
+      full: { state: 'available', allow: { canAssess: true, limit: 5, remaining: 3 } },
+      prescreen: { state: 'available', allow: { canAssess: true, limit: null, remaining: Infinity } },
+    },
+    selfserve: {
+      label: 'Self-serve account',
+      blurb: 'No paid credits. Pre-screening is free and unlimited by licence; the full run is reached by unlocking after it.',
+      rec: 'prescreen',
+      full: { state: 'locked', reason: 'Unlocks after a pre-screen', allow: { canAssess: true, limit: 0, remaining: 0 } },
+      prescreen: { state: 'available', allow: { canAssess: true, limit: null, remaining: Infinity } },
+    },
+    spent: {
+      label: 'Allowance spent',
+      blurb: 'A licensee who has used every assessment on the plan. They are still entitled to pre-screen — so the recommendation moves.',
+      rec: 'prescreen',
+      full: { state: 'unavailable', reason: 'No assessments left on this plan', allow: { canAssess: true, limit: 1, remaining: 0 } },
+      prescreen: { state: 'available', allow: { canAssess: true, limit: null, remaining: Infinity } },
+    },
+  };
+
+  const CTA = {
+    prescreen: { id: 'pick_prescreen', label: 'Set up a pre-screen', icon: 'bolt' },
+    full:      { id: 'pick_full',      label: 'Set up a full assessment', icon: 'play_arrow' },
+  };
+
+  let current = 'licensed';
+
+  function tiersFor(key) {
+    const S = STATES[key];
+    // Order is fixed — pre-screen first, because it is the smaller commitment and reading left to
+    // right should go cheap → expensive. The RECOMMENDATION moves, the order does not; a column
+    // that jumps sides between accounts is a column nobody can learn.
+    return ['prescreen', 'full'].map(t => ({
+      key: t,
+      label: TIERS[t].label,
+      ...TIER_COMPARISON[t],
+      tally: tierTally(t),
+      cost: tierCost(t, S[t].allow || {}),
+      cta: CTA[t],
+      recommended: S.rec === t && S[t].state === 'available',
+      ...S[t],
+    }));
+  }
+
+  // ⚠ REPLACE THE MOUNT'S CONTENTS, never outerHTML on a placeholder. pageShell() returns a shell
+  // whose root class is not `#app`, so removing `#app, .m3-shell` left the previous render in the
+  // DOM and the page quietly grew a second copy on every state switch — four cards, two primaries.
+  // Caught by asserting the counts rather than by looking at it.
+  const MOUNT = document.getElementById('app');
+
+  function render() {
+    const S = STATES[current];
+    MOUNT.innerHTML = DS.pageShell({
+      active: 'portfolio',
+      aux: {},
+      masthead: DS.masthead({
+        breadcrumb: { label: 'Portfolio', href: '#' },
+        crumbTail: 'New assessment',
+        eyebrow: 'New assessment',
+        headline: 'How should we read this venture?',
+        subheading: 'Two different questions, not two sizes of the same one. Pick the read before you set anything up.',
+      }),
+      body: `<div class="brief">
+        ${DS.wizardSteps(['Choose the read', 'Venture & evidence', 'Run'], 0)}
+        ${DS.tierChoice({
+          groups: TIER_GROUPS,
+          lede: 'Both reads start from the same evidence. One tells you whether this is worth your time; the other tells you what you would conclude, and shows its working.',
+          tiers: tiersFor(current),
+          note: 'You can commission the full assessment later from the venture itself — a pre-screen is never a dead end.',
+        })}
+      </div>`,
+    });
+    DS.initShell();
+
+    // the state bar, re-appended after every render
+    document.querySelector('.sw')?.remove();
+    const bar = document.createElement('div');
+    bar.className = 'sw';
+    bar.innerHTML = `<span class="lab">Licence state</span>` +
+      Object.entries(STATES).map(([k, v]) =>
+        `<button type="button" data-k="${k}" class="${k === current ? 'on' : ''}">${v.label}</button>`).join('');
+    bar.addEventListener('click', e => {
+      const k = e.target.closest('button')?.dataset.k;
+      if (k && k !== current) { current = k; render(); }
+    });
+    document.body.appendChild(bar);
+  }
+
+  render();
+</script>
+</body>
+</html>
