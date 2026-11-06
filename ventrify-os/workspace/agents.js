@@ -168,11 +168,19 @@
       const what = pend.added && pend.changed
         ? `${pend.added} new, ${pend.changed} updated`
         : `${n} ${pend.added ? 'new' : 'updated'} document${n === 1 ? '' : 's'}`;
+      // WHICH request they answered changes what to do next. After an advance the operator was waiting
+      // in order to run the FULL assessment, not to re-score a pre-screen — so say so and send them
+      // there. `advance` outranks `lastRequestAt` because it is the more specific of the two.
+      const adv = p.advance || {};
+      const answered = adv.sentAt
+        ? 'The founder has answered your full-assessment request. '
+        : (room.lastRequestAt ? 'The founder has answered your document request. ' : '');
+      const next = adv.sentAt && (p.tier || 'full') === 'prescreen'
+        ? 'Read them in, then run the full assessment against the new evidence.'
+        : 'Read them into the assessment, then re-run to score against the new evidence.';
       return { id: `act-room-new-${p.id}`, type: 'dataroom-new', urgency: 'high', programId: p.id,
         title: `${what} in the ${p.name} data room`,
-        detail: (names ? `${names}${extra}. ` : '')
-          + (room.lastRequestAt ? 'The founder has answered your document request. ' : '')
-          + 'Read them into the assessment, then re-run to score against the new evidence.',
+        detail: (names ? `${names}${extra}. ` : '') + answered + next,
         age: ago(pend.detectedAt) || 'just now', cta: 'Read the new documents', score: 92 };
     }
 
@@ -187,6 +195,25 @@
       }
       return null; // assumed reviewed after a week — drops off the queue
     }
+    // AWAITING THE FOUNDER. Entirely derived: an advance was sent, this is still a pre-screen, and no new
+    // documents have landed. Nothing has to be cleared when they answer — the dataRoom.pending item above
+    // outranks this one and takes over, and unlocking to `full` removes the condition altogether. A status
+    // field maintained by hand would be a fourth thing that can disagree with the other three.
+    const adv2 = p.advance || {};
+    if (adv2.sentAt && (p.tier || 'full') === 'prescreen') {
+      const days = daysSince(adv2.sentAt);
+      const chase = days != null && days >= 7;
+      return { id: `act-advance-wait-${p.id}`, type: 'assessment-awaiting-founder',
+        urgency: chase ? 'medium' : 'low', programId: p.id,
+        title: `Waiting on ${p.name}`,
+        detail: `${adv2.asks ? `${adv2.asks} ask${adv2.asks === 1 ? '' : 's'} sent` : 'Told they are through'} to ${adv2.to || 'the founder'}`
+          + (days != null ? ` ${days === 0 ? 'today' : days === 1 ? 'yesterday' : days + ' days ago'}` : '')
+          + '. ' + (chase
+            ? 'Nothing new in the room yet — worth a chase, or run the full assessment on what you already have.'
+            : 'New documents will show up here on their own. You can run the full assessment without waiting.'),
+        age: ago(adv2.sentAt) || 'just now', cta: 'Open assessment', score: chase ? 58 : 34 };
+    }
+
     if (!hasPitch) {
       return { id: `act-assess-deck-${p.id}`, type: 'assessment-deck', urgency: 'medium', programId: p.id,
         title: `Upload a deck for ${p.name}`,

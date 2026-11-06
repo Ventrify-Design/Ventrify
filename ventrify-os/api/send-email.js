@@ -97,6 +97,7 @@ function welcomeHtml({ orgName, planLabel, prescreens, link }) {
         <p style="margin:22px 0 0;font-size:13px;line-height:1.6;color:#8a8f98;">Sign in with the same email address and we'll send you a one-time link. If you didn't create this workspace, reply and tell us.</p>
       </td></tr>
       <tr><td style="padding:22px 32px 26px;border-top:1px solid rgba(0,0,0,0.06);">
+        ${operatorEmail ? `<p style="margin:0 0 6px;font-size:13px;line-height:1.6;color:#6b7280;">Sent by ${esc(operatorEmail)} &mdash; replying to this email reaches them directly.</p>` : ''}
         <p style="margin:0;font-size:12px;color:#aab0b8;">Powered by Ventrify OS</p>
       </td></tr>
     </table>
@@ -133,6 +134,70 @@ function docsRequestHtml({ orgName, ventureName, operatorName, missing, extras, 
   </body></html>`;
 }
 
+
+// -- ADVANCE TO A FULL ASSESSMENT ------------------------------------------------------------------
+// The founder's half of the pre-screen. An operator who likes what they read tells the founder they
+// are through, and asks for the specific things that would make the full assessment worth running.
+//
+// ASKS, NEVER VERDICTS. Of the six pre-screen findings, exactly TWO may leave the building:
+//
+//   thesis   "What has to be true for this to work"      - played back so they can CORRECT it
+//   tension  "Where your documents disagree, both sides" - already written in the second person
+//
+// The other four stay inside. `bear` is defined in the product as "how it will be argued in the room
+// the founder isn't in" - mailing it to the founder inverts its own definition. `bull`, `competitive`
+// and `team` are judgements about them, and the BAND is an investment decision about them: sending it
+// costs the operator their position and teaches the founder how to game the next read.
+//
+// Nothing here is composed by the operator beyond a short note. The content is assembled server-side
+// from the stored snapshot and a live room check, which is what makes it safe to send from a verified
+// domain - see the note on docs-request. Gate: tools/founder-safe.mjs.
+function advanceHtml({ orgName, ventureName, operatorName, operatorEmail, thesis, tensions, nextTests, missing, extras, folderUrl, note }) {
+  const org = esc(orgName), venture = esc(ventureName);
+  const bullet = (t, sub) => `<tr><td style="padding:9px 0;border-bottom:1px solid rgba(0,0,0,0.06);"><div style="font-size:14px;font-weight:600;color:#141414;">${esc(t)}</div>${sub ? `<div style="font-size:13px;line-height:1.5;color:#6b7280;margin-top:2px;">${esc(sub)}</div>` : ''}</td></tr>`;
+  const plain = (t) => `<tr><td style="padding:7px 0;"><div style="font-size:14px;line-height:1.55;color:#333;">&bull;&nbsp;&nbsp;${esc(t)}</div></td></tr>`;
+  const block = (title, rows) => rows
+    ? `<h2 style="margin:26px 0 8px;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#8a8f98;font-weight:600;">${esc(title)}</h2>
+       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0;">${rows}</table>`
+    : '';
+
+  return `<!doctype html><html><body style="margin:0;background:#f4f5f7;font-family:-apple-system,'Segoe UI',Inter,Helvetica,Arial,sans-serif;color:#141414;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5f7;padding:32px 12px;"><tr><td align="center">
+    <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:16px;border:1px solid rgba(0,0,0,0.06);overflow:hidden;">
+      <tr><td style="padding:28px 32px 0;">
+        <div style="font-weight:700;letter-spacing:-0.01em;font-size:15px;color:#0036FF;">${org}</div>
+      </td></tr>
+      <tr><td style="padding:18px 32px 8px;">
+        <h1 style="margin:0 0 12px;font-size:23px;letter-spacing:-0.02em;line-height:1.25;">${venture} is going through to a full assessment</h1>
+        <p style="margin:0 0 18px;font-size:15px;line-height:1.6;color:#444;">${operatorName ? esc(operatorName) + ' at ' + org : org} has read ${venture} and wants to take it further. The full assessment is a much deeper read, and it is worth running once a few things are in place.</p>
+        ${note ? `<p style="margin:0 0 18px;padding:12px 14px;background:#f4f5f7;border-radius:10px;font-size:14px;line-height:1.6;color:#333;">${esc(note)}</p>` : ''}
+
+        ${block('What we understood you to be claiming', thesis.map(t => plain(t.point)).join(''))}
+        ${thesis.length ? `<p style="margin:10px 0 0;font-size:13px;line-height:1.6;color:#8a8f98;">If we have any of that wrong, tell us &mdash; it is the part the whole assessment is built on.</p>` : ''}
+
+        ${block('Where your documents disagree', tensions.map(t => bullet(t.point, t.docName ? 'Seen in ' + t.docName : '')).join(''))}
+        ${tensions.length ? `<p style="margin:10px 0 0;font-size:13px;line-height:1.6;color:#8a8f98;">These are not accusations &mdash; two documents written months apart often differ for good reasons. Resolving them before the full read saves a lot of back and forth.</p>` : ''}
+
+        ${block('What we could not find in the data room', missing.map(m => bullet(m.label, m.want)).join('') + extras.map(e => bullet(e.label, e.why)).join(''))}
+
+        ${block('What the full assessment will test', nextTests.map(t => plain(t)).join(''))}
+
+        <div style="margin:28px 0 0;">
+        ${folderUrl
+          ? `<a href="${esc(folderUrl)}" style="display:inline-block;background:#0036FF;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:13px 26px;border-radius:10px;">Add them to the data room &rarr;</a>
+             <p style="margin:16px 0 0;font-size:13px;line-height:1.6;color:#8a8f98;">Drop everything straight into the shared folder, including an updated deck if you have one. We pick it up from there &mdash; nothing else to do.</p>`
+          : `<p style="margin:0;font-size:14px;line-height:1.6;color:#444;">Reply to this email with an updated deck and anything from the list above, and we will take it from there.</p>`}
+        </div>
+        <p style="margin:18px 0 0;font-size:13px;line-height:1.6;color:#8a8f98;">If something on the list is already in the room inside another document, just say so &mdash; a document we could not see is not a mark against you.</p>
+      </td></tr>
+      <tr><td style="padding:22px 32px 26px;border-top:1px solid rgba(0,0,0,0.06);">
+        <p style="margin:0;font-size:12px;color:#aab0b8;">Powered by Ventrify OS</p>
+      </td></tr>
+    </table>
+  </td></tr></table>
+  </body></html>`;
+}
+
 const { checkRoom } = require('./_roomcheck.js');
 
 // The ONLY cross-origin caller is the marketing site's contact form: the page is served from
@@ -159,7 +224,11 @@ module.exports = async (req, res) => {
   try {
     const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
     const email = String(body.email || '').trim().toLowerCase();
-    if (!email) { res.status(400).json({ error: 'email_required' }); return; }
+    // A recipient is required to SEND. A preview sends nothing, and the operator should be able to read
+    // what would go out before deciding who gets it — an engagement with no founder email on file would
+    // otherwise have to be filled in blind.
+    const isPreviewOnly = body.type === 'prescreen-advance' && !!body.preview;
+    if (!email && !isPreviewOnly) { res.status(400).json({ error: 'email_required' }); return; }
 
     // ── CONTACT (public, unauthenticated) ───────────────────────────────────────────────────────────
     // The pricing CTAs were four `mailto:` links, which on mobile and in webmail frequently do nothing
@@ -332,6 +401,105 @@ module.exports = async (req, res) => {
         dataRoom: { ...(eng.dataRoom || {}), lastRequestAt: new Date().toISOString(), lastRequestTo: email, lastRequestBy: caller, lastRequestItems: missing.length + extras.length }
       }, { merge: true });
       res.status(200).json({ ok: true, requested: missing.length + extras.length });
+      return;
+    }
+
+    // -- ADVANCE TO A FULL ASSESSMENT (operator -> founder) -----------------------------------------
+    // Same shape as docs-request: authenticated, org-scoped, content assembled HERE from stored state.
+    // Unlike docs-request this does NOT refuse when the room is complete - "you are through, send us
+    // your latest deck" is worth sending on its own, and a complete room is the best case for it.
+    if (body.type === 'prescreen-advance') {
+      const engagementId = String(body.engagementId || '').trim();
+      if (!body.idToken || !engagementId) { res.status(400).json({ error: 'bad_request' }); return; }
+      ensureAdmin();
+      let decoded;
+      try { decoded = await admin.auth().verifyIdToken(body.idToken); }
+      catch (e) { res.status(401).json({ error: 'invalid_token' }); return; }
+      const caller = (decoded.email || '').toLowerCase();
+      const db = admin.firestore();
+      const engSnap = await db.collection('engagements').doc(engagementId).get();
+      if (!engSnap.exists) { res.status(404).json({ error: 'engagement_not_found' }); return; }
+      const eng = engSnap.data();
+      const orgSnap = await db.collection('organisations').doc(eng.orgId || 'default').get();
+      const ops = ((orgSnap.exists && orgSnap.data().operatorEmails) || []).map(e => String(e).toLowerCase());
+      if (!ops.includes(caller)) { res.status(403).json({ error: 'forbidden' }); return; }
+
+      // There has to be something to advance FROM. A v1 snapshot has no nuggets and no nextTests, so it
+      // would send a near-empty letter under a confident heading.
+      const ps = eng.prescreen2 || {};
+      if (ps.v !== 2 || ps.state !== 'done') {
+        res.status(409).json({ error: 'not_prescreened', detail: 'This venture has no finished pre-screen to advance from.' });
+        return;
+      }
+
+      const docsSnap = await db.collection('engagements').doc(engagementId).collection('founderDocs').get();
+      const check = checkRoom(docsSnap.docs.map(d => ({ name: d.data().name, text: d.data().text || '' })));
+      const missing = check.classes.filter(c => !c.found).map(c => ({ label: c.label, want: c.want }));
+      const extras = check.strengtheners.map(e => ({ label: e.label, why: e.why }));
+
+      // THE ALLOWLIST IS THE WHOLE SAFETY PROPERTY. Two keys, named literally, never a loop over
+      // ps.nuggets - a future seventh finding must be let out deliberately, not inherited by accident.
+      const pointsOf = (k) => ((((ps.nuggets || {})[k]) || {}).points || []);
+      const clean = (v) => String(v == null ? '' : v).slice(0, 400);
+      const thesis = pointsOf('thesis').slice(0, 4).map(pt => ({ point: clean(pt.point) })).filter(t => t.point);
+      const tensions = pointsOf('tension').slice(0, 4)
+        .map(pt => ({ point: clean(pt.point), docName: clean(pt.docName).slice(0, 80) }))
+        .filter(t => t.point);
+      const nextTests = (Array.isArray(ps.nextTests) ? ps.nextTests : []).slice(0, 3).map(clean).filter(Boolean);
+
+      const ventureName = eng.ventureName || eng.name || 'the venture';
+      const orgName = (orgSnap.exists && orgSnap.data().name) || 'Ventrify';
+      const folderUrl = (eng.dataRoom && eng.dataRoom.folderUrl) || '';
+
+      // PREVIEW RETURNS THE REAL THING AND SENDS NOTHING. The operator is forwarding findings about the
+      // founder's own documents to that founder, so they have to see exactly what goes - and a preview
+      // the CLIENT assembles would be a second implementation that drifts from this one the first time
+      // either changes. Same inputs, same allowlist, same room check, one code path.
+      if (body.preview) {
+        res.status(200).json({
+          ok: true, preview: true,
+          to: email, venture: ventureName,
+          thesis, tensions, nextTests, missing, extras,
+          folderUrl: !!folderUrl,
+          asks: missing.length + extras.length + tensions.length,
+          lastSentAt: (eng.advance && eng.advance.sentAt) || null,
+          lastSentTo: (eng.advance && eng.advance.to) || null,
+        });
+        return;
+      }
+
+      // decoded.name is set when the identity provider has one; magic-link sign-ins usually do not,
+      // so the opening falls back to the firm. An email address reads as a machine wrote it.
+      const html = advanceHtml({
+        orgName, ventureName, operatorName: String(decoded.name || '').slice(0, 80), operatorEmail: caller,
+        thesis, tensions, nextTests, missing, extras, folderUrl,
+        note: String(body.note || '').slice(0, 600),
+      });
+      const sendResp = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from: process.env.INVITE_FROM_EMAIL || 'Ventrify <hello@ventrify.io>',
+          to: [email], reply_to: caller,
+          subject: `${ventureName} — going through to a full assessment`,
+          html
+        })
+      });
+      if (!sendResp.ok) { const detail = await sendResp.text(); res.status(502).json({ error: 'send_failed', detail: detail.slice(0, 300) }); return; }
+
+      // THE STAGE, not just a receipt. The queue derives "awaiting founder" from sentAt plus the absence
+      // of dataRoom.pending, so nothing has to be cleared by hand when the founder answers - the watcher
+      // already sets pending, and that item outranks this one.
+      const asks = missing.length + extras.length + tensions.length;
+      const prev = eng.advance || {};
+      await db.collection('engagements').doc(engagementId).set({
+        advance: {
+          sentAt: new Date().toISOString(), to: email, by: caller,
+          asks, missing: missing.length, tensions: tensions.length, tests: nextTests.length,
+          count: (prev.count || 0) + 1,
+        }
+      }, { merge: true });
+      res.status(200).json({ ok: true, asks, tensions: tensions.length, missing: missing.length, tests: nextTests.length });
       return;
     }
 

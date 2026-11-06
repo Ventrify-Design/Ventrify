@@ -449,6 +449,40 @@ export async function revokeDecision({ engagementId } = {}) {
 
 // ---- shareable memo link (VERBATIM /api/memo action:share|revoke-share) ----
 // The caller builds the memo html via memo-view.dealMemoHTML(p, snap, org, {shared:true}) and passes it.
+// ADVANCE A PRE-SCREENED VENTURE TO A FULL ASSESSMENT - the founder's half of the pre-screen.
+//
+// TWO CALLS, ONE SERVER CODE PATH. The preview is not a client-side rendering of what we think will be
+// sent; it is the send endpoint stopping one line short of Resend and returning what it assembled. The
+// operator is forwarding findings about the founder's own documents back to that founder, so "what you
+// saw is what went" has to be a property of the system, not a promise.
+export async function advancePreview({ engagementId, email = '' } = {}) {
+  const token = await idToken();
+  if (!token) throw new Error('Please sign in again.');
+  const resp = await fetch('/api/send-email', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ type: 'prescreen-advance', preview: true, idToken: token, engagementId, email })
+  });
+  const d = await resp.json().catch(() => ({}));
+  if (!resp.ok) {
+    throw new Error(d.error === 'not_prescreened'
+      ? 'This venture has no finished pre-screen to advance from.'
+      : (d.detail || d.error || ('Could not prepare the message (' + resp.status + ')')));
+  }
+  return d;
+}
+
+export async function advanceSend({ engagementId, email, note = '' } = {}) {
+  const token = await idToken();
+  if (!token) throw new Error('Please sign in again.');
+  const resp = await fetch('/api/send-email', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ type: 'prescreen-advance', idToken: token, engagementId, email, note })
+  });
+  const d = await resp.json().catch(() => ({}));
+  if (!resp.ok) throw new Error(d.detail || d.error || ('Could not send (' + resp.status + ')'));
+  return d;   // { asks, tensions, missing, tests }
+}
+
 export async function shareMemo({ engagementId, html, meta } = {}) {
   const token = await idToken();
   if (!token) throw new Error('Please sign in again.');
