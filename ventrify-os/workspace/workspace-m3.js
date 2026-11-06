@@ -283,7 +283,7 @@ window.__naRequestDocs = async () => {
   }
 };
 
-// RUN A PRE-SCREEN. The free ~1-minute read that returns a RANGE rather than a score.
+// RUN A PRE-SCREEN. The free ~5-minute read that returns a BAND rather than a score.
 //
 // Same create + ingest chain as the full run, then it stops short of dispatch and scores in-request
 // instead. The reveal happens in the create screen's right-hand column — the panel that was already
@@ -376,7 +376,7 @@ window.__wsRunPrescreen = async () => {
   // takes {key,label} and does not care which, so the swap needs no change to the component.
   const catList = Object.entries(DS_PRESCREEN.PS2_NUGGETS).map(([key, n]) => ({ key, label: n.title }));
 
-  const PS_SUB = 'About three minutes. Keep this tab open — the run is driven from your browser, so closing it stops the run.';
+  const PS_SUB = 'About five minutes. Keep this tab open — the run is driven from your browser, so closing it stops the run.';
   const repaint = () => {
     const h = naStageHost(PS_SUB); if (!h) return;
     const fr = naFileRows();
@@ -472,12 +472,12 @@ window.__wsCreateAssessment = async () => {
   const W = window.WORKSPACE || {};
   // A TWO-HOUR RUN SHOULD NOT START ON ONE CLICK. The unlock path has always confirmed; this one did
   // not, and it is the filled button for every licensee — so the first real user pressed it meaning to
-  // test the three-minute pre-screen and started the full agentic assessment instead. The pre-screen
+  // test the five-minute pre-screen and started the full agentic assessment instead. The pre-screen
   // is offered here by name, because at that moment it is probably what they wanted.
   if (W.mode === 'live') {
     const go = await window.__confirm({
       title: 'Run the full assessment?',
-      message: 'This is the complete agentic run — deep research, diligence, a measured score and a deal memo. It takes about two hours in the cloud.\n\nIf you want a quick read instead, cancel and choose “Run pre-screen first” — that takes about three minutes and is free.',
+      message: 'This is the complete agentic run — deep research, diligence, a measured score and a deal memo. It takes about two hours in the cloud.\n\nIf you want a quick read instead, cancel and choose “Run pre-screen first” — that takes about five minutes and is free.',
       confirmLabel: 'Run full assessment',
     });
     if (!go) return;

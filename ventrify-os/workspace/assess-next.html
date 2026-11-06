@@ -38,7 +38,7 @@
   // shared engagement-actions.js module (every /api call is verbatim). No pipeline reimplementation.
   import * as DS from '../shared/m3/ds.js';
   import { adaptEngagement } from '../shared/m3/adapter.js';
-  import { resolveActions } from '../shared/actions.js';
+  import { resolveActions, ACTIONS } from '../shared/actions.js';
   import { capsFor, entitlements, isPrescreen, unlockRoute } from '../shared/entitlements.js';
   import { wsNavConfig, wsBrandConfig, wsAccountConfig, mountOrgSwitcherM3 } from './workspace-m3.js';
   import * as EA from './engagement-actions.js';
@@ -672,18 +672,20 @@
 
   // ── masthead actions (≤3, ≤1 filled) ──
   function mastheadActions(st) {
-    // A PRE-SCREENED engagement has exactly one thing to offer: the full assessment. The unlock is the
-    // masthead primary — where shared/actions.js already says the primary lives — rather than a widget
-    // bolted into a corner, and with BILLING_ENFORCED false it simply runs the assessment.
-    // A PRE-SCREENED engagement has two honest exits, and they are not the same decision: run the full
-    // assessment on what we already hold, or tell the founder they are through and ask for what would
-    // make that run worth two hours. Unlock stays the filled primary; the ask is outlined beside it, so
-    // the masthead keeps one filled button and the conformance gate holds.
+    // A PRE-SCREENED engagement has three things it can do next, and they are not the same weight.
+    // Unlocking the full assessment is the decision about the VENTURE, so it keeps the filled primary.
+    // SHARING is what an operator does with a finished pre-screen most often — the document exists the
+    // moment the run ends and it is the one artefact that reaches people outside the firm — so it sits
+    // beside the unlock, outlined, and the masthead keeps exactly one filled button for the
+    // conformance gate. Emailing the FOUNDER is the rarer exit and lives in the utility rail
+    // (window.RAIL_ACTIONS.advance_founder).
+    //
+    // Label and icon come from shared/actions.js rather than being retyped here, so the registry stays
+    // the single source of what this action is called wherever it renders.
     if (isPrescreen(p)) return [
       { variant: 'filled', icon: 'lock_open', label: 'Unlock full assessment', onclick: 'window.__eaUnlock()' },
-      { variant: 'outlined', icon: 'outgoing_mail',
-        label: (p.advance && p.advance.sentAt) ? 'Chase the founder' : 'Ask the founder first',
-        onclick: 'window.__eaAdvance()' },
+      { variant: ACTIONS.share_prescreen.variant || 'outlined', icon: ACTIONS.share_prescreen.icon,
+        label: ACTIONS.share_prescreen.label, onclick: 'window.__eaSharePrescreen()' },
     ];
     // Deal memo / Share / Manage now live in the utility rail (window.RAIL_ACTIONS). The masthead keeps
     // ONLY the primary workflow CTA for the current state.
@@ -761,7 +763,7 @@
         })
       : r
         ? `<div class="brief">${DS.rangeHero(r, { docCount: r.docCount })}${DS.rangeStale(r, (A.inputs && A.inputs.docs && A.inputs.docs.length) || 0)}<hr class="rule">${DS.rangeCoverage(r.categories || [])}${DS.rangeFindings(r.categories || [], { assumed: r.assumed })}${DS.rangeNext()}</div>`
-        : `<div class="brief">${DS.emptyState({ title: 'Not pre-screened yet', text: 'Attach a pitch deck and run the free pre-screen to see where this venture stands in about a minute.' })}</div>`;
+        : `<div class="brief">${DS.emptyState({ title: 'Not pre-screened yet', text: 'Attach a pitch deck and the data room, then run the free pre-screen — it reads both and tells you where this venture stands in about five minutes.' })}</div>`;
     return `<div class="tab-panel active">${body}</div>
       <div class="tab-panel">${dataRoomBody()}</div>`;
   }
@@ -968,7 +970,11 @@
   window.RAIL_ACTIONS = {
     deal_memo: () => stateBits().hasVerdict ? window.__eaDownload() : window.__toast('The deal memo is ready once the assessment has a verdict.'),
     share: () => stateBits().hasVerdict ? window.__eaShare() : window.__toast('You can share the memo once the assessment has a verdict.'),
-    share_prescreen: () => window.__eaSharePrescreen(),
+    // The founder's half of the pre-screen. Rail, not masthead — see the note in mastheadActions.
+    // Every rail id that carries a capability MUST appear here or in RAIL_PANELS: an unbound tool does
+    // not fail, it opens ds.railPanel()'s placeholder, which looks like a half-built feature rather
+    // than a bug. tools/share-upsell.mjs joins this map against the resolved rail for both tiers.
+    advance_founder: () => window.__eaAdvance(),
     __more: () => window.__eaMore(),
   };
   window.openSources = () => window.openAux({ mode: 'push', ...DS.sourcesPanel(A) });

@@ -67,8 +67,19 @@ export const ACTIONS = {
   share:         { label: 'Share',         icon: 'ios_share',    tier: 'aux', panel: 'share', capability: 'share' },
   // The pre-screen's share. A SEPARATE action rather than a mode of `share`, because the two publish
   // different documents and are gated by different capabilities — entitlements makes them mutually
-  // exclusive, so the rail shows exactly one of them whatever the tier.
-  share_prescreen: { label: 'Share',       icon: 'ios_share',    tier: 'aux', panel: 'share_prescreen', capability: 'sharePrescreen' },
+  // exclusive, so exactly one of them is offered whatever the tier.
+  //
+  // IT IS A MASTHEAD ACTION, AND THE MEMO'S SHARE IS NOT. The surfaces differ because the pages do.
+  // On a FULL assessment the masthead belongs to the lifecycle — submit, approve, finalise — and the
+  // memo's share waits in the rail for a verdict that does not exist yet. On a PRE-SCREEN there is no
+  // lifecycle and the document is already finished the moment the run ends, so sharing it is one of
+  // the two things an operator does next. The other is `advance_founder`.
+  share_prescreen: { label: 'Share',       icon: 'ios_share',    tier: 'primary', variant: 'outlined', panel: 'share_prescreen', capability: 'sharePrescreen' },
+  // Tell the founder they are through, and ask for what would make the full read worth two hours.
+  // AUXILIARY, not primary: it leaves the building, it is addressed to someone who is not in the room,
+  // and it is the rarer of the two exits. A rail tool is the right weight for it — the masthead is for
+  // what the operator does with the venture, not what they send about it.
+  advance_founder: { label: 'Email the founder', icon: 'outgoing_mail', tier: 'aux', panel: 'advance', capability: 'advanceFounder' },
   view_settings: { label: 'View settings', icon: 'tune',         tier: 'aux', panel: 'view', meta: true },
   help:          { label: 'Help',          icon: 'help',         tier: 'aux', panel: 'help', meta: true },
   // overflow — rail kebab (rare / restricted / destructive)
@@ -92,7 +103,7 @@ export const ACTION_MODEL = {
       finalised:         { operator: null,       master_operator: null },
       rejected:          { operator: 'reopen',   master_operator: 'reopen' },
     },
-    rail:     ['sources', 'discuss', 'activity', 'assist', 'research_peek', 'deal_memo', 'share', 'share_prescreen', 'view_settings', 'help'],
+    rail:     ['sources', 'discuss', 'activity', 'assist', 'research_peek', 'deal_memo', 'share', 'advance_founder', 'view_settings', 'help'],
     overflow: ['recall', 'reassign', 'archive', 'delete'],
   },
   research:  { primary: null, rail: ['discuss', 'assist', 'export', 'help'], overflow: [] },

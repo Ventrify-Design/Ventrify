@@ -324,9 +324,9 @@ export function workspaceEmpty({ assessOnly = false, orgName = 'your Workspace',
   const eyebrow = prescreen ? 'First pre-screen' : assessOnly ? 'First assessment' : 'First engagement';
   const title = prescreen ? 'Pre-screen your<br>first venture.' : assessOnly ? 'Run your first<br>assessment.' : 'Create your first<br>engagement.';
   const sub = prescreen
-    ? 'Upload a pitch deck and whatever data room you have. In about three minutes you get a verdict — is this worth a full assessment’s time? — with the case argued both ways, who else is already doing this, and where your own documents disagree. Free.'
+    ? 'Upload a pitch deck and whatever data room you have. In about five minutes you get a verdict — is this worth a full assessment’s time? — with the case argued both ways, who else is already doing this, and where your own documents disagree. Free.'
     : assessOnly
-    ? 'Click “New assessment”, then upload a pitch deck and whatever supporting documents you have. Pre-screen it free in about three minutes, or run the full assessment — all here, with no founder needed.'
+    ? 'Click “New assessment”, then upload a pitch deck and whatever supporting documents you have. Pre-screen it free in about five minutes, or run the full assessment — all here, with no founder needed.'
     : 'Click “New engagement”. A five-step wizard captures the brief. The platform sets up the workspace, seeds the agents, opens Phase 0, and slots the venture into this portfolio.';
   /* ⚠ THE BUILD STEPS ARE GONE. A full licensee's first screen used to open with "Brief intake — an
      eight-section brief", "Hub seeding — the three-layer data room is scaffolded", "Agent wiring —
@@ -342,7 +342,7 @@ export function workspaceEmpty({ assessOnly = false, orgName = 'your Workspace',
      is worth running. Leaving it out made "unlimited assessments" read as the only thing on offer. */
   const assessSteps = [
     ['Deck', 'Deck & data room', 'Upload the pitch deck plus whatever supporting documents you have. Large files are extracted in-browser.'],
-    ['Screen', 'Pre-screen, free', 'A verdict in about three minutes — is this one worth a full assessment’s time? Free and unlimited, on every venture you look at.'],
+    ['Screen', 'Pre-screen, free', 'A verdict in about five minutes — is this one worth a full assessment’s time? Free and unlimited, on every venture you look at.'],
     ['Assess', 'The full assessment', 'Deep research, a competitor teardown, founder diligence, and a weighted 0–100 score across seven categories.'],
     ['Verdict', 'Decision-grade verdict', 'Recommendation, thesis, the case argued both ways, and how to strengthen it — ready to sign off or share.'],
   ];

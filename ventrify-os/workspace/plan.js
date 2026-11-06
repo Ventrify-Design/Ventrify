@@ -20,7 +20,7 @@
 // out — one boolean per preset is the whole migration when the second product arrives.
 //   • limits       — HOW MUCH of it   ({ assessments, builds, prescreens }; null = unlimited)
 //
-// `assessments` counts FULL-TIER engagements only. A pre-screen is a ~1-minute triage
+// `assessments` counts FULL-TIER engagements only. A pre-screen is a ~5-minute triage
 // read, not a two-hour run, so burning a full-assessment credit on one would discourage
 // exactly the behaviour that saves us the compute. It gets its own allowance. Engagement
 // TIER itself lives in shared/entitlements.js; this file owns the LICENCE.

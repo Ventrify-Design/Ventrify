@@ -1,5 +1,5 @@
 /**
- * _prescreen — the free ~1-minute read that returns a score RANGE, before anyone pays for a full run.
+ * _prescreen — the free read that returned a score RANGE, before anyone paid for a full run.
  *
  * ⚠️ SUPERSEDED 2026-10-31 by _prescreen2.js. The range and this whole 21-probe document-scoring
  * construction are retired in favour of a three-band "is this worth assessing?" verdict built from a
@@ -40,8 +40,11 @@ const API = 'https://api.anthropic.com/v1/messages';
 // "rate limit of 0 fast mode input tokens per minute", which is a capability answer, not back-pressure.
 //
 // DEFAULT IS STANDARD, decided with the operator on 2026-10-30: half the price, roughly twice the
-// wall-clock, identical scores. The promise is "under three minutes", not "about a minute". Pass
-// speed:'fast' explicitly if an allocation is ever granted.
+// wall-clock, identical scores. Pass speed:'fast' explicitly if an allocation is ever granted.
+//
+// What a licensee is TOLD this costs in time is stated in prose in eleven files and computed in none:
+// tools/run-timing.mjs owns that number. It is a promise about the whole run, which since 2026-11-06
+// includes the data-room read, so it is not this file's to set — see the header of _prescreen2.js.
 const DEFAULT_SPEED = 'standard';
 const FAST_BETA = 'fast-mode-2026-02-01';
 

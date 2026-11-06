@@ -421,7 +421,7 @@ It is a research preview with its own allocation and this organisation has none.
 it is a capability answer, not back-pressure.
 
 **DECIDED with the operator: run at STANDARD speed.** Half the price ($4/$20 rather than $8/$40) and
-roughly twice the wall-clock. The promise becomes "under three minutes", not "about a minute". Speed is
+roughly twice the wall-clock. Speed is
 chosen once per run, before anything is cached, and never switched mid-run — switching invalidates the
 prompt cache and reprices every remaining probe.
 

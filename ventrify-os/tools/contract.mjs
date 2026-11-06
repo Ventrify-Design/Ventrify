@@ -177,8 +177,12 @@ for (const p of ['/api/ingest-docs', '/api/create-engagement', '/api/dispatch-ru
 }
 
 console.log('\n4. THE CLIENT MODULES THE PAGES IMPORT ARE SERVED');
+// prescreen-bands.js is imported BY ds.js, so a 404 on it takes down the whole render layer and
+// every page with it — the most expensive single file to get wrong in the tree.
 for (const p of ['/workspace/prescreen2.js', '/workspace/prescreen.js', '/shared/m3/ds.js',
-                 '/shared/m3/workspace-chrome.css', '/shared/actions.js', '/shared/vss-rubric.js']) {
+                 '/shared/m3/workspace-chrome.css', '/shared/actions.js', '/shared/vss-rubric.js',
+                 '/shared/prescreen-bands.js', '/shared/m3/brand-lockup.js',
+                 '/assets/brand/verdictscore-lockup-mail.png']) {
   const r = await fetch(BASE + p);
   ok(r.ok, `${p.padEnd(34)} ${r.status}`);
 }

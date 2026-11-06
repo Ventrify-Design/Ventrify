@@ -1,5 +1,13 @@
 /**
- * _prescreen2 — the free ~1-minute read that answers ONE question: is this venture worth assessing?
+ * _prescreen2 — the free ~5-minute read that answers ONE question: is this venture worth assessing?
+ *
+ * FIVE, AND IT IS NOT ALL THIS FILE. The promise was "about a minute" at v2's first run, then
+ * "under three" when the engine settled on standard speed, and five from 2026-11-06, when the
+ * data-room read joined the run instead of being a step before it. This engine's own share has not
+ * changed; the wall-clock a licensee experiences includes the ingest in front of it. Eleven files
+ * state that number in prose and none of them compute it — tools/run-timing.mjs is what keeps them
+ * agreeing, and it exists because this line said "~1-minute" for five weeks after it stopped being
+ * true.
  *
  * Spec: design/prescreen-v2-spec.md. This file owns §6 (the four phases), §8.1-8.5 (the guardrails that
  * run inside every run) and the band construction. The browser owns orchestration, because Vercel Hobby

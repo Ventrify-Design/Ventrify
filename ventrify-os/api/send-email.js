@@ -30,108 +30,184 @@ function esc(s) {
   return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-function loginHtml({ surface, link }) {
-  const s = esc(surface || 'Workspace');
-  return `<!doctype html><html><body style="margin:0;background:#f4f5f7;font-family:-apple-system,'Segoe UI',Inter,Helvetica,Arial,sans-serif;color:#141414;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5f7;padding:32px 12px;"><tr><td align="center">
-    <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="max-width:480px;background:#ffffff;border-radius:16px;border:1px solid rgba(0,0,0,0.06);overflow:hidden;">
-      <tr><td style="padding:28px 32px 0;">
-        <div style="font-weight:700;letter-spacing:-0.01em;font-size:15px;color:#0036FF;">Ventrify <span style="color:#9aa0ab;font-weight:500;">OS &middot; ${s}</span></div>
+// ══ MAIL CHROME ═══════════════════════════════════════════════════════════════════════════════════
+// Every template below is built from this one shell, and it is the ONLY place the identity lives.
+//
+// WHY IT EXISTS. Six templates each carried their own copy of a white card, a #0036FF rule and
+// "Powered by Ventrify OS" — the parent brand, from before the product had an identity of its own.
+// The whole workspace renders [data-brand="verdictscore"], so the mail it sends was the one surface
+// still speaking the old dialect. Six copies also meant six places to fix, which is why the welcome
+// email's footer was a half-finished paste of the docs-request footer and threw a ReferenceError on
+// every send (see the note on welcomeHtml).
+//
+// IT IS DARK, BECAUSE THE PRODUCT IS. VerdictScore has no light mode: a white email with violet
+// buttons would look like a different company than the one the operator just left. The risk with a
+// dark email is the Outlook/Word engine, which ignores `background` on <body> and on <div> — so
+// every coloured surface here is a TABLE CELL carrying both a bgcolor attribute and an inline style,
+// and nothing relies on border-radius, flex or a background image.
+//
+// THE COLOURS ARE RESOLVED TOKENS, NOT GUESSES. An email cannot load brand.css and cannot composite
+// a translucent text step against a backdrop, so the values are flattened copies — measured in a
+// browser from brand.css with [data-brand="verdictscore"], and checked against it on every run by
+// tools/brand-fidelity.mjs. Contrast on the card: white 16.69:1, ink2 10.54:1, ink3 6.37:1, accent
+// text 7.97:1, and the dark ink on the accent fill 8.90:1. (--text-4 measures 3.74:1 and is unused.)
+const MAIL = {
+  canvas:  '#100B22',   // --brand-ground
+  card:    '#1B1B37',   // --brand-tint
+  deep:    '#140E2B',   // --v-violet-900 — masthead, close and footer
+  edge:    '#363245',   // --line-2 over the canvas
+  rule:    '#32324B',   // --line-1 over the card
+  ink1:    '#FFFFFF',   // --text-1
+  ink2:    '#CDCDD3',   // --text-2 flattened
+  ink3:    '#9F9FAB',   // --text-3 flattened
+  ruleDeep:'#3A354D',   // --line-2 over the deep blocks
+  accent:  '#B9A7FF',   // --brand-accent-2 — accent text AND the filled button
+  fill:    '#7C5CFC',   // --brand-accent — the saturated step, used as the brand rule
+  onAccent:'#140E2B',   // --text-on-accent
+  font:    "Inter,'Inter Tight',-apple-system,'Segoe UI',Helvetica,Arial,sans-serif",
+};
+
+// The lockup, as a PNG. No mail client renders inline SVG and both Gmail and Outlook strip a data:
+// URI, so this is the one raster copy of the mark — generated FROM the same path data as the inline
+// one (tools/make-lockup-png.mjs), white-on-transparent at 3x. Images are often blocked by default,
+// which is why the alt text is the product name and the firm is always named in text as well.
+const ASSETS = process.env.ASSET_ORIGIN || 'https://os.ventrify.io';
+const LOGO = `<img src="${ASSETS}/assets/brand/verdictscore-lockup-mail.png" width="121" height="24"
+  alt="VerdictScore" style="display:block;border:0;outline:none;text-decoration:none;">`;
+
+// Two weights, and the quiet one is the UPSELL. A filled white button in the close out-shouted the
+// violet one above it, so the loudest thing in an email about a specific venture was an advert. The
+// action the reader came for stays filled; the product pitch is outlined.
+const mailBtn = (href, label, tone = 'accent') => tone === 'accent'
+  ? `<a href="${esc(href)}" style="display:inline-block;background:${MAIL.accent};color:${MAIL.onAccent};
+      text-decoration:none;font-weight:600;font-size:15px;padding:13px 26px;border-radius:10px;">${label}</a>`
+  : `<a href="${esc(href)}" style="display:inline-block;background:${MAIL.deep};color:${MAIL.accent};
+      border:1px solid ${MAIL.ruleDeep};text-decoration:none;font-weight:600;font-size:14px;
+      padding:11px 22px;border-radius:10px;">${label}</a>`;
+
+// A labelled block of rows. `title` is the accent eyebrow the product uses above every section.
+const mailBlock = (title, rows) => rows
+  ? `<h2 style="margin:26px 0 9px;font-size:12px;letter-spacing:.09em;text-transform:uppercase;
+       color:${MAIL.accent};font-weight:600;">${esc(title)}</h2>
+     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0;">${rows}</table>`
+  : '';
+
+// A row with a heading and an optional sub-line, divided from the next.
+const mailRow = (t, sub) => `<tr><td style="padding:9px 0;border-bottom:1px solid ${MAIL.rule};">
+  <div style="font-size:14.5px;font-weight:600;color:${MAIL.ink1};line-height:1.5;">${esc(t)}</div>${
+  sub ? `<div style="font-size:13px;line-height:1.5;color:${MAIL.ink3};margin-top:3px;">${esc(sub)}</div>` : ''}</td></tr>`;
+
+// A plain bullet, for points that carry no second line. TWO CELLS, not a &bull; and two spaces: an
+// inline marker lets the second line of a wrapped point slide back under the dot, which at email
+// widths is most of them.
+const mailBullet = (t) => `<tr>
+  <td width="16" style="width:16px;padding:7px 0 0;vertical-align:top;font-size:14.5px;line-height:1.6;color:${MAIL.accent};">&bull;</td>
+  <td style="padding:7px 0;font-size:14.5px;line-height:1.6;color:${MAIL.ink2};">${esc(t)}</td></tr>`;
+
+const mailNote = (t) => t ? `<p style="margin:0 0 18px;padding:13px 15px;background:${MAIL.deep};
+  border-radius:10px;font-size:14.5px;line-height:1.6;color:${MAIL.ink2};">${esc(t)}</p>` : '';
+
+const mailFine = (t) => `<p style="margin:0;font-size:12.5px;line-height:1.6;color:${MAIL.ink3};">${t}</p>`;
+
+/* mailShell — the envelope. `eyebrow` sits opposite the lockup; `close` is the dark block at the
+   foot, used by the two emails that have something to sell and omitted by the four that do not. */
+function mailShell({ width = 560, eyebrow = '', body, close = '', foot = '' }) {
+  return `<!doctype html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark"><meta name="supported-color-schemes" content="dark">
+</head><body style="margin:0;padding:0;background:${MAIL.canvas};font-family:${MAIL.font};color:${MAIL.ink1};">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${MAIL.canvas}"
+         style="background:${MAIL.canvas};padding:32px 12px;"><tr><td align="center">
+    <table role="presentation" width="${width}" cellpadding="0" cellspacing="0" bgcolor="${MAIL.card}"
+           style="max-width:${width}px;background:${MAIL.card};border-radius:16px;border:1px solid ${MAIL.edge};overflow:hidden;">
+      <tr><td bgcolor="${MAIL.fill}" style="background:${MAIL.fill};height:3px;line-height:3px;font-size:0;">&nbsp;</td></tr>
+      <tr><td bgcolor="${MAIL.deep}" style="background:${MAIL.deep};padding:20px 32px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+          <td align="left" style="vertical-align:middle;">${LOGO}</td>
+          <td align="right" style="vertical-align:middle;font-size:11px;letter-spacing:.09em;
+              text-transform:uppercase;color:${MAIL.ink3};">${esc(eyebrow)}</td>
+        </tr></table>
       </td></tr>
-      <tr><td style="padding:18px 32px 8px;">
-        <h1 style="margin:0 0 12px;font-size:22px;letter-spacing:-0.02em;line-height:1.25;">Sign in to your ${s}</h1>
-        <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#444;">Click below to sign in to your Ventrify OS ${s}. No password needed.</p>
-        <a href="${link}" style="display:inline-block;background:#0036FF;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:13px 26px;border-radius:10px;">Open your ${s} &rarr;</a>
-        <p style="margin:22px 0 0;font-size:13px;line-height:1.6;color:#8a8f98;">This link signs you in and expires soon for security. If you didn't request it, you can safely ignore this email.</p>
-      </td></tr>
-      <tr><td style="padding:22px 32px 26px;margin-top:12px;border-top:1px solid rgba(0,0,0,0.06);">
-        <p style="margin:0;font-size:12px;color:#aab0b8;">Powered by Ventrify OS</p>
+      <tr><td bgcolor="${MAIL.card}" style="background:${MAIL.card};padding:24px 32px 28px;">${body}</td></tr>
+      ${close ? `<tr><td bgcolor="${MAIL.deep}" style="background:${MAIL.deep};padding:26px 32px 28px;">${close}</td></tr>` : ''}
+      <tr><td bgcolor="${MAIL.deep}" style="background:${MAIL.deep};padding:${close ? '0 32px 26px' : '20px 32px 24px'};
+              border-top:${close ? 'none' : '1px solid ' + MAIL.rule};">
+        ${foot}<p style="margin:${foot ? '8px' : '0'} 0 0;font-size:12px;color:${MAIL.ink3};">Generated by VerdictScore</p>
       </td></tr>
     </table>
   </td></tr></table>
   </body></html>`;
 }
 
+// The upsell close, shared by the two emails that reach people outside the firm. It is the same
+// argument workspace/prescreen-view.js makes: do not advertise, name the difference between what
+// they just read and what they did not get, and let the gap do the selling.
+function mailClose({ productUrl, heading, lead }) {
+  return `<p style="margin:0 0 8px;font-size:16px;font-weight:600;color:${MAIL.ink1};">${esc(heading)}</p>
+    <p style="margin:0 0 15px;font-size:13.5px;line-height:1.7;color:${MAIL.ink2};">${esc(lead)}</p>
+    ${mailBtn(productUrl, 'See what a full assessment looks like', 'quiet')}`;
+}
+
+function loginHtml({ surface, link }) {
+  const s = esc(surface || 'Workspace');
+  return mailShell({ width: 480, eyebrow: `Sign in · ${s}`, body: `
+    <h1 style="margin:0 0 12px;font-size:22px;letter-spacing:-0.02em;line-height:1.25;color:${MAIL.ink1};">Sign in to your ${s}</h1>
+    <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:${MAIL.ink2};">Click below to sign in. No password needed.</p>
+    ${mailBtn(link, `Open your ${s} &rarr;`)}
+    <p style="margin:22px 0 0;font-size:13px;line-height:1.6;color:${MAIL.ink3};">This link signs you in and expires soon for security. If you didn't request it, you can safely ignore this email.</p>` });
+}
+
 function inviteHtml({ orgName, ventureName, link }) {
   const org = esc(orgName), venture = esc(ventureName);
-  return `<!doctype html><html><body style="margin:0;background:#f4f5f7;font-family:-apple-system,'Segoe UI',Inter,Helvetica,Arial,sans-serif;color:#141414;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5f7;padding:32px 12px;"><tr><td align="center">
-    <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="max-width:480px;background:#ffffff;border-radius:16px;border:1px solid rgba(0,0,0,0.06);overflow:hidden;">
-      <tr><td style="padding:28px 32px 0;">
-        <div style="font-weight:700;letter-spacing:-0.01em;font-size:15px;color:#0036FF;">${org} <span style="color:#9aa0ab;font-weight:500;">Studio</span></div>
-      </td></tr>
-      <tr><td style="padding:18px 32px 8px;">
-        <h1 style="margin:0 0 12px;font-size:22px;letter-spacing:-0.02em;line-height:1.25;">You're invited to your Studio</h1>
-        <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#444;">${org} has set up a Studio for <strong>${venture}</strong> — your space to shape the research and direction of your venture. Click below to sign in. No password needed.</p>
-        <a href="${link}" style="display:inline-block;background:#0036FF;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:13px 26px;border-radius:10px;">Open your Studio &rarr;</a>
-        <p style="margin:22px 0 0;font-size:13px;line-height:1.6;color:#8a8f98;">This link signs you in and expires soon for security. If you weren't expecting this, you can safely ignore it.</p>
-      </td></tr>
-      <tr><td style="padding:22px 32px 26px;margin-top:12px;border-top:1px solid rgba(0,0,0,0.06);">
-        <p style="margin:0;font-size:12px;color:#aab0b8;">Powered by Ventrify OS</p>
-      </td></tr>
-    </table>
-  </td></tr></table>
-  </body></html>`;
+  return mailShell({ width: 480, eyebrow: 'Studio invitation', body: `
+    <div style="font-weight:600;font-size:14px;color:${MAIL.accent};letter-spacing:-0.01em;margin:0 0 10px;">${org}</div>
+    <h1 style="margin:0 0 12px;font-size:22px;letter-spacing:-0.02em;line-height:1.25;color:${MAIL.ink1};">You're invited to your Studio</h1>
+    <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:${MAIL.ink2};">${org} has set up a Studio for <strong style="color:${MAIL.ink1};">${venture}</strong> &mdash; your space to shape the research and direction of your venture. Click below to sign in. No password needed.</p>
+    ${mailBtn(link, 'Open your Studio &rarr;')}
+    <p style="margin:22px 0 0;font-size:13px;line-height:1.6;color:${MAIL.ink3};">This link signs you in and expires soon for security. If you weren't expecting this, you can safely ignore it.</p>` });
 }
 
 // A workspace now exists and nobody has been told. create-org has never sent anything — an operator
 // made an org for a customer and the customer learned about it by being telephoned — and self-signup
 // would have inherited exactly that silence. Deliberately NOT a magic link: this is confirmation, not
 // authentication, and a sign-in link sitting in an inbox is a credential with a long tail.
+//
+// ⚠ IT THREW ON EVERY SEND. The footer was a paste of the docs-request footer and still referenced
+// `operatorEmail`, which this function never took — a bare undefined identifier, so every call raised
+// a ReferenceError before Resend was ever reached and the branch 500'd. Nothing caught it because
+// nothing RENDERED these templates outside production: six near-identical copies, and the gates all
+// read source text. tools/mail-brand.mjs now renders all six on every run, which is the only check
+// that could have found this.
 function welcomeHtml({ orgName, planLabel, prescreens, link }) {
   const org = esc(orgName);
   const allowance = prescreens == null
     ? 'Unlimited pre-screens'
     : `${prescreens} free pre-screen${prescreens === 1 ? '' : 's'}`;
-  return `<!doctype html><html><body style="margin:0;background:#f4f5f7;font-family:-apple-system,'Segoe UI',Inter,Helvetica,Arial,sans-serif;color:#141414;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5f7;padding:32px 12px;"><tr><td align="center">
-    <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="max-width:480px;background:#ffffff;border-radius:16px;border:1px solid rgba(0,0,0,0.06);overflow:hidden;">
-      <tr><td style="padding:28px 32px 0;">
-        <div style="font-weight:700;letter-spacing:-0.01em;font-size:15px;color:#0036FF;">Verdict<span style="color:#9aa0ab;font-weight:500;">Score</span></div>
-      </td></tr>
-      <tr><td style="padding:18px 32px 8px;">
-        <h1 style="margin:0 0 12px;font-size:22px;letter-spacing:-0.02em;line-height:1.25;">${org} is ready</h1>
-        <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#444;">Your workspace is set up. Upload a deck and any supporting documents, and the pre-screen returns a verdict on whether the venture is worth a full assessment — with its reasoning and its sources attached.</p>
-        <p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#444;background:#f4f5f7;border-radius:10px;padding:12px 14px;"><strong>${esc(planLabel)}</strong> &middot; ${allowance}</p>
-        <a href="${link}" style="display:inline-block;background:#0036FF;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:13px 26px;border-radius:10px;">Open your workspace &rarr;</a>
-        <p style="margin:22px 0 0;font-size:13px;line-height:1.6;color:#8a8f98;">Sign in with the same email address and we'll send you a one-time link. If you didn't create this workspace, reply and tell us.</p>
-      </td></tr>
-      <tr><td style="padding:22px 32px 26px;border-top:1px solid rgba(0,0,0,0.06);">
-        ${operatorEmail ? `<p style="margin:0 0 6px;font-size:13px;line-height:1.6;color:#6b7280;">Sent by ${esc(operatorEmail)} &mdash; replying to this email reaches them directly.</p>` : ''}
-        <p style="margin:0;font-size:12px;color:#aab0b8;">Powered by Ventrify OS</p>
-      </td></tr>
-    </table>
-  </td></tr></table>
-  </body></html>`;
+  return mailShell({ width: 480, eyebrow: 'Your workspace', body: `
+    <h1 style="margin:0 0 12px;font-size:22px;letter-spacing:-0.02em;line-height:1.25;color:${MAIL.ink1};">${org} is ready</h1>
+    <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:${MAIL.ink2};">Your workspace is set up. Upload a deck and any supporting documents, and the pre-screen returns a verdict on whether the venture is worth a full assessment &mdash; with its reasoning and its sources attached.</p>
+    <p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:${MAIL.ink2};background:${MAIL.deep};border-radius:10px;padding:13px 15px;"><strong style="color:${MAIL.ink1};">${esc(planLabel)}</strong> &middot; ${esc(allowance)}</p>
+    ${mailBtn(link, 'Open your workspace &rarr;')}
+    <p style="margin:22px 0 0;font-size:13px;line-height:1.6;color:${MAIL.ink3};">Sign in with the same email address and we'll send you a one-time link. If you didn't create this workspace, reply and tell us.</p>` });
 }
 
 function docsRequestHtml({ orgName, ventureName, operatorName, missing, extras, folderUrl, note }) {
   const org = esc(orgName), venture = esc(ventureName);
-  const li = (t, sub) => `<tr><td style="padding:9px 0;border-bottom:1px solid rgba(0,0,0,0.06);"><div style="font-size:14px;font-weight:600;color:#141414;">${esc(t)}</div>${sub ? `<div style="font-size:13px;line-height:1.5;color:#6b7280;margin-top:2px;">${esc(sub)}</div>` : ''}</td></tr>`;
-  return `<!doctype html><html><body style="margin:0;background:#f4f5f7;font-family:-apple-system,'Segoe UI',Inter,Helvetica,Arial,sans-serif;color:#141414;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5f7;padding:32px 12px;"><tr><td align="center">
-    <table role="presentation" width="520" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:16px;border:1px solid rgba(0,0,0,0.06);overflow:hidden;">
-      <tr><td style="padding:28px 32px 0;">
-        <div style="font-weight:700;letter-spacing:-0.01em;font-size:15px;color:#0036FF;">${org}</div>
-      </td></tr>
-      <tr><td style="padding:18px 32px 8px;">
-        <h1 style="margin:0 0 12px;font-size:22px;letter-spacing:-0.02em;line-height:1.25;">A few documents for the ${venture} assessment</h1>
-        <p style="margin:0 0 18px;font-size:15px;line-height:1.6;color:#444;">${esc(operatorName)} is preparing the investability assessment for <strong>${venture}</strong>. These are the things the assessment looks for that we could not find in the data room:</p>
-        ${note ? `<p style="margin:0 0 18px;padding:12px 14px;background:#f4f5f7;border-radius:10px;font-size:14px;line-height:1.6;color:#333;">${esc(note)}</p>` : ''}
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 18px;">
-          ${missing.map(m => li(m.label, m.want)).join('')}
-          ${extras.map(e => li(e.label, e.why)).join('')}
-        </table>
-        ${folderUrl ? `<a href="${esc(folderUrl)}" style="display:inline-block;background:#0036FF;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:13px 26px;border-radius:10px;">Add them to the data room &rarr;</a>
-        <p style="margin:18px 0 0;font-size:13px;line-height:1.6;color:#8a8f98;">Drop them straight into the shared folder — nothing else to do. We pick them up from there.</p>` : `<p style="margin:0;font-size:14px;line-height:1.6;color:#444;">Reply to this email with the documents and we will add them.</p>`}
-        <p style="margin:18px 0 0;font-size:13px;line-height:1.6;color:#8a8f98;">If something on this list is already in the room inside another document, just say so — nothing is being marked against you.</p>
-      </td></tr>
-      <tr><td style="padding:22px 32px 26px;border-top:1px solid rgba(0,0,0,0.06);">
-        <p style="margin:0;font-size:12px;color:#aab0b8;">Powered by Ventrify OS</p>
-      </td></tr>
+  return mailShell({ width: 520, eyebrow: 'Document request', foot: operatorName
+    ? `<p style="margin:0;font-size:12.5px;line-height:1.6;color:${MAIL.ink3};">Sent by ${esc(operatorName)} at ${org} &mdash; replying reaches them directly.</p>` : '', body: `
+    <div style="font-weight:600;font-size:14px;color:${MAIL.accent};letter-spacing:-0.01em;margin:0 0 10px;">${org}</div>
+    <h1 style="margin:0 0 12px;font-size:22px;letter-spacing:-0.02em;line-height:1.25;color:${MAIL.ink1};">A few documents for the ${venture} assessment</h1>
+    <p style="margin:0 0 18px;font-size:15px;line-height:1.6;color:${MAIL.ink2};">${esc(operatorName)} is preparing the investability assessment for <strong style="color:${MAIL.ink1};">${venture}</strong>. These are the things the assessment looks for that we could not find in the data room:</p>
+    ${mailNote(note)}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;">
+      ${missing.map(m => mailRow(m.label, m.want)).join('')}
+      ${extras.map(e => mailRow(e.label, e.why)).join('')}
     </table>
-  </td></tr></table>
-  </body></html>`;
+    ${folderUrl
+      ? `${mailBtn(folderUrl, 'Add them to the data room &rarr;')}
+         <p style="margin:18px 0 0;font-size:13px;line-height:1.6;color:${MAIL.ink3};">Drop them straight into the shared folder &mdash; nothing else to do. We pick them up from there.</p>`
+      : `<p style="margin:0;font-size:14.5px;line-height:1.6;color:${MAIL.ink2};">Reply to this email with the documents and we will add them.</p>`}
+    <p style="margin:18px 0 0;font-size:13px;line-height:1.6;color:${MAIL.ink3};">If something on this list is already in the room inside another document, just say so &mdash; nothing is being marked against you.</p>` });
 }
 
 
@@ -139,63 +215,69 @@ function docsRequestHtml({ orgName, ventureName, operatorName, missing, extras, 
 // The founder's half of the pre-screen. An operator who likes what they read tells the founder they
 // are through, and asks for the specific things that would make the full assessment worth running.
 //
-// ASKS, NEVER VERDICTS. Of the six pre-screen findings, exactly TWO may leave the building:
+// FOUR OF THE SIX FINDINGS MAY LEAVE THE BUILDING. The line is not "how flattering is it" — it is
+// whether the finding is written FOR the founder or ABOUT them:
 //
-//   thesis   "What has to be true for this to work"      - played back so they can CORRECT it
-//   tension  "Where your documents disagree, both sides" - already written in the second person
+//   thesis       what we understood you to be claiming  - played back so they can CORRECT it
+//   bull         the strongest version of their case    - our argument FOR them, which they may use
+//   competitive  who else we found doing this           - research they can check and answer
+//   tension      where their documents disagree         - already written in the second person
 //
-// The other four stay inside. `bear` is defined in the product as "how it will be argued in the room
-// the founder isn't in" - mailing it to the founder inverts its own definition. `bull`, `competitive`
-// and `team` are judgements about them, and the BAND is an investment decision about them: sending it
-// costs the operator their position and teaches the founder how to game the next read.
+// The other two stay inside, and so does the band. `bear` is defined in the product as "how it will
+// be argued in the room the founder isn't in" - mailing it to the founder inverts its own definition.
+// `team` is a judgement about the people reading it. The BAND is an investment decision about them:
+// sending it costs the operator their position and teaches the founder how to game the next read.
+//
+// bull and competitive were added on 2026-11-06 so the email shows what the product actually found
+// rather than only what it wants. They are the two findings that are both substantive and answerable
+// — which is the same test the other four fail.
 //
 // Nothing here is composed by the operator beyond a short note. The content is assembled server-side
 // from the stored snapshot and a live room check, which is what makes it safe to send from a verified
 // domain - see the note on docs-request. Gate: tools/founder-safe.mjs.
-function advanceHtml({ orgName, ventureName, operatorName, operatorEmail, thesis, tensions, nextTests, missing, extras, folderUrl, note }) {
+function advanceHtml({ orgName, ventureName, operatorName, operatorEmail, thesis, bull, competitive,
+                       tensions, nextTests, missing, extras, folderUrl, note }) {
   const org = esc(orgName), venture = esc(ventureName);
-  const bullet = (t, sub) => `<tr><td style="padding:9px 0;border-bottom:1px solid rgba(0,0,0,0.06);"><div style="font-size:14px;font-weight:600;color:#141414;">${esc(t)}</div>${sub ? `<div style="font-size:13px;line-height:1.5;color:#6b7280;margin-top:2px;">${esc(sub)}</div>` : ''}</td></tr>`;
-  const plain = (t) => `<tr><td style="padding:7px 0;"><div style="font-size:14px;line-height:1.55;color:#333;">&bull;&nbsp;&nbsp;${esc(t)}</div></td></tr>`;
-  const block = (title, rows) => rows
-    ? `<h2 style="margin:26px 0 8px;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#8a8f98;font-weight:600;">${esc(title)}</h2>
-       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0;">${rows}</table>`
-    : '';
+  const found = thesis.length || bull.length || competitive.length || tensions.length;
 
-  return `<!doctype html><html><body style="margin:0;background:#f4f5f7;font-family:-apple-system,'Segoe UI',Inter,Helvetica,Arial,sans-serif;color:#141414;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5f7;padding:32px 12px;"><tr><td align="center">
-    <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:16px;border:1px solid rgba(0,0,0,0.06);overflow:hidden;">
-      <tr><td style="padding:28px 32px 0;">
-        <div style="font-weight:700;letter-spacing:-0.01em;font-size:15px;color:#0036FF;">${org}</div>
-      </td></tr>
-      <tr><td style="padding:18px 32px 8px;">
-        <h1 style="margin:0 0 12px;font-size:23px;letter-spacing:-0.02em;line-height:1.25;">${venture} is going through to a full assessment</h1>
-        <p style="margin:0 0 18px;font-size:15px;line-height:1.6;color:#444;">${operatorName ? esc(operatorName) + ' at ' + org : org} has read ${venture} and wants to take it further. The full assessment is a much deeper read, and it is worth running once a few things are in place.</p>
-        ${note ? `<p style="margin:0 0 18px;padding:12px 14px;background:#f4f5f7;border-radius:10px;font-size:14px;line-height:1.6;color:#333;">${esc(note)}</p>` : ''}
+  return mailShell({ width: 560, eyebrow: 'Pre-screen · cleared', foot: operatorEmail
+    ? `<p style="margin:0;font-size:12.5px;line-height:1.6;color:${MAIL.ink3};">Sent by ${
+        operatorName ? esc(operatorName) + ' (' + esc(operatorEmail) + ')' : esc(operatorEmail)
+      } at ${org} &mdash; replying reaches them directly.</p>` : '',
+    close: mailClose({
+      productUrl: 'https://verdict.ventrify.io',
+      heading: 'What you have just read is the short version.',
+      lead: 'A pre-screen is a five-minute read of your deck and whatever is in the room. The full assessment scores the venture 0–100 across seven categories and thirty-five signals, researches every document against the outside world with sources, and ends in a deal memo. That is the read your documents are about to go through.',
+    }),
+    body: `
+    <div style="font-weight:600;font-size:14px;color:${MAIL.accent};letter-spacing:-0.01em;margin:0 0 10px;">${org}</div>
+    <h1 style="margin:0 0 12px;font-size:23px;letter-spacing:-0.02em;line-height:1.25;color:${MAIL.ink1};">${venture} is going through to a full assessment</h1>
+    <p style="margin:0 0 18px;font-size:15px;line-height:1.6;color:${MAIL.ink2};">${operatorName ? esc(operatorName) + ' at ' + org : org} has read ${venture} and wants to take it further. The full assessment is a much deeper read, and it is worth running once a few things are in place.</p>
+    ${mailNote(note)}
+    ${found ? `<p style="margin:0 0 4px;font-size:13.5px;line-height:1.6;color:${MAIL.ink3};">Everything below came out of the five-minute read of your own documents. Correct anything we have wrong &mdash; it is the part the whole assessment is built on.</p>` : ''}
 
-        ${block('What we understood you to be claiming', thesis.map(t => plain(t.point)).join(''))}
-        ${thesis.length ? `<p style="margin:10px 0 0;font-size:13px;line-height:1.6;color:#8a8f98;">If we have any of that wrong, tell us &mdash; it is the part the whole assessment is built on.</p>` : ''}
+    ${mailBlock('What we understood you to be claiming', thesis.map(t => mailBullet(t.point)).join(''))}
 
-        ${block('Where your documents disagree', tensions.map(t => bullet(t.point, t.docName ? 'Seen in ' + t.docName : '')).join(''))}
-        ${tensions.length ? `<p style="margin:10px 0 0;font-size:13px;line-height:1.6;color:#8a8f98;">These are not accusations &mdash; two documents written months apart often differ for good reasons. Resolving them before the full read saves a lot of back and forth.</p>` : ''}
+    ${mailBlock('The strongest version of your case', bull.map(t => mailBullet(t.point)).join(''))}
+    ${bull.length ? `<p style="margin:10px 0 0;font-size:13px;line-height:1.6;color:${MAIL.ink3};">This is how we would argue for backing you. If the best case is stronger than this, that is worth knowing before the full read.</p>` : ''}
 
-        ${block('What we could not find in the data room', missing.map(m => bullet(m.label, m.want)).join('') + extras.map(e => bullet(e.label, e.why)).join(''))}
+    ${mailBlock('Who else we found working on this', competitive.map(t => mailBullet(t.point)).join(''))}
+    ${competitive.length ? `<p style="margin:10px 0 0;font-size:13px;line-height:1.6;color:${MAIL.ink3};">Found from public sources, not from your deck. If we have mischaracterised any of them, or missed the one that matters, tell us.</p>` : ''}
 
-        ${block('What the full assessment will test', nextTests.map(t => plain(t)).join(''))}
+    ${mailBlock('Where your documents disagree', tensions.map(t => mailRow(t.point, t.docName ? 'Seen in ' + t.docName : '')).join(''))}
+    ${tensions.length ? `<p style="margin:10px 0 0;font-size:13px;line-height:1.6;color:${MAIL.ink3};">These are not accusations &mdash; two documents written months apart often differ for good reasons. Resolving them before the full read saves a lot of back and forth.</p>` : ''}
 
-        <div style="margin:28px 0 0;">
-        ${folderUrl
-          ? `<a href="${esc(folderUrl)}" style="display:inline-block;background:#0036FF;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:13px 26px;border-radius:10px;">Add them to the data room &rarr;</a>
-             <p style="margin:16px 0 0;font-size:13px;line-height:1.6;color:#8a8f98;">Drop everything straight into the shared folder, including an updated deck if you have one. We pick it up from there &mdash; nothing else to do.</p>`
-          : `<p style="margin:0;font-size:14px;line-height:1.6;color:#444;">Reply to this email with an updated deck and anything from the list above, and we will take it from there.</p>`}
-        </div>
-        <p style="margin:18px 0 0;font-size:13px;line-height:1.6;color:#8a8f98;">If something on the list is already in the room inside another document, just say so &mdash; a document we could not see is not a mark against you.</p>
-      </td></tr>
-      <tr><td style="padding:22px 32px 26px;border-top:1px solid rgba(0,0,0,0.06);">
-        <p style="margin:0;font-size:12px;color:#aab0b8;">Powered by Ventrify OS</p>
-      </td></tr>
-    </table>
-  </td></tr></table>
-  </body></html>`;
+    ${mailBlock('What we could not find in the data room', missing.map(m => mailRow(m.label, m.want)).join('') + extras.map(e => mailRow(e.label, e.why)).join(''))}
+
+    ${mailBlock('What the full assessment will test', nextTests.map(t => mailBullet(t)).join(''))}
+
+    <div style="margin:28px 0 0;">
+    ${folderUrl
+      ? `${mailBtn(folderUrl, 'Add them to the data room &rarr;')}
+         <p style="margin:16px 0 0;font-size:13px;line-height:1.6;color:${MAIL.ink3};">Drop everything straight into the shared folder, including an updated deck if you have one. We pick it up from there &mdash; nothing else to do.</p>`
+      : `<p style="margin:0;font-size:14.5px;line-height:1.6;color:${MAIL.ink2};">Reply to this email with an updated deck and anything from the list above, and we will take it from there.</p>`}
+    </div>
+    <p style="margin:18px 0 0;font-size:13px;line-height:1.6;color:${MAIL.ink3};">If something on the list is already in the room inside another document, just say so &mdash; a document we could not see is not a mark against you.</p>` });
 }
 
 
@@ -207,36 +289,27 @@ function advanceHtml({ orgName, ventureName, operatorName, operatorEmail, thesis
 // and a second rendering of it in an email client is a second thing to keep in step. The close is the
 // same argument the page makes: name what a full assessment does that this did not, and let the gap
 // do the selling. Gate: tools/share-upsell.mjs.
-function prescreenShareHtml({ orgName, ventureName, senderEmail, band, oneLine, highlights, url, note, productUrl }) {
+function prescreenShareHtml({ orgName, ventureName, senderEmail, band, bandLine, oneLine, highlights, url, note, productUrl }) {
   const org = esc(orgName), venture = esc(ventureName);
-  const li = (t) => `<tr><td style="padding:8px 0;"><div style="font-size:14px;line-height:1.55;color:#333;">&bull;&nbsp;&nbsp;${esc(t)}</div></td></tr>`;
-  return `<!doctype html><html><body style="margin:0;background:#f4f5f7;font-family:-apple-system,'Segoe UI',Inter,Helvetica,Arial,sans-serif;color:#141414;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5f7;padding:32px 12px;"><tr><td align="center">
-    <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:16px;border:1px solid rgba(0,0,0,0.06);overflow:hidden;">
-      <tr><td style="padding:28px 32px 0;">
-        <div style="font-weight:700;letter-spacing:-0.01em;font-size:15px;color:#0036FF;">${org}</div>
-      </td></tr>
-      <tr><td style="padding:18px 32px 8px;">
-        <h1 style="margin:0 0 6px;font-size:23px;letter-spacing:-0.02em;line-height:1.25;">${venture}</h1>
-        ${oneLine ? `<p style="margin:0 0 14px;font-size:15px;line-height:1.6;color:#555;">${esc(oneLine)}</p>` : ''}
-        ${band ? `<p style="margin:0 0 16px;"><span style="display:inline-block;background:#101322;color:#fff;font-size:13px;font-weight:600;padding:5px 13px;border-radius:999px;">${esc(band)}</span>
-          <span style="font-size:13px;color:#8a8f98;margin-left:8px;">a three-minute read, not an assessment</span></p>` : ''}
-        <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#444;">${esc(senderEmail)} shared a pre-screen with you.</p>
-        ${note ? `<p style="margin:0 0 18px;padding:12px 14px;background:#f4f5f7;border-radius:10px;font-size:14px;line-height:1.6;color:#333;">${esc(note)}</p>` : ''}
-        ${highlights.length ? `<h2 style="margin:22px 0 4px;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#8a8f98;font-weight:600;">A few things it found</h2>
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;">${highlights.map(li).join('')}</table>` : ''}
-        <a href="${esc(url)}" style="display:inline-block;background:#0036FF;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:13px 26px;border-radius:10px;">Read the full pre-screen &rarr;</a>
-        <p style="margin:16px 0 0;font-size:13px;line-height:1.6;color:#8a8f98;">No login needed. The link is read-only and can be revoked by whoever sent it.</p>
-      </td></tr>
-      <tr><td style="padding:24px 32px 26px;background:#101322;">
-        <p style="margin:0 0 6px;font-size:15px;font-weight:600;color:#ffffff;">This is the quick read. There is a much longer one.</p>
-        <p style="margin:0 0 14px;font-size:13.5px;line-height:1.65;color:#aeb2c4;">A full assessment scores a venture 0&ndash;100 across seven categories and thirty-five signals, researches every document with sources, argues the case from the whole room, and ends in a deal memo you can take to an investment committee.</p>
-        <a href="${esc(productUrl)}" style="display:inline-block;background:#ffffff;color:#101322;text-decoration:none;font-weight:600;font-size:13.5px;padding:10px 20px;border-radius:9px;">See what a full assessment looks like</a>
-        <p style="margin:14px 0 0;font-size:12px;color:#767c92;">Generated by VerdictScore</p>
-      </td></tr>
-    </table>
-  </td></tr></table>
-  </body></html>`;
+  return mailShell({ width: 560, eyebrow: 'Pre-screen',
+    close: mailClose({
+      productUrl,
+      heading: 'This is the quick read. There is a much longer one.',
+      lead: 'A full assessment scores a venture 0–100 across seven categories and thirty-five signals, researches every document with sources, argues the case from the whole room, and ends in a deal memo you can take to an investment committee.',
+    }),
+    body: `
+    <div style="font-weight:600;font-size:14px;color:${MAIL.accent};letter-spacing:-0.01em;margin:0 0 10px;">${org}</div>
+    <h1 style="margin:0 0 6px;font-size:23px;letter-spacing:-0.02em;line-height:1.25;color:${MAIL.ink1};">${venture}</h1>
+    ${oneLine ? `<p style="margin:0 0 14px;font-size:15px;line-height:1.6;color:${MAIL.ink2};">${esc(oneLine)}</p>` : ''}
+    ${band ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 16px;"><tr>
+      <td style="padding:0 10px 0 0;"><span style="display:inline-block;background:${MAIL.accent};color:${MAIL.onAccent};
+        font-size:13px;font-weight:700;padding:5px 13px;border-radius:999px;">${esc(band)}</span></td>
+      <td style="font-size:13px;color:${MAIL.ink3};">${esc(bandLine || '')}</td></tr></table>` : ''}
+    <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:${MAIL.ink2};">${esc(senderEmail)} shared a pre-screen with you &mdash; a five-minute read, not an assessment.</p>
+    ${mailNote(note)}
+    ${highlights.length ? mailBlock('A few things it found', highlights.map(mailBullet).join('')) : ''}
+    <div style="margin:24px 0 0;">${mailBtn(url, 'Read the full pre-screen &rarr;')}</div>
+    <p style="margin:16px 0 0;font-size:13px;line-height:1.6;color:${MAIL.ink3};">No login needed. The link is read-only and can be revoked by whoever sent it.</p>` });
 }
 
 const { checkRoom } = require('./_roomcheck.js');
@@ -482,7 +555,13 @@ module.exports = async (req, res) => {
       // ps.nuggets - a future seventh finding must be let out deliberately, not inherited by accident.
       const pointsOf = (k) => ((((ps.nuggets || {})[k]) || {}).points || []);
       const clean = (v) => String(v == null ? '' : v).slice(0, 400);
+      // FOUR KEYS, NAMED ONE AT A TIME, never a loop over ps.nuggets. The two that are missing —
+      // `bear` and `team` — are the point of this list, and a loop is how they would arrive. The band
+      // and its reason are not read here at all. tools/founder-safe.mjs runs the real endpoint with
+      // tracer strings in every forbidden field and fails if one reaches the output.
       const thesis = pointsOf('thesis').slice(0, 4).map(pt => ({ point: clean(pt.point) })).filter(t => t.point);
+      const bull = pointsOf('bull').slice(0, 3).map(pt => ({ point: clean(pt.point) })).filter(t => t.point);
+      const competitive = pointsOf('competitive').slice(0, 3).map(pt => ({ point: clean(pt.point) })).filter(t => t.point);
       const tensions = pointsOf('tension').slice(0, 4)
         .map(pt => ({ point: clean(pt.point), docName: clean(pt.docName).slice(0, 80) }))
         .filter(t => t.point);
@@ -500,7 +579,7 @@ module.exports = async (req, res) => {
         res.status(200).json({
           ok: true, preview: true,
           to: email, venture: ventureName,
-          thesis, tensions, nextTests, missing, extras,
+          thesis, bull, competitive, tensions, nextTests, missing, extras,
           folderUrl: !!folderUrl,
           asks: missing.length + extras.length + tensions.length,
           lastSentAt: (eng.advance && eng.advance.sentAt) || null,
@@ -513,7 +592,7 @@ module.exports = async (req, res) => {
       // so the opening falls back to the firm. An email address reads as a machine wrote it.
       const html = advanceHtml({
         orgName, ventureName, operatorName: String(decoded.name || '').slice(0, 80), operatorEmail: caller,
-        thesis, tensions, nextTests, missing, extras, folderUrl,
+        thesis, bull, competitive, tensions, nextTests, missing, extras, folderUrl,
         note: String(body.note || '').slice(0, 600),
       });
       const sendResp = await fetch('https://api.resend.com/emails', {
@@ -581,10 +660,17 @@ module.exports = async (req, res) => {
 
       const ventureName = eng.ventureName || eng.name || 'A venture';
       const orgName = (orgSnap.exists && orgSnap.data().name) || 'Ventrify';
-      const BANDS = { high: 'Worth assessing', medium: 'Worth a closer look', low: 'Not yet' };
+      // THE BAND VOCABULARY IS NOT LOCAL. This branch carried its own third copy — "Worth assessing /
+      // Worth a closer look / Not yet" — while the product said High / Medium / Low and the shared
+      // document said something else again, so one snapshot read as three different verdicts
+      // depending on which surface you were looking at. shared/prescreen-bands.js is the one source.
+      // (A dynamic import, because this file is CommonJS and that module is ESM; api/memo.js reaches
+      // into ../shared the same way and has done in production since the rubric moved there.)
+      const { bandOf } = await import('../shared/prescreen-bands.js');
+      const psBand = bandOf(ps.band);
       const html = prescreenShareHtml({
         orgName, ventureName, senderEmail: caller,
-        band: BANDS[String(ps.band || '').toLowerCase()] || '',
+        band: psBand ? psBand.label : '', bandLine: psBand ? psBand.line : '',
         oneLine: String((ps.brief && (ps.brief.oneLine || ps.brief.one_line)) || '').slice(0, 300),
         highlights, url: origin + '/m/' + token,
         note: String(body.note || '').slice(0, 600),
@@ -645,4 +731,14 @@ module.exports = async (req, res) => {
   } catch (e) {
     res.status(500).json({ error: String((e && e.message) || e) });
   }
+};
+
+// ── RENDERABLE BY A GATE ───────────────────────────────────────────────────────────────────────────
+// Vercel calls the default export; a property hung off it changes nothing at runtime and costs
+// nothing. It exists so tools/mail-brand.mjs can RENDER all six templates rather than grep them —
+// which is the only kind of check that would have caught the welcome email throwing a ReferenceError
+// on every send for as long as it did. See CLAUDE.md: "reading proves you wrote what you meant to
+// write; only running proves it works."
+module.exports.__templates = {
+  loginHtml, inviteHtml, welcomeHtml, docsRequestHtml, advanceHtml, prescreenShareHtml, MAIL,
 };

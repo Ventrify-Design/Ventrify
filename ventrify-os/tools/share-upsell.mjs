@@ -8,18 +8,28 @@
 // NOT one. If the close is ever trimmed as clutter, the giveaway stays and the reason for it is gone —
 // silently, because nothing would look broken.
 //
-//  RULE 1 — IT SAYS WHAT IT IS NOT. The page names itself a three-minute read rather than an
-//           assessment, in the header, where a skim-reader will see it.
+//  RULE 1 — IT SAYS WHAT IT IS NOT. The page names itself a read rather than an assessment, in the
+//           header, where a skim-reader will see it. (How many MINUTES is tools/run-timing.mjs's to
+//           own — it is stated in a dozen files and this is only one of them.)
 //  RULE 2 — THE CLOSE NAMES THE DIFFERENCE. Not a slogan: the specific things a full assessment does
 //           that this did not, and a way to go and look.
 //  RULE 3 — NO SCORE, ANYWHERE. The pre-screen does not produce one, and a reader who thinks it did
 //           has been misled about the only thing that separates the two products.
 //  RULE 4 — COVERAGE IS DISCLOSURE. The "not a grade" sentence travels with the counts.
-//  RULE 5 — ONE SHARE PER TIER. entitlements must offer share XOR sharePrescreen, never both and
-//           never neither, or the rail shows two Share buttons or none.
+//  RULE 5 — ONE SHARE PER TIER, ON THE RIGHT SURFACE. entitlements must offer share XOR
+//           sharePrescreen, never both and never neither. The two render in different places and
+//           that is deliberate: on a FULL assessment the masthead belongs to the lifecycle, so the
+//           memo's share waits in the rail; on a PRE-SCREEN there is no lifecycle and the document is
+//           finished the moment the run ends, so sharing it is a masthead action and the founder
+//           email is the rail tool. They were the other way round until 2026-11-06.
 //  RULE 6 — THE EMAIL CANNOT BE TOLD WHERE TO POINT. The link is read from the engagement's own
 //           shareLink.token; a client-supplied url would make this an open relay that mails arbitrary
 //           links from a verified domain.
+//  RULE 7 — EVERY GATED RAIL TOOL IS WIRED. An id in the rail with no handler in RAIL_ACTIONS or
+//           RAIL_PANELS does not fail — ds.js falls through to railPanel()'s placeholder, so the
+//           operator gets a skeleton that looks like a half-built feature. Same shape as the
+//           2026-10-31 bug where five actions shipped unreachable behind memo.js's whitelist, and
+//           moving an action between surfaces is exactly when it happens.
 //
 // Run: node tools/share-upsell.mjs   [--canary]
 // ─────────────────────────────────────────────────────────────────────────────
@@ -28,7 +38,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { prescreenShareHTML } from '../workspace/prescreen-view.js';
 import { entitlements, capsFor } from '../shared/entitlements.js';
-import { resolveActions } from '../shared/actions.js';
+import { resolveActions, ACTIONS } from '../shared/actions.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CANARY = process.argv.includes('--canary');
@@ -62,7 +72,7 @@ function auditPage(html) {
   const bad = [];
   const text = html.replace(/<style[\s\S]*?<\/style>/g, ' ').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
 
-  if (!/three-minute read, not an assessment/i.test(text)) bad.push('RULE 1 — the page does not say it is a three-minute read rather than an assessment');
+  if (!/\b\w+-minute read, not an assessment/i.test(text)) bad.push('RULE 1 — the page does not say it is a short read rather than an assessment');
 
   const closeOk = /full assessment/i.test(text)
     && /0.?100|seven categories|thirty-five signals/i.test(text)
@@ -86,14 +96,53 @@ function auditEntitlements() {
     const n = (e.share ? 1 : 0) + (e.sharePrescreen ? 1 : 0);
     if (n !== 1) bad.push(`RULE 5 — a ${label} engagement entitles ${n} share actions, not exactly 1`);
 
-    // And the capability has to actually reach the rail. Entitlements agreeing while resolveActions
-    // shows both buttons (or neither) is precisely the gap that let paid actions onto a pre-screen
-    // before capsFor was applied to the rail at all.
+    // And the capability has to reach a SURFACE. Entitlements agreeing while resolveActions shows
+    // both buttons (or neither) is precisely the gap that let paid actions onto a pre-screen before
+    // capsFor was applied to the rail at all.
     const rail = resolveActions({ page: 'assess', caps: capsFor(eng, null) }).rail.map(a => a.id);
     const shares = rail.filter(id => id === 'share' || id === 'share_prescreen');
-    if (shares.length !== 1) bad.push(`RULE 5 — the ${label} RAIL renders ${shares.length} share buttons (${shares.join(', ') || 'none'})`);
-    const want = label === 'full' ? 'share' : 'share_prescreen';
-    if (shares[0] !== want) bad.push(`RULE 5 — the ${label} rail offers "${shares[0]}", expected "${want}"`);
+    if (label === 'full') {
+      if (shares.length !== 1 || shares[0] !== 'share')
+        bad.push(`RULE 5 — the full rail offers [${shares.join(', ') || 'nothing'}], expected exactly "share"`);
+      if (rail.includes('advance_founder'))
+        bad.push('RULE 5 — a FULL engagement offers "advance_founder"; there is nothing left to advance it to');
+    } else {
+      if (shares.length)
+        bad.push(`RULE 5 — the pre-screen RAIL offers [${shares.join(', ')}]; its share is a masthead action`);
+      if (!rail.includes('advance_founder'))
+        bad.push('RULE 5 — the pre-screen rail has no "advance_founder" — the founder email has nowhere to live');
+    }
+  }
+  // The surfaces themselves, from the registry both codebases render from.
+  if (ACTIONS.share_prescreen.tier !== 'primary')
+    bad.push(`RULE 5 — share_prescreen is tier "${ACTIONS.share_prescreen.tier}", not the masthead`);
+  if (!ACTIONS.advance_founder || ACTIONS.advance_founder.tier !== 'aux')
+    bad.push('RULE 5 — advance_founder is not a utility-rail action');
+  return bad;
+}
+
+// RULE 7 — the registry says an action exists; the PAGE has to answer when it is clicked.
+// A cross-file join, which is the one thing a source scan is genuinely good for: ds.js looks the id
+// up in window.RAIL_ACTIONS, falls back to window.RAIL_PANELS[panel], and then to a placeholder — so
+// a missing handler is SILENT. Every rail id that carries a capability is a real feature behind a
+// paywall and must be bound; the ungated tools (sources, discuss, activity, help…) may use the
+// generic panel.
+function auditWiring(pageSrc) {
+  const bad = [];
+  const keys = (name) => {
+    const i = pageSrc.indexOf(`window.${name} = {`);
+    if (i < 0) return null;
+    const block = pageSrc.slice(i, pageSrc.indexOf('\n  };', i));
+    return new Set([...block.matchAll(/^\s{4}(\w+)\s*:/gm)].map(m => m[1]));
+  };
+  const actions = keys('RAIL_ACTIONS'), panels = keys('RAIL_PANELS');
+  if (!actions) return ['RULE 7 — window.RAIL_ACTIONS is not where this gate can find it in assess-next.html'];
+  for (const tier of ['prescreen', 'full']) {
+    for (const a of resolveActions({ page: 'assess', caps: capsFor({ tier }, null) }).rail) {
+      if (!ACTIONS[a.id] || !ACTIONS[a.id].capability) continue;
+      if (!actions.has(a.id) && !(panels && panels.has(ACTIONS[a.id].panel)))
+        bad.push(`RULE 7 — the ${tier} rail offers "${a.id}" and nothing handles it; it opens a placeholder`);
+    }
   }
   return bad;
 }
@@ -109,28 +158,32 @@ function auditRelay(src) {
 }
 
 const emailSrc = fs.readFileSync(path.join(ROOT, 'api/send-email.js'), 'utf8');
+const pageSrc  = fs.readFileSync(path.join(ROOT, 'workspace/assess-next.html'), 'utf8');
 
 if (CANARY) {
   const base = prescreenShareHTML(P, ORG, { roomCheck: ROOM, operatorEmail: 'alex@mercer.vc' });
   const checks = [
     ['close removed', auditPage(base.replace(/<div class="close">[\s\S]*?<\/div>\s*<\/div>/, '</div>')).length > 0],
-    ['"not an assessment" removed', auditPage(base.replace('A three-minute read, not an assessment', 'Pre-screen')).length > 0],
+    ['"not an assessment" removed', auditPage(base.replace('A five-minute read, not an assessment', 'Pre-screen')).length > 0],
     ['a score appears', auditPage(base.replace('<h1>Verdana Bio</h1>', '<h1>Verdana Bio 72/100</h1>')).length > 0],
     ['"never a grade" removed', auditPage(base.replace(/Coverage is never a grade\./, '')).length > 0],
     ['relay: url taken from the request', auditRelay(emailSrc.replace("url: origin + '/m/' + token,", 'url: String(body.url),')).length > 0],
+    ['the founder email left unwired in the rail',
+      auditWiring(pageSrc.replace('    advance_founder: () => window.__eaAdvance(),', '')).length > 0],
     ['healthy page clean', auditPage(base).length === 0],
     ['healthy entitlements clean', auditEntitlements().length === 0],
     ['healthy relay clean', auditRelay(emailSrc).length === 0],
+    ['healthy wiring clean', auditWiring(pageSrc).length === 0],
   ];
-  checks.forEach(([l, ok]) => console.log(`  canary ${l.padEnd(34)} ${ok ? 'caught' : 'MISSED'}`));
-  [...auditPage(base), ...auditEntitlements(), ...auditRelay(emailSrc)].forEach(x => console.log(`      unexpected: ${x}`));
+  checks.forEach(([l, ok]) => console.log(`  canary ${l.padEnd(42)} ${ok ? 'caught' : 'MISSED'}`));
+  [...auditPage(base), ...auditEntitlements(), ...auditRelay(emailSrc), ...auditWiring(pageSrc)].forEach(x => console.log(`      unexpected: ${x}`));
   process.exit(checks.every(([, ok]) => ok) ? 0 : 1);
 }
 
 const html = prescreenShareHTML(P, ORG, { roomCheck: ROOM, operatorEmail: 'alex@mercer.vc' });
-const problems = [...auditPage(html), ...auditEntitlements(), ...auditRelay(emailSrc)];
+const problems = [...auditPage(html), ...auditEntitlements(), ...auditRelay(emailSrc), ...auditWiring(pageSrc)];
 problems.forEach(x => console.log(`  ✗ ${x}`));
 console.log(problems.length
   ? `\n  FAIL — ${problems.length} problem(s)`
-  : `  PASS — the page says what it is not, the close names the difference, no score anywhere,\n         coverage keeps its caveat, one share per tier, and the link cannot be supplied by a caller`);
+  : `  PASS — the page says what it is not, the close names the difference, no score anywhere,\n         coverage keeps its caveat, one share per tier on the right surface, every gated rail\n         tool is wired, and the link cannot be supplied by a caller`);
 process.exit(problems.length ? 1 : 0);

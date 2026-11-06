@@ -10,6 +10,7 @@
 import { brandLockup, hasLockup } from './brand-lockup.js';
 import { SUB_Q } from '../investability-view.js';
 import { GUIDANCE_BANDS } from '../vss-rubric.js';
+import { PS2_BANDS } from '../prescreen-bands.js';
 
 // Full HTML escaper — text AND attribute-safe (quotes escaped so a value can't break out of
 // style="…"/src="…"/title="…"). No onclick handler in this file interpolates esc(), so quote
@@ -4497,7 +4498,7 @@ export function assessmentWizard(state = {}) {
 // ---- tierChoice — STEP ZERO of the create flow --------------------------
 // A COMPARISON TABLE, NOT TWO CARDS. The first build gave each tier its own card and
 // its own list, which read as a DRAW — seven bullets against eight, all ticks, no way
-// to see that one is a three-minute read and the other is a morning's work. Two lists
+// to see that one is a five-minute read and the other is a morning's work. Two lists
 // cannot be compared; one vocabulary answered twice can. Every capability is named
 // once down the left, each tier says what it does about it, and the asymmetry becomes
 // countable: 7 of 15 against 15 of 15, tallied from the data by tierTally() so the
@@ -5793,11 +5794,10 @@ export function initTabs(opts = {}) {
 // document, and none of them may.
 // `i` is the band's position on the three-step scale — how many columns verdictSignal lights.
 // The `tone` keys the old dial used are GONE on purpose: one accent, never a ramp (see verdictSignal).
-const PS2_BANDS = {
-  HIGH:   { label: 'High',   i: 2, line: 'Worth assessing now.' },
-  MEDIUM: { label: 'Medium', i: 1, line: 'Real signal, with things to resolve.' },
-  LOW:    { label: 'Low',    i: 0, line: 'The case needs work before it is worth the full read.' },
-};
+// The three bands now live in shared/prescreen-bands.js, because the SHARED DOCUMENT needs the same
+// words and cannot import this file (249KB of render layer, and it is read by a node gate). They were
+// duplicated there with different labels for a while — see the note in that file.
+
 
 /**
  * verdictSignal — ATOM. The band as three ascending columns, lit up to the verdict.

@@ -36,7 +36,7 @@ export const BILLING_ENFORCED = false;
 export const TIERS = {
   prescreen: {
     key: 'prescreen', label: 'Pre-screen',
-    blurb: 'A free ~3-minute read that returns a verdict band, the case argued both ways, who else is doing this, and what your own documents disagree about.',
+    blurb: 'A free ~5-minute read that returns a verdict band, the case argued both ways, who else is doing this, and what your own documents disagree about.',
   },
   full: {
     key: 'full', label: 'Full assessment',
@@ -165,7 +165,7 @@ export const TIER_COMPARISON = {
   prescreen: {
     question: 'Is this worth assessing?',
     pitch: 'A fast read of the case, so you know whether to spend the real run on it.',
-    time: 'about 3 minutes', cost: 'Free',
+    time: 'about 5 minutes', cost: 'Free',
     basis: 'Reads your pitch deck, the data room if you attach one, and public sources.',
   },
   full: {
@@ -228,15 +228,21 @@ export function entitlements(engagement, plan) {
     // THE PRE-SCREEN'S OWN SHARE LINK, and deliberately not `share` above. They are two different
     // documents: `share` publishes the DEAL MEMO, which a pre-screened venture does not have, so
     // flipping that flag would have offered a link to nothing. This publishes the pre-screen itself —
-    // the band, the six findings, the coverage — labelled as the three-minute read it is.
+    // the band, the six findings, the coverage — labelled as the five-minute read it is.
     //
     // Free on purpose, and it is the one free feature that is also the best marketing the product has:
     // a pre-screen forwarded to a colleague is read by someone who has never seen VerdictScore, and
     // what it advertises is the full assessment it is visibly NOT. Keeping the paid artefact distinct
     // is what makes that work — see workspace/prescreen-view.js.
     //
-    // Mutually exclusive with `share` by construction, so the rail offers exactly one of them.
+    // Mutually exclusive with `share` by construction, so exactly one of them is ever offered. They
+    // render on different surfaces — see the note on share_prescreen in shared/actions.js.
     sharePrescreen: !full,
+
+    // The founder's half of the same moment: tell them they are through and ask for the documents
+    // that would make the full read worth two hours. Gated with the pre-screen rather than with
+    // `full`, because by the time an engagement IS full there is nothing left to advance it to.
+    advanceFounder: !full,
 
     // the free engagement loop — always on, costs $0, and it is the whole hook
     rescanRoom: true,
@@ -250,7 +256,8 @@ export function entitlements(engagement, plan) {
 // filters itself with no per-page conditionals.
 export function capsFor(engagement, plan) {
   const e = entitlements(engagement, plan);
-  return { create: true, assist: e.assist, export: e.export, share: e.share, sharePrescreen: e.sharePrescreen };
+  return { create: true, assist: e.assist, export: e.export, share: e.share,
+           sharePrescreen: e.sharePrescreen, advanceFounder: e.advanceFounder };
 }
 
 // ---- The two-button emphasis swap ---------------------------------------
@@ -264,13 +271,13 @@ export function capsFor(engagement, plan) {
 // EVERY BUTTON SAYS WHAT IT COSTS IN TIME. The first real user of this screen was a licensee who had
 // just created a workspace called "Pre-Screen Tests", pressed the filled button, and started a
 // two-hour agentic run — because the emphasis swap is correct for a licensee and nothing on either
-// button said that one takes three minutes and the other takes two hours. That is the single most
+// button said that one takes five minutes and the other takes two hours. That is the single most
 // decision-relevant fact about the choice, and it was the one thing missing from it.
 // `tier` defaults to the licence's preference, but a caller that has resolved what the org can
 // actually create TODAY (plan.js createableTier) passes that instead — an org whose full allowance is
 // spent must not be shown "Run full assessment" as its primary.
 export function ctaPair(plan, tier = defaultTier(plan)) {
-  const runPrescreen = { id: 'run_prescreen', label: 'Run free pre-screen', icon: 'bolt', cost: 'about 3 minutes · free' };
+  const runPrescreen = { id: 'run_prescreen', label: 'Run free pre-screen', icon: 'bolt', cost: 'about 5 minutes · free' };
   const runFull      = { id: 'run_full',      label: 'Run full assessment', icon: 'play_arrow', cost: 'about 2 hours' };
   return tier === 'prescreen'
     ? { primary: runPrescreen, secondary: { id: 'unlock_full', label: 'Unlock full assessment', icon: 'lock_open', cost: 'about 2 hours' } }
