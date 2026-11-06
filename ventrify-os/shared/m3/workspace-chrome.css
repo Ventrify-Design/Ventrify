@@ -391,11 +391,8 @@ body.signin::after {
    leave the button jammed beside a three-line hint on a 1440px screen, which is exactly what it did. */
 .na-drive-row { display: flex; flex-direction: column; align-items: stretch; gap: 10px; }
 .na-drive-row > *:first-child { min-width: 0; }
-.na-drive-btns { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.na-drive-go { white-space: nowrap; }
 /* Re-scan is the quieter sibling: same row, text weight — it is the thing you press on a return visit,
    not the thing you press first. */
-.na-drive-again { white-space: nowrap; }
 #na-room:not(:empty) { margin-top: 2px; }
 #na-room .sec { padding-block: 0; border: none; }
 /* The chase-the-gaps action. Sits under the list, with the "or just run it" alternative stated beside it —
@@ -523,10 +520,9 @@ body.signin::after {
    lead-in word carry that; without them the eye runs straight from the dropzone into a URL box. */
 .na-screen .na-drive { gap: 14px; padding-top: 20px; margin-top: 4px; border-top: 1px dashed var(--md-sys-color-outline-variant); }
 .na-screen .na-drive-row { gap: 12px; }
-.na-screen .na-drive-btns { padding-top: 2px; }
 
 /* ============================================================
-   PRE-SCREEN RUN STAGE (prescreenStage)
+   RUN STAGE (runStage) — both tiers. The .ps-* prefix predates the generalisation.
    Replaces the form the instant Run is pressed. Three columns, because the three questions a
    waiting person asks — what are you reading, what did you find, how far through are you — were
    previously stacked in a 380px rail and could not be on screen at the same time.

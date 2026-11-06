@@ -1286,11 +1286,11 @@ export const CATALOG = {
     props: [], variants: [], usedIn: ['assess-next.html \u00b7 Range tab'],
     adaptive: { status: 'built', layout: { mobile: 'Single column, full-width buttons at 44px.', tablet: 'Single column below 900px.', desktop: 'Two equal columns.' }, content: { mobile: 'Full.', tablet: 'Full.', desktop: 'Full.' } }
   },
-  prescreenStage: {
-    level: 'template', group: 'Templates', domain: 'Assessment', title: 'Pre-screen run stage', sig: 'prescreenStage({name, phase, step, deck, docs, room, justFound, categories, landed, total})',
+  runStage: {
+    level: 'template', group: 'Templates', domain: 'Assessment', title: 'Run stage (both tiers)', sig: 'runStage({kind, name, phase, step, deck, docs, room, justFound, categories, landed, total, produces, queued})',
     blurb: 'THE RUN SCREEN. It replaces the create form outright the instant Run is pressed \u2014 every field is locked at that moment anyway, so the form is a dead half-screen sitting on top of the only thing the person now cares about. The first real user spent the whole wait scrolling between a form on the left and a 380px live rail on the right. The three questions a waiting person asks get a column each: what are you reading \u00b7 what did you find in my room \u00b7 how far through the score are you. Every category is listed from the start and fills in place, so the column cannot grow and shove the page down seven times. No fabricated percentage anywhere \u2014 the only bar is indeterminate and a step is marked done only when it is done.',
     maxw: null, pad: true,
-    html: () => `<div class="brief" style="padding:20px 28px">${DS.prescreenStage({
+    html: () => `<div class="brief" style="padding:20px 28px">${DS.runStage({
       name: 'Verdana Bio', phase: 'Scoring the seven categories\u2026', step: 2,
       deck: { name: 'Verdana Bio \u2014 Seed deck.pdf', status: 'Read', state: 'done' },
       docs: [{ name: 'Financial model v4.xlsx', status: 'Stored', state: 'done', key: 'd0' },
@@ -1312,12 +1312,38 @@ export const CATALOG = {
                { category: 'team', label: 'Team & Founder-Market Fit', signals: [{ evidenced: true }, { evidenced: true }, { evidenced: true }, { evidenced: true }, { evidenced: true }] },
                { category: 'product', label: 'Product & Solution Clarity', signals: [{ evidenced: true }, { evidenced: false }, { evidenced: false }, { evidenced: false }, { evidenced: false }] }],
       total: 7,
+    })}
+    <div style="height:48px"></div>
+    ${DS.runStage({
+      kind: 'assessment', name: 'Verdana Bio', phase: 'Reading 14 of 46 · cap-table.xlsx', step: 1,
+      deck: { name: 'Verdana Bio — Seed deck.pdf', status: 'Read', state: 'done' },
+      docs: [{ name: 'Data room.zip', status: 'Stored', state: 'done', key: 'd0' }],
+      room: { docCount: 14, classes: [
+        { key: 'financials', label: 'Financial model', found: true, seenIn: 'Financial model v4.xlsx', want: '' },
+        { key: 'captable', label: 'Cap table', found: true, seenIn: 'Cap table.xlsx', want: '' },
+        { key: 'metrics', label: 'Traction metrics', found: false, want: 'Monthly revenue, retention or usage over time' },
+        { key: 'contracts', label: 'Customer contracts', found: false, want: 'Signed agreements or LOIs' },
+        { key: 'team', label: 'Team & CVs', found: true, seenIn: 'the deck', want: '' },
+        { key: 'ip', label: 'IP & filings', found: false, want: 'Patents, trademarks or filing receipts' } ] },
+      justFound: ['captable'],
+      // In the product these come from shared/entitlements.TIER_GROUPS filtered to the full tier — the
+      // same vocabulary the choice table used, so the promise and the run cannot describe different things.
+      produces: [{ key: 'p0', label: 'A measured investability score', note: 'Weighted 0–100 across 7 categories and 35 signals' },
+                 { key: 'p1', label: 'The case argued both ways', note: 'A full chapter, argued from the whole room' },
+                 { key: 'p2', label: 'Deep research, document by document', note: '' },
+                 { key: 'p3', label: 'Deal-memo PDF for an investment committee', note: '' },
+                 { key: 'p4', label: 'Shareable frozen memo link, with your sign-off', note: '' }],
+      queued: false,
     })}</div>`,
     props: [{ name: 'phase', type: 'string \u2014 the REAL stage, never a timer' }, { name: 'step', type: '0|1|2' },
             { name: 'deck / docs', type: '{name,status,state:done|fail|idle}' }, { name: 'room', type: 'roomCheck result or null' },
             { name: 'justFound', type: '[key] \u2014 classes that flipped on this paint' }, { name: 'categories', type: '[{key,label}] from VSS_RUBRIC' },
-            { name: 'landed', type: '[{category,label,signals}]' }],
-    variants: [{ label: 'Ingesting', note: 'step 0, room still null' }, { label: 'Scoring', note: 'step 2, categories landing' }],
+            { name: 'landed', type: '[{category,label,signals}]' },
+            { name: 'kind', type: "'prescreen' | 'assessment' — switches the wording and the third column" },
+            { name: 'produces', type: '[{key,label,note}] — assessment only, from TIER_GROUPS' },
+            { name: 'queued', type: 'bool — assessment only: dispatch was accepted' }],
+    variants: [{ label: 'Pre-screen · scoring', note: 'kind:prescreen, step 2, categories landing' },
+               { label: 'Assessment · reading the room', note: 'kind:assessment, step 1 — the third column is what the cloud run PRODUCES, and never animates: nothing here is computed in the browser, so there is no progress to invent' }],
     usedIn: ['create-m3.html \u00b7 replaces createScreen on Run'],
     adaptive: { status: 'built', layout: { mobile: 'One column below 760px.', tablet: 'Two columns below 1100px, the score column spanning both.', desktop: 'Three columns, rules between.' }, content: { mobile: 'Full.', tablet: 'Full.', desktop: 'Full.' } }
   },

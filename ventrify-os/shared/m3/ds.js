@@ -2123,8 +2123,8 @@ export function roomPreview(opts = {}) {
     <div class="sec-head"><span class="eyebrow accent">Data room</span><span class="t">What the score looks for</span><span class="meta">${esc(head)}</span></div>
     <div class="profile">${lines}</div>
     <div class="profile-foot"><span>${staged
-      ? 'Link or upload the room and we read it in seconds — you will see which of these we can and cannot find before you spend a run.'
-      : 'Attach a pitch deck to begin. Link or upload a data room and we read it in seconds, then tell you which of these we can and cannot find — before you spend a run.'}</span></div>
+      ? 'The run opens the room first and ticks these off in front of you, then starts the assessment. Anything we cannot find is named — it is evidence we were not given, not a mark against the venture.'
+      : 'Attach a pitch deck to begin. Add documents or link a Drive folder and the run reads them first, ticking off what it finds here before the assessment starts.'}</span></div>
   </section>`;
 }
 
@@ -2588,7 +2588,7 @@ export function emptyState(opts = {}) {
   return `<div class="empty-state"><div class="title-l">${esc(title)}</div>${text ? `<div class="body-m variant">${esc(text)}</div>` : ''}${ctaHtml}</div>`;
 }
 
-// prescreenStage — THE RUN SCREEN. Full width, three columns, nothing above the fold but the run.
+// runStage — THE RUN SCREEN, for BOTH tiers. Full width, three columns, nothing above the fold but the run.
 //
 // WHY IT REPLACES THE FORM RATHER THAN SITTING BESIDE IT. The first real user ran a pre-screen and spent the
 // whole wait scrolling: the form held the left column and the live read was a 380px rail on the right, so
@@ -2602,14 +2602,26 @@ export function emptyState(opts = {}) {
 //
 // NEVER A FABRICATED PERCENTAGE — same rule as before. `phase` is the real stage; the step rail marks a
 // stage done only when it is done. The only bar on screen is indeterminate.
-export function prescreenStage(opts = {}) {
+// IT SERVES THE FULL ASSESSMENT TOO. The pre-screen had this stage and the full assessment did not: the
+// same act — read the deck, read the room, then go — happened invisibly behind a 4px progress line on the
+// setup form, and the operator never saw their data room being read at all. Two run experiences for one
+// product is one too many, so `kind` switches the wording and the third column and nothing else.
+//
+// The .ps-* class prefix predates this and is left alone deliberately: renaming ~30 selectors across
+// workspace-chrome.css buys nothing a comment cannot.
+export function runStage(opts = {}) {
   const {
+    kind = 'prescreen',
     name = '', phase = 'Starting…', step = 0,
     deck = null, docs = [], room = null, justFound = [],
     categories = [], landed = [], total = 7,
+    produces = [], queued = false,
   } = opts;
+  const isAssess = kind === 'assessment';
 
-  const STEPS = ['Reading your documents', 'Checking the data room', 'Scoring the seven categories'];
+  const STEPS = isAssess
+    ? ['Reading your documents', 'Reading the data room', 'Starting the assessment']
+    : ['Reading your documents', 'Checking the data room', 'Scoring the seven categories'];
   const steps = STEPS.map((t, i) => `<li class="ps-step${i < step ? ' done' : i === step ? ' now' : ''}">
     <span class="material-symbols-rounded">${i < step ? 'check_circle' : i === step ? 'progress_activity' : 'radio_button_unchecked'}</span>${esc(t)}</li>`).join('');
 
@@ -2645,8 +2657,15 @@ export function prescreenStage(opts = {}) {
   const foundN = room ? (room.classes || []).filter(c => c.found).length : 0;
   const roomMeta = room ? `${foundN} of ${(room.classes || []).length} found` : 'reading…';
 
-  // COLUMN 3 — the score. Every category is listed from the start, so the column does not grow and shove
-  // the page around as results arrive; each one fills in place.
+  // COLUMN 3 — the score (pre-screen) or what the run will produce (full assessment).
+  //
+  // For the ASSESSMENT this column must never animate. Nothing is computed in the browser: the run is a
+  // two-hour job in the cloud, so a column that ticked along here would be inventing progress it cannot
+  // see — the one rule this screen has. It lists what the run produces, idle, and the only thing that
+  // changes is the header the moment dispatch is accepted.
+  //
+  // The rows are PASSED IN, not imported: ds.js does not depend on shared/entitlements.js (tierChoice
+  // takes its groups the same way), so the caller hands over the same vocabulary the choice table used.
   const byKey = Object.fromEntries(landed.map(c => [c.category, c]));
   const cats = (categories.length ? categories : landed.map(c => ({ key: c.category, label: c.label })));
   const catBody = cats.map(c => {
@@ -2665,6 +2684,12 @@ export function prescreenStage(opts = {}) {
     });
   }).join('');
 
+  const prodBody = `<div class="profile">${produces.map(r => row({
+    variant: 'metric', key: r.key, density: 'compact', cls: 'rcl is-idle',
+    title: r.label, sub: r.note || '',
+    trail: { kind: 'value', value: '', mark: { icon: 'radio_button_unchecked', tone: 'idle' } },
+  })).join('')}</div>`;
+
   const col = (eyebrow, title, meta, body, foot) => `<section class="ps-col">
     <div class="sec-head"><span class="eyebrow accent">${esc(eyebrow)}</span><span class="t">${esc(title)}</span><span class="meta">${esc(meta)}</span></div>
     ${body}
@@ -2673,7 +2698,7 @@ export function prescreenStage(opts = {}) {
 
   return `<div class="ps-stage">
     <header class="ps-head">
-      <span class="eyebrow accent"><span class="material-symbols-rounded">bolt</span>Pre-screening${name ? ' · ' + esc(name) : ''}</span>
+      <span class="eyebrow accent"><span class="material-symbols-rounded">${isAssess ? 'play_arrow' : 'bolt'}</span>${isAssess ? 'Setting up the assessment' : 'Pre-screening'}${name ? ' · ' + esc(name) : ''}</span>
       <h2 class="ps-h">${esc(phase)}</h2>
       ${linearProgress({ indeterminate: true })}
       <ol class="ps-steps">${steps}</ol>
@@ -2682,10 +2707,13 @@ export function prescreenStage(opts = {}) {
       ${col('What we are reading', 'Your evidence', `${(deck ? 1 : 0) + docs.length} file${(deck ? 1 : 0) + docs.length === 1 ? '' : 's'}`,
             evidence ? `<div class="profile">${evidence}</div>` : `<div class="profile-foot"><span>Nothing attached.</span></div>`,
             'Each file is read before the score starts. Anything that fails to parse is named here rather than dropped quietly.')}
-      ${col('Your data room', 'What the score looks for', roomMeta, roomBody,
+      ${col('Your data room', isAssess ? 'What the assessment reads' : 'What the score looks for', roomMeta, roomBody,
             'Free and unlimited to re-run. A type shown as not seen is not a mark against the venture — it is evidence we were not given.')}
-      ${col('The score', 'Seven categories', `${landed.length} of ${total} landed`, `<div class="profile">${catBody}</div>`,
-            'Three independent reads per signal, and the middle one is published — a single read of the same evidence can move a score by several points without making it more right.')}
+      ${isAssess
+        ? col('The assessment', 'What the run produces', queued ? 'queued' : 'about 2 hours', prodBody,
+              'This runs in the cloud, not in this tab. Once it is queued you can close the window — nothing on this screen is scored in your browser, so there is no progress here to invent.')
+        : col('The score', 'Seven categories', `${landed.length} of ${total} landed`, `<div class="profile">${catBody}</div>`,
+              'Three independent reads per signal, and the middle one is published — a single read of the same evidence can move a score by several points without making it more right.')}
     </div>
   </div>`;
 }
@@ -4612,14 +4640,14 @@ export function createScreen(opts = {}) {
         </div>
         <div class="na-sec">
           <span class="na-lab">Data room <span class="field-opt">optional</span></span>
-          <div id="na-docs">${docDropzone([], { status: '', icon: 'folder_open', prompt: 'Add data-room documents', sub: 'Financials, cap table, contracts, metrics — PDF, DOCX, XLSX, CSV, TXT, MD or ZIP.', note: 'Data room · uploads when you run', addLabel: 'Add more documents', onPick: "window.__naPick('docs')", onClear: 'window.__naClearDoc', onDrop: '__naDropDocs' })}</div>
+          <div id="na-docs">${docDropzone([], { status: '', icon: 'folder_open', prompt: 'Add data-room documents', sub: 'Financials, cap table, contracts, metrics — PDF, DOCX, XLSX, CSV, TXT, MD or ZIP.', note: 'Data room · read when you run', addLabel: 'Add more documents', onPick: "window.__naPick('docs')", onClear: 'window.__naClearDoc', onDrop: '__naDropDocs' })}</div>
+          <!-- NO "Read data room" BUTTON. It was a step before the step, and skipping it did not warn you:
+               the pasted link was read by exactly one function, so pressing Run without pressing that button
+               ran the whole assessment on the deck alone and said nothing. The folder is now read by the run
+               itself, in front of you, before the assessment starts — see runStage and __wsCreateAssessment. -->
           <div class="na-drive">
             <div class="na-drive-row">
-              ${formField({ label: 'Or link a Google Drive folder', id: 'na-drive', optional: true, type: 'url', placeholder: 'https://drive.google.com/drive/folders/…', hint: 'Shared with anyone who has the link, or with dataroom-reader@ventrify-os.iam.gserviceaccount.com' })}
-              <div class="na-drive-btns">
-                <button class="m3-btn tonal na-drive-go" type="button" onclick="window.__naReadRoom()">Read data room</button>
-                <button class="m3-btn text na-drive-again" type="button" onclick="window.__naCheckRoom()" hidden>Check for new files</button>
-              </div>
+              ${formField({ label: 'Or link a Google Drive folder', id: 'na-drive', optional: true, type: 'url', placeholder: 'https://drive.google.com/drive/folders/…', hint: 'Read when you run — share it with anyone who has the link, or with dataroom-reader@ventrify-os.iam.gserviceaccount.com' })}
             </div>
           </div>
         </div>

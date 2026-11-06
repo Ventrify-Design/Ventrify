@@ -32,7 +32,7 @@ const HUB_IDS = ['research', 'vision', 'strategy', 'financials', 'marketing', 'v
 const NA = { deck: null, docs: [], busy: false, deckStatus: '', docStatus: {},
   // A LINKED data room. `createdId` is set once the engagement exists — reading the room has to create
   // it first, so Run must then skip creation rather than making a second engagement.
-  driveUrl: '', driveFiles: null, roomRead: false, createdId: null, created: null };
+  createdId: null, created: null };
 const DOC_ACCEPT = '.pdf,.docx,.xlsx,.xls,.xlsm,.txt,.md,.csv,.zip';
 
 function naInput() {
@@ -143,7 +143,7 @@ export function openNewAssessment() {
 // inherit a half-filled NA from the last one.
 export function resetNewAssessment() {
   NA.deck = null; NA.docs = []; NA.busy = false; NA.deckStatus = ''; NA.docStatus = {};
-  NA.driveUrl = ''; NA.driveFiles = null; NA.roomRead = false; NA.createdId = null; NA.created = null;
+  NA.createdId = null; NA.created = null;
 }
 
 window.openNewAssessment = openNewAssessment;
@@ -187,8 +187,9 @@ function naForm() {
   };
 }
 
-// CREATE ONCE. Reading a linked data room needs an engagement to ingest into, so it creates one — and Run
-// must then reuse it. Without this, pressing Read and then Run would leave two engagements for one venture.
+// CREATE ONCE, and only from a run. There is no longer a separate "Read data room" step that could create
+// an engagement of its own, so this has one caller per tier — but the guard stays: a retry after a failed
+// ingest must reuse the engagement it already made, not leave two for one venture.
 async function naEnsureEngagement(f, tier = 'full') {
   if (NA.createdId) return NA.createdId;
   const W = window.WORKSPACE || {}, org = f.org;
@@ -203,6 +204,12 @@ async function naEnsureEngagement(f, tier = 'full') {
     founderName: f.founder, founderEmail: f.founderEmail || '',
     founderAvatar: (f.founder || f.name).split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || 'VV',
     founderAvatarColor: org.primaryColor || '#0036FF',
+    // THE LINKED FOLDER IS RECORDED AT CREATE, not when it is read. The read runs in the browser, so a
+    // closed tab used to lose the link outright — the engagement existed with no trace that a data room
+    // had ever been named, and nothing could resume it. Recorded here, an interrupted run leaves a
+    // resumable assessment: the Data Room tab finds the folder and reads it. ingest-docs overwrites this
+    // with the richer record (folderId, folderName, fileCount) the moment it lists the folder.
+    ...(f.driveUrl ? { dataRoom: { provider: 'google-drive', folderUrl: f.driveUrl, linkedAt: new Date().toISOString() } } : {}),
     industry: null, venturePitch: null, briefSubmitted: false, phase: 0,
     gateStatus: 'Ready to run',
     startDate: new Date().toISOString().slice(0, 10), daysActive: 0,
@@ -236,84 +243,10 @@ async function naIngestDeck(EA, programId) {
   return null;
 }
 
-// READ A LINKED GOOGLE DRIVE DATA ROOM, then play back what the score will look for and could not find.
-// Deliberately BEFORE the run: a missing cap table is worth knowing in three minutes, not in two hours.
-window.__naReadRoom = async () => {
-  const f = naForm(); if (!f) return;
-  if (!f.driveUrl) { window.__toast('Paste the Google Drive folder link first.', true); return; }
-  const W = window.WORKSPACE || {};
-  if (W.mode !== 'live') { window.__toast('Linking a data room needs the live workspace.', true); return; }
-  naBusy(true);
-  try {
-    const programId = await naEnsureEngagement(f);
-    const EA = await import('./engagement-actions.js');
-
-    const deckFail = await naIngestDeck(EA, programId);
-    if (deckFail) { window.__toast('The pitch deck didn’t upload: ' + deckFail, true); naBusy(false); naProg(null); return; }
-
-    // THE SAME routine the Data Room tab uses — same banner, same list ticking as evidence lands. This
-    // screen and that tab are the same act on the same room, and a pre-screened assessment has to behave
-    // identically wherever it is driven from and whatever licence the org holds.
-    const slot = () => document.getElementById('na-room');
-    let scan = { done: 0, total: 0, current: '', label: 'Reading your data room', found: null, of: null };
-    let last = null, fresh = [];
-    const paint = () => { const el = slot(); if (el) el.innerHTML = DS_PRESCREEN.roomScanBanner(scan) + (last ? roomCheck(last, { justFound: fresh }) : ''); };
-    paint();
-    DS_PRESCREEN.revealLive('#na-room .rsb');
-
-    let dr;
-    try {
-      dr = await EA.addToRoom({
-        engagementId: programId, folderUrl: f.driveUrl,
-        onProgress: (text, m) => {
-          scan = { ...scan, done: (m && m.done) || 0, total: (m && m.total) || scan.total, current: (m && m.current) || text };
-          naProg(text); paint();
-        },
-        onRoom: (check) => {
-          const was = new Set(((last && last.classes) || []).filter(c => c.found).map(c => c.key));
-          fresh = (check.classes || []).filter(c => c.found && !was.has(c.key)).map(c => c.key);
-          last = check;
-          scan = { ...scan, found: (check.classes || []).filter(c => c.found).length, of: (check.classes || []).length };
-          paint();
-          setTimeout(() => { fresh = []; }, 900);
-        },
-      });
-    } catch (err) {
-      window.__toast((err && err.message) || 'Could not read the folder.', true); naBusy(false); naProg(null);
-      const el = slot(); if (el) el.innerHTML = last ? roomCheck(last) : roomPreview({});
-      return;
-    }
-
-    const el = slot(); if (el) el.innerHTML = last ? roomCheck(last) : roomPreview({});
-    NA.driveFiles = Array.from({ length: dr.total });
-    NA.roomRead = true;
-    const again = document.querySelector('.na-drive-again'); if (again) again.hidden = false;
-    naBusy(false); naProg(null);
-    naSyncCta();
-    window.__toast(`Read ${dr.ingested} of ${dr.total} document${dr.total === 1 ? '' : 's'} from ${dr.folderName || 'Drive'}` + (dr.skipped ? ` · ${dr.skipped} skipped` : '') + (dr.failed ? ` · ${dr.failed} failed` : ''));
-  } catch (e) {
-    naBusy(false); naProg(null);
-    window.__toast('Could not read the data room: ' + ((e && e.message) || e), true);
-  }
-};
-
-// RE-SCAN. The founder was emailed a list and has dropped files into the folder; nothing tells the Workspace
-// that happened. This re-lists the room, re-reads ONLY what is new or changed — a re-scan of a 46-document
-// room that gained one file costs one listing and one ingest, not three minutes — and repaints the playback.
-window.__naCheckRoom = async () => {
-  const id = NA.createdId;
-  if (!id) { window.__toast('Read the data room first.', true); return; }
-  const btn = document.querySelector('.na-drive-again');
-  if (btn) { btn.disabled = true; btn.textContent = 'Checking…'; }
-  const EA = await import('./engagement-actions.js');
-  const r = await EA.rescanDataRoom({ engagementId: id, onProgress: naProg, onBusy: naBusy });
-  if (r) {
-    const slot = document.getElementById('na-room');
-    if (slot && r.check) slot.innerHTML = roomCheck(r.check);
-    window.__toast(EA.rescanSummary(r));
-  }
-  if (btn) { btn.disabled = false; btn.textContent = 'Check for new files'; }
-};
+// __naReadRoom and __naCheckRoom lived here. They are gone with the "Read data room" button: reading the
+// room is no longer a step the operator can skip, it is the first thing the RUN does — see naReadEvidence.
+// Re-scanning a room after the founder adds files still exists, where it belongs: on the assessment itself
+// (assess-next.html -> EA.rescanDataRoom), which is the only place there is a room to re-scan.
 
 // CHASE THE GAPS. Sends the founder the list the playback just showed — what the score looks for and could
 // not find in the room, with a link straight back to the folder they should drop it into.
@@ -322,8 +255,11 @@ window.__naCheckRoom = async () => {
 // chooses the recipient and may add a note, and nothing else. An operator cannot compose arbitrary mail
 // through this, which matters for anything that leaves the building from a verified domain.
 window.__naRequestDocs = async () => {
-  const id = NA.createdId;
-  if (!id) { window.__toast('Read the data room first.', true); return; }
+  // roomCheck renders this button on the create page AND on assess-next.html, which imports this module.
+  // NA.createdId only exists on the former, so on the assessment — the screen where the room has actually
+  // been read — the button used to answer "Read the data room first". Fall back to the engagement in view.
+  const id = NA.createdId || new URLSearchParams(location.search).get('id');
+  if (!id) { window.__toast('Open an assessment with a data room first.', true); return; }
   const to = ((document.getElementById('na-founder-email') || {}).value || '').trim().toLowerCase();
   if (!to || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) {
     window.__toast('Add the founder’s email so we know where to send the request.', true);
@@ -353,6 +289,75 @@ window.__naRequestDocs = async () => {
 // instead. The reveal happens in the create screen's right-hand column — the panel that was already
 // showing "what we can see" — so the page the customer is on fills up rather than handing off to a
 // spinner somewhere else.
+// ── THE RUN STAGE — shared by both tiers ─────────────────────────────────────────────────────────────
+// These were local to the pre-screen. The full assessment grew exactly the same need, and a second copy
+// of a mounting routine is how two screens that should be one start to drift apart.
+//
+// The form is REPLACED, not decorated. The instant Run is pressed every field is locked, so leaving it on
+// screen spends the whole viewport on controls that no longer do anything.
+function naStageHost(subText) {
+  let h = document.getElementById('ps-host');
+  if (h) return h;
+  const screen = document.querySelector('.na-screen');
+  if (!screen) return null;
+  h = document.createElement('div');
+  h.id = 'ps-host';
+  screen.replaceWith(h);
+  // The masthead still read "Attach the deck and the data room" with no form left to attach it to. What
+  // replaces it is the one thing a waiting person needs to know and cannot guess: how long this tab matters.
+  const sub = document.querySelector('.mh-sub');
+  if (sub && subText) sub.textContent = subText;
+  // The stage opens at its own head. NOT window.scrollTo: this page mounts with .app-scroll, so
+  // .shell-main scrolls internally and the document does not move at all. revealLive finds the scroller.
+  DS_PRESCREEN.revealLive(h, { pad: 0 });
+  return h;
+}
+
+function naFileRows() {
+  return {
+    deck: NA.deck ? { name: NA.deck.name, status: NA.deckStatus || 'Waiting',
+                      state: NA.deckStatus === 'Read' ? 'done' : NA.deckStatus === 'Failed' ? 'fail' : 'idle' } : null,
+    docs: NA.docs.map((f, i) => {
+      const st = (NA.docStatus || {})[i] || 'Waiting';
+      return { name: f.name, status: st, key: 'doc' + i,
+               state: st === 'Stored' ? 'done' : st === 'Failed' ? 'fail' : 'idle' };
+    }),
+  };
+}
+
+// READ THE EVIDENCE — the staged files AND a linked Drive folder, in ONE pass, as part of the run.
+//
+// This is the change that removed the "Read data room" button. That button was a step before the step,
+// and skipping it did not warn you: the pasted folder link was consumed by exactly one function, so
+// pressing Run without pressing it first ran the assessment on the pitch deck alone and said nothing
+// about the room it never opened.
+//
+// addToRoom already merges `files` and `folderUrl` into one unit list, ingests each, and re-checks the
+// room on a bounded cadence — so a zip, a Drive folder, or both, are the same code path here.
+//
+// A ROOM FAILURE IS A WARNING, NEVER A BLOCKER. Only the deck is required; refusing to run because a
+// folder could not be opened would throw away the assessment the operator actually asked for.
+async function naReadEvidence({ EA, programId, folderUrl = '', onProgress, onRoom }) {
+  const files = NA.docs || [];
+  if (!files.length && !folderUrl) return { skippedAll: true };
+  try {
+    return await EA.addToRoom({
+      engagementId: programId, files, folderUrl,
+      onProgress,
+      onRoom,
+      // `index` runs across the merged list, locals first — so it maps onto NA.docs only while it is
+      // inside that range. Drive files are past the end and have no row to tick.
+      onFile: ({ index, ok }) => {
+        if (index >= files.length) return;
+        NA.docStatus = { ...(NA.docStatus || {}), [index]: ok ? 'Stored' : 'Failed' };
+        naPaintDocs();
+      },
+    });
+  } catch (err) {
+    return { error: (err && err.message) || 'Could not read the data room.' };
+  }
+}
+
 window.__wsRunPrescreen = async () => {
   const f = naForm(); if (!f) return;
   const W = window.WORKSPACE || {};
@@ -367,48 +372,19 @@ window.__wsRunPrescreen = async () => {
   const stageName = f.name || '';
   let phaseText = 'Starting…', roomRead = null, justFound = [], step = 0;
   // THE STAGE LISTS WHAT IS ACTUALLY BEING WORKED THROUGH. v1 listed the seven rubric categories
-  // because it scored seven of them; v2 works through six findings, so it lists those. prescreenStage
+  // because it scored seven of them; v2 works through six findings, so it lists those. runStage
   // takes {key,label} and does not care which, so the swap needs no change to the component.
   const catList = Object.entries(DS_PRESCREEN.PS2_NUGGETS).map(([key, n]) => ({ key, label: n.title }));
 
-  const host = () => {
-    let h = document.getElementById('ps-host');
-    if (h) return h;
-    const screen = document.querySelector('.na-screen');
-    if (!screen) return null;
-    h = document.createElement('div');
-    h.id = 'ps-host';
-    screen.replaceWith(h);
-    // The masthead still read "Attach the deck and the data room" with no form left to attach it to.
-    // What replaces it is the one thing a waiting person needs to know and cannot guess: the run is
-    // orchestrated FROM THIS TAB (Vercel caps one invocation at 60s, so the browser fans the categories
-    // out), which means closing it stops the run. Nothing on screen said so.
-    const sub = document.querySelector('.mh-sub');
-    if (sub) sub.textContent = 'About three minutes. Keep this tab open — the run is driven from your browser, so closing it stops the run.';
-    // The stage opens at its own head. Without this the page keeps whatever scroll offset the form had,
-    // which on a long form means landing halfway down a screen that just changed underneath you.
-    //
-    // NOT window.scrollTo: this page mounts with .app-scroll, so .shell-main scrolls internally and the
-    // document does not move at all. revealLive finds whatever is actually scrolling.
-    DS_PRESCREEN.revealLive(h, { pad: 0 });
-    return h;
-  };
-  const fileRows = () => ({
-    deck: NA.deck ? { name: NA.deck.name, status: NA.deckStatus || 'Waiting',
-                      state: NA.deckStatus === 'Read' ? 'done' : NA.deckStatus === 'Failed' ? 'fail' : 'idle' } : null,
-    docs: NA.docs.map((f, i) => {
-      const st = (NA.docStatus || {})[i] || 'Waiting';
-      return { name: f.name, status: st, key: 'doc' + i,
-               state: st === 'Stored' ? 'done' : st === 'Failed' ? 'fail' : 'idle' };
-    }),
-  });
+  const PS_SUB = 'About three minutes. Keep this tab open — the run is driven from your browser, so closing it stops the run.';
   const repaint = () => {
-    const h = host(); if (!h) return;
-    const f = fileRows();
-    h.innerHTML = DS_PRESCREEN.prescreenStage({
+    const h = naStageHost(PS_SUB); if (!h) return;
+    const fr = naFileRows();
+    h.innerHTML = DS_PRESCREEN.runStage({
+      kind: 'prescreen',
       name: stageName,
       phase: phaseText, step,
-      deck: f.deck, docs: f.docs,
+      deck: fr.deck, docs: fr.docs,
       room: roomRead, justFound,
       categories: catList, landed, total: catList.length || 7,
     });
@@ -428,12 +404,19 @@ window.__wsRunPrescreen = async () => {
     const deckFail = await naIngestDeck(EA, programId);
     if (deckFail) { window.__toast('The pitch deck didn’t upload: ' + deckFail, true); naBusy(false); naProg(null); return; }
 
-    for (let i = 0; i < NA.docs.length; i++) {
-      NA.docStatus = { ...(NA.docStatus || {}), [i]: 'Uploading…' }; naPaintDocs();
-      naProg(`Data room · document ${i + 1} of ${NA.docs.length}`);
-      const r = await EA.ingestDocs({ engagementId: programId, files: [NA.docs[i]], docType: 'dataroom', onProgress: m => naProg(m) });
-      NA.docStatus = { ...(NA.docStatus || {}), [i]: ((r && r.skipped || []).length ? 'Failed' : 'Stored') }; naPaintDocs();
-    }
+    // The staged files AND the linked Drive folder, in one pass. The folder used to be ignored here
+    // entirely — a pre-screen with a linked room read none of it.
+    const ev = await naReadEvidence({
+      EA, programId, folderUrl: f.driveUrl,
+      onProgress: (t) => { phaseText = t; naProg(t); repaint(); },
+      onRoom: (check) => {
+        const was = new Set(((roomRead && roomRead.classes) || []).filter(c => c.found).map(c => c.key));
+        justFound = (check.classes || []).filter(c => c.found && !was.has(c.key)).map(c => c.key);
+        roomRead = check; repaint();
+        setTimeout(() => { justFound = []; }, 900);
+      },
+    });
+    if (ev && ev.error) window.__toast(ev.error + ' — the pre-screen will run on what was read.', true);
 
     const { runPrescreen2 } = await import('./prescreen2.js');
     step = 1; phaseText = 'Checking your data room…'; repaint();
@@ -503,6 +486,22 @@ window.__wsCreateAssessment = async () => {
   // for the DS demo, which still runs this chain inside a panel.
   const land = () => { const id = NA.createdId; resetNewAssessment(); window.closeOverlay && window.closeOverlay(); location.href = '/workspace/assess-next.html?id=' + encodeURIComponent(id); };
 
+  // THE STAGE. Same component the pre-screen uses, `kind: 'assessment'`. The full assessment used to do
+  // all of this behind a 4px indeterminate bar on the setup form — the operator never saw their data room
+  // being read, which is half of why the "Read data room" button existed at all.
+  const stageName = f.name || '';
+  let phaseText = 'Creating the assessment…', step = 0, roomRead = null, justFound = [], queued = false;
+  let produces = [];
+  const ASSESS_SUB = 'Reading your evidence, then starting the run. Keep this tab open until the assessment is queued — the room is read from your browser.';
+  const repaint = () => {
+    const h = naStageHost(ASSESS_SUB); if (!h) return;
+    const fr = naFileRows();
+    h.innerHTML = DS_PRESCREEN.runStage({
+      kind: 'assessment', name: stageName, phase: phaseText, step,
+      deck: fr.deck, docs: fr.docs, room: roomRead, justFound, produces, queued,
+    });
+  };
+
   naBusy(true);
   try {
     // DEMO / local — there is no Firestore doc to ingest into or dispatch against. Create only.
@@ -515,39 +514,56 @@ window.__wsCreateAssessment = async () => {
       return;
     }
 
-    // 1 — CREATE, unless reading a linked data room already did. One venture, one engagement.
-    const programId = await naEnsureEngagement(f);
+    // The third column's vocabulary is the SAME list the choice table compared the two tiers with —
+    // read from entitlements, never retyped, so the promise made before the run and the promise shown
+    // during it cannot drift apart.
+    try {
+      const { TIER_GROUPS } = await import('../shared/entitlements.js');
+      produces = TIER_GROUPS.flatMap(g => g.rows)
+        .filter(r => r.full)
+        .map((r, n) => ({ key: 'p' + n, label: r.label, note: typeof r.full === 'string' ? r.full : '' }));
+    } catch (e) { produces = []; }
 
+    // 1 — CREATE. One venture, one engagement.
+    const programId = await naEnsureEngagement(f);
     const EA = await import('./engagement-actions.js');
+    phaseText = 'Reading your documents…'; repaint();
 
     // 2 — THE PITCH DECK. The hard gate: dispatch-run REFUSES to start without an ingested deck, so a
-    // failure here must never reach dispatch (it would leave a brand-new, dead engagement). No-ops when
-    // the Read step already ingested it.
+    // failure here must never reach dispatch (it would leave a brand-new, dead engagement).
     const deckFail = await naIngestDeck(EA, programId);
     if (deckFail) {
       window.__toast('Assessment created, but the pitch deck didn’t upload: ' + deckFail + ' — add it from the assessment.', true);
       land();                                   // recoverable: the page opens on "Upload deck", never a dead end
       return;                                   // ⚠️ DO NOT DISPATCH — the run would be rejected
     }
+    repaint();
 
-    // 3 — THE DATA ROOM (optional). Fully awaited BEFORE dispatch so the runner never reads a half-filled
-    // room. A skipped data-room file is a warning, never a blocker — only the deck is required.
-    const roomSkipped = [];
-    if (NA.roomRead) naProg(`Linked data room already read · ${(NA.driveFiles || []).length} documents`);
-    for (let i = 0; i < NA.docs.length; i++) {
-      NA.docStatus = { ...(NA.docStatus || {}), [i]: 'Uploading…' }; naPaintDocs();
-      naProg(`Data room · document ${i + 1} of ${NA.docs.length}`);
-      const r = await EA.ingestDocs({ engagementId: programId, files: [NA.docs[i]], docType: 'dataroom', onProgress: m => naProg(m) });
-      const bad = (r && r.skipped || []).length;
-      roomSkipped.push(...((r && r.skipped) || []));
-      NA.docStatus = { ...(NA.docStatus || {}), [i]: bad ? 'Failed' : 'Stored' }; naPaintDocs();
-    }
-    if (roomSkipped.length) window.__toast(`Couldn’t ingest ${roomSkipped.length}: ${roomSkipped.map(s => s.name).join(', ')} — add them from the assessment.`, true);
+    // 3 — THE EVIDENCE: staged files and the linked Drive folder, in front of the operator, fully awaited
+    // BEFORE dispatch so the runner never reads a half-filled room. The folder is the part that used to be
+    // dropped on the floor unless a separate button had been pressed first.
+    step = 1; phaseText = f.driveUrl ? 'Opening your data room…' : 'Reading your documents…'; repaint();
+    const ev = await naReadEvidence({
+      EA, programId, folderUrl: f.driveUrl,
+      onProgress: (t) => { phaseText = t; naProg(t); repaint(); },
+      onRoom: (check) => {
+        const was = new Set(((roomRead && roomRead.classes) || []).filter(c => c.found).map(c => c.key));
+        justFound = (check.classes || []).filter(c => c.found && !was.has(c.key)).map(c => c.key);
+        roomRead = check; repaint();
+        setTimeout(() => { justFound = []; }, 900);
+      },
+    });
+    // A room that could not be read is a warning, never a blocker — only the deck is required.
+    if (ev && ev.error) window.__toast(ev.error + ' — the assessment will run on the deck and anything else that was read.', true);
+    else if (ev && ev.failed) window.__toast(`Couldn’t read ${ev.failed} of ${ev.total} documents — add them from the assessment.`, true);
 
     // 4 — DISPATCH. Verbatim; it surfaces its own failure and returns false.
-    naProg('Starting the assessment…');
+    step = 2; phaseText = 'Starting the assessment…'; repaint();
     const ok = await EA.dispatchRun({ engagementId: programId, phase: 'assess' });
-    if (ok) window.__toast('Assessment queued — this runs in the cloud.');
+    if (ok) {
+      queued = true; phaseText = 'Assessment queued'; step = 3; repaint();
+      window.__toast('Assessment queued — this runs in the cloud.');
+    }
 
     // 5 — LAND on the assessment, which paints the run banner (dispatch-run stamps runState.status='queued'
     // before it answers, so it is already active on first load). If the run was refused, the page simply

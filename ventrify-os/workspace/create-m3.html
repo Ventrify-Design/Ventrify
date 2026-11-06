@@ -188,9 +188,10 @@
         crumbTail: TIERS[tier].label,
         eyebrow: TIERS[tier].label,
         headline: `Assess a venture for ${(org && org.name) || 'your workspace'}`,
+        // The room is no longer read in a step of its own, so neither line may promise one.
         subheading: tier === 'prescreen'
-          ? 'Attach the deck and we’ll read it in about three minutes.'
-          : 'Attach the deck and the data room. We read the room first, so you know what we can see before the run starts.',
+          ? 'Attach the deck and the data room — the run reads them, then pre-screens, in about three minutes.'
+          : 'Attach the deck, then add documents or link a Drive folder. The run reads the room first and assesses from it.',
       }),
       `<div class="brief">
         ${DS.wizardSteps(['Choose the read', 'Venture & evidence', 'Run'], 1)}
