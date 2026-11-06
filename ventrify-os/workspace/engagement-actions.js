@@ -455,6 +455,25 @@ export async function revokeDecision({ engagementId } = {}) {
 // sent; it is the send endpoint stopping one line short of Resend and returning what it assembled. The
 // operator is forwarding findings about the founder's own documents back to that founder, so "what you
 // saw is what went" has to be a property of the system, not a promise.
+// EMAIL A PRE-SCREEN LINK TO A COLLEAGUE. The server builds the message from the stored snapshot and
+// the engagement's own share token — the client supplies a recipient and a note, and nothing else,
+// the same rule every other authenticated mail in this product follows.
+export async function sharePrescreenEmail({ engagementId, email, note = '' } = {}) {
+  const token = await idToken();
+  if (!token) throw new Error('Please sign in again.');
+  const resp = await fetch('/api/send-email', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ type: 'prescreen-share', idToken: token, engagementId, email, note })
+  });
+  const d = await resp.json().catch(() => ({}));
+  if (!resp.ok) {
+    throw new Error(d.error === 'no_share_link'
+      ? 'Create the share link first.'
+      : (d.detail || d.error || ('Could not send (' + resp.status + ')')));
+  }
+  return d;
+}
+
 export async function advancePreview({ engagementId, email = '' } = {}) {
   const token = await idToken();
   if (!token) throw new Error('Please sign in again.');

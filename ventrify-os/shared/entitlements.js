@@ -225,6 +225,19 @@ export function entitlements(engagement, plan) {
     export:       full,   // deal-memo PDF
     share:        full,   // the /m/<token> frozen memo link + operator sign-off
 
+    // THE PRE-SCREEN'S OWN SHARE LINK, and deliberately not `share` above. They are two different
+    // documents: `share` publishes the DEAL MEMO, which a pre-screened venture does not have, so
+    // flipping that flag would have offered a link to nothing. This publishes the pre-screen itself —
+    // the band, the six findings, the coverage — labelled as the three-minute read it is.
+    //
+    // Free on purpose, and it is the one free feature that is also the best marketing the product has:
+    // a pre-screen forwarded to a colleague is read by someone who has never seen VerdictScore, and
+    // what it advertises is the full assessment it is visibly NOT. Keeping the paid artefact distinct
+    // is what makes that work — see workspace/prescreen-view.js.
+    //
+    // Mutually exclusive with `share` by construction, so the rail offers exactly one of them.
+    sharePrescreen: !full,
+
     // the free engagement loop — always on, costs $0, and it is the whole hook
     rescanRoom: true,
 
@@ -237,7 +250,7 @@ export function entitlements(engagement, plan) {
 // filters itself with no per-page conditionals.
 export function capsFor(engagement, plan) {
   const e = entitlements(engagement, plan);
-  return { create: true, assist: e.assist, export: e.export, share: e.share };
+  return { create: true, assist: e.assist, export: e.export, share: e.share, sharePrescreen: e.sharePrescreen };
 }
 
 // ---- The two-button emphasis swap ---------------------------------------

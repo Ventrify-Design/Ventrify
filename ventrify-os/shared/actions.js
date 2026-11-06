@@ -65,6 +65,10 @@ export const ACTIONS = {
   export:        { label: 'Export',        icon: 'download',     tier: 'aux', panel: 'export', capability: 'export' },
   deal_memo:     { label: 'Deal memo',     icon: 'download',     tier: 'aux', panel: 'deal_memo', capability: 'export' },
   share:         { label: 'Share',         icon: 'ios_share',    tier: 'aux', panel: 'share', capability: 'share' },
+  // The pre-screen's share. A SEPARATE action rather than a mode of `share`, because the two publish
+  // different documents and are gated by different capabilities — entitlements makes them mutually
+  // exclusive, so the rail shows exactly one of them whatever the tier.
+  share_prescreen: { label: 'Share',       icon: 'ios_share',    tier: 'aux', panel: 'share_prescreen', capability: 'sharePrescreen' },
   view_settings: { label: 'View settings', icon: 'tune',         tier: 'aux', panel: 'view', meta: true },
   help:          { label: 'Help',          icon: 'help',         tier: 'aux', panel: 'help', meta: true },
   // overflow — rail kebab (rare / restricted / destructive)
@@ -88,7 +92,7 @@ export const ACTION_MODEL = {
       finalised:         { operator: null,       master_operator: null },
       rejected:          { operator: 'reopen',   master_operator: 'reopen' },
     },
-    rail:     ['sources', 'discuss', 'activity', 'assist', 'research_peek', 'deal_memo', 'share', 'view_settings', 'help'],
+    rail:     ['sources', 'discuss', 'activity', 'assist', 'research_peek', 'deal_memo', 'share', 'share_prescreen', 'view_settings', 'help'],
     overflow: ['recall', 'reassign', 'archive', 'delete'],
   },
   research:  { primary: null, rail: ['discuss', 'assist', 'export', 'help'], overflow: [] },

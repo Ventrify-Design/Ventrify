@@ -43,6 +43,7 @@
   import { wsNavConfig, wsBrandConfig, wsAccountConfig, mountOrgSwitcherM3 } from './workspace-m3.js';
   import * as EA from './engagement-actions.js';
   import { dealMemoHTML } from './memo-view.js';
+  import { prescreenShareHTML } from './prescreen-view.js';
 
   await window.WORKSPACE_READY;
   const W = window.WORKSPACE;
@@ -477,6 +478,70 @@
     }
   };
 
+  // ── SHARE THE PRE-SCREEN ────────────────────────────────────────────────────────────────────────
+  // Not the deal memo under another name. A pre-screened venture HAS no memo, so `share` would have
+  // published a link to nothing — this publishes the pre-screen itself, through the same /m/<token>
+  // plumbing, which was content-agnostic all along.
+  //
+  // The reader is usually someone who has never seen the product, so the page closes by naming what a
+  // full assessment does that this did not. That is the upsell: a visible difference, not a slogan.
+  window.__eaSharePrescreen = async () => {
+    const E = DS._esc;
+    const ps = p.prescreen2 || {};
+    if (ps.state !== 'done') { window.__toast('Run the pre-screen first — there is nothing to share yet.'); return; }
+    window.__toast('Preparing the link…');
+    try {
+      const html = prescreenShareHTML(p, W.org, {
+        roomCheck: roomCheckResult,
+        operatorEmail: ((W.helpers && W.helpers.currentOperator && W.helpers.currentOperator()) || {}).email || '',
+      });
+      const d = await EA.shareMemo({ engagementId: p.id, html, meta: { name: p.name } });
+      p.shareLink = { token: d.token, at: new Date().toISOString() };
+      const url = d.url || (location.origin + '/m/' + d.token);
+      window.openAux({
+        mode: 'push', title: 'Share this pre-screen', subtitle: p.name,
+        body: `<div style="padding:4px 2px">
+          <div class="body-m" style="color:var(--md-sys-color-on-surface-variant);margin-bottom:12px">Anyone with this link reads the pre-screen — the band, the six findings and the coverage — with no login. It closes by explaining what a full assessment adds, so it is safe to forward to someone who has never seen VerdictScore.</div>
+          ${DS.formField({ label: 'Link', id: 'ea-ps-url', value: String(url), attr: ' readonly onclick="this.select()"' })}
+          <div style="margin:18px 0 0">
+            <div class="overline" style="color:var(--md-sys-color-on-surface-variant);margin-bottom:6px">Or email it to a colleague</div>
+            ${DS.formField({ label: 'Send to', id: 'ea-ps-to', type: 'email', placeholder: 'colleague@yourfirm.com' })}
+            ${DS.formField({ label: 'Add a note', id: 'ea-ps-note', optional: true, placeholder: 'Why you are sending it', attr: ' maxlength="600"' })}
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+              <button class="m3-btn tonal" id="ea-ps-send" onclick="window.__eaSharePrescreenSend()"><span class="material-symbols-rounded">outgoing_mail</span>Email the link</button>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;justify-content:space-between;margin-top:18px;padding-top:14px;border-top:1px solid var(--md-sys-color-outline-variant)">
+            <button class="m3-btn text" onclick="window.__eaRevokeShare()" style="color:var(--md-sys-color-error)">Revoke link</button>
+            <span style="display:flex;gap:8px"><a class="m3-btn text" href="${String(url).replace(/"/g, '&quot;')}" target="_blank" rel="noopener">Open</a><button class="m3-btn filled" onclick="window.__eaCopyShare('ea-ps-url')">Copy</button></span>
+          </div>
+        </div>`,
+      });
+    } catch (e) {
+      window.__toast('Could not create the link: ' + ((e && e.message) || e), true);
+    }
+  };
+
+  window.__eaSharePrescreenSend = async () => {
+    const to = ((document.getElementById('ea-ps-to') || {}).value || '').trim().toLowerCase();
+    if (!to || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) {
+      window.__toast('Add the address to send it to.', true);
+      const el = document.getElementById('ea-ps-to'); if (el) el.focus();
+      return;
+    }
+    const note = ((document.getElementById('ea-ps-note') || {}).value || '').trim();
+    const btn = document.getElementById('ea-ps-send');
+    if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+    try {
+      await EA.sharePrescreenEmail({ engagementId: p.id, email: to, note });
+      window.__toast('Sent to ' + to + '.');
+      if (btn) { btn.disabled = false; btn.textContent = 'Email the link'; }
+    } catch (e) {
+      if (btn) { btn.disabled = false; btn.textContent = 'Email the link'; }
+      window.__toast('Could not send: ' + ((e && e.message) || e), true);
+    }
+  };
+
   window.__eaShare = async () => {
     window.__toast('Preparing the share link…');
     try {
@@ -498,7 +563,9 @@
       });
     } catch (e) { window.__toast('Could not create the share link: ' + ((e && (e.code || e.message)) || e), true); }
   };
-  window.__eaCopyShare = () => { const i = document.getElementById('ea-sh-url'); if (i) { navigator.clipboard && navigator.clipboard.writeText(i.value); window.__toast('Link copied.'); } };
+  // Takes the field id so the memo panel and the pre-screen panel share one copy button rather than
+  // growing a second one that drifts. Defaults to the memo's field, which is the older caller.
+  window.__eaCopyShare = (id) => { const i = document.getElementById(id || 'ea-sh-url'); if (i) { navigator.clipboard && navigator.clipboard.writeText(i.value); window.__toast('Link copied.'); } };
   window.__eaRevokeShare = async () => {
     try { await EA.revokeShare({ engagementId: p.id }); p.shareLink = null; window.closeAux && window.closeAux(); window.__toast('Share link revoked.'); }
     catch (e) { window.__toast('Could not revoke: ' + ((e && (e.code || e.message)) || e), true); }
@@ -901,6 +968,7 @@
   window.RAIL_ACTIONS = {
     deal_memo: () => stateBits().hasVerdict ? window.__eaDownload() : window.__toast('The deal memo is ready once the assessment has a verdict.'),
     share: () => stateBits().hasVerdict ? window.__eaShare() : window.__toast('You can share the memo once the assessment has a verdict.'),
+    share_prescreen: () => window.__eaSharePrescreen(),
     __more: () => window.__eaMore(),
   };
   window.openSources = () => window.openAux({ mode: 'push', ...DS.sourcesPanel(A) });

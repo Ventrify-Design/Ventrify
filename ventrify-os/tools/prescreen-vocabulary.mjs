@@ -68,6 +68,23 @@ const v2copy = stripComments(v2);
 scan('ds.js v2 block', v2copy, FORBIDDEN, 'no document-centric language in the verdict, brief or findings');
 scan('ds.js v2 block', v2copy, PENALISING, 'and nothing that penalises a thin upload');
 
+console.log('\n1b. THE SHARED PRE-SCREEN (workspace/prescreen-view.js) — the copy that leaves the firm');
+// This document is read by people who have never seen the product and often never see it again, so it
+// is the LEAST forgiving place for the audit voice to reappear. Its coverage section is allowed to talk
+// about documents — that is what coverage is for (3.4) — so the forbidden patterns are checked against
+// everything OUTSIDE it, the same split the product makes on screen.
+const psv = await readFile(new URL('workspace/prescreen-view.js', BASE), 'utf8');
+const psvCopy = stripComments(psv);
+const covStart = psvCopy.indexOf('const rc = opts.roomCheck');
+const covEnd = psvCopy.indexOf('const tests =');
+ok(covStart > 0 && covEnd > covStart, 'the coverage block is findable, so the rest can be checked apart from it');
+const psvOutsideCoverage = psvCopy.slice(0, covStart) + psvCopy.slice(covEnd < 0 ? psvCopy.length : covEnd);
+scan('prescreen-view.js', psvOutsideCoverage, FORBIDDEN, 'no document-centric language outside the coverage block');
+scan('prescreen-view.js', psvOutsideCoverage, PENALISING, 'and nothing that penalises a thin upload');
+// The claim this document must never make, in the one place a reader would believe it.
+scan('prescreen-view.js', psvCopy, [/\bscore\s*(of|:)\s*\d/i, /\b\d{1,3}\s*\/\s*100\b/],
+     'and no number that reads as a score — the pre-screen does not produce one');
+
 console.log('\n2. THE PROMPTS (api/_prescreen2.js) — the model must not be ASKED for that language');
 const eng = await readFile(new URL('api/_prescreen2.js', BASE), 'utf8');
 const bandPrompt = slice(eng, 'function bandPrompt', 'function bandRequest');
