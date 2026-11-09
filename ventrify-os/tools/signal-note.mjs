@@ -28,10 +28,19 @@ const ok = (c, m) => { if (!c) fails++; console.log((c ? '  PASS  ' : '  FAIL  '
 const words = t => String(t).toLowerCase().match(/[a-z0-9][a-z0-9.$%/'-]*/g) || [];
 
 const notes = [];
+const snaps = [];
 for (const d of (await db.collection('engagements').get()).docs)
-  for (const s of (await d.ref.collection('investabilitySnapshots').get()).docs)
-    for (const c of (s.data().categories || []))
-      for (const sub of (c.subs || [])) if (sub.note) notes.push({ eng: d.id, slug: sub.slug, note: String(sub.note) });
+  for (const s of (await d.ref.collection('investabilitySnapshots').get()).docs) {
+    const x = s.data();
+    const at = x.computedAt && x.computedAt.toDate ? x.computedAt.toDate().getTime() : Date.parse(x.computedAt || x.at || 0) || 0;
+    const mine = [];
+    for (const c of (x.categories || []))
+      for (const sub of (c.subs || [])) if (sub.note) {
+        const n = { eng: d.id, slug: sub.slug, note: String(sub.note) };
+        notes.push(n); mine.push(n);
+      }
+    if (mine.length) snaps.push({ eng: d.id, at, notes: mine });
+  }
 
 const lost = [], structured = [], plain = [];
 for (const n of notes) {
@@ -69,6 +78,23 @@ ok(pct >= 50, `${structured.length} of ${notes.length} notes (${pct}%) gain real
 const STRUCTURED_FLOOR = 490;   // MEASURED 2026-11-09: 498 of 953. Set just below, so noise does not fail it.
 ok(structured.length >= STRUCTURED_FLOOR,
    `${structured.length} notes structured — floor is ${STRUCTURED_FLOOR}`);
+
+// ── AND THE NEWEST RUN ON ITS OWN ───────────────────────────────────────────────────────────────────
+// Both checks above are over the WHOLE corpus, which only ever grows — so a run that wrote entirely
+// unstructured notes would be DILUTED into passing: 498 of 953 becomes 498 of 988, the rate slips from
+// 52% to 50.4%, and nothing fails for months. The markers this parser reads are an emergent habit of
+// the scorer, not a contract the prompt enforces, so drift is a real possibility and a slow alarm is
+// the same as none.
+//
+// The newest snapshot is ~35 notes, which is a noisy sample, so this is deliberately lenient: it is
+// looking for a COLLAPSE (a model or prompt that stopped marking sections at all), not a wobble.
+const newest = snaps.sort((a, b) => b.at - a.at)[0];
+if (newest) {
+  const ns = newest.notes.filter(n => { const r = parseSignalNote(n.note); return !r.plain && r.blocks.length; }).length;
+  const npct = Math.round(100 * ns / newest.notes.length);
+  const when = newest.at ? new Date(newest.at).toISOString().slice(0, 10) : 'undated';
+  ok(npct >= 25, `newest run (${newest.eng}, ${when}): ${ns} of ${newest.notes.length} notes structured (${npct}%) — a collapse below 25% means the scorer stopped marking sections`);
+}
 
 // ── THE HEAD IS THE ONLY LINE MOST OPERATORS WILL READ ──────────────────────────────────────────────
 // It is the answer, lifted out of a 1,300-character note, and it must not stop mid-phrase. splitClaim
