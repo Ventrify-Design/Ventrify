@@ -28,6 +28,7 @@ const dataStub = (failing, code) => js(`
   const ENG = {
     id: 'prg-gate', orgId: 'gateorg', name: 'Gate Venture', company: 'Gate Venture',
     engagementType: 'assessment', founderEmail: 'f@example.com',
+    pitchDoc: { name: 'deck.pdf', uploadedAt: '2026-11-09T09:00:00.000Z', bytes: 1024 },
     runState: { phase: 'assess', status: 'done', step: 8, totalSteps: 12, progress: 100,
                 startedAt: '2026-11-09T10:00:00.000Z', finishedAt: '2026-11-09T11:05:00.000Z' },
     investability: { composite: 76, band: 'PROMISING' },

@@ -477,7 +477,7 @@ window.__wsCreateAssessment = async () => {
   if (W.mode === 'live') {
     const go = await window.__confirm({
       title: 'Run the full assessment?',
-      message: 'This is the complete agentic run — deep research, diligence, a measured score and a deal memo. It takes about two hours in the cloud.\n\nIf you want a quick read instead, cancel and choose “Run pre-screen first” — that takes about five minutes and is free.',
+      message: 'This is the complete agentic run — deep research, diligence, a measured score and a deal memo. It takes about 90 minutes in the cloud.\n\nIf you want a quick read instead, cancel and choose “Run pre-screen first” — that takes about five minutes and is free.',
       confirmLabel: 'Run full assessment',
     });
     if (!go) return;

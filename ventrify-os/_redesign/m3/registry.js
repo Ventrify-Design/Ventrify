@@ -799,7 +799,7 @@ export const CATALOG = {
   },
   caseEditorial: {
     level: 'organism', group: 'Organisms', domain: 'Assessment', title: 'Case, both ways (editorial)', sig: 'caseEditorial(a)',
-    blurb: 'Bull and bear as two columns on the BACKGROUND — no card, no shadow. A card says “separate object”, and the two sides of an argument are one argument; boxing each half made the Verdict tab read as a dashboard rather than a memo. The structure the card implied now comes from a hairline between the columns, a 2px rule under each heading in the side\'s colour (the bar that used to run down the card edge), and the tick/cross markers. Counts derive from the arrays; a side with no points shows a muted empty row, not a hollow shell. Stacked below 900px the divider turns with the columns.',
+    blurb: 'Bull and bear as two columns on the BACKGROUND — no card, no shadow. A card says “separate object”, and the two sides of an argument are one argument; boxing each half made the Verdict tab read as a dashboard rather than a memo. The structure the card implied now comes from a hairline between the columns, a 2px rule under each heading in the side\'s colour (the bar that used to run down the card edge), and the tick/cross markers. Counts derive from the arrays; a side with no points shows a muted empty row, not a hollow shell. Stacked below 900px the divider turns with the columns. POINTS FOLD CLAIM-FIRST (2026-11-09): the first sentence is the scan layer and the rest opens under it, the same treatment the pre-screen findings use — same .cpt → .cpt-b → ps2Fold structure, and the .ps-claim / .ps-rest rules were ALREADY scoped to .cpt-b, so no new CSS. Measured on the 14 published assessments: 137 of 189 points (72%) split. A point with no second sentence renders a bare .ps-claim paragraph and no caret, so short points are unchanged rather than newly clickable.',
     maxw: null, pad: false,
     html: () => `<div class="brief" style="padding:8px 28px 20px">${DS.caseEditorial(A)}</div>`,
     props: [{ name: 'a.bull', type: 'string[]' }, { name: 'a.bear', type: 'string[]' }],
@@ -808,7 +808,7 @@ export const CATALOG = {
   },
   conditionsKill: {
     level: 'organism', group: 'Organisms', domain: 'Assessment', title: 'Conditions + kill-risk (editorial)', sig: 'conditionsKill(a)',
-    blurb: 'What-must-be-true as a numbered list beside the biggest kill-risk pull-quote. Balanced (align-items:center); with no kill-risk it reflows to a single readable measure.',
+    blurb: 'What-must-be-true as a numbered list beside the biggest kill-risk pull-quote. Balanced (align-items:center); with no kill-risk it reflows to a single readable measure. POINTS FOLD CLAIM-FIRST (2026-11-09): the first sentence is the scan layer and the rest opens under it, the same treatment the pre-screen findings use — same .must → .bd → ps2Fold structure, and the .ps-claim / .ps-rest rules were ALREADY scoped to .must, so no new CSS. Measured on the 14 published assessments: 26 of 44 conditions split. A point with no second sentence renders a bare .ps-claim paragraph and no caret, so short points are unchanged rather than newly clickable.',
     maxw: null, pad: false,
     html: () => `<div class="brief" style="padding:8px 28px 20px">${DS.conditionsKill(A)}</div>`,
     props: [{ name: 'a.mustBeTrue', type: 'string[]' }, { name: 'a.biggestRisk', type: '{label,headline,text}' }],

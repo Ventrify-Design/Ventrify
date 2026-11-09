@@ -171,7 +171,18 @@ export const TIER_COMPARISON = {
   full: {
     question: 'What is the verdict?',
     pitch: 'The complete agentic run — everything the pre-screen reads, argued from the whole room.',
-    time: 'about 2 hours', cost: '$' + PRICE_PER_RUN_USD + ' per run',
+    // ── "ABOUT 90 MINUTES", AND WHERE THAT NUMBER COMES FROM ──────────────────────────────────────
+    // Was "about 2 hours", which no run has matched since the effort change. MEASURED 2026-11-09 from
+    // runState.startedAt → finishedAt on every completed assess run:
+    //
+    //   all time                    n=13  median  85 min  (31–140)
+    //   since 2026-10-19, effort high  n=7  median  66 min  (38–128)   ← the current instrument
+    //
+    // 6 of those 7 finished inside 90 minutes, so 90 is a conservative promise against a 66-minute
+    // median rather than a target. IT IS A MEASUREMENT OF ONE INSTRUMENT: the model, the effort and the
+    // CLI are pinned (claude-config.js), and if any of them moves this number must be re-measured, not
+    // adjusted by feel. The same 2-hour claim is in ds.js, assess-next.html and workspace-m3.js.
+    time: 'about 90 minutes', cost: '$' + PRICE_PER_RUN_USD + ' per run',
     basis: 'Reads every document in the room, then researches the outside world against it.',
     // The line the pre-screen column is measured against. Counted, not asserted — see tierTally().
     upsell: 'Everything above, on every document you have, with the working shown.',
@@ -278,9 +289,9 @@ export function capsFor(engagement, plan) {
 // spent must not be shown "Run full assessment" as its primary.
 export function ctaPair(plan, tier = defaultTier(plan)) {
   const runPrescreen = { id: 'run_prescreen', label: 'Run free pre-screen', icon: 'bolt', cost: 'about 5 minutes · free' };
-  const runFull      = { id: 'run_full',      label: 'Run full assessment', icon: 'play_arrow', cost: 'about 2 hours' };
+  const runFull      = { id: 'run_full',      label: 'Run full assessment', icon: 'play_arrow', cost: 'about 90 minutes' };
   return tier === 'prescreen'
-    ? { primary: runPrescreen, secondary: { id: 'unlock_full', label: 'Unlock full assessment', icon: 'lock_open', cost: 'about 2 hours' } }
+    ? { primary: runPrescreen, secondary: { id: 'unlock_full', label: 'Unlock full assessment', icon: 'lock_open', cost: 'about 90 minutes' } }
     : { primary: runFull,      secondary: { ...runPrescreen, label: 'Run pre-screen first' } };
 }
 

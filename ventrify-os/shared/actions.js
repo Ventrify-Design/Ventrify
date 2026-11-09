@@ -57,14 +57,36 @@ export const ACTIONS = {
   finalise:        { label: 'Finalise & lock',  icon: 'lock',     tier: 'primary', variant: 'filled',   transition: 'finalise' },
   reopen:          { label: 'Reopen',           icon: 'lock_open',tier: 'primary', variant: 'outlined', transition: 'reopen' },
   // auxiliary — utility rail (open the aux panel). meta:true = pinned to the rail's foot.
+  //
+  // ── REMOVED 2026-11-09: discuss, activity, research_peek, view_settings, help ──────────────────────
+  // All five were declared here and bound NOWHERE. ds.js falls back to railPanel() for an unbound tool,
+  // whose entire body is "The <X> tool opens here as a side panel" plus four grey skeleton lines — so
+  // each one read as a feature mid-load rather than a feature that does not exist. Five of the ten tools
+  // on the assessment rail were that panel.
+  //
+  // research_peek was the worst of them: a stub of the research room, which SHIPS and works, as its own
+  // tab with a drill page per document. A placeholder competing with a finished feature.
+  //
+  // They were invisible to the only gate that looked: share-upsell.mjs joins the rail against the
+  // handler map for ids carrying a `capability`, and not one of these five carried one. tools/
+  // rail-bound.mjs now exempts nothing — it CLICKS every tool on every page and fails on a placeholder.
+  //
+  // Re-adding any of them means authoring real content (window.RAIL_PANELS[panel]) or a real handler
+  // (window.RAIL_ACTIONS[tool]) in the same change. The gate will refuse the button on its own.
   sources:       { label: 'Sources',       icon: 'source',       tier: 'aux', panel: 'sources' },
-  discuss:       { label: 'Discussion',    icon: 'forum',        tier: 'aux', panel: 'discuss' },
-  activity:      { label: 'Activity',      icon: 'history',      tier: 'aux', panel: 'activity' },
   assist:        { label: 'Assist',        icon: 'auto_awesome', tier: 'aux', panel: 'assist', capability: 'assist' },
-  research_peek: { label: 'Research',      icon: 'science',      tier: 'aux', panel: 'research' },
   export:        { label: 'Export',        icon: 'download',     tier: 'aux', panel: 'export', capability: 'export' },
   deal_memo:     { label: 'Deal memo',     icon: 'download',     tier: 'aux', panel: 'deal_memo', capability: 'export' },
-  share:         { label: 'Share',         icon: 'ios_share',    tier: 'aux', panel: 'share', capability: 'share' },
+  // PROMOTED TO THE MASTHEAD 2026-11-09, on the operator's call. It used to be a rail tool on the
+  // reasoning that a full assessment's masthead belongs to the lifecycle (submit / confirm / decline)
+  // while the pre-screen's document is finished the instant the run ends. True, but it left ONE product
+  // answering the same question two ways: the same act of sharing was a primary button on a pre-screen
+  // and a buried icon on the thing that costs ninety minutes.
+  //
+  // It renders as `text`, not `filled`, and only once a verdict exists — so the lifecycle pair keeps the
+  // masthead's single filled button (the conformance gate allows exactly one) and share never offers to
+  // publish a memo that has not been written yet.
+  share:         { label: 'Share',         icon: 'ios_share',    tier: 'primary', variant: 'text', panel: 'share', capability: 'share' },
   // The pre-screen's share. A SEPARATE action rather than a mode of `share`, because the two publish
   // different documents and are gated by different capabilities — entitlements makes them mutually
   // exclusive, so exactly one of them is offered whatever the tier.
@@ -80,8 +102,6 @@ export const ACTIONS = {
   // and it is the rarer of the two exits. A rail tool is the right weight for it — the masthead is for
   // what the operator does with the venture, not what they send about it.
   advance_founder: { label: 'Email the founder', icon: 'outgoing_mail', tier: 'aux', panel: 'advance', capability: 'advanceFounder' },
-  view_settings: { label: 'View settings', icon: 'tune',         tier: 'aux', panel: 'view', meta: true },
-  help:          { label: 'Help',          icon: 'help',         tier: 'aux', panel: 'help', meta: true },
   // overflow — rail kebab (rare / restricted / destructive)
   recall:   { label: 'Recall submission', icon: 'undo',    tier: 'overflow', transition: 'recall' },
   reassign: { label: 'Reassign operator', icon: 'group',   tier: 'overflow' },
@@ -92,8 +112,11 @@ export const ACTIONS = {
 // Per-page placement. primaryByState[state][role] → the workflow primary (a single id, or an
 // array = a DECISION PAIR resolved in one masthead slot). '*'-style pages use a static `primary`.
 export const ACTION_MODEL = {
-  portfolio: { primary: 'new_engagement', rail: ['activity', 'view_settings', 'help'], overflow: [] },
-  queue:     { primary: null,             rail: ['activity', 'view_settings', 'help'], overflow: [] },
+  // portfolio/queue rails are now EMPTY, and pageShell renders no rail for an empty array. The live
+  // pages (dashboard-m3, queue-m3) never rendered one anyway — only the _redesign/m3 specimens resolve
+  // these entries, so they now match the product instead of showing three placeholders it does not have.
+  portfolio: { primary: 'new_engagement', rail: [], overflow: [] },
+  queue:     { primary: null,             rail: [], overflow: [] },
   assess: {
     primaryByState: {
       draft:             { operator: 'submit',   master_operator: 'submit' },
@@ -103,10 +126,10 @@ export const ACTION_MODEL = {
       finalised:         { operator: null,       master_operator: null },
       rejected:          { operator: 'reopen',   master_operator: 'reopen' },
     },
-    rail:     ['sources', 'discuss', 'activity', 'assist', 'research_peek', 'deal_memo', 'share', 'advance_founder', 'view_settings', 'help'],
+    rail:     ['sources', 'assist', 'deal_memo', 'advance_founder'],
     overflow: ['recall', 'reassign', 'archive', 'delete'],
   },
-  research:  { primary: null, rail: ['discuss', 'assist', 'export', 'help'], overflow: [] },
+  research:  { primary: null, rail: ['assist', 'export'], overflow: [] },
 };
 
 const expand = id => ({ id, ...(ACTIONS[id] || { label: id, icon: 'help_outline' }) });

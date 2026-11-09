@@ -193,7 +193,7 @@
   window.__eaUnlock = async () => {
     const ok = await window.__confirm({
       title: 'Run the full assessment?',
-      message: `This replaces the range with a single measured score, and adds diligence, deep research and the deal memo. It takes about two hours and runs in the cloud.${unlockRoute() === 'checkout' ? '' : '\n\nBilling is not switched on yet, so this is free for now.'}`,
+      message: `This replaces the range with a single measured score, and adds diligence, deep research and the deal memo. It takes about 90 minutes and runs in the cloud.${unlockRoute() === 'checkout' ? '' : '\n\nBilling is not switched on yet, so this is free for now.'}`,
       confirmLabel: 'Run full assessment',
     });
     if (!ok) return;
@@ -718,11 +718,17 @@
     if (st.active) return DS.canStopRun(st.rs) ? [{ variant: 'outlined', icon: 'stop_circle', label: 'Stop run', onclick: 'window.__eaStop()' }] : [];
     if (st.hasVerdict) {                                                          // verdict ready — the operator confirms or declines the deal
       const dec = p.assessmentDecision;
+      // Share rides WITH the decision, on both branches. Label + icon + variant come from the registry
+      // rather than being retyped, so promoting it there moves it here too. `text` keeps Confirm the
+      // only filled button on the masthead.
+      const shareBtn = { variant: ACTIONS.share.variant || 'text', icon: ACTIONS.share.icon,
+                         label: ACTIONS.share.label, onclick: 'window.__eaShare()' };
       if (!dec) return [
         { variant: 'filled', icon: 'check_circle', label: 'Confirm', onclick: "window.__eaDecide('confirmed')" },
         { variant: 'outlined', icon: 'do_not_disturb_on', label: 'Decline', onclick: "window.__eaDecideAsk('declined')" },
+        shareBtn,
       ];
-      return [{ variant: 'text', icon: 'edit', label: 'Change decision', onclick: 'window.__eaChangeDecision()' }];   // decided — the state shows in the pill
+      return [{ variant: 'text', icon: 'edit', label: 'Change decision', onclick: 'window.__eaChangeDecision()' }, shareBtn];   // decided — the state shows in the pill
     }
     if (st.recoverable) return [{ variant: 'filled', icon: 'restore', label: 'Republish', onclick: 'window.__eaRepublish()' }, { variant: 'text', icon: 'restart_alt', label: 'Re-run', onclick: 'window.__eaRun()' }];
     return [{ variant: 'filled', icon: 'play_arrow', label: 'Run assessment', onclick: 'window.__eaRun()' }];   // idle + deck
@@ -949,7 +955,6 @@
   // share opens the shareable-link flow, and the rail's overflow kebab (__more) opens the Manage menu.
   window.RAIL_ACTIONS = {
     deal_memo: () => stateBits().hasVerdict ? window.__eaDownload() : window.__toast('The deal memo is ready once the assessment has a verdict.'),
-    share: () => stateBits().hasVerdict ? window.__eaShare() : window.__toast('You can share the memo once the assessment has a verdict.'),
     // The founder's half of the pre-screen. Rail, not masthead — see the note in mastheadActions.
     // Every rail id that carries a capability MUST appear here or in RAIL_PANELS: an unbound tool does
     // not fail, it opens ds.railPanel()'s placeholder, which looks like a half-built feature rather

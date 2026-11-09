@@ -1473,10 +1473,22 @@ export function categoryDetail(s, key, gapBySlug = {}) {
 
 // the case, argued both ways — two grouped lists (the one place cards earn elevation)
 export function caseEditorial(a) {
+  // ── CLAIM-FIRST, AS ON THE PRE-SCREEN ─────────────────────────────────────────────────────────────
+  // Measured across the 14 published assessments: 56 of 72 bull points and 57 of 73 bear points run
+  // past 180 characters, median 215, longest 471. Fourteen paragraphs of that is a page you read or
+  // skip, with nothing in between — which is the same problem the pre-screen had before it folded.
+  //
+  // This is a CONVERGENCE rather than a new pattern. ps2Points already renders the pre-screen's
+  // findings into `.cpt` → `.cpt-b` → ps2Fold, and workspace-chrome.css already scopes `.ps-claim` /
+  // `.ps-rest` to `.cpt-b`. The only reason the case read differently was that it put a bare <p> where
+  // the pre-screen puts `.cpt-b` — so the fix is to stop being the exception, not to add a mechanism.
+  //
+  // A point with no second sentence still renders `<p class="ps-claim">` and no caret: splitClaim
+  // returns rest:'' and ps2Fold drops the <details>. Short points are unchanged, not newly clickable.
   const side = (cls, ttl, tag, icon, mk, items) => `<div class="case-card ${cls}">
     <div class="ch"><span class="material-symbols-rounded">${icon}</span><span class="ttl">${ttl}</span><span class="ct">${tag}</span></div>
-    ${items.length ? items.map(t => `<div class="cpt"><span class="mk"><span class="material-symbols-rounded">${mk}</span></span><p>${esc(t)}</p></div>`).join('')
-      : `<div class="cpt cpt-empty"><span class="mk"></span><p>No material points raised on this side.</p></div>`}
+    ${items.length ? items.map(t => `<div class="cpt"><span class="mk"><span class="material-symbols-rounded">${mk}</span></span><div class="cpt-b">${ps2Fold({ text: t })}</div></div>`).join('')
+      : `<div class="cpt cpt-empty"><span class="mk"></span><div class="cpt-b"><p>No material points raised on this side.</p></div></div>`}
   </div>`;
   return `<section class="sec">
     <div class="sec-head"><span class="eyebrow">The case</span><span class="t">Argued both ways</span><span class="meta">${a.bull.length} for · ${a.bear.length} against</span></div>
@@ -1491,7 +1503,11 @@ export function caseEditorial(a) {
 export function conditionsKill(a) {
   const n = a.mustBeTrue.length;
   const sub = n ? `For the thesis to hold, all ${NUMWORD[n] || n} must be true` : 'Conditions for the thesis to hold';
-  const conds = a.mustBeTrue.map((m, i) => `<div class="must"><span class="idx">${i + 1}</span><p>${esc(m)}</p></div>`).join('');
+  // 26 of 44 stored mustBeTrue conditions run past 180 characters (median 190, longest 402), so these
+  // fold too. `.bd` is the body wrapper assess-editorial.css already expects inside a flex `.must`
+  // (`.cpt-b, .must > .bd { flex: 1; min-width: 0 }`), and `.must .ps-claim` / `.must .ps-rest` are
+  // already scoped — a descendant selector, so it reaches through `.bd`.
+  const conds = a.mustBeTrue.map((m, i) => `<div class="must"><span class="idx">${i + 1}</span><div class="bd">${ps2Fold({ text: m })}</div></div>`).join('');
   const r = a.biggestRisk;
   const kill = r ? `<aside class="kill">
       <div class="kh"><span class="material-symbols-rounded">gpp_maybe</span><span class="tg">Biggest kill-risk<b>${esc(r.label)}</b></span></div>
@@ -2425,7 +2441,7 @@ export function rangeHero(range = {}, opts = {}) {
   return sectionHero({
     eyebrow: 'Pre-screen', eyebrowIcon: 'bolt',
     headline: width === 0
-      ? 'Your data room answered everything the score asks for.'
+      ? 'The data room answered everything the score asks for.'
       : `This range is ${width} points wide because of what we cannot see yet.`,
     facts: [
       { k: 'Categories fully evidenced', v: `${seen} of ${categories.length}` },
@@ -2621,8 +2637,8 @@ export function runStage(opts = {}) {
   const isAssess = kind === 'assessment';
 
   const STEPS = isAssess
-    ? ['Reading your documents', 'Reading the data room', 'Starting the assessment']
-    : ['Reading your documents', 'Checking the data room', 'Scoring the seven categories'];
+    ? ['Reading the documents', 'Reading the data room', 'Starting the assessment']
+    : ['Reading the documents', 'Checking the data room', 'Scoring the seven categories'];
   const steps = STEPS.map((t, i) => `<li class="ps-step${i < step ? ' done' : i === step ? ' now' : ''}">
     <span class="material-symbols-rounded">${i < step ? 'check_circle' : i === step ? 'progress_activity' : 'radio_button_unchecked'}</span>${esc(t)}</li>`).join('');
 
@@ -2708,10 +2724,10 @@ export function runStage(opts = {}) {
       ${col('What we are reading', 'Your evidence', `${(deck ? 1 : 0) + docs.length} file${(deck ? 1 : 0) + docs.length === 1 ? '' : 's'}`,
             evidence ? `<div class="profile">${evidence}</div>` : `<div class="profile-foot"><span>Nothing attached.</span></div>`,
             'Each file is read before the score starts. Anything that fails to parse is named here rather than dropped quietly.')}
-      ${col('Your data room', isAssess ? 'What the assessment reads' : 'What the score looks for', roomMeta, roomBody,
+      ${col('The data room', isAssess ? 'What the assessment reads' : 'What the score looks for', roomMeta, roomBody,
             'Free and unlimited to re-run. A type shown as not seen is not a mark against the venture — it is evidence we were not given.')}
       ${isAssess
-        ? col('The assessment', 'What the run produces', queued ? 'queued' : 'about 2 hours', prodBody,
+        ? col('The assessment', 'What the run produces', queued ? 'queued' : 'about 90 minutes', prodBody,
               'This runs in the cloud, not in this tab. Once it is queued you can close the window — nothing on this screen is scored in your browser, so there is no progress here to invent.')
         : col('The score', 'Seven categories', `${landed.length} of ${total} landed`, `<div class="profile">${catBody}</div>`,
               'Three independent reads per signal, and the middle one is published — a single read of the same evidence can move a score by several points without making it more right.')}
@@ -2769,13 +2785,13 @@ export function dataRoomHero(check = null, opts = {}) {
   const WORDS = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten'];
   const word = n => WORDS[n] || String(n);
   const headline = found == null
-    ? 'We have not read your data room yet.'
+    ? 'We have not read the data room yet.'
     : missing === 0
       ? 'Your room answers everything the score looks for.'
       : `${word(missing)} document type${missing === 1 ? '' : 's'} the score counts ${missing === 1 ? 'is' : 'are'} missing.`;
 
   const thesis = found == null
-    ? 'Scanning reads what is already uploaded and tells you which of the document types the score counts it can find. It is free, it takes about a second, and it never moves your score on its own.'
+    ? 'Scanning reads what is already uploaded and tells you which of the document types the score counts it can find. It is free, it takes about a second, and it never moves the score on its own.'
     : missing === 0
       ? (isPrescreen
         ? 'There is nothing left to add for coverage. What is still holding the range open is the depth of the reading, not the evidence — and that is what the full assessment buys.'
@@ -2875,7 +2891,7 @@ export function revealLive(target, opts = {}) {
 // read, so `total` is a real count and not an estimate. `found` counts up as the free room check re-runs
 // between files, which is the part that says the scan is DOING something rather than merely running.
 export function roomScanBanner(opts = {}) {
-  const { done = 0, total = 0, current = '', found = null, of = null, label = 'Reading your data room' } = opts;
+  const { done = 0, total = 0, current = '', found = null, of = null, label = 'Reading the data room' } = opts;
   const pct = total ? Math.round((done / total) * 100) : null;
   return `<section class="sec rsb" aria-live="polite">
     <div class="rsb-top">
@@ -2960,7 +2976,7 @@ export function dataRoomTab(opts = {}) {
         <span class="dr-act-x"><b>Re-reading the room is free and unlimited</b> — it updates what we can see and narrows what the range is guessing at. Re-<i>scoring</i> on the new evidence is the full assessment, which reads everything here properly and returns one measured number.</span>
       </div>`
     : `<div class="dr-act">
-        <span class="dr-act-x">Free, and as often as you like — scanning the room costs nothing and never changes your score on its own. File evidence against a specific gap from the Diligence tab to move the score.</span>
+        <span class="dr-act-x">Free, and as often as you like — scanning the room costs nothing and never changes the score on its own. File evidence against a specific gap from the Diligence tab to move the score.</span>
       </div>`;
 
   // ORDER IS THE ARGUMENT: here is what we found → here is how to change it → here is what that buys.

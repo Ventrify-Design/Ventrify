@@ -16,12 +16,13 @@
 //  RULE 3 — NO SCORE, ANYWHERE. The pre-screen does not produce one, and a reader who thinks it did
 //           has been misled about the only thing that separates the two products.
 //  RULE 4 — COVERAGE IS DISCLOSURE. The "not a grade" sentence travels with the counts.
-//  RULE 5 — ONE SHARE PER TIER, ON THE RIGHT SURFACE. entitlements must offer share XOR
-//           sharePrescreen, never both and never neither. The two render in different places and
-//           that is deliberate: on a FULL assessment the masthead belongs to the lifecycle, so the
-//           memo's share waits in the rail; on a PRE-SCREEN there is no lifecycle and the document is
-//           finished the moment the run ends, so sharing it is a masthead action and the founder
-//           email is the rail tool. They were the other way round until 2026-11-06.
+//  RULE 5 — ONE SHARE PER TIER, AND IT IS A MASTHEAD ACTION ON BOTH. entitlements must offer share
+//           XOR sharePrescreen, never both and never neither — and NEITHER belongs in the utility
+//           rail. Until 2026-11-09 the full assessment's share WAS a rail tool, on the reasoning that
+//           its masthead belongs to the lifecycle; the result was one product answering the same
+//           question two ways, a primary button on a pre-screen and a buried icon on the ninety-minute
+//           run. Promoted on the operator's call. The founder email is the rail tool on a pre-screen,
+//           and a FULL engagement has nothing to advance to, so it is absent there.
 //  RULE 6 — THE EMAIL CANNOT BE TOLD WHERE TO POINT. The link is read from the engagement's own
 //           shareLink.token; a client-supplied url would make this an open relay that mails arbitrary
 //           links from a verified domain.
@@ -101,21 +102,25 @@ function auditEntitlements() {
     // capsFor was applied to the rail at all.
     const rail = resolveActions({ page: 'assess', caps: capsFor(eng, null) }).rail.map(a => a.id);
     const shares = rail.filter(id => id === 'share' || id === 'share_prescreen');
+    // NEITHER tier may put a share in the rail any more. This replaces the old assertion that the full
+    // rail had to contain exactly "share" — reinstating the rail button now has to DELETE a check.
+    if (shares.length)
+      bad.push(`RULE 5 — the ${label} RAIL offers [${shares.join(', ')}]; share is a masthead action on both tiers`);
     if (label === 'full') {
-      if (shares.length !== 1 || shares[0] !== 'share')
-        bad.push(`RULE 5 — the full rail offers [${shares.join(', ') || 'nothing'}], expected exactly "share"`);
       if (rail.includes('advance_founder'))
         bad.push('RULE 5 — a FULL engagement offers "advance_founder"; there is nothing left to advance it to');
-    } else {
-      if (shares.length)
-        bad.push(`RULE 5 — the pre-screen RAIL offers [${shares.join(', ')}]; its share is a masthead action`);
-      if (!rail.includes('advance_founder'))
-        bad.push('RULE 5 — the pre-screen rail has no "advance_founder" — the founder email has nowhere to live');
+    } else if (!rail.includes('advance_founder')) {
+      bad.push('RULE 5 — the pre-screen rail has no "advance_founder" — the founder email has nowhere to live');
     }
   }
   // The surfaces themselves, from the registry both codebases render from.
-  if (ACTIONS.share_prescreen.tier !== 'primary')
-    bad.push(`RULE 5 — share_prescreen is tier "${ACTIONS.share_prescreen.tier}", not the masthead`);
+  for (const id of ['share_prescreen', 'share'])
+    if (!ACTIONS[id] || ACTIONS[id].tier !== 'primary')
+      bad.push(`RULE 5 — ${id} is tier "${ACTIONS[id] && ACTIONS[id].tier}", not the masthead`);
+  // The full memo's share must stay `text`: the masthead already has one filled button (Confirm) and
+  // the conformance gate allows exactly one.
+  if (ACTIONS.share.variant !== 'text')
+    bad.push(`RULE 5 — share renders as "${ACTIONS.share.variant}"; it must be text so Confirm stays the only filled button`);
   if (!ACTIONS.advance_founder || ACTIONS.advance_founder.tier !== 'aux')
     bad.push('RULE 5 — advance_founder is not a utility-rail action');
   return bad;
