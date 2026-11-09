@@ -27,6 +27,105 @@ const AG = withGaps(ASSESSMENT, SCORE);
 const A = ASSESSMENT;
 // A realistic pre-screen result for the range components: a deck plus a thin room, which is the case the
 // feature exists for. Weights are the rubric's own, so the arithmetic on screen is the real arithmetic.
+// PRE-SCREEN v2 SAMPLE — shaped from a real run (lengths, sentence order, the own-documents vs
+// public-sources mix) and paraphrased, because this file is tracked and a customer's diligence is not
+// catalog fixture material.
+// A snapshot built to be AWKWARD, not realistic: the shapes a model is free to produce and the
+// stored corpus happens not to contain. Rendered at 390px by tools/fold-behaviour.mjs.
+const PS2_STRESS = {
+  v: 2, state: 'done', band: 'MEDIUM',
+  reason: 'A single unbroken token follows and it must not open a scrollbar: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA.',
+  brief: {
+    oneLine: 'Builds a thing called AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA and sells it.',
+    sector: 'A', subSector: 'A narrower A', businessModel: 'Priced by area. Then by subscription.',
+    stage: 'seed', geography: 'Everywhere', marketClaim: '$70BN', ask: 'Raising $2M',
+    team: Array.from({ length: 20 }, (_, i) => ({ name: 'A Person With A Rather Long Name ' + (i + 1),
+      background: 'Chief Something Officer With A Long Title; MSc in an extremely long subject name indeed, plus a second clause that keeps going' })),
+    claims: [{ statement: 'A claim naming a file with no spaces in it at all.',
+      docName: 'Averyveryverylongdocumentfilenamewithnospacesatallhere.pdf', quotedSpan: 'q' }],
+    traction: ['AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'],
+  },
+  nextTests: ['Whether AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA survives contact with a customer'],
+  basis: 'Read from 1 document.',
+  nuggets: {
+    thesis: { points: [{ point: 'The bet is one very long sentence that never stops to breathe and therefore cannot be split into a claim and its evidence at all, which means it must render as one piece at exactly the same size as every point that does split, because otherwise the type size on this page would be decided by the model\'s punctuation', external: false, tier: 'verified', docName: 'd.pdf', quotedSpan: 'q' }] },
+    competitive: { points: [{ point: 'See AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA. It is one unbroken word.', external: true, tier: 'verified',
+      source: { url: 'https://example.com/a/very/long/path/that/keeps/going/and/going', title: 'A source with an extremely long title that will not fit on one line in this column at all' }, quotedSpan: 'q' }] },
+    team: { points: [{ point: 'Short point', external: false, tier: 'verified', docName: 'd.pdf', quotedSpan: 'q' }] },
+    tension: { points: [] },
+  },
+};
+
+const PS2_BRIEF = {
+  readable: true,
+  oneLine: 'Builds passive density-imaging sensors (surface-mounted and borehole) and software that maps subsurface density to find mineral deposits, sold as a pay-per-area scanning service and later as hardware and software subscriptions.',
+  sector: 'Mining technology / geophysical exploration',
+  subSector: 'Passive subsurface imaging for critical minerals exploration',
+  businessModel: 'Pay-as-you-scan service priced by area surveyed (about $200K per sq km), progressing to instrument leases and software subscriptions; hardware margin is the second act.',
+  stage: 'seed',
+  geography: 'Delaware C-corp with operations in Tokyo and the US (San Francisco / Washington); targets global mining customers.',
+  marketClaim: '$70BN TAM (total exploration spend by 2030), $7BN SAM (mineral exploration geophysics excluding drilling), $200M SOM',
+  ask: 'Raising $2M seed via SAFEs; 18-month milestones: secure $1M ARR, deploy the second-generation instrument, complete three to five brownfield deployments',
+  traction: [
+    'Soft commitments of $80K across two named juniors',
+    'Pipeline sheet lists one deal won, two in negotiation, two lost',
+    'Instrument field-tested for 129.9 hours, 1,989 events collected',
+    'Accepted into four accelerators',
+    'SAFE of $2.67M recorded with an accelerator fund; $2M seed raise planned',
+    'Government grant application with two partners passed concept-paper stage',
+  ],
+  claims: [
+    { statement: 'The mounted instrument withstood 130 hours of continuous field operation and reproduced the expected contrast.', docName: 'Field Study Report.pdf', quotedSpan: '130 hours of continuous field operation' },
+    { statement: 'Phase 1 targets bodies under 50 m deep with a six-week survey and a density map under 10 m resolution.', docName: 'Product Overview.pdf', quotedSpan: 'under 50 m deep' },
+    { statement: 'The company is incorporated in Delaware.', docName: 'Board Consent.pdf', quotedSpan: 'incorporated in Delaware' },
+    { statement: 'The financial model assumes $200,000 of revenue per sq km surveyed.', docName: 'Financial Model.xlsx', quotedSpan: 'Revenue per sqkm' },
+    { statement: 'The roadmap projects first-year services revenue of $520,000 against a $2M seed round.', docName: 'Roadmap.xlsx', quotedSpan: 'first-year services revenue' },
+  ],
+  team: [
+    { name: 'J. Anderson', background: 'Co-founder & CEO; MSc Earth & Planetary Sciences, BS CS and Physics; former Head of Product at a satellite company' },
+    { name: 'B. Santhanam', background: 'Co-founder & COO; MBA; 15+ years business development in finance, automotive and AI' },
+    { name: 'A. Ferataj', background: 'Chief Hardware Officer; MSc Electronic Engineering; FPGA and embedded systems, lead architect of the instrument' },
+    { name: 'O. Vandans', background: 'Engineering Lead; MSc Machine Learning' },
+    { name: 'F. Yoshida', background: 'Sensors Lead; MSc and BSc in particle physics' },
+    { name: 'Prof. H. Tanaka', background: 'Advisor; high-energy geophysics, university chair' },
+    { name: 'A. Baensch', background: 'Advisor; executive geoscientist and mining technologist' },
+  ],
+};
+
+const PS2_SAMPLE = {
+  thesis: { points: [{
+    point: 'The bet is that a buyer will pay about $200K per square kilometre for a passive density map after waiting roughly six weeks, instead of spending that money on drilling. The entry offer covers only bodies shallower than 50 m. The plan to reach $1M of recurring revenue in 18 months needs about 5 km² of paid surveys a year. If customers read the survey as a curiosity that comes BEFORE drilling rather than something that replaces part of it, the per-area pricing collapses.',
+    external: false, tier: 'verified', docName: 'Financial Model.xlsx', quotedSpan: '$200K per square kilometre' }] },
+  bull: { points: [
+    { point: 'The company has moved past lab demos to a public result with a listed customer. A survey published in October matched a known deposit and flagged two new targets, which is the first third-party confirmation the instrument works outside a controlled test.',
+      external: true, tier: 'verified', source: { url: 'https://example.com/a', title: 'Survey results published — Industry Week' }, quotedSpan: 'matched a known deposit' },
+    { point: 'Investors and government already back this category, which lowers the risk for a later, lower-cost entrant. Two national labs and a $16M Series A have gone into adjacent instruments in the last three years.',
+      external: true, tier: 'attributed', source: { url: 'https://example.com/b', title: 'Funding round roundup — Sector Brief' }, quotedSpan: '$16M Series A' },
+    { point: 'The hardware has shown it can run unattended in the field.',
+      external: false, tier: 'verified', docName: 'Field Study Report.pdf', quotedSpan: 'unattended' }] },
+  bear: { points: [
+    { point: 'The grant the deck lists as traction appears to have been won by the direct competitor. A national lab announced the award with the incumbent, not with this venture, and the lab named here as a partner is now building the next-generation instrument with them.',
+      external: true, tier: 'verified', source: { url: 'https://example.com/c', title: 'Lab secures funding for transportable imager' }, quotedSpan: 'announced the award' },
+    { point: 'The market sizing does not survive contact with the published data. All global spending in the category was $12.5B in 2024 and has been shrinking. The $7B figure quoted would be about 56% of that total, even though drilling takes the largest share of it.',
+      external: true, tier: 'verified', source: { url: 'https://example.com/d', title: 'Exploration spending 2024 — Market Data' }, quotedSpan: '$12.5B in 2024' },
+    { point: 'The headline product is one the incumbent was already deploying in 2021 at a customer site.',
+      external: true, tier: 'verified', source: { url: 'https://example.com/e', title: 'Technology deployed at customer site' }, quotedSpan: 'already deploying in 2021' }] },
+  competitive: { points: [
+    { point: 'A Vancouver spin-off with about $16M of Series A funding led by a well-known fund already deployed a borehole detector at a customer site in 2021. The planned second-generation instrument therefore enters a niche where the incumbent is roughly four to five years ahead. On the device itself the wedge is not defensible; any edge would have to come from cheaper per-area pricing or from regional channels.',
+      external: true, tier: 'verified', source: { url: 'https://example.com/f', title: 'Transformative technology deployed — World News' }, quotedSpan: 'deployed a borehole detector' },
+    { point: 'A national laboratory won funding for a three-year active-source imager, and its partner is the incumbent. If the approach works, imaging time drops from months to hours. That would erode the six-week survey model this venture prices on, and it would leave the key lab ally aligned with the competitor.',
+      external: true, tier: 'verified', source: { url: 'https://example.com/g', title: 'Lab-led project secures funding' }, quotedSpan: 'months to hours' },
+    { point: 'A Palo Alto company builds probabilistic subsurface models from geophysics, geochemistry and drilling data. It raised a $20M Series A and sells to the same majors this venture courts. The more defensible wedge is to supply unique density data into platforms like it rather than sell against them.',
+      external: true, tier: 'attributed', source: { url: 'https://example.com/h', title: 'Raises $20M Series A — Fundraise Insider' }, quotedSpan: '$20M Series A' }] },
+  team: { points: [
+    { point: 'The team has physics, hardware, ML and product depth (a geoscience chief executive, an FPGA lead, a sensors lead) but no operating geologist or geophysicist in management; the gap sits exactly where the buying conversation happens.',
+      external: true, tier: 'verified', source: { url: 'https://example.com/i', title: 'Team page — company site' }, quotedSpan: 'no operating geologist' },
+    { point: 'No one on the team has a track record of commercialising this instrument class. The direct competitor spun out of a national lab with the people who built the first one.',
+      external: true, tier: 'verified', source: { url: 'https://example.com/j', title: 'Founding team — competitor' }, quotedSpan: 'spun out of a national lab' },
+    { point: 'The venture’s own field validation is thin: 1,989 events collected over about 130 hours on a single occlusion test, against a plan of $200K per square kilometre of paid surveys.',
+      external: false, tier: 'verified', docName: 'Field Study Report.pdf', quotedSpan: '1,989 events' }] },
+};
+
 const SAMPLE_RANGE = (() => {
   const CATS = [
     { key: 'market',    label: 'Market Opportunity',          weight: 0.20, of: 5, evidenced: 5 },
@@ -1249,6 +1348,94 @@ export const CATALOG = {
     variants: [{ label: 'Pre-screened', note: 'unlock is the outcome' }, { label: 'Full', note: 'points at the Diligence tab instead' }],
     usedIn: ['assess-next.html \u00b7 both tab sets'],
     adaptive: { status: 'built', layout: { mobile: 'Single column, 44px targets.', tablet: 'Single column below 900px.', desktop: 'Upload and Drive side by side.' }, content: { mobile: 'Full.', tablet: 'Full.', desktop: 'Full.' } }
+  },
+  /* ── PRE-SCREEN v2 · THE TWO-LAYER FINDING ────────────────────────────────────────────────────
+     A real pre-screen point is 300–600 characters and six sections of them is about a thousand
+     words. The model writes every point claim-first, so the claim is the scan layer and the evidence
+     folds under it — nothing is summarised, `claim + rest` reconstructs the point exactly
+     (ds.js splitClaim, gated by tools/claim-split.mjs).
+
+     The fixtures below are SHAPED FROM REAL OUTPUT and paraphrased: the catalog is a tracked file
+     and a customer's diligence does not belong in it. Lengths, sentence order and the
+     own-documents / public-source mix are the real ones. */
+  ps2Stress: {
+    level: 'organism', group: 'Organisms', domain: 'Pre-screen', title: 'Verdict tab — hostile content', sig: 'verdictPage(snapshot)',
+    blurb: 'The whole tab against output no run has produced YET: an 80-character unbroken token, a 20-person team, a 600-character single sentence, a filename with no spaces, a source title that cannot fit its column. Every string on this tab was copied by a model out of a customer’s documents, so none of those is hypothetical — and the stored corpus contains none of them. It is here so tools/fold-behaviour.mjs can measure the page at 390px against the worst content rather than the content we happen to have.',
+    maxw: null, pad: true,
+    html: () => `<div class="brief" style="padding:18px 24px">${DS.verdictPage(PS2_STRESS, {})}</div>`,
+    props: [{ name: 'snapshot', type: 'a deliberately hostile v2 snapshot' }],
+    usedIn: ['Pre-screen · Verdict tab (gate fixture)'],
+    adaptive: { status: 'built', layout: { mobile: 'Must not scroll sideways at 390px — that is the whole point of it.', tablet: 'Same.', desktop: 'Same.' }, content: { mobile: 'Full.', tablet: 'Full.', desktop: 'Full.' } }
+  },
+  ps2Brief: {
+    level: 'organism', group: 'Organisms', domain: 'Pre-screen', title: 'What we understood', sig: 'briefPlayback(brief, opts)',
+    blurb: 'The distilled brief every finding is reasoned from, as a thing you can scan and then open. The field table is one line per field with the rest folded underneath; three blocks beneath it — the team, the statements quoted out of the documents, and the traction the documents claim — fold on their own and arrive CLOSED, because they are depth an operator goes looking for rather than something to read on landing. The whole section folds by its head too.',
+    maxw: null, pad: true,
+    html: () => `<div class="brief" style="padding:18px 24px">${DS.briefPlayback(PS2_BRIEF, { editable: true, editsLeft: 2 })}</div>`,
+    props: [{ name: 'brief', type: 'the v2 snapshot’s brief' }, { name: 'opts', type: '{ asserted, editable, editsLeft }' }],
+    variants: [
+      { label: 'Field folds', note: 'Sector folds to show the sub-sector; long values fold at their first sentence' },
+      { label: 'Blocks closed', note: 'team / quoted claims / traction, counts visible while shut' },
+    ],
+    usedIn: ['Pre-screen · Verdict tab'],
+    adaptive: { status: 'built', layout: { mobile: 'Field table and team both single-column.', tablet: 'Two columns.', desktop: 'Two columns.' }, content: { mobile: 'Everything kept — folds are how the length is managed.', tablet: 'Full.', desktop: 'Full.' } }
+  },
+  ps2Point: {
+    level: 'molecule', group: 'Molecules', domain: 'Pre-screen', title: 'Finding — claim + evidence', sig: 'ps2Body(point)',
+    blurb: 'ONE finding, as the operator meets it: the claim always visible, the evidence folded under it, the citation belonging to the evidence rather than to the claim. This is the row the field, the team and the tension are built from, and the same body the two-column case uses. Three states are shown: a point with evidence to open, a point that is a single sentence and therefore has nothing to fold, and an attributed citation (a source we could not read ourselves).',
+    maxw: 760, pad: true,
+    html: () => `<div class="brief" style="padding:18px 24px">${DS.verdictStrand('competitive', { points: PS2_SAMPLE.competitive.points })}</div>`,
+    props: [{ name: 'point', type: '{ point, external, tier, source, docName, quotedSpan }' }],
+    variants: [
+      { label: 'Foldable', note: 'the usual case — a claim, then two to four sentences of evidence' },
+      { label: 'Single sentence', note: 'nothing to fold; renders exactly as it did before the two layers existed' },
+      { label: 'Attributed', note: 'a source we could not read ourselves — italic, neutral, "according to"' },
+    ],
+    usedIn: ['Pre-screen · Verdict tab'],
+    adaptive: { status: 'built', layout: { mobile: 'Claim wraps; the evidence loses its 30px gutter.', tablet: 'As desktop.', desktop: 'Claim, caret right; evidence indented under it.' }, content: { mobile: 'Everything kept — a fold is how the length is managed, not truncation.', tablet: 'Full.', desktop: 'Full.' } }
+  },
+  ps2Strip: {
+    level: 'atom', group: 'Atoms', domain: 'Pre-screen', title: 'Section weight strip', sig: 'ps2Strip(points)',
+    blurb: 'A section’s weight, in the head’s own meta slot. COUNTS OF REAL OBJECTS, never a rating: the bar’s two segments are how many points rest on the venture’s own documents and how many on public sources — the question an operator asks while deciding which section to read first. It must never grow a third "quality" segment or a percentage; see verdictSignal for why this product refuses continuous faces on a verdict.',
+    maxw: 560, pad: true,
+    html: () => `<div class="brief" style="padding:18px 24px;display:flex;flex-direction:column;gap:22px">${
+      [['All public', PS2_SAMPLE.competitive.points],
+       ['Mixed', PS2_SAMPLE.team.points],
+       ['Own documents only', PS2_SAMPLE.thesis.points],
+       ['Nothing found', []]].map(([label, pts]) =>
+        `<div><div class="body-s variant" style="margin-bottom:6px">${label}</div>
+         <div class="sec-head" style="margin-bottom:0"><span class="eyebrow accent">The field</span><span class="t">Who else is already doing this</span>${
+           DS.ps2Strip(pts) ? `<span class="meta">${DS.ps2Strip(pts)}</span>` : ''}</div></div>`).join('')}</div>`,
+    props: [{ name: 'points', type: 'point[]' }],
+    usedIn: ['Pre-screen · Verdict tab'],
+    adaptive: { status: 'built', layout: { mobile: 'Drops under the heading — .sec-head is single-column there — and wraps.', tablet: 'Inline, right.', desktop: 'Inline, right.' }, content: { mobile: 'Full.', tablet: 'Full.', desktop: 'Full.' } }
+  },
+  ps2Bet: {
+    level: 'organism', group: 'Organisms', domain: 'Pre-screen', title: 'The bet', sig: 'verdictBet(data)',
+    blurb: 'The ONE highlighted block on the page, and the only thing lifted off the background. DELIBERATELY NOT FOLDED: it is the thing most worth reading in full, so the claim is lifted off its own evidence rather than hiding it. Carries the larger prose step (--row-prose-lg) that the rest of the page does not.',
+    maxw: 860, pad: true,
+    html: () => `<div class="brief" style="padding:18px 24px">${DS.verdictBet(PS2_SAMPLE.thesis)}</div>`,
+    props: [{ name: 'data', type: '{ points }' }], usedIn: ['Pre-screen · Verdict tab'],
+    adaptive: { status: 'built', layout: { mobile: 'Full width, tint kept.', tablet: 'As desktop.', desktop: 'Tinted block, numbered rows.' }, content: { mobile: 'Full.', tablet: 'Full.', desktop: 'Full.' } }
+  },
+  ps2Case: {
+    level: 'organism', group: 'Organisms', domain: 'Pre-screen', title: 'The case, argued both ways', sig: 'verdictCase(bull, bear)',
+    blurb: 'Two sides of one argument, so two columns rather than two cards. Each side’s tag carries that side’s provenance (BULL · 2 public), which is where the weight strip goes in a section that already has two heads. The rows are the same claim + folded evidence as every other finding.',
+    maxw: null, pad: true,
+    html: () => `<div class="brief" style="padding:18px 24px">${DS.verdictCase(PS2_SAMPLE.bull, PS2_SAMPLE.bear)}</div>`,
+    props: [{ name: 'bull', type: '{ points }' }, { name: 'bear', type: '{ points }' }], usedIn: ['Pre-screen · Verdict tab'],
+    adaptive: { status: 'built', layout: { mobile: 'Columns stack, hairline becomes a rule.', tablet: 'Side by side.', desktop: 'Side by side.' }, content: { mobile: 'Full.', tablet: 'Full.', desktop: 'Full.' } }
+  },
+  ps2Strand: {
+    level: 'organism', group: 'Organisms', domain: 'Pre-screen', title: 'A findings section', sig: 'verdictStrand(kind, data)',
+    blurb: 'The field, the team and the tension, each as a plain editorial section: head + weight strip, then the claim list. One function for all three — they differ only in their head and their empty line, both of which are data. The empty state is shown too, because a section that found nothing is a TRUTHFUL OUTCOME and must not read as a render failure.',
+    maxw: null, pad: true,
+    html: () => `<div class="brief" style="padding:18px 24px">${
+      DS.verdictStrand('team', PS2_SAMPLE.team)}<hr class="rule">${
+      DS.verdictStrand('tension', { points: [] })}</div>`,
+    props: [{ name: 'kind', type: "'competitive' | 'team' | 'tension'" }, { name: 'data', type: '{ points }' }],
+    usedIn: ['Pre-screen · Verdict tab'],
+    adaptive: { status: 'built', layout: { mobile: 'Strip drops under the heading.', tablet: 'Full.', desktop: 'Full.' }, content: { mobile: 'Full.', tablet: 'Full.', desktop: 'Full.' } }
   },
   rangeFindings: {
     level: 'organism', group: 'Organisms', domain: 'Assessment', title: 'Range \u2014 the 35 findings', sig: 'rangeFindings(categories)',

@@ -702,6 +702,7 @@ body.signin::after {
 /* briefPlayback — the guardrail and the wow in one component. A corrected row is marked, permanently:
    it is customer-asserted and has no document behind it. */
 .bpb-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 30px; margin-top: 18px; }
+.bpb-r { align-items: start; }
 .bpb-r { display: grid; grid-template-columns: 148px minmax(0, 1fr); gap: 16px; align-items: baseline;
          padding: 11px 0; border-bottom: 1px solid var(--md-sys-color-outline-variant); min-width: 0; }
 .bpb-r[data-field="oneLine"] { grid-column: 1 / -1; }
@@ -715,9 +716,65 @@ body.signin::after {
   color: var(--md-sys-color-on-surface);
 }
 .bpb-r.said .bpb-v { font-style: italic; }
-.bpb-team { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 16px; }
-.bpb-p { font-size: 13px; color: var(--md-sys-color-on-surface-variant); }
-.bpb-p b { color: var(--md-sys-color-on-surface); font-weight: 600; }
+/* A BRIEF FIELD IS NOT A FINDING, so it folds with the same component at a quieter weight. The
+   `.ps-claim` / `.ps-rest` rules are scoped to `.cpt-b` and `.must`; without this pair a folded
+   field would render at the browser's default size, which is how it looked on the first attempt. */
+.bpb-v .ps-claim { font-size: 14.5px; line-height: 1.55; font-weight: 400; color: var(--md-sys-color-on-surface); }
+.bpb-v .ps-rest { margin: 8px 0 0; font-size: 13.5px; line-height: 1.6; color: var(--md-sys-color-on-surface-variant); }
+.bpb-v .ps-car { font-size: 18px; width: 18px; }
+.bpb-xk { display: block; font-size: 11px; font-weight: 600; letter-spacing: .06em;
+          text-transform: uppercase; color: var(--text-3); margin-bottom: 2px; }
+
+/* ── the three blocks under the field table: the team, the quoted claims, the traction ──
+   Each is a labelled group with its own count, because "7 people" and "5 quoted" are the two numbers
+   that tell an operator whether this brief was read off a real data room or off a deck. */
+.bpb-b { margin-top: 20px; }
+.bpb-bk { display: flex; align-items: center; gap: 8px;
+          font-size: 11px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase;
+          color: var(--md-sys-color-primary);
+          list-style: none; cursor: pointer; border-radius: 10px; }
+.bpb-bk::-webkit-details-marker { display: none; }
+.bpb-bk:focus-visible { outline: 2px solid var(--md-sys-color-primary); outline-offset: 4px; }
+/* The caret sits AGAINST THE COUNT, not at the row's end. Pushed to the end with `margin-left:auto`
+   the three controls aligned with each other — but the summary spans the full section, so each caret
+   ended up a couple of thousand pixels from the label it belongs to, and the eye had nothing to
+   follow. Attached beats aligned. */
+.bpb-bk > .ps-car { font-size: 18px; width: 18px; margin-left: -2px; }
+.bpb-b[open] > .bpb-bk > .ps-car { transform: rotate(180deg); }
+.bpb-bk:hover > .ps-car { color: var(--md-sys-color-on-surface); }
+/* Only open blocks pay for the gap under their label. */
+.bpb-b[open] > .bpb-bk { margin-bottom: 10px; }
+/* ⚠ THE COUNT IS A CLASS, NOT `> span`. The first version styled `.bpb-bk > span` — which also
+   matched the caret sitting next to it, so every chevron rendered wearing the count's tinted pill
+   and 7px of padding. A bare child selector in a row that holds more than one kind of child is a
+   bug waiting for the second child to arrive. */
+.bpb-bn {
+  font-size: 11px; font-weight: 600; letter-spacing: .02em; padding: 1px 7px; border-radius: 999px;
+  background: color-mix(in srgb, var(--md-sys-color-primary) 15%, transparent);
+  color: var(--md-sys-color-on-surface);
+}
+
+/* THE TEAM AS PEOPLE, NOT AS A PARAGRAPH. Seven names run together with their backgrounds was one
+   block of 13px grey a reader skipped. Two columns on desktop, one on a phone; the role on the
+   name's line because it is the thing being scanned for, the rest beneath it. */
+.bpb-team { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 30px; }
+.bpb-pp { min-width: 0; }
+.bpb-pn { font-size: 14px; font-weight: 600; color: var(--md-sys-color-on-surface);
+          display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.bpb-pr { font-size: 12px; font-weight: 500; letter-spacing: .01em; padding: 1px 8px; border-radius: 999px;
+          background: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, transparent);
+          color: var(--md-sys-color-on-surface-variant); }
+.bpb-pb { margin-top: 3px; font-size: 13px; line-height: 1.55; color: var(--md-sys-color-on-surface-variant); }
+
+/* THE VERIFIED HALF. Every statement here was substring-matched against the document named beside
+   it, which is more than any other line in this section can say — so the chip is not decoration. */
+.bpb-claims { display: flex; flex-direction: column; }
+.bpb-c { padding: 11px 0; border-bottom: 1px solid var(--md-sys-color-outline-variant); }
+.bpb-c:last-child { border-bottom: none; }
+.bpb-c p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--md-sys-color-on-surface); }
+.bpb-tr { margin: 0; padding-left: 18px; }
+.bpb-tr li { font-size: 14px; line-height: 1.6; margin-bottom: 7px; color: var(--md-sys-color-on-surface-variant); }
+.bpb-tr li::marker { color: var(--text-4); }
 .bpb-act { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 20px; }
 .bpb-note { font-size: 12.5px; line-height: 1.5; color: var(--md-sys-color-on-surface-variant); max-width: 42ch; }
 
@@ -754,6 +811,145 @@ a.ps-cite.said:hover { background: color-mix(in srgb, var(--md-sys-color-on-surf
    having to read the word "according". */
 .ps-cite.said { font-style: italic; }
 
+/* ── LONG WORDS ARE NOT A HYPOTHETICAL ───────────────────────────────────────────────────────────
+   Everything on this tab is text a model copied out of a customer's documents: filenames with no
+   spaces, chemical and mineral names, URLs, German compounds, accession numbers. One token wider
+   than the column and the whole page gets a horizontal scrollbar on a phone.
+
+   MEASURED 2026-11-09 against a deliberately hostile snapshot (an 80-character unbroken token, a
+   20-person team, a 600-character sentence, a filename with no spaces): every component built for
+   the two-layer treatment held at 390px, and `.statement-lockup` — the verdict hero, which predates
+   this work — blew out to 701px inside a 390px viewport. It had no wrapping rule at all; nothing had
+   yet handed it a word it could not break.
+
+   `anywhere` rather than `break-word`, because only `anywhere` also shrinks the element's
+   min-content width, which is what stops a flex or grid column being forced open from the inside.
+
+   SCOPED TO `.section-hero`, NOT `.statement-lockup`. The first cut named the lockup, and `.lead`
+   and `.coda` — hero text that is a SIBLING of the lockup, not a descendant — carried on at 701px
+   inside a 294px column. Measured, not reasoned: the selector looked right and the scrollbar stayed. */
+.ps-sec, .ps-sec *, .section-hero, .section-hero * { overflow-wrap: anywhere; }
+/* AND THE COLUMN HAS TO BE ALLOWED TO SHRINK. Wrapping the text is only half of it: a grid item
+   defaults to `min-width: auto`, so the hero's single column was still sized to its content's
+   min-content width and resolved to 701px inside a 294px parent — the text wrapped and the column
+   did not. One of the two fixes alone leaves the scrollbar exactly where it was. */
+.section-hero > * { min-width: 0; }
+
+/* ── TWO LAYERS: THE CLAIM, AND THE EVIDENCE UNDER IT ─────────────────────────────────────────────
+   A real pre-screen point is 300–600 characters, and six sections of them is about a thousand words —
+   four or five minutes of reading before an operator knows which two findings mattered. The model
+   writes every point claim-first, so the scan layer is the first sentence and the evidence folds
+   under it. Nothing is summarised: `claim + rest` reconstructs the point exactly (ds.js splitClaim).
+
+   EVERY NUMBER BELOW WAS MEASURED OFF THE APPROVED MOCK-UP, not chosen here. The first cut of this
+   reused the flat row ramp (14px claim, no section subtitle, a bullet for a marker) and read as a
+   denser version of the old page rather than as two layers. The sizes, the 34px evidence gutter, the
+   22px marker box and the 18px icon in it are the mock's, transcribed.
+
+   SCOPED TO `.ps-sec`, AND THAT IS LOAD-BEARING. `.sec-head` belongs to the full assessment as well,
+   where the section title is 22px/500. Restyling it unscoped would silently retypeset the paid
+   artefact to match the free one. */
+
+/* ── the section head: kicker with an icon, a smaller heading, and a line saying what it is for ── */
+.ps-sec .sec-head { row-gap: 4px; margin-bottom: 14px; }
+.ps-sec .sec-head .eyebrow { display: inline-flex; align-items: center; gap: 6px; }
+.ps-sec .sec-head .eyebrow .material-symbols-rounded { font-size: 15px; }
+.ps-sec .sec-head .t { font-size: 19px; line-height: 1.3; font-weight: 600; letter-spacing: -.015em; }
+/* The subtitle is a THIRD row of the head's grid. `.sec-head` is `1fr auto` with the title spanning
+   both columns, so a new child needs its placement stated or it lands in the meta column. */
+.ps-sec .sec-head .sub {
+  grid-column: 1 / -1; grid-row: 3;
+  font-size: 13.5px; line-height: 1.45; color: var(--text-3);
+}
+
+/* ── the point row ── */
+.ps-sec .cpt { gap: 12px; padding: 13px 0; }
+.ps-sec .cpt .mk { width: 22px; height: 22px; margin-top: 2px; color: var(--text-4); }
+.ps-sec .cpt .mk .material-symbols-rounded { font-size: 18px; }
+.ps-fold > summary {
+  display: flex; align-items: flex-start; gap: 12px;
+  list-style: none; cursor: pointer; border-radius: 10px;
+}
+.ps-fold > summary::-webkit-details-marker { display: none; }
+.ps-fold > summary:focus-visible { outline: 2px solid var(--md-sys-color-primary); outline-offset: 3px; }
+
+/* The claim carries the page's full-strength ink at the larger step; the evidence sits one size and
+   one ink-step back, indented to the marker's gutter. That contrast IS the two layers — without it a
+   fold is just a shorter paragraph.
+
+   ⚠ TWO CLASSES DEEP, AND NOT FOR STYLE. `.ps-rest` alone (0,1,0) LOSES to `.cpt p` and `.must p`
+   (0,1,1), which both set `margin: 0` and `color: on-surface`. Measured on the real page: the
+   evidence came out pure white with no top margin — identical to the claim but for its weight, so
+   the two layers were one layer. It looked almost right in a screenshot, which is why this was
+   found by reading getComputedStyle instead. */
+.cpt-b .ps-claim, .must .ps-claim {
+  flex: 1; min-width: 0; margin: 0;
+  font-size: 15.5px; line-height: 1.55; font-weight: 500;
+  color: var(--md-sys-color-on-surface);
+}
+.cpt-b .ps-rest, .must .ps-rest {
+  margin: 10px 0 0; font-size: 14.5px; line-height: 1.7; font-weight: 400;
+  color: var(--md-sys-color-on-surface-variant); max-width: 74ch;
+}
+.cpt-b .ps-fold > .ps-rest, .cpt-b .ps-fold > .ps-cite { margin-left: 34px; }
+.cpt-b .ps-fold[open] { padding-bottom: 2px; }
+.ps-car {
+  flex: none; width: 22px; font-size: 20px; margin-top: 1px;
+  color: var(--text-4);
+  transition: transform .18s cubic-bezier(.34, 1.56, .64, 1);
+}
+.ps-fold[open] > summary .ps-car { transform: rotate(180deg); }
+.ps-fold > summary:hover .ps-car { color: var(--md-sys-color-on-surface); }
+/* The bet is not a fold, so its evidence needs no gutter — it is already inside a numbered row. */
+.must .ps-rest { margin-left: 0; }
+/* An empty section is a truthful outcome, so it reads as prose rather than as a greyed-out row. */
+.ps-sec .cpt-empty p { font-style: normal; font-size: 14.5px; line-height: 1.6; }
+
+/* ── A SECTION THAT FOLDS BY ITS OWN HEAD ────────────────────────────────────────────────────────
+   The caret sits BESIDE `.sec-head`, not inside it: the head is a two-column grid the full
+   assessment also renders, and a third column there would reach the paid artefact. The summary is
+   the flex row that holds the two together. */
+.ps-sfold > summary {
+  display: flex; align-items: flex-start; gap: 12px;
+  list-style: none; cursor: pointer; border-radius: 10px;
+}
+.ps-sfold > summary::-webkit-details-marker { display: none; }
+.ps-sfold > summary:focus-visible { outline: 2px solid var(--md-sys-color-primary); outline-offset: 4px; }
+.ps-sfold > summary .sec-head { flex: 1; min-width: 0; margin-bottom: 0; }
+.ps-sfold > summary > .ps-car { margin-top: 3px; }
+.ps-sfold[open] > summary > .ps-car { transform: rotate(180deg); }
+.ps-sfold > summary:hover > .ps-car { color: var(--md-sys-color-on-surface); }
+/* The head's own bottom margin comes back only when there is something under it. */
+.ps-sfold[open] > summary { margin-bottom: 14px; }
+
+/* THE DIM STEPS ARE --text-3 AND --text-4, NOT AN M3 ROLE. brand-map maps `outline` to --line-2,
+   which is 16% white — a HAIRLINE colour. Using it for the subtitle and the strip's detail line (as
+   the first port of the mock-up did) rendered them at 1.4:1, all but invisible. The mock used 40%
+   white throughout; 12.5px at 40% measures 3.74:1 and fails AA, so small TEXT takes --text-3
+   (58%, 6.37:1) and only the icons and the unlit bar segment keep the 40% step, where WCAG does not
+   apply. brand-map's own note sanctions reaching for the quieter pair directly.
+
+   ps2Strip — a section's weight in the head's own `.meta` slot. Counts of points, never a rating:
+   the bar's two segments are how many points rest on the venture's own documents and how many on
+   public sources, which is the question an operator asks while deciding where to look. It is NOT a
+   gauge and must never grow a third "quality" segment — see verdictSignal in ds.js for why this
+   product refuses continuous faces on a verdict. */
+.ps-strip { display: inline-flex; align-items: center; gap: 9px; white-space: nowrap; }
+.ps-strip b { font-size: 13px; font-weight: 600; color: var(--md-sys-color-on-surface); }
+.ps-strip > span:last-child { font-size: 12.5px; color: var(--text-3); }
+.ps-bar { display: inline-flex; width: 54px; height: 6px; gap: 2px; border-radius: 999px; overflow: hidden; }
+.ps-bar i { display: block; }
+.ps-bar .own { background: var(--text-4); }
+.ps-bar .pub { background: var(--md-sys-color-primary); }
+
+/* On a phone the strip drops under the heading (`.sec-head` is already single-column there) and the
+   evidence loses its gutter, because 34px is 9% of the reading width. */
+@media (max-width: 640px) {
+  .cpt-b .ps-fold > .ps-rest, .cpt-b .ps-fold > .ps-cite { margin-left: 0; }
+  .ps-strip { white-space: normal; }
+  .ps-sec .sec-head .sub { grid-row: auto; }
+}
+
 /* verdictBet — the ONE highlighted block on the page, and the only thing lifted off the background:
    the brand-tinted recipe the product already uses for an advisory (.rstale-in) with the geometry its
    kill-risk uses (.kill). The rows inside are `.must`, the full assessment's own conditions idiom, so
@@ -767,17 +963,12 @@ a.ps-cite.said:hover { background: color-mix(in srgb, var(--md-sys-color-on-surf
 .ps-none { margin: 0; font-size: var(--row-prose); line-height: 1.55;
            color: var(--md-sys-color-on-surface-variant); font-style: italic; }
 
-/* verdictStrand — the field / the team / the tension. Flat `.cpt` rows, and the marker slot takes a dot
-   rather than a tick: SOLID on the brand for a point that came from outside the documents (the
-   expensive, non-obvious ones) and hollow for one read out of the deck. That distinction is the
-   product, so it is worth a marker rather than only a chip. */
-.ps-strand .cpt .mk::before {
-  content: ''; width: 7px; height: 7px; border-radius: 50%; box-sizing: border-box;
-  border: 1.5px solid var(--md-sys-color-outline);
-}
-.ps-strand .cpt.ext .mk::before {
-  background: var(--md-sys-color-primary); border-color: var(--md-sys-color-primary);
-}
+/* verdictStrand — the field / the team / the tension.
+   THE DOT IS GONE, REPLACED BY WHAT IT WAS STANDING IN FOR. The marker used to be a dot: solid on
+   the brand for a point from outside the documents, hollow for one read out of the deck. It carried
+   the right distinction and said nothing about it — a reader had to learn the code. The slot now
+   holds the icon for the thing itself (`public` / `description`), which says it outright. Leaving
+   the pseudo-element in place drew BOTH, a dot stacked on a globe, which is how it was spotted. */
 
 /* verdictNext — the conversion surface, earned by everything above it. */
 .ps-next .m3-btn { margin-top: 30px; }
@@ -800,6 +991,7 @@ a.ps-cite.said:hover { background: color-mix(in srgb, var(--md-sys-color-on-surf
 }
 @media (max-width: 640px) {
   .bpb-r { grid-template-columns: minmax(0, 1fr); gap: 3px; padding: 10px 0; }
+  .bpb-team { grid-template-columns: minmax(0, 1fr); }
   .vsig-face { width: 118px; height: 84px; }
   .vsig-lab { font-size: 26px; }
   .bpb-act .m3-btn { width: 100%; justify-content: center; min-height: 44px; }

@@ -5875,46 +5875,113 @@ export function verdictHero(snapshot = {}, opts = {}) {
   });
 }
 
+/* The stage, as a person says it. `stage` is a schema ENUM (api/_prescreen2.js STAGES) and both the
+   playback and the correction form were printing it raw — "series-b-plus" in a brief the customer is
+   asked to validate in two seconds. One map, used by both, so the form offers exactly the words the
+   page shows. */
+export const STAGE_LABELS = {
+  'pre-seed': 'Pre-seed', 'seed': 'Seed', 'series-a': 'Series A',
+  'series-b-plus': 'Series B or later', 'unknown': 'Not stated in the documents',
+};
+const stageLabel = v => STAGE_LABELS[String(v || '').trim().toLowerCase()] || String(v || '');
+
 /**
- * briefPlayback — ORGANISM. "Here is what we understood your venture to be."
+ * briefPlayback — the distilled brief, as a thing you can scan and then open.
  *
- * THE GUARDRAIL AND THE WOW ARE THE SAME COMPONENT (§8.2). Everything downstream reasons from this brief
- * and nothing else, so if it is wrong — wrong sector, wrong model — every finding below will be
- * confidently about the wrong company and will look perfect. The customer is the only validator who
- * knows in two seconds, so it goes first, and they can fix it.
+ * WHAT THIS SECTION WAS HIDING. The brief carries twelve fields; the page rendered seven of them and
+ * a row of names. Three things never reached the screen at all:
+ *   · `claims`  — the load-bearing factual statements, each with its document and a span this code
+ *                 substring-matched against that document. The engine's own note says "claims is the
+ *                 part that must be TRUE, so it is the part that is verified" — and it was the one
+ *                 part of the brief with proof behind it that nobody could see, while seven
+ *                 unverified scalars sat on screen.
+ *   · `traction` — the figures the documents claim.
+ *   · `subSector` — the specific read, under the generic one.
+ * And `.slice(0, 6)` on the team silently dropped the seventh person. ORE has seven.
  *
- * A corrected field is CUSTOMER-ASSERTED and marked as such, here and on every export (§8.8). It has no
- * document behind it to verify against, and an unmarked unverifiable claim in something carrying our
- * name is the thing this product cannot afford.
+ * SO IT IS NOW TWO LAYERS, like everything else on this tab: a one-line value per field with the
+ * rest of it folded underneath, through the same ps2Fold the findings use. A field whose value is
+ * short and has nothing behind it renders exactly as it did before.
  */
 export function briefPlayback(brief = {}, opts = {}) {
   const asserted = new Set(opts.asserted || []);
+  // [key, label, extraKey] — `extraKey` is depth that belongs to this field but is not part of its
+  // sentence, so the row folds even when the value itself does not split.
   const FIELDS = [
-    ['oneLine', 'What it does'], ['sector', 'Sector'], ['businessModel', 'Business model'],
-    ['stage', 'Stage'], ['geography', 'Where'], ['marketClaim', 'Market it claims'], ['ask', 'The ask'],
+    ['oneLine', 'What it does', null], ['sector', 'Sector', 'subSector'],
+    ['businessModel', 'Business model', null], ['stage', 'Stage', null],
+    ['geography', 'Where', null], ['marketClaim', 'Market it claims', null], ['ask', 'The ask', null],
   ];
   const shown = FIELDS.filter(([k]) => String(brief[k] || '').trim());
-  const rows = shown.map(([k, label]) => `
+  const rows = shown.map(([k, label, extraKey]) => {
+    const extraVal = extraKey ? String(brief[extraKey] || '').trim() : '';
+    const mark = asserted.has(k)
+      ? '<span class="bpb-mark" title="You told us this. We have not checked it against a document.">your correction</span>' : '';
+    return `
     <div class="bpb-r${asserted.has(k) ? ' said' : ''}" data-field="${k}">
       <div class="bpb-k">${esc(label)}</div>
-      <div class="bpb-v">${esc(brief[k])}${asserted.has(k)
-        ? '<span class="bpb-mark" title="You told us this. We have not checked it against a document.">your correction</span>' : ''}</div>
-    </div>`).join('');
+      <div class="bpb-v">${ps2Fold({
+        text: k === 'stage' ? stageLabel(brief[k]) : String(brief[k]),
+        extra: extraVal ? `<p class="ps-rest"><span class="bpb-xk">More precisely</span>${esc(extraVal)}</p>` : '',
+      })}${mark}</div>
+    </div>`;
+  }).join('');
+
+  // THE TEAM, as people rather than as a paragraph. `background` is semicolon-delimited and its FIRST
+  // segment is the role every time — so the role gets its own line and the rest becomes the detail,
+  // which is what makes a seven-person list scannable instead of a wall. No slice: the seventh person
+  // is a real advisor, not overflow.
+  const team = (brief.team || []).filter(t => t && t.name);
+  const teamRows = team.map(t => {
+    const segs = String(t.background || '').split(';').map(x => x.trim()).filter(Boolean);
+    const role = segs.length > 1 ? segs[0] : '';
+    const detail = (segs.length > 1 ? segs.slice(1) : segs).join('; ');
+    return `<div class="bpb-pp">
+      <div class="bpb-pn">${esc(t.name)}${role ? `<span class="bpb-pr">${esc(role)}</span>` : ''}</div>
+      ${detail ? `<div class="bpb-pb">${esc(detail)}</div>` : ''}
+    </div>`;
+  }).join('');
+
+  // The verified half of the brief. Each statement carries the document it was read from and the span
+  // matched in it — ps2Cite puts that span in the chip's title, exactly as it does for a finding.
+  const claims = (brief.claims || []).filter(c => c && c.statement);
+  const claimRows = claims.map(c => `<div class="bpb-c">
+    <p>${esc(c.statement)}</p>${ps2Cite({ docName: c.docName, quotedSpan: c.quotedSpan })}
+  </div>`).join('');
+
+  const traction = (brief.traction || []).filter(t => String(t || '').trim());
+  const tractionRows = traction.map(t => `<li>${esc(t)}</li>`).join('');
+
+  /* Each block folds on its own, CLOSED BY DEFAULT. The seven people, the five quoted claims and the
+     six traction lines are depth an operator goes looking for, not something to read on arrival —
+     open, they were two screens of brief standing between the verdict and the findings. The label
+     row is the control, the count is visible while closed, and the whole thing is `<details>` again
+     so there is still no handler and no state anywhere in the render layer. */
+  const block = (label, count, body) => body ? `<details class="bpb-b">
+    <summary class="bpb-bk">${esc(label)}<span class="bpb-bn">${count}</span>
+      <span class="ps-car material-symbols-rounded">expand_more</span></summary>${body}</details>` : '';
+
   const canEdit = opts.editable && (opts.editsLeft == null || opts.editsLeft > 0);
-  return `<section class="sec">
-    ${ps2Head('What we understood', 'Here’s what we read your venture to be', shown.length + ' fields')}
+  const meta = [`${shown.length} field${shown.length === 1 ? '' : 's'}`,
+                team.length ? `${team.length} ${team.length === 1 ? 'person' : 'people'}` : '',
+                claims.length ? `${claims.length} quoted` : ''].filter(Boolean).join(' · ');
+
+  return ps2Section({ foldable: true, open: true,
+    head: ps2Head('What we understood', 'Here’s what we read your venture to be', meta, 'accent',
+      { icon: 'summarize', sub: 'The distilled brief every finding below is reasoned from.' }),
+    body: `
     <p class="lead"><span class="drop">Read this first.</span> Everything below is reasoned from this summary and nothing else. If it’s wrong, correct it — the read is only as good as this.</p>
     <div class="bpb-grid">${rows}</div>
-    ${(brief.team || []).length ? `<div class="bpb-team">${(brief.team || []).slice(0, 6).map(t =>
-      `<span class="bpb-p"><b>${esc(t.name)}</b>${t.background ? ' — ' + esc(t.background) : ''}</span>`).join('')}</div>` : ''}
+    ${block('The team', team.length, teamRows ? `<div class="bpb-team">${teamRows}</div>` : '')}
+    ${block('Claimed in your documents', claims.length, claimRows ? `<div class="bpb-claims">${claimRows}</div>` : '')}
+    ${block('Traction the documents claim', traction.length, tractionRows ? `<ul class="bpb-tr">${tractionRows}</ul>` : '')}
     ${canEdit ? `<div class="bpb-act">
       <button class="m3-btn tonal" type="button" onclick="window.__ps2Correct&&window.__ps2Correct()">
         <span class="material-symbols-rounded">edit</span>That’s not quite right
       </button>
       <span class="bpb-note">Correcting this re-runs the read on your version. It doesn’t use up your free pre-screen${
         opts.editsLeft != null ? `, and you have ${opts.editsLeft} correction${opts.editsLeft === 1 ? '' : 's'} left` : ''}.</span>
-    </div>` : ''}
-  </section>`;
+    </div>` : ''}` });
 }
 
 /* ════════════════════════════════════════════════════════════════════════════════════════════════════
@@ -5969,9 +6036,44 @@ const PS2_NUGGETS = {
 
 // ps2Head — the product's section head, used by every section on this page. `tone` is the eyebrow
 // variant assess-editorial.css already defines (accent / good / warn / none), not a new scale.
-const ps2Head = (eyebrow, title, meta = '', tone = 'accent') => `<div class="sec-head">
-    <span class="eyebrow${tone ? ' ' + tone : ''}">${esc(eyebrow)}</span><span class="t">${esc(title)}</span>${
-      meta ? `<span class="meta">${esc(meta)}</span>` : ''}</div>`;
+/* ps2Head — the pre-screen's section head. Every caller is a pre-screen component, so the whole tab
+   moves together when this changes.
+   `metaHtml` is the one slot that takes markup — ps2Strip's bar cannot survive being escaped.
+   `icon` and `sub` come from PS2_NUGGETS, which has carried both since the run stage needed them;
+   until now the Verdict tab rendered neither, so a section announced itself with a kicker and a
+   heading and nothing to say what it was for. */
+const ps2Head = (eyebrow, title, meta = '', tone = 'accent', o = {}) => ps2HeadHtml(eyebrow, title, meta, tone, o);
+
+// A subtitle that restates its own heading is noise. PS2_NUGGETS.sub was written for the RUN STAGE,
+// where each line stands alone as a checklist item with no heading above it — so for `thesis` the
+// sub and the title are the same sentence, and under a heading it rendered twice. Compared on words
+// rather than characters, because the run-stage copy ends in a full stop and the heading does not.
+const ps2SameText = (a, b) => String(a || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
+                           === String(b || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+
+const ps2HeadHtml = (eyebrow, title, meta, tone, o) => `<div class="sec-head">
+    <span class="eyebrow${tone ? ' ' + tone : ''}">${
+      o.icon ? `<span class="material-symbols-rounded">${esc(o.icon)}</span>` : ''}${esc(eyebrow)}</span><span class="t">${esc(title)}</span>${
+      o.metaHtml ? `<span class="meta">${o.metaHtml}</span>`
+                 : meta ? `<span class="meta">${esc(meta)}</span>` : ''}${
+      o.sub && !ps2SameText(o.sub, title) ? `<span class="sub">${esc(o.sub)}</span>` : ''}</div>`;
+
+/* ps2Section — a section whose HEAD is the control that collapses it.
+   `<details>` again, for the same reason the point rows use it: no handler, no state, and the
+   keyboard and screen-reader behaviour is the platform's. The head keeps its own grid untouched and
+   the caret sits beside it, because putting the caret inside `.sec-head` would mean a third column
+   in a grid the full assessment also uses.
+
+   `foldable: false` returns the section exactly as it was, so this is one component for both cases
+   rather than two that drift. */
+function ps2Section({ cls = '', head, body, foldable = false, open = true }) {
+  const sec = (inner) => `<section class="sec ps-sec${cls ? ' ' + cls : ''}">${inner}</section>`;
+  if (!foldable) return sec(`${head}${body}`);
+  return sec(`<details class="ps-sfold"${open ? ' open' : ''}>
+    <summary>${head}<span class="ps-car material-symbols-rounded">expand_more</span></summary>
+    ${body}
+  </details>`);
+}
 
 /**
  * ps2Cite — a point's provenance, as a chip the reader can follow. The ONLY place a source URL appears.
@@ -6007,6 +6109,97 @@ const ps2Empty = (kind, data = {}) => data.skipped === 'needs_two_documents'
     : 'Nothing here we could stand behind.';
 
 /**
+ * splitClaim — a point's first sentence, and the rest of it.
+ *
+ * THE SCAN LAYER IS ALREADY IN THE DATA. A real pre-screen point is 300–600 characters — ORE's six
+ * sections measured 931 words — and the model writes every one of them the same way: the CLAIM first,
+ * then the evidence for it. ("The market sizing does not survive contact with S&P data." / "All global
+ * nonferrous exploration spending was $12.5B in 2024 and has been shrinking…") So the operator's scan
+ * layer needs no second model call, no new field on the snapshot and no re-run: it is the first
+ * sentence, in the model's own words, and it works on every snapshot already stored.
+ *
+ * NOTHING IS SUMMARISED. claim + rest reconstructs the original string exactly — tools/claim-split.mjs
+ * asserts that character for character over real snapshots. A point that cannot be split is returned
+ * whole with an empty rest, and renders exactly as it does today, which is the honest failure mode.
+ *
+ * A boundary is . ! or ? followed by a space and a capital, at least 40 characters in, so "Inc." and
+ * "$1M." cannot cut a point in half. If the first sentence runs past 240 characters an earlier
+ * semicolon or em-dash is used instead: ORE's first team point is one 200-character clause before its
+ * first full stop, and reading that as the claim beats reading two hundred characters of it.
+ */
+export function splitClaim(text) {
+  const t = String(text == null ? '' : text);
+  const sent = /[.!?]["')\]]?\s+(?=[A-Z$£"'(])/g;
+  let cut = -1, m;
+  while ((m = sent.exec(t))) { if (m.index >= 40) { cut = m.index + m[0].length; break; } }
+  if (cut > 240 || cut < 0) {
+    const soft = /[;—]\s+/g; let s2;
+    while ((s2 = soft.exec(t))) {
+      if (s2.index >= 40 && (cut < 0 || s2.index < cut)) { cut = s2.index + s2[0].length; break; }
+    }
+  }
+  if (cut < 0 || cut >= t.length) return { claim: t, rest: '' };
+  return { claim: t.slice(0, cut).trim(), rest: t.slice(cut).trim() };
+}
+
+/**
+ * ps2Strip — a section's weight, as COUNTS OF REAL OBJECTS. Never a score.
+ *
+ * `external` and `tier` are on every point and have never been shown per section. They answer the one
+ * question an operator has while deciding where to look: is this section telling me about the OUTSIDE
+ * WORLD, or reading the deck back to me? On ORE that separates a case-against built entirely from
+ * public sources from a bet built entirely from the founder's own documents.
+ *
+ * DELIBERATELY NOT A GAUGE. The product's rule is that a continuous face invites "where exactly on
+ * it?", which is the one question a three-band verdict exists so as not to answer (see verdictSignal).
+ * Every number here is a count of sentences, so it cannot read as a measurement we did not make.
+ */
+export function ps2Strip(points = []) {
+  const n = points.length;
+  if (!n) return '';
+  const ext = points.filter(p => p.external).length;
+  const ver = points.filter(p => p.tier !== 'attributed').length;
+  const seg = (cls, k) => k ? `<i class="${cls}" style="flex:${k}"></i>` : '';
+  return `<span class="ps-strip"><span class="ps-bar">${seg('own', n - ext)}${seg('pub', ext)}</span>` +
+    `<b>${n} point${n === 1 ? '' : 's'}</b>` +
+    `<span>${ext ? `${ext} from public sources` : 'from your documents'}${
+      ver === n ? '' : ` · ${ver} verified`}</span></span>`;
+}
+
+/**
+ * ps2Body — the inside of a point row: the claim, and the evidence folded under it.
+ *
+ * `<details>` rather than a handler, because this is the one interaction on the page that needs no
+ * state anywhere: it is keyboard-operable and announces itself to a screen reader for free, and the
+ * render layer stays a pure function of the snapshot. (A fold left open does close on the progressive
+ * reveal's repaint during a live run, which is the right trade — mid-run the newest section is what
+ * you want in front of you.)
+ */
+function ps2Body(p, opts = {}) {
+  return ps2Fold({ text: p.point, tail: ps2Cite(p), open: opts.open });
+}
+
+/* ps2Fold — the claim, and everything behind it. ONE implementation for a finding and for a field of
+   the brief: both are "a sentence you can scan, and more underneath", and two of these would drift.
+     text   the prose whose first sentence becomes the summary
+     extra  content that belongs in the fold whether or not `text` splits (the brief's sub-sector,
+            a list) — so a short value can still have depth behind it
+     tail   what sits at the foot of the fold, normally a citation
+   With nothing behind it, the text renders exactly as it did before folds existed. */
+function ps2Fold({ text, extra = '', tail = '', open = false }) {
+  const { claim, rest } = splitClaim(text);
+  // ⚠ `.ps-claim` EVEN WITH NOTHING BEHIND IT. A bare <p> here fell to `.cpt p` / `.must p` /
+  // `.bpb-v`, which set a different size from the folded claim — so whether a finding rendered at
+  // 14px or 15.5px depended on whether the model happened to write a second sentence. Two sizes in
+  // one list, decided by the content. The class travels; only the <details> is conditional.
+  if (!rest && !extra) return `<p class="ps-claim">${esc(claim)}</p>${tail}`;
+  return `<details class="ps-fold"${open ? ' open' : ''}>
+    <summary><span class="ps-claim">${esc(claim)}</span><span class="ps-car material-symbols-rounded">expand_more</span></summary>
+    ${rest ? `<p class="ps-rest">${esc(rest)}</p>` : ''}${extra}${tail}
+  </details>`;
+}
+
+/**
  * ps2Points — the point rows, as the SAME `.cpt` row the Verdict tab's case is built from: a marker,
  * the prose, a hairline between. Flat on the background.
  *
@@ -6014,12 +6207,16 @@ const ps2Empty = (kind, data = {}) => data.skipped === 'needs_two_documents'
  * character for character against the page it cites, an internal one against the document — so the
  * citation is a link to follow rather than a claim to take on trust.
  */
-const ps2Points = (points, empty) => points.length
+// A point that is blank or whitespace-only is not a finding — it renders as an empty row with a
+// caret that opens onto nothing. Filtered at the single place the rows are built, so the empty-state
+// sentence takes over when a section turns out to hold only blanks.
+const ps2Real = (points = []) => points.filter(p => p && String(p.point == null ? '' : p.point).trim());
+const ps2Points = (pointsIn, empty) => (points => points.length
   ? points.map(p => `<div class="cpt${p.external ? ' ext' : ''}">
-      <span class="mk"></span>
-      <div class="cpt-b"><p>${esc(p.point)}</p>${ps2Cite(p)}</div>
+      <span class="mk"><span class="material-symbols-rounded">${p.external ? 'public' : 'description'}</span></span>
+      <div class="cpt-b">${ps2Body(p)}</div>
     </div>`).join('')
-  : `<div class="cpt cpt-empty"><span class="mk"></span><div class="cpt-b"><p>${esc(empty)}</p></div></div>`;
+  : `<div class="cpt cpt-empty"><span class="mk"></span><div class="cpt-b"><p>${esc(empty)}</p></div></div>`)(ps2Real(pointsIn));
 
 /**
  * verdictBet — ORGANISM. The one highlighted block on the page.
@@ -6031,15 +6228,19 @@ const ps2Points = (points, empty) => points.length
  */
 export function verdictBet(data = {}, opts = {}) {
   const m = PS2_NUGGETS.thesis;
-  const points = data.points || [];
+  const points = ps2Real(data.points);
   const body = opts.pending
     ? ps2Dots()
     : points.length
+      // FOLDS, like every other finding. It was left open on the grounds that the bet is the one
+      // thing most worth reading in full — but the claim IS the summary of it, and a 600-character
+      // paragraph sitting permanently open at the top of the page is the thing this whole treatment
+      // exists to fix. One behaviour for every point on the page beats an exception.
       ? points.map((p, i) => `<div class="must"><span class="idx">${i + 1}</span>
-          <div class="bd"><p>${esc(p.point)}</p>${ps2Cite(p)}</div></div>`).join('')
+          <div class="bd">${ps2Body(p)}</div></div>`).join('')
       : `<div class="must"><span class="idx"></span><div class="bd"><p class="ps-none">${esc(ps2Empty('thesis', data))}</p></div></div>`;
-  return `<section class="sec">
-    ${ps2Head(m.eyebrow, m.title, points.length ? `${points.length} condition${points.length === 1 ? '' : 's'}` : '')}
+  return `<section class="sec ps-sec">
+    ${ps2Head(m.eyebrow, m.title, '', 'accent', { metaHtml: opts.pending ? '' : ps2Strip(points), icon: m.icon, sub: m.sub })}
     <div class="ps-bet">${body}</div>
   </section>`;
 }
@@ -6054,22 +6255,23 @@ export function verdictCase(bull = {}, bear = {}, opts = {}) {
   const pend = new Set(opts.pending || []);
   const side = (cls, kind, tag, icon, mk, data) => {
     const m = PS2_NUGGETS[kind];
-    const pts = data.points || [];
+    const pts = ps2Real(data.points);
     const rows = pend.has(kind)
       ? ps2Dots()
       : pts.length
         ? pts.map(p => `<div class="cpt${p.external ? ' ext' : ''}">
             <span class="mk"><span class="material-symbols-rounded">${mk}</span></span>
-            <div class="cpt-b"><p>${esc(p.point)}</p>${ps2Cite(p)}</div></div>`).join('')
+            <div class="cpt-b">${ps2Body(p)}</div></div>`).join('')
         : `<div class="cpt cpt-empty"><span class="mk"></span><div class="cpt-b"><p>No material points we could stand behind on this side.</p></div></div>`;
     return `<div class="case-card ${cls}">
-      <div class="ch"><span class="material-symbols-rounded">${icon}</span><span class="ttl">${esc(m.title)}</span><span class="ct">${tag}</span></div>
+      <div class="ch"><span class="material-symbols-rounded">${icon}</span><span class="ttl">${esc(m.title)}</span><span class="ct">${
+        tag}${pts.length ? ' · ' + (pts.filter(x => x.external).length || 'your docs') + (pts.filter(x => x.external).length ? ' public' : '') : ''}</span></div>
       ${rows}
     </div>`;
   };
   const nFor = (bull.points || []).length, nAg = (bear.points || []).length;
-  return `<section class="sec">
-    ${ps2Head('The case', 'Argued both ways', `${nFor} for · ${nAg} against`, '')}
+  return `<section class="sec ps-sec">
+    ${ps2Head('The case', 'Argued both ways', `${nFor} for · ${nAg} against`, 'accent', { icon: 'balance', sub: 'The strongest version of each side, argued from the same room.' })}
     <div class="case-grid">
       ${side('forc', 'bull', 'BULL', 'trending_up', 'check_circle', bull)}
       ${side('against', 'bear', 'BEAR', 'trending_down', 'cancel', bear)}
@@ -6087,12 +6289,10 @@ export function verdictStrand(kind, data = {}, opts = {}) {
   const m = PS2_NUGGETS[kind];
   if (!m) return '';
   const pts = data.points || [];
-  const ext = pts.filter(p => p.external).length;
-  const meta = opts.pending ? ''
-    : kind === 'competitive' && ext ? `${ext} from public sources`
-    : pts.length ? `${pts.length} point${pts.length === 1 ? '' : 's'}` : '';
-  return `<section class="sec ps-strand">
-    ${ps2Head(m.eyebrow, m.title, meta)}
+  // `.ps-strand` was dropped with the dot marker it existed to style — tools/class-coverage.mjs
+  // fails on a class no stylesheet defines, which is how a hook outlives its reason.
+  return `<section class="sec ps-sec">
+    ${ps2Head(m.eyebrow, m.title, '', 'accent', { metaHtml: opts.pending ? '' : ps2Strip(pts), icon: m.icon, sub: m.sub })}
     ${opts.pending ? ps2Dots() : ps2Points(pts, ps2Empty(kind, data))}
   </section>`;
 }
@@ -6126,8 +6326,8 @@ export function verdictFindings(nuggets = {}, opts = {}) {
 export function verdictNext(snapshot = {}) {
   const tests = (snapshot.nextTests || []).filter(t => String(t || '').trim()).slice(0, 3);
   if (!tests.length) return '';
-  return `<section class="sec ps-next">
-    ${ps2Head('The next read', 'Three things we’d go after next', 'drawn from this read, not from a list')}
+  return `<section class="sec ps-sec ps-next">
+    ${ps2Head('The next read', 'Three things we’d go after next', 'drawn from this read, not from a list', 'accent', { icon: 'science' })}
     <div class="mbt-grid"><div>${tests.map((t, i) =>
       `<div class="must"><span class="idx">${i + 1}</span><div class="bd"><p>${esc(t)}</p></div></div>`).join('')}</div></div>
     <button class="m3-btn filled" type="button" onclick="window.__eaUnlock&&window.__eaUnlock()">
@@ -6160,7 +6360,7 @@ export function briefEditor(brief = {}, opts = {}) {
       ? `<textarea class="bpe-i" id="bpe-${k}" rows="2">${v}</textarea>`
       : kind === 'select'
         ? `<select class="bpe-i" id="bpe-${k}">${STAGE_OPTS.map(o =>
-            `<option value="${o}"${o === brief[k] ? ' selected' : ''}>${esc(o)}</option>`).join('')}</select>`
+            `<option value="${o}"${o === brief[k] ? ' selected' : ''}>${esc(stageLabel(o))}</option>`).join('')}</select>`
         : `<input class="bpe-i" id="bpe-${k}" type="text" value="${v}">`;
     return `<label class="bpe-r${kind === 'textarea' ? ' wide' : ''}"><span class="bpe-k">${esc(label)}</span>${input}</label>`;
   };
