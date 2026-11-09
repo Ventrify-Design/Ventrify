@@ -737,10 +737,17 @@ function scoreDial(score, potential, max, tone) {
    which is what today's runs render, because the runner publishes the median
    and keeps nothing else. */
 function stabilityStrip(draws, score) {
-  if (!Array.isArray(draws) || draws.length < 2) {
-    return `<div class="sl-strip is-empty"><div class="sl-strip-lab"><span>Stability</span></div>
-      <p class="sl-none">Draw spread not recorded for this run.</p></div>`;
-  }
+  // MEASURED 2026-11-09: 0 of 28 stored snapshots carry a usable draw spread, because the runner
+  // publishes the median and keeps nothing else. So this block's "empty state" was its ONLY state — a
+  // labelled Stability heading with "not recorded" under it on every assessment ever produced.
+  //
+  // An empty state earns its place when the thing is sometimes there. This one never is, and the fact
+  // it was reporting — that we cannot see the spread — is already carried, far better, by the wobble
+  // note above it ("7 of 35 signals were decided by a single vote…"), which says WHICH signals were
+  // unstable and what would settle them. Rendering nothing here removes a dead heading, not a fact.
+  //
+  // The moment the runner starts publishing draws, this returns of its own accord. Nothing to re-enable.
+  if (!Array.isArray(draws) || draws.length < 2) return '';
   const lo = Math.min(...draws), hi = Math.max(...draws), d = hi - lo;
   const win = Math.max(10, d * 1.9);            // never closes below 10pts, so tight reads as tight
   const c = (lo + hi) / 2, a = c - win / 2, b = c + win / 2;

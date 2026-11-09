@@ -21,6 +21,58 @@ import { SUB_Q } from '../investability-view.js';
 const esc = s => String(s == null ? '' : s);
 const words = s => String(s || '').trim().split(/\s+/).filter(Boolean);
 const initials = s => words(s).slice(0, 2).map(w => w[0]).join('').toUpperCase() || '—';
+
+// ── WHEN WAS THIS ASSESSED? ───────────────────────────────────────────────────────────────────────────
+// `lastActivity` is a STORED STRING, not a timestamp — and every engagement in the database stores the
+// same one: "just now", 20 of 20. So "Assessed just now" was rendered on an assessment from three weeks
+// ago, and would have been rendered on one from a year ago. It is a label written once at creation and
+// never touched again, so it can only ever be wrong.
+//
+// The real answer is on the record in three places, in order of what the sentence actually claims:
+// when the VERDICT was published, else when the RUN finished, else when the document last changed.
+// A date we cannot establish prints nothing at all, because "Assessed —" is not better than silence.
+const ASSESSED_PLACEHOLDER = /^(just now|recently|today)$/i;
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function assessedAt(p) {
+  const a = p.assessment || {};
+  const rs = p.runState || {};
+  const raw = a.updatedAt || rs.finishedAt || p.updatedAt || null;
+  if (!raw) {
+    // No timestamp anywhere. Keep a stored label ONLY if it is not the known placeholder.
+    const t = String(p.lastActivity || '').trim();
+    return (t && !ASSESSED_PLACEHOLDER.test(t)) ? t : '';
+  }
+  const d = raw && typeof raw.toDate === 'function' ? raw.toDate() : new Date(raw);
+  if (isNaN(d.getTime())) return '';
+  const days = Math.floor((Date.now() - d.getTime()) / 86400000);
+  if (days < 0) return '';                       // a clock skew is not a date worth printing
+  if (days === 0) return 'today';
+  if (days === 1) return 'yesterday';
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+// ── THE MASTHEAD MARK IS THE VENTURE'S, NOT THE FOUNDER'S ────────────────────────────────────────────
+// It was `founderAvatar || initials(p.name)`, and founderAvatar is seeded from the founder's name — so
+// the circle beside "Holoclara" read "A" (Antony) and the one beside "ORE (Outer Rim Exploration)" read
+// "FN", because that engagement was created with the literal placeholder "Founder Name".
+//
+// This page is about the venture; the sidebar already carries the ORG's mark in the same idiom, and the
+// founder is named where the founder is relevant. One source for the monogram removes both the wrong
+// initial and the placeholder, and it cannot drift again with whatever a founder field happens to hold.
+//
+// `initials()` is left alone — it is the shared helper for PEOPLE (team rows, operator chips), where
+// first-letters-of-two-words is right. A venture name is not a person's name: "ORE (Outer Rim
+// Exploration)" gave "O(" through it, because the second "word" was an opening bracket.
+const ventureMark = (p) => {
+  const clean = String(p.name || '')
+    .replace(/\([^)]*\)/g, ' ')          // drop a parenthetical expansion — "ORE (Outer Rim…)" is "ORE"
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ')   // and any punctuation that would become a letter
+    .trim();
+  const w = clean.split(/\s+/).filter(Boolean);
+  if (!w.length) return '—';
+  // One word is a wordmark, so take two of ITS letters (ORE → OR); several words take one each (HO).
+  return (w.length === 1 ? w[0].slice(0, 2) : w.slice(0, 2).map(x => x[0]).join('')).toUpperCase();
+};
 const cap = s => s ? s[0].toUpperCase() + s.slice(1) : s;
 const firstSentence = s => { const t = String(s || '').trim(); const m = t.match(/^(.*?[.!?])(\s|$)/); return m ? m[1] : t; };
 const parseMoney = s => { const m = String(s || '').match(/([\d.]+)\s*([bmk])?/i); if (!m) return 0; let n = parseFloat(m[1]); const u = (m[2] || '').toLowerCase(); if (u === 'b') n *= 1e3; else if (u === 'k') n /= 1e3; return n; };  // → millions
@@ -192,7 +244,15 @@ function mapScore(snap, docN = 0) {
       if (n) c.unsettled = n;
     }
   }
+  // THE THREE DRAWS, CARRIED THROUGH. Every signal is scored three times blind and the median published;
+  // the stability strip is the only surface that would show the spread. It never has — and the reason is
+  // TWO failures stacked, not one: no stored snapshot carries `draws` (0 of 28, measured 2026-11-09),
+  // AND this adapter never mapped the field, so even a snapshot that had them would render nothing.
+  // Mapping it here is what makes "the strip returns when the runner publishes draws" a true statement
+  // rather than a hopeful comment. tools/masthead-truth.mjs canaries exactly that.
+  const draws = Array.isArray(snap.draws) ? snap.draws.map(Number).filter(n => !isNaN(n)) : null;
   return { composite, potential, band: BAND[snap.band] || 'Forming', categories: cats,
+           draws: draws && draws.length >= 2 ? draws : null,
            wobbleNote: wobbleNote(snap, docN), unsettled: w.oneVote, wobbleFlagged: w.flagged };
 }
 
@@ -513,8 +573,8 @@ export function adaptEngagement(p = {}) {
   const A = {
     inputs,          // the evidence the agents are reading — drives inputManifest on the assessing screen
     gaps, gapById, gapBySlug, filings,
-    id: p.id, name: p.name, initials: p.founderAvatar || initials(p.name),
-    stageLine: [p.stage, p.venturePitch, p.lastActivity && `Assessed ${p.lastActivity}`].filter(Boolean).join(' · '),
+    id: p.id, name: p.name, initials: ventureMark(p),
+    stageLine: [p.stage, p.venturePitch, (x => x && `Assessed ${x}`)(assessedAt(p))].filter(Boolean).join(' · '),
     status: a.recommendation ? { kind: 'ok', label: 'Verdict ready', icon: 'check_circle' } : { kind: 'n', label: p.gateStatus || 'In progress', icon: 'pending' },
     run: { agent: 'Assess · v3 rubric', at: p.lastActivity || '', duration: '' },
     lifecycle,
