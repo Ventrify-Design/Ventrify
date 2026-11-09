@@ -4729,6 +4729,20 @@ export function runAge(rs) {
   const ms = Date.now() - new Date(t).getTime();
   return ms >= 0 ? ms : null;
 }
+// HOW LONG THIS STEP HAS BEEN RUNNING. The runner stamps runState.stepAt when it OBSERVES the step
+// change (run-phase.js), so this is a measurement rather than an estimate — and it is the one number that
+// makes a long step legible. Measured gaps on a real run: 18.6 minutes for the five research agents, 12.8
+// for the investment analysis. With only a total elapsed time on screen, a healthy run in the middle of
+// its longest step looks exactly like a hung one, which is how it was reported: "it seemed to be loading
+// on stage 6 for ages, and it wasn't until I randomly refreshed that it showed me my assessment".
+//
+// null for a run that predates stepAt, and the banner then shows what it always showed. Never a guess.
+export function stepAge(rs) {
+  const t = rs && rs.stepAt;
+  if (!t) return null;
+  const ms = Date.now() - new Date(t).getTime();
+  return ms >= 0 ? ms : null;
+}
 export function fmtElapsed(ms) {
   if (ms == null) return '';
   const m = Math.floor(ms / 60000);
@@ -4748,9 +4762,9 @@ export const RUN_BUDGET_MIN = 300;
 // SILENCE — how long since the runner last said anything. This is the honest health instrument.
 //
 // It replaces a total-age heuristic ("older than 45 minutes ⇒ probably stalled") that was simply the wrong
-// measurement: a run that has been going 100 minutes is not stalled, it is BUSY. Real assess runs take ~2
-// hours, so that rule fired on every healthy run and taught the operator to ignore the warning — which is
-// worse than having no warning at all.
+// measurement: a run that has been going 100 minutes is not stalled, it is BUSY. Assess runs measured
+// 2026-11-09 at a 66-minute median and a 128-minute tail (n=7 on the current instrument), so that rule
+// fired on healthy runs and taught the operator to ignore the warning — which is worse than no warning.
 //
 // The runner now beats every 2 minutes for its whole life (runstate.js startHeartbeat), so silence is
 // finally meaningful: a live runner is never quiet for long, and a dead one is quiet forever.
@@ -4831,7 +4845,18 @@ export function runBanner(rs = {}, opts = {}) {
   const stallReason = runStallReason(rs);
   const stalled = stallReason != null;
   const elapsed = fmtElapsed(runAge(rs));
-  const meta = [total > 0 && step > 0 ? `Step ${step} / ${total}` : '', elapsed].filter(Boolean).join(' · ');
+  // "Step 5 / 12 · 14m on this step · 38m" — the middle term is what stops a long step reading as a
+  // stall. Omitted when the run predates stepAt, or when it would merely restate the total.
+  // fmtElapsed's words are written for the TOTAL ("38m elapsed", "just started"); reusing them here gave
+  // "14m elapsed on this step · 38m elapsed". The step term drops the suffix and keeps the measurement.
+  const stepMs = stepAge(rs);
+  const onStep = stepMs == null ? '' : stepMs < 60000 ? 'just started this step'
+    : `${fmtElapsed(stepMs).replace(/ elapsed$/, '')} on this step`;
+  const meta = [
+    total > 0 && step > 0 ? `Step ${step} / ${total}` : '',
+    onStep && onStep !== elapsed ? onStep : '',
+    elapsed,
+  ].filter(Boolean).join(' · ');
   const title = s.prog ? (isRepub ? 'Republishing…' : isRescore ? 'Re-scoring…' : s.title) : s.title;
   const text = rs.label || (isRepub ? 'Recovering your saved results…'
     : isRescore ? 'Reading the records you filed, then scoring all 35 signals again from the evidence. The score may rise, fall, or hold.'

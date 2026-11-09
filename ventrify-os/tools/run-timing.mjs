@@ -61,6 +61,13 @@ const OTHER_OP = /re-?reads?|re-?runs?|correction|your version|doesn.t use up/i;
 // promise. It was found by looking at a screenshot. The article is in the alternation now.
 const NUMBER = /\b(?:(?:~|about|under|in|roughly|approx\.?|approximately)\s*)?(\d+|an?|one|two|three|four|five|six|seven|eight|nine|ten)[\s-]minutes?\b/gi;
 const PRESCREEN = /pre-?screen|triage read|quick read/i;
+// THE FULL ASSESSMENT'S OWN DURATION. auditTiming's 4-line context window was safe on the explicit
+// grounds that "the full tier's own duration is in hours, so widening the window cannot pull it in" —
+// an assumption this change BROKE the moment hours became 90 minutes. Two of the three call sites put
+// both products' durations within four lines of each other (ctaPair) or on the SAME line (the confirm
+// dialog, which offers the pre-screen as the alternative). So the full figure is named once, here, and
+// skipped by the pre-screen audit; auditFullAssessment owns it instead.
+const FULL_DURATION = /\b(?:about\s+)?90\s*min(?:ute)?s?\b/i;
 
 const WANT = new Set([String(MINUTES), WORD]);
 
@@ -79,6 +86,7 @@ function auditTiming(files) {
       if (!PRESCREEN.test(context)) return;
       for (const m of line.matchAll(NUMBER)) {
         const n = String(m[1]).toLowerCase();
+        if (FULL_DURATION.test(m[0])) continue;      // the full assessment's figure, not a pre-screen promise
         if (!WANT.has(n) && !QUOTED(line, m[0])) {
           bad.push(`RULE 1 — ${rel}:${i + 1} promises "${m[0].trim()}" for a pre-screen, not ${WORD} minutes`);
         }
@@ -141,10 +149,48 @@ if (CANARY) {
   process.exit(checks.every(([, ok]) => ok) ? 0 : 1);
 }
 
+// ── THE FULL ASSESSMENT'S DURATION, the same bug one product over ───────────────────────────────────
+// This gate was written for the pre-screen's "five minutes" because that number drifted across eleven
+// files twice. The FULL assessment's claim had drifted further and for longer: every surface said "about
+// 2 hours" while no run had matched that since the October effort change.
+//
+//   runState.startedAt -> finishedAt, measured 2026-11-09:
+//     all time                        n=13  median 85 min  (31-140)
+//     since 2026-10-19, effort high   n=7   median 66 min  (38-128)   <- the current instrument
+//
+// 6 of 7 finished inside 90 minutes, so "90 minutes" is a conservative promise, not a target. It is a
+// measurement of ONE instrument (model + effort + CLI, all pinned in claude-config.js): if any of those
+// moves, re-measure rather than adjust by feel.
+//
+// Checked the same way as the pre-screen: no surface may still claim hours, and the surfaces that state
+// a duration must state THIS one.
+const FULL_WORD = '90 minutes';
+const FULL_SCAN = ['shared/entitlements.js', 'shared/m3/ds.js', 'workspace/workspace-m3.js', 'workspace/assess-next.html'];
+const HOURS = /\babout (?:2|two) hours\b|\btwo[- ]hour\b|\b2[- ]hour\b/i;
+
+function auditFullAssessment(map) {
+  const bad = [];
+  for (const f of FULL_SCAN) {
+    const src = map.get(f);   // read() returns a Map, not an object
+    if (src == null) { bad.push(`${f} — not readable, so its duration claim is unchecked`); continue; }
+    src.split('\n').forEach((line, i) => {
+      // Comments here are the DECISION LOG for this very change and quote the old number on purpose.
+      const code = line.replace(/\/\/.*$/, '').replace(/^\s*\*.*$/, '');
+      const m = code.match(HOURS);
+      if (m && !EXEMPT.test(code)) bad.push(`${f}:${i + 1} still promises "${m[0]}" — the measured median is 66 min`);
+    });
+  }
+  // and at least one surface has to actually STATE the new number, or the gate would pass on a product
+  // that simply stopped saying how long it takes.
+  const states = FULL_SCAN.filter(f => (map.get(f) || '').includes(FULL_WORD));
+  if (!states.length) bad.push(`no surface states "${FULL_WORD}" — the full assessment no longer tells anyone how long it takes`);
+  return bad;
+}
+
 const files = read();
-const problems = [...auditTiming(files), ...auditSurfaces(files)];
+const problems = [...auditTiming(files), ...auditSurfaces(files), ...auditFullAssessment(files)];
 problems.forEach(x => console.log(`  ✗ ${x}`));
 console.log(problems.length
-  ? `\n  FAIL — ${problems.length} problem(s): the product does not agree with itself about how long a pre-screen takes`
-  : `  PASS — every pre-screen duration in ${SCAN.length} files reads ${WORD} minutes, and all ${REQUIRED.length} surfaces still state it`);
+  ? `\n  FAIL — ${problems.length} problem(s): the product does not agree with itself about how long a run takes`
+  : `  PASS — every pre-screen duration in ${SCAN.length} files reads ${WORD} minutes, all ${REQUIRED.length} surfaces still state it,\n         and no surface still promises the full assessment in hours (measured median: 66 min)`);
 process.exit(problems.length ? 1 : 0);
