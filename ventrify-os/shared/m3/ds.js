@@ -2182,7 +2182,7 @@ export function scoreMovement(filings = []) {
     : 'a changed scoring model or criteria';
 
   const verdict = upgraded
-    ? (d ? `The score moved <b>${d > 0 ? 'up' : 'down'}</b> by ${pts(Math.abs(d))} on this re-score — but it was also the first scored with ${what}, so the move cannot be credited to your evidence alone.`
+    ? (d ? `The score moved <b>${d > 0 ? 'up' : 'down'}</b> by ${pts(Math.abs(d))} on this re-score — but it was also the first scored with ${what}, so the move cannot be credited to the evidence alone.`
          : `The score <b>held</b> on this re-score, which was also the first taken with ${what}.`)
     : d > 0
     ? `The evidence you filed <b>raised</b> the score by ${pts(d)}.`
@@ -2205,7 +2205,7 @@ export function scoreMovement(filings = []) {
 
   const meta = `${batch.length} record${batch.length === 1 ? '' : 's'} · ${moved.length} signal${moved.length === 1 ? '' : 's'} moved`;
   return `<section class="sec">
-    <div class="sec-head"><span class="eyebrow accent">The re-score</span><span class="t">What your evidence moved</span><span class="meta">${esc(meta)}</span></div>
+    <div class="sec-head"><span class="eyebrow accent">The re-score</span><span class="t">What the evidence moved</span><span class="meta">${esc(meta)}</span></div>
     <p class="lead"><span class="drop">${drop}</span> ${verdict}</p>
     <div class="profile">${rows}</div>
     <div class="profile-foot"><span>Scored cold against the filed document${batch.length > 1 ? 's' : ''}. Your note was not read by the assessment.${batch.length > 1 ? ' With several records in one re-score, we do not claim which one moved which signal.' : ''}${upgraded ? ` The signal moves shown include the effect of ${what}.` : ''}</span></div>
@@ -2463,7 +2463,7 @@ export function rangeHero(range = {}, opts = {}) {
     // ceiling whose basis is hidden.
     thesis: width === 0
       ? 'Every signal the rubric asks for had evidence behind it, so there is no spread left to close. A full assessment replaces this with a single measured number and the reasoning behind it.'
-      : 'The low end is what your evidence proves today. The high end assumes the documents we could not find are about as strong as the ones we could — your own evidence sets that expectation, so a thin room cannot borrow a high ceiling. The full assessment closes the gap to one number.',
+      : 'The low end is what the evidence proves today. The high end assumes the documents we could not find are about as strong as the ones we could — your own evidence sets that expectation, so a thin room cannot borrow a high ceiling. The full assessment closes the gap to one number.',
   });
 }
 
@@ -2486,7 +2486,7 @@ export function rangeStale(snapshot = {}, liveDocs = 0) {
     <div class="rstale-in">
       <span class="material-symbols-rounded">history</span>
       <div class="rstale-b">
-        <div class="rstale-h">This range was scored on ${then} document${then === 1 ? '' : 's'}. Your room now holds ${liveDocs}.</div>
+        <div class="rstale-h">This range was scored on ${then} document${then === 1 ? '' : 's'}. The room now holds ${liveDocs}.</div>
         <p class="rstale-p">The ${added} you added since ${added === 1 ? 'has' : 'have'} updated what we can <b>see</b> — the coverage below reflects them — but the score itself is composed once and not recomputed. Re-scoring on the new evidence is the full assessment.</p>
         <button class="m3-btn tonal" type="button" onclick="window.__eaUnlock&&window.__eaUnlock()"><span class="material-symbols-rounded">bolt</span>Score it on everything</button>
       </div>
@@ -2561,13 +2561,13 @@ export function rangeFindings(categories = [], opts = {}) {
   const totalPts = gaps.reduce((a, g) => a + g.pts, 0);
 
   return `${gaps.length ? `<hr class="rule"><section class="sec">
-    <div class="sec-head"><span class="eyebrow accent">What we could not see</span><span class="t">${totalGaps} question${totalGaps === 1 ? '' : 's'} your evidence does not answer</span>
+    <div class="sec-head"><span class="eyebrow accent">What we could not see</span><span class="t">${totalGaps} question${totalGaps === 1 ? '' : 's'} the evidence does not answer</span>
       <span class="meta">worth ${totalPts.toFixed(0)} points · highest first</span></div>
     <div class="profile">${gapRows}</div>
     <div class="profile-foot"><span>Each line names what would answer it. These are not marks against the venture — they are questions we were not given the evidence to score, so the floor has to assume the worst of each one. The points column is what that assumption costs you.</span></div>
   </section>` : ''}
   ${provenBlocks ? `<hr class="rule"><section class="sec">
-    <div class="sec-head"><span class="eyebrow accent">What your evidence proves</span><span class="t">Read from the documents you supplied</span>
+    <div class="sec-head"><span class="eyebrow accent">What the evidence proves</span><span class="t">Read from the documents you supplied</span>
       <span class="meta">${cats.reduce((a, c) => a + c.signals.filter(s => s.evidenced).length, 0)} of 35 signals</span></div>
     ${provenBlocks}
     <div class="profile-foot"><span>Three independent reads per signal; the middle one is published. A balance icon marks a signal where the three disagreed and one vote decided it — more evidence would settle it.</span></div>
@@ -2728,7 +2728,7 @@ export function runStage(opts = {}) {
       <ol class="ps-steps">${steps}</ol>
     </header>
     <div class="ps-grid">
-      ${col('What we are reading', 'Your evidence', `${(deck ? 1 : 0) + docs.length} file${(deck ? 1 : 0) + docs.length === 1 ? '' : 's'}`,
+      ${col('What we are reading', 'The evidence', `${(deck ? 1 : 0) + docs.length} file${(deck ? 1 : 0) + docs.length === 1 ? '' : 's'}`,
             evidence ? `<div class="profile">${evidence}</div>` : `<div class="profile-foot"><span>Nothing attached.</span></div>`,
             'Each file is read before the score starts. Anything that fails to parse is named here rather than dropped quietly.')}
       ${col('The data room', isAssess ? 'What the assessment reads' : 'What the score looks for', roomMeta, roomBody,
@@ -2794,7 +2794,7 @@ export function dataRoomHero(check = null, opts = {}) {
   const headline = found == null
     ? 'We have not read the data room yet.'
     : missing === 0
-      ? 'Your room answers everything the score looks for.'
+      ? 'The room answers everything the score looks for.'
       : `${word(missing)} document type${missing === 1 ? '' : 's'} the score counts ${missing === 1 ? 'is' : 'are'} missing.`;
 
   const thesis = found == null

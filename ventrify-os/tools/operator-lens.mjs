@@ -16,7 +16,9 @@ import { readFile } from 'node:fs/promises';
 // possessions, not the second person as such.
 
 const SRC = 'shared/m3/ds.js';
-const BANNED = /\byour (venture|ventures|documents|docs|company|score|deck|founders|assessment|data room|cap table|financials|traction|market)\b/gi;
+// `room` on its own as well as `data room`: the Data room tab opened with "Your room answers
+// everything the score looks for", which the first pattern walked straight past.
+const BANNED = /\byour (venture|ventures|documents|docs|company|score|deck|founders|assessment|room|data room|cap table|financials|traction|market|evidence|numbers|team's)\b/gi;
 const ALLOW = [
   /For your team — why you filed this\./,     // the operator's own team, on the evidence-filing form
 ];
