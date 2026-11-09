@@ -84,25 +84,47 @@
 
   // ── mutable live data (refreshed after actions / on subscription tick) ──
   let invSnapshot = null, invSnapshots = [], provCards = [], hubDocs = [], operatorEvidence = [], A = null, S = null;
+  let loadFailures = [];
   async function loadData() {
     invSnapshot = p.investabilitySnapshot || null; provCards = p.provCards || []; hubDocs = p.hubDocs || [];
     invSnapshots = p.investabilitySnapshots || (invSnapshot ? [invSnapshot] : []);
     operatorEvidence = p.operatorEvidence || [];
+    loadFailures = [];
     if (live) {
       try {
         const data = await import('../firebase/data.js');
+        // ── EACH READ IS ISOLATED, AND A FAILURE IS NAMED ──────────────────────────────────────────────
+        // These four reads used to share one try/catch and run in sequence, so a throw on the FIRST of
+        // them left the other three unattempted and every result at its empty default. The operator then
+        // saw an assessment with no score, no provenance, no hub docs and no evidence ledger — and the
+        // only trace was a console.warn nobody was looking at. A read that is DENIED must never be
+        // indistinguishable from a read that correctly returned nothing: one is a fault, the other is a
+        // fact, and rendering them the same way is how a permissions error gets diagnosed as a bad run.
+        const read = async (label, fn, fallback) => {
+          try { return await fn(); }
+          catch (e) {
+            loadFailures.push({ label, code: e && (e.code || e.name) || 'error', message: (e && e.message) || String(e) });
+            console.error(`[assessment] ${label} FAILED`, e);
+            return fallback;
+          }
+        };
         // Keep the WHOLE history, not just the newest. It was already being fetched and then thrown away —
         // and since the newest snapshot is the one we publish, discarding the rest is precisely what let an
         // operator who disliked 67 run it again and keep 73, with nothing on screen ever saying so.
-        const snaps = await data.listInvestabilitySnapshots(p.id);
-        invSnapshots = snaps || [];
-        invSnapshot = snaps.length ? snaps[snaps.length - 1] : invSnapshot;
-        provCards = await data.listCardsForEngagement(p.id);
-        hubDocs = await data.listHubDocs(p.id);
+        const snaps = await read('investability snapshots', () => data.listInvestabilitySnapshots(p.id), null);
+        if (snaps) {
+          invSnapshots = snaps;
+          invSnapshot = snaps.length ? snaps[snaps.length - 1] : invSnapshot;
+        }
+        provCards = await read('provenance cards', () => data.listCardsForEngagement(p.id), provCards);
+        hubDocs = await read('data-room documents', () => data.listHubDocs(p.id), hubDocs);
         // the evidence ledger — what the operator pointed us at, what the FETCHER observed, and what the
         // SCORER then did about it (signalDelta / compositeDelta, which may be NEGATIVE).
-        operatorEvidence = await data.listOperatorEvidence(p.id);
-      } catch (e) { console.warn('live assessment data load failed', e); }
+        operatorEvidence = await read('evidence ledger', () => data.listOperatorEvidence(p.id), operatorEvidence);
+      } catch (e) {
+        loadFailures.push({ label: 'assessment data', code: (e && e.code) || 'error', message: (e && e.message) || String(e) });
+        console.error('[assessment] live data load failed outright', e);
+      }
     }
     ({ A, S } = adaptEngagement({ ...p, investabilitySnapshot: invSnapshot, provCards, hubDocs, operatorEvidence }));
   }
@@ -738,7 +760,7 @@
       <div class="sec-head"><span class="eyebrow accent">The engagement</span><span class="t">Where this sits</span><span class="meta">Intake → decision</span></div>
       ${DS.lifecycleStrip(A.lifecycle, { scale: 'editorial' })}
     </section>`;
-    return `<div class="brief"><div id="ea-status">${banner}</div>${DS.missingDocs(A)}${note}${forming}${life}</div>`;
+    return `<div class="brief"><div id="ea-load-fail">${DS.loadFailureBanner(loadFailures)}</div><div id="ea-status">${banner}</div>${DS.missingDocs(A)}${note}${forming}${life}</div>`;
   }
   // ---- the PRE-SCREEN tab set: the verdict, and the room it was read from ----
   // Both tabs are complete in themselves. The argument for upgrading closes the Verdict tab in what
@@ -814,8 +836,11 @@
 
   function verdictTabs(st) {
     const slim = (st.active || st.flagged) ? `<div class="brief" style="padding-bottom:0;margin-bottom:4px" id="ea-status">${DS.runBanner(st.rs)}</div>` : '<span id="ea-status"></span>';
+    // A failed read is reported ABOVE the assessment, on every path — an operator must never have to
+    // wonder whether a blank score means "not scored" or "not readable".
+    const failBanner = loadFailures.length ? `<div class="brief" style="padding-bottom:0;margin-bottom:4px" id="ea-load-fail">${DS.loadFailureBanner(loadFailures)}</div>` : '<span id="ea-load-fail"></span>';
     return `
-      <div class="tab-panel active">${slim}${DS.missingDocs(A) ? `<div class="brief" style="padding-bottom:0">${DS.missingDocs(A)}</div>` : ''}${DS.verdictMemo(A, S)}</div>
+      <div class="tab-panel active">${failBanner}${slim}${DS.missingDocs(A) ? `<div class="brief" style="padding-bottom:0">${DS.missingDocs(A)}</div>` : ''}${DS.verdictMemo(A, S)}</div>
       <div class="tab-panel"><div class="brief">${DS.investabilityHero(S, A)}${DS.scoreProvenance(invSnapshots)}${DS.scoreMovement(A.filings)}<hr class="rule">${DS.investabilityComposition(S, 'openInvest')}<hr class="rule">${DS.strengthProfile(S, 'openInvest')}</div></div>
       <div class="tab-panel">${DS.marketMemo(A)}</div>
       <div class="tab-panel">${DS.teamMemo(A, S)}</div>

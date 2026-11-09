@@ -4833,6 +4833,35 @@ export function runBanner(rs = {}, opts = {}) {
   </div>`;
 }
 
+// ── A READ THAT FAILED SAYS SO ────────────────────────────────────────────────────────────────────────
+// The assessment page loads its score, its provenance, its data-room docs and its evidence ledger from
+// four separate Firestore reads. When one of those is DENIED or errors, the page used to fall back to the
+// empty default and render a complete-looking assessment with the score missing — the operator's report
+// was "no score has been produced for me", which sent the investigation after the RUNNER when the run had
+// in fact published a perfectly good 76.
+//
+// The rule this encodes: ABSENT AND UNREADABLE ARE DIFFERENT ANSWERS. "There is no score yet" is a fact
+// about the venture; "we could not read the score" is a fault in our software, and the operator must be
+// able to tell which one they are looking at without opening a console.
+export function loadFailureBanner(failures = []) {
+  const list = (failures || []).filter(Boolean);
+  if (!list.length) return '';
+  const denied = list.some(f => String(f.code || '').includes('permission-denied'));
+  const what = list.map(f => f.label).join(', ');
+  const text = denied
+    ? `Your account could not read ${what} for this assessment. The assessment itself is fine — this is an access problem on our side, not a failed run.`
+    : `We could not load ${what} for this assessment. Nothing below is missing because the run failed; it is missing because the page could not fetch it.`;
+  return `<div class="run-banner warn">
+    <span class="rb-ic"><span class="material-symbols-rounded">warning</span></span>
+    <div class="rb-bd">
+      <div class="rb-t">Part of this assessment could not be loaded<span class="rb-meta">${esc(String(list.length))} of 4 reads failed</span></div>
+      <div class="rb-x">${esc(text)}</div>
+      <div class="rb-warn">${esc(list.map(f => `${f.label}: ${f.code}`).join(' · '))}</div>
+      <div class="rb-act"><button class="m3-btn text" onclick="location.reload()"><span class="material-symbols-rounded">refresh</span>Try again</button></div>
+    </div>
+  </div>`;
+}
+
 // ============================================================
 // THE ASSESSING SCREEN — "the memo, before the ink lands".
 // A run in flight is not a loading state: it is the assessment ITSELF, caught mid-formation. So this screen

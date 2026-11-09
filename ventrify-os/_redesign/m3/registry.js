@@ -1243,6 +1243,15 @@ export const CATALOG = {
     html: () => `<div class="brief" style="padding:22px 28px;max-width:560px">${DS.runBanner({ status: 'queued', requestedAt: new Date().toISOString() })}${DS.runBanner({ status: 'running', totalSteps: 11, step: 4, progress: 36, label: 'Section 4 · Market and timing…', startedAt: new Date(Date.now() - 6 * 60000).toISOString() })}${DS.runBanner({ status: 'queued', requestedAt: new Date(Date.now() - 5 * 60000).toISOString() })}${DS.runBanner({ status: 'needs-attention' })}${DS.runBanner({ status: 'done' })}</div>`,
     props: [{ name: 'runState', type: '{status, label}' }], variants: [{ label: 'status', note: 'queued/running/partial/needs-attention/limit-paused/error/done' }], usedIn: ['assess-setup.html', 'assess.html'], adaptive: noAdapt
   },
+  loadFailureBanner: {
+    level: 'molecule', group: 'Molecules', domain: 'Workspace', title: 'Load failure banner', sig: 'loadFailureBanner(failures)',
+    blurb: 'Shown above an assessment when one of the page\u2019s four Firestore reads (score snapshots, provenance cards, data-room docs, evidence ledger) DENIED or errored. It exists because ABSENT AND UNREADABLE ARE DIFFERENT ANSWERS: those four reads once shared one try/catch and ran in sequence, so a throw on the first left the rest unattempted and the page rendered a complete-looking assessment with the score silently missing \u2014 reported by the operator as a failed run when the run had published 76. Names each failed read and its error code so the fault is diagnosable without a console, distinguishes permission-denied (an access fault on our side) from any other error, and offers the only useful control: reload. Renders nothing when the array is empty.',
+    maxw: 560, pad: true,
+    html: () => `<div class="brief" style="padding:22px 28px;max-width:560px">${DS.loadFailureBanner([{ label: 'investability snapshots', code: 'permission-denied' }])}${DS.loadFailureBanner([{ label: 'data-room documents', code: 'unavailable' }, { label: 'evidence ledger', code: 'unavailable' }])}</div>`,
+    props: [{ name: 'failures', type: '[{label, code, message}]' }],
+    variants: [{ label: 'code', note: 'permission-denied reads as an access fault; anything else as a fetch fault' }],
+    usedIn: ['assess-next.html'], adaptive: noAdapt
+  },
   portfolioEmptyPage: {
     level: 'page', group: 'Pages', domain: 'Workspace', title: 'Portfolio · first run', sig: 'portfolio.html?state=empty', src: 'portfolio.html?state=empty',
     blurb: 'The first-run empty-state Portfolio — the same shell as the populated page, body swapped for the launchpad, the utility rail suppressed, the drawer queue badge forced to 0. One page proves empty → 1 → many via ?state=.',
