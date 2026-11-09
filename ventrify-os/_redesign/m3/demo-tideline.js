@@ -348,6 +348,20 @@ export const demo = {
      and the elapsed clock climbs at the REAL rate rather than the animation's. That is the honest
      way round: the shot is short, and what it says about the product is true. */
   async run() {
+    /* THE ROOM IS READ WHEN YOU RUN — so the run reads it. The create screen used to carry a separate
+       "Read data room" button and the shot tapped it; the product dropped that step, and its Drive field
+       now says so in as many words ("Read when you run"). What was left was a choreography tapping a
+       class nothing renders, a read that never happened, and a shot that scrolled back to the top and
+       started over instead of running anything. The operator saw that on verdict.ventrify.io.
+       Scanning here restores the most valuable seconds in the shot AND puts them in the order the
+       product actually does them, without inventing a button that does not exist. */
+    if (($('#na-drive') || {}).value) {
+      await demo.scanRoom();
+      /* HOLD ON WHAT IT FOUND. scanRoom ends by painting roomCheck — four types present, two not
+         seen — and without this the workstreams replaced that the same frame it appeared. The whole
+         point of reading the room before a penny is spent is the COVERAGE, so it gets a beat. */
+      await sleep(2600);
+    }
     const RUN_MINUTES = [0, 8, 23, 37, 52, 68, 81, 96, 108, 117, 124, 131];
     const started = () => new Date(Date.now() - RUN_MINUTES[step] * 60000).toISOString();
     let step = 0;

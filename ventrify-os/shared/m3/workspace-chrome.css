@@ -838,6 +838,30 @@ a.ps-cite.said:hover { background: color-mix(in srgb, var(--md-sys-color-on-surf
    and `.coda` — hero text that is a SIBLING of the lockup, not a descendant — carried on at 701px
    inside a 294px column. Measured, not reasoned: the selector looked right and the scrollbar stayed. */
 .ps-sec, .ps-sec *, .section-hero, .section-hero * { overflow-wrap: anywhere; }
+/* ── BUT A NUMBER IS NOT A WORD ───────────────────────────────────────────────────────────────────
+   The rule above is for PROSE tokens — a URL, a compound, a hostile string with no space in it. It
+   was written with the `*` because the hero's text is several sibling elements and naming them had
+   already missed `.lead` and `.coda` once.
+
+   The `*` also caught the FIGURES. `.lockup-num` is a flex row holding a numeral and its unit, and
+   on the marketing site's live shot the Research tab's evidence figure rendered at 140.8px inside a
+   302px column — so "35" broke BETWEEN THE DIGITS and drew a giant 3 above a giant 5. It reached
+   verdict.ventrify.io, where the operator saw it.
+
+   `anywhere` is a licence to break mid-token, and there is no reading of a numeral where that is
+   ever wanted: 35 split across two lines is not a smaller 35, it is a 3 and a 5. `keep-all` as well
+   as `normal`, because `normal` alone still permits a break at a hyphen or a slash — and these
+   figures are written "12/35" and "3-5x".
+
+   The UNIT keeps the old behaviour: `<small>` is prose ("signals rated") and may wrap freely, which
+   is what keeps the lockup inside a narrow column now that the numeral will not give. */
+.ps-sec .lockup-num, .section-hero .lockup-num,
+.ps-sec .stat .n, .section-hero .stat .n,
+.ps-sec .fs-v, .section-hero .fs-v,
+.ps-sec .sl-val, .section-hero .sl-val {
+  overflow-wrap: normal; word-break: keep-all;
+}
+.ps-sec .lockup-num small, .section-hero .lockup-num small { overflow-wrap: anywhere; }
 /* AND THE COLUMN HAS TO BE ALLOWED TO SHRINK. Wrapping the text is only half of it: a grid item
    defaults to `min-width: auto`, so the hero's single column was still sized to its content's
    min-content width and resolved to 701px inside a 294px parent — the text wrapped and the column

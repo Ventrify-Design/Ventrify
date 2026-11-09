@@ -298,10 +298,24 @@ const CHECKS = {
     await new Promise(r => setTimeout(r, 1500));
     ok('"New assessment" opens the create screen', !!(await inner('full-run', `(d) => !!d.getElementById('na-drive')`)));
 
-    await until(/Read data room/);
+    /* THE READ IS TRIGGERED BY THE RUN. There is no "Read data room" button on the create screen —
+       the product reads the room when you run, and its Drive field says so. This used to wait on a
+       beat line that the choreography emitted by tapping `.na-drive-go`, a class nothing renders:
+       the tap failed, the banner never came, and the shot fell through to a restart. */
+    await until(/Run full assessment/);
     const typed = await inner('full-run', `(d) => (d.getElementById('na-drive')||{}).value || ''`);
     ok('the Drive URL was typed into the real field', /drive\.google\.com\/drive\/folders\//.test(typed), typed.slice(0, 48));
-    ok('the scan banner came up', !!(await inner('full-run', `(d) => !!d.querySelector('.rsb')`)));
+    /* POLL FOR THE BANNER. `until(/Run full assessment/)` matches the beat log, and the choreography
+       emits "scrolling to Run full assessment" BEFORE it taps — so a single read here ran before the
+       button had been pressed and reported a banner that was still seconds away. The gate's own note
+       further down says to wait on the banner rather than a beat line; this is the same lesson, one
+       assertion earlier. */
+    let sawBanner = false;
+    for (let n = 0; n < 150; n++) {
+      if (await inner('full-run', `(d) => !!d.querySelector('.rsb')`)) { sawBanner = true; break; }
+      await new Promise(r => setTimeout(r, 200));
+    }
+    ok('the scan banner came up', sawBanner);
 
     /* Wait on the BANNER, not on a beat line. beats() returns the whole accumulated log, so any
        regex that could have matched an earlier line matches immediately. */

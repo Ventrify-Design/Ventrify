@@ -96,16 +96,19 @@ export const SCRIPTS = {
     { act: 'reach', sel: '#na-drive', pad: 300, ms: 2000 },
     { act: 'type', text: 'https://drive.google.com/drive/folders/1kQ9xTideline-dataroom', cps: 30, label: 'Drive folder' },
     { act: 'hold', ms: 700 },
-    { act: 'tap', sel: '.na-drive-go', label: 'Read data room' },
+    /* THE READ IS PART OF THE RUN, because that is what the product does now. This used to tap
+       `.na-drive-go` — a class NOTHING has ever rendered — then wait for a banner that could not
+       appear, scroll to the top, and fall through to a restart. On the live site it read as "the shot
+       scrolls back up instead of running the assessment", which is exactly what it was doing.
+       shot-check caught it in one line: `!! nothing to tap for .na-drive-go`. */
+    { act: 'reach', sel: '.m3-btn.filled.na-run', pad: 420, ms: 1800 },
+    { act: 'tap', sel: '.m3-btn.filled.na-run', label: 'Run full assessment' },
     { act: 'await', sel: '.rsb' },                       // the banner is up: the read has started
     /* Back to the top to WATCH it. The aside is sticky, but at 900px its content is taller than the
        frame, so down by the Drive field the banner sits tucked under the masthead — measured at y=5.
        The counter is the best thing in this part and it was off-screen for all of it. */
     { act: 'home', ms: 1100 },
-    { act: 'await', sel: '.rsb', gone: true },           // and down again: the read has finished
-    { act: 'hold', ms: 2600 },
-    { act: 'reach', sel: '.m3-btn.filled.na-run', pad: 420, ms: 1800 },
-    { act: 'tap', sel: '.m3-btn.filled.na-run', label: 'Run full assessment' },
+    { act: 'await', sel: '.rsb', gone: true },           // the read has finished; the workstreams start
     { act: 'await', sel: '.run-step' },
     { act: 'hold', ms: 2200 },
     { act: 'read', to: .42, ms: 3200 },                  // the eleven workstreams, ticking over
