@@ -1390,6 +1390,179 @@ const CD_VERDICT = { green: 'a load-bearing strength', yellow: 'real but uneven'
 const cdBand = r => r >= 0.8 ? 'green' : r >= 0.5 ? 'yellow' : 'red';
 const cdSplitRef = note => { const t = String(note || ''); const i = t.indexOf(' · ref: '); return i < 0 ? { note: t || '', ref: '' } : { note: t.slice(0, i), ref: t.slice(i + 8) }; };
 const cdChip = sc => sc === 1 ? '<span class="cd-chip g">1</span>' : sc === 0.5 ? '<span class="cd-chip y">½</span>' : sc === 0 ? '<span class="cd-chip r">0</span>' : '<span class="cd-chip n">–</span>';
+// ── A SCORER'S NOTE IS ALREADY STRUCTURED; IT WAS JUST BEING PRINTED AS A WALL ────────────────────────
+//
+// Measured across the whole corpus — 953 sub-signal notes on 28 snapshots — the median note is 1,308
+// characters and the longest is 8,665. They were rendered as one undifferentiated <div>, so the operator
+// met a page of text that mixes what was READ, what was FOUND, what was QUOTED and what it SCORED, with
+// no way in. The operator's words: "super messy, hard to read, feels like it mixes up different bits".
+//
+// But they are NOT unstructured. The scorer already marks its sections, and the markers are consistent:
+//
+//     ALLCAPS LABEL —     54% of notes          quoted evidence     73%
+//     ALLCAPS LABEL:      49%                   => score reason     35%
+//     (i)/(1) enumeration 15%
+//
+// So nothing here invents structure or asks the model to write differently. It READS the structure the
+// scorer already emits and gives each part its own shape. That matters for two reasons: it works on
+// every note already stored — including assessments run months ago, which can never be re-run — and it
+// cannot drift from what the scorer does, because it is derived from it.
+//
+// NOTHING IS EVER DROPPED. This is an audit trail: a note is the evidence for a number in an investment
+// decision. parseSignalNote's output reconstructs the input character for character, and tools/
+// signal-note.mjs asserts exactly that over the real corpus. A parser that improves readability by
+// losing text would be the worst possible failure here, and it would be invisible.
+// The BOUNDARY is wider than it looks because the scorer's prose is: a label can follow a full stop, a
+// closing quote ("…free to drive adoption.' CANDIDATE DEMAND ARTEFACTS:"), a comma, or a bracket. The
+// first cut allowed only . ; ) and left 140 labelled notes flat — measured, not guessed.
+// LABEL = VERDICT — body. The scorer often states its finding IN the label: "(i) WHAT CHANGES = PRESENT
+// — muon tomography replaces…". Captured separately so the verdict can be a chip rather than shouting
+// inside the heading; it is the single most common shape in the ceo_vision signal the operator reported.
+const SN_LABEL = /(^|[.;:)!?]\s+|['"’”]\s+|,\s+|\n)([A-Z][A-Z0-9 _/&'’-]{2,38}?(?:\s*\([a-z][^)]{0,30}\))?)(?:\s*=\s*([A-Z][A-Z0-9 _/-]{0,22}))?\s*(—|–|:)\s+/g;
+// The closing rationale: "… => 1.0." / "… ⇒ 0.5". It is the ANSWER, and it was last on a page nobody
+// reached the bottom of.
+// "=> 1.0", "⇒ 0.5", "-> 0.0" and "→ 1.0" are all the same sentence; the scorer uses all four.
+//
+// NOT ANCHORED TO THE END. The rationale is usually the last sentence, but not always — plenty of notes
+// close with "⇒ 1.0. Diligence notes (not scored): …", so an end-anchored match found nothing and the
+// head fell back to the note's first sentence, which on these is mid-working ("Count A (senior
+// operators = operating title + executed instrument): Jeremiah Anderson (CEO;"). The LAST arrow-and-
+// number sentence anywhere is the answer; anything after it stays in the body, where it belongs.
+const SN_CONCLUDE = /(?:^|[.;]\s+)([^.;]*(?:=>|⇒|->|→)\s*[\d.]+\s*\.?)(?=\s|$)/g;
+
+export function parseSignalNote(raw) {
+  const text = String(raw == null ? '' : raw).trim();
+  if (!text) return { lead: '', blocks: [], conclusion: '', plain: true };
+
+  // 1 · the trailing score rationale, if the scorer wrote one
+  let body = text, conclusion = '';
+  SN_CONCLUDE.lastIndex = 0;
+  let cm = null, last = null;
+  while ((cm = SN_CONCLUDE.exec(text))) last = cm;
+  if (last && last[1] && last[1].length < 320) {
+    conclusion = last[1].trim();
+    const at = last.index + last[0].length - last[1].length;
+    // the text either side of it is kept — a rationale is lifted OUT of the body, never deleted from it
+    body = (text.slice(0, at) + ' ' + text.slice(at + last[1].length)).replace(/\s+/g, ' ').trim();
+  }
+
+  // 2 · the labelled sections
+  const marks = [];
+  SN_LABEL.lastIndex = 0;
+  let mm;
+  while ((mm = SN_LABEL.exec(body))) {
+    marks.push({ at: mm.index + mm[1].length, label: mm[2].trim(),
+                 verdict: (mm[3] || '').trim(), after: mm.index + mm[0].length });
+  }
+  if (!marks.length) return { lead: body, blocks: [], conclusion, plain: !conclusion };
+
+  const lead = body.slice(0, marks[0].at).trim();
+  // "(i) WHAT CHANGES — …  (ii) FOR WHOM — …" : the enumerator sits in the boundary BEFORE its label,
+  // so a naive slice leaves "(ii)" stranded at the end of the previous block. It is MOVED to the block
+  // it introduces, never dropped — the whole point of this parser is that no character goes missing.
+  const ENUM_TAIL = /\(\s*([ivx]+|\d+)\s*\)\s*$/i;
+  const blocks = marks.map((k, i) => ({
+    label: k.label, verdict: k.verdict,
+    body: body.slice(k.after, i + 1 < marks.length ? marks[i + 1].at : body.length).trim(),
+  })).filter(b => b.body || b.verdict);
+  for (let i = 0; i < blocks.length; i++) {
+    const t = blocks[i].body.match(ENUM_TAIL);
+    if (t && blocks[i + 1]) { blocks[i].body = blocks[i].body.replace(ENUM_TAIL, '').trim(); blocks[i + 1].n = t[1]; }
+  }
+  // the first block's own enumerator is at the tail of the lead
+  const lt = lead.match(ENUM_TAIL);
+  const lead2 = lt && blocks[0] ? (blocks[0].n = lt[1], lead.replace(ENUM_TAIL, '').trim()) : lead;
+  // A single label with everything under it is not a structure worth drawing boxes for.
+  if (blocks.length < 2 && !lead2) return { lead: body, blocks: [], conclusion, plain: !conclusion };
+  return { lead: lead2, blocks, conclusion, plain: false };
+}
+
+// signalNote — the parsed note, rendered so it can be SCANNED before it is read.
+//
+// THE ANSWER GOES FIRST. A scorer's note ends with its rationale ("All three components present, zero
+// contradictions => 1.0") after a page of what-was-read and what-was-found. That sentence is the one
+// the operator wants and it was last, under everything. It becomes the head; the working goes behind a
+// disclosure. Where the scorer wrote no rationale, splitClaim supplies the head from the note's own
+// first sentence — the same primitive the pre-screen findings and the case points fold on, so there is
+// ONE idea of "the claim and the evidence under it" across the product rather than three.
+//
+// THE DISCLOSURE IS CLOSED, and the summary counts what is inside it rather than teasing it. An operator
+// scanning five signals should be able to read five answers; opening one is a decision they make.
+//
+// A note with no structure is NOT dressed up to look structured — it folds on its first sentence and
+// nothing else. 455 of the 953 stored notes take that path, and they must look like themselves.
+// A HEAD THAT STOPS MID-PHRASE IS WORSE THAN A LONGER ONE. splitClaim cuts at the first sentence
+// boundary past 40 characters, and its documented fallbacks include `;` — which on a scorer's note
+// produces "Count A (senior operators = operating title + executed instrument): Jeremiah Anderson (CEO;"
+// and leaves a bracket hanging open. splitClaim is shared and gated, so it is not changed here; the
+// HEAD keeps taking sentences until its brackets and quotes close, or it gives up and shows the lot.
+function snHead(text) {
+  const t = String(text || '').trim();
+  const balanced = (x) => {
+    let d = 0;
+    for (const ch of x) { if (ch === '(') d++; else if (ch === ')') d--; }
+    return d <= 0 && (x.match(/'/g) || []).length % 2 === 0 && (x.match(/"/g) || []).length % 2 === 0;
+  };
+  let { claim, rest } = splitClaim(t);
+  let guard = 0;
+  while (rest && !balanced(claim) && claim.length < 260 && guard++ < 6) {
+    const next = splitClaim(rest);
+    claim = `${claim} ${next.claim}`.trim();
+    rest = next.rest;
+  }
+  return balanced(claim) || claim.length < 260 ? { claim, rest } : splitClaim(t);
+}
+
+export function signalNote(raw) {
+  const r = parseSignalNote(raw);
+  if (!r.lead && !r.blocks.length && !r.conclusion) return '';
+
+  const blockOf = (list) => list.map(b => `<div class="sn-b">
+      <div class="sn-bk">${b.n ? `<span class="sn-n">(${esc(b.n)})</span>` : ''}<span class="sn-k">${esc(b.label)}</span>${b.verdict ? `<span class="sn-v">${esc(b.verdict)}</span>` : ''}</div>
+      ${b.body ? `<p class="sn-bb">${esc(b.body)}</p>` : ''}
+    </div>`).join('');
+
+  // STRUCTURED: the rationale leads, the working folds.
+  if (r.blocks.length) {
+    let blocks = r.blocks;
+    let head = r.conclusion || snHead(r.lead).claim;
+    let leadRest = r.conclusion ? r.lead : snHead(r.lead).rest;
+    // A note that OPENS on a label has no lead and often no rationale — 44 of the 953 — so there was
+    // nothing to put in the head and the row rendered blank above its own disclosure. The first block's
+    // opening sentence is the note's opening statement; it is MOVED up, not copied, so the block keeps
+    // the remainder and no sentence appears twice.
+    if (!head && blocks.length) {
+      const first = blocks[0];
+      const cut = snHead(first.body);
+      head = `${first.label}${first.verdict ? ` = ${first.verdict}` : ''} — ${cut.claim}`;
+      blocks = cut.rest
+        ? [{ ...first, body: cut.rest }, ...blocks.slice(1)]
+        : blocks.slice(1);
+    }
+    const n = blocks.length;
+    return `<div class="sn">
+      <p class="sn-head">${esc(head)}</p>
+      <details class="sn-fold">
+        <summary><span class="sn-sum">${n} finding${n === 1 ? '' : 's'} behind this</span><span class="sn-car material-symbols-rounded">expand_more</span></summary>
+        ${leadRest ? `<p class="sn-lead">${esc(leadRest)}</p>` : ''}
+        ${blockOf(blocks)}
+      </details>
+    </div>`;
+  }
+
+  // UNSTRUCTURED: claim first, everything else under it. No invented sections.
+  const whole = [r.lead, r.conclusion].filter(Boolean).join(' ');
+  const { claim, rest } = snHead(whole);
+  if (!rest) return `<div class="sn"><p class="sn-head">${esc(claim)}</p></div>`;
+  return `<div class="sn">
+    <p class="sn-head">${esc(claim)}</p>
+    <details class="sn-fold">
+      <summary><span class="sn-sum">The working</span><span class="sn-car material-symbols-rounded">expand_more</span></summary>
+      <p class="sn-lead">${esc(rest)}</p>
+    </details>
+  </div>`;
+}
+
 // signalRows — the 5 VSS sub-signals as chip · canonical question · note rows. SHARED by categoryDetail's
 // aux drill and the Research evidenceIntegrity surface, so the two never drift. Unrated → the forming '–' chip.
 // gapBySlug (optional): a map of DOTTED rubric slug → gap. Where a signal was scored down because the
@@ -1411,7 +1584,7 @@ export function signalRows(subs = [], gapBySlug = {}, catKey = '', opts = {}) {
     // on the signal itself because the verdict's warning says a fifth of the score is unsettled without
     // saying WHICH fifth — and the operator's next question is always which.
     const un = x.unsettled ? `<span class="cd-unsettled material-symbols-rounded" title="The three independent reads split on this signal — it was decided by a single vote. More evidence would settle it.">balance</span>` : '';
-    return `<div class="cd-sig ${cls}${x.unsettled ? ' unsettled' : ''}">${cdChip(x.score)}<div class="bd"><div class="q">${esc(SUB_Q[x.slug] || x.slug)}${un}</div><div class="nt${note ? '' : ' muted'}">${note ? esc(note) : 'Not yet scored — assessed when the research run completes.'}</div></div>${trail}${lift}</div>`;
+    return `<div class="cd-sig ${cls}${x.unsettled ? ' unsettled' : ''}">${cdChip(x.score)}<div class="bd"><div class="q">${esc(SUB_Q[x.slug] || x.slug)}${un}</div><div class="nt${note ? '' : ' muted'}">${note ? signalNote(note) : 'Not yet scored — assessed when the research run completes.'}</div></div>${trail}${lift}</div>`;
   }).join('');
 }
 const cdOrd = n => n === 1 ? '1st' : n === 2 ? '2nd' : n === 3 ? '3rd' : `${n}th`;

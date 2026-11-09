@@ -770,6 +770,38 @@
   .cd-sig .q { font-size: var(--row-title-lg); font-weight: 500; line-height: 1.35; color: var(--md-sys-color-on-surface); }
   .cd-sig .nt { font-size: var(--row-sub-lg); line-height: 1.5; color: var(--md-sys-color-on-surface-variant); margin-top: 5px; }
   .cd-sig .nt.muted { font-style: italic; opacity: .85; }
+
+  /* ── THE SCORER'S NOTE, GIVEN A SHAPE ────────────────────────────────────────────────────────────
+     Median note: 1,308 characters; longest 8,665. Rendered as one paragraph it was a wall that mixed
+     what was read, what was found, what was quoted and what it scored. signalNote() parses the
+     structure the scorer already writes; this gives each part its own weight.
+
+     THE HEAD IS THE ANSWER and reads at the row's own size — the rest is working, and is quieter. */
+  .cd-sig .sn-head { margin: 0; font-size: var(--row-sub-lg); line-height: 1.5; color: var(--md-sys-color-on-surface); }
+  .cd-sig .sn-fold { margin-top: 7px; }
+  .cd-sig .sn-fold > summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;
+       font-size: var(--row-cap); color: var(--md-sys-color-primary); padding: 2px 0; }
+  .cd-sig .sn-fold > summary::-webkit-details-marker { display: none; }
+  .cd-sig .sn-fold > summary:hover .sn-sum { text-decoration: underline; }
+  .cd-sig .sn-fold > summary:focus-visible { outline: 2px solid var(--md-sys-color-primary); outline-offset: 3px; border-radius: 4px; }
+  .cd-sig .sn-car { font-size: 16px; width: 16px; transition: transform .18s ease; }
+  .cd-sig .sn-fold[open] > summary .sn-car { transform: rotate(180deg); }
+  .cd-sig .sn-lead { margin: 8px 0 0; font-size: var(--row-sub); line-height: 1.55; color: var(--md-sys-color-on-surface-variant); }
+
+  /* A BLOCK IS A FINDING. The label is a quiet key, not a shout: the scorer writes them in caps for its
+     own record, and six consecutive ALLCAPS headings at body weight read as an alarm. */
+  .cd-sig .sn-b { margin-top: 10px; padding-left: 11px; border-left: 2px solid var(--md-sys-color-outline-variant); }
+  .cd-sig .sn-bk { display: flex; align-items: baseline; flex-wrap: wrap; gap: 7px; }
+  .cd-sig .sn-n { font-size: var(--row-cap); color: var(--md-sys-color-on-surface-variant); font-variant-numeric: tabular-nums; }
+  .cd-sig .sn-k { font-size: var(--row-cap); font-weight: 600; letter-spacing: .5px; color: var(--md-sys-color-on-surface); text-transform: none; }
+  /* the verdict the scorer stated IN the label ("WHAT CHANGES = PRESENT") — a chip, so the eye can
+     count PRESENT / ABSENT down a column without reading a word of the bodies. */
+  .cd-sig .sn-v { font-size: 11px; font-weight: 600; letter-spacing: .3px; padding: 2px 7px; border-radius: 999px;
+       background: color-mix(in srgb, var(--md-sys-color-primary) 14%, transparent); color: var(--md-sys-color-primary); white-space: nowrap; }
+  .cd-sig .sn-bb { margin: 4px 0 0; font-size: var(--row-sub); line-height: 1.55; color: var(--md-sys-color-on-surface-variant); }
+  /* a note is a quotation-heavy audit record; long paths and figures must not force the panel open */
+  .cd-sig .sn, .cd-sig .sn * { overflow-wrap: anywhere; }
+  .cd-sig .sn-head, .cd-sig .sn-k, .cd-sig .sn-v { overflow-wrap: normal; word-break: keep-all; }
   .cd-ev { align-self: center; font-size: var(--row-cap); padding: 4px 9px; border-radius: 999px; background: var(--md-sys-color-surface-container-highest); color: var(--md-sys-color-on-surface-variant); max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   /* the lift a signal is worth, sitting ON that signal. Brand-tinted: headroom is an
      opportunity, and amber/red stay reserved for warnings and risks. */
