@@ -1010,5 +1010,8 @@ a.ps-cite.said:hover { background: color-mix(in srgb, var(--md-sys-color-on-surf
 
 /* briefEditor — the correction state. Same grid as the playback so the swap does not jump. */
 /* The correction form's styles went with it (2026-11-09) — `.bpe-*` had no markup left to style
-   once briefEditor was removed. The decision is in ds.js next to the component it replaced. */
-@media (max-width: 900px) { .bpe-grid { grid-template-columns: minmax(0, 1fr); } }
+   once briefEditor was removed. The decision is in ds.js next to the component it replaced.
+   ⚠ One rule survived the first pass: a `.bpe-grid` override inside a media query, which the sweep
+   missed because it bounded the block by the last TOP-LEVEL `.bpe-` selector. Dead CSS does not
+   fail class-coverage — that gate catches a class with no rule, not a rule with no class — so it
+   was found by diffing what the deploy actually served against what was meant to be removed. */
