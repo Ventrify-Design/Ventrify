@@ -701,14 +701,25 @@ body.signin::after {
 
 /* briefPlayback — the guardrail and the wow in one component. A corrected row is marked, permanently:
    it is customer-asserted and has no document behind it. */
-.bpb-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 30px; margin-top: 18px; }
-.bpb-r { align-items: start; }
-.bpb-r { display: grid; grid-template-columns: 148px minmax(0, 1fr); gap: 16px; align-items: baseline;
-         padding: 11px 0; border-bottom: 1px solid var(--md-sys-color-outline-variant); min-width: 0; }
-.bpb-r[data-field="oneLine"] { grid-column: 1 / -1; }
-.bpb-k { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em;
-         color: var(--md-sys-color-on-surface-variant); }
-.bpb-v { font-size: 14.5px; line-height: 1.55; color: var(--md-sys-color-on-surface); min-width: 0; }
+/* ── THE FACTS GRID ──────────────────────────────────────────────────────────────────────────────
+   Label OVER value, in two columns. It replaces a label-left / value-right table, and the reason is
+   how the eye moves: in that table every value started at a different indent behind a label of a
+   different length, so reading six facts meant six zig-zags. Stacked, the values all start at the
+   same x and the eye runs straight down them; the labels become a quiet index down the side rather
+   than something to read past.
+
+   NOT FOLDED, deliberately. Every field here is one line to three and all of it is decision-relevant
+   — hiding a fact behind a chevron spends a click to learn something that could simply have been
+   read. Only the three blocks beneath fold, because those are depth rather than facts. */
+.bpb-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 34px; }
+.bpb-r { padding: 14px 0; border-bottom: 1px solid var(--md-sys-color-outline-variant); min-width: 0; }
+.bpb-k { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .09em;
+         color: var(--md-sys-color-primary); margin-bottom: 5px; }
+.bpb-v { font-size: 15px; line-height: 1.5; color: var(--md-sys-color-on-surface); min-width: 0; }
+/* The narrower restatement of the same field — sub-sector under sector. A second line rather than a
+   fold, because it is three words that answer "which kind", not a paragraph. */
+.bpb-u { margin-top: 4px; font-size: 13px; line-height: 1.5; color: var(--text-3); }
+.bpb-r.said .bpb-v { font-style: italic; }
 .bpb-mark {
   display: inline-block; margin-left: 8px; padding: 1px 7px; border-radius: 999px;
   font-size: 11px; font-weight: 600; letter-spacing: .01em; vertical-align: 1px;
@@ -775,8 +786,6 @@ body.signin::after {
 .bpb-tr { margin: 0; padding-left: 18px; }
 .bpb-tr li { font-size: 14px; line-height: 1.6; margin-bottom: 7px; color: var(--md-sys-color-on-surface-variant); }
 .bpb-tr li::marker { color: var(--text-4); }
-.bpb-act { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 20px; }
-.bpb-note { font-size: 12.5px; line-height: 1.5; color: var(--md-sys-color-on-surface-variant); max-width: 42ch; }
 
 /* ── THE FINDINGS ARE NOT CARDS ────────────────────────────────────────────────────────
    The six `.ng` cards and the `.vf-grid` they sat in are gone, and so are `.vn-l` / `.vs-l`. They
@@ -986,36 +995,20 @@ a.ps-cite.said:hover { background: color-mix(in srgb, var(--md-sys-color-on-surf
 /* 641-900px: the brief rows need the full width. `.case-grid` already collapses at 900px in
    assess-editorial.css, which is the whole argument for rendering through it. */
 @media (max-width: 900px) {
+  /* `.bpb-r` is no longer a grid of its own — the label stacks over the value at every width, so
+     there is nothing left to collapse here; the COLUMNS are what give way. */
   .bpb-grid { grid-template-columns: minmax(0, 1fr); }
-  .bpb-r { grid-template-columns: 128px minmax(0, 1fr); gap: 14px; }
 }
 @media (max-width: 640px) {
-  .bpb-r { grid-template-columns: minmax(0, 1fr); gap: 3px; padding: 10px 0; }
+  .bpb-r { padding: 11px 0; }
   .bpb-team { grid-template-columns: minmax(0, 1fr); }
   .vsig-face { width: 118px; height: 84px; }
   .vsig-lab { font-size: 26px; }
-  .bpb-act .m3-btn { width: 100%; justify-content: center; min-height: 44px; }
-  .bpb-note { max-width: none; }
   .ps-bet { padding: 16px 16px 18px; border-radius: 16px; }
   .ps-next .m3-btn { width: 100%; justify-content: center; min-height: 44px; }
 }
 
 /* briefEditor — the correction state. Same grid as the playback so the swap does not jump. */
-/* `.bpe-sec` replaces a bare `bpb bpe` on the section, which styled nothing: both were namespace
-   tokens with no rule behind them, so the editor inherited the playback's spacing by accident rather
-   than by declaration. tools/class-coverage.mjs is what found them. */
-.bpe-sec .bpe-grid:first-of-type { margin-top: 18px; }
-.bpe-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 24px; margin-top: 18px; }
-.bpe-r { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-.bpe-r.wide { grid-column: 1 / -1; }
-.bpe-k { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em;
-         color: var(--md-sys-color-on-surface-variant); }
-.bpe-i {
-  font: inherit; font-size: 16px; /* 16px: anything smaller makes iOS zoom the page on focus */
-  width: 100%; min-height: 44px; padding: 10px 12px; box-sizing: border-box;
-  color: var(--md-sys-color-on-surface); background: var(--md-sys-color-surface);
-  border: 1px solid var(--md-sys-color-outline-variant); border-radius: 10px;
-  resize: vertical;
-}
-.bpe-i:focus-visible { outline: 2px solid var(--md-sys-color-primary); outline-offset: 1px; border-color: transparent; }
+/* The correction form's styles went with it (2026-11-09) — `.bpe-*` had no markup left to style
+   once briefEditor was removed. The decision is in ds.js next to the component it replaced. */
 @media (max-width: 900px) { .bpe-grid { grid-template-columns: minmax(0, 1fr); } }

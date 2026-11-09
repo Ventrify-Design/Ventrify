@@ -164,6 +164,7 @@ Write the brief from the documents and NOTHING else. You have no web access at t
 - oneLine: what the venture does, in one sentence, in plain language.
 - marketClaim: the market the documents claim, including its number if they state one. Empty string if they do not.
 - traction: the figures the documents claim, as short strings. Empty array if none.
+- EVERY PROSE FIELD IN PLAIN ENGLISH. oneLine, businessModel, marketClaim, geography and ask are read by an investor who is not an expert in this field: ordinary words, no jargon where a plain word does the job, a technical term explained in a handful of words the first time. Keep every number and name.
 - claims: the load-bearing factual statements, each with the document name and a VERBATIM span of at least 30 characters copied exactly from that document. Copy the span character for character — it is checked against the source and dropped if it does not match.
 - readable: false ONLY if the documents contain too little to say what the venture does at all. Thin evidence is not unreadable; a two-slide teaser with no substance is.
 
@@ -370,6 +371,15 @@ Return at most ${spec.items} ${spec.items === 1 ? 'item' : 'items'}. RETURN FEWE
 
 Every point must contain a number or a named entity. "Strong team" and "needs to prove product-market fit" are not points — they are true of everyone.
 
+WRITE IT SO A NON-SPECIALIST CAN READ IT. The person reading this is an investor assessing a venture in a field that is probably not theirs. They are clever and they are not an expert in this one.
+
+- Plain, direct English. Short sentences. No jargon where an ordinary word does the job.
+- The FIRST SENTENCE of every point must be the claim in plain words, standing on its own, understandable by someone who knows nothing about this field. The sentences after it carry the evidence and may be more technical.
+- A technical term is allowed when it IS the thing — a named technology, a regulatory regime, an instrument. Say what it means the first time, in a handful of words: "muon tomography (imaging rock density with cosmic-ray particles)".
+- No consultancy filler: not "leverage", "synergies", "headwinds", "at scale", "best-in-class", "strategic", "robust", "disruptive".
+- Spell out an acronym the first time unless it is as common as CEO, API or VC.
+- Never make it vaguer to make it simpler. Keep every number, every name and every date — plain English is about the WORDS, not about saying less.
+
 For each point:
 - external: true if it rests on a public source below, false if it rests on the venture's own documents.
 - If external, set sourceIndex to the source it rests on and quotedSpan to a VERBATIM span of at least 30 characters copied from that source's text.
@@ -519,6 +529,7 @@ Rules:
 - Judge the case, not the paperwork. How MANY documents were supplied is not evidence of anything. A venture that supplied one deck and whose case holds up is HIGH.
 - reason: one sentence. Do not mention missing, absent or incomplete documents.
 - nextTests: up to three specific things the full assessment would test, drawn from these findings. Never generic.
+- PLAIN ENGLISH, like the findings above it: the reader is an investor assessing a venture in a field that is not theirs. Short sentences, ordinary words, a technical term explained in a handful of words the first time it appears, and no consultancy filler. Keep every number and name — plain English is about the words, not about saying less.
 
 ===== THE VENTURE =====
 ${JSON.stringify(brief, null, 1)}
@@ -620,8 +631,12 @@ function costOf(entries = []) {
 
 // A deck-only run says so, and is never marked down for it (§3.2). This sentence is the whole of
 // "disclose the basis, never penalise it", so it is built here rather than written in the UI.
+// THE READER IS THE OPERATOR, not the founder. "your documents" was written when this page belonged
+// to the venture; an investor assessing someone else's company is put in the wrong seat by it.
+// Snapshots written before 2026-11-09 keep their stored line — it is a record of what was said, and
+// rewriting it would be editing history to match a later decision.
 function basisLine(docCount, sourceCount) {
-  const docs = docCount === 1 ? 'your pitch deck' : `${docCount} of your documents`;
+  const docs = docCount === 1 ? 'the pitch deck' : `${docCount} documents`;
   if (!sourceCount) return `Read from ${docs}.`;
   return `Read from ${docs} and ${sourceCount} public source${sourceCount === 1 ? '' : 's'}.`;
 }

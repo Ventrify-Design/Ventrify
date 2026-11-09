@@ -5886,51 +5886,56 @@ export const STAGE_LABELS = {
 const stageLabel = v => STAGE_LABELS[String(v || '').trim().toLowerCase()] || String(v || '');
 
 /**
- * briefPlayback — the distilled brief, as a thing you can scan and then open.
+ * briefPlayback — the distilled brief every finding is reasoned from.
  *
- * WHAT THIS SECTION WAS HIDING. The brief carries twelve fields; the page rendered seven of them and
- * a row of names. Three things never reached the screen at all:
- *   · `claims`  — the load-bearing factual statements, each with its document and a span this code
- *                 substring-matched against that document. The engine's own note says "claims is the
- *                 part that must be TRUE, so it is the part that is verified" — and it was the one
- *                 part of the brief with proof behind it that nobody could see, while seven
- *                 unverified scalars sat on screen.
- *   · `traction` — the figures the documents claim.
- *   · `subSector` — the specific read, under the generic one.
- * And `.slice(0, 6)` on the team silently dropped the seventh person. ORE has seven.
+ * READ BY AN OPERATOR, NOT BY THE FOUNDER. This copy used to say "your venture" and "your
+ * documents", written when the page belonged to the founder. It is an investor's instrument now:
+ * they are assessing a venture that is not theirs, and a second-person possessive puts them in the
+ * wrong seat.
  *
- * SO IT IS NOW TWO LAYERS, like everything else on this tab: a one-line value per field with the
- * rest of it folded underneath, through the same ps2Fold the findings use. A field whose value is
- * short and has nothing behind it renders exactly as it did before.
+ * NO CORRECTION PATH. The brief carried an edit affordance that re-ran the read on the operator's
+ * own version of it. Removed 2026-11-09 on the operator's instruction: a pre-screen is a read of the
+ * documents AS THEY STAND, and a verdict you can hand-tune before you act on it is not evidence of
+ * anything. The server action and its limit are untouched; nothing on this page reaches them.
+ * `asserted` is still honoured, so a snapshot corrected before that decision still says so rather
+ * than quietly presenting an edit as something we checked.
+ *
+ * THE FACTS ARE NOT FOLDED, and that is deliberate. Every field here is one line to three, all of it
+ * is decision-relevant, and hiding a fact behind a chevron costs a click to learn something that
+ * could simply have been read. Label OVER value in two columns, so the values start at the same x
+ * and the eye runs straight down them — the label-left/value-right table it replaces made the eye
+ * zig-zag and set every value at a different indent. Only the three BLOCKS beneath fold, because
+ * those are depth rather than facts.
+ *
+ * `oneLine` is deliberately absent: the verdict hero above already opens with "What this is", and
+ * the same sentence twice on one screen reads as a rendering fault.
  */
 export function briefPlayback(brief = {}, opts = {}) {
   const asserted = new Set(opts.asserted || []);
-  // [key, label, extraKey] — `extraKey` is depth that belongs to this field but is not part of its
-  // sentence, so the row folds even when the value itself does not split.
+  // [key, label, underKey] — `underKey` is a narrower restatement of the same field, shown as a
+  // second line rather than hidden behind a fold. Ordered so the two short facts lead and the four
+  // longer ones pair off, which keeps the grid's rows from going ragged.
   const FIELDS = [
-    ['oneLine', 'What it does', null], ['sector', 'Sector', 'subSector'],
-    ['businessModel', 'Business model', null], ['stage', 'Stage', null],
-    ['geography', 'Where', null], ['marketClaim', 'Market it claims', null], ['ask', 'The ask', null],
+    ['stage', 'Stage', null], ['sector', 'Sector', 'subSector'],
+    ['businessModel', 'Business model', null], ['geography', 'Where', null],
+    ['marketClaim', 'Market it claims', null], ['ask', 'The ask', null],
   ];
   const shown = FIELDS.filter(([k]) => String(brief[k] || '').trim());
-  const rows = shown.map(([k, label, extraKey]) => {
-    const extraVal = extraKey ? String(brief[extraKey] || '').trim() : '';
-    const mark = asserted.has(k)
-      ? '<span class="bpb-mark" title="You told us this. We have not checked it against a document.">your correction</span>' : '';
+  const rows = shown.map(([k, label, underKey]) => {
+    const under = underKey ? String(brief[underKey] || '').trim() : '';
     return `
     <div class="bpb-r${asserted.has(k) ? ' said' : ''}" data-field="${k}">
       <div class="bpb-k">${esc(label)}</div>
-      <div class="bpb-v">${ps2Fold({
-        text: k === 'stage' ? stageLabel(brief[k]) : String(brief[k]),
-        extra: extraVal ? `<p class="ps-rest"><span class="bpb-xk">More precisely</span>${esc(extraVal)}</p>` : '',
-      })}${mark}</div>
+      <div class="bpb-v">${esc(k === 'stage' ? stageLabel(brief[k]) : String(brief[k]))}${
+        asserted.has(k) ? '<span class="bpb-mark" title="Supplied by the operator. We have not checked it against a document.">operator-supplied</span>' : ''}</div>
+      ${under ? `<div class="bpb-u">${esc(under)}</div>` : ''}
     </div>`;
   }).join('');
 
   // THE TEAM, as people rather than as a paragraph. `background` is semicolon-delimited and its FIRST
   // segment is the role every time — so the role gets its own line and the rest becomes the detail,
-  // which is what makes a seven-person list scannable instead of a wall. No slice: the seventh person
-  // is a real advisor, not overflow.
+  // which is what makes a seven-person list scannable instead of a wall. No slice: every person in
+  // the brief is a person the operator is being asked to back.
   const team = (brief.team || []).filter(t => t && t.name);
   const teamRows = team.map(t => {
     const segs = String(t.background || '').split(';').map(x => x.trim()).filter(Boolean);
@@ -5952,36 +5957,27 @@ export function briefPlayback(brief = {}, opts = {}) {
   const traction = (brief.traction || []).filter(t => String(t || '').trim());
   const tractionRows = traction.map(t => `<li>${esc(t)}</li>`).join('');
 
-  /* Each block folds on its own, CLOSED BY DEFAULT. The seven people, the five quoted claims and the
-     six traction lines are depth an operator goes looking for, not something to read on arrival —
-     open, they were two screens of brief standing between the verdict and the findings. The label
-     row is the control, the count is visible while closed, and the whole thing is `<details>` again
-     so there is still no handler and no state anywhere in the render layer. */
+  /* Each block folds on its own, CLOSED BY DEFAULT. The people, the quoted claims and the traction
+     lines are depth an operator goes looking for, not something to read on arrival — open, they were
+     two screens of brief standing between the verdict and the findings. The label row is the control,
+     the count stays visible while closed, and the whole thing is `<details>`, so there is still no
+     handler and no state in the render layer. */
   const block = (label, count, body) => body ? `<details class="bpb-b">
     <summary class="bpb-bk">${esc(label)}<span class="bpb-bn">${count}</span>
       <span class="ps-car material-symbols-rounded">expand_more</span></summary>${body}</details>` : '';
 
-  const canEdit = opts.editable && (opts.editsLeft == null || opts.editsLeft > 0);
   const meta = [`${shown.length} field${shown.length === 1 ? '' : 's'}`,
                 team.length ? `${team.length} ${team.length === 1 ? 'person' : 'people'}` : '',
                 claims.length ? `${claims.length} quoted` : ''].filter(Boolean).join(' · ');
 
   return ps2Section({ foldable: true, open: true,
-    head: ps2Head('What we understood', 'Here’s what we read your venture to be', meta, 'accent',
+    head: ps2Head('What we understood', 'Here’s what we read this venture to be', meta, 'accent',
       { icon: 'summarize', sub: 'The distilled brief every finding below is reasoned from.' }),
     body: `
-    <p class="lead"><span class="drop">Read this first.</span> Everything below is reasoned from this summary and nothing else. If it’s wrong, correct it — the read is only as good as this.</p>
     <div class="bpb-grid">${rows}</div>
     ${block('The team', team.length, teamRows ? `<div class="bpb-team">${teamRows}</div>` : '')}
-    ${block('Claimed in your documents', claims.length, claimRows ? `<div class="bpb-claims">${claimRows}</div>` : '')}
-    ${block('Traction the documents claim', traction.length, tractionRows ? `<ul class="bpb-tr">${tractionRows}</ul>` : '')}
-    ${canEdit ? `<div class="bpb-act">
-      <button class="m3-btn tonal" type="button" onclick="window.__ps2Correct&&window.__ps2Correct()">
-        <span class="material-symbols-rounded">edit</span>That’s not quite right
-      </button>
-      <span class="bpb-note">Correcting this re-runs the read on your version. It doesn’t use up your free pre-screen${
-        opts.editsLeft != null ? `, and you have ${opts.editsLeft} correction${opts.editsLeft === 1 ? '' : 's'} left` : ''}.</span>
-    </div>` : ''}` });
+    ${block('Claimed in the documents', claims.length, claimRows ? `<div class="bpb-claims">${claimRows}</div>` : '')}
+    ${block('Traction the documents claim', traction.length, tractionRows ? `<ul class="bpb-tr">${tractionRows}</ul>` : '')}` });
 }
 
 /* ════════════════════════════════════════════════════════════════════════════════════════════════════
@@ -6030,7 +6026,7 @@ const PS2_NUGGETS = {
                  sub: 'From public sources, not from the deck.' },
   team:        { icon: 'groups',         eyebrow: 'The team',         title: 'The team against the problem',
                  sub: 'Fit, and what’s conspicuously absent.' },
-  tension:     { icon: 'compare_arrows', eyebrow: 'The tension',      title: 'Where your documents disagree',
+  tension:     { icon: 'compare_arrows', eyebrow: 'The tension',      title: 'Where the documents disagree',
                  sub: 'Both sides, quoted.' },
 };
 
@@ -6103,7 +6099,7 @@ const ps2Dots = () => '<div class="ps-wait"><span></span><span></span><span></sp
 
 // An empty section is a TRUTHFUL OUTCOME, not a render failure (§8.5), so it says which.
 const ps2Empty = (kind, data = {}) => data.skipped === 'needs_two_documents'
-  ? 'This one reads your documents against each other, so it needs more than the deck.'
+  ? 'This one reads the documents against each other, so it needs more than the deck.'
   : kind === 'competitive'
     ? 'We couldn’t find comparable players in public sources for this one.'
     : 'Nothing here we could stand behind.';
@@ -6162,7 +6158,7 @@ export function ps2Strip(points = []) {
   const seg = (cls, k) => k ? `<i class="${cls}" style="flex:${k}"></i>` : '';
   return `<span class="ps-strip"><span class="ps-bar">${seg('own', n - ext)}${seg('pub', ext)}</span>` +
     `<b>${n} point${n === 1 ? '' : 's'}</b>` +
-    `<span>${ext ? `${ext} from public sources` : 'from your documents'}${
+    `<span>${ext ? `${ext} from public sources` : 'from the documents'}${
       ver === n ? '' : ` · ${ver} verified`}</span></span>`;
 }
 
@@ -6265,7 +6261,7 @@ export function verdictCase(bull = {}, bear = {}, opts = {}) {
         : `<div class="cpt cpt-empty"><span class="mk"></span><div class="cpt-b"><p>No material points we could stand behind on this side.</p></div></div>`;
     return `<div class="case-card ${cls}">
       <div class="ch"><span class="material-symbols-rounded">${icon}</span><span class="ttl">${esc(m.title)}</span><span class="ct">${
-        tag}${pts.length ? ' · ' + (pts.filter(x => x.external).length || 'your docs') + (pts.filter(x => x.external).length ? ' public' : '') : ''}</span></div>
+        tag}${pts.length ? ' · ' + (pts.filter(x => x.external).length || 'documents') + (pts.filter(x => x.external).length ? ' public' : '') : ''}</span></div>
       ${rows}
     </div>`;
   };
@@ -6336,48 +6332,12 @@ export function verdictNext(snapshot = {}) {
   </section>`;
 }
 
-/**
- * briefEditor — MOLECULE. The correction state of briefPlayback (§8.8).
- *
- * A component rather than DOM surgery on the rendered playback, so the two states live in one file and
- * cannot drift apart. The fields here are exactly the ones the server will accept: `claims` is absent
- * deliberately — it is the substring-verified layer, and letting it be edited would put unverifiable
- * text into the one place the pipeline treats as proven.
- *
- * The warning is not decoration. Re-reading costs most of a run, and the customer should know that
- * before they press it rather than discover it as a wait.
- */
-export function briefEditor(brief = {}, opts = {}) {
-  const FIELDS = [
-    ['oneLine', 'What it does', 'textarea'], ['sector', 'Sector', 'text'],
-    ['businessModel', 'Business model', 'text'], ['stage', 'Stage', 'select'],
-    ['geography', 'Where', 'text'], ['marketClaim', 'Market it claims', 'text'], ['ask', 'The ask', 'text'],
-  ];
-  const STAGE_OPTS = ['pre-seed', 'seed', 'series-a', 'series-b-plus', 'unknown'];
-  const field = ([k, label, kind]) => {
-    const v = esc(brief[k] || '');
-    const input = kind === 'textarea'
-      ? `<textarea class="bpe-i" id="bpe-${k}" rows="2">${v}</textarea>`
-      : kind === 'select'
-        ? `<select class="bpe-i" id="bpe-${k}">${STAGE_OPTS.map(o =>
-            `<option value="${o}"${o === brief[k] ? ' selected' : ''}>${esc(stageLabel(o))}</option>`).join('')}</select>`
-        : `<input class="bpe-i" id="bpe-${k}" type="text" value="${v}">`;
-    return `<label class="bpe-r${kind === 'textarea' ? ' wide' : ''}"><span class="bpe-k">${esc(label)}</span>${input}</label>`;
-  };
-  return `<section class="sec bpe-sec">
-    ${ps2Head('Your correction', 'Put us right')}
-    <p class="lead"><span class="drop">Your version.</span> Change what we got wrong. Everything below re-reads on your version — it takes about a minute and doesn’t use up your free pre-screen.</p>
-    <div class="bpe-grid">${FIELDS.map(field).join('')}</div>
-    <div class="bpb-act">
-      <button class="m3-btn filled" type="button" onclick="window.__ps2SaveBrief&&window.__ps2SaveBrief()">
-        <span class="material-symbols-rounded">refresh</span>Read it again on my version
-      </button>
-      <button class="m3-btn text" type="button" onclick="window.__ps2CancelBrief&&window.__ps2CancelBrief()">Cancel</button>
-      <span class="bpb-note">What you change here is marked as yours — we won’t present it as something we checked.${
-        opts.editsLeft != null ? ` ${opts.editsLeft} correction${opts.editsLeft === 1 ? '' : 's'} left.` : ''}</span>
-    </div>
-  </section>`;
-}
+/* briefEditor is GONE (2026-11-09). It rendered the correction form — the operator's own version of
+   the brief, which the read then re-ran on. A pre-screen is a read of the documents as they stand;
+   an assessment that can be hand-tuned before it is acted on is not evidence. The server action and
+   its edit limit are untouched, so a snapshot corrected before this decision still renders honestly
+   through briefPlayback's `asserted` marks. */
+
 
 /**
  * verdictPage — ORGANISM. The whole pre-screen result, in reveal order (§5).
@@ -6386,14 +6346,11 @@ export function briefEditor(brief = {}, opts = {}) {
  * and the page they come back to are the same page. Forking them is how the two drift.
  */
 export function verdictPage(snapshot = {}, opts = {}) {
-  const editing = !!opts.editing;
   const brief = snapshot.brief || {};
   const readable = snapshot.state !== 'unreadable';
   return `<div class="brief">${[
     verdictHero(snapshot, opts),
-    editing
-      ? briefEditor(brief, { editsLeft: opts.editsLeft })
-      : briefPlayback(brief, { asserted: snapshot.asserted || [], editable: opts.editable, editsLeft: opts.editsLeft }),
+    briefPlayback(brief, { asserted: snapshot.asserted || [] }),
     readable ? verdictFindings(snapshot.nuggets || {}, { pending: opts.pending || [] }) : '',
     readable ? verdictNext(snapshot) : '',
   ].filter(Boolean).join('<hr class="rule">')}</div>`;

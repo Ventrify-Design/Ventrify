@@ -1371,10 +1371,10 @@ export const CATALOG = {
     level: 'organism', group: 'Organisms', domain: 'Pre-screen', title: 'What we understood', sig: 'briefPlayback(brief, opts)',
     blurb: 'The distilled brief every finding is reasoned from, as a thing you can scan and then open. The field table is one line per field with the rest folded underneath; three blocks beneath it — the team, the statements quoted out of the documents, and the traction the documents claim — fold on their own and arrive CLOSED, because they are depth an operator goes looking for rather than something to read on landing. The whole section folds by its head too.',
     maxw: null, pad: true,
-    html: () => `<div class="brief" style="padding:18px 24px">${DS.briefPlayback(PS2_BRIEF, { editable: true, editsLeft: 2 })}</div>`,
-    props: [{ name: 'brief', type: 'the v2 snapshot’s brief' }, { name: 'opts', type: '{ asserted, editable, editsLeft }' }],
+    html: () => `<div class="brief" style="padding:18px 24px">${DS.briefPlayback(PS2_BRIEF, {})}</div>`,
+    props: [{ name: 'brief', type: 'the v2 snapshot’s brief' }, { name: 'opts', type: '{ asserted }' }],
     variants: [
-      { label: 'Field folds', note: 'Sector folds to show the sub-sector; long values fold at their first sentence' },
+      { label: 'Facts grid', note: 'label over value, two columns, never folded \u2014 the sub-sector is a second line' },
       { label: 'Blocks closed', note: 'team / quoted claims / traction, counts visible while shut' },
     ],
     usedIn: ['Pre-screen · Verdict tab'],

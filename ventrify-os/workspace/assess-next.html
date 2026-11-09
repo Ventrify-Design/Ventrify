@@ -745,8 +745,6 @@
   // this run actually found; the unlock itself is the masthead primary.
   // Declared ABOVE prescreenTabs because it reads them: a `let` used before its declaration runs is a
   // temporal-dead-zone throw, not an undefined, and it would take the whole tab out.
-  let PS2_EDITING = false;
-  let PS2_EDITS_LEFT = null;
 
   function prescreenTabs() {
     // v2 FIRST, AND v1 IS NOT CONVERTED. A range and a band are different instruments on different
@@ -756,11 +754,7 @@
     const v2 = p.prescreen2 && p.prescreen2.v === 2 ? p.prescreen2 : null;
     const r = p.prescreen || null;
     const body = v2
-      ? DS.verdictPage(v2, {
-          editing: !!PS2_EDITING,
-          editable: (p.tier || 'full') === 'prescreen',
-          editsLeft: PS2_EDITS_LEFT,
-        })
+      ? DS.verdictPage(v2, {})
       : r
         ? `<div class="brief">${DS.rangeHero(r, { docCount: r.docCount })}${DS.rangeStale(r, (A.inputs && A.inputs.docs && A.inputs.docs.length) || 0)}<hr class="rule">${DS.rangeCoverage(r.categories || [])}${DS.rangeFindings(r.categories || [], { assumed: r.assumed })}${DS.rangeNext()}</div>`
         : `<div class="brief">${DS.emptyState({ title: 'Not pre-screened yet', text: 'Attach a pitch deck and the data room, then run the free pre-screen — it reads both and tells you where this venture stands in about five minutes.' })}</div>`;
@@ -768,50 +762,11 @@
       <div class="tab-panel">${dataRoomBody()}</div>`;
   }
 
-  // §8.8 — THE CORRECTION PATH, continued. The handlers below drive the screen; the server owns the
-  // rule that a correction never consumes the venture's one scored pre-screen.
-  window.__ps2Correct = () => { PS2_EDITING = true; paint(); };
-  window.__ps2CancelBrief = () => { PS2_EDITING = false; paint(); };
-  window.__ps2SaveBrief = async () => {
-    const KEYS = ['oneLine', 'sector', 'businessModel', 'stage', 'geography', 'marketClaim', 'ask'];
-    const fields = {};
-    for (const k of KEYS) {
-      const el = document.getElementById('bpe-' + k);
-      if (el) fields[k] = el.value;
-    }
-    PS2_EDITING = false;
-    try {
-      const { correctBrief } = await import('./prescreen2.js');
-      // The findings are cleared server-side the moment the correction lands, so the cards go back to
-      // their waiting state rather than showing the old read beside the new brief.
-      const pending = ['thesis', 'bull', 'bear', 'competitive', 'team', 'tension'];
-      const live = { ...p.prescreen2, nuggets: {}, sources: [] };
-      const repaint = () => { p.prescreen2 = live; paint(); };
-      await correctBrief({
-        engagementId: p.id,
-        fields,
-        onPhase: (t) => window.__toast(t),
-        onBrief: (brief, _c, meta) => {
-          live.brief = brief;
-          live.asserted = (meta && meta.asserted) || live.asserted;
-          PS2_EDITS_LEFT = meta && meta.editsLeft != null ? meta.editsLeft : PS2_EDITS_LEFT;
-          repaint();
-        },
-        onSources: (srcs) => { live.sources = srcs; repaint(); },
-        onNugget: (out) => { live.nuggets = { ...live.nuggets, [out.nugget]: out }; repaint(); },
-        onDone: (snapshot) => { p.prescreen2 = snapshot; paint(); window.__toast('Re-read on your version.'); },
-      });
-    } catch (e) {
-      if (e && e.status === 409 && e.body && e.body.error === 'edit_limit') {
-        window.__toast(`That’s the limit of ${e.body.limit} corrections for this venture.`, true);
-      } else if (e && e.status === 402) {
-        window.__toast('The account’s model spend limit stopped this. Nothing was charged for the part that didn’t run.', true);
-      } else {
-        window.__toast('Could not re-read it: ' + ((e && e.message) || e), true);
-      }
-      paint();
-    }
-  };
+  // §8.8 — THE CORRECTION PATH IS GONE FROM THIS PAGE (2026-11-09, on the operator's instruction).
+  // A pre-screen is a read of the documents as they stand; a verdict that can be hand-tuned before it
+  // is acted on is not evidence of anything. The SERVER action and its edit limit are untouched and
+  // still refuse past the limit — this removes the only way to reach them, not the rule behind them.
+  // A snapshot corrected before this decision still renders its `asserted` marks truthfully.
   // ONE data-room body, rendered into both tab sets — it is the same surface whether the venture is
   // pre-screened or fully assessed, and forking it is how the two would drift.
   function dataRoomBody() {

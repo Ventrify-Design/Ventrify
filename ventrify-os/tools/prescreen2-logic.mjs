@@ -134,8 +134,12 @@ ok(!/\b(range|floor|ceiling|composite|out of 100)\b/i.test(bp), 'no range vocabu
 
 console.log('\n9. §3.2 — DISCLOSE THE BASIS, NEVER PENALISE IT');
 const b1 = E.basisLine(1, 4), b9 = E.basisLine(9, 0);
-ok(b1 === 'Read from your pitch deck and 4 public sources.', 'deck-only reads as a basis: "' + b1 + '"');
-ok(b9 === 'Read from 9 of your documents.', 'and so does a room with no sources found');
+// Third person since 2026-11-09: the reader is an OPERATOR assessing someone else's venture, and
+// "your documents" put them in the founder's seat. Snapshots written before that keep their stored
+// line — it records what was said.
+ok(b1 === 'Read from the pitch deck and 4 public sources.', 'deck-only reads as a basis: "' + b1 + '"');
+ok(b9 === 'Read from 9 documents.', 'and so does a room with no sources found');
+ok(!/\byour\b/i.test(b1 + b9), 'and neither addresses the founder');
 ok(!/only|just|insufficient|missing|didn't|more document/i.test(b1 + b9), 'neither sentence penalises the upload');
 
 console.log('\n10. §3.3 — "WE COULDN\'T TELL" IS ITS OWN STATE, NOT THE BOTTOM BAND');
@@ -302,15 +306,24 @@ ok(/p\.prescreen2 && p\.prescreen2\.v === 2/.test(assess), 'and only when the sn
 ok(/DS\.rangeHero\(r/.test(assess), 'a pre-v2 snapshot still renders on the range page it was scored on');
 ok(assess.indexOf('DS.verdictPage(v2') < assess.indexOf('DS.rangeHero(r'), 'v2 is checked first');
 
-// The correction path, end to end: the DS button names the handler and the page defines it.
+// THE CORRECTION PATH IS GONE FROM THE CLIENT, and this asserts it STAYS gone.
+// It used to check the opposite — that the button, the three handlers and the orchestrator call all
+// lined up. Removed 2026-11-09 on the operator's instruction: a pre-screen is a read of the
+// documents as they stand, and a verdict that can be hand-tuned before it is acted on is not
+// evidence. The server action and its edit limit are deliberately untouched, so this asserts only
+// that nothing on the page can reach them — a reinstated button would be a product decision, not a
+// refactor, and should have to delete this check to happen.
 const dsrc = await fsp.readFile(new URL('../shared/m3/ds.js', import.meta.url), 'utf8');
 for (const fn of ['__ps2Correct', '__ps2SaveBrief', '__ps2CancelBrief']) {
-  ok(dsrc.includes(fn) && new RegExp('window\\.' + fn + ' =').test(assess),
-     `${fn}: the component calls it and the page defines it`);
+  ok(!dsrc.includes(fn) && !new RegExp('window\\.' + fn + ' =').test(assess),
+     `${fn}: no correction affordance on the pre-screen`);
 }
-ok(/correctBrief/.test(assess), 'saving a correction goes through the orchestrator, not a bare fetch');
-ok(/nuggets: \{\}, sources: \[\]/.test(assess), 'and clears the old findings so none sits beside a corrected brief');
-ok(/edit_limit/.test(assess) && /402/.test(assess), 'both refusals the customer can actually hit are named');
+ok(!/correctBrief/.test(assess), 'the page does not call the correction orchestrator');
+// Scanned with the COMMENTS STRIPPED. The note explaining why briefEditor went names it, and the
+// first run of this check failed on that note — the fifth time a gate in this repo has flagged its
+// own documentation. A removal has to be explainable in the file it was removed from.
+const code = dsrc.replace(/\/\*[\s\S]*?\*\//g, '').split('\n').filter(l => !/^\s*\/\//.test(l)).join('\n');
+ok(!/briefEditor/.test(code), 'the correction form is not rendered anywhere');
 
 // The create screen runs v2, and the stage lists what v2 works through.
 ok(/runPrescreen2/.test(wsjs), 'the create screen runs the v2 orchestrator');

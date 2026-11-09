@@ -87,6 +87,8 @@ scan('prescreen-view.js', psvCopy, [/\bscore\s*(of|:)\s*\d/i, /\b\d{1,3}\s*\/\s*
 
 console.log('\n2. THE PROMPTS (api/_prescreen2.js) — the model must not be ASKED for that language');
 const eng = await readFile(new URL('api/_prescreen2.js', BASE), 'utf8');
+const nuggetPromptSrc = slice(eng, 'function nuggetPrompt', 'function nuggetRequest');
+const briefPromptSrc = eng.slice(eng.indexOf('- traction:'), eng.indexOf('- traction:') + 1200);
 const bandPrompt = slice(eng, 'function bandPrompt', 'function bandRequest');
 // bandPrompt names the forbidden words exactly once, in the line that forbids them. That line is
 // asserted separately and then removed, so everything else in the prompt is held to the rule.
@@ -96,6 +98,26 @@ scan('bandPrompt', stripComments(bandPrompt).replace(FORBIDS, ''), FORBIDDEN,
      'and says nothing of the kind itself');
 const basis = stripComments(slice(eng, 'function basisLine', 'module.exports'));
 scan('basisLine', basis, FORBIDDEN.concat(PENALISING), 'the basis line discloses, never apologises');
+
+console.log('\n2b. PLAIN ENGLISH — the findings are read by someone who is not an expert in the field');
+// The operator is an investor assessing a venture in a field that is probably not theirs. Nothing
+// here can check what the model WROTE without spending ~$1.10 on a run, so it checks that the model
+// was ASKED — in all three places that produce prose a human reads. A rule that can be deleted in a
+// tidy-up without anything failing is not a rule, and this is the cheapest thing standing between
+// "explain it plainly" and six months of findings nobody outside the sector can parse.
+const PLAIN_MARKS = [
+  [/non-?specialist|not an expert/i, 'names who is reading it'],
+  [/plain,? (and )?direct english|PLAIN ENGLISH/i, 'asks for plain English in terms'],
+  [/jargon/i, 'rules on jargon'],
+  [/keep every number|every number and name/i, 'forbids losing precision in the name of simplicity'],
+];
+for (const [re, what] of PLAIN_MARKS) {
+  ok(re.test(nuggetPromptSrc), `the FINDINGS prompt ${what}`);
+}
+ok(/first sentence/i.test(nuggetPromptSrc),
+   'and says the FIRST SENTENCE must stand alone — it is the scan layer the Verdict tab folds on');
+ok(/PLAIN ENGLISH/i.test(bandPrompt), 'the BAND prompt carries the rule, since its reason is read first of all');
+ok(/PLAIN ENGLISH/i.test(briefPromptSrc), 'the BRIEF prompt carries it too — the brief is the first thing on screen');
 
 console.log('\n3. THE BAND COPY ITSELF — none of the three sentences may mention a document');
 const copy = stripComments(slice(eng, 'const BAND_COPY', 'function expectedBandFor'));
