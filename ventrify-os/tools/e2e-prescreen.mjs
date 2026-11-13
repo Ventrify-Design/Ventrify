@@ -229,7 +229,7 @@ try {
   ok(p4.status === 200, `ps2-band -> ${p4.status} ${p4.body.error || ''}`);
   const snap = p4.body.snapshot || {};
   ok(ENGINE.BANDS.includes(snap.band), `a band was decided (${snap.band})`);
-  ok(/your pitch deck/.test(snap.basis || '') && !/only|insufficient/i.test(snap.basis || ''),
+  ok(/the pitch deck/.test(snap.basis || '') && !/only|insufficient/i.test(snap.basis || ''),
      `the basis discloses what it read without apologising for it (“${snap.basis}”)`);
   ok(!/missing|not provided|incomplete/i.test(snap.reason || ''), 'the reason is not document-centric');
   // No page was fetched, so every external claim is ATTRIBUTED and none is verified. That is the

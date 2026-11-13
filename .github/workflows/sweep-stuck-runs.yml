@@ -35,3 +35,21 @@ jobs:
             -H "Content-Type: application/json" \
             -d '{}')
           echo "watchdog: $resp"
+
+      - name: Drain the widget intake queue
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        # The pre-screen is nine handler invocations and about five minutes of wall
+        # clock — more than one serverless invocation can hold. /api/intake-run does
+        # as much as fits a budget, writes a cursor and answers `more: true`. So this
+        # calls it back immediately rather than making a founder wait a quarter of an
+        # hour per phase. The cap stops a stuck queue burning a whole Actions job.
+        run: |
+          for i in $(seq 1 40); do
+            resp=$(curl -fsS -X POST "https://os.ventrify.io/api/intake-run" \
+              -H "Authorization: Bearer $CRON_SECRET" \
+              -H "Content-Type: application/json" -d '{}') || break
+            echo "intake-run[$i]: $resp"
+            case "$resp" in *'"more":true'*) ;; *) break ;; esac
+            sleep 5
+          done
