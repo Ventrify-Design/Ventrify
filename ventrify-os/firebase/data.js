@@ -96,10 +96,26 @@ export async function getEngagement(id) {
   return snap.exists() ? { id: snap.id, ...snap.data() } : null;
 }
 
-// All engagements for the current org (the operator's portfolio).
+/* All engagements for the current org (the operator's portfolio).
+
+   TWO QUERIES, NOT ONE, AND DELIBERATELY NOT A COMPOUND FILTER. An engagement reaches
+   this portfolio two ways: it belongs to the org (`orgId`), or it came from this org's
+   partner widget and lives in the founder's own workspace (`partnerOrgId`). Firestore
+   has no OR across different fields that an automatic index can serve — asking for one
+   returns FAILED_PRECONDITION until somebody builds a composite index, which is exactly
+   how /api/intake went down. Two equality reads, merged by id, need no index at all. */
+async function engagementsVisibleTo(orgId) {
+  const [own, viaPartner] = await Promise.all([
+    getDocs(query(engCol(), where('orgId', '==', orgId))),
+    getDocs(query(engCol(), where('partnerOrgId', '==', orgId))),
+  ]);
+  const byId = new Map();
+  [own, viaPartner].forEach(snap => snap.docs.forEach(d => byId.set(d.id, { id: d.id, ...d.data() })));
+  return [...byId.values()];
+}
+
 export async function listEngagements() {
-  const snap = await getDocs(query(engCol(), where('orgId', '==', ORG_ID)));
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  return engagementsVisibleTo(ORG_ID);
 }
 
 // Engagements a given founder owns (matched by the email on their invite).
@@ -194,9 +210,22 @@ export async function requestRun(engagementId, phase = 'research', requestedBy =
 // ---- Live subscriptions (real-time cross-surface updates) -----------------
 // cb receives the full engagement array on every change. Returns unsubscribe.
 export function watchEngagements(cb) {
-  return onSnapshot(query(engCol(), where('orgId', '==', ORG_ID)), (snap) => {
-    cb(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+  /* Same two-query reason as listEngagements. Each listener holds its own half and the
+     merged set is re-emitted whenever either side moves, so a partner pre-screen appears
+     live in the referring org exactly as an owned one does. */
+  const halves = new Map([['own', []], ['partner', []]]);
+  const emit = () => {
+    const byId = new Map();
+    halves.forEach(rows => rows.forEach(r => byId.set(r.id, r)));
+    cb([...byId.values()]);
+  };
+  const sub = (field, slot) => onSnapshot(query(engCol(), where(field, '==', ORG_ID)), (snap) => {
+    halves.set(slot, snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    emit();
   });
+  const offA = sub('orgId', 'own');
+  const offB = sub('partnerOrgId', 'partner');
+  return () => { offA(); offB(); };
 }
 
 export function watchEngagement(id, cb) {

@@ -239,7 +239,12 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;
 /* THE REAL LOCKUP, not an imitation of it. Height 26px is the optical floor
    named in shared/m3/brand-lockup.js — the chevron is a layered form with a
    counter cut out of it and below that the layers collapse into a smudge. */
-.by .brand-lockup{height:26px;width:auto;display:block;flex:0 0 auto}
+/* THE WORDMARK IS INK, NOT UI TEXT. "Verdict" and the dark half of the chevron are
+     fill="currentColor" in brand-lockup.js, so without this they inherit .by's muted
+     --t3 and the logo renders grey — a washed-out version of a mark that is black in
+     the original. Pinned to --t1 (#14171F light, #fff dark) and deliberately NOT
+     changed on hover: a brand mark is not a link affordance. */
+  .by .brand-lockup{height:26px;width:auto;display:block;flex:0 0 auto;color:var(--t1)}
 .by .v{width:18px;height:18px;border-radius:5px;flex:0 0 auto;display:grid;place-items:center;
   background:linear-gradient(145deg,var(--vs-lo),var(--vs));color:#fff}
 .by .pb{color:var(--t4);white-space:nowrap}

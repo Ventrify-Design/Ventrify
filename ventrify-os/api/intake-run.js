@@ -57,9 +57,16 @@ function ensureAdmin() {
 const { idTokenFor } = require('./_auth.js');
 const E = require('./_prescreen2.js');
 
-/* Wall-clock stop, well inside the 60s this function declares. A step that does not
-   start before the budget is spent is simply left for the next tick. */
-const BUDGET_MS = 42000;
+/* Wall-clock stop, inside the 300s this function declares in vercel.json. A step that
+   does not START before the budget is spent is left for the next tick, so this number
+   is a floor on waste, not a deadline anything races.
+
+   300 IS THE FIRST REAL TEST OF THE PRO maxDuration CEILING. If Vercel refuses it the
+   deploy fails loudly and immediately, and the fix is to put both numbers back to 60 /
+   42000 — the cursor means that costs more ticks, never a broken run. Nothing here is
+   load-bearing on the higher limit; it just lets one tick finish a whole pre-screen
+   (~5 min, tools/run-timing.mjs) instead of eight. */
+const BUDGET_MS = Math.max(10000, Number(process.env.INTAKE_RUN_BUDGET_MS || 240000));
 
 /* Long enough that a tick which dies mid-step cannot be lapped by the next one, short
    enough that a crash does not strand the founder for an hour. */
@@ -107,12 +114,89 @@ function partnerMap() {
 
 const toMs = t => (t && typeof t.toMillis === 'function') ? t.toMillis() : Number(t || 0);
 
+const slug = x => String(x || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
+
+/**
+ * THE WORKSPACE THE FOUNDER ACTUALLY LANDS IN.
+ *
+ * This exists because of a real failure: the first live submission put the engagement
+ * in the PARTNER's org, emailed the founder a sign-in link, and dropped them on an
+ * empty portfolio. The workspace lists by `orgId == yourOrg` (firebase/data.js:101),
+ * so an engagement in someone else's org is invisible no matter who may read it.
+ *
+ * So the engagement's `orgId` is the FOUNDER's own org, and `partnerOrgId` carries the
+ * partner. The partner still sees it — one widened line in firestore.rules and a second
+ * equality query in data.js — but the founder's workspace is correct by default rather
+ * than by special case.
+ *
+ * The service operator is added to the org because /api/memo gates on membership of the
+ * ENGAGEMENT's org, which is now this one. Scoped per org and revocable, rather than
+ * making the sweeper a platform-wide super-admin.
+ */
+async function founderOrgFor(db, FieldValue, intake, operator) {
+  const email = String(intake.email || '').toLowerCase();
+
+  /* Reuse a workspace that is ALREADY THEIRS AND ONLY THEIRS — typically the one they
+     made via self-serve signup.
+
+     THE RULE IS NOT "AN ORG THEY OPERATE", AND THAT DISTINCTION IS LOAD-BEARING. The
+     first version took `.limit(1)` of an array-contains on operatorEmails. Checked
+     against live data, one test address operated EIGHT orgs — and `organisations/default`,
+     the live TCA Venture Group workspace with four real operators on it, was among them
+     and was even owned by that address. Firestore does not promise an order, so that
+     query was a coin flip that could have dropped an unvetted widget submission into a
+     customer's workspace.
+
+     So two conditions, both required: they OWN it, and nobody else operates it (the
+     sweeper does not count — it puts itself there). A shared or customer workspace can
+     never be selected, whoever happens to be listed on it. */
+  const operated = await db.collection('organisations')
+    .where('operatorEmails', 'array-contains', email).get();
+  const solelyTheirs = operated.docs.find(d => {
+    const x = d.data();
+    if (String(x.ownerEmail || '').toLowerCase() !== email) return false;
+    const others = (x.operatorEmails || [])
+      .map(e => String(e).toLowerCase())
+      .filter(e => e !== email && e !== operator.toLowerCase());
+    return others.length === 0;
+  });
+  if (solelyTheirs) {
+    await solelyTheirs.ref.set({ operatorEmails: FieldValue.arrayUnion(operator) }, { merge: true });
+    return { orgId: solelyTheirs.id, created: false };
+  }
+
+  /* Otherwise make one. A readable id, with the intake id appended only if something
+     already holds the plain slug — two founders at the same company must not collide
+     into one workspace. */
+  const base = slug(intake.company) || slug(email.split('@')[0]) || 'venture';
+  let orgId = base;
+  if ((await db.collection('organisations').doc(orgId).get()).exists) orgId = base + '-' + slug(intake.__id).slice(0, 6);
+
+  await db.collection('organisations').doc(orgId).set({
+    name: intake.company || intake.name || 'My workspace',
+    slug: orgId,
+    ownerEmail: email,
+    operatorEmails: [email, operator],
+    /* ONE FREE PRE-SCREEN, AND NOTHING ELSE. The `trial` preset would hand over a free
+       full assessment, which is the $199 product the widget exists to sell. */
+    plan: { preset: 'widget-founder', capabilities: { assess: true, build: false },
+            limits: { assessments: 0, builds: 0, prescreens: 1 } },
+    createdAt: FieldValue.serverTimestamp(),
+  }, { merge: true });
+  return { orgId, created: true };
+}
+
 module.exports = async (req, res) => {
   const secret = process.env.CRON_SECRET;
   if (secret && (req.headers.authorization || '') !== `Bearer ${secret}`) {
     res.status(401).json({ error: 'unauthorized' }); return;
   }
-  if (req.method !== 'POST') { res.status(405).json({ error: 'method_not_allowed' }); return; }
+  /* Vercel Cron invokes with GET; the GitHub Actions poll loop and a human testing by
+     hand both use POST. Both are the same job, so both are allowed. HEAD and the rest
+     are not, which is what keeps a link preview or a crawler from starting a run. */
+  if (req.method !== 'POST' && req.method !== 'GET') {
+    res.status(405).json({ error: 'method_not_allowed' }); return;
+  }
 
   const started = Date.now();
   try {
@@ -179,6 +263,9 @@ module.exports = async (req, res) => {
     const sendEmail = require('./send-email.js');
 
     let step = String(claimed.step || STEPS[0]);
+    /* Carried on the intake so a later tick, which does not re-run the engagement step,
+       still knows which org the pre-screen is running in. */
+    let founderOrgId = claimed.founderOrgId || null;
     const done = [];
 
     /* ── ADVANCE ───────────────────────────────────────────────────────────────── */
@@ -187,12 +274,14 @@ module.exports = async (req, res) => {
         /* Deterministic id from the intake, so a retry after a crash re-uses the same
            engagement instead of leaving a half-built one behind.
 
-           orgId is the PARTNER's, and founderEmail is the founder's: firestore.rules:51
-           already reads `founderEmail == you || isOperatorOf(orgId)`, so both sides can
-           see this with no rules change. The founder's own workspace is step 3. */
+           orgId is the FOUNDER's own workspace and partnerOrgId is the partner's, so the
+           founder's portfolio shows it without a special case and the partner reads it
+           through the widened line in firestore.rules. See founderOrgFor above. */
+        const fo = await founderOrgFor(db, FieldValue, { ...claimed, __id: intakeId }, operator);
+        founderOrgId = fo.orgId;
         await engRef.set({
           name: claimed.company || claimed.name || 'Untitled venture',
-          orgId, partnerOrgId: orgId,
+          orgId: founderOrgId, partnerOrgId: orgId,
           founderEmail: String(claimed.email || '').toLowerCase(),
           founderName: claimed.name || null,
           type: 'assessment', tier: 'prescreen',
@@ -242,14 +331,14 @@ module.exports = async (req, res) => {
 
       done.push(step);
       step = STEPS[STEPS.indexOf(step) + 1] || 'complete';
-      await ref.set({ step, engagementId, orgId,
+      await ref.set({ step, engagementId, orgId, founderOrgId,
                       leaseUntil: Date.now() + LEASE_MS }, { merge: true });
     }
 
     const finished = !STEPS.includes(step);
     await ref.set({
       step,
-      engagementId, orgId,
+      engagementId, orgId, founderOrgId,
       state: finished ? 'done' : 'running',
       leaseUntil: 0,
       ...(finished ? { completedAt: FieldValue.serverTimestamp() } : {}),

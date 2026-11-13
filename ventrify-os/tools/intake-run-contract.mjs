@@ -26,10 +26,21 @@ let DOCS = new Map(), FILES = new Set(), COPIES = [], CALLS = [], WHERES = 0;
 const k = (c, i) => c + '/' + i;
 const snapOf = (c, i, d) => ({ id: i, ref: docApi(c, i), exists: !!d, data: () => d });
 
+/* arrayUnion is RESOLVED, not stored. A fake that keeps the sentinel verbatim would let
+   'the sweeper is an operator of the founder org' pass while the array never changed. */
+const merge = (prev, next) => {
+  const out = { ...(prev || {}) };
+  for (const [key, v] of Object.entries(next)) {
+    out[key] = (v && v.__union)
+      ? [...new Set([...(Array.isArray(out[key]) ? out[key] : []), ...v.__union])]
+      : v;
+  }
+  return out;
+};
 function docApi(col, id) {
   return {
     id, __col: col,
-    set: async (v, o) => DOCS.set(k(col, id), { ...(o && o.merge ? DOCS.get(k(col, id)) : null), ...v }),
+    set: async (v, o) => DOCS.set(k(col, id), merge(o && o.merge ? DOCS.get(k(col, id)) : null, v)),
     get: async () => snapOf(col, id, DOCS.get(k(col, id))),
   };
 }
@@ -40,7 +51,8 @@ function queryApi(col, filters) {
       if (filters.length) throw new Error('COMPOSITE INDEX: a second where() on ' + col +
         ' pairs two fields. Firestore refuses that without a purpose-built index — ' +
         'the failure mode that took /api/intake down. Filter in JS instead.');
-      if (op !== 'in' && op !== '==') throw new Error('range operator ' + op + ' needs a composite index');
+      if (!['in', '==', 'array-contains'].includes(op))
+        throw new Error('operator ' + op + ' is not served by an automatic single-field index');
       return queryApi(col, filters.concat([[f, op, v]]));
     },
     orderBy(f) {
@@ -53,7 +65,10 @@ function queryApi(col, filters) {
       for (const [key, d] of DOCS) {
         if (!key.startsWith(col + '/')) continue;
         const id = key.slice(col.length + 1);
-        const hit = !filters.length || (op === 'in' ? v.includes(d[f]) : d[f] === v);
+        const hit = !filters.length
+          || (op === 'in' ? v.includes(d[f])
+          : op === 'array-contains' ? Array.isArray(d[f]) && d[f].includes(v)
+          : d[f] === v);
         if (hit) out.push(snapOf(col, id, d));
       }
       return { docs: out, empty: !out.length };
@@ -65,7 +80,7 @@ const db = {
   runTransaction: async fn => fn({
     get: async ref => ref.get(),
     set: (ref, v, o) => { const key = k(ref.__col, ref.id);
-                          DOCS.set(key, { ...(o && o.merge ? DOCS.get(key) : null), ...v }); },
+                          DOCS.set(key, merge(o && o.merge ? DOCS.get(key) : null, v)); },
   }),
 };
 const fileApi = path => ({
@@ -76,7 +91,9 @@ const fileApi = path => ({
 const admin = {
   apps: [], initializeApp() { this.apps.push(1); },
   credential: { cert: () => ({}) },
-  firestore: Object.assign(() => db, { FieldValue: { serverTimestamp: () => new Date() } }),
+  firestore: Object.assign(() => db, {
+    FieldValue: { serverTimestamp: () => new Date(), arrayUnion: (...a) => ({ __union: a }) },
+  }),
   storage: () => ({ bucket: () => ({ file: fileApi }) }),
 };
 const stub = (mod, exports) => {
@@ -160,8 +177,8 @@ await t('`default` — which IS the live TCA workspace — is never reachable by
 await t('a mapped partner resolves to the mapped org, not the one sharing its name', async () => {
   seed();
   await drain();
-  eq(DOCS.get('intakes/I1').orgId, 'tca-widget', 'orgId');
-  eq(DOCS.get('engagements/ps-I1').orgId, 'tca-widget', 'engagement orgId');
+  eq(DOCS.get('intakes/I1').orgId, 'tca-widget', 'intake orgId (the partner)');
+  eq(DOCS.get('engagements/ps-I1').partnerOrgId, 'tca-widget', 'engagement partnerOrgId');
 });
 
 await t('an operator missing from the org fails closed too', async () => {
@@ -172,10 +189,15 @@ await t('an operator missing from the org fails closed too', async () => {
 
 console.log('\n2. IT CANNOT ASK FIRESTORE FOR AN INDEX IT HAS NOT GOT');
 
-await t('exactly one where(), single-field, no orderBy', async () => {
+await t('every query is single-field — two of them, both index-free', async () => {
   seed();
   await call();
-  if (WHERES !== 1) throw new Error('where() called ' + WHERES + ' times');
+  /* The fake THROWS on a chained where() or any orderBy, so reaching this line at all
+     proves no query needed a composite index. The count is pinned so that a THIRD
+     query has to be a decision someone makes here, not one that creeps in:
+       1. intakes      where state in [submitted, running]
+       2. organisations where operatorEmails array-contains <founder>   */
+  if (WHERES !== 2) throw new Error('expected 2 single-field queries, saw ' + WHERES);
 });
 
 console.log('\n3. TWO TICKS CANNOT RUN ONE FOUNDER TWICE');
@@ -219,16 +241,59 @@ await t('a missing deck fails closed rather than pre-screening an empty venture'
   eq(DOCS.get('intakes/I1').failedReason, 'deck_missing', 'reason');
 });
 
-console.log('\n5. BOTH SIDES CAN READ THE RESULT (firestore.rules:51)');
+console.log('\n5. THE FOUNDER LANDS ON SOMETHING, NOT AN EMPTY PORTFOLIO');
 
-await t('the engagement carries the partner orgId AND the founder email', async () => {
+await t('the engagement lives in the FOUNDER’s org, which is what their workspace lists', async () => {
   seed();
   await drain();
   const e = DOCS.get('engagements/ps-I1');
-  eq(e.orgId, 'tca-widget', 'orgId — what isOperatorOf() reads');
-  eq(e.founderEmail, 'alex@northwind.health', 'founderEmail — what the founder rule reads');
+  if (e.orgId === 'tca-widget')
+    throw new Error('it went to the partner org — the founder would see a blank portfolio');
+  eq(e.orgId, 'northwind-health', 'orgId (data.js lists by this)');
+  eq(e.partnerOrgId, 'tca-widget', 'partnerOrgId (the referring partner)');
+  eq(e.founderEmail, 'alex@northwind.health', 'founderEmail');
   eq(e.tier, 'prescreen', 'tier');
-  eq(e.source, 'widget', 'source');
+});
+
+await t('a founder with no workspace gets one, with ONE pre-screen and no free assessment', async () => {
+  seed();
+  await drain();
+  const o = DOCS.get('organisations/northwind-health');
+  if (!o) throw new Error('no workspace was created');
+  eq(o.plan.limits.prescreens, 1, 'prescreens');
+  eq(o.plan.limits.assessments, 0, 'assessments — the $199 product must not be given away');
+  if (!o.operatorEmails.includes('alex@northwind.health')) throw new Error('founder is not an operator of it');
+  if (!o.operatorEmails.includes('svc@ventrify.io')) throw new Error('the sweeper cannot run memo.js phases there');
+});
+
+await t('a founder who ALREADY owns a solo workspace keeps it — no second one is minted', async () => {
+  seed();
+  DOCS.set('organisations/ants-prescreen', { name: 'ANTs pre-screen',
+    ownerEmail: 'alex@northwind.health', operatorEmails: ['alex@northwind.health'],
+    plan: { preset: 'trial' } });
+  await drain();
+  eq(DOCS.get('engagements/ps-I1').orgId, 'ants-prescreen', 'orgId');
+  if (DOCS.get('organisations/northwind-health')) throw new Error('it created a duplicate workspace');
+  eq(DOCS.get('organisations/ants-prescreen').plan.preset, 'trial', 'their existing plan was overwritten');
+});
+
+/* THE ONE THAT MATTERS MOST. Checked against live data, one real address operated EIGHT
+   orgs — `default` (the live TCA workspace, four operators) among them. An array-contains
+   with .limit(1) is a coin flip, and one of those faces drops an unvetted submission into
+   a customer's workspace. Being listed as an operator is NOT consent to receive one. */
+await t('an org the founder merely OPERATES is never reused — not even one they own with others', async () => {
+  seed();
+  DOCS.set('organisations/default', { name: 'TCA Venture Group',
+    ownerEmail: 'alex@northwind.health',
+    operatorEmails: ['alex@northwind.health', 'someone.real@tcavg.net', 'svc@ventrify.io'],
+    plan: { preset: 'full' } });
+  DOCS.set('organisations/a-clients-room', { name: "A client",
+    ownerEmail: 'someoneelse@x.com', operatorEmails: ['alex@northwind.health'] });
+  await drain();
+  const landed = DOCS.get('engagements/ps-I1').orgId;
+  if (landed === 'default') throw new Error('it landed in the LIVE TCA workspace');
+  if (landed === 'a-clients-room') throw new Error("it landed in someone else's workspace");
+  eq(landed, 'northwind-health', 'it made them a fresh one instead');
 });
 
 console.log('\n6. THE WHOLE PIPELINE RUNS, AND NOTHING IS SKIPPED');

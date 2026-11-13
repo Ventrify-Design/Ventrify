@@ -42,7 +42,10 @@ const API  = (Q.get('api') || 'https://os.ventrify.io').replace(/\/$/, '');
    record is parked, and a sign-in link is sent. The pre-screen does NOT run yet,
    so nothing here may say that it has. Flipping this to 'full' is what step two
    earns — and it changes the three sentences that would otherwise be a lie. */
-const STAGE = Q.get('stage') === 'full' ? 'full' : 'intake';
+/* The pre-screen RUNS now (api/intake-run.js), so 'full' is the honest default.
+   ?stage=intake forces the older, smaller promise back — useful if the runner is
+   ever paused and the widget must stop promising a verdict it cannot deliver. */
+const STAGE = Q.get('stage') === 'intake' ? 'intake' : 'full';
 
 /* ONE NUMBER. It was written out three times — the drop-zone caption, the error
    sentence and the server — which is how a limit quietly becomes three limits
@@ -269,11 +272,11 @@ const done = () => `
     <div class="mid">
       <div class="tick">&#10003;</div>
       <h1>${STAGE === 'full' ? 'That is everything we need.' : 'We have your deck.'}</h1>
-      <p class="lede" style="margin:.5rem 0 0">We have emailed</p>
+      <p class="lede" style="margin:.5rem 0 0">${STAGE === 'full' ? 'We will email' : 'We have your deck at'}</p>
       <span class="addr">${esc(S.email)}</span>
       <p class="lede" style="margin:0">${STAGE === 'full'
-        ? 'When your pre-screen is ready, the link in it takes you straight to the result &mdash; no password, nothing to set up.'
-        : 'Open the link in it to claim your workspace &mdash; no password, nothing to set up. Your pre-screen lands there.'}</p>
+        ? 'One email, when your pre-screen is finished &mdash; not before. The link in it opens the result directly: no password, nothing to set up.'
+        : 'We will be in touch once we have read it.'}</p>
     </div>
     ${S.roomState === 'given' ? `
       <div class="warn" style="background:var(--surface);border-color:var(--edge)"><span class="i">&#9432;</span>
@@ -424,15 +427,19 @@ async function runIt() {
       set(1, 'done', 'none given — we will read the deck alone');
     }
 
-    /* ── 3. the email. /api/send-email type:'login' mints the magic link with the
-          Admin SDK and sends it from the verified domain. ─────────────────── */
-    set(2, 'on', 'sending your sign-in link');
-    if (DEMO) await wait(1200);
-    else await post('/api/send-email', {
-      type: 'login', email: S.email, surface: 'Workspace',
-      continueUrl: 'https://os.ventrify.io/workspace/?intake=' + encodeURIComponent(S.intakeId),
-    });
-    set(2, 'done', 'sent to ' + S.email);
+    /* ── 3. NO EMAIL HERE. ───────────────────────────────────────
+          This step used to send a sign-in link the moment the deck landed, back
+          when that was the only email the system could send. It meant the founder
+          clicked through to a workspace with NOTHING IN IT — the pre-screen had
+          not been run yet — and then got a second email later. Two emails, and
+          the first one delivered an empty room.
+
+          ONE EMAIL, WHEN THERE IS SOMETHING TO SEE. /api/intake-run sends it after
+          the band is written. A link is a promise that something is there; do not
+          send one before it is. ─────────────────────────────────── */
+    set(2, 'on', 'queuing your pre-screen');
+    await wait(DEMO ? 1200 : 400);
+    set(2, 'done', 'we will email ' + S.email + ' when it is ready');
 
     await wait(700);
     go('done');

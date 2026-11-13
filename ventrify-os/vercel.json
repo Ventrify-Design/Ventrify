@@ -15,7 +15,13 @@
       "maxDuration": 60
     },
     "api/intake-run.js": {
-      "maxDuration": 60
+      "maxDuration": 300
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/intake-run",
+      "schedule": "*/5 * * * *"
+    }
+  ]
 }

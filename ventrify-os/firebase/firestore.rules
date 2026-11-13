@@ -47,10 +47,21 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // Engagements — a founder sees only their own; operators see their org's.
+    // Engagements — a founder sees only their own; operators see their org's; and a
+    // PARTNER whose widget produced it sees it too.
+    //
+    // partnerOrgId exists because a widget pre-screen has two legitimate audiences. The
+    // engagement lives in the FOUNDER's org, so their workspace lists it by default
+    // (data.js queries orgId == yours). The angel group that referred them is recorded
+    // in partnerOrgId and gets READ ONLY — never update. They are entitled to the
+    // verdict on a venture they sent us; they are not entitled to edit it, sign it off,
+    // or touch the founder's own workspace. The `in` guard keeps every engagement
+    // written before this field existed evaluating exactly as it did before.
     match /engagements/{engId} {
       allow read: if signedIn()
-        && (userEmail() == resource.data.founderEmail || isOperatorOf(resource.data.orgId));
+        && (userEmail() == resource.data.founderEmail
+            || isOperatorOf(resource.data.orgId)
+            || ('partnerOrgId' in resource.data && isOperatorOf(resource.data.partnerOrgId)));
       // Update is open to founder/operator EXCEPT the server-managed integrity fields:
       //   • assessmentSignoff — the operator endorsement that rides into the shared memo;
       //   • shareLink        — the public share-link pointer.
