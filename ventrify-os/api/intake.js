@@ -92,8 +92,26 @@ const ipOf = req => String(
   (req.headers['x-forwarded-for'] || '').split(',')[0] || req.socket?.remoteAddress || ''
 ).trim();
 
-const daysAgo = n => new Date(Date.now() - n * 864e5);
-const monthStart = () => { const d = new Date(); return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1)); };
+/* ── THE CAPS ARE DOCUMENT IDS, NOT QUERIES ───────────────────────────────────
+   The first version asked Firestore three questions of the form "this field
+   equals X and createdAt is after Y". Firestore refuses that shape without a
+   purpose-built composite index and answers FAILED_PRECONDITION, which arrived
+   as a 500 on the first real submission. The offline gate passed it because a
+   fake Firestore has no index rules — so the gate was wrong about the world,
+   not just the code.
+
+   Creating three indexes would fix the symptom and leave the shape. These are
+   counters addressed BY ID instead: a document id never needs an index, costs
+   one read, and cannot grow a new failure mode when a fourth cap is added. */
+const crypto = require('crypto');
+const slug = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60);
+const dayKey   = d => new Date(d).toISOString().slice(0, 10);   // YYYY-MM-DD
+const monthKey = d => new Date(d).toISOString().slice(0, 7);    // YYYY-MM
+const guardIds = (email, ip, partner, now) => ({
+  email:   'e_' + crypto.createHash('sha1').update(email).digest('hex'),
+  ip:      'ip_' + slug(ip || 'none') + '_' + dayKey(now),
+  partner: 'p_' + slug(partner) + '_' + monthKey(now),
+});
 
 module.exports = async (req, res) => {
   cors(req, res);
@@ -160,17 +178,28 @@ module.exports = async (req, res) => {
 
     const ip = ipOf(req);
     const col = db.collection('intakes');
+    const now = Date.now();
+    const G = guardIds(email, ip, partner, now);
+    const guards = db.collection('intake_guards');
 
-    const [byEmail, byIp, byPartner] = await Promise.all([
-      LIMITS.perEmailDays > 0
-        ? col.where('email', '==', email).where('createdAt', '>=', daysAgo(LIMITS.perEmailDays)).limit(1).get()
-        : null,
-      ip ? col.where('ip', '==', ip).where('createdAt', '>=', daysAgo(1)).limit(LIMITS.perIpPerDay).get() : null,
-      col.where('partner', '==', partner).where('createdAt', '>=', monthStart()).limit(LIMITS.perPartnerMonth).get(),
-    ]);
-    if (byEmail && !byEmail.empty)                  { res.status(429).json({ error: 'already_submitted_recently' }); return; }
-    if (byIp && byIp.size >= LIMITS.perIpPerDay)    { res.status(429).json({ error: 'rate_limited' }); return; }
-    if (byPartner.size >= LIMITS.perPartnerMonth)   { res.status(429).json({ error: 'partner_cap_reached' }); return; }
+    /* Three reads, by id, in one round trip. No query, so no index, ever. */
+    const [gEmail, gIp, gPartner] = await db.getAll(
+      guards.doc(G.email), guards.doc(G.ip), guards.doc(G.partner)
+    );
+
+    if (LIMITS.perEmailDays > 0 && gEmail.exists) {
+      const last = gEmail.data().lastAt;
+      const ms = last && typeof last.toMillis === 'function' ? last.toMillis() : Number(last || 0);
+      if (now - ms < LIMITS.perEmailDays * 864e5) {
+        res.status(429).json({ error: 'already_submitted_recently' }); return;
+      }
+    }
+    if (ip && gIp.exists && Number(gIp.data().n || 0) >= LIMITS.perIpPerDay) {
+      res.status(429).json({ error: 'rate_limited' }); return;
+    }
+    if (gPartner.exists && Number(gPartner.data().n || 0) >= LIMITS.perPartnerMonth) {
+      res.status(429).json({ error: 'partner_cap_reached' }); return;
+    }
 
     const ref = col.doc();
     const safe = fileName.replace(/[^A-Za-z0-9._-]/g, '_').slice(-120);
@@ -189,10 +218,21 @@ module.exports = async (req, res) => {
       freeMail: FREE_MAIL.has(email.split('@')[1] || ''),
       deckPath, deckFileName: safe,
       ip: ip || null,
+      day: dayKey(now), period: monthKey(now),
       userAgent: clean(req.headers['user-agent'], 300) || null,
       claimedBy: null, orgId: null, engagementId: null,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
+
+    /* Counted only once the intake exists, so a rejected submission never burns
+       anyone's allowance. increment() is atomic, which two submissions landing in
+       the same second rely on. */
+    const inc = admin.firestore.FieldValue.increment(1);
+    await Promise.all([
+      guards.doc(G.email).set({ lastAt: admin.firestore.FieldValue.serverTimestamp() }),
+      ip ? guards.doc(G.ip).set({ n: inc }, { merge: true }) : null,
+      guards.doc(G.partner).set({ n: inc }, { merge: true }),
+    ].filter(Boolean));
 
     res.status(200).json({ ok: true, intakeId: ref.id, uploadUrl, contentType });
   } catch (e) {

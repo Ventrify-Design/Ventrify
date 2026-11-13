@@ -132,6 +132,15 @@ const WHY = {
   deck_type_unsupported:     'We can read PDF, PowerPoint and Keynote. That file is not one of them.',
   room_not_a_url:            'That data room link does not look like a web address.',
   email_invalid:             'That email address does not look right.',
+  /* These five fell through to the generic sentence the first time this was
+     tested for real, which told the founder nothing and told us nothing either.
+     An error code with no sentence is a bug report nobody can file. */
+  partner_unknown:           'This widget is not set up for this site yet. Please let us know where you saw it.',
+  upload_failed:             'Your deck did not finish uploading. Check your connection and try again.',
+  deck_not_found:            'Your deck did not arrive. Try attaching it again.',
+  already_submitted:         'That submission is already in. Check your inbox for the link.',
+  unknown_intake:            'That submission expired before the deck finished. Start again and it will be quick.',
+  intake_failed:             'Something broke at our end, not yours. Nothing was charged. Try again in a minute \u2014 if it keeps happening, email hello@ventrify.io and quote the time.',
 };
 const STEPS = ['intro', 'form', 'running', 'done', 'failed'];
 let at = 0;

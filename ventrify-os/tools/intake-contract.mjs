@@ -17,24 +17,37 @@ import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const CANARY = process.argv.includes('--canary');
 
-/* ── the fake world ───────────────────────────────────────────────────────── */
-let DOCS = new Map(), SEQ = 0, FILES = new Map();
-const snapOf = d => ({ exists: !!d, data: () => d });
-const qres = rows => ({ empty: rows.length === 0, size: rows.length, docs: rows.map(r => snapOf(r)) });
+/* ── the fake world ───────────────────────────────────────────────────────────
+   THIS GATE WAS WRONG ONCE, AND THIS IS THE CORRECTION. The first version let a
+   query through that Firestore refuses without a composite index; it reached
+   production and 500'd on the first real submission. A fake that answers every
+   query is not a model of Firestore — it is a model of a database that does not
+   exist.
 
-function makeQuery(col, preds) {
-  return {
-    where: (f, op, v) => makeQuery(col, [...preds, [f, op, v]]),
-    limit: () => makeQuery(col, preds),
-    get: async () => qres([...DOCS.values()].filter(d => d.__col === col && preds.every(([f, op, v]) =>
-      op === '==' ? d[f] === v : op === '>=' ? (d.createdAt instanceof Date ? d.createdAt >= v : true) : true))),
-  };
-}
+   So where() now THROWS. Not because queries are bad, but because this endpoint
+   is public, uncached and on the hot path, and the index-free shape is the whole
+   design. If a future edit reaches for a query, this gate stops it at the door
+   rather than letting Firestore stop it in front of a founder. */
+let DOCS = new Map(), SEQ = 0, FILES = new Map(), QUERIES = 0;
+const key = (col, id) => col + '/' + id;
+const snapOf = (k, d) => ({ id: String(k).split('/').pop(), exists: !!d, data: () => d });
+
+const INC = Symbol('increment');
+const resolve = (prev, next) => {
+  const out = { ...(prev || {}) };
+  for (const [k, v] of Object.entries(next)) {
+    out[k] = (v && v.__inc) ? Number(out[k] || 0) + v.n : v;
+  }
+  return out;
+};
 const docApi = (col, id) => ({
-  id,
-  set: async v => { DOCS.set(id, { ...v, __col: col, createdAt: new Date() }); },
-  update: async v => { DOCS.set(id, { ...DOCS.get(id), ...v }); },
-  get: async () => snapOf(DOCS.get(id)),
+  id, __k: key(col, id),
+  set: async (v, opts) => {
+    const prev = opts && opts.merge ? DOCS.get(key(col, id)) : null;
+    DOCS.set(key(col, id), { ...resolve(prev, v), __col: col, createdAt: new Date() });
+  },
+  update: async v => { DOCS.set(key(col, id), { ...DOCS.get(key(col, id)), ...v }); },
+  get: async () => snapOf(key(col, id), DOCS.get(key(col, id))),
 });
 const fileApi = path => ({
   getSignedUrl: async o => {
@@ -46,14 +59,25 @@ const fileApi = path => ({
   getMetadata: async () => [FILES.get(path) || {}],
   delete: async () => { FILES.delete(path); },
 });
+const db = {
+  collection: col => ({
+    doc: id => docApi(col, id || ('id' + (++SEQ))),
+    where() {
+      QUERIES++;
+      throw new Error(
+        'FAILED_PRECONDITION-by-design: /api/intake must not query. Firestore needs a ' +
+        'composite index for equality+range, which is how this endpoint 500\'d in production. ' +
+        'Address a guard document by id instead.');
+    },
+  }),
+  getAll: async (...refs) => refs.map(r => snapOf(r.__k, DOCS.get(r.__k))),
+};
 const admin = {
   apps: [], initializeApp() { this.apps.push(1); },
   credential: { cert: () => ({}) },
-  firestore: Object.assign(() => ({
-    collection: col => Object.assign(makeQuery(col, []), {
-      doc: id => docApi(col, id || ('id' + (++SEQ))),
-    }),
-  }), { FieldValue: { serverTimestamp: () => 'TS' } }),
+  firestore: Object.assign(() => db, {
+    FieldValue: { serverTimestamp: () => ({ toMillis: () => Date.now() }), increment: n => ({ __inc: true, n }) },
+  }),
   storage: () => ({ bucket: () => ({ file: fileApi }) }),
 };
 const p = require.resolve('firebase-admin');
@@ -114,11 +138,11 @@ await t('phase 1 parks the intake and returns an upload url', async () => {
   if (!r.payload.intakeId) throw new Error('no intakeId');
   if (!/^https:\/\//.test(r.payload.uploadUrl || '')) throw new Error('no uploadUrl');
   id = r.payload.intakeId;
-  deckPath = DOCS.get(id).deckPath;
+  deckPath = DOCS.get('intakes/' + id).deckPath;
   if (!deckPath.startsWith('intake/')) throw new Error('deck parked outside intake/: ' + deckPath);
-  eq(DOCS.get(id).state, 'awaiting_deck', 'state');
-  eq(DOCS.get(id).orgId, null, 'orgId');                 // it must create NOTHING
-  eq(DOCS.get(id).engagementId, null, 'engagementId');
+  eq(DOCS.get('intakes/' + id).state, 'awaiting_deck', 'state');
+  eq(DOCS.get('intakes/' + id).orgId, null, 'orgId');                 // it must create NOTHING
+  eq(DOCS.get('intakes/' + id).engagementId, null, 'engagementId');
 });
 await t('phase 2 refuses when no deck actually landed', async () =>
   eq((await call('POST', { intakeId: id, uploaded: true })).code, 409, 'code'));
@@ -126,14 +150,14 @@ await t('phase 2 accepts once the object exists', async () => {
   FILES.set(deckPath, { size: 2400000, contentType: 'application/pdf' });
   const r = await call('POST', { intakeId: id, uploaded: true });
   eq(r.code, 200, 'code');
-  eq(DOCS.get(id).state, 'submitted', 'state');
-  eq(DOCS.get(id).deckBytes, 2400000, 'deckBytes');
+  eq(DOCS.get('intakes/' + id).state, 'submitted', 'state');
+  eq(DOCS.get('intakes/' + id).deckBytes, 2400000, 'deckBytes');
 });
 await t('phase 2 twice is refused', async () =>
   eq((await call('POST', { intakeId: id, uploaded: true })).code, 409, 'code'));
 await t('an oversized deck is rejected and deleted', async () => {
   const a = await call('POST', { ...OK, email: 'big@northwind.health' });
-  FILES.set(DOCS.get(a.payload.intakeId).deckPath, { size: 60 * 1024 * 1024 });
+  FILES.set(DOCS.get('intakes/' + a.payload.intakeId).deckPath, { size: 60 * 1024 * 1024 });
   eq((await call('POST', { intakeId: a.payload.intakeId, uploaded: true })).code, 413, 'code');
 });
 await t('an unknown intake id → 404', async () =>
@@ -161,5 +185,10 @@ if (CANARY) {
   process.exit(0);
 }
 
-console.log(fails ? `\n✗ ${fails} failed` : '\n✓ /api/intake answers, refuses and caps as specified');
+console.log('\nthe index-free invariant');
+await t('it made no Firestore queries at all', () => {
+  if (QUERIES) throw new Error(QUERIES + ' query/queries attempted — each one needs a composite index');
+});
+
+console.log(fails ? `\n✗ ${fails} failed` : '\n✓ /api/intake answers, refuses, caps — and needs no index');
 process.exit(fails ? 1 : 0);
