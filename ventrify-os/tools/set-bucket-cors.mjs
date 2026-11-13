@@ -23,6 +23,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
 const require = createRequire(import.meta.url);
+const { parseServiceAccount } = await import('./contract-auth.mjs');
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..');
 const DRY = process.argv.includes('--dry-run');
@@ -55,55 +56,15 @@ if (!raw) {
    JSON from Vercel, JSON with the private key's newlines left literal (which a
    strict parse rejects as a control character), or base64. Accept all three —
    the alternative is a confusing failure on a value that is actually correct. */
-/* ventrify-os/.env.local holds this value in a shape no strict reader accepts:
-   the outer quotes are present, every newline is written as a literal backslash-n,
-   and the inner JSON quotes are NOT escaped. The trap is that the pretty-printing
-   newlines and the PRIVATE KEY's own newlines are the same two characters, so
-   converting all of them puts raw control characters inside a string literal —
-   which is the "Bad control character" a naive repair reports.
-   Only the ones OUTSIDE a string may be converted, so this tracks string state. */
-function unwrapLiteralNewlines(t) {
-  let out = '', inStr = false;
-  for (let i = 0; i < t.length; i++) {
-    const c = t[i];
-    if (inStr) {
-      if (c === '\\') { out += c + (t[i + 1] || ''); i++; continue; }  // keep the escape intact
-      if (c === '"') inStr = false;
-      out += c;
-      continue;
-    }
-    if (c === '"') { inStr = true; out += c; continue; }
-    if (c === '\\' && t[i + 1] === 'n') { out += '\n'; i++; continue; }
-    out += c;
-  }
-  return out;
-}
-
-function readServiceAccount(v) {
-  const unquote = t => (t.startsWith('"') && t.endsWith('"')) || (t.startsWith("'") && t.endsWith("'"))
-    ? t.slice(1, -1) : t;
-  const base = unquote(v.trim());
-  const candidates = [
-    v,
-    base,
-    unwrapLiteralNewlines(base),
-    base.replace(/\\"/g, '"'),
-    unwrapLiteralNewlines(base.replace(/\\"/g, '"')),
-    (() => { try { return Buffer.from(base, 'base64').toString('utf8'); } catch (e) { return ''; } })(),
-  ];
-  for (const t of candidates) {
-    if (!t) continue;
-    try {
-      const o = JSON.parse(t);
-      /* The only check that means anything: a key that is actually a key. */
-      if (o && o.project_id && typeof o.private_key === 'string'
-          && o.private_key.includes('-----BEGIN')) return o;
-    } catch (e) {}
-  }
-  return null;
-}
-
-const cert = readServiceAccount(raw);
+/* THE PARSER ALREADY EXISTED. contract-auth.mjs exports parseServiceAccount and
+   it solves exactly this: .env.local stores the value with the outer quotes on,
+   every newline written as a literal backslash-n, and the inner JSON quotes left
+   unescaped — and the pretty-printing newlines are indistinguishable from the
+   PRIVATE KEY's own, so converting all of them yields a PEM that parses and
+   cannot sign. It even asserts the key kept its newlines. I wrote a second copy
+   of this before finding the first; one of them had to go, and it was mine. */
+let cert;
+try { cert = parseServiceAccount(raw); } catch (e) { cert = null; }
 if (!cert) {
   console.error('\n  FIREBASE_SERVICE_ACCOUNT is set but could not be read as a service account.\n' +
     '  Pull a clean copy:  vercel env pull .env.local\n');

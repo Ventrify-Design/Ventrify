@@ -111,6 +111,26 @@ $('head').innerHTML =
 $('close').onclick = () => send('close');
 $('by').onclick = () => send('navigate', { href: CFG.site });
 
+/* ── THE LOCKUP, FROM THE ONE PLACE IT LIVES ──────────────────────────────────
+   shared/m3/brand-lockup.js holds the path data with its fills already written
+   as var(--brand-accent / -2), which this file pins to VerdictScore violet so
+   the mark never takes the partner's colour. Pasting the artwork in here would
+   have made a second copy of a logo — and the copy would have been the one that
+   went stale.
+
+   The path resolves both ways with no build step: locally the file really is at
+   /ventrify-os/shared/m3/..., and in production the root project rewrites that
+   prefix to os.ventrify.io. It is a DYNAMIC import with a fallback, because a
+   widget on someone else's site must not lose its panel over a logo. */
+(async () => {
+  try {
+    const m = await import('/ventrify-os/shared/m3/brand-lockup.js');
+    $('lockup').innerHTML = m.brandLockup({ brand: 'verdictscore', label: 'VerdictScore' });
+  } catch (e) {
+    $('lockup').innerHTML = '<b>VerdictScore</b>';
+  }
+})();
+
 const S = { name:'', email:'', company:'', file:null, room:'', share:true, roomState:null,
             intakeId:null, failed:null };
 
@@ -156,8 +176,7 @@ const paint = () => send('step', { step: STEPS[at] });
 /* ── the upsell. OURS, so it keeps the violet on every partner's site. ──── */
 const sell = loud => `
   <div class="sell">
-    <span class="lbl"><span class="v"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 3.6 L6 8.6 L9 3.6"
-      fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span>${loud ? 'What happens next' : 'Or go further'}</span>
+    <span class="lbl">${loud ? 'What happens next' : 'Or go further'}</span>
     <h3>Full assessment <span class="price">$${esc(CFG.price)}</span></h3>
     <p>Your investability score across 35 signals, with the evidence behind every one &mdash;
        the same read an investor's analyst would do.</p>
