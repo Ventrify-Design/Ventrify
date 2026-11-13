@@ -72,7 +72,10 @@ const LIMITS = {
   perEmailDays:   Number(process.env.INTAKE_EMAIL_COOLDOWN_DAYS ?? 30),
   perIpPerDay:    5,      // a shared office NATs; 5 is generous for humans, useless for a loop
   perPartnerMonth: Number(process.env.INTAKE_PARTNER_CAP || 100),
-  maxDeckBytes:   40 * 1024 * 1024,
+  /* THE AUTHORITY on deck size. The widget's caption and its pick-time check
+     read their number from ?maxMb — set that to match this, or the founder is
+     told one limit and refused by another. */
+  maxDeckBytes:   Math.max(1, Number(process.env.INTAKE_MAX_DECK_MB || 40)) * 1024 * 1024,
 };
 const DECK_TYPES = new Set([
   'application/pdf',
@@ -169,6 +172,13 @@ module.exports = async (req, res) => {
     if (name.length < 2)       { res.status(400).json({ error: 'name_required' }); return; }
     if (company.length < 2)    { res.status(400).json({ error: 'company_required' }); return; }
     if (!DECK_TYPES.has(contentType)) { res.status(415).json({ error: 'deck_type_unsupported' }); return; }
+    /* The size the client DECLARES, refused here so a 200MB upload is never
+       started. It is not trusted — phase 2 measures the object itself — but a
+       truthful client should never be made to send bytes that will be binned. */
+    const declared = Number(body.size || 0);
+    if (declared > LIMITS.maxDeckBytes) {
+      res.status(413).json({ error: 'deck_too_large', maxMb: Math.round(LIMITS.maxDeckBytes / 1048576) }); return;
+    }
     if (room && !/^https?:\/\//i.test(room)) { res.status(400).json({ error: 'room_not_a_url' }); return; }
 
     /* A partner allowlist, when one is configured. Without it any site could

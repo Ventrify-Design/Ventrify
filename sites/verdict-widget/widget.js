@@ -44,6 +44,13 @@ const API  = (Q.get('api') || 'https://os.ventrify.io').replace(/\/$/, '');
    earns — and it changes the three sentences that would otherwise be a lie. */
 const STAGE = Q.get('stage') === 'full' ? 'full' : 'intake';
 
+/* ONE NUMBER. It was written out three times — the drop-zone caption, the error
+   sentence and the server — which is how a limit quietly becomes three limits
+   that disagree. The server is the authority (INTAKE_MAX_DECK_MB); this must be
+   set to match it, and both say so. */
+const MAX_MB = Math.max(1, Number(Q.get('maxMb') || 40));
+const DECK_EXT = /\.(pdf|ppt|pptx|key)$/i;
+
 /* ── theme ──────────────────────────────────────────────────────────────── */
 const root = document.documentElement;
 root.dataset.theme = CFG.theme;
@@ -128,7 +135,7 @@ const WHY = {
   already_submitted_recently: 'You have already sent us a deck from this address recently. Check your inbox — the link is still good.',
   rate_limited:              'Too many submissions from this connection today. Try again tomorrow, or email us.',
   partner_cap_reached:       'This month’s free pre-screens have all been claimed. Try again next month, or go straight to a full assessment.',
-  deck_too_large:            'That deck is over 40 MB. Send a lighter export and we will read it.',
+  deck_too_large:            `That deck is over ${MAX_MB} MB. Send a lighter export and we will read it.`,
   deck_type_unsupported:     'We can read PDF, PowerPoint and Keynote. That file is not one of them.',
   room_not_a_url:            'That data room link does not look like a web address.',
   email_invalid:             'That email address does not look right.',
@@ -199,7 +206,7 @@ const form = () => `
         <label for="d">Pitch deck</label>
         <div class="drop" id="d" tabindex="0" role="button" aria-label="Choose your pitch deck">
           <div class="big">Drop your deck, or choose a file</div>
-          <div class="sm">PDF, PPT or Keynote &middot; up to 40 MB</div>
+          <div class="sm">PDF, PPT or Keynote &middot; up to ${MAX_MB} MB</div>
         </div>
         <input id="fi" type="file" accept=".pdf,.ppt,.pptx,.key,application/pdf" hidden>
         <span class="err" id="ferr" style="display:none">A deck is the one thing we cannot do without.</span>
@@ -299,11 +306,36 @@ function wireForm() {
   d.addEventListener('drop', e => { if (e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]); });
   fi.onchange = () => { if (fi.files[0]) setFile(fi.files[0]); };
 
+  /* CHECKED AT PICK TIME, NOT AFTER THE UPLOAD. The server's own check ran in
+     phase two — which is to say after every byte had already been sent. On a
+     slow connection that is minutes of uploading before being told no. This
+     costs nothing and happens before anything moves; the server still checks
+     too, because a client can say whatever it likes. */
+  function rejectFile(msg) {
+    S.file = null;
+    d.classList.remove('has');
+    d.innerHTML = `<div class="big">Drop your deck, or choose a file</div>
+      <div class="sm">PDF, PPT or Keynote &middot; up to ${MAX_MB} MB</div>`;
+    const e = $('ferr');
+    e.textContent = msg;
+    e.style.display = 'block';
+  }
+
   function setFile(f) {
+    if (!DECK_EXT.test(f.name)) {
+      return rejectFile('We can read PDF, PowerPoint and Keynote. That file is not one of them.');
+    }
+    if (f.size > MAX_MB * 1048576) {
+      return rejectFile(`That file is ${(f.size / 1048576).toFixed(1)} MB and the limit is ${MAX_MB} MB. ` +
+        'Export it lighter \u2014 flattening images usually does it \u2014 and try again.');
+    }
+    if (!f.size) return rejectFile('That file is empty.');
+
     S.file = f;
     $('ferr').style.display = 'none';
     d.classList.add('has');
-    d.innerHTML = `<span class="fi">PDF</span><span class="nm"><b>${esc(f.name)}</b>
+    d.innerHTML = `<span class="fi">${esc((f.name.split('.').pop() || '').toUpperCase().slice(0, 4))}</span>
+      <span class="nm"><b>${esc(f.name)}</b>
       <span>${(f.size / 1048576).toFixed(1)} MB &middot; tap to replace</span></span>`;
   }
 
@@ -348,6 +380,7 @@ async function runIt() {
         partner: CFG.partner, name: S.name, email: S.email, company: S.company,
         room: S.room, share: S.share,
         fileName: S.file.name, contentType: S.file.type || 'application/pdf',
+        size: S.file.size,
       });
       S.intakeId = a.intakeId;
       const put = await fetch(a.uploadUrl, {

@@ -160,6 +160,16 @@ await t('an oversized deck is rejected and deleted', async () => {
   FILES.set(DOCS.get('intakes/' + a.payload.intakeId).deckPath, { size: 60 * 1024 * 1024 });
   eq((await call('POST', { intakeId: a.payload.intakeId, uploaded: true })).code, 413, 'code');
 });
+await t('an oversized deck is refused BEFORE an upload url is minted', async () => {
+  const r = await call('POST', { ...OK, email: 'early@northwind.health', size: 60 * 1024 * 1024 });
+  eq(r.code, 413, 'code');
+  if (r.payload.uploadUrl) throw new Error('it handed out an upload url anyway');
+  if (r.payload.maxMb !== 40) throw new Error('it did not say what the limit is');
+});
+await t('a deck inside the limit still gets a url', async () => {
+  const r = await call('POST', { ...OK, email: 'fine@northwind.health', size: 5 * 1024 * 1024 });
+  eq(r.code, 200, 'code');
+});
 await t('an unknown intake id → 404', async () =>
   eq((await call('POST', { intakeId: 'nope', uploaded: true })).code, 404, 'code'));
 

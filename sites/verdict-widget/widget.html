@@ -125,8 +125,9 @@ input[aria-invalid=true] ~ .err{display:block}
 .drop .sm{font-size:13px;color:var(--t4)}
 .drop.has{border-style:solid;border-color:color-mix(in srgb,var(--acc) 55%,transparent);
   background:var(--acc-film);text-align:left;display:flex;align-items:center;gap:.65rem}
-.drop.has .fi{flex:0 0 auto;width:30px;height:30px;border-radius:8px;display:grid;place-items:center;
-  background:var(--acc);color:var(--acc-ink);font:700 10px/1 var(--w-display,sans-serif)}
+.drop.has .fi{flex:0 0 auto;min-width:34px;height:30px;padding:0 .4rem;border-radius:8px;
+  display:grid;place-items:center;letter-spacing:.02em;
+  background:var(--acc);color:var(--acc-ink);font:700 11px/1 var(--w-display,sans-serif)}
 .drop.has .nm{min-width:0;flex:1 1 auto}
 .drop.has .nm b{display:block;font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .drop.has .nm span{font-size:13px;color:var(--t4)}
@@ -239,7 +240,7 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;
 /* HOUSE RULE: nothing under 14px once the panel goes full-screen on a phone. */
 @media(max-width:640px){
   .lede,.fact,.check span,.hint,.sell p,.sell .gate,.run .t span,.foot,.head .what,
-  label,.drop .sm,.drop.has .nm span,.err,.addr,code,.sell .lbl,.eyebrow,.back,
+  label,.drop .sm,.drop.has .nm span,.drop.has .fi,.err,.addr,code,.sell .lbl,.eyebrow,.back,
   .wait p,.wait b,.warn,.by,.sell .price,.sell .gate .sc{font-size:14px}
   .body{padding:1.1rem 1rem .4rem}
   .foot{gap:.45rem}
