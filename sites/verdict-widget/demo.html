@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Partner host — stand-in</title>
+<meta name="description" content="Internal stand-in for a partner site, used to see the VerdictScore pre-screen widget in situ.">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@400;600;700&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/* ══ A STAND-IN, NOT A COPY ════════════════════════════════════════════════
+   Every word and image here is a placeholder. What is matched is the visual
+   CHARACTER of the host we measured — light #E2E2E2 ground, white content
+   band, #212934 navy text, a bronze mark, Zilla Slab headings over Open Sans
+   body — because that is the only thing that tells us whether a dark violet
+   panel can sit on it without looking like an advert. */
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--ink:#212934;--ink-2:#4A4E57;--ground:#E2E2E2;--paper:#fff;--bronze:#A68B5B;--rule:#DCDCDC}
+body{background:var(--ground);color:var(--ink);font:400 16px/1.65 "Open Sans",system-ui,sans-serif}
+h1,h2,h3{font-family:"Zilla Slab",Georgia,serif;font-weight:600;line-height:1.2;letter-spacing:-.005em}
+img{display:block;max-width:100%}
+a{color:#1B5E9E}
+.ribbon{background:#2B2238;color:#fff;font-size:13px;text-align:center;padding:.5rem 1rem;
+  font-weight:600;letter-spacing:.02em}
+.ribbon span{opacity:.7;font-weight:400}
+header{background:var(--paper);border-bottom:1px solid var(--rule)}
+.bar{max-width:1240px;margin:0 auto;padding:1rem 1.5rem;display:flex;align-items:center;gap:2rem}
+.logo{display:flex;align-items:center;flex:0 0 auto}
+.logo img{height:52px;width:auto}
+nav{margin-left:auto;display:flex;gap:1.5rem;flex-wrap:wrap}
+nav a{color:var(--ink);text-decoration:none;font-size:15px}
+nav a:hover,nav a.on{color:var(--bronze)}
+.hero{height:340px;background:linear-gradient(180deg,#9FB4C7,#7E96AC);position:relative;overflow:hidden}
+.hero img{width:100%;height:100%;object-fit:cover;opacity:.9}
+main{max-width:1240px;margin:0 auto;padding:3rem 1.5rem 4rem;display:grid;gap:3rem;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+h1{font-size:34px;margin-bottom:1rem}
+h1+hr{border:0;border-top:1px solid var(--rule);margin-bottom:1.3rem}
+p{margin-bottom:1rem;color:var(--ink-2)}
+.cards{display:grid;gap:1.5rem;grid-template-columns:1fr 1fr;align-content:start}
+.card{background:var(--paper);border:1px solid var(--rule)}
+.card img{width:100%;aspect-ratio:16/10;object-fit:cover}
+.card .b{padding:1rem 1.1rem}
+.card h3{font-size:17px;margin-bottom:.35rem}
+.card p{font-size:14px;margin:0}
+.apply{grid-column:1/-1;background:var(--paper);border:1px solid var(--rule);
+  padding:2rem;display:flex;gap:1.5rem;align-items:center;flex-wrap:wrap}
+.apply h2{font-size:24px;margin-bottom:.4rem}
+.apply p{margin:0;max-width:52ch}
+.apply .btn{margin-left:auto;background:var(--bronze);color:#fff;text-decoration:none;
+  font-weight:700;padding:.9rem 1.8rem;font-size:15px;white-space:nowrap;min-height:48px;
+  display:inline-flex;align-items:center}
+.apply .btn:hover{background:#8C7649}
+footer{background:#212934;color:#C9CDD3;padding:2.5rem 1.5rem;font-size:14px}
+footer div{max-width:1240px;margin:0 auto}
+@media(max-width:900px){
+  main{grid-template-columns:1fr;padding:2rem 1.25rem 3rem;gap:2rem}
+  nav{display:none}
+  .hero{height:200px}
+  .logo img{height:40px}
+  h1{font-size:27px}
+  .cards{grid-template-columns:1fr}
+  .apply{padding:1.5rem}
+  .apply .btn{margin-left:0;width:100%;justify-content:center}
+  /* the widget sits bottom-right; keep the page's own CTA clear of it */
+  footer{padding-bottom:6.5rem}
+}
+</style>
+</head>
+<body>
+
+<div class="ribbon">STAND-IN HOST PAGE A <span>&mdash; light, serif, bronze. Placeholder content, not the partner's real site. <a href="./demo-b.html" style="color:#C9B6FF">See the same widget on host B &rarr;</a></span></div>
+
+<header>
+  <div class="bar">
+    <a class="logo" href="#" aria-label="Partner home">
+      <img src="./demo-logo-tca.svg" alt="Partner logo placeholder" width="286" height="86">
+    </a>
+    <nav>
+      <a href="#" class="on">Home</a><a href="#">Entrepreneurs</a><a href="#">Angels</a>
+      <a href="#">About Us</a><a href="#">Portfolio</a><a href="#">Investor Login</a>
+    </nav>
+  </div>
+</header>
+
+<div class="hero"><img src="https://placehold.co/1440x340/8FA6BA/6B8299?text=+" alt="Placeholder hero banner" width="1440" height="340"></div>
+
+<main>
+  <section>
+    <h1>Catalyzing the startup ecosystem</h1><hr>
+    <p>Placeholder copy standing in for the partner's introduction. Two or three sentences
+      describing the group, its members and the funds it operates.</p>
+    <p>A second placeholder paragraph covering the kinds of company the group backs and the
+      stages at which it invests.</p>
+    <p>A third, shorter line about mentorship and operational support.</p>
+  </section>
+
+  <section class="cards">
+    <article class="card">
+      <img src="https://placehold.co/560x350/D8D8D8/8A8A8A?text=+" alt="Placeholder article thumbnail" loading="lazy" width="560" height="350">
+      <div class="b"><h3>Placeholder headline one</h3><p>A short standfirst of about a line and a half.</p></div>
+    </article>
+    <article class="card">
+      <img src="https://placehold.co/560x350/D8D8D8/8A8A8A?text=+" alt="Placeholder article thumbnail" loading="lazy" width="560" height="350">
+      <div class="b"><h3>Placeholder headline two</h3><p>A short standfirst of about a line and a half.</p></div>
+    </article>
+  </section>
+
+  <section class="apply">
+    <div>
+      <h2>Apply for funding</h2>
+      <p>The host page's own call to action. The widget has to coexist with this, not compete with it.</p>
+    </div>
+    <a class="btn" href="#">Apply Now!</a>
+  </section>
+</main>
+
+<footer><div>Placeholder footer &middot; stand-in for a partner site.</div></footer>
+
+<!-- ── THE ENTIRE INTEGRATION. One tag. ──────────────────────────────── -->
+<script src="./embed.js"
+        data-partner="TCA Venture Group"
+        data-short="TCA"
+        data-logo="./demo-logo-tca.svg"
+        data-theme="light"
+        data-accent="#A68B5B"
+        data-font="Zilla Slab"
+        data-font-body="Open Sans"
+        data-radius="2"
+        data-label="Is your deck ready?"
+        data-sub="Free pre-screen · 2 min"
+        data-price="199"
+        data-demo="1"
+        data-bar="75"
+        defer></script>
+</body>
+</html>

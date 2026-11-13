@@ -147,5 +147,19 @@ service cloud.firestore {
       allow create: if isOperatorOf(request.resource.data.orgId);
       allow delete: if isOperatorOf(engData(resource.data.engagementId).orgId);
     }
+
+    // Widget intakes — the parked submissions from a partner site's pre-screen
+    // widget. CLOSED TO EVERY CLIENT, in both directions, with no exception.
+    //
+    // The record holds an email, a company, an IP and a path to an unread deck,
+    // for a person who by definition has no account yet, so there is nobody who
+    // could be granted a read without granting it to everyone. It is written and
+    // read ONLY by the Admin SDK (/api/intake, and the claim step that will
+    // follow it), which bypasses these rules. Firestore would deny an unmatched
+    // path anyway; this says so out loud, because an unwritten rule reads like an
+    // oversight to the next person deciding whether to add one.
+    match /intakes/{intakeId} {
+      allow read, write: if false;
+    }
   }
 }

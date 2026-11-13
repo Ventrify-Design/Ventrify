@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 286 86" width="286" height="86"
+     role="img" aria-label="Partner logo placeholder">
+  <!-- STAND-IN for the partner's real mark: three nested bronze leaf forms,
+       navy sans wordmark, bronze letterspaced descriptor. Replace with their
+       actual SVG before this goes anywhere near their site. -->
+  <g fill="none" stroke="#A68B5B" stroke-width="2.5" stroke-linejoin="round">
+    <path d="M10 70 Q66 68 84 13 Q27 16 10 70 Z"/>
+    <path d="M10 55 Q57 56 72 12 Q24 11 10 55 Z"/>
+    <path d="M13 41 Q48 45 60 11 Q24 9 13 41 Z"/>
+  </g>
+  <text x="101" y="47" font-family="Helvetica Neue,Helvetica,Arial,sans-serif"
+        font-size="44" font-weight="700" fill="#1B2A4C" letter-spacing="1">TCA</text>
+  <text x="103" y="71" font-family="Helvetica Neue,Helvetica,Arial,sans-serif"
+        font-size="14.5" font-weight="400" fill="#A68B5B" letter-spacing="3.1">VENTURE GROUP</text>
+</svg>

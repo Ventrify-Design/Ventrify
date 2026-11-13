@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Partner host B — stand-in</title>
+<meta name="description" content="Second stand-in partner site, used to prove the pre-screen widget re-themes rather than being rebuilt.">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ══ THE OPPOSITE HOST ═════════════════════════════════════════════════════
+   Host A is light, serif, bronze and square-cornered. This one is dark, grotesk,
+   teal and heavily rounded — deliberately as far from it as a real partner is
+   likely to be. The widget on this page is the SAME four files as host A with
+   six attributes changed. That is the test; a white-label that only works on
+   one host is a skin, not a system. */
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--ink:#0B0F14;--panel:#121820;--line:rgba(255,255,255,.09);
+  --t1:#E8EEF2;--t2:rgba(232,238,242,.62);--teal:#2DD4BF}
+body{background:var(--ink);color:var(--t1);font:400 16px/1.65 Inter,system-ui,sans-serif}
+h1,h2,h3{font-family:"Space Grotesk",system-ui,sans-serif;font-weight:700;letter-spacing:-.03em;line-height:1.1}
+img{display:block;max-width:100%}
+.ribbon{background:#1C1630;color:#D8CBFF;font-size:13px;text-align:center;padding:.5rem 1rem;font-weight:600}
+.ribbon span{opacity:.75;font-weight:400}
+.ribbon a{color:#C9B6FF}
+header{position:sticky;top:0;background:rgba(11,15,20,.82);backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line);z-index:5}
+.bar{max-width:1180px;margin:0 auto;padding:1rem 1.5rem;display:flex;align-items:center;gap:2rem}
+nav{margin-left:auto;display:flex;gap:1.75rem}
+nav a{color:var(--t2);text-decoration:none;font-size:15px}
+nav a:hover{color:var(--t1)}
+.cta{background:var(--teal);color:#06231F;text-decoration:none;font-weight:600;font-size:15px;
+  padding:.65rem 1.25rem;border-radius:999px;min-height:44px;display:inline-flex;align-items:center}
+main{max-width:1180px;margin:0 auto;padding:5rem 1.5rem 6rem}
+.hero{max-width:720px;margin-bottom:4rem}
+.eyebrow{display:inline-block;font:500 12px/1 "Space Grotesk",sans-serif;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--teal);margin-bottom:1.1rem}
+h1{font-size:clamp(2.2rem,5.4vw,3.6rem);margin-bottom:1.1rem}
+.hero p{color:var(--t2);font-size:18px;max-width:54ch}
+.grid{display:grid;gap:1.25rem;grid-template-columns:repeat(3,1fr)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:1.6rem}
+.card .n{font:700 28px/1 "Space Grotesk",sans-serif;color:var(--teal);margin-bottom:.5rem}
+.card h3{font-size:17px;margin-bottom:.4rem}
+.card p{color:var(--t2);font-size:14.5px}
+footer{border-top:1px solid var(--line);color:var(--t2);font-size:14px;padding:2.5rem 1.5rem}
+footer div{max-width:1180px;margin:0 auto}
+@media(max-width:900px){
+  nav{display:none}
+  main{padding:3rem 1.25rem 4rem}
+  .grid{grid-template-columns:1fr}
+  footer{padding-bottom:7rem}
+}
+</style>
+</head>
+<body>
+
+<div class="ribbon">STAND-IN HOST PAGE B <span>&mdash; dark, grotesk, teal, round. Same widget, six attributes changed.
+  <a href="./demo.html">&larr; Back to host A</a></span></div>
+
+<header><div class="bar">
+  <img src="./demo-logo-harbour.svg" alt="Placeholder partner logo" width="150" height="40">
+  <nav><a href="#">Thesis</a><a href="#">Portfolio</a><a href="#">Team</a><a href="#">Notes</a></nav>
+  <a class="cta" href="#">Pitch us</a>
+</div></header>
+
+<main>
+  <section class="hero">
+    <span class="eyebrow">Pre-seed &amp; seed</span>
+    <h1>Placeholder headline for a second partner.</h1>
+    <p>Stand-in copy. The point of this page is only that it looks nothing like host A &mdash;
+      different ground, different type, different colour, different corners.</p>
+  </section>
+  <section class="grid">
+    <article class="card"><div class="n">120</div><h3>Placeholder stat</h3><p>A short line of stand-in description.</p></article>
+    <article class="card"><div class="n">$40M</div><h3>Placeholder stat</h3><p>A short line of stand-in description.</p></article>
+    <article class="card"><div class="n">14</div><h3>Placeholder stat</h3><p>A short line of stand-in description.</p></article>
+  </section>
+</main>
+
+<footer><div>Placeholder footer &middot; stand-in for a second partner site.</div></footer>
+
+<!-- SAME FILES AS HOST A. Six attributes differ. -->
+<script src="./embed.js"
+        data-partner="Harbour VC"
+        data-short="Harbour"
+        data-logo="./demo-logo-harbour.svg"
+        data-theme="dark"
+        data-accent="#2DD4BF"
+        data-font="Space Grotesk"
+        data-radius="18"
+        data-label="Pitch us — get a read first"
+        data-sub="Free pre-screen · 2 min"
+        data-price="199"
+        data-demo="1"
+        data-bar="70"
+        defer></script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 40" width="150" height="40" role="img" aria-label="Partner logo placeholder">
+  <path d="M8 28 L16 10 L24 28 Z" fill="none" stroke="#2DD4BF" stroke-width="2.2" stroke-linejoin="round"/>
+  <circle cx="16" cy="30" r="2.6" fill="#2DD4BF"/>
+  <text x="34" y="26" font-family="Inter,system-ui,sans-serif" font-size="17" font-weight="700" fill="#E6F6F4" letter-spacing="-.4">Harbour</text>
+  <text x="112" y="26" font-family="Inter,system-ui,sans-serif" font-size="17" font-weight="300" fill="#2DD4BF" letter-spacing="-.4">VC</text>
+</svg>
