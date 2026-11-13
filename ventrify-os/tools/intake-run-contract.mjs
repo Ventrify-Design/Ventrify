@@ -14,6 +14,7 @@
  *   node tools/intake-run-contract.mjs --canary   prove the gate can fail
  */
 import { createRequire } from 'module';
+import { readFileSync } from 'node:fs';
 const require = createRequire(import.meta.url);
 const CANARY = process.argv.includes('--canary');
 
@@ -254,6 +255,36 @@ await t('the engagement lives in the FOUNDER’s org, which is what their worksp
   eq(e.partnerOrgId, 'tca-widget', 'partnerOrgId (the referring partner)');
   eq(e.founderEmail, 'alex@northwind.health', 'founderEmail');
   eq(e.tier, 'prescreen', 'tier');
+});
+
+/* THE FIELD NAMES BELONG TO THE PRODUCT, AND THIS GATE ASKS THE PRODUCT.
+   The previous version asserted `type === 'assessment'` — a name invented in
+   intake-run.js. The assertion passed, the gate was green, and the workspace ignored the
+   field completely: it reads `engagementType`. The engagement was filed as a BUILD, the
+   row linked to program.html, and the founder got a blank page.
+
+   So this does not restate a field name. It reads the adapter's own test and asserts the
+   document satisfies THAT. Rename it in the adapter and this gate fails, which is the
+   point — a gate that only checks our side of a contract is checking nothing. */
+await t('the engagement passes the workspace adapter\u2019s OWN test for an assessment', async () => {
+  seed();
+  await drain();
+  const e = DOCS.get('engagements/ps-I1');
+  const adapter = readFileSync(new URL('../shared/m3/workspace-adapter.js', import.meta.url), 'utf8');
+  const m = adapter.match(/const isAssess = p\.(\w+) === 'assessment'/);
+  if (!m) throw new Error('could not find the adapter\u2019s assessment test \u2014 has it been renamed?');
+  eq(e[m[1]], 'assessment', `engagement.${m[1]} \u2014 the field the workspace actually reads`);
+  if ('type' in e) throw new Error('`type` is an invented field; it misled once and must not come back');
+});
+
+await t('and carries what the portfolio row renders, so it is not \u201cPhase undefined / Stuck\u201d', async () => {
+  seed();
+  await drain();
+  const e = DOCS.get('engagements/ps-I1');
+  eq(e.health, 'on-track', 'health');
+  eq(e.phase, 0, 'phase');
+  eq(e.organisationSlug, 'northwind-health', 'organisationSlug');
+  if (!e.lastActivityDetail) throw new Error('no lastActivityDetail \u2014 the row has nothing to say');
 });
 
 await t('a founder with no workspace gets one, with ONE pre-screen and no free assessment', async () => {

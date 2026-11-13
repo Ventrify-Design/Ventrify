@@ -305,16 +305,33 @@ module.exports = async (req, res) => {
           throw e;
         }
         founderOrgId = fo.orgId;
+        /* THE FIELD NAMES ARE THE PRODUCT'S, NOT OURS.
+           The first version wrote `type: 'assessment'` — a name invented here. The
+           workspace reads `engagementType` (shared/m3/workspace-adapter.js:51), so the
+           engagement was classified as a BUILD: it counted under "1 build · 0 assess",
+           the row linked to program.html instead of assess-next.html (a blank page,
+           because a build page cannot render an assessment), and program.html's missing
+           `phase` and `health` rendered as "Phase undefined" and "Stuck".
+
+           One wrong field name, three symptoms, none of which looked like a field name.
+           The rest below mirror what the product writes for a UI-created assessment —
+           compared against 22 real ones rather than guessed. */
+        const today = new Date().toISOString().slice(0, 10);
         await engRef.set({
           name: claimed.company || claimed.name || 'Untitled venture',
-          orgId: founderOrgId, partnerOrgId: orgId,
+          orgId: founderOrgId, partnerOrgId: orgId, organisationSlug: founderOrgId,
           founderEmail: String(claimed.email || '').toLowerCase(),
           founderName: claimed.name || null,
-          type: 'assessment', tier: 'prescreen',
+          engagementType: 'assessment', tier: 'prescreen',
+          health: 'on-track', phase: 0, briefSubmitted: false,
+          startDate: today, daysActive: 0,
+          lastActivity: 'just now',
+          lastActivityDetail: `Pre-screen from the ${claimed.partner || 'partner'} widget`,
           source: 'widget', partner: claimed.partner || null, intakeId,
           shareWithPartner: claimed.shareWithPartner !== false,
           dataRoomLink: claimed.room || null,
           createdAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
         }, { merge: true });
 
       } else if (step === 'deck') {
