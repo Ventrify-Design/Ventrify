@@ -77,11 +77,17 @@ const BUDGET_MS = Math.max(10000, Number(process.env.INTAKE_RUN_BUDGET_MS || 200
    enough that a crash does not strand the founder for an hour. */
 const LEASE_MS = 90 * 1000;
 
+/* A data room is read to inform the pre-screen, not archived. The deck plus this many
+   documents is far past the point where another file changes the band, and it bounds
+   how long one tick spends fetching from Drive. */
+const ROOM_MAX_DOCS = 25;
+
 /* THE PIPELINE, derived from the engine so adding a nugget cannot silently skip it.
    `_prescreen2.NUGGETS` is the same array memo.js dispatches on. */
 const STEPS = [
   'engagement',          // create engagements/<id> in the mapped partner org
   'deck',                // copy the intake deck into founder-docs/ and ingest it
+  'room',                // link + read the Google Drive data room, if one was given
   'ps2-brief',
   'ps2-research',
   ...E.NUGGETS.map(n => 'nugget:' + n.key),
@@ -329,7 +335,6 @@ module.exports = async (req, res) => {
           lastActivityDetail: `Pre-screen from the ${claimed.partner || 'partner'} widget`,
           source: 'widget', partner: claimed.partner || null, intakeId,
           shareWithPartner: claimed.shareWithPartner !== false,
-          dataRoomLink: claimed.room || null,
           createdAt: FieldValue.serverTimestamp(),
           updatedAt: FieldValue.serverTimestamp(),
         }, { merge: true });
@@ -352,6 +357,52 @@ module.exports = async (req, res) => {
           file: { name }, storagePath: dest,
         });
         if (r.status !== 200) return fail('ingest_failed', `${r.status} ${r.body && r.body.error}`);
+
+      } else if (step === 'room') {
+        /* THE DOC SHAPE IS NOT WRITTEN HERE, AND THAT IS THE POINT.
+           The first version stored `dataRoomLink: <url>` — another invented field, and the
+           workspace showed an empty data room for exactly the reason it showed a blank
+           assessment page. `ingest-docs` already has a `drive-list` action that parses the
+           link, reads the folder and writes the canonical
+           `dataRoom: {provider, folderId, folderUrl, folderName, fileCount, linkedBy,
+           linkedAt}`. Call it; do not reproduce it. */
+        if (!claimed.room) {
+          // Nothing given. The deck alone is a complete pre-screen (_prescreen2 §4).
+        } else {
+          const list = await callLocal(ingest, {
+            idToken, engagementId, action: 'drive-list', folderUrl: claimed.room,
+          });
+
+          if (list.status !== 200) {
+            /* A room we cannot open is NOT a failed run. The widget told the founder:
+               "If it is not shared with room@ventrify.io, we will read the deck alone and
+               tell you." Honour that — record why, and carry on. Failing here would throw
+               away a perfectly good deck-only pre-screen over a sharing setting. */
+            await engRef.set({
+              dataRoom: {
+                provider: 'google-drive', folderUrl: claimed.room,
+                linkedAt: new Date().toISOString(),
+                unreadable: (list.body && list.body.error) || 'drive_error',
+                unreadableDetail: (list.body && list.body.detail) || null,
+              },
+            }, { merge: true });
+          } else {
+            /* Ingest what is in there so the pre-screen actually READS the room rather
+               than merely displaying that one exists. Each file is parsed, not modelled,
+               so this costs no credits. A tick that runs out of budget mid-way leaves the
+               cursor on `room` and the next one resumes — ingest is keyed by document
+               name, so re-reading a file overwrites rather than duplicates. */
+            const files = (list.body.files || []).slice(0, ROOM_MAX_DOCS);
+            for (const f of files) {
+              if (Date.now() - started > BUDGET_MS) break;
+              await callLocal(ingest, {
+                idToken, engagementId, docType: 'dataroom',
+                file: { name: f.name, driveId: f.driveId,
+                        exportMime: f.exportMime || null, driveModified: f.modifiedTime || null },
+              });
+            }
+          }
+        }
 
       } else if (step === 'email') {
         /* The founder's way back in. NOTE: this is still the generic sign-in template —

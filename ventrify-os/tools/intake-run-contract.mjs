@@ -106,12 +106,19 @@ stub('../api/_auth.js', { idTokenFor: async e => ({ idToken: 'tok:' + e, uid: 'u
 
 /* The three handlers, recorded rather than run. FAIL_AT makes one of them refuse, so
    the "a broken phase stops the pipeline" rule is exercised and not assumed. */
-let FAIL_AT = null, REPLY_AT = null;
+let FAIL_AT = null, REPLY_AT = null, ROOM_UNREADABLE = false;
 const handlerStub = name => async (req, res) => {
   CALLS.push({ name, body: req.body });
   const tag = name === 'memo' ? (req.body.nugget ? 'nugget:' + req.body.nugget : req.body.action) : name;
   if (REPLY_AT && REPLY_AT.tag === tag) { res.status(REPLY_AT.status).json(REPLY_AT.body); return; }
   if (FAIL_AT === tag) { res.status(500).json({ error: 'boom' }); return; }
+  if (req.body.action === 'drive-list') {
+    if (ROOM_UNREADABLE) { res.status(404).json({ error: 'drive_not_shared', detail: 'not shared' }); return; }
+    res.status(200).json({ ok: true, folderId: 'F1', folderName: 'Data Room',
+      files: [{ driveId: 'd1', name: 'financials.xlsx', exportMime: null, modifiedTime: 'T' },
+              { driveId: 'd2', name: 'cap-table.pdf', exportMime: null, modifiedTime: 'T' }] });
+    return;
+  }
   res.status(200).json({ ok: true });
 };
 stub('../api/memo.js', handlerStub('memo'));
@@ -131,11 +138,12 @@ const call = async (headers = {}) => {
 
 /** One submitted intake, exactly as /api/intake writes it. */
 function seed(over = {}) {
-  DOCS = new Map(); FILES = new Set(); COPIES = []; CALLS = []; WHERES = 0; FAIL_AT = null; REPLY_AT = null;
+  DOCS = new Map(); FILES = new Set(); COPIES = []; CALLS = []; WHERES = 0; FAIL_AT = null; REPLY_AT = null; ROOM_UNREADABLE = false;
   DOCS.set('intakes/I1', {
     state: 'submitted', partner: 'TCA Venture Group', email: 'alex@northwind.health',
     name: 'Alex Moreau', company: 'Northwind Health', shareWithPartner: true,
     deckPath: 'intake/I1/deck.pdf', deckFileName: 'deck.pdf',
+    room: 'https://drive.google.com/drive/folders/XYZ',
     createdAt: new Date(), leaseUntil: 0, ...over,
   });
   DOCS.set('organisations/tca-widget', { name: 'TCA (widget)', operatorEmails: ['svc@ventrify.io'] });
@@ -241,6 +249,42 @@ await t('a missing deck fails closed rather than pre-screening an empty venture'
   await drain();
   eq(DOCS.get('intakes/I1').state, 'failed', 'state');
   eq(DOCS.get('intakes/I1').failedReason, 'deck_missing', 'reason');
+});
+
+console.log('\n4b. THE DATA ROOM IS LINKED THE PRODUCT\u2019S WAY, AND ACTUALLY READ');
+
+await t('the room is linked through ingest-docs drive-list, not by hand', async () => {
+  seed();
+  await drain();
+  const dl = CALLS.find(c => c.body && c.body.action === 'drive-list');
+  if (!dl) throw new Error('drive-list was never called \u2014 the dataRoom doc would be invented again');
+  eq(dl.body.folderUrl, 'https://drive.google.com/drive/folders/XYZ', 'folderUrl');
+  const e = DOCS.get('engagements/ps-I1');
+  if ('dataRoomLink' in e) throw new Error('`dataRoomLink` is an invented field; it showed an empty room once');
+});
+
+await t('its documents are ingested, so the pre-screen READS the room', async () => {
+  seed();
+  await drain();
+  const ing = CALLS.filter(c => c.name === 'ingest' && c.body.docType === 'dataroom');
+  eq(ing.length, 2, 'room documents ingested');
+  if (!ing.every(c => c.body.file && c.body.file.driveId)) throw new Error('ingested without a driveId');
+});
+
+await t('a room we cannot open does NOT fail the run \u2014 the deck alone is still a verdict', async () => {
+  seed(); ROOM_UNREADABLE = true;
+  const r = await drain();
+  eq(DOCS.get('intakes/I1').state, 'done', 'state');
+  eq(DOCS.get('engagements/ps-I1').dataRoom.unreadable, 'drive_not_shared', 'the reason is recorded');
+  if (!CALLS.some(c => c.name === 'email')) throw new Error('the founder was not told');
+  eq(r.payload.more, false, 'more');
+});
+
+await t('no room given is simply skipped', async () => {
+  seed({ room: null });
+  await drain();
+  if (CALLS.some(c => c.body && c.body.action === 'drive-list')) throw new Error('it called Drive with no link');
+  eq(DOCS.get('intakes/I1').state, 'done', 'state');
 });
 
 console.log('\n5. THE FOUNDER LANDS ON SOMETHING, NOT AN EMPTY PORTFOLIO');
