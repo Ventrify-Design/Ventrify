@@ -64,7 +64,16 @@ export async function completeMagicLinkIfPresent() {
   if (!isSignInWithEmailLink(auth, window.location.href)) return null;
   let email = window.localStorage.getItem(EMAIL_KEY);
   if (!email) {
-    // Link opened on a different device/browser → confirm the address.
+    /* `vse` is the address the link was issued to, put there by /api/send-email.
+       Server-minted links never populate localStorage — nothing in this browser sent
+       them — so without this every widget founder was prompted to retype the address
+       they had just been emailed at. The oobCode remains the credential; Firebase
+       refuses the pair if they do not match. */
+    const vse = new URL(window.location.href).searchParams.get('vse');
+    if (vse) { try { email = atob(vse.replace(/-/g, '+').replace(/_/g, '/')); } catch (e) { /* ignore */ } }
+  }
+  if (!email) {
+    // Link opened on a different device/browser, and no address on it → ask.
     email = window.prompt('Confirm the email address this invite was sent to:');
   }
   if (!email) return null;
@@ -72,7 +81,7 @@ export async function completeMagicLinkIfPresent() {
   window.localStorage.removeItem(EMAIL_KEY);
   // Drop Firebase's auth query params, keep our own (e.g. ?id=) intact.
   const url = new URL(window.location.href);
-  ['apiKey', 'oobCode', 'mode', 'continueUrl', 'lang', 'tenantId'].forEach(p => url.searchParams.delete(p));
+  ['apiKey', 'oobCode', 'mode', 'continueUrl', 'lang', 'tenantId', 'vse'].forEach(p => url.searchParams.delete(p));
   window.history.replaceState({}, document.title, url.pathname + (url.search || '') + url.hash);
   return cred.user;
 }

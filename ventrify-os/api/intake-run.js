@@ -66,7 +66,12 @@ const E = require('./_prescreen2.js');
    42000 — the cursor means that costs more ticks, never a broken run. Nothing here is
    load-bearing on the higher limit; it just lets one tick finish a whole pre-screen
    (~5 min, tools/run-timing.mjs) instead of eight. */
-const BUDGET_MS = Math.max(10000, Number(process.env.INTAKE_RUN_BUDGET_MS || 240000));
+const BUDGET_MS = Math.max(10000, Number(process.env.INTAKE_RUN_BUDGET_MS || 200000));
+/* The budget gates whether a step STARTS, so the function can still be killed by the
+   300s ceiling if a step that began at 199s runs long. 100s of headroom covers the
+   slowest phase observed (research, with web search). A kill is survivable — see the
+   step-already-done handling below — but it costs a repeated model call, so the
+   headroom is cheaper than the retry. */
 
 /* Long enough that a tick which dies mid-step cannot be lapped by the next one, short
    enough that a crash does not strand the founder for an hour. */
@@ -170,7 +175,16 @@ async function founderOrgFor(db, FieldValue, intake, operator) {
      into one workspace. */
   const base = slug(intake.company) || slug(email.split('@')[0]) || 'venture';
   let orgId = base;
-  if ((await db.collection('organisations').doc(orgId).get()).exists) orgId = base + '-' + slug(intake.__id).slice(0, 6);
+  if ((await db.collection('organisations').doc(orgId).get()).exists) {
+    /* The plain slug is taken by an org that is NOT solely theirs (the check above already
+       rejected it), so fall back to a suffixed id. If THAT is somehow taken too, stop:
+       set({merge:true}) onto a stranger's org would rewrite its name, plan and ownerEmail
+       and add this founder as an operator of it. Failing is recoverable; that is not. */
+    orgId = base + '-' + slug(intake.__id).slice(0, 6);
+    if ((await db.collection('organisations').doc(orgId).get()).exists) {
+      throw new Error('org_id_taken:' + orgId);
+    }
+  }
 
   await db.collection('organisations').doc(orgId).set({
     name: intake.company || intake.name || 'My workspace',
@@ -277,7 +291,19 @@ module.exports = async (req, res) => {
            orgId is the FOUNDER's own workspace and partnerOrgId is the partner's, so the
            founder's portfolio shows it without a special case and the partner reads it
            through the widened line in firestore.rules. See founderOrgFor above. */
-        const fo = await founderOrgFor(db, FieldValue, { ...claimed, __id: intakeId }, operator);
+        /* A thrown error leaves the intake `running`, which is RIGHT for a transient fault
+           — the next tick retries it. It is wrong for a permanent one: org_id_taken cannot
+           resolve itself, so an uncaught throw would re-fail on every tick, forever. Name
+           the permanent case and park the intake instead. */
+        let fo;
+        try {
+          fo = await founderOrgFor(db, FieldValue, { ...claimed, __id: intakeId }, operator);
+        } catch (e) {
+          if (String((e && e.message) || e).startsWith('org_id_taken')) {
+            return fail('org_id_taken', String(e.message));
+          }
+          throw e;
+        }
         founderOrgId = fo.orgId;
         await engRef.set({
           name: claimed.company || claimed.name || 'Untitled venture',
@@ -326,7 +352,23 @@ module.exports = async (req, res) => {
         const body = { idToken, engagementId, action: isNugget ? 'ps2-nugget' : step };
         if (isNugget) body.nugget = step.slice(7);
         const r = await callLocal(memo, body);
-        if (r.status !== 200) return fail('phase_failed', `${step}: ${r.status} ${r.body && r.body.error}`);
+
+        /* A STEP THAT ALREADY RAN IS NOT A FAILURE.
+           The cursor is written AFTER a step returns, so a tick killed in between leaves a
+           phase done and the cursor still pointing at it. The retry then hits claimVenture,
+           which refuses a second pre-screen of the same engagement with
+           `already_prescreened / self` (memo.js:62) — and the whole intake failed, with the
+           founder never emailed, over a pre-screen that had actually SUCCEEDED.
+
+           `self` means THIS engagement already has one, which is precisely the state the
+           retry wanted to reach. Advance. Any other reason is the real duplicate-venture
+           rule catching a genuine duplicate, and must still stop the run. */
+        const err = r.body && r.body.error;
+        const alreadyDone = r.status === 409 && err === 'already_prescreened'
+                            && r.body.reason === 'self';
+        if (r.status !== 200 && !alreadyDone) {
+          return fail('phase_failed', `${step}: ${r.status} ${err}`);
+        }
       }
 
       done.push(step);

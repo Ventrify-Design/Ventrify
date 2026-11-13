@@ -105,10 +105,11 @@ stub('../api/_auth.js', { idTokenFor: async e => ({ idToken: 'tok:' + e, uid: 'u
 
 /* The three handlers, recorded rather than run. FAIL_AT makes one of them refuse, so
    the "a broken phase stops the pipeline" rule is exercised and not assumed. */
-let FAIL_AT = null;
+let FAIL_AT = null, REPLY_AT = null;
 const handlerStub = name => async (req, res) => {
   CALLS.push({ name, body: req.body });
   const tag = name === 'memo' ? (req.body.nugget ? 'nugget:' + req.body.nugget : req.body.action) : name;
+  if (REPLY_AT && REPLY_AT.tag === tag) { res.status(REPLY_AT.status).json(REPLY_AT.body); return; }
   if (FAIL_AT === tag) { res.status(500).json({ error: 'boom' }); return; }
   res.status(200).json({ ok: true });
 };
@@ -129,7 +130,7 @@ const call = async (headers = {}) => {
 
 /** One submitted intake, exactly as /api/intake writes it. */
 function seed(over = {}) {
-  DOCS = new Map(); FILES = new Set(); COPIES = []; CALLS = []; WHERES = 0; FAIL_AT = null;
+  DOCS = new Map(); FILES = new Set(); COPIES = []; CALLS = []; WHERES = 0; FAIL_AT = null; REPLY_AT = null;
   DOCS.set('intakes/I1', {
     state: 'submitted', partner: 'TCA Venture Group', email: 'alex@northwind.health',
     name: 'Alex Moreau', company: 'Northwind Health', shareWithPartner: true,
@@ -333,6 +334,41 @@ await t('a phase that fails stops the pipeline and says which one', async () => 
   eq(d.state, 'failed', 'state');
   if (!/nugget:bear/.test(d.failedDetail || '')) throw new Error('detail: ' + d.failedDetail);
   if (CALLS.some(c => c.name === 'email')) throw new Error('it emailed the founder about a run that broke');
+});
+
+/* The cursor is written AFTER a step returns. A tick killed in that gap leaves the phase
+   done and the cursor still on it, so the retry re-runs a phase that already succeeded.
+   Before this, claimVenture's `already_prescreened/self` failed the whole intake and the
+   founder was never emailed about a pre-screen that had worked. */
+await t('a phase that ALREADY ran advances instead of failing the whole intake', async () => {
+  seed();
+  REPLY_AT = { tag: 'ps2-brief', status: 409,
+               body: { error: 'already_prescreened', reason: 'self', engagementId: 'ps-I1' } };
+  const r = await drain();
+  eq(DOCS.get('intakes/I1').state, 'done', 'state');
+  eq(r.payload.more, false, 'more');
+  if (!CALLS.some(c => c.name === 'email')) throw new Error('the founder was never emailed');
+});
+
+await t('but a DIFFERENT already_prescreened reason still stops it \u2014 that is the real duplicate rule', async () => {
+  seed();
+  REPLY_AT = { tag: 'ps2-brief', status: 409,
+               body: { error: 'already_prescreened', reason: 'fingerprint', engagementId: 'other-eng' } };
+  await drain();
+  eq(DOCS.get('intakes/I1').state, 'failed', 'state');
+});
+
+await t('it never set({merge}) onto an org it does not own', async () => {
+  seed();
+  /* Both candidate ids taken by orgs that are somebody else's. Merging would rewrite
+     their name, plan and ownerEmail and add this founder as an operator. */
+  DOCS.set('organisations/northwind-health', { name: 'Someone else', ownerEmail: 'x@y.com', operatorEmails: ['x@y.com'] });
+  DOCS.set('organisations/northwind-health-i1', { name: 'Also not ours', ownerEmail: 'z@y.com', operatorEmails: ['z@y.com'] });
+  const r = await call();
+  eq(DOCS.get('organisations/northwind-health').name, 'Someone else', 'their org was rewritten');
+  eq(DOCS.get('organisations/northwind-health').ownerEmail, 'x@y.com', 'their ownership was taken');
+  eq(r.payload.failed, 'org_id_taken', 'it parks the intake');
+  eq(DOCS.get('intakes/I1').state, 'failed', 'state \u2014 an unresolvable fault must not retry forever');
 });
 
 console.log('\n7. THE DOOR IS LOCKED WHEN A SECRET IS SET');

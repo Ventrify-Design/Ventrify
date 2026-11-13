@@ -702,6 +702,22 @@ module.exports = async (req, res) => {
     if (type === 'login') {
       const surface = (body.surface === 'Studio') ? 'Studio' : 'Workspace';
       continueUrl = body.continueUrl || ('https://os.ventrify.io/' + (surface === 'Studio' ? 'studio' : 'workspace') + '/');
+      /* CARRY THE ADDRESS ON THE LINK.
+         signInWithEmailLink() needs the email that the link was issued to. The client
+         normally has it in localStorage — but only because the PAGE that sent the link
+         put it there. These links are minted here, server-side, so that key is never
+         set and firebase/auth.js fell through to window.prompt('Confirm the email
+         address...') on EVERY sign-in. A founder who was just emailed a link is then
+         asked to prove they know their own address, which reads like the link failed.
+         This is NOT a secret: the oobCode is the credential, and Firebase rejects the
+         pair unless the address matches the one the code was issued to. Putting it in
+         the URL removes a dead end without weakening anything. auth.js strips it from
+         the address bar once sign-in completes. */
+      try {
+        const cu = new URL(continueUrl);
+        cu.searchParams.set('vse', Buffer.from(email, 'utf8').toString('base64url'));
+        continueUrl = cu.toString();
+      } catch (e) { /* a malformed continueUrl is the caller's problem, not a reason to not send */ }
       ensureAdmin();
       const link = await admin.auth().generateSignInWithEmailLink(email, { url: continueUrl, handleCodeInApp: true });
       subject = `Your Ventrify ${surface} sign-in link`;

@@ -105,9 +105,16 @@ export async function getEngagement(id) {
    returns FAILED_PRECONDITION until somebody builds a composite index, which is exactly
    how /api/intake went down. Two equality reads, merged by id, need no index at all. */
 async function engagementsVisibleTo(orgId) {
+  /* THE PARTNER HALF IS ALLOWED TO FAIL, AND MUST NOT TAKE THE PORTFOLIO WITH IT.
+     A partner engagement lives in the FOUNDER's org, so reading it depends on the
+     `partnerOrgId` clause in firestore.rules. Until those rules are published, Firestore
+     refuses the whole query with permission-denied — and an unguarded Promise.all would
+     turn that into an empty portfolio for an org whose own engagements were fine. The
+     owned half is the one that must always work. */
   const [own, viaPartner] = await Promise.all([
     getDocs(query(engCol(), where('orgId', '==', orgId))),
-    getDocs(query(engCol(), where('partnerOrgId', '==', orgId))),
+    getDocs(query(engCol(), where('partnerOrgId', '==', orgId)))
+      .catch(e => { console.warn('[data] partner engagements unavailable:', e && e.code); return { docs: [] }; }),
   ]);
   const byId = new Map();
   [own, viaPartner].forEach(snap => snap.docs.forEach(d => byId.set(d.id, { id: d.id, ...d.data() })));
@@ -219,8 +226,16 @@ export function watchEngagements(cb) {
     halves.forEach(rows => rows.forEach(r => byId.set(r.id, r)));
     cb([...byId.values()]);
   };
+  /* Same reason as engagementsVisibleTo: an error handler is REQUIRED on the partner
+     listener. onSnapshot reports permission-denied to the error callback, and with none
+     supplied the rejection is unhandled and this listener dies silently — taking the
+     live portfolio with it on any org whose rules have not caught up yet. */
   const sub = (field, slot) => onSnapshot(query(engCol(), where(field, '==', ORG_ID)), (snap) => {
     halves.set(slot, snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    emit();
+  }, (e) => {
+    console.warn('[data] watch(' + field + ') stopped:', e && e.code);
+    halves.set(slot, []);
     emit();
   });
   const offA = sub('orgId', 'own');
