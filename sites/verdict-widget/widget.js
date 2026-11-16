@@ -31,8 +31,13 @@ const CFG = {
   site:     Q.get('site')     || 'https://verdict.ventrify.io',
   price:    Q.get('price')    || '199',
   bar:      Q.get('bar')      || '75',
-  /* ⚠ ASSUMED, NOT MEASURED — one token, change it once we have timed a run. */
-  readyIn:  Q.get('readyIn')  || 'within the hour',
+  /* MEASURED, 2026-11-16: submittedAt → completedAt on the three runs since the
+     sweeper moved to the Vercel */5 cron — 6.6, 6.2, 5.8 min. "Within the hour"
+     was a guess made before any run existed and it undersold the product to the
+     one person watching the screen. The ceiling is the cron interval plus a run
+     (~11 min), so "about ten minutes" has headroom; a retried step costs one
+     more cycle, which is why this says about and not exactly. */
+  readyIn:  Q.get('readyIn')  || 'in about ten minutes',
 };
 const DEMO = Q.get('demo') === '1';
 const API  = (Q.get('api') || 'https://os.ventrify.io').replace(/\/$/, '');
