@@ -301,24 +301,49 @@ await t('the engagement lives in the FOUNDER’s org, which is what their worksp
   eq(e.tier, 'prescreen', 'tier');
 });
 
-/* THE FIELD NAMES BELONG TO THE PRODUCT, AND THIS GATE ASKS THE PRODUCT.
-   The previous version asserted `type === 'assessment'` — a name invented in
-   intake-run.js. The assertion passed, the gate was green, and the workspace ignored the
-   field completely: it reads `engagementType`. The engagement was filed as a BUILD, the
-   row linked to program.html, and the founder got a blank page.
+/* DO NOT ASSERT FIELD NAMES. RUN THE THING THAT READS THEM.
+   Two bugs came from writing a name this file chose: `type` (the workspace reads
+   `engagementType`, so every pre-screen filed as a build and opened a blank page) and
+   `dataRoomLink` (the product writes `dataRoom`, so the room showed empty). Both times
+   the gate was green, because it compared our side of the contract with itself.
 
-   So this does not restate a field name. It reads the adapter's own test and asserts the
-   document satisfies THAT. Rename it in the adapter and this gate fails, which is the
-   point — a gate that only checks our side of a contract is checking nothing. */
-await t('the engagement passes the workspace adapter\u2019s OWN test for an assessment', async () => {
+   So this imports the REAL adapter and feeds it the REAL document the sweeper just
+   wrote, then asserts on what the portfolio row would actually say. Any rename,
+   anywhere in that chain, fails here. */
+await t('the portfolio row the workspace would draw is correct, from the real adapter', async () => {
   seed();
   await drain();
-  const e = DOCS.get('engagements/ps-I1');
-  const adapter = readFileSync(new URL('../shared/m3/workspace-adapter.js', import.meta.url), 'utf8');
-  const m = adapter.match(/const isAssess = p\.(\w+) === 'assessment'/);
-  if (!m) throw new Error('could not find the adapter\u2019s assessment test \u2014 has it been renamed?');
-  eq(e[m[1]], 'assessment', `engagement.${m[1]} \u2014 the field the workspace actually reads`);
-  if ('type' in e) throw new Error('`type` is an invented field; it misled once and must not come back');
+  const { adaptEngagementRow } = await import('../shared/m3/workspace-adapter.js');
+  const doc = DOCS.get('engagements/ps-I1');
+  /* The band lives on the engagement after ps2-band; the stubs do not write it, so
+     supply it here — this gate is about how a FINISHED pre-screen renders. */
+  const row = adaptEngagementRow({ id: 'ps-I1', ...doc, prescreen2: { band: 'MEDIUM' } }, {});
+
+  if (/program\.html/.test(row.href)) throw new Error('row links to the BUILD page: ' + row.href);
+  if (!/assess/.test(row.href)) throw new Error('row does not link to an assessment: ' + row.href);
+  if (/In assessment/.test(row.status.label)) throw new Error('a finished pre-screen reads as unstarted');
+  if (!/Pre-screen/.test(row.status.label)) throw new Error('status does not say it was pre-screened: ' + row.status.label);
+  if (row.progress === 0) throw new Error('0% progress beside a published verdict');
+  if (row.rec) throw new Error('band placed in rec, which renders as ${score}/100');
+  if (!/Pre-screen/.test(row.stage)) throw new Error('stage column calls it an Assessment: ' + row.stage);
+});
+
+await t('the founder\u2019s own stage reaches the row, instead of a guessed "Seed"', async () => {
+  seed({ stage: 'Pre-seed' });
+  await drain();
+  const { adaptEngagementRow } = await import('../shared/m3/workspace-adapter.js');
+  const doc = DOCS.get('engagements/ps-I1');
+  eq(doc.stage, 'Pre-seed', 'engagement.stage');
+  const row = adaptEngagementRow({ id: 'ps-I1', ...doc, prescreen2: { band: 'MEDIUM' } }, {});
+  if (!row.stage.startsWith('Pre-seed')) throw new Error('row says: ' + row.stage);
+});
+
+await t('room-check runs, so the Data room tab is not left saying it read nothing', async () => {
+  seed();
+  await drain();
+  const rc = CALLS.find(c => c.body && c.body.action === 'room-check');
+  if (!rc) throw new Error('room-check never called \u2014 the page would say "0 documents read"');
+  eq(rc.body.engagementId, 'ps-I1', 'engagementId');
 });
 
 await t('and carries what the portfolio row renders, so it is not \u201cPhase undefined / Stuck\u201d', async () => {
