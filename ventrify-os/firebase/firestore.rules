@@ -57,11 +57,20 @@ service cloud.firestore {
     // verdict on a venture they sent us; they are not entitled to edit it, sign it off,
     // or touch the founder's own workspace. The `in` guard keeps every engagement
     // written before this field existed evaluating exactly as it did before.
+    //
+    // shareWithPartner IS THE FOUNDER'S ANSWER AND IT IS LOAD-BEARING. The widget says,
+    // beside the tickbox: "only the verdict, and only if you tick this." Without this
+    // clause the partner saw every pre-screen their widget produced, including from
+    // founders who had explicitly declined — a promise broken at the only moment it
+    // was ever going to matter. The deck itself needs no rule here: there is no match
+    // block for founderDocs, and unmatched paths are denied, so no client reads it.
     match /engagements/{engId} {
       allow read: if signedIn()
         && (userEmail() == resource.data.founderEmail
             || isOperatorOf(resource.data.orgId)
-            || ('partnerOrgId' in resource.data && isOperatorOf(resource.data.partnerOrgId)));
+            || ('partnerOrgId' in resource.data
+                && resource.data.shareWithPartner == true
+                && isOperatorOf(resource.data.partnerOrgId)));
       // Update is open to founder/operator EXCEPT the server-managed integrity fields:
       //   • assessmentSignoff — the operator endorsement that rides into the shared memo;
       //   • shareLink        — the public share-link pointer.

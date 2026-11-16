@@ -338,6 +338,32 @@ await t('the founder\u2019s own stage reaches the row, instead of a guessed "See
   if (!row.stage.startsWith('Pre-seed')) throw new Error('row says: ' + row.stage);
 });
 
+/* THE TICKBOX IS A PROMISE, AND THE ENGAGEMENT IS WHERE IT IS KEPT.
+   The widget says, beside it: "only the verdict, and only if you tick this."
+   firestore.rules only lets a partner operator read an engagement when
+   shareWithPartner is true, so this field IS the promise — if the sweeper wrote the
+   wrong value, or dropped it, the founder's choice would silently invert.
+   Verified against live rules 2026-11-16: opted in → visible; opted out → query
+   excludes it AND a direct document read is refused 403. */
+await t('the founder\u2019s sharing choice is carried onto the engagement, both ways', async () => {
+  seed();
+  await drain();
+  eq(DOCS.get('engagements/ps-I1').shareWithPartner, true, 'opted in');
+
+  seed({ shareWithPartner: false });
+  await drain();
+  eq(DOCS.get('engagements/ps-I1').shareWithPartner, false,
+     'opted out \u2014 the partner rule reads this field, so a wrong value shares it anyway');
+});
+
+await t('an engagement the partner can see always carries partnerOrgId to see it BY', async () => {
+  seed();
+  await drain();
+  const e = DOCS.get('engagements/ps-I1');
+  eq(e.partnerOrgId, 'tca-widget', 'partnerOrgId');
+  if (e.partnerOrgId === e.orgId) throw new Error('partner and founder org are the same \u2014 the split is the whole design');
+});
+
 await t('room-check runs, so the Data room tab is not left saying it read nothing', async () => {
   seed();
   await drain();

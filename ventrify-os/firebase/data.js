@@ -113,7 +113,12 @@ async function engagementsVisibleTo(orgId) {
      owned half is the one that must always work. */
   const [own, viaPartner] = await Promise.all([
     getDocs(query(engCol(), where('orgId', '==', orgId))),
-    getDocs(query(engCol(), where('partnerOrgId', '==', orgId)))
+    /* BOTH equality clauses, because the RULE requires both. A query that asks for
+       documents the rules would refuse fails whole — Firestore does not quietly drop the
+       denied rows — so omitting shareWithPartner here would break the partner's entire
+       portfolio the moment one founder declined. Two equality filters need no composite
+       index (Firestore merges single-field indexes); an inequality would. */
+    getDocs(query(engCol(), where('partnerOrgId', '==', orgId), where('shareWithPartner', '==', true)))
       .catch(e => { console.warn('[data] partner engagements unavailable:', e && e.code); return { docs: [] }; }),
   ]);
   const byId = new Map();
@@ -230,7 +235,13 @@ export function watchEngagements(cb) {
      listener. onSnapshot reports permission-denied to the error callback, and with none
      supplied the rejection is unhandled and this listener dies silently — taking the
      live portfolio with it on any org whose rules have not caught up yet. */
-  const sub = (field, slot) => onSnapshot(query(engCol(), where(field, '==', ORG_ID)), (snap) => {
+  const sub = (field, slot) => onSnapshot(
+    field === 'partnerOrgId'
+      /* Same pairing as listEngagements: the rule demands shareWithPartner, so the
+         listener must ask for it too or it is refused outright. */
+      ? query(engCol(), where('partnerOrgId', '==', ORG_ID), where('shareWithPartner', '==', true))
+      : query(engCol(), where(field, '==', ORG_ID)),
+    (snap) => {
     halves.set(slot, snap.docs.map(d => ({ id: d.id, ...d.data() })));
     emit();
   }, (e) => {
