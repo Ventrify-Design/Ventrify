@@ -69,6 +69,40 @@ console.log('\n── the Sign in destination');
   }
 }
 
+/* THE PARTNER EMBED PATH. One line of HTML on someone else's website is the whole integration, and
+   once it is pasted into a WordPress theme it is not ours to change. It therefore cannot be an
+   internal-looking /sites/verdict-widget/embed.js that moves when the repo is tidied. The public
+   path is /widget/*, which exists only as a rewrite in vercel.json — nothing on disk — so no file
+   read can tell you it resolves. The iframe src is relative to the script, so the whole directory
+   has to answer at the public prefix, not just the loader. */
+console.log('\n── the partner embed path (what a partner pastes)');
+{
+  const BASE = 'https://verdict.ventrify.io';
+  const want = CANARY ? '/widget/embed-zzz-not-a-real-file.js' : '/widget/embed.js';
+
+  /* The documented path and the live one are the same claim; a partner reads the docblock. */
+  const src = await import('node:fs').then(m => m.readFileSync('sites/verdict-widget/embed.js', 'utf8'));
+  const documented = (src.match(/src="https:\/\/verdict\.ventrify\.io(\/[^"]+embed\.js)"/) || [, ''])[1];
+  ok('embed.js documents the public path', documented === '/widget/embed.js', documented || '(none found)');
+
+  const probes = [
+    { path: want,             type: /javascript/,  must: /verdictscore-widget/,  what: 'the loader' },
+    { path: '/widget/widget', type: /html/,        must: /id="lockup"/,          what: 'the panel the iframe loads' },
+    { path: '/widget/demo',   type: /html/,        must: /data-partner/,         what: 'the stand-in host page' },
+  ];
+  for (const { path, type, must, what } of probes) {
+    try {
+      const r = await fetch(BASE + path + '?cb=' + Date.now(), { redirect: 'follow' });
+      const body = r.ok ? await r.text() : '';
+      ok(`${path} answers 200 — ${what}`, r.status === 200, 'status ' + r.status);
+      if (r.status !== 200) continue;
+      ok(`${path} is served as the right type`, type.test(r.headers.get('content-type') || ''),
+         r.headers.get('content-type') || '(none)');
+      ok(`${path} is the real file`, must.test(body), must.test(body) ? '' : 'content does not match ' + must);
+    } catch (e) { ok(path + ' reachable', false, e.message); }
+  }
+}
+
 console.log(fail ? `\n${fail} FAILED` : '\nevery host serves its own site');
 if (CANARY) {
   console.log(fail ? 'canary OK — the gate can fail' : '\n!! CANARY DID NOT FAIL — this gate is decoration');

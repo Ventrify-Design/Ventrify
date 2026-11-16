@@ -24,6 +24,11 @@
     },
 
     {
+      "source": "/widget/:path*",
+      "destination": "/sites/verdict-widget/:path*"
+    },
+
+    {
       "source": "/",
       "has": [{ "type": "host", "value": "verdict.ventrify.io" }],
       "destination": "/sites/verdict-score/index.html"
