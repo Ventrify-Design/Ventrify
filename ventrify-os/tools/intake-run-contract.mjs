@@ -445,11 +445,18 @@ await t('brief → research → nuggets → band → email, in that order, then 
   eq(r.payload.more, false, 'more');
 });
 
-await t('the founder is emailed a link that lands on THEIR engagement', async () => {
+await t('the founder is emailed about a PRE-SCREEN, pointed at THEIR engagement', async () => {
   seed();
   await drain();
   const m = CALLS.find(c => c.name === 'email');
-  if (!m.body.continueUrl.includes('id=ps-I1')) throw new Error('continueUrl: ' + m.body.continueUrl);
+  /* type:'login' is the regression this replaces: six minutes of waiting that ended in
+     "Sign in to your Workspace", with no verdict and no partner named. The payload is small
+     on purpose — the branch reads the company, the band and the recipient from the engagement
+     — so all there is to assert here is that it names the right one. What the branch then
+     DOES with it is exercised by tools/prescreen-ready-contract.mjs. */
+  eq(m.body.type, 'prescreen-ready', 'email type');
+  eq(m.body.engagementId, 'ps-I1', 'engagement');
+  if (!m.body.idToken) throw new Error('no idToken — the branch authorises its caller');
   eq(m.body.email, 'alex@northwind.health', 'recipient');
 });
 

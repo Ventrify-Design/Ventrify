@@ -50,15 +50,20 @@ const FULL = {
   folderUrl: 'https://drive.google.com/drive/folders/X', note: 'As discussed.',
   band: 'Medium', bandLine: 'Real signal, with things to resolve.',
   oneLine: 'A £38 assay.', url: 'https://os.ventrify.io/m/abc', productUrl: 'https://verdict.ventrify.io',
+  // the widget's founder-facing email: a partner's name, what the read was based on, the share tick
+  company: 'Verdana Bio', partner: 'Mercer Angels',
+  basis: 'Read from 17 documents and 46 public sources.', shared: true,
 };
 // The same call with every list empty and every optional string absent — a real pre-screen that found
 // nothing in a category, a founder with no Drive folder, an operator who added no note.
 const EMPTY = {
   ...FULL, operatorName: '', note: '', folderUrl: '', oneLine: '', band: '', bandLine: '',
+  // a founder who came in direct rather than through a partner, and did not tick the share box
+  partner: '', basis: '', shared: false,
   thesis: [], bull: [], competitive: [], tensions: [], nextTests: [], missing: [], extras: [], highlights: [],
 };
 
-const OUTWARD = new Set(['advanceHtml', 'prescreenShareHtml']);   // they leave the firm
+const OUTWARD = new Set(['advanceHtml', 'prescreenShareHtml', 'prescreenReadyHtml']); // they leave the firm
 const INTERNAL = ['loginHtml', 'inviteHtml', 'welcomeHtml', 'docsRequestHtml'];
 
 function load(src) {
@@ -132,7 +137,13 @@ if (CANARY) {
 
 const problems = audit(src);
 problems.forEach(x => console.log(`  ✗ ${x}`));
+/* COUNTED, NOT TYPED. This line said "all six templates ... only the two that leave the firm" for
+   as long as there were six; the seventh arrived and the summary was quietly a lie about its own
+   coverage, which is the one thing a gate may never be. */
+const rendered = Object.values(load(src) || {}).filter(f => typeof f === 'function').length;
 console.log(problems.length
   ? `\n  FAIL — ${problems.length} problem(s) in what would arrive in an inbox`
-  : '  PASS — all six templates render with full and with empty arguments, each carries the lockup and\n         signs off as VerdictScore, every coloured cell survives Outlook, and only the two that\n         leave the firm make the case for the product');
+  : `  PASS — all ${rendered} templates render with full and with empty arguments, each carries the lockup\n`
+    + `         and signs off as VerdictScore, every coloured cell survives Outlook, and only the\n`
+    + `         ${OUTWARD.size} that leave the firm make the case for the product`);
 process.exit(problems.length ? 1 : 0);

@@ -30,6 +30,30 @@ function esc(s) {
   return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+/* ONE COPY OF THE MAGIC-LINK MINT, because the hard-won part of it is a comment.
+
+   CARRY THE ADDRESS ON THE LINK. signInWithEmailLink() needs the email the link was issued to.
+   The client normally has it in localStorage — but only because the PAGE that sent the link put
+   it there. These links are minted server-side, so that key is never set and firebase/auth.js
+   fell through to window.prompt('Confirm the email address...') on EVERY sign-in: a founder who
+   was just emailed a link is asked to prove they know their own address, which reads like the
+   link failed. This is NOT a secret — the oobCode is the credential, and Firebase rejects the
+   pair unless the address matches the one the code was issued to. auth.js strips it from the
+   address bar once sign-in completes.
+
+   The second email to need this is the pre-screen-ready one, and a second copy of the paragraph
+   above is the copy that would have been forgotten. */
+async function signInLink(email, continueUrl) {
+  let url = continueUrl;
+  try {
+    const cu = new URL(url);
+    cu.searchParams.set('vse', Buffer.from(email, 'utf8').toString('base64url'));
+    url = cu.toString();
+  } catch (e) { /* a malformed continueUrl is the caller's problem, not a reason to not send */ }
+  ensureAdmin();
+  return admin.auth().generateSignInWithEmailLink(email, { url, handleCodeInApp: true });
+}
+
 // ══ MAIL CHROME ═══════════════════════════════════════════════════════════════════════════════════
 // Every template below is built from this one shell, and it is the ONLY place the identity lives.
 //
@@ -310,6 +334,41 @@ function prescreenShareHtml({ orgName, ventureName, senderEmail, band, bandLine,
     ${highlights.length ? mailBlock('A few things it found', highlights.map(mailBullet).join('')) : ''}
     <div style="margin:24px 0 0;">${mailBtn(url, 'Read the full pre-screen &rarr;')}</div>
     <p style="margin:16px 0 0;font-size:13px;line-height:1.6;color:${MAIL.ink3};">No login needed. The link is read-only and can be revoked by whoever sent it.</p>` });
+}
+
+/* THE ONE EMAIL A WIDGET FOUNDER GETS — and until now it was the generic sign-in template.
+   A stranger fills in a form on an angel group's website, waits six minutes, and receives
+   "Sign in to your Workspace": no pre-screen, no verdict, no mention of the group they trusted
+   enough to hand a deck to. That message is the hinge of the entire funnel and it read like a
+   password reset.
+
+   A POINTER, NOT A COPY, for the same reason prescreenShareHtml is one: the verdict is a page
+   with its sources attached, and a second rendering of it in Gmail is a second thing to keep in
+   step. Four things only — one line of what we understood the company to be (the proof that the
+   deck was read), the band in the product's own vocabulary, what it was read from, and the way
+   in. The partner's name is at the top because "why am I getting this" is the first thought of
+   anyone who filled in a form on somebody else's website. */
+function prescreenReadyHtml({ company, partner, band, bandLine, oneLine, basis, shared, link, productUrl }) {
+  const co = esc(company || 'Your venture'), pt = esc(partner || '');
+  return mailShell({ width: 560, eyebrow: 'Pre-screen · ready',
+    close: mailClose({
+      productUrl,
+      heading: 'This is the quick read. There is a much longer one.',
+      lead: 'A full assessment scores a venture 0–100 across seven categories and thirty-five signals, researches every document with sources, argues the case from the whole room, and ends in a deal memo you can take to an investment committee.',
+    }),
+    body: `
+    ${pt ? `<div style="font-weight:600;font-size:14px;color:${MAIL.accent};letter-spacing:-0.01em;margin:0 0 10px;">Submitted via ${pt}</div>` : ''}
+    <h1 style="margin:0 0 6px;font-size:23px;letter-spacing:-0.02em;line-height:1.25;color:${MAIL.ink1};">${co}</h1>
+    <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:${MAIL.ink2};">Your pre-screen is ready.</p>
+    ${oneLine ? `<p style="margin:0 0 14px;font-size:15px;line-height:1.6;color:${MAIL.ink2};">${esc(oneLine)}</p>` : ''}
+    ${band ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 16px;"><tr>
+      <td style="padding:0 10px 0 0;"><span style="display:inline-block;background:${MAIL.accent};color:${MAIL.onAccent};
+        font-size:13px;font-weight:700;padding:5px 13px;border-radius:999px;">${esc(band)}</span></td>
+      <td style="font-size:13px;color:${MAIL.ink3};">${esc(bandLine || '')}</td></tr></table>` : ''}
+    ${basis ? mailFine(esc(basis)) : ''}
+    <div style="margin:24px 0 0;">${mailBtn(link, 'Open your verdict &rarr;')}</div>
+    <p style="margin:16px 0 0;font-size:13px;line-height:1.6;color:${MAIL.ink3};">The button signs you in &mdash; no password, and the link expires soon for security. Sign in later with the same address and we will send you another.</p>
+    ${shared && pt ? `<p style="margin:14px 0 0;font-size:13px;line-height:1.6;color:${MAIL.ink3};">You asked us to share the result with ${pt}, so they can see this verdict. They cannot see your deck or your data room.</p>` : ''}` });
 }
 
 const { checkRoom } = require('./_roomcheck.js');
@@ -694,6 +753,72 @@ module.exports = async (req, res) => {
       return;
     }
 
+    // ── PRE-SCREEN READY (the widget founder's one and only email) ─────────────────────────────────
+    // Called by api/intake-run.js at the end of the sweep. Everything it says is read from the
+    // engagement rather than taken from the caller, because the caller is a service account and a
+    // service account that can dictate the contents of a branded email is a phishing primitive.
+    if (body.type === 'prescreen-ready') {
+      const engagementId = String(body.engagementId || '').trim();
+      if (!body.idToken || !engagementId) { res.status(400).json({ error: 'bad_request' }); return; }
+      if (!process.env.RESEND_API_KEY) { res.status(503).json({ error: 'email_not_configured' }); return; }
+      ensureAdmin();
+      let decoded;
+      try { decoded = await admin.auth().verifyIdToken(body.idToken); }
+      catch (e) { res.status(401).json({ error: 'invalid_token' }); return; }
+      const caller = (decoded.email || '').toLowerCase();
+      const db = admin.firestore();
+      const engSnap = await db.collection('engagements').doc(engagementId).get();
+      if (!engSnap.exists) { res.status(404).json({ error: 'engagement_not_found' }); return; }
+      const eng = engSnap.data();
+      // The same gate as every other pre-screen action: an operator of the engagement's own org.
+      // The sweeper's service account is listed on the founder's org for exactly this reason, so
+      // it goes THROUGH the gate rather than around it.
+      const orgSnap = await db.collection('organisations').doc(eng.orgId || 'default').get();
+      const ops = ((orgSnap.exists && orgSnap.data().operatorEmails) || []).map(e => String(e).toLowerCase());
+      if (!ops.includes(caller)) { res.status(403).json({ error: 'forbidden' }); return; }
+
+      const ps = eng.prescreen2 || {};
+      // Nothing may announce a verdict that does not exist. The sweeper orders the email last, but
+      // an ordering is not a guarantee and this is the sentence the founder reads.
+      if (ps.v !== 2 || ps.state !== 'done') { res.status(409).json({ error: 'not_prescreened' }); return; }
+
+      /* THE RECIPIENT IS THE ENGAGEMENT'S FOUNDER, never the request's `email`. This mails a
+         sign-in link, which is a credential: a caller who could name the recipient would hold an
+         account-takeover primitive for every engagement it can see. The sweeper passes the address
+         it claimed from the intake, and if the two ever disagree that is a bug to refuse rather
+         than an email sent to whichever one was wrong. */
+      const to = String(eng.founderEmail || '').trim().toLowerCase();
+      if (!to) { res.status(409).json({ error: 'no_founder_email' }); return; }
+      if (email && email !== to) { res.status(409).json({ error: 'recipient_mismatch' }); return; }
+
+      // One source for the band vocabulary — see the note in the share branch.
+      const { bandOf } = await import('../shared/prescreen-bands.js');
+      const psBand = bandOf(ps.band);
+      const company = eng.ventureName || eng.name || 'Your venture';
+      const link = await signInLink(to, 'https://os.ventrify.io/workspace/?id=' + encodeURIComponent(engagementId));
+      const html = prescreenReadyHtml({
+        company, partner: eng.partner || '',
+        band: psBand ? psBand.label : '', bandLine: psBand ? psBand.line : '',
+        oneLine: String((ps.brief && ps.brief.oneLine) || '').slice(0, 300),
+        basis: String(ps.basis || '').slice(0, 200),
+        shared: eng.shareWithPartner === true,
+        link, productUrl: process.env.PRODUCT_URL || 'https://verdict.ventrify.io',
+      });
+      const sendResp = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from: process.env.INVITE_FROM_EMAIL || 'Ventrify <hello@ventrify.io>',
+          to: [to],
+          subject: `${company} — your pre-screen is ready`,
+          html
+        })
+      });
+      if (!sendResp.ok) { const detail = await sendResp.text(); res.status(502).json({ error: 'send_failed', detail: detail.slice(0, 300) }); return; }
+      res.status(200).json({ ok: true, to, band: psBand ? psBand.label : '' });
+      return;
+    }
+
     // Default to 'invite' when unspecified so any legacy caller that omitted the field
     // still behaves as the old /api/send-invite did.
     const type = body.type === 'login' ? 'login' : 'invite';
@@ -702,24 +827,9 @@ module.exports = async (req, res) => {
     if (type === 'login') {
       const surface = (body.surface === 'Studio') ? 'Studio' : 'Workspace';
       continueUrl = body.continueUrl || ('https://os.ventrify.io/' + (surface === 'Studio' ? 'studio' : 'workspace') + '/');
-      /* CARRY THE ADDRESS ON THE LINK.
-         signInWithEmailLink() needs the email that the link was issued to. The client
-         normally has it in localStorage — but only because the PAGE that sent the link
-         put it there. These links are minted here, server-side, so that key is never
-         set and firebase/auth.js fell through to window.prompt('Confirm the email
-         address...') on EVERY sign-in. A founder who was just emailed a link is then
-         asked to prove they know their own address, which reads like the link failed.
-         This is NOT a secret: the oobCode is the credential, and Firebase rejects the
-         pair unless the address matches the one the code was issued to. Putting it in
-         the URL removes a dead end without weakening anything. auth.js strips it from
-         the address bar once sign-in completes. */
-      try {
-        const cu = new URL(continueUrl);
-        cu.searchParams.set('vse', Buffer.from(email, 'utf8').toString('base64url'));
-        continueUrl = cu.toString();
-      } catch (e) { /* a malformed continueUrl is the caller's problem, not a reason to not send */ }
-      ensureAdmin();
-      const link = await admin.auth().generateSignInWithEmailLink(email, { url: continueUrl, handleCodeInApp: true });
+      /* The address is carried on the link, and the reason is long enough to live with the
+         helper rather than here — see signInLink(). */
+      const link = await signInLink(email, continueUrl);
       subject = `Your Ventrify ${surface} sign-in link`;
       html = loginHtml({ surface, link });
     } else {
@@ -756,5 +866,6 @@ module.exports = async (req, res) => {
 // on every send for as long as it did. See CLAUDE.md: "reading proves you wrote what you meant to
 // write; only running proves it works."
 module.exports.__templates = {
-  loginHtml, inviteHtml, welcomeHtml, docsRequestHtml, advanceHtml, prescreenShareHtml, MAIL,
+  loginHtml, inviteHtml, welcomeHtml, docsRequestHtml, advanceHtml, prescreenShareHtml,
+  prescreenReadyHtml, MAIL,
 };

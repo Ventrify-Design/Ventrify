@@ -428,12 +428,14 @@ module.exports = async (req, res) => {
         }
 
       } else if (step === 'email') {
-        /* The founder's way back in. NOTE: this is still the generic sign-in template —
-           a dedicated "your pre-screen is ready" email is the next piece of step 2. The
-           link lands on the engagement, so the founder does arrive in the right place. */
+        /* The founder's one email, and the hinge of the funnel: six minutes earlier they were a
+           stranger on an angel group's website. It used to be type:'login' — "Sign in to your
+           Workspace", with no mention of a pre-screen or of the partner whose site they used.
+           The payload is deliberately this small: the branch reads the company, the band, the
+           one-line read and the recipient from the ENGAGEMENT, so nothing a caller passes can
+           put words in a branded email. */
         const r = await callLocal(sendEmail, {
-          type: 'login', email: claimed.email, surface: 'Workspace',
-          continueUrl: `https://os.ventrify.io/workspace/?id=${encodeURIComponent(engagementId)}`,
+          type: 'prescreen-ready', idToken, email: claimed.email, engagementId,
         });
         if (r.status !== 200) return fail('email_failed', `${r.status} ${r.body && r.body.error}`);
 
