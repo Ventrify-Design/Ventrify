@@ -77,10 +77,15 @@ const BUDGET_MS = Math.max(10000, Number(process.env.INTAKE_RUN_BUDGET_MS || 200
    enough that a crash does not strand the founder for an hour. */
 const LEASE_MS = 90 * 1000;
 
-/* A data room is read to inform the pre-screen, not archived. The deck plus this many
-   documents is far past the point where another file changes the band, and it bounds
-   how long one tick spends fetching from Drive. */
-const ROOM_MAX_DOCS = 25;
+/* How many room documents to ingest. This is a bound on how long one tick spends
+   fetching from Drive — it is NOT a quality control, because `_prescreen2.buildCorpus`
+   already truncates to CORPUS_MAX_TOKENS whatever it is handed.
+
+   It was 25, which was wrong: the first real room had 32 ingestible files, so seven were
+   dropped by an arbitrary cut with no ordering behind it. Reading a document costs a
+   parse, not a model call, so the cheap mistake is reading too many. The budget loop
+   below stops mid-room if a tick runs long and the next one resumes. */
+const ROOM_MAX_DOCS = Math.max(1, Number(process.env.INTAKE_ROOM_MAX_DOCS || 60));
 
 /* THE PIPELINE, derived from the engine so adding a nugget cannot silently skip it.
    `_prescreen2.NUGGETS` is the same array memo.js dispatches on. */
