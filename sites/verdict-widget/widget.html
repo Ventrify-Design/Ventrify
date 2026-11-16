@@ -107,15 +107,28 @@ h1{font-size:22px;margin-bottom:.55rem}
 .f{display:grid;gap:.85rem}
 label{display:block;font-size:13.5px;color:var(--t2);margin-bottom:.32rem;font-weight:500}
 label .opt{color:var(--t4);font-weight:400}
-input[type=text],input[type=email],input[type=url]{width:100%;
+input[type=text],input[type=email],input[type=url],select{width:100%;
   /* 16px is not a style choice: anything smaller makes iOS zoom the whole
-     partner page on focus, and the founder lands in a half-scrolled host site. */
-  font:400 16px/1.4 inherit;color:var(--t1);
+     partner page on focus, and the founder lands in a half-scrolled host site.
+     LONGHANDS, NOT THE `font` SHORTHAND. `font:400 16px/1.4 inherit` is invalid —
+     `inherit` is not a usable family inside the shorthand — so the browser dropped
+     the WHOLE declaration and every field rendered at the UA default, 13.33px Arial:
+     under the 14px floor, under the 16px iOS-zoom threshold, and not the partner's
+     font. It looked fine on a desktop screenshot, which is why it survived. */
+  font-weight:400;font-size:16px;line-height:1.4;font-family:inherit;color:var(--t1);
   background:var(--field);border:1px solid var(--edge);border-radius:var(--r3);
   padding:.72rem .8rem;min-height:46px;transition:border-color .18s ease,background .18s ease}
 input::placeholder{color:var(--t4)}
-input:focus{outline:none;border-color:var(--acc);background:var(--acc-film)}
-input[aria-invalid=true]{border-color:#E5484D}
+input:focus,select:focus{outline:none;border-color:var(--acc);background:var(--acc-film)}
+input[aria-invalid=true],select[aria-invalid=true]{border-color:#E5484D}
+  /* The native dropdown arrow is drawn by the OS in the OS's own colour, so on a dark
+     panel it disappears. Painted here in currentColor instead, which follows our ink. */
+  select{appearance:none;-webkit-appearance:none;cursor:pointer;padding-right:2.2rem;
+    background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),
+      linear-gradient(135deg,currentColor 50%,transparent 50%);
+    background-position:calc(100% - 1.15rem) 54%,calc(100% - .8rem) 54%;
+    background-size:6px 6px,6px 6px;background-repeat:no-repeat}
+  select:has(option[value=""]:checked){color:var(--t3)}
 .err{display:none;font-size:13px;color:#E5484D;margin-top:.3rem}
 input[aria-invalid=true] ~ .err{display:block}
 

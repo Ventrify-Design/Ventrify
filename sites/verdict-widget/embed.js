@@ -72,7 +72,7 @@
   var qs = 'partner=' + encodeURIComponent(CFG.partner) + '&short=' + encodeURIComponent(CFG.short) +
            '&theme=' + CFG.theme + '&accent=' + encodeURIComponent(CFG.accent) +
            '&radius=' + CFG.radius;
-  ['logo','font','fontBody','site','price','bar','readyIn','demo','api','stage'].forEach(function (k) {
+  ['logo','font','fontBody','site','price','bar','readyIn','demo','api','stage','roomReader'].forEach(function (k) {
     if (D[k]) qs += '&' + k + '=' + encodeURIComponent(D[k]);
   });
   /* A stand-in host page is simulated by default so it can be shown with no

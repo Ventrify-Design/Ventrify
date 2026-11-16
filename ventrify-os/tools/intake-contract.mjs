@@ -103,6 +103,23 @@ const OK = { partner: 'TCA Venture Group', name: 'Alex Moreau', email: 'alex@nor
              company: 'Northwind Health', room: 'https://drive.google.com/drive/folders/x',
              fileName: 'deck.pdf', contentType: 'application/pdf' };
 
+/* ── THE STAGE LIST EXISTS THREE TIMES ────────────────────────────────────────
+   shared/m3/ds.js is the origin. api/intake.js validates against a copy, and
+   sites/verdict-widget/widget.js draws a dropdown from another, because a widget
+   embedded on a stranger's website must not pull a 6k-line design-system module to
+   render six options.
+
+   Three literals is a drift risk, so this is the thing that makes it safe: read all
+   three off disk and require them to be identical. If ds.js gains "Series D", this
+   fails until the other two follow. */
+import { readFileSync } from 'node:fs';
+const stagesIn = (rel, re) => {
+  const src = readFileSync(new URL(rel, import.meta.url), 'utf8');
+  const m = src.match(re);
+  if (!m) throw new Error('no STAGES literal found in ' + rel);
+  return m[1].split(',').map(x => x.trim().replace(/^['"]|['"]$/g, '')).filter(Boolean);
+};
+
 let fails = 0;
 const t = async (what, fn) => {
   try { await fn(); console.log('  ✓ ' + what); }
@@ -198,6 +215,19 @@ if (CANARY) {
 console.log('\nthe index-free invariant');
 await t('it made no Firestore queries at all', () => {
   if (QUERIES) throw new Error(QUERIES + ' query/queries attempted — each one needs a composite index');
+});
+
+console.log('\nTHE STAGE LIST AGREES IN ALL THREE PLACES');
+await t('ds.js, api/intake.js and the widget offer the same stages', async () => {
+  const RE = /STAGES\s*=\s*\[([^\]]+)\]/;
+  const ds     = stagesIn('../shared/m3/ds.js', RE);
+  const api    = stagesIn('../api/intake.js', RE);
+  const widget = stagesIn('../../sites/verdict-widget/widget.js', RE);
+  const j = a => a.join('|');
+  if (j(api) !== j(ds)) throw new Error(`api/intake.js has [${j(api)}], ds.js has [${j(ds)}]`);
+  if (j(widget) !== j(ds)) throw new Error(`widget has [${j(widget)}], ds.js has [${j(ds)}]`);
+  if (!ds.includes('Pre-seed')) throw new Error('Pre-seed missing \u2014 the stage most widget founders are at');
+  console.log('      ' + ds.length + ' stages: ' + ds.join(', '));
 });
 
 console.log(fails ? `\n✗ ${fails} failed` : '\n✓ /api/intake answers, refuses, caps — and needs no index');

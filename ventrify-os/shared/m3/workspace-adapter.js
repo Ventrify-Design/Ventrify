@@ -133,16 +133,39 @@ export function adaptEngagementRow(p, ctx = {}) {
     // Status column carries the OPERATOR'S decision (confirm/decline) on top of the AI rec, which stays in the
     // Progress/signal column. Green is reserved for a real Confirm; a declined deal is a clean neutral outcome.
     const dec = p.assessmentDecision;
+
+    /* A FINISHED PRE-SCREEN IS A RESULT, NOT AN ABSENCE.
+       Everything below keys off `assessment.recommendation`, which only the FULL
+       assessment writes. A pre-screened venture has none — so a completed pre-screen
+       read as "In assessment" at 0%, which is the opposite of what happened. It said
+       nothing had been done to a venture we had just published a verdict on.
+
+       The band does NOT go in `rec`: that column renders `${score}/100`, and HIGH is not
+       a number. It belongs in the status pill, which is the column for "where has this
+       got to". Ordering matters — an operator decision and a full verdict both outrank
+       a pre-screen, so this is only consulted when neither exists. */
+    const preBand = (p.prescreen2 || {}).band;
+    const PRE = { HIGH:  { kind: 'ok',   word: 'High' },
+                  MEDIUM:{ kind: 'info', word: 'Medium' },
+                  LOW:   { kind: 'n',    word: 'Low' } };
+    const pre = (!hasVerdict && preBand && PRE[preBand]) ? PRE[preBand] : null;
+
     const status = !hasVerdict
-      ? (hasDeck ? { kind: 'n', label: 'In assessment', icon: 'fact_check' } : { kind: 'n', label: 'Draft', icon: 'edit_note' })
+      ? (pre ? { kind: pre.kind, label: `Pre-screened · ${pre.word}`, icon: 'bolt' }
+        : hasDeck ? { kind: 'n', label: 'In assessment', icon: 'fact_check' } : { kind: 'n', label: 'Draft', icon: 'edit_note' })
       : (dec && dec.decision === 'confirmed') ? { kind: 'ok', label: 'Confirmed', icon: 'check_circle', title: dec.by ? 'Confirmed by ' + dec.by : undefined }
       : (dec && dec.decision === 'declined') ? { kind: 'n', label: 'Declined', icon: 'do_not_disturb_on', title: dec.by ? 'Declined by ' + dec.by : undefined }
       : { kind: 'info', label: 'Ready to decide', icon: 'rate_review' };
     return {
       id: p.id,
       i, avatar, name: p.name, sub: [p.industry, p.stage].filter(Boolean).join(' · ') || 'Assessment',
-      stage: `${p.stage || 'Seed'} · Assessment`, status, runState: rowRun, rec,
-      progress: (!rec && !rowRun) ? 0 : undefined, when, href,
+      /* `Seed` is a fallback for a stage nobody recorded, not a claim about the venture.
+         A pre-screen is labelled as one so the row does not promise a full assessment. */
+      stage: `${p.stage || 'Seed'} · ${pre ? 'Pre-screen' : 'Assessment'}`,
+      status, runState: rowRun, rec,
+      /* A pre-screened venture has no "progress": the thing it was asked to do is done.
+         A 0% bar beside a published verdict reads as a stalled job. */
+      progress: (!rec && !rowRun && !pre) ? 0 : undefined, when, href,
     };
   }
 

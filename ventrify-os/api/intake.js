@@ -77,6 +77,10 @@ const LIMITS = {
      told one limit and refused by another. */
   maxDeckBytes:   Math.max(1, Number(process.env.INTAKE_MAX_DECK_MB || 40)) * 1024 * 1024,
 };
+/* Mirrors STAGES in shared/m3/ds.js. Kept as a literal because api/ is CJS and ds.js is
+   a 6k-line browser ESM module; the gate is what keeps them identical. */
+const STAGES = ['Pre-seed', 'Seed', 'Series A', 'Series B', 'Series C', 'Growth'];
+
 const DECK_TYPES = new Set([
   'application/pdf',
   'application/vnd.ms-powerpoint',
@@ -163,6 +167,13 @@ module.exports = async (req, res) => {
     const name    = clean(body.name, 120);
     const company = clean(body.company, 120);
     const partner = clean(body.partner, 80) || 'direct';
+    /* The founder's funding stage. Validated against a fixed list rather than stored as
+       free text, because it is printed in the workspace as a fact about their company
+       and feeds the scoring bands. An unrecognised value is dropped, not rejected: a bad
+       stage is not worth losing a deck over, and the row falls back as it always did.
+       The list is duplicated in sites/verdict-widget/widget.js and originates in
+       shared/m3/ds.js — tools/intake-contract.mjs asserts all three agree. */
+    const stage = STAGES.includes(String(body.stage || '')) ? String(body.stage) : null;
     const room    = clean(body.room, 600);
     const share   = body.share !== false;
     const fileName = clean(body.fileName, 180) || 'deck.pdf';
@@ -223,7 +234,7 @@ module.exports = async (req, res) => {
 
     await ref.set({
       state: 'awaiting_deck',
-      partner, email, name, company, room: room || null,
+      partner, email, name, company, room: room || null, stage,
       shareWithPartner: share,
       freeMail: FREE_MAIL.has(email.split('@')[1] || ''),
       deckPath, deckFileName: safe,

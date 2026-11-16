@@ -54,6 +54,12 @@ const STAGE = Q.get('stage') === 'intake' ? 'intake' : 'full';
 const MAX_MB = Math.max(1, Number(Q.get('maxMb') || 40));
 const DECK_EXT = /\.(pdf|ppt|pptx|key)$/i;
 
+/* The identity that actually reads a linked Drive folder. It is NOT a mailbox: the
+   widget used to print `room@ventrify.io`, which no service account answers to, so a
+   founder who followed the instruction exactly still handed us a folder we could not
+   open. Overridable per partner via data-room-reader. */
+CFG.roomReader = CFG.roomReader || 'dataroom-reader@ventrify-os.iam.gserviceaccount.com';
+
 /* ── theme ──────────────────────────────────────────────────────────────── */
 const root = document.documentElement;
 root.dataset.theme = CFG.theme;
@@ -134,7 +140,13 @@ $('by').onclick = () => send('navigate', { href: CFG.site });
   }
 })();
 
-const S = { name:'', email:'', company:'', file:null, room:'', share:true, roomState:null,
+/* Mirrors STAGES in ventrify-os/shared/m3/ds.js and the copy in api/intake.js. Three
+   literals rather than an import: this widget is loaded on a stranger's website and must
+   not pull a 6k-line design-system module to draw a dropdown. tools/intake-contract.mjs
+   asserts all three lists are identical, so they cannot drift apart silently. */
+const STAGES = ['Pre-seed', 'Seed', 'Series A', 'Series B', 'Series C', 'Growth'];
+
+const S = { name:'', email:'', company:'', stage:'', file:null, room:'', share:true, roomState:null,
             intakeId:null, failed:null };
 
 /* ── THE WIRE ─────────────────────────────────────────────────────────────────
@@ -225,6 +237,14 @@ const form = () => `
         <span class="err">We need a company name for the report.</span>
       </div>
       <div>
+        <label for="st">Stage</label>
+        <select id="st">
+          <option value="">Select your stage&hellip;</option>
+          ${STAGES.map(x => `<option value="${esc(x)}"${S.stage === x ? ' selected' : ''}>${esc(x)}</option>`).join('')}
+        </select>
+        <span class="err">Tell us which stage you are at.</span>
+      </div>
+      <div>
         <label for="d">Pitch deck</label>
         <div class="drop" id="d" tabindex="0" role="button" aria-label="Choose your pitch deck">
           <div class="big">Drop your deck, or choose a file</div>
@@ -236,8 +256,9 @@ const form = () => `
       <div>
         <label for="r">Data room link <span class="opt">&mdash; optional</span></label>
         <input id="r" type="url" inputmode="url" placeholder="https://drive.google.com/drive/folders/..." value="${esc(S.room)}">
-        <p class="hint">Share the folder with <code>room@ventrify.io</code> as a Viewer,
-          or we will not be able to open it.</p>
+        <p class="hint">Set it to <b>Anyone with the link &middot; Viewer</b>, or share it with
+          <code>${esc(CFG.roomReader)}</code>. If your workspace blocks outside sharing,
+          the second one is the one that works.</p>
       </div>
       <label class="check" for="sh">
         <input id="sh" type="checkbox" ${S.share ? 'checked' : ''}>
@@ -281,7 +302,7 @@ const done = () => `
     ${S.roomState === 'given' ? `
       <div class="warn" style="background:var(--surface);border-color:var(--edge)"><span class="i">&#9432;</span>
         <span>We will check we can open your data room when the pre-screen runs. If it is not shared with
-          <code>room@ventrify.io</code>, we will read the deck alone and tell you.</span></div>` : ''}
+          <code>${esc(CFG.roomReader)}</code> (or open by link), we will read the deck alone and tell you.</span></div>` : ''}
     ${sell(true)}
   </div>`;
 
@@ -362,16 +383,20 @@ function wireForm() {
   }
 
   $('go').onclick = () => {
-    const n = $('n'), e = $('e'), c = $('c');
+    const n = $('n'), e = $('e'), c = $('c'), st = $('st');
     let bad = false;
     const mark = (el, ok) => { el.setAttribute('aria-invalid', ok ? 'false' : 'true'); if (!ok) bad = true; };
     mark(n, n.value.trim().length > 1);
     mark(e, /^[^@\s]+@[^@\s.]+\.[^@\s]{2,}$/.test(e.value.trim()));
     mark(c, c.value.trim().length > 1);
+    /* Required, because it is not cosmetic: stage sets the bar the venture is judged
+       against (shared/vss-rubric.js weights by stage), and guessing "Seed" for a
+       pre-seed founder marks them down for things nobody expects them to have yet. */
+    mark(st, STAGES.includes(st.value));
     if (!S.file) { $('ferr').style.display = 'block'; bad = true; }
     if (bad) { body.querySelector('[aria-invalid=true]')?.scrollIntoView({ block:'center', behavior:'smooth' }); return; }
     S.name = n.value.trim(); S.email = e.value.trim(); S.company = c.value.trim();
-    S.room = $('r').value.trim(); S.share = $('sh').checked;
+    S.room = $('r').value.trim(); S.share = $('sh').checked; S.stage = $('st').value;
     go('running');
   };
 }
@@ -399,7 +424,7 @@ async function runIt() {
     if (DEMO) { await wait(1500); S.intakeId = 'demo'; }
     else {
       const a = await post('/api/intake', {
-        partner: CFG.partner, name: S.name, email: S.email, company: S.company,
+        partner: CFG.partner, name: S.name, email: S.email, company: S.company, stage: S.stage,
         room: S.room, share: S.share,
         fileName: S.file.name, contentType: S.file.type || 'application/pdf',
         size: S.file.size,

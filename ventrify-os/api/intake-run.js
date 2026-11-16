@@ -334,6 +334,9 @@ module.exports = async (req, res) => {
           founderEmail: String(claimed.email || '').toLowerCase(),
           founderName: claimed.name || null,
           engagementType: 'assessment', tier: 'prescreen',
+          /* The founder's own answer. Without it the portfolio row falls back to "Seed",
+             which is a guess printed as a fact about somebody's company. */
+          ...(claimed.stage ? { stage: claimed.stage } : {}),
           health: 'on-track', phase: 0, briefSubmitted: false,
           startDate: today, daysActive: 0,
           lastActivity: 'just now',
@@ -407,6 +410,21 @@ module.exports = async (req, res) => {
               });
             }
           }
+        }
+
+        /* NOW SAY WHAT WE FOUND.
+           `roomCheck` is what the Data room tab reads — six artefact classes, how many
+           are present, how many documents were read. Ingesting without it left a page
+           saying "We have not read the data room yet · 0 documents read" on an engagement
+           that had just ingested thirty-three. The documents were there; the ledger of
+           them was not, because nothing wrote it.
+
+           It runs with or without a room: the deck alone still answers some of the six,
+           and "— of 6" is a worse answer than "1 of 6". Free — regex over text already
+           ingested, no model call — and advisory, so a failure must not fail the run. */
+        const rc = await callLocal(ingest, { idToken, engagementId, action: 'room-check' });
+        if (rc.status !== 200) {
+          console.warn('[intake-run] room-check returned', rc.status, rc.body && rc.body.error);
         }
 
       } else if (step === 'email') {
