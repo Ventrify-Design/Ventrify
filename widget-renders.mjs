@@ -29,9 +29,16 @@ const browser = await puppeteer.launch({
 const page = await browser.newPage();
 await page.setViewport({ width: 400, height: 640 });
 
+/* Three different things get called "an error in the console", and only two of them are the
+   panel's fault. A failed resource arrives as a console line with no URL in it — so the URL is
+   taken from the response instead, and the browser's own unprompted /favicon.ico probe is dropped
+   rather than reported. A gate that cries wolf about a favicon is a gate that gets ignored. */
 const errors = [];
+const missing = [];
 page.on('pageerror', e => errors.push(String(e.message)));
-page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+page.on('console', m => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
+page.on('response', r => { if (r.status() >= 400 && !/\/favicon\.ico$/.test(r.url())) missing.push(r.status() + ' ' + r.url()); });
+page.on('requestfailed', r => { if (!/favicon/.test(r.url())) missing.push('dead ' + r.url()); });
 
 if (CANARY) {
   /* Exactly what a file that does not parse does: the script is requested and nothing runs. */
@@ -56,6 +63,7 @@ ok('the VerdictScore lockup rendered', seen.lockup.length > 0, seen.lockup.lengt
 ok('the panel offers the thing it exists for', /deck|pre-screen/i.test(seen.text),
    seen.text.replace(/\s+/g, ' ').slice(0, 72));
 ok('no uncaught errors in the console', errors.length === 0, errors.slice(0, 2).join(' | '));
+ok('every resource the panel asks for exists', missing.length === 0, missing.slice(0, 2).join(' | '));
 
 await browser.close();
 
