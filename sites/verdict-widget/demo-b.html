@@ -24,6 +24,11 @@ h1,h2,h3{font-family:"Space Grotesk",system-ui,sans-serif;font-weight:700;letter
 img{display:block;max-width:100%}
 .ribbon{background:#1C1630;color:#D8CBFF;font-size:13px;text-align:center;padding:.5rem 1rem;font-weight:600}
 .ribbon span{opacity:.75;font-weight:400}
+.ribbon .mode{display:inline-block;padding:.1rem .5rem;border-radius:999px;font-size:11px;
+  letter-spacing:.08em;vertical-align:1px}
+.ribbon .mode.is-demo{background:rgba(255,255,255,.14);color:#fff}
+.ribbon .mode.is-live{background:#D64545;color:#fff}
+.ribbon .mode-note{opacity:.75;font-weight:400}
 .ribbon a{color:#C9B6FF}
 header{position:sticky;top:0;background:rgba(11,15,20,.82);backdrop-filter:blur(14px);
   border-bottom:1px solid var(--line);z-index:5}
@@ -96,5 +101,6 @@ footer div{max-width:1180px;margin:0 auto}
         data-demo="1"
         data-bar="70"
         defer></script>
+<script src="./demo-mode.js"></script>
 </body>
 </html>

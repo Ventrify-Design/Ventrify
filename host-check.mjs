@@ -85,10 +85,19 @@ console.log('\n── the partner embed path (what a partner pastes)');
   const documented = (src.match(/src="https:\/\/verdict\.ventrify\.io(\/[^"]+embed\.js)"/) || [, ''])[1];
   ok('embed.js documents the public path', documented === '/widget/embed.js', documented || '(none found)');
 
+  /* THE DEMO/LIVE BADGE. Both stand-in hosts are public URLs and the only thing between "nothing
+     happens" and a real deck, a real email and real credit is ?live=1 in the address bar. A page
+     that forgets the script looks completely normal — which is the point of checking for it. */
+  for (const f of ['demo.html', 'demo-b.html']) {
+    const h = await import('node:fs').then(m => m.readFileSync('sites/verdict-widget/' + f, 'utf8'));
+    ok(`${f} says which mode it is in`, /demo-mode\.js/.test(h), /demo-mode\.js/.test(h) ? '' : 'no demo-mode.js');
+  }
+
   const probes = [
     { path: want,             type: /javascript/,  must: /verdictscore-widget/,  what: 'the loader' },
     { path: '/widget/widget', type: /html/,        must: /id="lockup"/,          what: 'the panel the iframe loads' },
     { path: '/widget/demo',   type: /html/,        must: /data-partner/,         what: 'the stand-in host page' },
+    { path: '/widget/demo-mode.js', type: /javascript/, must: /is-live/,           what: 'the DEMO / LIVE badge' },
   ];
   for (const { path, type, must, what } of probes) {
     try {
