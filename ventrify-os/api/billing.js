@@ -33,6 +33,7 @@ function ensureAdmin() {
   admin.initializeApp({ credential: admin.credential.cert(JSON.parse(raw)) });
 }
 
+const ACTIONS = new Set(['checkout', 'confirm']);
 const WORKSPACE_URL = process.env.WORKSPACE_URL || 'https://os.ventrify.io';
 
 // ── Stripe, over fetch ────────────────────────────────────────────────────────────────────────────
@@ -82,6 +83,17 @@ module.exports = async (req, res) => {
     const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
     const { action, idToken } = body;
     const engagementId = String(body.engagementId || '').trim();
+
+    /* THE ACTION IS CHECKED BEFORE THE TOKEN, and that order is load-bearing rather than careless.
+       api/memo.js does the same, and tools/contract.mjs depends on it: an endpoint that authenticates
+       first answers 401 to a real action and to an invented one alike, so nothing can prove the door
+       for `checkout` actually opens — which is the exact failure that gate was written for, when five
+       whitelisted-out actions shipped and the operator met `bad_action` first. The names are in the
+       client bundle already, so there is nothing here to leak. */
+    if (!ACTIONS.has(String(action || ''))) {
+      res.status(400).json({ error: 'bad_action', detail: String(action || '') });
+      return;
+    }
     if (!idToken) { res.status(401).json({ error: 'no_token' }); return; }
     if (!engagementId) { res.status(400).json({ error: 'engagement_required' }); return; }
 
@@ -196,7 +208,9 @@ module.exports = async (req, res) => {
       return;
     }
 
-    res.status(400).json({ error: 'bad_action', detail: String(action || '') });
+    /* Unreachable: the whitelist above already refused anything that is not one of these. It stays
+       as the answer of last resort if an action is ever added to ACTIONS and not to the body. */
+    res.status(500).json({ error: 'action_not_implemented', detail: String(action || '') });
   } catch (e) {
     const code = e && e.code && Number.isInteger(e.code) ? e.code : 500;
     res.status(code).json({ error: (e && e.error) || 'server_error', detail: String((e && e.detail) || (e && e.message) || e) });

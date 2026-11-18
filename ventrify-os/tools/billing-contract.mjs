@@ -245,6 +245,19 @@ await t('no token, bad token, unknown action, wrong method', async () => {
   eq(code, 405, 'GET');
 });
 
+await t('an unknown action is refused BEFORE the token — the property contract.mjs needs', async () => {
+  /* An endpoint that authenticates first answers 401 to a real action and an invented one alike,
+     so nothing outside can prove the door for `checkout` opens. That is the exact blindness the
+     whole contract gate exists to remove, and it is one line away at all times. */
+  seed();
+  const bad = await post({ action: 'free_money', engagementId: 'ps-1' });       // no token at all
+  eq(bad.code, 400, 'invented action, no token');
+  eq(bad.payload.error, 'bad_action', 'error');
+  const real = await post({ action: 'checkout', engagementId: 'ps-1' });        // real action, no token
+  eq(real.code, 401, 'real action, no token');
+  if (bad.code === real.code) throw new Error('a real action and an invented one are indistinguishable');
+});
+
 if (CANARY) {
   console.log(fail ? '\ncanary OK — the gate can fail' : '\n!! CANARY DID NOT FAIL — this gate is decoration');
   process.exit(fail ? 0 : 1);
