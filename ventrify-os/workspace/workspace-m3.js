@@ -458,12 +458,22 @@ window.__wsRunPrescreen = async () => {
   }
 };
 
-// UNLOCK. With BILLING_ENFORCED false this simply runs the full assessment: Stripe is not wired, and the
-// operator must keep being able to run full assessments. When the flag flips, this routes to checkout and
-// nothing else about the screen changes.
+// UNLOCK, on the CREATE screen — where no engagement exists yet, so there is nothing to buy. An org
+// with allowance left still goes straight to a full assessment. An org without one is not sold anything
+// here, because the thing api/billing.js sells is the upgrade of a venture that has already been
+// pre-screened: the pre-screen is free, it takes five minutes, and it is what the $199 upgrade is
+// measured against. Sending them to a checkout for a venture that does not exist would be selling a
+// number with nothing behind it.
 window.__wsUnlock = async () => {
-  const { unlockRoute } = await import('../shared/entitlements.js');
-  if (unlockRoute() === 'checkout') { window.__toast('Checkout is not wired up yet.', true); return; }
+  const W = window.WORKSPACE || {};
+  const [{ unlockRoute }, { remainingFor }] = await Promise.all([
+    import('../shared/entitlements.js'), import('./plan.js'),
+  ]);
+  const route = unlockRoute({ remainingFull: remainingFor(W.plan, W.programs || [], 'assessment', 'full') });
+  if (route === 'checkout') {
+    window.__toast('Run the free pre-screen first — you can unlock the full assessment from its page.', true);
+    return;
+  }
   return window.__wsCreateAssessment();
 };
 

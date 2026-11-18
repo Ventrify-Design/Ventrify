@@ -28,12 +28,15 @@ const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..')
 /* The live module, and the same module with billing switched on. The second is a temp copy, so
    nothing here can leave the flag flipped in the repo by accident. */
 const SRC = readFileSync(path.join(ROOT, 'shared/entitlements.js'), 'utf8');
-const OFF = await import(pathToFileURL(path.join(ROOT, 'shared/entitlements.js')).href);
 const tmp = mkdtempSync(path.join(tmpdir(), 'paywall-'));
-const onPath = path.join(tmp, 'entitlements-on.mjs');
-writeFileSync(onPath, SRC.replace('export const BILLING_ENFORCED = false;',
-                                  'export const BILLING_ENFORCED = true;'));
-const ON = await import(pathToFileURL(onPath).href);
+const withFlag = async (value) => {
+  const f = path.join(tmp, 'entitlements-' + value + '.mjs');
+  writeFileSync(f, SRC.replace(/export const BILLING_ENFORCED = (true|false);/,
+                               'export const BILLING_ENFORCED = ' + value + ';'));
+  return import(pathToFileURL(f).href);
+};
+const OFF = await withFlag(false);
+const ON = await withFlag(true);
 
 /* AND THE MODULE THAT PRODUCES THE NUMBER. unlockGrant only decides; workspace/plan.js is what turns
    an org document into `remainingFull`, with its own copy of normLimit. Tidy that to `Number(v) ||
@@ -51,8 +54,14 @@ writeFileSync(planPath, absolutise(CANARY
   ? PLAN_SRC.replace('return (isNaN(n) || n < 0) ? null : n;', 'return (isNaN(n) || n <= 0) ? null : n;')
   : PLAN_SRC, path.join(ROOT, 'workspace')));
 const PLAN = await import(pathToFileURL(planPath).href);
-if (OFF.BILLING_ENFORCED !== false) throw new Error('the repo ships with billing ENFORCED — is that intended?');
-if (ON.BILLING_ENFORCED !== true) throw new Error('the temp copy did not flip; the constant was renamed');
+/* BOTH STATES ARE BUILT HERE, whichever one the repo currently ships. The gate used to assert that
+   the live module was the OFF one, which made the day it flipped look like a failure rather than a
+   decision. What must never happen is the two copies being the same module — that would quietly turn
+   half of these assertions into duplicates of the other half. */
+if (OFF.BILLING_ENFORCED === ON.BILLING_ENFORCED)
+  throw new Error('both copies read the same flag — the constant was renamed and nothing is being tested');
+const SHIPPED = /export const BILLING_ENFORCED = true;/.test(SRC);
+console.log(`  billing is ${SHIPPED ? 'ENFORCED' : 'OFF'} in the repo as it stands`);
 
 let fail = 0;
 const t = (name, fn) => { try { fn(); console.log('  ✓ ' + name); } catch (e) { console.log('  ✗ ' + name + '\n      ' + e.message); fail++; } };

@@ -31,7 +31,7 @@
 // plan at all and are already unlimited, so they are unaffected either way.
 //
 // When Stripe lands: flip this to true. That is the whole migration.
-export const BILLING_ENFORCED = false;
+export const BILLING_ENFORCED = true;
 
 export const TIERS = {
   prescreen: {
