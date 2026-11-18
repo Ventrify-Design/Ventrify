@@ -190,8 +190,38 @@ module.exports = async (req, res) => {
     // browser, is what makes a venture paid. With BILLING_ENFORCED false it is simply available; when
     // Stripe lands, a verified payment calls the same endpoint and the rest of the flow is unchanged.
     if (action === 'prescreen-unlock') {
-      await engRef.set({ tier: 'full', unlockedAt: FieldValue.serverTimestamp(), unlockedBy: caller }, { merge: true });
-      res.status(200).json({ ok: true, tier: 'full' });
+      /* THE ALLOWANCE IS COMPUTED EVEN WHILE BILLING IS OFF, deliberately. workspace/plan.js is a
+         second dynamic ESM import on a serverless path, and whether Vercel's tracer bundles it is
+         unproven until it runs — exactly the risk already written up against the rubric import
+         below. Doing the work before it can matter means a bundling failure appears in testing
+         instead of on the morning the flag flips and every licensee is sent to a checkout. */
+      let remainingFull = 0, planPreset = null;
+      try {
+        const { resolvePlan, remainingFor } = await import('../workspace/plan.js');
+        const plan = resolvePlan(orgSnap.exists ? orgSnap.data() : null);
+        planPreset = plan.preset;
+        // One where(), one field — served by an automatic index. Counting is the licence's job and
+        // plan.js owns how it is counted, so this hands it the rows and asks.
+        const mine = await db.collection('engagements').where('orgId', '==', orgId).get();
+        remainingFull = remainingFor(plan, mine.docs.map(d => d.data()), 'assessment', 'full');
+      } catch (e) {
+        // FAIL CLOSED. Without the allowance we cannot tell a licensee from a stranger, and the two
+        // wrong answers are not equal: one is a customer told to pay who then complains, the other
+        // is a 90-minute run given away silently, every time, for as long as nobody notices.
+        console.warn('[memo] unlock allowance unavailable:', (e && e.message) || e);
+      }
+
+      const { unlockGrant } = await import('../shared/entitlements.js');
+      const grant = unlockGrant({ engagement: engData, remainingFull, isSuper: supers.includes(caller) });
+      if (!grant.allowed) {
+        res.status(402).json({ error: 'payment_required',
+          detail: 'This assessment has not been paid for yet.' });
+        return;
+      }
+
+      await engRef.set({ tier: 'full', unlockedAt: FieldValue.serverTimestamp(), unlockedBy: caller,
+                         unlockedVia: grant.reason }, { merge: true });
+      res.status(200).json({ ok: true, tier: 'full', via: grant.reason, planPreset });
       return;
     }
 

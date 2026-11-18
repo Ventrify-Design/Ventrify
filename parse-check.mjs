@@ -24,8 +24,13 @@ import path from 'node:path';
 const CANARY = process.argv.includes('--canary');
 const TMP = mkdtempSync(path.join(tmpdir(), 'parse-'));
 
-const files = execFileSync('git', ['ls-files', '*.js', '*.mjs'], { encoding: 'utf8' })
-  .split('\n').map(s => s.trim()).filter(Boolean).filter(f => !f.includes('node_modules'));
+/* ANCHORED TO THE REPO ROOT, not to wherever this was run from. `git ls-files` is relative to the
+   working directory, so running it from ventrify-os/ scanned 116 files and reported a clean PASS —
+   a gate that quietly covers a third less than it claims, which is the fault it was written to catch. */
+const ROOT = execFileSync('git', ['rev-parse', '--show-toplevel'], { encoding: 'utf8' }).trim();
+const files = execFileSync('git', ['ls-files', '*.js', '*.mjs'], { encoding: 'utf8', cwd: ROOT })
+  .split('\n').map(s => s.trim()).filter(Boolean).filter(f => !f.includes('node_modules'))
+  .map(f => path.join(ROOT, f));
 
 /* The error a CommonJS parse gives a perfectly good ES module. It is the one failure that means
    "try the other mode", and it must not be confused with a real syntax error. */
@@ -51,13 +56,13 @@ for (const f of files) {
   let src = readFileSync(f, 'utf8');
   /* The canary plants the exact bug, in a real file, in the place it actually happened: a comment
      that mentions a cron expression. A gate that cannot fail is decoration. */
-  if (CANARY && f === 'sites/verdict-widget/widget.js') src = src.replace('/* MEASURED', '/* MEASURED, on the */5 cron,');
+  if (CANARY && f.endsWith('sites/verdict-widget/widget.js')) src = src.replace('/* MEASURED', '/* MEASURED, on the */5 cron,');
   const err = parses(src, f);
   if (err) {
     bad++;
     const line = (err.match(/^.*?:(\d+)\n/) || [, '?'])[1];
     const why = (err.match(/^(SyntaxError:.*)$/m) || [, err.split('\n')[0]])[1];
-    console.log(`  ✗ ${f}:${line}  ${why}`);
+    console.log(`  ✗ ${path.relative(ROOT, f)}:${line}  ${why}`);
   }
 }
 

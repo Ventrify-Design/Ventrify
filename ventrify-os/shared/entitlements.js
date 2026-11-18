@@ -295,8 +295,37 @@ export function ctaPair(plan, tier = defaultTier(plan)) {
     : { primary: runFull,      secondary: { ...runPrescreen, label: 'Run pre-screen first' } };
 }
 
-// Where the unlock button goes. One call site, one flag.
-export const unlockRoute = () => (BILLING_ENFORCED ? 'checkout' : 'run');
+// ---- MAY THIS VENTURE BE PROMOTED WITHOUT PAYING? -----------------------
+// The paywall, as one decision, read by both halves of the system: api/memo.js decides whether to
+// flip the tier, and the button decides whether to send the customer to Stripe. Two copies of this
+// would be two paywalls, and the one that disagreed would be the one holding the money.
+//
+// THREE WAYS THROUGH, and the order matters:
+//   • billing is off          — today. The flag is the whole switch.
+//   • a super-admin asked     — comping a venture by hand stays possible, and is recorded.
+//   • the licence covers it   — a VC on an unlimited plan must NEVER be sent to a checkout they
+//                               have already paid for by other means.
+//   • this engagement is paid — the Stripe webhook wrote it. Payment buys THIS venture, not a
+//                               floating credit, which is why it is read off the engagement.
+//
+// `remainingFull` IS PASSED IN, and defaults to zero — the restrictive value. This module has no
+// business querying Firestore, and the alternative (reaching into workspace/plan.js from here) adds
+// a second dynamic import to a serverless path where bundling is already the known risk. The default
+// is deliberate: a caller who forgets the argument gets "asks for payment when it shouldn't", which
+// is visible and costs nobody anything. The other way round is a stranger handed a 90-minute run,
+// which is invisible and costs every time.
+export function unlockGrant({ engagement, remainingFull = 0, isSuper = false } = {}) {
+  if (!BILLING_ENFORCED) return { allowed: true, reason: 'billing_off' };
+  if (isSuper)           return { allowed: true, reason: 'super_admin' };
+  if (remainingFull === Infinity || remainingFull > 0) return { allowed: true, reason: 'licence' };
+  const pay = (engagement && engagement.payment) || {};
+  if (pay.status === 'paid') return { allowed: true, reason: 'paid' };
+  return { allowed: false, reason: 'payment_required' };
+}
+
+// Where the unlock button goes — the same decision, asked from the other side. An org with an
+// allowance goes straight to the run; only an org with nothing left sees Stripe.
+export const unlockRoute = (opts) => (unlockGrant(opts).allowed ? 'run' : 'checkout');
 
 // ---- Venture identity, for "one free pre-screen per venture" ------------
 // The rule is per VENTURE, not per file — so identity is the primary key and the

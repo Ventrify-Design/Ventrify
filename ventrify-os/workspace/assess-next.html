@@ -40,6 +40,7 @@
   import { adaptEngagement } from '../shared/m3/adapter.js';
   import { resolveActions, ACTIONS } from '../shared/actions.js';
   import { capsFor, entitlements, isPrescreen, unlockRoute } from '../shared/entitlements.js';
+  import { remainingFor } from './plan.js';
   import { wsNavConfig, wsBrandConfig, wsAccountConfig, mountOrgSwitcherM3 } from './workspace-m3.js';
   import * as EA from './engagement-actions.js';
   import { dealMemoHTML } from './memo-view.js';
@@ -190,10 +191,18 @@
   // could skip the paywall, which is the one thing the paywall is for. BILLING_ENFORCED is false, so
   // today this is simply available — the confirm is because it starts a real two-hour run, not because
   // money changes hands yet.
+  /* THE SAME DECISION THE SERVER MAKES — api/memo.js prescreen-unlock calls unlockGrant() with these
+     exact inputs. A licensee with allowance left must never be sent to a checkout they have already
+     paid for by other means, so the route is asked of the LICENCE and not of the flag alone. */
+  const route = () => unlockRoute({
+    engagement: p,
+    remainingFull: remainingFor(W.plan, allPrograms, 'assessment', 'full'),
+  });
+
   window.__eaUnlock = async () => {
     const ok = await window.__confirm({
       title: 'Run the full assessment?',
-      message: `This replaces the range with a single measured score, and adds diligence, deep research and the deal memo. It takes about 90 minutes and runs in the cloud.${unlockRoute() === 'checkout' ? '' : '\n\nBilling is not switched on yet, so this is free for now.'}`,
+      message: `This replaces the range with a single measured score, and adds diligence, deep research and the deal memo. It takes about 90 minutes and runs in the cloud.${route() === 'checkout' ? '' : '\n\nBilling is not switched on yet, so this is free for now.'}`,
       confirmLabel: 'Run full assessment',
     });
     if (!ok) return;
