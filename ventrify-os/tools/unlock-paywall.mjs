@@ -34,6 +34,23 @@ const onPath = path.join(tmp, 'entitlements-on.mjs');
 writeFileSync(onPath, SRC.replace('export const BILLING_ENFORCED = false;',
                                   'export const BILLING_ENFORCED = true;'));
 const ON = await import(pathToFileURL(onPath).href);
+
+/* AND THE MODULE THAT PRODUCES THE NUMBER. unlockGrant only decides; workspace/plan.js is what turns
+   an org document into `remainingFull`, with its own copy of normLimit. Tidy that to `Number(v) ||
+   null` and a limit of 0 becomes "unlimited" — every widget founder is handed the $199 product and
+   every assertion above still passes, because they were all fed numbers by hand. */
+const PLAN_SRC = readFileSync(path.join(ROOT, 'workspace/plan.js'), 'utf8');
+/* A copy in /tmp loses its neighbours: plan.js imports ../shared/entitlements.js, which from a temp
+   directory resolves to nothing. The specifiers are rewritten to absolute file URLs so the copy is
+   the same module with the same dependencies, living somewhere else. */
+const absolutise = (src, fromDir) => src.replace(
+  /from\s+'(\.\.?\/[^']+)'/g,
+  (_, rel) => "from '" + pathToFileURL(path.resolve(fromDir, rel)).href + "'");
+const planPath = path.join(tmp, 'plan-' + (CANARY ? 'tidied' : 'real') + '.mjs');
+writeFileSync(planPath, absolutise(CANARY
+  ? PLAN_SRC.replace('return (isNaN(n) || n < 0) ? null : n;', 'return (isNaN(n) || n <= 0) ? null : n;')
+  : PLAN_SRC, path.join(ROOT, 'workspace')));
+const PLAN = await import(pathToFileURL(planPath).href);
 if (OFF.BILLING_ENFORCED !== false) throw new Error('the repo ships with billing ENFORCED — is that intended?');
 if (ON.BILLING_ENFORCED !== true) throw new Error('the temp copy did not flip; the constant was renamed');
 
@@ -104,6 +121,43 @@ t('api/memo.js calls unlockGrant and returns 402 when it says no', () => {
   if (body.indexOf('unlockGrant(') > body.indexOf("tier: 'full'"))
     throw new Error('it writes the tier BEFORE asking whether it may');
   if (!/remainingFull = 0/.test(body)) throw new Error('the allowance does not default to zero — it must fail closed');
+});
+
+console.log('\n5. THE NUMBER THE DECISION IS FED — real org documents, through plan.js');
+const ORGS = {
+  'widget founder':  { plan: { preset: 'widget-founder', capabilities: { assess: true, build: false },
+                               limits: { assessments: 0, builds: 0, prescreens: 1 } } },
+  'assess licence':  { plan: { preset: 'assess', capabilities: { assess: true, build: false },
+                               limits: { assessments: null, builds: 0, prescreens: null } } },
+  'one-off licence': { plan: { preset: 'one-off', capabilities: { assess: true, build: false },
+                               limits: { assessments: 1, builds: 0, prescreens: null } } },
+  'no plan at all':  {},
+};
+const remainingOf = (org, programs = []) =>
+  PLAN.remainingFor(PLAN.resolvePlan(org), programs, 'assessment', 'full');
+
+t('a limit of 0 means 0, not unlimited', () => {
+  eq(remainingOf(ORGS['widget founder']), 0, 'widget founder remaining');
+});
+t('…so the founder is refused once billing is on, end to end', () => {
+  eq(G({ engagement: UNPAID, remainingFull: remainingOf(ORGS['widget founder']) }).allowed, false, 'allowed');
+});
+t('a licensee is unlimited, and is never sent to a checkout', () => {
+  eq(remainingOf(ORGS['assess licence']), Infinity, 'assess remaining');
+  eq(R({ engagement: UNPAID, remainingFull: remainingOf(ORGS['assess licence']) }), 'run', 'route');
+});
+t('an org with no plan at all is a pre-existing licensee, not a stranger', () => {
+  eq(remainingOf(ORGS['no plan at all']), Infinity, 'no-plan remaining');
+});
+t('a one-off licence is spent by the assessment it already ran', () => {
+  eq(remainingOf(ORGS['one-off licence']), 1, 'unspent');
+  const spent = [{ engagementType: 'assessment', tier: 'full' }];
+  eq(remainingOf(ORGS['one-off licence'], spent), 0, 'after one full run');
+  eq(G({ engagement: UNPAID, remainingFull: remainingOf(ORGS['one-off licence'], spent) }).allowed, false, 'refused');
+});
+t('a pre-screen never spends the full-assessment allowance', () => {
+  const screened = [{ engagementType: 'assessment', tier: 'prescreen' }];
+  eq(remainingOf(ORGS['one-off licence'], screened), 1, 'still unspent');
 });
 
 if (CANARY) {
