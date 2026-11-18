@@ -39,7 +39,7 @@
   import * as DS from '../shared/m3/ds.js';
   import { adaptEngagement } from '../shared/m3/adapter.js';
   import { resolveActions, ACTIONS } from '../shared/actions.js';
-  import { capsFor, entitlements, isPrescreen, unlockRoute } from '../shared/entitlements.js';
+  import { capsFor, entitlements, isPrescreen, unlockRoute, PRICE_PER_RUN_USD } from '../shared/entitlements.js';
   import { remainingFor } from './plan.js';
   import { wsNavConfig, wsBrandConfig, wsAccountConfig, mountOrgSwitcherM3 } from './workspace-m3.js';
   import * as EA from './engagement-actions.js';
@@ -199,21 +199,83 @@
     remainingFull: remainingFor(W.plan, allPrograms, 'assessment', 'full'),
   });
 
+  /* PROMOTE — the only place a pre-screen becomes a full assessment. The SAME engagement: its brief,
+     its deck, its data room and its sources stay exactly where they are and the tier moves over them.
+     Nothing here creates a second venture, and nothing here writes the tier either — api/memo.js does,
+     because a client that could set its own tier would be its own paywall. */
+  const promote = async () => {
+    await EA.unlockFull({ engagementId: p.id });
+    p.tier = 'full';
+    if (await EA.dispatchRun({ engagementId: p.id, phase: 'assess', onBusy: busy })) {
+      window.__toast('Full assessment queued — this runs in the cloud.');
+    }
+    refresh();
+  };
+
   window.__eaUnlock = async () => {
+    const buying = route() === 'checkout';
     const ok = await window.__confirm({
-      title: 'Run the full assessment?',
-      message: `This replaces the range with a single measured score, and adds diligence, deep research and the deal memo. It takes about 90 minutes and runs in the cloud.${route() === 'checkout' ? '' : '\n\nBilling is not switched on yet, so this is free for now.'}`,
-      confirmLabel: 'Run full assessment',
+      title: buying ? 'Unlock the full assessment?' : 'Run the full assessment?',
+      message: 'This replaces the range with a single measured score, and adds diligence, deep research and the deal memo. It takes about 90 minutes and runs in the cloud.'
+        + (buying ? `\n\nYou will be taken to Stripe to pay $${PRICE_PER_RUN_USD}. The assessment starts as soon as the payment clears.`
+                  : '\n\nBilling is not switched on yet, so this is free for now.'),
+      confirmLabel: buying ? 'Continue to payment' : 'Run full assessment',
     });
     if (!ok) return;
     if (!live) { p.tier = 'full'; window.__toast('Unlocked — full assessment.'); refresh(); return; }
-    try {
-      await EA.unlockFull({ engagementId: p.id });
-      p.tier = 'full';
-      if (await EA.dispatchRun({ engagementId: p.id, phase: 'assess', onBusy: busy })) window.__toast('Full assessment queued — this runs in the cloud.');
-      refresh();
-    } catch (e) { window.__toast('Could not unlock: ' + ((e && e.message) || e), true); }
+
+    if (buying) {
+      try {
+        busy(true);
+        const s = await EA.startCheckout({ engagementId: p.id });
+        /* LEAVING THE PAGE IS THE LAST THING THAT HAPPENS. If anything above threw, the customer is
+           still here with a toast rather than on a checkout for a session we failed to record. */
+        location.href = s.url;
+      } catch (e) {
+        busy(false);
+        // An org that turns out to be covered after all should get the run, not an error.
+        if (e.code === 'no_payment_needed') { await promote().catch(() => {}); return; }
+        window.__toast('Could not start the payment: ' + ((e && e.message) || e), true);
+      }
+      return;
+    }
+
+    try { await promote(); }
+    catch (e) { window.__toast('Could not unlock: ' + ((e && e.message) || e), true); }
   };
+
+  /* THE RETURN TRIP, and the closed tab. Stripe sends them back to ?paid=cs_... which is a string
+     anyone can type, so it is handed to the server as a question rather than believed. The second
+     branch matters more often than it should: someone pays, closes the tab on Stripe's own page and
+     comes back later. The session id was written at checkout time, so the page can ask about it
+     without being told. */
+  (async function settleUp() {
+    if (!live || !p) return;
+    const fromStripe = params.get('paid');
+    const pending = p.payment && p.payment.status === 'pending' && p.payment.sessionId;
+    const sessionId = (fromStripe && /^cs_/.test(fromStripe)) ? fromStripe : (pending ? p.payment.sessionId : null);
+
+    if (fromStripe) {
+      // Clean the address bar either way: a reload must never look like a second payment.
+      const u = new URL(location.href);
+      u.searchParams.delete('paid');
+      history.replaceState({}, '', u.toString());
+      if (fromStripe === 'cancelled') { window.__toast('Payment cancelled, nothing was charged.'); return; }
+    }
+    if (!sessionId || p.tier === 'full') return;
+
+    try {
+      const d = await EA.confirmPayment({ engagementId: p.id, sessionId });
+      if (!d.paid) return;
+      p.payment = d.payment || p.payment;
+      if (!d.already || fromStripe) window.__toast('Payment received, starting your full assessment.');
+      await promote();
+    } catch (e) {
+      // not_paid is the ordinary answer for a session someone abandoned. Only say something if they
+      // have just come back from Stripe expecting to have bought something.
+      if (fromStripe && e.code !== 'not_paid') window.__toast('Could not confirm the payment: ' + ((e && e.message) || e), true);
+    }
+  })();
 
   // CHECK THE DATA ROOM — free, instant, and as often as they like. This is the loop the product most
   // wants customers in, so it is never metered and never costs them a run.

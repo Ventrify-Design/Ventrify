@@ -333,6 +333,33 @@ export async function unlockFull({ engagementId } = {}) {
   return d;
 }
 
+/* ── THE TILL ──────────────────────────────────────────────────────────────────────────────────
+   startCheckout mints a Stripe session and hands back the URL to send the customer to. It does NOT
+   change the tier: paying and being unlocked are two facts, and conflating them is how a cancelled
+   checkout leaves a venture looking bought.
+
+   confirmPayment is the return trip, and it asks STRIPE, not the browser. The customer comes back
+   to ?paid=cs_live_… and that is a string anyone can type, so it is treated as a question rather
+   than as evidence. */
+export async function startCheckout({ engagementId } = {}) {
+  return billing({ engagementId, action: 'checkout' });
+}
+
+export async function confirmPayment({ engagementId, sessionId } = {}) {
+  return billing({ engagementId, action: 'confirm', sessionId });
+}
+
+async function billing(payload) {
+  const token = await idToken();
+  const r = await fetch('/api/billing', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ idToken: token, ...payload }),
+  });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw Object.assign(new Error(d.detail || d.error || ('HTTP ' + r.status)), { code: d.error, status: r.status });
+  return d;
+}
+
 export async function rescanDataRoom({ engagementId, onProgress, onBusy } = {}) {
   const prog = onProgress || (() => {});
   const busy = onBusy || (() => {});

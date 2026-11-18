@@ -40,7 +40,8 @@ const isDead = (r) => DEAD.has(r.error) || r.status === 405 || r.status >= 500 |
 // endpoint a client actually calls and pass if ANY of them recognises the action — "is this reachable
 // somewhere" is the question that matters, and it needs no brittle pairing.
 const ENDPOINTS = ['/api/memo', '/api/ingest-docs', '/api/dispatch-run', '/api/send-email', '/api/admin',
-                   '/api/create-engagement', '/api/update-org', '/api/manage-operator', '/api/notify'];
+                   '/api/create-engagement', '/api/update-org', '/api/manage-operator', '/api/notify',
+                   '/api/billing'];
 
 async function post(path, body, token) {
   const r = await fetch(BASE + path, {
