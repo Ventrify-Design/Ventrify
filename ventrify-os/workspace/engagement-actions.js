@@ -329,7 +329,8 @@ export async function unlockFull({ engagementId } = {}) {
     body: JSON.stringify({ idToken: token, engagementId, action: 'prescreen-unlock' }),
   });
   const d = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(d.detail || d.error || ('HTTP ' + r.status));
+  // The REASON travels with the error, because payment_required is not a failure — it is a route.
+  if (!r.ok) throw Object.assign(new Error(d.detail || d.error || ('HTTP ' + r.status)), { code: d.error, status: r.status });
   return d;
 }
 

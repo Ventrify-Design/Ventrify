@@ -224,25 +224,33 @@
     if (!ok) return;
     if (!live) { p.tier = 'full'; window.__toast('Unlocked — full assessment.'); refresh(); return; }
 
-    if (buying) {
-      try {
-        busy(true);
-        const s = await EA.startCheckout({ engagementId: p.id });
-        /* LEAVING THE PAGE IS THE LAST THING THAT HAPPENS. If anything above threw, the customer is
-           still here with a toast rather than on a checkout for a session we failed to record. */
-        location.href = s.url;
-      } catch (e) {
-        busy(false);
-        // An org that turns out to be covered after all should get the run, not an error.
-        if (e.code === 'no_payment_needed') { await promote().catch(() => {}); return; }
-        window.__toast('Could not start the payment: ' + ((e && e.message) || e), true);
-      }
-      return;
-    }
+    if (buying) { await goToCheckout(); return; }
 
+    /* THE SERVER IS THE PAYWALL, AND THE CLIENT FOLLOWS IT. The route above is computed from W.plan,
+       and a page that loaded without one would compute "unlimited" and send the customer down the
+       free path — where api/memo.js, which cannot be fooled, answers 402. That answer is not an
+       error to report; it is the checkout, arriving by a different door. */
     try { await promote(); }
-    catch (e) { window.__toast('Could not unlock: ' + ((e && e.message) || e), true); }
+    catch (e) {
+      if (e.code === 'payment_required') { await goToCheckout(); return; }
+      window.__toast('Could not unlock: ' + ((e && e.message) || e), true);
+    }
   };
+
+  async function goToCheckout() {
+    try {
+      busy(true);
+      const s = await EA.startCheckout({ engagementId: p.id });
+      /* LEAVING THE PAGE IS THE LAST THING THAT HAPPENS. If anything above threw, the customer is
+         still here with a toast rather than on a checkout for a session we failed to record. */
+      location.href = s.url;
+    } catch (e) {
+      busy(false);
+      // An org that turns out to be covered after all should get the run, not an error.
+      if (e.code === 'no_payment_needed') { await promote().catch(() => {}); return; }
+      window.__toast('Could not start the payment: ' + ((e && e.message) || e), true);
+    }
+  }
 
   /* THE RETURN TRIP, and the closed tab. Stripe sends them back to ?paid=cs_... which is a string
      anyone can type, so it is handed to the server as a question rather than believed. The second
