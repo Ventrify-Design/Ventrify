@@ -48,7 +48,20 @@ if (CANARY) {
 
 console.log(`\n── ${URL_.split('?')[0]}`);
 await page.goto(URL_, { waitUntil: 'domcontentloaded' });
-await new Promise(r => setTimeout(r, 800));
+
+/* WAIT FOR THE THING, DO NOT SAMPLE THE CLOCK. The lockup arrives from a dynamic import that is
+   rewritten cross-origin to os.ventrify.io in production, and a fixed 800ms sampled it as empty on
+   a cold edge — reporting a broken panel that was merely slower than the stopwatch. A flaky gate
+   gets ignored, which costs more than the bug it was guarding. This still fails if the lockup never
+   arrives: the catch branch writes a fallback, so empty after five seconds means neither ran. */
+await page.waitForFunction(
+  () => {
+    const el = document.getElementById('lockup');
+    const body = document.getElementById('body');
+    return el && el.innerHTML.length > 0 && body && body.innerHTML.length > 200;
+  },
+  { timeout: 5000 },
+).catch(() => {});
 
 const seen = await page.evaluate(() => ({
   head: (document.getElementById('head') || {}).innerHTML || '',
