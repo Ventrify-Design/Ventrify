@@ -42,8 +42,8 @@
     font:    D.font    || '',
     fontBody:D.fontBody|| '',
     radius:  D.radius  == null || D.radius === '' ? 16 : Math.max(0, Math.min(24, parseInt(D.radius, 10) || 0)),
-    label:   D.label   || 'Is your deck ready?',
-    sub:     D.sub     || 'Free pre-screen · 2 min',
+    label:   D.label   || 'A first look at your venture',
+    sub:     D.sub     || 'Free initial review, 2 min',
     side:    D.side === 'left' ? 'left' : 'right'
   };
 

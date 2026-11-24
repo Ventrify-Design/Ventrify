@@ -39,7 +39,7 @@ const CFG = {
      more cycle, which is why this says about and not exactly.
      (And the cron expression is spelled out rather than written: a star-slash in a
      block comment ends the comment, which is how this file shipped unparseable.) */
-  readyIn:  Q.get('readyIn')  || 'in about ten minutes',
+  readyIn:  Q.get('readyIn')  || 'usually within ten minutes',
 };
 const DEMO = Q.get('demo') === '1';
 const API  = (Q.get('api') || 'https://os.ventrify.io').replace(/\/$/, '');
@@ -122,8 +122,8 @@ $('head').innerHTML =
   (CFG.logo
     ? `<img class="logo" src="${esc(CFG.logo)}" alt="${esc(CFG.partner)}">`
     : `<span class="wordmark">${esc(CFG.partner)}</span>`) +
-  `<span class="bar"></span><span class="what">Pre-screen</span>
-   <button class="x" id="close" aria-label="Close pre-screen">&times;</button>`;
+  `<span class="bar"></span><span class="what">Initial review</span>
+   <button class="x" id="close" aria-label="Close initial review">&times;</button>`;
 $('close').onclick = () => send('close');
 $('by').onclick = () => send('navigate', { href: CFG.site });
 
@@ -176,7 +176,7 @@ const post = async (path, payload) => {
 const WHY = {
   already_submitted_recently: 'You have already sent us a deck from this address recently. Check your inbox — the link is still good.',
   rate_limited:              'Too many submissions from this connection today. Try again tomorrow, or email us.',
-  partner_cap_reached:       'This month’s free pre-screens have all been claimed. Try again next month, or go straight to a full assessment.',
+  partner_cap_reached:       'This month’s free initial reviews have all been claimed. Try again next month, or go straight to a full assessment.',
   deck_too_large:            `That deck is over ${MAX_MB} MB. Send a lighter export and we will read it.`,
   deck_type_unsupported:     'We can read PDF, PowerPoint and Keynote. That file is not one of them.',
   room_not_a_url:            'That data room link does not look like a web address.',
@@ -198,50 +198,56 @@ const paint = () => send('step', { step: STEPS[at] });
 /* ── the upsell. OURS, so it keeps the violet on every partner's site. ──── */
 const sell = loud => `
   <div class="sell">
-    <span class="lbl">${loud ? 'What happens next' : 'Or go further'}</span>
-    <h3>Full assessment <span class="price">$${esc(CFG.price)}</span></h3>
-    <p>Your investability score across 35 signals, with the evidence behind every one &mdash;
-       the same read an investor's analyst would do.</p>
     <div class="gate"><span class="sc">${esc(CFG.bar)}+</span>
-      <span>Score ${esc(CFG.bar)} or above and you are automatically eligible for
-      <b>${esc(CFG.short)}'s screening process</b>.</span></div>
-    <button class="btn v" data-go="sell">See what's in it &rarr;</button>
+      <span>Score ${esc(CFG.bar)} or above in your full assessment and become eligible to be
+      considered for <b>${esc(CFG.short)}'s formal screening process</b>.</span></div>
+    <span class="lbl">Full investment readiness assessment <span class="price">$${esc(CFG.price)}</span></span>
+    <h3>See what an investor will see, before they do.</h3>
+    <p>Your venture scored out of 100 across 35 signals, with the evidence behind every finding
+       and the specific gaps to close.</p>
+    <button class="btn v" data-go="sell">${loud
+      ? `Get my full assessment, $${esc(CFG.price)}`
+      : 'Explore the full assessment'}</button>
   </div>`;
 
 const intro = () => `
   <div class="step">
-    <span class="eyebrow">Free pre-screen</span>
-    <h1>Is your deck ready for ${esc(CFG.short)}?</h1>
-    <p class="lede">Upload what you have. We will tell you whether it is worth putting
-      in front of an investor yet &mdash; and name what is missing if it is not.</p>
+    <span class="eyebrow">Free initial review</span>
+    <h1>Get an early indication of your investment readiness.</h1>
+    <p class="lede">Get an initial view of your venture's strengths, gaps and the questions an
+      investor is likely to ask, based on your pitch deck and any data room you share.</p>
     <div class="facts">
-      <div class="fact"><span class="ic">&#10003;</span><span><b>Free</b>, and no account to create.</span></div>
+      <div class="fact"><span class="ic">&#10003;</span><span><b>Free</b>, no account required.</span></div>
       <div class="fact"><span class="ic">&#9201;</span><span>About <b>two minutes</b> to submit.</span></div>
-      <div class="fact"><span class="ic">&#9993;</span><span>Your result arrives <b>by email</b>, ${esc(CFG.readyIn)}.</span></div>
+      <div class="fact"><span class="ic">&#9993;</span><span>Your initial review arrives <b>by email</b>, ${esc(CFG.readyIn)}.</span></div>
     </div>
-    <button class="btn p" data-go="form">Start pre-screen</button>
+    <button class="btn p" data-go="form">Start free review</button>
+    <p class="hint" style="margin:.75rem 0 0">Independent investment readiness review by VerdictScore.
+      ${esc(CFG.short)} runs its own screening process separately.</p>
     ${sell(false)}
   </div>`;
 
 const form = () => `
   <div class="step">
     <button class="back" data-go="intro">&larr; Back</button>
-    <h1 style="font-size:19px;margin:.2rem 0 .9rem">Tell us where to send it</h1>
+    <h1 style="font-size:19px;margin:.2rem 0 .35rem">A few details about you and your venture.</h1>
+    <p class="lede" style="margin:0 0 .9rem">We'll use these details to prepare your initial review
+      and send your result to the right place.</p>
     <div class="f">
       <div>
         <label for="n">Your name</label>
-        <input id="n" type="text" autocomplete="name" placeholder="Alex Moreau" value="${esc(S.name)}">
-        <span class="err">We need a name for the report.</span>
+        <input id="n" type="text" autocomplete="name" placeholder="Your full name" value="${esc(S.name)}">
+        <span class="err">We need a name for your initial review.</span>
       </div>
       <div>
         <label for="e">Work email</label>
-        <input id="e" type="email" autocomplete="email" inputmode="email" placeholder="alex@yourcompany.com" value="${esc(S.email)}">
+        <input id="e" type="email" autocomplete="email" inputmode="email" placeholder="you@yourcompany.com" value="${esc(S.email)}">
         <span class="err">That does not look like an email address.</span>
       </div>
       <div>
         <label for="c">Company</label>
-        <input id="c" type="text" autocomplete="organization" placeholder="Northwind Health" value="${esc(S.company)}">
-        <span class="err">We need a company name for the report.</span>
+        <input id="c" type="text" autocomplete="organization" placeholder="Company name" value="${esc(S.company)}">
+        <span class="err">We need a company name for your initial review.</span>
       </div>
       <div>
         <label for="st">Stage</label>
@@ -255,43 +261,45 @@ const form = () => `
         <label for="d">Pitch deck</label>
         <div class="drop" id="d" tabindex="0" role="button" aria-label="Choose your pitch deck">
           <div class="big">Drop your deck, or choose a file</div>
-          <div class="sm">PDF, PPT or Keynote &middot; up to ${MAX_MB} MB</div>
+          <div class="sm">PDF, PPT or Keynote, up to ${MAX_MB} MB</div>
         </div>
         <input id="fi" type="file" accept=".pdf,.ppt,.pptx,.key,application/pdf" hidden>
         <span class="err" id="ferr" style="display:none">A deck is the one thing we cannot do without.</span>
       </div>
       <div>
-        <label for="r">Data room link <span class="opt">&mdash; optional</span></label>
-        <input id="r" type="url" inputmode="url" placeholder="https://drive.google.com/drive/folders/..." value="${esc(S.room)}">
-        <p class="hint">Set it to <b>Anyone with the link &middot; Viewer</b>, or share it with
-          <code>${esc(CFG.roomReader)}</code>. If your workspace blocks outside sharing,
-          the second one is the one that works.</p>
+        <label for="r">Data room link <span class="opt">/ optional</span></label>
+        <input id="r" type="url" inputmode="url" placeholder="Paste your data room link" value="${esc(S.room)}">
+        <p class="hint">Optional. Share your data room and the initial review has more of your
+          venture to go on. Set access to <b>Anyone with the link &middot; Viewer</b>, or share
+          directly with <code>${esc(CFG.roomReader)}</code>. If your workspace blocks outside
+          sharing, the second one is the one that works.</p>
       </div>
-      <label class="check" for="sh">
-        <input id="sh" type="checkbox" ${S.share ? 'checked' : ''}>
-        <span>Share my result with <b>${esc(CFG.partner)}</b>. Your deck is not shared either way &mdash;
-          only the verdict, and only if you tick this.</span>
-      </label>
+      <div class="check" style="align-items:flex-start">
+        <span>Your initial review result is shared with <b>${esc(CFG.partner)}</b>.
+          Your pitch deck and data room are not.</span>
+      </div>
     </div>
-    <div class="stick"><button class="btn p" id="go">Submit for pre-screen</button></div>
+    <div class="stick"><button class="btn p" id="go">Submit for free initial review</button></div>
   </div>`;
 
 const running = () => `
   <div class="step tall">
     <span class="eyebrow">Submitting</span>
-    <h1 style="font-size:19px">Hold on &mdash; this takes a few seconds.</h1>
+    <h1 style="font-size:19px">Your submission is with us.</h1>
+    <p class="lede" style="margin:.2rem 0 .9rem">Uploading takes a few moments. Your initial review
+      follows by email, ${esc(CFG.readyIn)}.</p>
     <div class="runs" id="runs" aria-live="polite">
       <div class="run" data-i="0"><span class="m">1</span>
-        <span class="t"><b>Receiving your deck</b><span id="s0">&mdash;</span></span></div>
+        <span class="t"><b id="l0">Receiving your deck</b><span id="s0">&mdash;</span></span></div>
       <div class="run" data-i="1"><span class="m">2</span>
-        <span class="t"><b>Opening your data room</b><span id="s1">&mdash;</span></span></div>
+        <span class="t"><b id="l1">Checking for a data room</b><span id="s1">&mdash;</span></span></div>
       <div class="run" data-i="2"><span class="m">3</span>
-        <span class="t"><b>Queued for pre-screen</b><span id="s2">&mdash;</span></span></div>
+        <span class="t"><b id="l2">Queuing your venture review</b><span id="s2">&mdash;</span></span></div>
     </div>
     <div class="wait">
-      <b>What comes back</b>
-      <p>A pre-screen answers one question &mdash; is this worth assessing properly?
-        It does not give you a number. The score comes from the full assessment.</p>
+      <b>What to expect</b>
+      <p>A first look at your venture. It gives an early indication, not a score, and the full
+        assessment may reach a different conclusion, higher or lower.</p>
     </div>
   </div>`;
 
@@ -299,16 +307,22 @@ const done = () => `
   <div class="step">
     <div class="mid">
       <div class="tick">&#10003;</div>
-      <h1>${STAGE === 'full' ? 'That is everything we need.' : 'We have your deck.'}</h1>
-      <p class="lede" style="margin:.5rem 0 0">${STAGE === 'full' ? 'We will email' : 'We have your deck at'}</p>
+      <h1>${STAGE === 'full' ? 'Your submission is in.' : 'We have your deck.'}</h1>
+      <p class="lede" style="margin:.5rem 0 0">${STAGE === 'full' ? 'We will email your initial review to:' : 'We have your deck at'}</p>
       <span class="addr">${esc(S.email)}</span>
       <p class="lede" style="margin:0">${STAGE === 'full'
-        ? 'One email, when your pre-screen is finished &mdash; not before. The link in it opens the result directly: no password, nothing to set up.'
+        ? 'You will receive one email when your initial review is complete. The link opens your result directly, with no password or account needed.'
         : 'We will be in touch once we have read it.'}</p>
     </div>
+    ${STAGE === 'full' ? `
+      <div class="wait" style="margin-top:1rem">
+        <b>What your initial review gives you</b>
+        <p>A first look at your venture. It gives an early indication, not a score, and the full
+          assessment may reach a different conclusion, higher or lower.</p>
+      </div>` : ''}
     ${S.roomState === 'given' ? `
       <div class="warn" style="background:var(--surface);border-color:var(--edge)"><span class="i">&#9432;</span>
-        <span>We will check we can open your data room when the pre-screen runs. If it is not shared with
+        <span>We will check we can open your data room when your initial review runs. If it is not shared with
           <code>${esc(CFG.roomReader)}</code> (or open by link), we will read the deck alone and tell you.</span></div>` : ''}
     ${sell(true)}
   </div>`;
@@ -403,7 +417,10 @@ function wireForm() {
     if (!S.file) { $('ferr').style.display = 'block'; bad = true; }
     if (bad) { body.querySelector('[aria-invalid=true]')?.scrollIntoView({ block:'center', behavior:'smooth' }); return; }
     S.name = n.value.trim(); S.email = e.value.trim(); S.company = c.value.trim();
-    S.room = $('r').value.trim(); S.share = $('sh').checked; S.stage = $('st').value;
+    /* Always true now: the form states plainly that the result is shared, so there is no box
+       to read. api/intake still takes the field, and firestore.rules still gate the partner's
+       access on it — what changed is that the founder is told rather than asked. */
+    S.room = $('r').value.trim(); S.share = true; S.stage = $('st').value;
     go('running');
   };
 }
@@ -443,7 +460,8 @@ async function runIt() {
       if (!put.ok) throw new Error('upload_failed');
       await post('/api/intake', { intakeId: S.intakeId, uploaded: true });
     }
-    set(0, 'done', S.file.name + ' · ' + mb(S.file.size));
+    $('l0').textContent = 'Deck received';
+    set(0, 'done', 'Your pitch deck has been received.');
 
     /* ── 2. the data room. NOT CHECKED YET, and so not claimed. The check that
           exists (api/_roomcheck.js) is reachable only behind auth; opening it to
@@ -451,12 +469,17 @@ async function runIt() {
           given, which is all it is entitled to say. ──────────────────────── */
     set(1, 'on', 'noting the link');
     await wait(DEMO ? 1200 : 450);
+    /* THE LABEL TELLS THE TRUTH ABOUT WHICH OF THE TWO HAPPENED. Nothing here opens the data
+       room — the real check runs later, inside the review — so a link that was given is SAVED,
+       not checked. Only the empty case can honestly claim to be settled. */
     if (S.room) {
       S.roomState = 'given';
-      set(1, 'done', 'saved — we check we can open it when your pre-screen runs');
+      $('l1').textContent = 'Data room link saved';
+      set(1, 'done', 'We check we can open it when your review runs.');
     } else {
       S.roomState = 'none';
-      set(1, 'done', 'none given — we will read the deck alone');
+      $('l1').textContent = 'Data room checked';
+      set(1, 'done', 'No data room link provided.');
     }
 
     /* ── 3. NO EMAIL HERE. ───────────────────────────────────────
@@ -469,9 +492,10 @@ async function runIt() {
           ONE EMAIL, WHEN THERE IS SOMETHING TO SEE. /api/intake-run sends it after
           the band is written. A link is a promise that something is there; do not
           send one before it is. ─────────────────────────────────── */
-    set(2, 'on', 'queuing your pre-screen');
+    set(2, 'on', 'queuing your initial review');
     await wait(DEMO ? 1200 : 400);
-    set(2, 'done', 'we will email ' + S.email + ' when it is ready');
+    $('l2').textContent = 'Venture review queued';
+    set(2, 'done', 'We will email your initial review when it is ready.');
 
     await wait(700);
     go('done');
