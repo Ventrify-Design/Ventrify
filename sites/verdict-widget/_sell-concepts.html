@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Upsell concepts — VerdictScore widget</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=Zilla+Slab:wght@500;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* ══ A LAB, NOT THE PRODUCT ═══════════════════════════════════════════════════════════════════
+   Four takes on the one card that has to sell the $199 assessment, shown at the real panel width
+   on both partner themes. The tokens below are COPIED from widget.html so the cards sit in a true
+   context; whichever concept is chosen gets built into widget.html itself, and this page is then
+   a record of what was rejected rather than a second source of truth. */
+:root{
+  --vs:#7C5CFC; --vs-lo:#9B82FF; --vs-hi:#B9A7FF; --vs-pale:#E7E1FF; --vs-ink:#140E2B;
+  --acc:#A68B5B; --acc-ink:#fff;                      /* TCA bronze, as the embed tag sets it */
+  --r:16px; --r2:12px; --r3:10px;
+  --w-display:'Zilla Slab',Georgia,serif;
+  --w-body:'Open Sans','Inter Tight',system-ui,sans-serif;
+}
+.panel[data-theme="light"]{
+  --ground:#fff; --surface:rgba(16,19,26,.034); --field:rgba(16,19,26,.045);
+  --edge:rgba(16,19,26,.12); --t1:#14171F; --t2:rgba(20,23,31,.74);
+  --t3:rgba(20,23,31,.56); --t4:rgba(20,23,31,.42);
+}
+.panel[data-theme="dark"]{
+  --ground:#16141C; --surface:rgba(255,255,255,.035); --field:rgba(255,255,255,.05);
+  --edge:rgba(255,255,255,.13); --t1:#fff; --t2:rgba(255,255,255,.78);
+  --t3:rgba(255,255,255,.58); --t4:rgba(255,255,255,.42);
+}
+*{box-sizing:border-box}
+body{margin:0;background:#EEF0F4;font-family:var(--w-body);color:#14171F;padding:2rem 1.25rem 4rem}
+h1{font-family:var(--w-display);font-size:26px;margin:0 0 .35rem}
+.sub{color:#5A6072;font-size:14px;margin:0 0 1.5rem;max-width:62ch;line-height:1.6}
+.bar{display:flex;gap:.5rem;align-items:center;margin-bottom:2rem}
+.bar button{font:600 13px var(--w-body);padding:.5rem .9rem;border-radius:999px;border:1px solid #CDD2DC;
+  background:#fff;cursor:pointer}
+.bar button[aria-pressed="true"]{background:#14171F;color:#fff;border-color:#14171F}
+.grid{display:flex;gap:1.75rem;flex-wrap:wrap;align-items:flex-start}
+.col{width:400px}
+.cap{font:600 12px var(--w-body);letter-spacing:.1em;text-transform:uppercase;color:#7C5CFC;margin:0 0 .3rem}
+.cap b{color:#14171F;display:block;font-family:var(--w-display);font-size:17px;letter-spacing:0;
+  text-transform:none;margin-top:.15rem}
+.why{font-size:13px;color:#5A6072;line-height:1.55;margin:.35rem 0 .8rem;min-height:3.2em}
+.panel{width:400px;background:var(--ground);border:1px solid rgba(16,19,26,.1);border-radius:14px;
+  padding:1.1rem;box-shadow:0 14px 34px -16px rgba(16,24,40,.32)}
+
+/* ── the shared skeleton every concept keeps ──────────────────────────────────────────────── */
+.sell{border-radius:var(--r2);position:relative;overflow:hidden;color:#fff;
+  background:linear-gradient(165deg,#1B1430 0%,#120E22 55%,#0D0A1A 100%)}
+.sell .in{position:relative;z-index:2;padding:1rem}
+.sell .halo{position:absolute;inset:auto -20% -45% -20%;height:70%;z-index:1;pointer-events:none;
+  background:radial-gradient(60% 60% at 50% 50%,rgba(124,92,252,.42),transparent 70%)}
+.sell .lbl{display:flex;align-items:center;gap:.5rem;font:700 10.5px/1 var(--w-body);
+  letter-spacing:.13em;text-transform:uppercase;color:var(--vs-hi);margin-bottom:.5rem}
+.sell .lbl .pipe{color:rgba(255,255,255,.26)}
+.sell .lbl .price{color:#fff;font-weight:700}
+.sell h3{font-family:var(--w-display);font-size:19px;line-height:1.2;margin:0 0 .4rem;color:#fff}
+.sell p{font-size:13px;line-height:1.55;color:rgba(255,255,255,.66);margin:0 0 .85rem}
+.sell .gate{display:flex;gap:.6rem;align-items:center;font-size:12.5px;line-height:1.45;
+  color:rgba(255,255,255,.82);padding:.6rem .65rem;border-radius:var(--r3);
+  border:1px solid rgba(255,255,255,.13);background:rgba(255,255,255,.04);margin:.85rem 0}
+.sell .gate b{color:#fff}
+.sell .sc{flex:0 0 auto;font:700 13px/1 var(--w-body);color:#fff;background:var(--vs);
+  border-radius:6px;padding:.3rem .42rem}
+.sell .cta{display:block;width:100%;min-height:44px;border:0;border-radius:var(--r3);cursor:pointer;
+  font:600 14.5px var(--w-display);color:#fff;background:linear-gradient(180deg,#8B6CFF,#6F4BF5);
+  box-shadow:0 8px 20px -8px rgba(124,92,252,.8)}
+.ill{font-size:10.5px;color:rgba(255,255,255,.38);text-align:center;margin:.45rem 0 0}
+
+/* ── A · the artefact ──────────────────────────────────────────────────────────────────────── */
+.art{position:relative;height:150px;margin:.3rem -.25rem .1rem}
+.art .sheet{position:absolute;border-radius:9px;border:1px solid rgba(255,255,255,.14);
+  background:linear-gradient(160deg,rgba(60,44,110,.85),rgba(26,20,48,.9));padding:.45rem .5rem;
+  box-shadow:0 10px 24px -12px rgba(0,0,0,.8)}
+.art .side{top:26px;width:112px;height:92px;opacity:.72}
+.art .l{left:-6px;transform:rotate(-4deg)}
+.art .r{right:-6px;transform:rotate(4deg);text-align:right}
+.art .r .row{flex-direction:row-reverse}
+.art .r .cap2{text-align:right}
+.art .mid{left:50%;top:8px;transform:translateX(-50%);width:196px;z-index:3;
+  background:linear-gradient(160deg,#3A2C6E,#1B1538);border-color:rgba(185,167,255,.3)}
+.art .hd{display:flex;justify-content:space-between;align-items:center;font-size:7px;
+  color:rgba(255,255,255,.55);margin-bottom:.3rem}
+.art .hd b{color:#fff;font-size:7.5px}
+.art .score{font:700 30px/1 var(--w-body);color:#fff;letter-spacing:-.02em}
+.art .score i{font-style:normal;font-size:12px;color:var(--vs-hi)}
+.art .meter{height:4px;border-radius:3px;background:rgba(255,255,255,.12);margin:.35rem 0 .4rem;overflow:hidden}
+.art .meter span{display:block;height:100%;width:78%;border-radius:3px;
+  background:linear-gradient(90deg,var(--vs),var(--vs-hi))}
+.art .cols{display:flex;gap:4px}
+.art .cols div{flex:1;text-align:center;font-size:6px;color:rgba(255,255,255,.5)}
+.art .cols b{display:block;color:#fff;font-size:8px;margin-bottom:2px}
+.art .cols u{display:block;height:3px;border-radius:2px;background:var(--vs);text-decoration:none;margin-top:2px}
+.art .row{display:flex;gap:3px;align-items:center;font-size:6.5px;color:rgba(255,255,255,.62);margin-bottom:3px}
+.art .row span{width:5px;height:5px;border-radius:1px;background:rgba(255,255,255,.3);flex:0 0 auto}
+.art .cap2{font-size:6.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--vs-hi);margin-bottom:4px}
+
+/* ── B · the gap ───────────────────────────────────────────────────────────────────────────── */
+.gap{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin:.1rem 0 .2rem}
+.gap .box{border-radius:9px;padding:.55rem .6rem;border:1px solid rgba(255,255,255,.1)}
+.gap .free{background:rgba(255,255,255,.03)}
+.gap .paid{background:linear-gradient(165deg,rgba(124,92,252,.3),rgba(124,92,252,.08));
+  border-color:rgba(185,167,255,.4)}
+.gap h4{font:700 9px/1 var(--w-body);letter-spacing:.1em;text-transform:uppercase;margin:0 0 .4rem;
+  color:rgba(255,255,255,.45)}
+.gap .paid h4{color:var(--vs-hi)}
+.gap ul{margin:0;padding:0;list-style:none}
+.gap li{font-size:11px;line-height:1.5;color:rgba(255,255,255,.55);display:flex;gap:.3rem}
+.gap .paid li{color:rgba(255,255,255,.9)}
+.gap li i{font-style:normal;flex:0 0 auto;color:rgba(255,255,255,.3)}
+.gap .paid li i{color:var(--vs-hi)}
+.gap .big{font:700 22px/1 var(--w-body);color:#fff;display:block;margin-bottom:.25rem}
+.gap .free .big{color:rgba(255,255,255,.4);font-size:18px}
+
+/* ── C · the score ─────────────────────────────────────────────────────────────────────────── */
+.sco{text-align:center;margin:.4rem 0 .2rem}
+.sco .n{font:700 52px/1 var(--w-body);letter-spacing:-.03em;color:#fff}
+.sco .n i{font-style:normal;font-size:18px;color:var(--vs-hi)}
+.sco .bars{display:flex;gap:5px;margin:.7rem 0 0}
+.sco .bars div{flex:1}
+.sco .bars u{display:block;height:46px;border-radius:3px;text-decoration:none;
+  background:linear-gradient(180deg,rgba(124,92,252,.25),rgba(124,92,252,.6));position:relative}
+.sco .bars u b{position:absolute;inset:auto 0 0 0;display:block;border-radius:3px;
+  background:linear-gradient(180deg,var(--vs-lo),var(--vs))}
+.sco .bars span{display:block;font-size:7.5px;color:rgba(255,255,255,.5);margin-top:4px;letter-spacing:.02em}
+
+/* ── D · the desk ──────────────────────────────────────────────────────────────────────────── */
+.desk{margin:.3rem 0 .2rem;border-radius:9px;border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.03);padding:.6rem}
+.desk .ln{display:flex;align-items:center;gap:.45rem;font-size:11px;color:rgba(255,255,255,.7);
+  padding:.28rem 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.desk .ln:last-child{border-bottom:0}
+.desk .ln em{font-style:normal;margin-left:auto;font-size:9.5px;color:var(--vs-hi)}
+.desk .tk{width:14px;height:14px;border-radius:4px;flex:0 0 auto;display:grid;place-items:center;
+  background:rgba(124,92,252,.22);color:var(--vs-hi);font-size:8px}
+.desk .tot{display:flex;align-items:baseline;gap:.4rem;margin-top:.5rem;padding-top:.5rem;
+  border-top:1px solid rgba(255,255,255,.1)}
+.desk .tot b{font:700 20px/1 var(--w-body);color:#fff}
+.desk .tot span{font-size:10.5px;color:rgba(255,255,255,.55)}
+</style>
+</head>
+<body>
+
+<h1>The upsell card — four concepts</h1>
+<p class="sub">Shown at the real panel width, inside a partner-themed panel. The move every concept
+shares: the card goes <b>dark</b> while the panel stays the partner's, so the thing we are selling
+visibly belongs to VerdictScore rather than to TCA. Copy is held constant so you are choosing a
+design, not a sentence.</p>
+
+<div class="bar">
+  <button id="t-light" aria-pressed="true">Partner theme: light</button>
+  <button id="t-dark" aria-pressed="false">Partner theme: dark</button>
+</div>
+
+<div class="grid">
+
+  <!-- ─────────────────────────────── A ─────────────────────────────── -->
+  <div class="col">
+    <p class="cap">Concept A<b>The artefact</b></p>
+    <p class="why">Closest to your reference. Shows the deliverable itself — a scored report with
+      evidence either side of it — so the $199 buys a thing you can picture.</p>
+    <div class="panel" data-theme="light">
+      <div class="sell">
+        <div class="halo"></div>
+        <div class="in">
+          <div class="lbl"><span>Full investment readiness assessment</span>
+            <span class="pipe">|</span><span class="price">$199</span></div>
+          <h3>See what an investor will see, before they do.</h3>
+          <p>Your venture scored out of 100 across 35 signals, with the evidence behind every
+            finding and the specific gaps to close.</p>
+
+          <div class="art">
+            <div class="sheet side l">
+              <div class="cap2">Evidence</div>
+              <div class="row"><span></span>Investor deck v3</div>
+              <div class="row"><span></span>Financial model</div>
+              <div class="row"><span></span>Market research</div>
+              <div class="row"><span></span>Customer traction</div>
+            </div>
+            <div class="sheet side r">
+              <div class="cap2">Key findings</div>
+              <div class="row"><span></span>Strengths</div>
+              <div class="row"><span></span>Gaps to address</div>
+              <div class="row"><span></span>What to evidence</div>
+            </div>
+            <div class="sheet mid">
+              <div class="hd"><b>VerdictScore</b><span>Investment readiness</span></div>
+              <div class="score">78<i>/100</i></div>
+              <div class="meter"><span></span></div>
+              <div class="cols">
+                <div><b>82</b><span>Team</span><u style="width:82%"></u></div>
+                <div><b>79</b><span>Market</span><u style="width:79%"></u></div>
+                <div><b>76</b><span>Product</span><u style="width:76%"></u></div>
+                <div><b>74</b><span>Financials</span><u style="width:74%"></u></div>
+                <div><b>80</b><span>Execution</span><u style="width:80%"></u></div>
+              </div>
+            </div>
+          </div>
+          <p class="ill">Illustrative. Not your result.</p>
+
+          <div class="gate"><span class="sc">75+</span>
+            <span>Score 75 or above and become eligible to be considered for
+              <b>TCA's formal screening process</b>.</span></div>
+          <button class="cta">Explore the full assessment &rarr;</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────── B ─────────────────────────────── -->
+  <div class="col">
+    <p class="cap">Concept B<b>The gap</b></p>
+    <p class="why">Sells by comparison rather than by picture: what they are about to get free,
+      beside what they are not. The weakest column is the one they already own.</p>
+    <div class="panel" data-theme="light">
+      <div class="sell">
+        <div class="halo"></div>
+        <div class="in">
+          <div class="lbl"><span>Full investment readiness assessment</span>
+            <span class="pipe">|</span><span class="price">$199</span></div>
+          <h3>See what an investor will see, before they do.</h3>
+          <p>Your venture scored out of 100 across 35 signals, with the evidence behind every
+            finding and the specific gaps to close.</p>
+
+          <div class="gap">
+            <div class="box free">
+              <h4>Your free review</h4>
+              <span class="big">—</span>
+              <ul>
+                <li><i>·</i>An early indication</li>
+                <li><i>·</i>Read from your deck</li>
+                <li><i>·</i>No score</li>
+              </ul>
+            </div>
+            <div class="box paid">
+              <h4>Full assessment</h4>
+              <span class="big">78<span style="font-size:12px;color:var(--vs-hi)">/100</span></span>
+              <ul>
+                <li><i>&#10003;</i>35 signals scored</li>
+                <li><i>&#10003;</i>Evidence per finding</li>
+                <li><i>&#10003;</i>Gaps to close</li>
+              </ul>
+            </div>
+          </div>
+          <p class="ill">Illustrative. Not your result.</p>
+
+          <div class="gate"><span class="sc">75+</span>
+            <span>Score 75 or above and become eligible to be considered for
+              <b>TCA's formal screening process</b>.</span></div>
+          <button class="cta">Explore the full assessment &rarr;</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────── C ─────────────────────────────── -->
+  <div class="col">
+    <p class="cap">Concept C<b>The number</b></p>
+    <p class="why">One hero: the score. The 75+ threshold sits directly under it, so the bar they
+      have to clear is read against the number itself rather than as small print.</p>
+    <div class="panel" data-theme="light">
+      <div class="sell">
+        <div class="halo"></div>
+        <div class="in">
+          <div class="lbl"><span>Full investment readiness assessment</span>
+            <span class="pipe">|</span><span class="price">$199</span></div>
+          <h3>See what an investor will see, before they do.</h3>
+
+          <div class="sco">
+            <div class="n">78<i>/100</i></div>
+            <div class="bars">
+              <div><u><b style="height:55%"></b></u><span>Team</span></div>
+              <div><u><b style="height:48%"></b></u><span>Market</span></div>
+              <div><u><b style="height:40%"></b></u><span>Product</span></div>
+              <div><u><b style="height:35%"></b></u><span>Finance</span></div>
+              <div><u><b style="height:50%"></b></u><span>Exec</span></div>
+              <div><u><b style="height:28%"></b></u><span>Traction</span></div>
+              <div><u><b style="height:62%"></b></u><span>Risk</span></div>
+            </div>
+          </div>
+          <p class="ill">Illustrative. Not your result.</p>
+
+          <p style="margin-top:.7rem">Scored across 35 signals, with the evidence behind every
+            finding and the specific gaps to close.</p>
+
+          <div class="gate"><span class="sc">75+</span>
+            <span>Score 75 or above and become eligible to be considered for
+              <b>TCA's formal screening process</b>.</span></div>
+          <button class="cta">Explore the full assessment &rarr;</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────── D ─────────────────────────────── -->
+  <div class="col">
+    <p class="cap">Concept D<b>The work</b></p>
+    <p class="why">Sells the labour rather than the output: every document read, every signal
+      checked. Makes $199 feel like a day of an analyst's time, which is what it replaces.</p>
+    <div class="panel" data-theme="light">
+      <div class="sell">
+        <div class="halo"></div>
+        <div class="in">
+          <div class="lbl"><span>Full investment readiness assessment</span>
+            <span class="pipe">|</span><span class="price">$199</span></div>
+          <h3>See what an investor will see, before they do.</h3>
+          <p>Every document read, every signal checked, every finding evidenced — the same read an
+            investor's analyst would do.</p>
+
+          <div class="desk">
+            <div class="ln"><span class="tk">&#10003;</span>Investor deck <em>14 pages</em></div>
+            <div class="ln"><span class="tk">&#10003;</span>Financial model <em>read</em></div>
+            <div class="ln"><span class="tk">&#10003;</span>Market research <em>46 sources</em></div>
+            <div class="ln"><span class="tk">&#10003;</span>Customer traction <em>evidenced</em></div>
+            <div class="tot"><b>35</b><span>investment readiness signals scored</span></div>
+          </div>
+          <p class="ill">Illustrative. Not your result.</p>
+
+          <div class="gate"><span class="sc">75+</span>
+            <span>Score 75 or above and become eligible to be considered for
+              <b>TCA's formal screening process</b>.</span></div>
+          <button class="cta">Explore the full assessment &rarr;</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* The partner theme is the thing most likely to break a dark card, so it is one click away. */
+const set = (t) => {
+  document.querySelectorAll('.panel').forEach(p => p.setAttribute('data-theme', t));
+  document.getElementById('t-light').setAttribute('aria-pressed', String(t === 'light'));
+  document.getElementById('t-dark').setAttribute('aria-pressed', String(t === 'dark'));
+};
+document.getElementById('t-light').onclick = () => set('light');
+document.getElementById('t-dark').onclick = () => set('dark');
+</script>
+</body>
+</html>
