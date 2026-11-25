@@ -112,6 +112,30 @@ console.log('\n── the partner embed path (what a partner pastes)');
   }
 }
 
+/* THE PRIVACY PAGE IS A MIDDLEWARE ROUTE, and those fail silently. An unrewritten path falls
+   through to the filesystem, where verdict.ventrify.io/privacy is nothing at all — and the only
+   symptom is a 404 on the page a founder is sent to from a form that already has their deck. */
+console.log('\n── the privacy page');
+{
+  const want = CANARY ? '/privacy-not-a-real-page' : '/privacy';
+  try {
+    const r = await fetch('https://verdict.ventrify.io' + want + '?cb=' + Date.now(), { redirect: 'follow' });
+    ok(`${want} answers 200`, r.status === 200, 'status ' + r.status);
+    if (r.status === 200) {
+      const body = await r.text();
+      ok('it is the privacy page', /<h1>Privacy<\/h1>/.test(body), (body.match(/<title>([^<]*)</) || [, ''])[1]);
+      /* The three sentences this page exists to make: what the partner gets, what they do not,
+         and that deletion can be asked for. If any of them vanish in an edit, the page is still
+         a privacy page and still 200s, and nobody finds out. */
+      for (const [label, re] of [
+        ['it says the partner gets the result',     /receives your review result/i],
+        ['it says they do not get the documents',   /do not receive your pitch deck/i],
+        ['it offers deletion',                      /we will delete them/i],
+      ]) ok(label, re.test(body));
+    }
+  } catch (e) { ok(want + ' reachable', false, e.message); }
+}
+
 console.log(fail ? `\n${fail} FAILED` : '\nevery host serves its own site');
 if (CANARY) {
   console.log(fail ? 'canary OK — the gate can fail' : '\n!! CANARY DID NOT FAIL — this gate is decoration');
