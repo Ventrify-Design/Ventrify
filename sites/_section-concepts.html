@@ -161,6 +161,34 @@ body{background:var(--bg,#0E0D13);padding:0 0 5rem}
 .f-lock{display:flex;align-items:center;gap:7px;font:500 10.5px/1 var(--font-mono,ui-monospace,Menlo,monospace);
   color:rgba(255,255,255,.5)}
 .f-lock b{color:#B9A7FF;font-weight:600}
+
+/* ══ 7 · THE LEDGER, WITH CHAPTER NUMERALS — the chosen direction ═════════════════════════
+   Treatment 1's layout and treatment 4's numbers. Two changes beyond the merge:
+
+   COLUMN FLOW, NOT ROW FLOW. Six items across two columns read 01 02 / 03 04 / 05 06 if you
+   let the grid fill by rows — the eye crosses the page between consecutive steps. Flowing by
+   column puts 01-02-03 down the left and 04-05-06 down the right, which is how a numbered
+   sequence continues in a book, and the only item needing a top rule is the first of each
+   column.
+
+   AND THE OUTPUT ENTRIES GAIN A SENTENCE. They were titles alone, which is why they needed a
+   different variant and why the cards under them were empty. Give each one a line and the two
+   sections stop being two things that resemble each other and become the same component with
+   different content in it. */
+.ledx{list-style:none;padding:0;margin:0;border-top:1px solid rgba(255,255,255,.14)}
+.ledx li{display:grid;grid-template-columns:auto 1fr;gap:1.4rem;align-items:baseline;
+  padding:1.4rem 0;border-bottom:1px solid rgba(255,255,255,.1)}
+.ledx .n{font:600 46px/.8 system-ui;letter-spacing:-.05em;min-width:2.15ch;
+  -webkit-text-stroke:1px rgba(155,130,255,.5);color:transparent;
+  transition:color .4s ease}
+.ledx li:hover .n{color:rgba(155,130,255,.14)}
+.ledx h4{margin:0 0 .3rem;font-size:18px;letter-spacing:-.015em}
+.ledx p{margin:0;color:var(--muted,#9A96AE);font-size:14.5px;line-height:1.55;max-width:60ch}
+@media (min-width:880px){
+  .ledx{border-top:0;display:grid;grid-auto-flow:column;
+    grid-template-columns:1fr 1fr;grid-template-rows:repeat(3,auto);column-gap:4rem}
+  .ledx li:nth-child(1),.ledx li:nth-child(4){border-top:1px solid rgba(255,255,255,.14)}
+}
 </style>
 </head>
 <body data-site="verdictscore">
@@ -386,6 +414,37 @@ body{background:var(--bg,#0E0D13);padding:0 0 5rem}
       <div class="f-lines"><i></i><i></i><i></i></div>
       <div class="f-row" style="font-size:9.5px">Material gaps recorded: 3</div>
     </div><div class="txt"><h4>Evidence references and a record of material gaps</h4></div></li>
+  </ol>
+</section>
+
+
+<!-- ══════════════════════════════ 7 ══════════════════════════════ -->
+<section class="wrap lab-sec" id="chosen">
+  <p class="lab-tag">Treatment 7 — the refinement</p>
+  <h2>The ledger, with chapter numerals</h2>
+  <p class="why">Treatment 1's layout, treatment 4's numbers, and <b>a sentence under every output
+  entry</b> — which is the change that makes both sections genuinely one component rather than two
+  that resemble each other. The numerals flow down each column, so the sequence continues the way it
+  would in a book instead of zig-zagging across the page.</p>
+
+  <p class="lab-sub">How it works</p>
+  <ol class="ledx">
+    <li><span class="n">01</span><div><h4>Upload the data room</h4><p>Bring together decks, financial models, spreadsheets, contracts and other supporting documents.</p></div></li>
+    <li><span class="n">02</span><div><h4>Review readiness</h4><p>Before assessment, receive a review of potential gaps and missing supporting material so you can strengthen the data room.</p></div></li>
+    <li><span class="n">03</span><div><h4>Examine the evidence</h4><p>Specialist analysis steps review claims, markets, competitors, comparables, assumptions and risks.</p></div></li>
+    <li><span class="n">04</span><div><h4>Freeze the findings</h4><p>Evidence is fixed before scoring so the basis for the assessment can be identified.</p></div></li>
+    <li><span class="n">05</span><div><h4>Score against criteria</h4><p>Blind readers apply defined criteria and anchored thresholds; disagreement is surfaced rather than hidden.</p></div></li>
+    <li><span class="n">06</span><div><h4>Review the memo</h4><p>Receive a structured assessment with reasoning and source references to support further diligence.</p></div></li>
+  </ol>
+
+  <p class="lab-sub">The output — now with a line under each</p>
+  <ol class="ledx">
+    <li><span class="n">01</span><div><h4>Overall score and stated guidance</h4><p>A single measured score out of 100, with the guidance band that goes with it.</p></div></li>
+    <li><span class="n">02</span><div><h4>Investment thesis with supporting and opposing evidence</h4><p>The case for and the case against, each point tied to what it rests on.</p></div></li>
+    <li><span class="n">03</span><div><h4>Claims marked as supported, unverified or contradicted</h4><p>Each claim traced to what supports it, or flagged where nothing does.</p></div></li>
+    <li><span class="n">04</span><div><h4>Market, competitor and comparable analysis</h4><p>Who else is doing this, how large the market really is, and how the venture compares.</p></div></li>
+    <li><span class="n">05</span><div><h4>Key assumptions and risks that could change the decision</h4><p>The few things that would move the score if they turned out differently.</p></div></li>
+    <li><span class="n">06</span><div><h4>Evidence references and a record of material gaps</h4><p>Where each finding came from, and what the data room did not contain.</p></div></li>
   </ol>
 </section>
 
