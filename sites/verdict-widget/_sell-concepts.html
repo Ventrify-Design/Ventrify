@@ -3,29 +3,28 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Upsell concepts — VerdictScore widget</title>
+<title>Arrival — refinements</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=Zilla+Slab:wght@500;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
 <style>
-/* ══ ROUND THREE — BUILT ON THE REAL PRODUCT SHOT ═════════════════════════════════════════════
-   The operator's own mockup, _shot-workspace.png: a transparent PNG with the long shadow baked
-   into the alpha, so the device floats on any background and needs no plate under it.
+/* ══ ARRIVAL, REFINED ═════════════════════════════════════════════════════════════════════════
+   Concept 2 chosen. Three changes applied to all three cards below:
 
-   Four directions, each a different ANSWER TO ONE QUESTION — how much of the product do you show,
-   and from how far away? Full bleed, entering from the edge, a portal into one detail, and the
-   whole thing held at arm's length. The type system is unchanged from round two because it was
-   the part that worked.
+   · the "Full assessment · $199" label above the headline is GONE. The price now appears once,
+     in the button, instead of twice inside 200px.
+   · the button is concept 4's — "Get my full assessment · $199" — which asks for the sale instead
+     of offering a tour of it.
+   · the 75+ line MOVED ABOVE THE BUTTON and got louder. It was set at 44% opacity, quieter than
+     the supporting copy, which had the strongest claim on the card whispering. It is now the last
+     thing read before the button is pressed.
 
-   ⚠ 1974×1632 at 1.2MB. Fine here, impossible in production: this card loads on somebody else's
-   website, where today the whole widget is 11KB. Whichever wins ships as a WebP cut to the size
-   it is actually displayed at — an exercise in a few hundred KB, not a design constraint now. */
+   The three differ ONLY in how the 75 is drawn. Everything else is identical. */
 :root{
   --vs:#7C5CFC; --vs-lo:#9B82FF; --vs-hi:#B9A7FF; --vs-pale:#E7E1FF;
   --ink:#0A0716;
   --w:'Inter Tight',system-ui,sans-serif;
   --w-partner:'Zilla Slab',Georgia,serif;
-  --shot:url('./_shot-workspace-trim.png');
 }
 *{box-sizing:border-box}
 body{margin:0;background:#EEF0F4;font-family:'Open Sans',sans-serif;color:#14171F;padding:2rem 1.25rem 4rem}
@@ -47,79 +46,71 @@ h1{font-family:var(--w-partner);font-size:26px;margin:0 0 .35rem}
 .pfake{font-family:var(--w-partner);font-size:15px;margin:0 0 .75rem}
 .panel[data-theme="dark"] .pfake{color:#fff}
 
-/* ══ shared card + type scale (unchanged from round two) ═══════════════════════════════════ */
+/* ══ the card ══════════════════════════════════════════════════════════════════════════════ */
 .sell{position:relative;border-radius:13px;overflow:hidden;background:var(--ink);font-family:var(--w)}
 .sell::after{content:'';position:absolute;inset:0 0 auto 0;height:1px;z-index:9;
   background:linear-gradient(90deg,transparent,rgba(185,167,255,.5),transparent)}
-.k{font:600 10px/1 var(--w);letter-spacing:.17em;text-transform:uppercase;color:var(--vs-hi)}
-.h{font:600 27px/1.05 var(--w);letter-spacing:-.025em;color:#fff;margin:.5rem 0 0}
+.h{font:600 27px/1.05 var(--w);letter-spacing:-.025em;color:#fff;margin:0}
 .h em{font-style:normal;color:var(--vs-hi)}
-.s{font:400 13px/1.5 var(--w);color:rgba(255,255,255,.58);margin:.5rem 0 0}
-.cta{display:flex;align-items:center;justify-content:center;gap:.5rem;width:100%;min-height:46px;
-  border:0;border-radius:10px;cursor:pointer;margin-top:1rem;
-  font:600 15px var(--w);color:#fff;letter-spacing:-.01em;
+.s{font:400 13px/1.5 var(--w);color:rgba(255,255,255,.58);margin:.75rem 0 0}
+.cta{display:flex;align-items:center;justify-content:center;gap:.45rem;width:100%;min-height:48px;
+  border:0;border-radius:10px;cursor:pointer;margin-top:.85rem;
+  font:600 15.5px var(--w);color:#fff;letter-spacing:-.012em;
   background:linear-gradient(180deg,#8E70FF,#6B45F2);box-shadow:0 10px 26px -10px rgba(124,92,252,.95)}
-.cta span{opacity:.62;font-weight:500}
-.fine{display:flex;align-items:center;gap:.45rem;margin:.7rem 0 0;
-  font:400 11.5px/1.45 var(--w);color:rgba(255,255,255,.44)}
-.fine b{color:rgba(255,255,255,.74);font-weight:600}
-.fine .sc{flex:0 0 auto;font:700 10px/1 var(--w);color:var(--vs-hi);border:1px solid rgba(185,167,255,.4);
-  border-radius:4px;padding:.2rem .3rem}
+.cta span{opacity:.6;font-weight:500}
 .glow{position:absolute;z-index:0;pointer-events:none;
   background:radial-gradient(52% 52% at 50% 45%,rgba(150,112,255,.9),rgba(110,72,235,.38) 44%,transparent 74%)}
 
-/* ══ 1 · FULL BLEED — the screen IS the card ══════════════════════════════════════════════ */
-.c1{min-height:430px;display:flex;flex-direction:column;justify-content:flex-end}
-.c1 .bg{position:absolute;inset:0;z-index:1;background:var(--shot) no-repeat;
-  background-size:245%;background-position:22% 6%;opacity:.9;filter:blur(2.5px) saturate(1.15)}
-.c1 .tint{position:absolute;inset:0;z-index:2;
-  background:linear-gradient(to top,var(--ink) 30%,rgba(10,7,22,.95) 52%,rgba(10,7,22,.45) 74%,rgba(10,7,22,.15))}
-.c1 .wash{position:absolute;inset:0;z-index:3;mix-blend-mode:overlay;
-  background:radial-gradient(70% 50% at 50% 18%,rgba(140,104,255,.5),transparent 70%)}
-.c1 .body{position:relative;z-index:4;padding:1.15rem}
-
-/* ══ 2 · ARRIVAL — the device comes in from the right, cropped by the frame ═══════════════ */
-.c2 .hero{position:relative;height:232px;overflow:hidden}
-.c2 .glow{inset:-10% -10% 12% 2%}
-.c2 img{position:absolute;z-index:2;width:400px;left:38%;top:-6px;
+.hero{position:relative;height:232px;overflow:hidden}
+.hero .glow{inset:-10% -10% 12% 2%}
+.hero img{position:absolute;z-index:2;width:400px;left:38%;top:-6px;
   transform:rotate(-3deg);filter:drop-shadow(0 26px 44px rgba(0,0,0,.65))}
-.c2 .scrim{position:absolute;inset:0;z-index:3;
+.scrim{position:absolute;inset:0;z-index:3;
   background:linear-gradient(to top,var(--ink) 11%,rgba(10,7,22,.88) 27%,rgba(10,7,22,.08) 52%,transparent 64%)}
-.c2 .type{position:absolute;z-index:4;left:1.15rem;right:1.15rem;bottom:1rem}
-.c2 .body{position:relative;z-index:4;padding:0 1.15rem 1.15rem}
+.type{position:absolute;z-index:4;left:1.15rem;right:1.15rem;bottom:1rem}
+.body{position:relative;z-index:4;padding:0 1.15rem 1.15rem}
 
-/* ══ 3 · PORTAL — one detail, close enough to read ════════════════════════════════════════ */
-.c3{padding:1.15rem}
-.c3 .glow{inset:8% -14% 30% -14%}
-.c3 .rel{position:relative;z-index:3}
-.c3 .port{position:relative;z-index:3;height:168px;margin:.95rem 0 0;border-radius:11px;overflow:hidden;
-  border:1px solid rgba(185,167,255,.26);box-shadow:0 22px 44px -18px rgba(0,0,0,.9),
-  inset 0 1px 0 rgba(255,255,255,.08)}
-.c3 .port i{position:absolute;inset:0;display:block;background:var(--shot) no-repeat;
-  background-size:290%;background-position:74% 29%}
-.c3 .port .edge{position:absolute;inset:0;
-  background:linear-gradient(to right,rgba(10,7,22,.5),transparent 28%,transparent 72%,rgba(10,7,22,.5))}
+/* ══ A · THE PLINTH — the numeral as a figure, the claim set against it ════════════════════ */
+.gate-a{display:flex;align-items:center;gap:.85rem;margin-top:1.15rem;padding-top:.95rem;
+  border-top:1px solid rgba(255,255,255,.12)}
+.gate-a .fig{flex:0 0 auto;display:flex;align-items:flex-start;line-height:1;
+  font-weight:600;letter-spacing:-.045em;
+  background:linear-gradient(170deg,#fff 22%,var(--vs-hi) 92%);-webkit-background-clip:text;
+  background-clip:text;color:transparent}
+.gate-a .fig b{font-size:42px;font-weight:600}
+.gate-a .fig i{font-style:normal;font-size:17px;margin-top:4px;font-weight:600}
+.gate-a p{margin:0;font:400 12.5px/1.45 var(--w);color:rgba(255,255,255,.66)}
+.gate-a p b{color:#fff;font-weight:600}
 
-/* ══ 4 · THE OBJECT — held at arm's length, nothing else in the room ══════════════════════ */
-.c4{padding:1.15rem 1.15rem 1.25rem;text-align:center}
-.c4 .glow{inset:10% -8% 46% -8%}
-.c4 .rel{position:relative;z-index:3}
-.c4 .stage{position:relative;z-index:3;margin:.55rem -1.6rem .1rem;
-  height:0;padding-bottom:50%;overflow:hidden}
-.c4 .stage img{position:absolute;inset:0;display:block;width:100%;height:auto;
-  filter:drop-shadow(0 20px 34px rgba(0,0,0,.6))}
-.c4 .h{margin-top:.2rem}
-.c4 .s{margin-left:auto;margin-right:auto;max-width:30ch}
-.c4 .fine{justify-content:center;text-align:left}
+/* ══ B · INLINE — one sentence, the number set at display size inside it ═══════════════════ */
+.gate-b{margin-top:1.15rem;padding:.85rem .95rem;border-radius:10px;
+  background:linear-gradient(145deg,rgba(124,92,252,.16),rgba(124,92,252,.05));
+  border:1px solid rgba(185,167,255,.26)}
+.gate-b p{margin:0;font:400 13px/1.62 var(--w);color:rgba(255,255,255,.72)}
+.gate-b .n{font-weight:600;font-size:30px;letter-spacing:-.04em;color:#fff;
+  line-height:0;position:relative;top:4px;padding:0 1px}
+.gate-b .n i{font-style:normal;font-size:15px;color:var(--vs-hi)}
+.gate-b p b{color:#fff;font-weight:600}
+
+/* ══ C · THE BAR — the number gets its own lit field ═══════════════════════════════════════ */
+.gate-c{display:flex;align-items:stretch;margin-top:1.15rem;border-radius:10px;overflow:hidden;
+  border:1px solid rgba(185,167,255,.3);box-shadow:0 0 34px -10px rgba(124,92,252,.6)}
+.gate-c .n{flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:1px;
+  padding:0 .85rem;background:linear-gradient(165deg,var(--vs-lo),#5B34E8);color:#fff}
+.gate-c .n b{font:600 27px/1 var(--w);letter-spacing:-.045em}
+.gate-c .n i{font-style:normal;font:600 14px/1 var(--w);align-self:flex-start;margin-top:9px}
+.gate-c .t{padding:.7rem .8rem;font:400 12.5px/1.42 var(--w);color:rgba(255,255,255,.74);
+  background:rgba(124,92,252,.1)}
+.gate-c .t b{color:#fff;font-weight:600}
 </style>
 </head>
 <body>
 
-<h1>The upsell card — on your product shot</h1>
-<p class="sub">Four answers to one question: <b>how much of the product do you show, and from how far
-away?</b> The whole screen as the card itself; the device arriving from the edge; a portal into a
-single detail; or the object held at arm's length with nothing else in the room. Type system is
-unchanged from the last round — that part was working.</p>
+<h1>Arrival — three ways to set the 75</h1>
+<p class="sub">The tagline above the headline is gone, the button asks for the sale and carries the
+price, and the eligibility line has moved <b>above</b> the button — it was the strongest claim on the
+card and it was set quieter than the supporting copy. These three differ only in how the number is
+drawn; everything else is identical.</p>
 
 <div class="bar">
   <button id="t-light" aria-pressed="true">Partner theme: light</button>
@@ -128,97 +119,87 @@ unchanged from the last round — that part was working.</p>
 
 <div class="grid">
 
-  <!-- ══════════════ 1 ══════════════ -->
+  <!-- ══════════════ A ══════════════ -->
   <div class="col">
-    <p class="cap">Concept 1<b>Full bleed</b></p>
-    <p class="why">The screen is the card. No device, no frame, no plate — you are looking straight
-      at the thing you would own, with the type sitting in the dark at the bottom of it.</p>
+    <p class="cap">Treatment A<b>The plinth</b></p>
+    <p class="why">The numeral as a figure in its own right — 42px, filled from white into violet,
+      with the claim set against it across a hairline. Quietest frame, loudest number.</p>
     <div class="panel" data-theme="light">
       <p class="pfake">…your initial review arrives by email.</p>
-      <div class="sell c1">
-        <div class="bg"></div><div class="tint"></div><div class="wash"></div>
-        <div class="body">
-          <div class="k">Full assessment · $199</div>
-          <h3 class="h">See what an investor<br>sees, <em>before they do.</em></h3>
-          <p class="s">Scored across 35 signals, with the evidence behind every finding.</p>
-          <button class="cta">Explore the full assessment <span>→</span></button>
-          <p class="fine"><span class="sc">75+</span>
-            <span>Score 75 or above and become eligible for <b>TCA's formal screening</b>.</span></p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══════════════ 2 ══════════════ -->
-  <div class="col">
-    <p class="cap">Concept 2<b>Arrival</b></p>
-    <p class="why">The device enters from the right and is cut off by the card, so what you see is
-      a fragment of something bigger. The shadow in your PNG does the lifting.</p>
-    <div class="panel" data-theme="light">
-      <p class="pfake">…your initial review arrives by email.</p>
-      <div class="sell c2">
+      <div class="sell">
         <div class="hero">
           <div class="glow"></div>
           <img src="./_shot-workspace-trim.png" alt="">
           <div class="scrim"></div>
           <div class="type">
-            <div class="k">Full assessment · $199</div>
             <h3 class="h">See what an investor<br>sees, <em>before they do.</em></h3>
           </div>
         </div>
         <div class="body">
           <p class="s">Scored across 35 signals, with the evidence behind every finding.</p>
-          <button class="cta">Explore the full assessment <span>→</span></button>
-          <p class="fine"><span class="sc">75+</span>
-            <span>Score 75 or above and become eligible for <b>TCA's formal screening</b>.</span></p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══════════════ 3 ══════════════ -->
-  <div class="col">
-    <p class="cap">Concept 3<b>Portal</b></p>
-    <p class="why">A window cut into the card, looking at one part of the screen close enough to
-      read the score and what it is made of. Implies the rest rather than shrinking it.</p>
-    <div class="panel" data-theme="light">
-      <p class="pfake">…your initial review arrives by email.</p>
-      <div class="sell c3">
-        <div class="glow"></div>
-        <div class="rel">
-          <div class="k">Full assessment · $199</div>
-          <h3 class="h">Every number,<br><em>shown its working.</em></h3>
-        </div>
-        <div class="port"><i></i><span class="edge"></span></div>
-        <div class="rel">
-          <p class="s">35 signals, each one weighted, evidenced and added up in front of you.</p>
-          <button class="cta">Explore the full assessment <span>→</span></button>
-          <p class="fine"><span class="sc">75+</span>
-            <span>Score 75 or above and become eligible for <b>TCA's formal screening</b>.</span></p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══════════════ 4 ══════════════ -->
-  <div class="col">
-    <p class="cap">Concept 4<b>The object</b></p>
-    <p class="why">Product-launch reverence: the whole thing, centred, lit from beneath, with air
-      around it. The least busy of the four and the one that treats $199 as a purchase rather than
-      an upsell.</p>
-    <div class="panel" data-theme="light">
-      <p class="pfake">…your initial review arrives by email.</p>
-      <div class="sell c4">
-        <div class="glow"></div>
-        <div class="rel"><div class="k">Full assessment · $199</div></div>
-        <div class="stage"><img src="./_shot-workspace-trim.png" alt=""></div>
-        <div class="rel">
-          <h3 class="h">Go beyond an<br><em>initial indication.</em></h3>
-          <p class="s">Your venture, scored across 35 signals, with the evidence behind every
-            finding and the gaps to close.</p>
+          <div class="gate-a">
+            <span class="fig"><b>75</b><i>+</i></span>
+            <p>Score 75 or above and become eligible to be considered for
+              <b>TCA's formal screening process</b>.</p>
+          </div>
           <button class="cta">Get my full assessment <span>· $199</span></button>
-          <p class="fine"><span class="sc">75+</span>
-            <span>Score 75 or above and become eligible for <b>TCA's formal screening</b>.</span></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ B ══════════════ -->
+  <div class="col">
+    <p class="cap">Treatment B<b>Inline</b></p>
+    <p class="why">Still one sentence, but the number is set at display size inside it, so the eye
+      lands on 75 and reads outwards from there. The most literary of the three.</p>
+    <div class="panel" data-theme="light">
+      <p class="pfake">…your initial review arrives by email.</p>
+      <div class="sell">
+        <div class="hero">
+          <div class="glow"></div>
+          <img src="./_shot-workspace-trim.png" alt="">
+          <div class="scrim"></div>
+          <div class="type">
+            <h3 class="h">See what an investor<br>sees, <em>before they do.</em></h3>
+          </div>
+        </div>
+        <div class="body">
+          <p class="s">Scored across 35 signals, with the evidence behind every finding.</p>
+          <div class="gate-b">
+            <p>Score <span class="n">75<i>+</i></span> and become eligible to be considered for
+              <b>TCA's formal screening process</b>.</p>
+          </div>
+          <button class="cta">Get my full assessment <span>· $199</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ C ══════════════ -->
+  <div class="col">
+    <p class="cap">Treatment C<b>The bar</b></p>
+    <p class="why">The number gets its own lit field, violet on violet, so it reads as a threshold
+      to clear rather than a statistic. Most prominent, and the most badge-like.</p>
+    <div class="panel" data-theme="light">
+      <p class="pfake">…your initial review arrives by email.</p>
+      <div class="sell">
+        <div class="hero">
+          <div class="glow"></div>
+          <img src="./_shot-workspace-trim.png" alt="">
+          <div class="scrim"></div>
+          <div class="type">
+            <h3 class="h">See what an investor<br>sees, <em>before they do.</em></h3>
+          </div>
+        </div>
+        <div class="body">
+          <p class="s">Scored across 35 signals, with the evidence behind every finding.</p>
+          <div class="gate-c">
+            <span class="n"><b>75</b><i>+</i></span>
+            <span class="t">Score 75 or above and become eligible to be considered for
+              <b>TCA's formal screening process</b>.</span>
+          </div>
+          <button class="cta">Get my full assessment <span>· $199</span></button>
         </div>
       </div>
     </div>
