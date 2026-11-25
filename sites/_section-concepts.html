@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en" data-brand="verdictscore">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How it works / The output — concepts</title>
+<link rel="stylesheet" href="/assets/brand.css">
+<link rel="stylesheet" href="/sites/shared/base.css">
+<link rel="stylesheet" href="/sites/shared/brand-map.css">
+<style>
+/* ══ A LAB ════════════════════════════════════════════════════════════════════════════════════
+   The real stylesheets are linked above, so these are the page's own tokens, type and colour —
+   not an approximation of them. Whatever is chosen gets built as a variant of <v-steps>, because
+   BOTH sections render from that one component and the page must not end up with two systems.
+
+   WHAT IS WRONG WITH THE PANES TODAY, which is what these three answer:
+   · the photographs fight the copy. "Examine the evidence" sits on a magnifying glass; the text
+     is competing with a picture for the same rectangle and neither wins.
+   · six violet-tinted frames do not differentiate. The textures were chosen per entry, but at a
+     glance the section reads as one texture repeated six times.
+   · THE OUTPUT CARDS ARE MOSTLY EMPTY. Those six entries are titles with no body — a contents
+     line — and a card shape demands content that does not exist, so each one is a sentence
+     floating above a void.
+   · a sequence is drawn as a set. How it works is 1→6; three-across-then-wrap reads as a grid. */
+body{background:var(--bg,#0E0D13);padding:0 0 5rem}
+.lab-head{padding:2.5rem 0 1rem}
+.lab-head h1{font-size:28px;margin:0 0 .3rem}
+.lab-head p{color:var(--muted,#9A96AE);max-width:70ch;margin:0;line-height:1.6}
+.lab-sec{padding:2.5rem 0 1rem;border-top:1px solid rgba(255,255,255,.08);margin-top:3rem}
+.lab-tag{font:600 11px/1 system-ui;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--brand-accent,#7C5CFC);margin:0 0 .4rem}
+.lab-sec h2{font-size:23px;margin:0 0 .35rem}
+.lab-sec .why{color:var(--muted,#9A96AE);max-width:76ch;margin:0 0 .4rem;line-height:1.6;font-size:14.5px}
+.lab-sub{font:600 11px/1 system-ui;letter-spacing:.12em;text-transform:uppercase;
+  color:rgba(255,255,255,.4);margin:2.2rem 0 1rem}
+
+/* ══ 1 · THE LEDGER — no boxes, no pictures. Rules and numerals. ══════════════════════════ */
+.led{border-top:1px solid rgba(255,255,255,.14)}
+.led li{display:grid;grid-template-columns:3.4rem 1fr;gap:1.4rem;align-items:start;
+  padding:1.15rem 0;border-bottom:1px solid rgba(255,255,255,.09);list-style:none}
+.led .n{font:500 13px/1.5 var(--font-mono,ui-monospace,SFMono-Regular,Menlo,monospace);
+  color:var(--brand-accent,#7C5CFC);letter-spacing:.06em;padding-top:2px}
+.led h4{margin:0 0 .25rem;font-size:17px;letter-spacing:-.01em}
+.led p{margin:0;color:var(--muted,#9A96AE);font-size:14.5px;line-height:1.55;max-width:62ch}
+.led.contents li{padding:.95rem 0}
+.led.contents h4{margin:0;font-size:16px;font-weight:500}
+@media (min-width:860px){
+  .led.two-up{display:grid;grid-template-columns:1fr 1fr;column-gap:3.5rem;border-top:0}
+  .led.two-up li:nth-child(-n+3){border-top:1px solid rgba(255,255,255,.14)}
+}
+
+/* ══ 2 · THE RAIL — one line, six stations on it ══════════════════════════════════════════ */
+.rail{position:relative;list-style:none;padding:0;margin:0}
+.rail::before{content:'';position:absolute;left:11px;top:6px;bottom:6px;width:1px;
+  background:linear-gradient(180deg,transparent,rgba(124,92,252,.55) 8%,rgba(124,92,252,.55) 92%,transparent)}
+.rail li{position:relative;padding:0 0 1.6rem 2.6rem}
+.rail li:last-child{padding-bottom:0}
+.rail .dot{position:absolute;left:4px;top:4px;width:15px;height:15px;border-radius:50%;
+  background:var(--bg,#0E0D13);border:1px solid rgba(124,92,252,.75);display:grid;place-items:center}
+.rail .dot i{width:5px;height:5px;border-radius:50%;background:var(--brand-accent,#7C5CFC);display:block}
+.rail .step{font:600 10.5px/1 system-ui;letter-spacing:.14em;text-transform:uppercase;
+  color:rgba(255,255,255,.38);display:block;margin-bottom:.3rem}
+.rail h4{margin:0 0 .25rem;font-size:17px;letter-spacing:-.01em}
+.rail p{margin:0;color:var(--muted,#9A96AE);font-size:14.5px;line-height:1.55;max-width:60ch}
+@media (min-width:860px){
+  .rail.two-up{columns:2;column-gap:4rem}
+  .rail.two-up::before{display:none}
+  .rail.two-up li{break-inside:avoid;border-left:1px solid rgba(124,92,252,.3);padding-left:1.6rem;
+    margin-bottom:1.6rem;padding-bottom:0}
+  .rail.two-up .dot{left:-8px;top:2px}
+}
+
+/* ══ 3 · QUIET PANES — the shape stays, the photographs go ════════════════════════════════ */
+.quiet{display:grid;gap:14px;list-style:none;padding:0;margin:0}
+@media (min-width:720px){ .quiet{grid-template-columns:repeat(3,minmax(0,1fr))} }
+.quiet li{border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:1.15rem 1.2rem 1.3rem;
+  background:linear-gradient(168deg,rgba(124,92,252,.09),rgba(255,255,255,.015));
+  display:flex;flex-direction:column;gap:.1rem}
+.quiet .top{display:flex;align-items:center;gap:.6rem;margin-bottom:.9rem;
+  padding-bottom:.85rem;border-bottom:1px solid rgba(255,255,255,.1)}
+.quiet .ic{width:30px;height:30px;border-radius:9px;flex:0 0 auto;display:grid;place-items:center;
+  background:rgba(124,92,252,.16);border:1px solid rgba(124,92,252,.3);
+  color:var(--brand-accent,#9B82FF);font:600 13px/1 system-ui}
+.quiet .n{font:500 12px/1 var(--font-mono,ui-monospace,Menlo,monospace);
+  color:rgba(255,255,255,.4);letter-spacing:.08em}
+.quiet h4{margin:0 0 .3rem;font-size:16.5px;letter-spacing:-.01em}
+.quiet p{margin:0;color:var(--muted,#9A96AE);font-size:14px;line-height:1.5}
+.quiet.contents li{padding-bottom:1.15rem}
+.quiet.contents h4{margin:0;font-size:15.5px;font-weight:500}
+
+/* ══ 4 · CHAPTER — the numeral IS the design ══════════════════════════════════════════════ */
+.chap{list-style:none;padding:0;margin:0;border-top:1px solid rgba(255,255,255,.1)}
+.chap li{display:grid;grid-template-columns:auto 1fr;gap:1.6rem;align-items:baseline;
+  padding:1.5rem 0;border-bottom:1px solid rgba(255,255,255,.1)}
+.chap .n{font:600 54px/.82 system-ui;letter-spacing:-.05em;
+  -webkit-text-stroke:1px rgba(155,130,255,.55);color:transparent;min-width:2.1ch}
+.chap li:hover .n,.chap li.is-lit .n{color:rgba(155,130,255,.16)}
+.chap h4{margin:0 0 .3rem;font-size:20px;letter-spacing:-.015em}
+.chap p{margin:0;color:var(--muted,#9A96AE);font-size:14.5px;line-height:1.55;max-width:68ch}
+.chap.contents li{padding:1.05rem 0}
+.chap.contents .n{font-size:34px}
+.chap.contents h4{margin:0;font-size:17px;font-weight:500}
+
+/* ══ 5 · THE SPREAD — a printed page: running head left, body right ═══════════════════════ */
+.spread{list-style:none;padding:0;margin:0}
+.spread li{display:grid;gap:.5rem;padding:1.4rem 0;border-top:1px solid rgba(255,255,255,.1)}
+@media (min-width:860px){ .spread li{grid-template-columns:15rem 1fr;gap:3rem} }
+.spread .head{display:flex;align-items:baseline;gap:.7rem}
+.spread .n{font:500 11.5px/1 var(--font-mono,ui-monospace,Menlo,monospace);
+  color:var(--brand-accent,#7C5CFC);letter-spacing:.1em}
+.spread h4{margin:0;font-size:16.5px;letter-spacing:-.01em}
+.spread p{margin:0;color:var(--muted,#9A96AE);font-size:15px;line-height:1.65;max-width:64ch}
+/* the contents rows are NOT a two-column spread — they are single full-width lines whose leader
+   dots run the whole measure. Inheriting the 15rem margin column crushed every title into a strip
+   and left the dots nowhere to go. */
+.spread.contents li{padding:.85rem 0;grid-template-columns:1fr}
+@media (min-width:860px){ .spread.contents li{grid-template-columns:1fr} }
+.spread.contents .lead{flex:1;border-bottom:1px dotted rgba(255,255,255,.22);margin:0 .6rem 4px}
+.spread.contents .row{display:flex;align-items:baseline}
+.spread.contents h4{font-weight:500;font-size:16px}
+.spread.contents .pg{font:500 11.5px/1 var(--font-mono,ui-monospace,Menlo,monospace);
+  color:rgba(255,255,255,.4)}
+
+/* ══ 6 · INSTRUMENTS — each entry shows the PRODUCT, not a photograph of nothing ══════════ */
+.inst{display:grid;gap:14px;list-style:none;padding:0;margin:0}
+@media (min-width:720px){ .inst{grid-template-columns:repeat(3,minmax(0,1fr))} }
+.inst li{border:1px solid rgba(255,255,255,.1);border-radius:14px;overflow:hidden;
+  background:linear-gradient(168deg,rgba(124,92,252,.07),rgba(255,255,255,.012))}
+.inst .fig{height:104px;padding:14px;display:flex;flex-direction:column;justify-content:center;gap:6px;
+  background:linear-gradient(180deg,rgba(124,92,252,.1),transparent);
+  border-bottom:1px solid rgba(255,255,255,.09)}
+.inst .txt{padding:.95rem 1.1rem 1.15rem}
+.inst h4{margin:0 0 .3rem;font-size:16px;letter-spacing:-.01em}
+.inst p{margin:0;color:var(--muted,#9A96AE);font-size:13.5px;line-height:1.5}
+.inst.contents h4{margin:0;font-size:15.5px;font-weight:500}
+/* the fragments */
+.f-row{display:flex;align-items:center;gap:7px;font:500 10.5px/1 system-ui;color:rgba(255,255,255,.62)}
+.f-row .tick{width:13px;height:13px;border-radius:4px;background:rgba(124,92,252,.3);
+  color:#D9CEFF;display:grid;place-items:center;font-size:8px;flex:0 0 auto}
+.f-row .chip{margin-left:auto;font:500 9.5px/1 var(--font-mono,ui-monospace,Menlo,monospace);
+  color:rgba(255,255,255,.4)}
+.f-bar{height:6px;border-radius:3px;background:rgba(255,255,255,.1);overflow:hidden}
+.f-bar i{display:block;height:100%;background:linear-gradient(90deg,#7C5CFC,#B9A7FF)}
+.f-gap{height:6px;border-radius:3px;background:repeating-linear-gradient(90deg,
+  rgba(255,255,255,.14) 0 5px,transparent 5px 10px)}
+.f-cite{font:400 10.5px/1.45 system-ui;color:rgba(255,255,255,.6)}
+.f-cite b{color:#B9A7FF;font-weight:600}
+.f-dial{width:58px;height:58px;border-radius:50%;margin:0 auto;display:grid;place-items:center;
+  background:conic-gradient(#9B82FF 0 80%,rgba(255,255,255,.1) 80% 100%);position:relative}
+.f-dial::after{content:'';position:absolute;inset:7px;border-radius:50%;background:#15121F}
+.f-dial span{position:relative;z-index:2;font:600 17px/1 system-ui;color:#fff}
+.f-lines i{display:block;height:4px;border-radius:2px;background:rgba(255,255,255,.14);margin-bottom:5px}
+.f-lines i:nth-child(1){width:100%} .f-lines i:nth-child(2){width:78%}
+.f-lines i:nth-child(3){width:90%;background:rgba(155,130,255,.4)} .f-lines i:nth-child(4){width:62%}
+.f-split{display:flex;height:7px;border-radius:4px;overflow:hidden}
+.f-split b{display:block;height:100%}
+.f-tags{display:flex;gap:5px;flex-wrap:wrap}
+.f-tags span{font:500 9.5px/1 system-ui;padding:4px 6px;border-radius:5px;
+  border:1px solid rgba(255,255,255,.14);color:rgba(255,255,255,.62)}
+.f-tags .ok{border-color:rgba(124,92,252,.5);color:#C6B8FF}
+.f-lock{display:flex;align-items:center;gap:7px;font:500 10.5px/1 var(--font-mono,ui-monospace,Menlo,monospace);
+  color:rgba(255,255,255,.5)}
+.f-lock b{color:#B9A7FF;font-weight:600}
+</style>
+</head>
+<body data-site="verdictscore">
+
+<div class="wrap lab-head">
+  <h1>How it works &amp; The output — three treatments</h1>
+  <p>Both sections render from the same <code>&lt;v-steps&gt;</code> component, so each treatment is
+  shown on <b>both</b> lists. A fix that only works on one would put two systems in one page. The
+  real stylesheets are linked, so these are the page's own type, colour and spacing.</p>
+</div>
+
+<!-- ══════════════════════════════ 1 ══════════════════════════════ -->
+<section class="wrap lab-sec">
+  <p class="lab-tag">Treatment 1</p>
+  <h2>The ledger</h2>
+  <p class="why">No boxes and no photographs — rules, numerals and text. The product's whole claim is
+  that it shows its working, and a ruled ledger is what working looks like. It also lets the second
+  list be what it actually is: a table of contents.</p>
+
+  <p class="lab-sub">How it works</p>
+  <ol class="led two-up">
+    <li><span class="n">01</span><div><h4>Upload the data room</h4><p>Bring together decks, financial models, spreadsheets, contracts and other supporting documents.</p></div></li>
+    <li><span class="n">02</span><div><h4>Review readiness</h4><p>Before assessment, receive a review of potential gaps and missing supporting material so you can strengthen the data room.</p></div></li>
+    <li><span class="n">03</span><div><h4>Examine the evidence</h4><p>Specialist analysis steps review claims, markets, competitors, comparables, assumptions and risks.</p></div></li>
+    <li><span class="n">04</span><div><h4>Freeze the findings</h4><p>Evidence is fixed before scoring so the basis for the assessment can be identified.</p></div></li>
+    <li><span class="n">05</span><div><h4>Score against criteria</h4><p>Blind readers apply defined criteria and anchored thresholds; disagreement is surfaced rather than hidden.</p></div></li>
+    <li><span class="n">06</span><div><h4>Review the memo</h4><p>Receive a structured assessment with reasoning and source references to support further diligence.</p></div></li>
+  </ol>
+
+  <p class="lab-sub">The output</p>
+  <ol class="led contents two-up">
+    <li><span class="n">01</span><div><h4>Overall score and stated guidance</h4></div></li>
+    <li><span class="n">02</span><div><h4>Investment thesis with supporting and opposing evidence</h4></div></li>
+    <li><span class="n">03</span><div><h4>Claims marked as supported, unverified or contradicted</h4></div></li>
+    <li><span class="n">04</span><div><h4>Market, competitor and comparable analysis</h4></div></li>
+    <li><span class="n">05</span><div><h4>Key assumptions and risks that could change the decision</h4></div></li>
+    <li><span class="n">06</span><div><h4>Evidence references and a record of material gaps</h4></div></li>
+  </ol>
+</section>
+
+<!-- ══════════════════════════════ 2 ══════════════════════════════ -->
+<section class="wrap lab-sec">
+  <p class="lab-tag">Treatment 2</p>
+  <h2>The rail</h2>
+  <p class="why">One line threading all six, so the sequence is drawn rather than numbered. It is the
+  only treatment that says <i>this happens, then this</i> — which is the thing a grid of six cards
+  cannot say. On the contents list the rail becomes a spine down the side of the document.</p>
+
+  <p class="lab-sub">How it works</p>
+  <ol class="rail two-up">
+    <li><span class="dot"><i></i></span><span class="step">Step 01</span><h4>Upload the data room</h4><p>Bring together decks, financial models, spreadsheets, contracts and other supporting documents.</p></li>
+    <li><span class="dot"><i></i></span><span class="step">Step 02</span><h4>Review readiness</h4><p>Before assessment, receive a review of potential gaps and missing supporting material so you can strengthen the data room.</p></li>
+    <li><span class="dot"><i></i></span><span class="step">Step 03</span><h4>Examine the evidence</h4><p>Specialist analysis steps review claims, markets, competitors, comparables, assumptions and risks.</p></li>
+    <li><span class="dot"><i></i></span><span class="step">Step 04</span><h4>Freeze the findings</h4><p>Evidence is fixed before scoring so the basis for the assessment can be identified.</p></li>
+    <li><span class="dot"><i></i></span><span class="step">Step 05</span><h4>Score against criteria</h4><p>Blind readers apply defined criteria and anchored thresholds; disagreement is surfaced rather than hidden.</p></li>
+    <li><span class="dot"><i></i></span><span class="step">Step 06</span><h4>Review the memo</h4><p>Receive a structured assessment with reasoning and source references to support further diligence.</p></li>
+  </ol>
+
+  <p class="lab-sub">The output</p>
+  <ol class="rail two-up">
+    <li><span class="dot"><i></i></span><h4>Overall score and stated guidance</h4></li>
+    <li><span class="dot"><i></i></span><h4>Investment thesis with supporting and opposing evidence</h4></li>
+    <li><span class="dot"><i></i></span><h4>Claims marked as supported, unverified or contradicted</h4></li>
+    <li><span class="dot"><i></i></span><h4>Market, competitor and comparable analysis</h4></li>
+    <li><span class="dot"><i></i></span><h4>Key assumptions and risks that could change the decision</h4></li>
+    <li><span class="dot"><i></i></span><h4>Evidence references and a record of material gaps</h4></li>
+  </ol>
+</section>
+
+<!-- ══════════════════════════════ 3 ══════════════════════════════ -->
+<section class="wrap lab-sec">
+  <p class="lab-tag">Treatment 3</p>
+  <h2>Quiet panes</h2>
+  <p class="why">The smallest change: the card shape and the three-across grid stay, the photographs
+  go. Everything the textures were doing is done by one tinted surface and a rule. Keeps the page's
+  existing rhythm — and the contents cards stop being a sentence above a void.</p>
+
+  <p class="lab-sub">How it works</p>
+  <ol class="quiet">
+    <li><div class="top"><span class="ic">↑</span><span class="n">01</span></div><h4>Upload the data room</h4><p>Bring together decks, financial models, spreadsheets, contracts and other supporting documents.</p></li>
+    <li><div class="top"><span class="ic">◷</span><span class="n">02</span></div><h4>Review readiness</h4><p>Before assessment, receive a review of potential gaps and missing supporting material so you can strengthen the data room.</p></li>
+    <li><div class="top"><span class="ic">⌕</span><span class="n">03</span></div><h4>Examine the evidence</h4><p>Specialist analysis steps review claims, markets, competitors, comparables, assumptions and risks.</p></li>
+    <li><div class="top"><span class="ic">▣</span><span class="n">04</span></div><h4>Freeze the findings</h4><p>Evidence is fixed before scoring so the basis for the assessment can be identified.</p></li>
+    <li><div class="top"><span class="ic">◉</span><span class="n">05</span></div><h4>Score against criteria</h4><p>Blind readers apply defined criteria and anchored thresholds; disagreement is surfaced rather than hidden.</p></li>
+    <li><div class="top"><span class="ic">≡</span><span class="n">06</span></div><h4>Review the memo</h4><p>Receive a structured assessment with reasoning and source references to support further diligence.</p></li>
+  </ol>
+
+  <p class="lab-sub">The output</p>
+  <ol class="quiet contents">
+    <li><div class="top"><span class="ic">◉</span><span class="n">01</span></div><h4>Overall score and stated guidance</h4></li>
+    <li><div class="top"><span class="ic">⚖</span><span class="n">02</span></div><h4>Investment thesis with supporting and opposing evidence</h4></li>
+    <li><div class="top"><span class="ic">⚑</span><span class="n">03</span></div><h4>Claims marked as supported, unverified or contradicted</h4></li>
+    <li><div class="top"><span class="ic">▤</span><span class="n">04</span></div><h4>Market, competitor and comparable analysis</h4></li>
+    <li><div class="top"><span class="ic">⚠</span><span class="n">05</span></div><h4>Key assumptions and risks that could change the decision</h4></li>
+    <li><div class="top"><span class="ic">▥</span><span class="n">06</span></div><h4>Evidence references and a record of material gaps</h4></li>
+  </ol>
+</section>
+
+
+<!-- ══════════════════════════════ 4 ══════════════════════════════ -->
+<section class="wrap lab-sec">
+  <p class="lab-tag">Treatment 4</p>
+  <h2>Chapter</h2>
+  <p class="why">The numerals become the design — outlined, oversized, full width. Nothing but type
+  and a hairline. It is the most confident of the set and the cheapest to build; it works because the
+  copy is good enough to carry a section on its own.</p>
+
+  <p class="lab-sub">How it works</p>
+  <ol class="chap">
+    <li class="is-lit"><span class="n">01</span><div><h4>Upload the data room</h4><p>Bring together decks, financial models, spreadsheets, contracts and other supporting documents.</p></div></li>
+    <li><span class="n">02</span><div><h4>Review readiness</h4><p>Before assessment, receive a review of potential gaps and missing supporting material so you can strengthen the data room.</p></div></li>
+    <li><span class="n">03</span><div><h4>Examine the evidence</h4><p>Specialist analysis steps review claims, markets, competitors, comparables, assumptions and risks.</p></div></li>
+    <li><span class="n">04</span><div><h4>Freeze the findings</h4><p>Evidence is fixed before scoring so the basis for the assessment can be identified.</p></div></li>
+    <li><span class="n">05</span><div><h4>Score against criteria</h4><p>Blind readers apply defined criteria and anchored thresholds; disagreement is surfaced rather than hidden.</p></div></li>
+    <li><span class="n">06</span><div><h4>Review the memo</h4><p>Receive a structured assessment with reasoning and source references to support further diligence.</p></div></li>
+  </ol>
+
+  <p class="lab-sub">The output</p>
+  <ol class="chap contents">
+    <li><span class="n">01</span><h4>Overall score and stated guidance</h4></li>
+    <li><span class="n">02</span><h4>Investment thesis with supporting and opposing evidence</h4></li>
+    <li><span class="n">03</span><h4>Claims marked as supported, unverified or contradicted</h4></li>
+    <li><span class="n">04</span><h4>Market, competitor and comparable analysis</h4></li>
+    <li><span class="n">05</span><h4>Key assumptions and risks that could change the decision</h4></li>
+    <li><span class="n">06</span><h4>Evidence references and a record of material gaps</h4></li>
+  </ol>
+</section>
+
+<!-- ══════════════════════════════ 5 ══════════════════════════════ -->
+<section class="wrap lab-sec">
+  <p class="lab-tag">Treatment 5</p>
+  <h2>The spread</h2>
+  <p class="why">Set like a printed page: the step name as a running head in the left margin, the
+  explanation in the measure beside it. The contents list then gets leader dots and section numbers,
+  because that is what a contents page has. The most literal reading of "a documented assessment".</p>
+
+  <p class="lab-sub">How it works</p>
+  <ol class="spread">
+    <li><div class="head"><span class="n">01</span><h4>Upload the data room</h4></div><p>Bring together decks, financial models, spreadsheets, contracts and other supporting documents.</p></li>
+    <li><div class="head"><span class="n">02</span><h4>Review readiness</h4></div><p>Before assessment, receive a review of potential gaps and missing supporting material so you can strengthen the data room.</p></li>
+    <li><div class="head"><span class="n">03</span><h4>Examine the evidence</h4></div><p>Specialist analysis steps review claims, markets, competitors, comparables, assumptions and risks.</p></li>
+    <li><div class="head"><span class="n">04</span><h4>Freeze the findings</h4></div><p>Evidence is fixed before scoring so the basis for the assessment can be identified.</p></li>
+    <li><div class="head"><span class="n">05</span><h4>Score against criteria</h4></div><p>Blind readers apply defined criteria and anchored thresholds; disagreement is surfaced rather than hidden.</p></li>
+    <li><div class="head"><span class="n">06</span><h4>Review the memo</h4></div><p>Receive a structured assessment with reasoning and source references to support further diligence.</p></li>
+  </ol>
+
+  <p class="lab-sub">The output</p>
+  <ol class="spread contents">
+    <li><div class="row"><h4>Overall score and stated guidance</h4><span class="lead"></span><span class="pg">§1</span></div></li>
+    <li><div class="row"><h4>Investment thesis with supporting and opposing evidence</h4><span class="lead"></span><span class="pg">§2</span></div></li>
+    <li><div class="row"><h4>Claims marked as supported, unverified or contradicted</h4><span class="lead"></span><span class="pg">§3</span></div></li>
+    <li><div class="row"><h4>Market, competitor and comparable analysis</h4><span class="lead"></span><span class="pg">§4</span></div></li>
+    <li><div class="row"><h4>Key assumptions and risks that could change the decision</h4><span class="lead"></span><span class="pg">§5</span></div></li>
+    <li><div class="row"><h4>Evidence references and a record of material gaps</h4><span class="lead"></span><span class="pg">§6</span></div></li>
+  </ol>
+</section>
+
+<!-- ══════════════════════════════ 6 ══════════════════════════════ -->
+<section class="wrap lab-sec">
+  <p class="lab-tag">Treatment 6</p>
+  <h2>Instruments</h2>
+  <p class="why">The direct answer to the complaint: if a stock photograph says nothing about the
+  product, show the product. Each entry carries a small, real fragment of the thing it describes —
+  the coverage bar, the citation, the frozen hash, the dial, the claim tags. Drawn in CSS, so there
+  is no image weight and nothing to license. The most work of the six, and the only one where the
+  picture is <i>evidence</i> rather than decoration.</p>
+
+  <p class="lab-sub">How it works</p>
+  <ol class="inst">
+    <li><div class="fig">
+      <div class="f-row"><span class="tick">✓</span>Investor deck v3<span class="chip">14 pp</span></div>
+      <div class="f-row"><span class="tick">✓</span>Financial model<span class="chip">xlsx</span></div>
+      <div class="f-row"><span class="tick">✓</span>Customer contracts<span class="chip">6</span></div>
+    </div><div class="txt"><h4>Upload the data room</h4><p>Bring together decks, financial models, spreadsheets, contracts and other supporting documents.</p></div></li>
+
+    <li><div class="fig">
+      <div class="f-row">Coverage<span class="chip">17 of 24</span></div>
+      <div class="f-bar"><i style="width:71%"></i></div>
+      <div class="f-gap"></div>
+      <div class="f-row" style="font-size:9.5px">Missing: cap table, cohort retention</div>
+    </div><div class="txt"><h4>Review readiness</h4><p>Before assessment, receive a review of potential gaps and missing supporting material so you can strengthen the data room.</p></div></li>
+
+    <li><div class="fig">
+      <p class="f-cite" style="margin:0">“The $7B figure is the whole terrestrial spend, not this segment.”</p>
+      <div class="f-row"><b class="f-cite"><b>Deck v3, p.11</b></b><span class="chip">+3 sources</span></div>
+    </div><div class="txt"><h4>Examine the evidence</h4><p>Specialist analysis steps review claims, markets, competitors, comparables, assumptions and risks.</p></div></li>
+
+    <li><div class="fig">
+      <div class="f-lock">Evidence set <b>frozen</b></div>
+      <div class="f-lock" style="font-size:9.5px">sha 4f2c…a91b · 33 documents</div>
+      <div class="f-bar"><i style="width:100%"></i></div>
+    </div><div class="txt"><h4>Freeze the findings</h4><p>Evidence is fixed before scoring so the basis for the assessment can be identified.</p></div></li>
+
+    <li><div class="fig"><div class="f-dial"><span>80</span></div></div>
+      <div class="txt"><h4>Score against criteria</h4><p>Blind readers apply defined criteria and anchored thresholds; disagreement is surfaced rather than hidden.</p></div></li>
+
+    <li><div class="fig"><div class="f-lines"><i></i><i></i><i></i><i></i></div>
+      <div class="f-row" style="font-size:9.5px">Decision memo · 7 chapters</div>
+    </div><div class="txt"><h4>Review the memo</h4><p>Receive a structured assessment with reasoning and source references to support further diligence.</p></div></li>
+  </ol>
+
+  <p class="lab-sub">The output</p>
+  <ol class="inst contents">
+    <li><div class="fig"><div class="f-dial"><span>80</span></div></div><div class="txt"><h4>Overall score and stated guidance</h4></div></li>
+    <li><div class="fig">
+      <div class="f-row">For<span class="chip">5</span></div>
+      <div class="f-split"><b style="width:52%;background:#7C5CFC"></b><b style="width:48%;background:rgba(255,255,255,.18)"></b></div>
+      <div class="f-row">Against<span class="chip">5</span></div>
+    </div><div class="txt"><h4>Investment thesis with supporting and opposing evidence</h4></div></li>
+    <li><div class="fig"><div class="f-tags"><span class="ok">Supported 14</span><span>Unverified 7</span><span>Contradicted 2</span></div></div><div class="txt"><h4>Claims marked as supported, unverified or contradicted</h4></div></li>
+    <li><div class="fig">
+      <div class="f-row">Comparable A<span class="chip">4.2×</span></div>
+      <div class="f-row">Comparable B<span class="chip">6.8×</span></div>
+      <div class="f-row">Comparable C<span class="chip">3.1×</span></div>
+    </div><div class="txt"><h4>Market, competitor and comparable analysis</h4></div></li>
+    <li><div class="fig">
+      <div class="f-row"><span class="tick">!</span>Single-channel dependency</div>
+      <div class="f-row"><span class="tick">!</span>Runway to next milestone</div>
+      <div class="f-row" style="font-size:9.5px">2 of 9 could move the score</div>
+    </div><div class="txt"><h4>Key assumptions and risks that could change the decision</h4></div></li>
+    <li><div class="fig">
+      <div class="f-row">References<span class="chip">46</span></div>
+      <div class="f-lines"><i></i><i></i><i></i></div>
+      <div class="f-row" style="font-size:9.5px">Material gaps recorded: 3</div>
+    </div><div class="txt"><h4>Evidence references and a record of material gaps</h4></div></li>
+  </ol>
+</section>
+
+</body>
+</html>
