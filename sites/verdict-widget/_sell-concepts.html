@@ -8,34 +8,29 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=Zilla+Slab:wght@500;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
 <style>
-/* ══ A LAB, NOT THE PRODUCT ═══════════════════════════════════════════════════════════════════
-   Round two. The first four were six or seven competing blocks in a 400px card — elements
-   arranged rather than one thing made hero — and the product mock was full of 6px text, which
-   reads as noise at this size and is the opposite of cinematic.
+/* ══ ROUND THREE — BUILT ON THE REAL PRODUCT SHOT ═════════════════════════════════════════════
+   The operator's own mockup, _shot-workspace.png: a transparent PNG with the long shadow baked
+   into the alpha, so the device floats on any background and needs no plate under it.
 
-   Three rules this round:
+   Four directions, each a different ANSWER TO ONE QUESTION — how much of the product do you show,
+   and from how far away? Full bleed, entering from the edge, a portal into one detail, and the
+   whole thing held at arm's length. The type system is unchanged from round two because it was
+   the part that worked.
 
-   ONE HERO. Each card has a single thing to look at and everything else gets out of its way.
-   Body paragraphs are gone; the picture explains, or the headline does.
-
-   THE MOCK BLEEDS. A product shot cropped by its frame reads as a photograph of something
-   bigger. A diagram fitted neatly inside a box reads as a diagram. Four legible elements in
-   the mock, not fifteen.
-
-   OUR TYPE, NOT THE PARTNER'S. The rest of the panel is set in TCA's Zilla Slab. This card is
-   Inter Tight — the same reason it is dark: the frame is theirs, this is ours. One more way the
-   upsell looks identical on five different angel groups' sites. */
+   ⚠ 1974×1632 at 1.2MB. Fine here, impossible in production: this card loads on somebody else's
+   website, where today the whole widget is 11KB. Whichever wins ships as a WebP cut to the size
+   it is actually displayed at — an exercise in a few hundred KB, not a design constraint now. */
 :root{
   --vs:#7C5CFC; --vs-lo:#9B82FF; --vs-hi:#B9A7FF; --vs-pale:#E7E1FF;
-  --acc:#A68B5B;
-  --ink:#0C0818;                                   /* deeper than before: the room is darker */
-  --w:'Inter Tight',system-ui,sans-serif;          /* OURS */
-  --w-partner:'Zilla Slab',Georgia,serif;          /* theirs, for the panel around it */
+  --ink:#0A0716;
+  --w:'Inter Tight',system-ui,sans-serif;
+  --w-partner:'Zilla Slab',Georgia,serif;
+  --shot:url('./_shot-workspace-trim.png');
 }
 *{box-sizing:border-box}
 body{margin:0;background:#EEF0F4;font-family:'Open Sans',sans-serif;color:#14171F;padding:2rem 1.25rem 4rem}
 h1{font-family:var(--w-partner);font-size:26px;margin:0 0 .35rem}
-.sub{color:#5A6072;font-size:14px;margin:0 0 1.4rem;max-width:66ch;line-height:1.6}
+.sub{color:#5A6072;font-size:14px;margin:0 0 1.4rem;max-width:68ch;line-height:1.6}
 .bar{display:flex;gap:.5rem;align-items:center;margin-bottom:2rem}
 .bar button{font:600 13px 'Open Sans';padding:.5rem .9rem;border-radius:999px;border:1px solid #CDD2DC;
   background:#fff;cursor:pointer}
@@ -52,110 +47,79 @@ h1{font-family:var(--w-partner);font-size:26px;margin:0 0 .35rem}
 .pfake{font-family:var(--w-partner);font-size:15px;margin:0 0 .75rem}
 .panel[data-theme="dark"] .pfake{color:#fff}
 
-/* ══ the shared card ═══════════════════════════════════════════════════════════════════════ */
+/* ══ shared card + type scale (unchanged from round two) ═══════════════════════════════════ */
 .sell{position:relative;border-radius:13px;overflow:hidden;background:var(--ink);font-family:var(--w)}
-.sell::after{                                     /* a thin light along the top edge */
-  content:'';position:absolute;inset:0 0 auto 0;height:1px;z-index:5;
-  background:linear-gradient(90deg,transparent,rgba(185,167,255,.55),transparent)}
-
-/* TYPE SCALE — the thing that was missing. Four steps, each clearly not the one above it. */
+.sell::after{content:'';position:absolute;inset:0 0 auto 0;height:1px;z-index:9;
+  background:linear-gradient(90deg,transparent,rgba(185,167,255,.5),transparent)}
 .k{font:600 10px/1 var(--w);letter-spacing:.17em;text-transform:uppercase;color:var(--vs-hi)}
 .h{font:600 27px/1.05 var(--w);letter-spacing:-.025em;color:#fff;margin:.5rem 0 0}
 .h em{font-style:normal;color:var(--vs-hi)}
-.s{font:400 13px/1.5 var(--w);color:rgba(255,255,255,.55);margin:.5rem 0 0}
+.s{font:400 13px/1.5 var(--w);color:rgba(255,255,255,.58);margin:.5rem 0 0}
 .cta{display:flex;align-items:center;justify-content:center;gap:.5rem;width:100%;min-height:46px;
   border:0;border-radius:10px;cursor:pointer;margin-top:1rem;
   font:600 15px var(--w);color:#fff;letter-spacing:-.01em;
   background:linear-gradient(180deg,#8E70FF,#6B45F2);box-shadow:0 10px 26px -10px rgba(124,92,252,.95)}
 .cta span{opacity:.62;font-weight:500}
 .fine{display:flex;align-items:center;gap:.45rem;margin:.7rem 0 0;
-  font:400 11.5px/1.45 var(--w);color:rgba(255,255,255,.42)}
-.fine b{color:rgba(255,255,255,.72);font-weight:600}
+  font:400 11.5px/1.45 var(--w);color:rgba(255,255,255,.44)}
+.fine b{color:rgba(255,255,255,.74);font-weight:600}
 .fine .sc{flex:0 0 auto;font:700 10px/1 var(--w);color:var(--vs-hi);border:1px solid rgba(185,167,255,.4);
   border-radius:4px;padding:.2rem .3rem}
-
-/* the glow that makes it a room rather than a rectangle */
 .glow{position:absolute;z-index:0;pointer-events:none;
-  background:radial-gradient(52% 52% at 50% 45%,rgba(150,112,255,.95),rgba(110,72,235,.42) 42%,transparent 74%);
-  filter:blur(2px)}
-/* a second, tighter core so the falloff has shape instead of being one flat wash */
-.glow::after{content:'';position:absolute;inset:22% 18%;border-radius:50%;
-  background:radial-gradient(50% 50% at 50% 50%,rgba(196,172,255,.5),transparent 70%)}
+  background:radial-gradient(52% 52% at 50% 45%,rgba(150,112,255,.9),rgba(110,72,235,.38) 44%,transparent 74%)}
 
-/* ══ 1 · POSTER ════════════════════════════════════════════════════════════════════════════ */
-.p1 .hero{position:relative;height:218px;overflow:hidden}
-.p1 .glow{inset:-12% -14% 10% 6%}
-.p1 .scrim{position:absolute;inset:0;z-index:3;
-  background:linear-gradient(to top,var(--ink) 10%,rgba(12,8,24,.88) 26%,rgba(12,8,24,.1) 50%,transparent 62%)}
-.p1 .type{position:absolute;z-index:4;left:1.15rem;right:1.15rem;bottom:1rem}
-.p1 .body{padding:0 1.15rem 1.15rem}
-/* the mock: one window, tilted, bleeding off the right */
-.win{position:absolute;z-index:2;width:290px;left:52%;top:10px;
-  transform:perspective(900px) rotateY(-17deg) rotateX(5deg) rotateZ(-2deg);transform-origin:left center;
-  border-radius:10px;border:1px solid rgba(185,167,255,.26);overflow:hidden;
-  background:linear-gradient(155deg,#453485,#241A4E 58%,#180F38);
-  box-shadow:0 30px 60px -22px rgba(0,0,0,.9),0 0 0 1px rgba(0,0,0,.4)}
-.win .top{display:flex;align-items:center;gap:5px;padding:7px 9px;border-bottom:1px solid rgba(255,255,255,.08)}
-.win .dot{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.22)}
-.win .ttl{margin-left:3px;font:600 8px var(--w);letter-spacing:.1em;text-transform:uppercase;
-  color:rgba(255,255,255,.78)}
-.win .pad{padding:11px 12px 13px}
-.win .n{font:700 40px/1 var(--w);letter-spacing:-.04em;color:#fff;text-shadow:0 2px 18px rgba(170,140,255,.55)}
-.win .n i{font-style:normal;font-size:15px;color:var(--vs-hi);margin-left:2px}
-.win .meter{height:5px;border-radius:3px;background:rgba(255,255,255,.1);margin:9px 0 11px;overflow:hidden}
-.win .meter span{display:block;height:100%;width:78%;border-radius:3px;
-  background:linear-gradient(90deg,var(--vs),var(--vs-hi))}
-.win .r{display:flex;align-items:center;gap:7px;font:500 9.5px var(--w);color:rgba(255,255,255,.72);
-  padding:5px 0;border-top:1px solid rgba(255,255,255,.06)}
-.win .r em{font-style:normal;margin-left:auto;color:var(--vs-hi);font-weight:600}
-.win .r u{width:4px;height:4px;border-radius:50%;background:var(--vs-hi);text-decoration:none;flex:0 0 auto}
+/* ══ 1 · FULL BLEED — the screen IS the card ══════════════════════════════════════════════ */
+.c1{min-height:430px;display:flex;flex-direction:column;justify-content:flex-end}
+.c1 .bg{position:absolute;inset:0;z-index:1;background:var(--shot) no-repeat;
+  background-size:245%;background-position:22% 6%;opacity:.9;filter:blur(2.5px) saturate(1.15)}
+.c1 .tint{position:absolute;inset:0;z-index:2;
+  background:linear-gradient(to top,var(--ink) 30%,rgba(10,7,22,.95) 52%,rgba(10,7,22,.45) 74%,rgba(10,7,22,.15))}
+.c1 .wash{position:absolute;inset:0;z-index:3;mix-blend-mode:overlay;
+  background:radial-gradient(70% 50% at 50% 18%,rgba(140,104,255,.5),transparent 70%)}
+.c1 .body{position:relative;z-index:4;padding:1.15rem}
 
-/* ══ 2 · DEPTH ═════════════════════════════════════════════════════════════════════════════ */
-.p2 .hero{position:relative;height:196px;overflow:hidden}
-.p2 .glow{inset:-8% -16% 6% -16%}
-.p2 .scrim{position:absolute;inset:0;z-index:3;
-  background:linear-gradient(to top,var(--ink) 6%,rgba(12,8,24,.55) 20%,transparent 46%)}
-.p2 .body{padding:0 1.15rem 1.15rem;position:relative;z-index:4;margin-top:-.4rem}
-.stack{position:absolute;z-index:2;left:50%;top:34px;transform:translateX(-50%);width:330px;height:150px}
-.sheet{position:absolute;left:50%;border-radius:9px;border:1px solid rgba(255,255,255,.12);
-  background:linear-gradient(160deg,rgba(96,74,182,.9),rgba(32,22,66,.96));
-  box-shadow:0 22px 44px -18px rgba(0,0,0,.9)}
-.sheet.far{width:220px;height:104px;top:0;transform:translateX(-50%) scale(.86);opacity:.3}
-.sheet.mid{width:250px;height:112px;top:16px;transform:translateX(-50%) scale(.94);opacity:.55}
-.sheet.near{width:278px;height:124px;top:34px;transform:translateX(-50%);
-  background:linear-gradient(158deg,#5B45AE,#241847 70%);border-color:rgba(200,182,255,.42);padding:11px 13px;box-shadow:0 26px 50px -16px rgba(0,0,0,.95),0 0 44px -6px rgba(140,104,255,.5)}
-.sheet.near .lab{font:600 8px var(--w);letter-spacing:.14em;text-transform:uppercase;
-  color:rgba(255,255,255,.72)}
-.sheet.near .big{font:700 34px/1 var(--w);letter-spacing:-.04em;color:#fff;margin-top:4px;text-shadow:0 2px 16px rgba(180,150,255,.6)}
-.sheet.near .big i{font-style:normal;font-size:13px;color:var(--vs-hi)}
-.sheet.near .mt{height:4px;border-radius:3px;background:rgba(255,255,255,.1);margin-top:9px;overflow:hidden}
-.sheet.near .mt span{display:block;height:100%;width:78%;
-  background:linear-gradient(90deg,var(--vs),var(--vs-hi))}
-.p2 .price{font:600 27px/1 var(--w);letter-spacing:-.03em;color:#fff}
+/* ══ 2 · ARRIVAL — the device comes in from the right, cropped by the frame ═══════════════ */
+.c2 .hero{position:relative;height:232px;overflow:hidden}
+.c2 .glow{inset:-10% -10% 12% 2%}
+.c2 img{position:absolute;z-index:2;width:400px;left:38%;top:-6px;
+  transform:rotate(-3deg);filter:drop-shadow(0 26px 44px rgba(0,0,0,.65))}
+.c2 .scrim{position:absolute;inset:0;z-index:3;
+  background:linear-gradient(to top,var(--ink) 11%,rgba(10,7,22,.88) 27%,rgba(10,7,22,.08) 52%,transparent 64%)}
+.c2 .type{position:absolute;z-index:4;left:1.15rem;right:1.15rem;bottom:1rem}
+.c2 .body{position:relative;z-index:4;padding:0 1.15rem 1.15rem}
 
-/* ══ 3 · THE FINDING ═══════════════════════════════════════════════════════════════════════ */
-.p3{padding:1.15rem}
-.p3 .glow{inset:auto -22% -52% -22%;height:62%;opacity:.75}
-.p3 .quote{position:relative;z-index:2;margin:.9rem 0 0;padding:0 0 0 .9rem;
-  border-left:2px solid var(--vs)}
-.p3 .quote p{font:500 15.5px/1.45 var(--w);color:#fff;margin:0;letter-spacing:-.01em}
-.p3 .quote .src{display:flex;align-items:center;gap:.4rem;margin-top:.55rem;
-  font:400 11px var(--w);color:rgba(255,255,255,.45)}
-.p3 .quote .src b{color:var(--vs-hi);font-weight:600}
-.p3 .meta{position:relative;z-index:2;display:flex;gap:1.4rem;margin-top:1.05rem;
-  padding-top:.85rem;border-top:1px solid rgba(255,255,255,.1)}
-.p3 .meta div b{display:block;font:700 21px/1 var(--w);letter-spacing:-.03em;color:#fff}
-.p3 .meta div span{display:block;font:400 10.5px var(--w);color:rgba(255,255,255,.45);margin-top:3px}
-.p3 .rel,.p3 .cta,.p3 .fine,.p3 .quote,.p3 .meta{position:relative;z-index:2}
+/* ══ 3 · PORTAL — one detail, close enough to read ════════════════════════════════════════ */
+.c3{padding:1.15rem}
+.c3 .glow{inset:8% -14% 30% -14%}
+.c3 .rel{position:relative;z-index:3}
+.c3 .port{position:relative;z-index:3;height:168px;margin:.95rem 0 0;border-radius:11px;overflow:hidden;
+  border:1px solid rgba(185,167,255,.26);box-shadow:0 22px 44px -18px rgba(0,0,0,.9),
+  inset 0 1px 0 rgba(255,255,255,.08)}
+.c3 .port i{position:absolute;inset:0;display:block;background:var(--shot) no-repeat;
+  background-size:290%;background-position:74% 29%}
+.c3 .port .edge{position:absolute;inset:0;
+  background:linear-gradient(to right,rgba(10,7,22,.5),transparent 28%,transparent 72%,rgba(10,7,22,.5))}
+
+/* ══ 4 · THE OBJECT — held at arm's length, nothing else in the room ══════════════════════ */
+.c4{padding:1.15rem 1.15rem 1.25rem;text-align:center}
+.c4 .glow{inset:10% -8% 46% -8%}
+.c4 .rel{position:relative;z-index:3}
+.c4 .stage{position:relative;z-index:3;margin:.55rem -1.6rem .1rem;
+  height:0;padding-bottom:50%;overflow:hidden}
+.c4 .stage img{position:absolute;inset:0;display:block;width:100%;height:auto;
+  filter:drop-shadow(0 20px 34px rgba(0,0,0,.6))}
+.c4 .h{margin-top:.2rem}
+.c4 .s{margin-left:auto;margin-right:auto;max-width:30ch}
+.c4 .fine{justify-content:center;text-align:left}
 </style>
 </head>
 <body>
 
-<h1>The upsell card — round two</h1>
-<p class="sub">Fewer elements, one hero each, and a type scale with actual steps in it. The mock is
-cropped by the card rather than fitted inside it, because a product shot that runs off the edge
-reads as a photograph of something bigger — and a diagram in a box reads as a diagram. The card is
-also set in <b>our</b> typeface rather than the partner's, for the same reason it is dark.</p>
+<h1>The upsell card — on your product shot</h1>
+<p class="sub">Four answers to one question: <b>how much of the product do you show, and from how far
+away?</b> The whole screen as the card itself; the device arriving from the edge; a portal into a
+single detail; or the object held at arm's length with nothing else in the room. Type system is
+unchanged from the last round — that part was working.</p>
 
 <div class="bar">
   <button id="t-light" aria-pressed="true">Partner theme: light</button>
@@ -166,25 +130,36 @@ also set in <b>our</b> typeface rather than the partner's, for the same reason i
 
   <!-- ══════════════ 1 ══════════════ -->
   <div class="col">
-    <p class="cap">Concept 1<b>Poster</b></p>
-    <p class="why">The structure of a film poster: the image bleeds, a scrim carries the type, and
-      there is exactly one thing to read. The assessment tilts away off the right edge, so what you
-      see is a fragment of something larger.</p>
+    <p class="cap">Concept 1<b>Full bleed</b></p>
+    <p class="why">The screen is the card. No device, no frame, no plate — you are looking straight
+      at the thing you would own, with the type sitting in the dark at the bottom of it.</p>
     <div class="panel" data-theme="light">
       <p class="pfake">…your initial review arrives by email.</p>
-      <div class="sell p1">
+      <div class="sell c1">
+        <div class="bg"></div><div class="tint"></div><div class="wash"></div>
+        <div class="body">
+          <div class="k">Full assessment · $199</div>
+          <h3 class="h">See what an investor<br>sees, <em>before they do.</em></h3>
+          <p class="s">Scored across 35 signals, with the evidence behind every finding.</p>
+          <button class="cta">Explore the full assessment <span>→</span></button>
+          <p class="fine"><span class="sc">75+</span>
+            <span>Score 75 or above and become eligible for <b>TCA's formal screening</b>.</span></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ 2 ══════════════ -->
+  <div class="col">
+    <p class="cap">Concept 2<b>Arrival</b></p>
+    <p class="why">The device enters from the right and is cut off by the card, so what you see is
+      a fragment of something bigger. The shadow in your PNG does the lifting.</p>
+    <div class="panel" data-theme="light">
+      <p class="pfake">…your initial review arrives by email.</p>
+      <div class="sell c2">
         <div class="hero">
           <div class="glow"></div>
-          <div class="win">
-            <div class="top"><i class="dot"></i><i class="dot"></i><i class="dot"></i>
-              <span class="ttl">Investment readiness</span></div>
-            <div class="pad">
-              <div class="n">78<i>/100</i></div>
-              <div class="meter"><span></span></div>
-              <div class="r"><u></u>Market opportunity <em>79</em></div>
-              <div class="r"><u></u>Team <em>82</em></div>
-            </div>
-          </div>
+          <img src="./_shot-workspace-trim.png" alt="">
           <div class="scrim"></div>
           <div class="type">
             <div class="k">Full assessment · $199</div>
@@ -201,33 +176,23 @@ also set in <b>our</b> typeface rather than the partner's, for the same reason i
     </div>
   </div>
 
-  <!-- ══════════════ 2 ══════════════ -->
+  <!-- ══════════════ 3 ══════════════ -->
   <div class="col">
-    <p class="cap">Concept 2<b>Depth</b></p>
-    <p class="why">Three sheets receding into the glow. It says "there is a great deal in here"
-      without listing a single thing, and the price is set as display type rather than hidden in a
-      label.</p>
+    <p class="cap">Concept 3<b>Portal</b></p>
+    <p class="why">A window cut into the card, looking at one part of the screen close enough to
+      read the score and what it is made of. Implies the rest rather than shrinking it.</p>
     <div class="panel" data-theme="light">
       <p class="pfake">…your initial review arrives by email.</p>
-      <div class="sell p2">
-        <div class="hero">
-          <div class="glow"></div>
-          <div class="stack">
-            <div class="sheet far"></div>
-            <div class="sheet mid"></div>
-            <div class="sheet near">
-              <div class="lab">Investment readiness</div>
-              <div class="big">78<i>/100</i></div>
-              <div class="mt"><span></span></div>
-            </div>
-          </div>
-          <div class="scrim"></div>
+      <div class="sell c3">
+        <div class="glow"></div>
+        <div class="rel">
+          <div class="k">Full assessment · $199</div>
+          <h3 class="h">Every number,<br><em>shown its working.</em></h3>
         </div>
-        <div class="body">
-          <div class="k">Full investment readiness assessment</div>
-          <h3 class="h">Go beyond an<br>initial indication.</h3>
-          <p class="s">35 signals, scored. The evidence behind every finding, and the gaps to close.</p>
-          <button class="cta">Get my full assessment <span>· $199</span></button>
+        <div class="port"><i></i><span class="edge"></span></div>
+        <div class="rel">
+          <p class="s">35 signals, each one weighted, evidenced and added up in front of you.</p>
+          <button class="cta">Explore the full assessment <span>→</span></button>
           <p class="fine"><span class="sc">75+</span>
             <span>Score 75 or above and become eligible for <b>TCA's formal screening</b>.</span></p>
         </div>
@@ -235,33 +200,26 @@ also set in <b>our</b> typeface rather than the partner's, for the same reason i
     </div>
   </div>
 
-  <!-- ══════════════ 3 ══════════════ -->
+  <!-- ══════════════ 4 ══════════════ -->
   <div class="col">
-    <p class="cap">Concept 3<b>The finding</b></p>
-    <p class="why">No chart at all. One real sentence from the assessment, with its source under it,
-      blown up like a pull quote — the smallest possible piece of the product, shown close enough
-      to prove the whole thing is worth having.</p>
+    <p class="cap">Concept 4<b>The object</b></p>
+    <p class="why">Product-launch reverence: the whole thing, centred, lit from beneath, with air
+      around it. The least busy of the four and the one that treats $199 as a purchase rather than
+      an upsell.</p>
     <div class="panel" data-theme="light">
       <p class="pfake">…your initial review arrives by email.</p>
-      <div class="sell p3">
+      <div class="sell c4">
         <div class="glow"></div>
+        <div class="rel"><div class="k">Full assessment · $199</div></div>
+        <div class="stage"><img src="./_shot-workspace-trim.png" alt=""></div>
         <div class="rel">
-          <div class="k">Full assessment · $199</div>
-          <h3 class="h">Every finding,<br><em>evidenced.</em></h3>
+          <h3 class="h">Go beyond an<br><em>initial indication.</em></h3>
+          <p class="s">Your venture, scored across 35 signals, with the evidence behind every
+            finding and the gaps to close.</p>
+          <button class="cta">Get my full assessment <span>· $199</span></button>
+          <p class="fine"><span class="sc">75+</span>
+            <span>Score 75 or above and become eligible for <b>TCA's formal screening</b>.</span></p>
         </div>
-        <div class="quote">
-          <p>“The $7B market figure is the whole terrestrial exploration spend, not the segment this
-            product addresses.”</p>
-          <div class="src"><b>Source</b> · Investor deck v3, p.11 · cross-checked against 3 others</div>
-        </div>
-        <div class="meta">
-          <div><b>35</b><span>signals scored</span></div>
-          <div><b>46</b><span>sources read</span></div>
-          <div><b>100</b><span>point scale</span></div>
-        </div>
-        <button class="cta">Explore the full assessment <span>→</span></button>
-        <p class="fine"><span class="sc">75+</span>
-          <span>Score 75 or above and become eligible for <b>TCA's formal screening</b>.</span></p>
       </div>
     </div>
   </div>
