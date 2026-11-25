@@ -106,7 +106,10 @@ await t('it sends one email, to the founder on the engagement', async () => {
   eq(SENT.length, 1, 'emails sent');
   eq(SENT[0].to[0], 'alex@northwind.health', 'recipient');
   has(SENT[0].subject, 'Northwind Health', 'subject names the company');
-  has(SENT[0].subject, 'pre-screen is ready', 'subject says what it is');
+  /* PINNED ON PURPOSE. This is the subject line of the only email a widget founder ever gets, so
+     a change to it should have to be deliberate — this assertion is what made the 'pre-screen' to
+     'initial review' rename announce itself instead of slipping through. */
+  has(SENT[0].subject, 'initial review is ready', 'subject says what it is');
 });
 
 await t('it says which partner it came through — the "why am I getting this" line', async () => {

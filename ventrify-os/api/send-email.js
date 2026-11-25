@@ -205,11 +205,11 @@ function inviteHtml({ orgName, ventureName, link }) {
 function welcomeHtml({ orgName, planLabel, prescreens, link }) {
   const org = esc(orgName);
   const allowance = prescreens == null
-    ? 'Unlimited pre-screens'
-    : `${prescreens} free pre-screen${prescreens === 1 ? '' : 's'}`;
+    ? 'Unlimited initial reviews'
+    : `${prescreens} free initial review${prescreens === 1 ? '' : 's'}`;
   return mailShell({ width: 480, eyebrow: 'Your workspace', body: `
     <h1 style="margin:0 0 12px;font-size:22px;letter-spacing:-0.02em;line-height:1.25;color:${MAIL.ink1};">${org} is ready</h1>
-    <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:${MAIL.ink2};">Your workspace is set up. Upload a deck and any supporting documents, and the pre-screen returns a verdict on whether the venture is worth a full assessment &mdash; with its reasoning and its sources attached.</p>
+    <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:${MAIL.ink2};">Your workspace is set up. Upload a deck and any supporting documents, and the initial review comes back with an early indication of whether the venture is worth a full assessment &mdash; with its reasoning and its sources attached.</p>
     <p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:${MAIL.ink2};background:${MAIL.deep};border-radius:10px;padding:13px 15px;"><strong style="color:${MAIL.ink1};">${esc(planLabel)}</strong> &middot; ${esc(allowance)}</p>
     ${mailBtn(link, 'Open your workspace &rarr;')}
     <p style="margin:22px 0 0;font-size:13px;line-height:1.6;color:${MAIL.ink3};">Sign in with the same email address and we'll send you a one-time link. If you didn't create this workspace, reply and tell us.</p>` });
@@ -264,14 +264,14 @@ function advanceHtml({ orgName, ventureName, operatorName, operatorEmail, thesis
   const org = esc(orgName), venture = esc(ventureName);
   const found = thesis.length || bull.length || competitive.length || tensions.length;
 
-  return mailShell({ width: 560, eyebrow: 'Pre-screen · cleared', foot: operatorEmail
+  return mailShell({ width: 560, eyebrow: 'Initial review · cleared', foot: operatorEmail
     ? `<p style="margin:0;font-size:12.5px;line-height:1.6;color:${MAIL.ink3};">Sent by ${
         operatorName ? esc(operatorName) + ' (' + esc(operatorEmail) + ')' : esc(operatorEmail)
       } at ${org} &mdash; replying reaches them directly.</p>` : '',
     close: mailClose({
       productUrl: 'https://verdict.ventrify.io',
       heading: 'What you have just read is the short version.',
-      lead: 'A pre-screen is a five-minute read of your deck and whatever is in the room. The full assessment scores the venture 0–100 across seven categories and thirty-five signals, researches every document against the outside world with sources, and ends in a deal memo. That is the read your documents are about to go through.',
+      lead: 'An initial review is a five-minute read of your deck and whatever is in the room. The full assessment scores the venture 0–100 across seven categories and thirty-five signals, researches every document against the outside world with sources, and ends in a deal memo. That is the read your documents are about to go through.',
     }),
     body: `
     <div style="font-weight:600;font-size:14px;color:${MAIL.accent};letter-spacing:-0.01em;margin:0 0 10px;">${org}</div>
@@ -315,7 +315,7 @@ function advanceHtml({ orgName, ventureName, operatorName, operatorEmail, thesis
 // do the selling. Gate: tools/share-upsell.mjs.
 function prescreenShareHtml({ orgName, ventureName, senderEmail, band, bandLine, oneLine, highlights, url, note, productUrl }) {
   const org = esc(orgName), venture = esc(ventureName);
-  return mailShell({ width: 560, eyebrow: 'Pre-screen',
+  return mailShell({ width: 560, eyebrow: 'Initial review',
     close: mailClose({
       productUrl,
       heading: 'This is the quick read. There is a much longer one.',
@@ -329,10 +329,10 @@ function prescreenShareHtml({ orgName, ventureName, senderEmail, band, bandLine,
       <td style="padding:0 10px 0 0;"><span style="display:inline-block;background:${MAIL.accent};color:${MAIL.onAccent};
         font-size:13px;font-weight:700;padding:5px 13px;border-radius:999px;">${esc(band)}</span></td>
       <td style="font-size:13px;color:${MAIL.ink3};">${esc(bandLine || '')}</td></tr></table>` : ''}
-    <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:${MAIL.ink2};">${esc(senderEmail)} shared a pre-screen with you &mdash; a five-minute read, not an assessment.</p>
+    <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:${MAIL.ink2};">${esc(senderEmail)} shared an initial review with you &mdash; a five-minute read, not a full assessment.</p>
     ${mailNote(note)}
     ${highlights.length ? mailBlock('A few things it found', highlights.map(mailBullet).join('')) : ''}
-    <div style="margin:24px 0 0;">${mailBtn(url, 'Read the full pre-screen &rarr;')}</div>
+    <div style="margin:24px 0 0;">${mailBtn(url, 'Read the initial review &rarr;')}</div>
     <p style="margin:16px 0 0;font-size:13px;line-height:1.6;color:${MAIL.ink3};">No login needed. The link is read-only and can be revoked by whoever sent it.</p>` });
 }
 
@@ -350,7 +350,7 @@ function prescreenShareHtml({ orgName, ventureName, senderEmail, band, bandLine,
    anyone who filled in a form on somebody else's website. */
 function prescreenReadyHtml({ company, partner, band, bandLine, oneLine, basis, shared, link, productUrl }) {
   const co = esc(company || 'Your venture'), pt = esc(partner || '');
-  return mailShell({ width: 560, eyebrow: 'Pre-screen · ready',
+  return mailShell({ width: 560, eyebrow: 'Initial review · ready',
     close: mailClose({
       productUrl,
       heading: 'This is the quick read. There is a much longer one.',
@@ -359,7 +359,7 @@ function prescreenReadyHtml({ company, partner, band, bandLine, oneLine, basis, 
     body: `
     ${pt ? `<div style="font-weight:600;font-size:14px;color:${MAIL.accent};letter-spacing:-0.01em;margin:0 0 10px;">Submitted via ${pt}</div>` : ''}
     <h1 style="margin:0 0 6px;font-size:23px;letter-spacing:-0.02em;line-height:1.25;color:${MAIL.ink1};">${co}</h1>
-    <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:${MAIL.ink2};">Your pre-screen is ready.</p>
+    <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:${MAIL.ink2};">Your initial review is ready.</p>
     ${oneLine ? `<p style="margin:0 0 14px;font-size:15px;line-height:1.6;color:${MAIL.ink2};">${esc(oneLine)}</p>` : ''}
     ${band ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 16px;"><tr>
       <td style="padding:0 10px 0 0;"><span style="display:inline-block;background:${MAIL.accent};color:${MAIL.onAccent};
@@ -601,7 +601,7 @@ module.exports = async (req, res) => {
       // would send a near-empty letter under a confident heading.
       const ps = eng.prescreen2 || {};
       if (ps.v !== 2 || ps.state !== 'done') {
-        res.status(409).json({ error: 'not_prescreened', detail: 'This venture has no finished pre-screen to advance from.' });
+        res.status(409).json({ error: 'not_prescreened', detail: 'This venture has no finished initial review to advance from.' });
         return;
       }
 
@@ -741,7 +741,7 @@ module.exports = async (req, res) => {
         body: JSON.stringify({
           from: process.env.INVITE_FROM_EMAIL || 'Ventrify <hello@ventrify.io>',
           to: [email], reply_to: caller,
-          subject: `${ventureName} — pre-screen`,
+          subject: `${ventureName} — initial review`,
           html
         })
       });
@@ -810,7 +810,7 @@ module.exports = async (req, res) => {
         body: JSON.stringify({
           from: process.env.INVITE_FROM_EMAIL || 'Ventrify <hello@ventrify.io>',
           to: [to],
-          subject: `${company} — your pre-screen is ready`,
+          subject: `${company} — your initial review is ready`,
           html
         })
       });
