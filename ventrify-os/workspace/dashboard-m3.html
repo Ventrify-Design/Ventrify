@@ -74,7 +74,7 @@
     const { label, detail } = Plan.planSummary(plan);
     return detail ? `${label} — ${detail}` : label;
   })() : '';
-  const NEW_LABEL = PRESCREEN_FIRST ? 'Pre-screen a venture' : ASSESS_ONLY ? 'New assessment' : 'New engagement';
+  const NEW_LABEL = PRESCREEN_FIRST ? 'Review a venture' : ASSESS_ONLY ? 'New assessment' : 'New engagement';
   const canCreateAny = Plan
     ? ALLOWED_TYPES.some(t => t === 'assessment' ? !!CREATABLE : Plan.canCreate(plan, programs, t).allowed)
     : true;

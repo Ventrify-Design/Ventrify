@@ -151,7 +151,7 @@ export function adaptEngagementRow(p, ctx = {}) {
     const pre = (!hasVerdict && preBand && PRE[preBand]) ? PRE[preBand] : null;
 
     const status = !hasVerdict
-      ? (pre ? { kind: pre.kind, label: `Pre-screened · ${pre.word}`, icon: 'bolt' }
+      ? (pre ? { kind: pre.kind, label: `Initial review · ${pre.word}`, icon: 'bolt' }
         : hasDeck ? { kind: 'n', label: 'In assessment', icon: 'fact_check' } : { kind: 'n', label: 'Draft', icon: 'edit_note' })
       : (dec && dec.decision === 'confirmed') ? { kind: 'ok', label: 'Confirmed', icon: 'check_circle', title: dec.by ? 'Confirmed by ' + dec.by : undefined }
       : (dec && dec.decision === 'declined') ? { kind: 'n', label: 'Declined', icon: 'do_not_disturb_on', title: dec.by ? 'Declined by ' + dec.by : undefined }
@@ -161,7 +161,7 @@ export function adaptEngagementRow(p, ctx = {}) {
       i, avatar, name: p.name, sub: [p.industry, p.stage].filter(Boolean).join(' · ') || 'Assessment',
       /* `Seed` is a fallback for a stage nobody recorded, not a claim about the venture.
          A pre-screen is labelled as one so the row does not promise a full assessment. */
-      stage: `${p.stage || 'Seed'} · ${pre ? 'Pre-screen' : 'Assessment'}`,
+      stage: `${p.stage || 'Seed'} · ${pre ? 'Initial review' : 'Assessment'}`,
       status, runState: rowRun, rec,
       /* A pre-screened venture has no "progress": the thing it was asked to do is done.
          A 0% bar beside a published verdict reads as a stalled job. */

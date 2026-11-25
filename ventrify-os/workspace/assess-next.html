@@ -589,7 +589,7 @@
   window.__eaSharePrescreen = async () => {
     const E = DS._esc;
     const ps = p.prescreen2 || {};
-    if (ps.state !== 'done') { window.__toast('Run the pre-screen first — there is nothing to share yet.'); return; }
+    if (ps.state !== 'done') { window.__toast('Run the initial review first — there is nothing to share yet.'); return; }
     window.__toast('Preparing the link…');
     try {
       const html = prescreenShareHTML(p, W.org, {
@@ -600,9 +600,9 @@
       p.shareLink = { token: d.token, at: new Date().toISOString() };
       const url = d.url || (location.origin + '/m/' + d.token);
       window.openAux({
-        mode: 'push', title: 'Share this pre-screen', subtitle: p.name,
+        mode: 'push', title: 'Share this initial review', subtitle: p.name,
         body: `<div style="padding:4px 2px">
-          <div class="body-m" style="color:var(--md-sys-color-on-surface-variant);margin-bottom:12px">Anyone with this link reads the pre-screen — the band, the six findings and the coverage — with no login. It closes by explaining what a full assessment adds, so it is safe to forward to someone who has never seen VerdictScore.</div>
+          <div class="body-m" style="color:var(--md-sys-color-on-surface-variant);margin-bottom:12px">Anyone with this link reads the initial review — the band, the six findings and the coverage — with no login. It closes by explaining what a full assessment adds, so it is safe to forward to someone who has never seen VerdictScore.</div>
           ${DS.formField({ label: 'Link', id: 'ea-ps-url', value: String(url), attr: ' readonly onclick="this.select()"' })}
           <div style="margin:18px 0 0">
             <div class="overline" style="color:var(--md-sys-color-on-surface-variant);margin-bottom:6px">Or email it to a colleague</div>
@@ -815,7 +815,7 @@
   function statusPill(st) {
     // A pre-screened venture has no verdict, whatever the run state says. Without this guard the pill
     // read "Verdict ready" beside a range — claiming the one thing the customer has not bought.
-    if (isPrescreen(p)) return { kind: 'info', label: 'Pre-screened', icon: 'bolt' };
+    if (isPrescreen(p)) return { kind: 'info', label: 'Initial review', icon: 'bolt' };
     if (st.hasVerdict) {
       const dec = p.assessmentDecision;
       if (dec && dec.decision === 'confirmed') return { kind: 'ok', label: 'Confirmed', icon: 'check_circle' };
@@ -864,7 +864,7 @@
       ? DS.verdictPage(v2, {})
       : r
         ? `<div class="brief">${DS.rangeHero(r, { docCount: r.docCount })}${DS.rangeStale(r, (A.inputs && A.inputs.docs && A.inputs.docs.length) || 0)}<hr class="rule">${DS.rangeCoverage(r.categories || [])}${DS.rangeFindings(r.categories || [], { assumed: r.assumed })}${DS.rangeNext()}</div>`
-        : `<div class="brief">${DS.emptyState({ title: 'Not pre-screened yet', text: 'Attach a pitch deck and the data room, then run the free pre-screen — it reads both and tells you where this venture stands in about five minutes.' })}</div>`;
+        : `<div class="brief">${DS.emptyState({ title: 'No initial review yet', text: 'Attach a pitch deck and the data room, then run the free initial review — it reads both and tells you where this venture stands in about five minutes.' })}</div>`;
     return `<div class="tab-panel active">${body}</div>
       <div class="tab-panel">${dataRoomBody()}</div>`;
   }

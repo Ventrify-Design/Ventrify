@@ -1,4 +1,4 @@
-# VerdictScore pre-screen — integration note
+# VerdictScore Initial Review — integration note
 
 For the person who looks after tcaventuregroup.com. Everything below is one line of HTML;
 the rest of this note is what that line does and how to check it.
@@ -13,7 +13,7 @@ verdict on whether the deck is ready to put in front of TCA.
 
 - The button carries **your** logo, colour, type and corner radius. It is meant to look like
   part of your site, not like an advert on it.
-- It is free to the founder. One pre-screen per founder.
+- It is free to the founder. One initial review per founder.
 - Measured end to end on three real runs: **the verdict email arrives about six minutes after
   submit** (5.8, 6.2 and 6.6 minutes).
 - Founders who score 75 or above are told they are eligible for TCA's screening process.
@@ -89,7 +89,7 @@ Only `data-partner` is required.
 | `data-font-body` | system | Google Font name for body text. |
 | `data-radius` | `16` | Corner radius in px, 0–24. 14 or more becomes a pill. |
 | `data-label` | `Is your deck ready?` | The button's first line. |
-| `data-sub` | `Free pre-screen · 2 min` | The button's second line. |
+| `data-sub` | `Free initial review, 2 min` | The button's second line. |
 | `data-side` | `right` | `left` or `right`. |
 
 ## 6. Analytics
@@ -107,7 +107,7 @@ Nothing is pushed if `dataLayer` is absent, and no third-party analytics are loa
 - **Simulated, no real submission:** <https://verdict.ventrify.io/widget/demo> — the widget on a
   stand-in page, every screen reachable, nothing sent. Use this to agree the styling.
 - **Live, on your staging site:** paste the tag. A submission there is a real one: a real email,
-  a real pre-screen, and it counts against the monthly allowance.
+  a real initial review, and it counts against the monthly allowance.
 - A submission that is refused tells you why in the panel. The two you are most likely to meet
   are a deck over 40 MB and a second submission from an address that has already had one.
 
@@ -123,7 +123,7 @@ expire.
 - **TCA** sees the verdict for any founder who ticks the sharing box, in a TCA workspace we will
   set up for your team. TCA never sees the deck or the data room — not by policy alone: the
   permission rules refuse it.
-- **VerdictScore** reads the deck to produce the pre-screen.
+- **VerdictScore** reads the deck to produce the initial review.
 
 ## 10. Questions
 

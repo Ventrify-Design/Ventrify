@@ -361,7 +361,7 @@ async function naReadEvidence({ EA, programId, folderUrl = '', onProgress, onRoo
 window.__wsRunPrescreen = async () => {
   const f = naForm(); if (!f) return;
   const W = window.WORKSPACE || {};
-  if (W.mode !== 'live') { window.__toast('The pre-screen needs the live workspace.', true); return; }
+  if (W.mode !== 'live') { window.__toast('The initial review needs the live workspace.', true); return; }
 
   // THE FORM GOES. The instant Run is pressed every field is locked and nothing in it can be changed, so
   // it is a dead half-screen of controls sitting on top of the only thing the person now cares about.
@@ -416,7 +416,7 @@ window.__wsRunPrescreen = async () => {
         setTimeout(() => { justFound = []; }, 900);
       },
     });
-    if (ev && ev.error) window.__toast(ev.error + ' — the pre-screen will run on what was read.', true);
+    if (ev && ev.error) window.__toast(ev.error + ' — the initial review will run on what was read.', true);
 
     const { runPrescreen2 } = await import('./prescreen2.js');
     step = 1; phaseText = 'Checking your data room…'; repaint();
@@ -450,11 +450,11 @@ window.__wsRunPrescreen = async () => {
     naBusy(false); naProg(null);
     // The one refusal that is not a failure: this venture has already had its free pre-screen.
     if (e && e.status === 409 && e.body && e.body.error === 'already_prescreened') {
-      window.__toast(`“${e.body.name}” has already been pre-screened — opening it.`);
+      window.__toast(`“${e.body.name}” has already had its initial review — opening it.`);
       location.href = '/workspace/assess-next.html?id=' + encodeURIComponent(e.body.engagementId);
       return;
     }
-    window.__toast('Could not run the pre-screen: ' + ((e && e.message) || e), true);
+    window.__toast('Could not run the initial review: ' + ((e && e.message) || e), true);
   }
 };
 
@@ -471,7 +471,7 @@ window.__wsUnlock = async () => {
   ]);
   const route = unlockRoute({ remainingFull: remainingFor(W.plan, W.programs || [], 'assessment', 'full') });
   if (route === 'checkout') {
-    window.__toast('Run the free pre-screen first — you can unlock the full assessment from its page.', true);
+    window.__toast('Run the free initial review first — you can unlock the full assessment from its page.', true);
     return;
   }
   return window.__wsCreateAssessment();
@@ -487,7 +487,7 @@ window.__wsCreateAssessment = async () => {
   if (W.mode === 'live') {
     const go = await window.__confirm({
       title: 'Run the full assessment?',
-      message: 'This is the complete agentic run — deep research, diligence, a measured score and a deal memo. It takes about 90 minutes in the cloud.\n\nIf you want a quick read instead, cancel and choose “Run pre-screen first” — that takes about five minutes and is free.',
+      message: 'This is the complete agentic run — deep research, diligence, a measured score and a deal memo. It takes about 90 minutes in the cloud.\n\nIf you want a quick read instead, cancel and choose “Run initial review first” — that takes about five minutes and is free.',
       confirmLabel: 'Run full assessment',
     });
     if (!go) return;

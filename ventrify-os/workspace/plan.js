@@ -70,13 +70,13 @@ export const PLAN_PRESETS = {
   // api/admin.js hard-codes this preset on create-own-org and never reads one from the request.
   'trial': {
     label: 'Free trial',
-    blurb: 'One full assessment and two pre-screens, free. Upgrade for more.',
+    blurb: 'One full assessment and two initial reviews, free. Upgrade for more.',
     capabilities: { assess: true, build: false },
     limits: { assessments: 1, builds: 0, prescreens: 2 },
   },
   'self-serve': {
     label: 'Free account',
-    blurb: 'Pre-screen any venture free — a verdict on whether it is worth assessing. Full assessments are bought per venture.',
+    blurb: 'Review any venture free — an early indication of whether it is worth assessing. Full assessments are bought per venture.',
     capabilities: { assess: true, build: false },
     limits: { assessments: 0, builds: 0, prescreens: null },
   },
@@ -94,13 +94,13 @@ export const PLAN_PRESETS = {
   },
   'full': {
     label: 'Full platform licence',
-    blurb: 'Everything VerdictScore does — unlimited pre-screens and unlimited full assessments.',
+    blurb: 'Everything VerdictScore does — unlimited initial reviews and unlimited full assessments.',
     capabilities: { assess: true, build: false },
     limits: { assessments: null, builds: 0, prescreens: null },
   },
   'custom': {
     label: 'Custom',
-    blurb: 'Hand-pick the assessment allowance and the pre-screen allowance.',
+    blurb: 'Hand-pick the assessment allowance and the initial review allowance.',
     capabilities: { assess: true, build: false },
     limits: { assessments: null, builds: 0, prescreens: null },
   },
@@ -253,7 +253,7 @@ export function planSummary(plan) {
     fmt('build', 'full', 'build'),
     fmt('assessment', 'full', 'assessment'),
   ].filter(Boolean);
-  const pre = fmt('assessment', 'prescreen', 'pre-screen');
+  const pre = fmt('assessment', 'prescreen', 'initial review');
   /* ALWAYS SAY THE PRE-SCREEN ALLOWANCE. It used to be suppressed whenever anything else printed,
      on the grounds that "unlimited builds · unlimited assessments · unlimited pre-screens" is noise.
      With builds retired there are at most two things to say, and the pre-screen is the one a

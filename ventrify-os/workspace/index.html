@@ -58,9 +58,9 @@
     function renderForm() {
       card.innerHTML = `
         ${mark()}
-        <h1 class="signin-title">${SIGNUP ? 'Start pre-screening, free' : 'Sign in to your workspace'}</h1>
+        <h1 class="signin-title">${SIGNUP ? 'Start reviewing, free' : 'Sign in to your workspace'}</h1>
         <p class="signin-sub">${SIGNUP
-          ? 'Two free pre-screens — a verdict on whether a venture is worth a full assessment. No card, no password.'
+          ? 'Two free initial reviews — an early indication of whether a venture is worth a full assessment. No card, no password.'
           : 'Evidence-led venture assessment — the operator view of every venture your team is scoring.'}</p>
         <form class="signin-form" id="login-form">
           ${formField({ label: 'Work email', id: 'login-email', type: 'email', placeholder: 'you@yourfund.com', attr: ' autocomplete="email" required' })}

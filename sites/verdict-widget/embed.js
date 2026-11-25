@@ -151,7 +151,7 @@
   var launcher = document.createElement('button');
   launcher.className = 'l';
   launcher.type = 'button';
-  launcher.setAttribute('aria-label', 'Open the free pre-screen');
+  launcher.setAttribute('aria-label', 'Open the free initial review');
   launcher.innerHTML = '<span class="m"></span><span class="tx"><b></b><i></i></span>';
   var mark = launcher.querySelector('.m');
   if (CFG.logo) { var im = document.createElement('img'); im.src = CFG.logo; im.alt = ''; mark.appendChild(im);
@@ -164,7 +164,7 @@
   var panel = document.createElement('div');
   panel.className = 'w';
   panel.setAttribute('role', 'dialog');
-  panel.setAttribute('aria-label', 'Pre-screen');
+  panel.setAttribute('aria-label', 'Initial review');
   R.appendChild(panel);
 
   /* ── open / close ───────────────────────────────────────────────────── */
@@ -173,7 +173,7 @@
   function open() {
     if (!frame) {                                   /* built once, on demand */
       frame = document.createElement('iframe');
-      frame.title = 'Pre-screen';
+      frame.title = 'Initial review';
       frame.src = BASE + 'widget.html?' + qs;
       panel.appendChild(frame);
     }

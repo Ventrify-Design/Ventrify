@@ -512,7 +512,7 @@ export async function advancePreview({ engagementId, email = '' } = {}) {
   const d = await resp.json().catch(() => ({}));
   if (!resp.ok) {
     throw new Error(d.error === 'not_prescreened'
-      ? 'This venture has no finished pre-screen to advance from.'
+      ? 'This venture has no finished initial review to advance from.'
       : (d.detail || d.error || ('Could not prepare the message (' + resp.status + ')')));
   }
   return d;

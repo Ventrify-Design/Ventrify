@@ -2619,7 +2619,7 @@ export function rangeHero(range = {}, opts = {}) {
   const seen = categories.filter(c => c.evidenced === c.of).length;
   const width = ceiling - floor;
   return sectionHero({
-    eyebrow: 'Pre-screen', eyebrowIcon: 'bolt',
+    eyebrow: 'Initial review', eyebrowIcon: 'bolt',
     headline: width === 0
       ? 'The data room answered everything the score asks for.'
       : `This range is ${width} points wide because of what we cannot see yet.`,
@@ -2895,7 +2895,7 @@ export function runStage(opts = {}) {
 
   return `<div class="ps-stage">
     <header class="ps-head">
-      <span class="eyebrow accent"><span class="material-symbols-rounded">${isAssess ? 'play_arrow' : 'bolt'}</span>${isAssess ? 'Setting up the assessment' : 'Pre-screening'}${name ? ' · ' + esc(name) : ''}</span>
+      <span class="eyebrow accent"><span class="material-symbols-rounded">${isAssess ? 'play_arrow' : 'bolt'}</span>${isAssess ? 'Setting up the assessment' : 'Reviewing'}${name ? ' · ' + esc(name) : ''}</span>
       <h2 class="ps-h">${esc(phase)}</h2>
       ${linearProgress({ indeterminate: true })}
       <ol class="ps-steps">${steps}</ol>
@@ -6099,7 +6099,7 @@ export function verdictHero(snapshot = {}, opts = {}) {
   const { band = null, reason = '', basis = '', brief = {}, sources = [] } = snapshot;
   const unreadable = snapshot.state === 'unreadable' || !band;
   return sectionHero({
-    eyebrow: 'Pre-screen', eyebrowIcon: 'bolt',
+    eyebrow: 'Initial review', eyebrowIcon: 'bolt',
     headline: unreadable
       ? 'There isn’t enough here for us to say anything useful yet.'
       : fitHeadline(reason || PS2_BANDS[band].line),
@@ -6118,7 +6118,7 @@ export function verdictHero(snapshot = {}, opts = {}) {
     thesisPlacement: 'span',
     thesisLabel: 'What this is.',
     thesis: unreadable
-      ? 'A pre-screen reads what a venture says about itself and then goes looking for what it does not say. There is too little here to do either yet — add the deck and we will take another look, and it will not count against your free pre-screen.'
+      ? 'An initial review reads what a venture says about itself and then goes looking for what it does not say. There is too little here to do either yet — add the deck and we will take another look, and it will not count against your free initial review.'
       : (brief.oneLine
           ? `${esc(brief.oneLine)} This verdict is about whether that case is worth a full assessment’s time — not about whether the business is good. We have read documents, not met the team.`
           : 'This verdict is about whether the case is worth a full assessment’s time — not about whether the business is good. We have read documents, not met the team.'),

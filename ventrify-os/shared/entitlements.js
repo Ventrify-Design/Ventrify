@@ -35,8 +35,8 @@ export const BILLING_ENFORCED = true;
 
 export const TIERS = {
   prescreen: {
-    key: 'prescreen', label: 'Pre-screen',
-    blurb: 'A free ~5-minute read that returns a verdict band, the case argued both ways, who else is doing this, and what your own documents disagree about.',
+    key: 'prescreen', label: 'Initial review',
+    blurb: 'A free ~5-minute read that returns an indication band, the case argued both ways, who else is doing this, and what your own documents disagree about.',
   },
   full: {
     key: 'full', label: 'Full assessment',
@@ -155,7 +155,7 @@ export function tierCost(tier, allowance = {}) {
   };
   return tier === 'full'
     ? { main: '$' + PRICE_PER_RUN_USD + ' per run', sub: limit > 0 ? 'Your plan allowance is used' : '' }
-    : { main: 'No pre-screens left', sub: 'of ' + limit + ' on your plan' };
+    : { main: 'No initial reviews left', sub: 'of ' + limit + ' on your plan' };
 }
 
 // Per-tier framing. `cost` here is the FALLBACK used when no plan is in hand — the DS
@@ -170,7 +170,7 @@ export const TIER_COMPARISON = {
   },
   full: {
     question: 'What is the verdict?',
-    pitch: 'The complete agentic run — everything the pre-screen reads, argued from the whole room.',
+    pitch: 'The complete agentic run — everything the initial review reads, argued from the whole room.',
     // ── "ABOUT 90 MINUTES", AND WHERE THAT NUMBER COMES FROM ──────────────────────────────────────
     // Was "about 2 hours", which no run has matched since the effort change. MEASURED 2026-11-09 from
     // runState.startedAt → finishedAt on every completed assess run:
@@ -288,11 +288,11 @@ export function capsFor(engagement, plan) {
 // actually create TODAY (plan.js createableTier) passes that instead — an org whose full allowance is
 // spent must not be shown "Run full assessment" as its primary.
 export function ctaPair(plan, tier = defaultTier(plan)) {
-  const runPrescreen = { id: 'run_prescreen', label: 'Run free pre-screen', icon: 'bolt', cost: 'about 5 minutes · free' };
+  const runPrescreen = { id: 'run_prescreen', label: 'Run free initial review', icon: 'bolt', cost: 'about 5 minutes · free' };
   const runFull      = { id: 'run_full',      label: 'Run full assessment', icon: 'play_arrow', cost: 'about 90 minutes' };
   return tier === 'prescreen'
     ? { primary: runPrescreen, secondary: { id: 'unlock_full', label: 'Unlock full assessment', icon: 'lock_open', cost: 'about 90 minutes' } }
-    : { primary: runFull,      secondary: { ...runPrescreen, label: 'Run pre-screen first' } };
+    : { primary: runFull,      secondary: { ...runPrescreen, label: 'Run initial review first' } };
 }
 
 // ---- MAY THIS VENTURE BE PROMOTED WITHOUT PAYING? -----------------------

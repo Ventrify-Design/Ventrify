@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>New assessment · Ventrify OS</title>
-<meta name="description" content="Choose the read — pre-screen or full assessment — then set up the venture, the pitch deck and the data room on one screen.">
+<meta name="description" content="Choose the read — initial review or full assessment — then set up the venture, the pitch deck and the data room on one screen.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- The brand's faces. These MUST match what --font-text / --font-display name in
      brand.css — tools/font-sync.mjs fails the build if a page stops fetching one. -->
@@ -104,7 +104,7 @@
     if (!canAssess) return { state: 'unavailable', reason: 'Assessments are not included on this licence' };
     const gate = Plan ? Plan.canCreate(plan, programs, 'assessment', tier) : { allowed: true };
     if (gate.allowed) return { state: 'available' };
-    if (tier === 'prescreen') return { state: 'unavailable', reason: 'No pre-screens left on this plan' };
+    if (tier === 'prescreen') return { state: 'unavailable', reason: 'No initial reviews left on this plan' };
     return { state: 'available', buy: true };
   }
 
@@ -141,7 +141,7 @@
         ${DS.tierChoice({
           groups: TIER_GROUPS, tiers,
           lede: 'Both reads start from the same evidence. One tells you whether this is worth your time; the other tells you what you would conclude, and shows its working.',
-          note: 'You can commission the full assessment later from the venture itself — a pre-screen is never a dead end.',
+          note: 'You can commission the full assessment later from the venture itself — an initial review is never a dead end.',
         })}
       </div>`
     );
@@ -174,7 +174,7 @@
     const cost = tierCost(tier, allowanceOf(tier));
     const costLine = [cost.main, TIER_COMPARISON[tier].time].filter(Boolean).join(' · ');
     const primary = tier === 'prescreen'
-      ? { id: 'run_prescreen', label: 'Run the pre-screen', icon: 'bolt', cost: costLine }
+      ? { id: 'run_prescreen', label: 'Run the initial review', icon: 'bolt', cost: costLine }
       : st.buy
         ? { id: 'unlock_full', label: 'Unlock the full assessment', icon: 'lock_open', cost: costLine }
         : { id: 'run_full', label: 'Run the full assessment', icon: 'play_arrow', cost: costLine };
@@ -190,7 +190,7 @@
         headline: `Assess a venture for ${(org && org.name) || 'your workspace'}`,
         // The room is no longer read in a step of its own, so neither line may promise one.
         subheading: tier === 'prescreen'
-          ? 'Attach the deck and the data room — the run reads them, then pre-screens, in about five minutes.'
+          ? 'Attach the deck and the data room — the run reads them, then reviews, in about five minutes.'
           : 'Attach the deck, then add documents or link a Drive folder. The run reads the room first and assesses from it.',
       }),
       `<div class="brief">

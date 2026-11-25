@@ -321,17 +321,17 @@ export function workspaceEmpty({ assessOnly = false, orgName = 'your Workspace',
   /* `assessOnly` is now always true — no VerdictScore licence grants `build` (see plan.js). The
      parameter and the third branch are kept because VentureStack will be built on this component and
      will want the other half back; they are unreachable here, not wrong. */
-  const eyebrow = prescreen ? 'First pre-screen' : assessOnly ? 'First assessment' : 'First engagement';
-  const title = prescreen ? 'Pre-screen your<br>first venture.' : assessOnly ? 'Run your first<br>assessment.' : 'Create your first<br>engagement.';
+  const eyebrow = prescreen ? 'First initial review' : assessOnly ? 'First assessment' : 'First engagement';
+  const title = prescreen ? 'Review your<br>first venture.' : assessOnly ? 'Run your first<br>assessment.' : 'Create your first<br>engagement.';
   const sub = prescreen
     ? 'Upload a pitch deck and whatever data room you have. In about five minutes you get a verdict — is this worth a full assessment’s time? — with the case argued both ways, who else is already doing this, and where your own documents disagree. Free.'
     : assessOnly
-    ? 'Click “New assessment”, then upload a pitch deck and whatever supporting documents you have. Pre-screen it free in about five minutes, or run the full assessment — all here, with no founder needed.'
+    ? 'Click “New assessment”, then upload a pitch deck and whatever supporting documents you have. Review it free in about five minutes, or run the full assessment — all here, with no founder needed.'
     : 'Click “New engagement”. A five-step wizard captures the brief. The platform sets up the workspace, seeds the agents, opens Phase 0, and slots the venture into this portfolio.';
   /* ⚠ THE BUILD STEPS ARE GONE. A full licensee's first screen used to open with "Brief intake — an
      eight-section brief", "Hub seeding — the three-layer data room is scaffolded", "Agent wiring —
      Phase 0 opens", "The Studio goes live". That is VENTURESTACK's onboarding: the product that
-     builds ventures. VerdictScore pre-screens and assesses them, and a licence that grants
+     builds ventures. VerdictScore reviews and assesses them, and a licence that grants
      everything VerdictScore does should say so in VerdictScore's own terms.
      The old four steps survived the pivot because the only org that renders them is one with the
      `build` capability, and the demo org has engagements, so nobody ever saw this screen. */
@@ -342,7 +342,7 @@ export function workspaceEmpty({ assessOnly = false, orgName = 'your Workspace',
      is worth running. Leaving it out made "unlimited assessments" read as the only thing on offer. */
   const assessSteps = [
     ['Deck', 'Deck & data room', 'Upload the pitch deck plus whatever supporting documents you have. Large files are extracted in-browser.'],
-    ['Screen', 'Pre-screen, free', 'A verdict in about five minutes — is this one worth a full assessment’s time? Free and unlimited, on every venture you look at.'],
+    ['Review', 'Initial review, free', 'An early indication in about five minutes — is this one worth a full assessment’s time? Free and unlimited, on every venture you look at.'],
     ['Assess', 'The full assessment', 'Deep research, a competitor teardown, founder diligence, and a weighted 0–100 score across seven categories.'],
     ['Verdict', 'Decision-grade verdict', 'Recommendation, thesis, the case argued both ways, and how to strengthen it — ready to sign off or share.'],
   ];
@@ -366,7 +366,7 @@ export function workspaceEmpty({ assessOnly = false, orgName = 'your Workspace',
   const steps = (prescreen ? prescreenSteps : assessOnly ? assessSteps : (buildSteps || assessSteps))
     .map(([tag, t, p], i) => `<div class="ws-step"><div class="ws-step-n">${i + 1}</div><div class="ws-step-b"><div class="ws-step-tag">${tag}</div><div class="ws-step-title">${t}</div><p>${p}</p></div></div>`).join('');
   const cta = canCreate
-    ? `<button class="m3-btn filled" style="margin-top:20px" onclick="window.openNewAssessment&&window.openNewAssessment()"><span class="material-symbols-rounded">${prescreen ? 'bolt' : 'add'}</span>${prescreen ? 'Run your first pre-screen' : assessOnly ? 'Start your first assessment' : 'Start your first engagement'}</button>`
+    ? `<button class="m3-btn filled" style="margin-top:20px" onclick="window.openNewAssessment&&window.openNewAssessment()"><span class="material-symbols-rounded">${prescreen ? 'bolt' : 'add'}</span>${prescreen ? 'Run your first initial review' : assessOnly ? 'Start your first assessment' : 'Start your first engagement'}</button>`
     : `<div style="margin-top:20px">${planGateBanner(assessOnly ? 'New assessment' : 'New engagement')}</div>`;
   const explorers = [
     ['tune', 'Refine your brand', 'Edit your organisation name, primary colour, or logo before your first assessment goes out.', '/workspace/settings-m3.html', 'Open settings →', ''],

@@ -164,7 +164,7 @@ export function prescreenShareHTML(p, org, opts = {}) {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <meta name="color-scheme" content="dark">
-<title>${esc(venture)} — Pre-screen</title>
+<title>${esc(venture)} — Initial Review</title>
 <style>
   *{box-sizing:border-box;}
   body{margin:0;background:${VS.canvas};color:${VS.ink1};font-size:14.5px;line-height:1.65;
@@ -218,7 +218,7 @@ export function prescreenShareHTML(p, org, opts = {}) {
     <div class="mast">
       ${brandLockup({ brand: 'verdictscore', cls: 'lockup', label: 'VerdictScore' })
         .replace('<svg ', `<svg style="--brand-accent:${VS.fill};--brand-accent-2:${VS.accent}" `)}
-      <div class="doc">Pre-screen · ${esc(date)}</div>
+      <div class="doc">Initial Review · ${esc(date)}</div>
     </div>
     <div class="org">${esc(orgName)}</div>
     <h1>${esc(venture)}</h1>
@@ -238,7 +238,7 @@ export function prescreenShareHTML(p, org, opts = {}) {
   ${ps.basis ? `<div class="basis">${esc(ps.basis)}</div>` : ''}
   <div class="close">
     <h3>This is the quick read. There is a much longer one.</h3>
-    <p>A pre-screen answers one question — is this worth your time — from the deck and whatever is in
+    <p>An initial review answers one question — is this worth your time — from the deck and whatever is in
        the room, in about five minutes. It does not produce a score, it does not research each
        document, and nothing in it has been diligenced.</p>
     <p>A full assessment scores the venture 0&ndash;100 across seven categories and thirty-five signals,
