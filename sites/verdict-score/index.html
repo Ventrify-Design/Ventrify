@@ -253,38 +253,33 @@
     <div class="wrap">
       <v-section-head class="measure-lg">
         <p data-eyebrow>Pricing</p>
-        <h2>Try one assessment free. Then $199 per run.</h2>
-        <p data-sub>Every tier reads the full data room. The difference is how many assessments you run.</p>
+        <h2>Start free. Pay for the full read.</h2>
+        <p data-sub>Both read your pitch deck and your whole data room. The difference is how deep the
+          read goes, and what it hands you back.</p>
       </v-section-head>
 
-      <div class="grid four" data-stagger="100">
-        <v-price tier="Angel" amount="$1,200" per="per year · 6 runs" cta="Get your 6 runs" contact="Angel">
-          <li>Six assessments a year</li>
-          <li>Full memo on each</li>
-          <li>Share with co-investors</li>
+      <!-- TWO PRICES, AND THE FREE ONE IS NOT A SAMPLE OF THE PAID ONE. An initial review answers
+           one question — is this worth a full assessment's time — and says so. The full assessment
+           is the scored, evidenced read. Stating the limit of the free thing is what makes the paid
+           thing worth buying; a free tier that pretends to be the product sells neither. -->
+      <div class="grid two" data-stagger="100">
+        <v-price tier="Initial Review" amount="Free" per="about five minutes" cta="Start free" href="https://os.ventrify.io/workspace?new=1">
+          <li>An early indication, not a score</li>
+          <li>Your strengths, gaps and the questions an investor will ask</li>
+          <li>Reads your pitch deck and data room</li>
+          <li>No card, no password</li>
         </v-price>
 
-        <v-price featured tier="Investor" amount="$20,000" per="per year · 48 runs" cta="Start your free trial now" href="https://os.ventrify.io/workspace?new=1">
-          <li>Pipeline dashboard</li>
-          <li>Your thesis, codified</li>
-          <li>Team seats</li>
-          <li>Free trial</li>
-        </v-price>
-
-        <v-price tier="Enterprise" amount="$35,000" per="per year · 60 runs" cta="Book a pipeline demo" contact="Enterprise">
-          <li>Mid-market PE and advisers</li>
-          <li>Larger data rooms</li>
-          <li>Free trial</li>
-        </v-price>
-
-        <v-price tier="Founder" amount="$299" per="per assessment" cta="Check my data room" contact="Founder">
-          <li>One full assessment</li>
-          <li>One re-run included</li>
-          <li>Your gaps, itemised</li>
+        <v-price featured tier="Full Assessment" amount="$199" per="per assessment" cta="Get my full assessment" href="https://os.ventrify.io/workspace">
+          <li>Scored out of 100 across 35 signals</li>
+          <li>The evidence behind every finding</li>
+          <li>The specific gaps to close</li>
+          <li>A deal memo you can send on</li>
         </v-price>
       </div>
 
-      <p class="pricing-footnote" data-reveal>Diligence on a single mid-market deal runs from $338,000. Extra runs are available on every annual tier.</p>
+      <p class="pricing-footnote" data-reveal>Diligence on a single mid-market deal runs from $338,000.
+        Running a pipeline? <a href="#" data-contact="Enterprise">Talk to us about a programme</a>.</p>
     </div>
   </section>
 
@@ -293,13 +288,13 @@
     <div class="wrap cta-inner">
       <div>
         <h2 data-split>See how VerdictScore could fit your process.</h2>
-        <p data-reveal>Run your first assessment free. For larger annual programmes, book a pipeline demo.</p>
+        <p data-reveal>Start with a free initial review. For a pipeline rather than a single venture, book a demo.</p>
       </div>
       <!-- BOTH BUTTONS IN ONE .buttonrow. Loose in .cta-inner the second one fell into an
            implicit grid row in the 1fr column and stretched the full width of the band —
            live, until 2026-11-04. The rule that makes this the fix is in base.css. -->
       <div class="buttonrow" data-reveal>
-        <a class="button" href="https://os.ventrify.io/workspace?new=1">Run your first assessment free</a>
+        <a class="button" href="https://os.ventrify.io/workspace?new=1">Start a free initial review</a>
         <a class="button light" href="#" data-contact="Enterprise">Book a pipeline demo</a>
       </div>
     </div>
