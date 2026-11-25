@@ -293,7 +293,8 @@ const form = () => `
       </div>
       <div class="check" style="align-items:flex-start">
         <span>Your initial review result is shared with <b>${esc(CFG.partner)}</b>.
-          Your pitch deck and data room are not.</span>
+          Your pitch deck and data room are not.
+          <a href="${esc(CFG.site)}/privacy" target="_blank" rel="noopener">How we handle your documents</a>.</span>
       </div>
     </div>
     <div class="stick"><button class="btn p" id="go">Submit for free initial review</button></div>

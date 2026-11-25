@@ -23,7 +23,10 @@
  * verdict.ventrify.io (to a bad path) and let ventrify.io through to its 87KB page untouched.
  */
 
-export const config = { matcher: '/' };
+/* '/privacy' joins the matcher because the host rewrite is the only thing that can serve a second
+   page on these domains. A path with no rewrite falls through to the filesystem, where
+   verdict.ventrify.io/privacy is nothing at all — the file lives at /sites/verdict-score/privacy. */
+export const config = { matcher: ['/', '/privacy'] };
 
 /* EXTENSIONLESS, AND NOT BY STYLE. vercel.json sets cleanUrls, so /sites/verdict-score/index.html is
  * a 308 to /sites/verdict-score — and an internal rewrite aimed at a redirect resolves to nothing at
@@ -37,7 +40,11 @@ const SITES = {
 
 export default function middleware(request) {
   const host = (request.headers.get('host') || '').toLowerCase().split(':')[0];
-  const dest = SITES[host];
+  const path = new URL(request.url).pathname;
+  /* Same rule as '/', one level down: the site's folder plus the page, and still extensionless,
+     because cleanUrls turns /sites/verdict-score/privacy.html into a 308 and an internal rewrite
+     aimed at a redirect resolves to NOT_FOUND. */
+  const dest = SITES[host] ? SITES[host] + (path === '/privacy' ? '/privacy' : '') : undefined;
 
   /* Every other host — ventrify.io, the *.vercel.app previews — carries on to the filesystem. */
   if (!dest) return new Response(null, { headers: { 'x-middleware-next': '1' } });
