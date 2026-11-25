@@ -158,6 +158,16 @@ const EXPECT = {
  "The decision memo shows its working.",
  "Overall score and stated guidance","Investment thesis with supporting and opposing evidence",
  "Claims marked as supported, unverified or contradicted","Market, competitor and comparable analysis",
+ /* THE OUTPUT ENTRIES GAINED A SENTENCE EACH, 2026-11-25. They were titles alone, which is why
+    they needed their own component variant and why the cards under them were two-thirds empty.
+    ⚠ These six describe what the assessment produces. They are claims, and they were written
+    here rather than supplied — worth the same check as any other product claim. */
+ "A single measured score out of 100, with the guidance band that goes with it.",
+ "The case for and the case against, each point tied to what it rests on.",
+ "Each claim traced to what supports it, or flagged where nothing does.",
+ "Who else is doing this, how large the market really is, and how the venture compares.",
+ "The few things that would move the score if they turned out differently.",
+ "Where each finding came from, and what the data room did not contain.",
  "Key assumptions and risks that could change the decision","Evidence references and a record of material gaps",
  "For founders","See what an investor will see, before they do.",
  "Review your data room before assessment. VerdictScore flags missing documents and weakly supported claims so you can address gaps before a pitch. The review identifies gaps; it does not promise a higher score.",

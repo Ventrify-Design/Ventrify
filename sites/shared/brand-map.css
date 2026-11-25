@@ -422,13 +422,50 @@ section.dark {
 }
 [data-brand="verdictscore"] .steps:not(.is-pane) li:hover::after { transform: scaleX(1.9); }
 
-[data-brand="verdictscore"] .steps:not(.is-pane) li::before {
-  display: block;
-  font-size: var(--fs-small);
-  color: var(--brand-accent-2);
-  margin-bottom: .55rem;
+/* ── THE CHAPTER NUMERAL ───────────────────────────────────────────────────────────────────
+   The step number was a small mono line sitting above the title. It is now the largest thing
+   in the row: outlined rather than filled, so it carries the sequence without competing with
+   the words for attention.
+
+   PLACED BY GRID, NOT WRAPPED BY JAVASCRIPT. The <li> becomes a two-column grid and the
+   pseudo-element is a grid item like any other, so the numeral takes the left column across
+   both rows while the title and its sentence take the right. The alternative — wrapping h4+p
+   in a div inside the component — would have been a change to a component used by two
+   sections to fix the styling of one, and this needs no component change at all. */
+[data-brand="verdictscore"] .steps:not(.is-pane) li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: clamp(.9rem, 1.6vw, 1.4rem);
+  align-items: baseline;
 }
-[data-brand="verdictscore"] .steps:not(.is-pane) h4 { margin-top: 0; }
+[data-brand="verdictscore"] .steps:not(.is-pane) li::before {
+  grid-column: 1; grid-row: 1 / span 2;
+  font-family: var(--f-display, system-ui);
+  font-size: clamp(34px, 3.4vw, 46px); font-weight: 600; line-height: .8;
+  letter-spacing: -.05em; margin: 0; min-width: 2.15ch;
+  -webkit-text-stroke: 1px color-mix(in srgb, var(--brand-accent) 55%, transparent);
+  color: transparent;
+  transition: color var(--dur-2, .28s) var(--ease-out, cubic-bezier(.2,0,0,1));
+}
+/* the hover fill, the same gesture as the accent tick widening beside it */
+[data-brand="verdictscore"] .steps:not(.is-pane) li:hover::before {
+  color: color-mix(in srgb, var(--brand-accent) 15%, transparent);
+}
+[data-brand="verdictscore"] .steps:not(.is-pane) h4 { grid-column: 2; grid-row: 1; margin-top: 0; }
+[data-brand="verdictscore"] .steps:not(.is-pane) p  { grid-column: 2; grid-row: 2; margin: 0; }
+
+/* ── TWO COLUMNS, FILLED BY COLUMN ─────────────────────────────────────────────────────────
+   Six items in two columns fill 01 02 / 03 04 / 05 06 when the grid flows by row, so the eye
+   crosses the page between consecutive steps. Flowing by column puts 01-02-03 down the left
+   and 04-05-06 down the right, which is how a numbered sequence continues in a book. Three
+   across was the pane layout's shape and it never suited a sequence. */
+@media (min-width: 880px) {
+  [data-brand="verdictscore"] .steps:not(.is-pane).of-6 {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: repeat(3, auto);
+    grid-auto-flow: column;
+  }
+}
 
 /* A PANE STEP IS NOT GIVEN THE STEPPER'S CHROME IN THE FIRST PLACE — every
    rule above is scoped `:not(.is-pane)`, because cancelling them afterwards
