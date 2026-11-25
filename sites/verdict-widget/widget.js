@@ -196,18 +196,35 @@ let at = 0;
 const paint = () => send('step', { step: STEPS[at] });
 
 /* ── the upsell. OURS, so it keeps the violet on every partner's site. ──── */
-const sell = loud => `
+/* ONE CARD, ONE BUTTON, EVERY SCREEN. It used to take a `loud` flag that changed nothing but an
+   eyebrow label and the button's wording. Both are settled now: the price was appearing twice
+   inside 200px — once in the label, once in the button — and appears once, in the button, which
+   asks for the sale rather than offering a tour of it.
+
+   THE ALT TEXT SAYS IT IS AN EXAMPLE. The shot is an assessment of a real venture scoring 80, and
+   it is visibly another company's, which is what stops a founder reading it as their own result
+   moments after being told the free review gives no score. A screen reader cannot see that, so the
+   text says it. */
+const sell = () => `
   <div class="sell">
-    <div class="gate"><span class="sc">${esc(CFG.bar)}+</span>
-      <span>Score ${esc(CFG.bar)} or above in your full assessment and become eligible to be
-      considered for <b>${esc(CFG.short)}'s formal screening process</b>.</span></div>
-    <span class="lbl">Full investment readiness assessment <span class="price">$${esc(CFG.price)}</span></span>
-    <h3>See what an investor will see, before they do.</h3>
-    <p>Your venture scored out of 100 across 35 signals, with the evidence behind every finding
-       and the specific gaps to close.</p>
-    <button class="btn v" data-go="sell">${loud
-      ? `Get my full assessment, $${esc(CFG.price)}`
-      : 'Explore the full assessment'}</button>
+    <div class="hero">
+      <div class="lit"></div>
+      <img src="./assessment-shot.webp" width="880" height="695" decoding="async"
+           alt="Example of a full assessment: an investability score of 80 out of 100, with the seven weighted categories that make it up.">
+      <div class="scrim"></div>
+      <div class="over">
+        <h3>See what an investor<br>sees, <em>before they do.</em></h3>
+      </div>
+    </div>
+    <div class="in">
+      <p>Scored across 35 signals, with the evidence behind every finding.</p>
+      <div class="gate">
+        <span class="fig"><b>${esc(CFG.bar)}</b><i>+</i></span>
+        <p>Score ${esc(CFG.bar)} or above and become eligible to be considered for
+          <b>${esc(CFG.short)}'s formal screening process</b>.</p>
+      </div>
+      <button class="btn v" data-go="sell">Get my full assessment <span>&middot; $${esc(CFG.price)}</span></button>
+    </div>
   </div>`;
 
 const intro = () => `
@@ -224,7 +241,7 @@ const intro = () => `
     <button class="btn p" data-go="form">Start free review</button>
     <p class="hint" style="margin:.75rem 0 0">Independent investment readiness review by VerdictScore.
       ${esc(CFG.short)} runs its own screening process separately.</p>
-    ${sell(false)}
+    ${sell()}
   </div>`;
 
 const form = () => `
@@ -324,7 +341,7 @@ const done = () => `
       <div class="warn" style="background:var(--surface);border-color:var(--edge)"><span class="i">&#9432;</span>
         <span>We will check we can open your data room when your initial review runs. If it is not shared with
           <code>${esc(CFG.roomReader)}</code> (or open by link), we will read the deck alone and tell you.</span></div>` : ''}
-    ${sell(true)}
+    ${sell()}
   </div>`;
 
 /* The failure screen. It exists because the alternative — a spinner that stops,
@@ -338,7 +355,7 @@ const failed = () => `
       <p class="lede" style="margin:.5rem 0 0">${esc(S.failed || '')}</p>
     </div>
     <div style="margin-top:1.1rem"><button class="btn p" data-go="form">Try again</button></div>
-    ${sell(false)}
+    ${sell()}
   </div>`;
 
 /* ── render + behaviour ─────────────────────────────────────────────────── */
